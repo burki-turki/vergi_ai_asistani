@@ -1,0 +1,512 @@
+{
+  "schema_version": 1,
+  "provisions": [
+    {
+      "provision_id": "kanun_6736_m5_f3",
+      "provision_version_id": "kanun_6736_m5_f3_v1",
+      "document_id": "kanun_6736",
+      "enabled": true,
+      "verification_state": "partially_verified",
+      "locator": {
+        "madde": "5",
+        "fikra": "3",
+        "bent": null
+      },
+      "formal": {
+        "verified": false,
+        "status": "unknown",
+        "valid_from": null,
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": []
+      },
+      "applicability": {
+        "windows_complete": true,
+        "windows_complete_verified": true,
+        "completion_evidence": [
+          {
+            "evidence_id": "ev_6736_m5f3_completion_9385",
+            "kind": "council_of_ministers_decision",
+            "source_document_id": null,
+            "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/10/20161026-1.pdf",
+            "citation": "25.10.2016 tarihli ve 2016/9385 sayılı Bakanlar Kurulu Kararı, RG 26.10.2016/29869, Madde 1/1",
+            "verified": true,
+            "notes": "6736 sayılı Kanunda yer alan başvuru süreleri, Kanunun 4/1 ve 6. maddesi saklı kalmak üzere 25.11.2016 tarihine kadar uzatılmıştır. Madde 5 bu istisnalar arasında değildir."
+          },
+          {
+            "evidence_id": "ev_6736_m5f3_completion_9608",
+            "kind": "council_of_ministers_decision",
+            "source_document_id": null,
+            "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/12/20161230.htm",
+            "citation": "12.12.2016 tarihli ve 2016/9608 sayılı Bakanlar Kurulu Kararı, RG 30.12.2016/29934",
+            "verified": true,
+            "notes": "Daha sonraki 2016/9608 sayılı süre uzatımı yalnızca 6736 sayılı Kanunun 7. maddesindeki süreleri kapsamaktadır; 5. maddedeki matrah ve vergi artırımı başvuru süresini uzatmamaktadır."
+          },
+          {
+            "evidence_id": "ev_6736_m5f3_completion_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_6736",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.6736.pdf",
+            "citation": "6736 sayılı Kanun konsolide mevzuat geçmişi ve süre uzatımı dipnotları",
+            "verified": true,
+            "notes": "Konsolide mevzuat geçmişi, genel başvuru süresinin 2016/9385 ile 25.11.2016 tarihine uzatıldığını; 2016/9608 sayılı sonraki uzatmanın ise 7. maddeye ilişkin olduğunu göstermektedir."
+          }
+        ],
+        "windows": [
+          {
+            "window_id": "application_original",
+            "type": "application",
+            "start": "2016-08-19",
+            "end": "2016-10-31",
+            "start_inclusive": true,
+            "end_inclusive": true,
+            "verified": true,
+            "legal_basis": "6736 sayılı Kanun m.5/3 ve 6736 sayılı Kanun Genel Tebliği Seri No:1",
+            "evidence": [
+              {
+                "evidence_id": "ev_6736_m5f3_original_window",
+                "kind": "statute_text",
+                "source_document_id": "kanun_6736",
+                "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/08/20160819-1.pdf",
+                "citation": "6736 sayılı Kanun m.5/3; Kanunun yayımlandığı tarihi izleyen ikinci ayın sonuna kadar",
+                "verified": true,
+                "notes": "Kanun 19.08.2016 tarihinde yürürlüğe girmiştir. İlk başvuru/beyan son tarihi 31.10.2016'dır."
+              }
+            ],
+            "notes": "6736 sayılı Kanunun ilk halinde m.5 kapsamındaki matrah ve vergi artırımı için öngörülen başvuru dönemidir."
+          },
+          {
+            "window_id": "application_extension_2016_9385",
+            "type": "application_extension",
+            "start": "2016-11-01",
+            "end": "2016-11-25",
+            "start_inclusive": true,
+            "end_inclusive": true,
+            "verified": true,
+            "legal_basis": "25.10.2016 tarihli ve 2016/9385 sayılı Bakanlar Kurulu Kararı Madde 1/1",
+            "evidence": [
+              {
+                "evidence_id": "ev_6736_m5f3_extension_9385",
+                "kind": "council_of_ministers_decision",
+                "source_document_id": null,
+                "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/10/20161026-1.pdf",
+                "citation": "2016/9385 sayılı BKK, RG 26.10.2016/29869, Madde 1/1",
+                "verified": true,
+                "notes": "4/1 ve 6. madde istisnaları dışında kalan başvuru süreleri 25.11.2016 tarihine kadar uzatılmıştır. Madde 5 kapsamındaki matrah ve vergi artırımı bu genel uzatmanın kapsamındadır."
+              }
+            ],
+            "notes": "31.10.2016 tarihinde sona erecek başvuru süresinin 2016/9385 sayılı Karar ile 25.11.2016 tarihine kadar uzatılan bölümüdür."
+          }
+        ],
+        "notes": "Bu applicability kaydı yalnızca 6736 sayılı Kanunun 5. maddesi kapsamındaki matrah ve vergi artırımı başvuru/beyan imkanını modellemektedir. Ödeme ve taksit süreleri ayrı hukuki olaylardır ve bu window listesine eklenmemiştir."
+      },
+      "subject_periods": [
+        {
+          "period_id": "kdv_2011",
+          "type": "tax_year",
+          "start": "2011-01-01",
+          "end": "2011-12-31",
+          "label": "2011 takvim yılı",
+          "verified": true,
+          "evidence": [
+            {
+              "evidence_id": "ev_6736_m5f3_subject_2011",
+              "kind": "statute_text",
+              "source_document_id": "kanun_6736",
+              "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/08/20160819-1.pdf",
+              "citation": "6736 sayılı Kanun m.5/3-a",
+              "verified": true,
+              "notes": "KDV artırımı kapsamında 2011 yılı açıkça sayılmıştır."
+            }
+          ],
+          "notes": null
+        },
+        {
+          "period_id": "kdv_2012",
+          "type": "tax_year",
+          "start": "2012-01-01",
+          "end": "2012-12-31",
+          "label": "2012 takvim yılı",
+          "verified": true,
+          "evidence": [
+            {
+              "evidence_id": "ev_6736_m5f3_subject_2012",
+              "kind": "statute_text",
+              "source_document_id": "kanun_6736",
+              "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/08/20160819-1.pdf",
+              "citation": "6736 sayılı Kanun m.5/3-a",
+              "verified": true,
+              "notes": "KDV artırımı kapsamında 2012 yılı açıkça sayılmıştır."
+            }
+          ],
+          "notes": null
+        },
+        {
+          "period_id": "kdv_2013",
+          "type": "tax_year",
+          "start": "2013-01-01",
+          "end": "2013-12-31",
+          "label": "2013 takvim yılı",
+          "verified": true,
+          "evidence": [
+            {
+              "evidence_id": "ev_6736_m5f3_subject_2013",
+              "kind": "statute_text",
+              "source_document_id": "kanun_6736",
+              "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/08/20160819-1.pdf",
+              "citation": "6736 sayılı Kanun m.5/3-a",
+              "verified": true,
+              "notes": "KDV artırımı kapsamında 2013 yılı açıkça sayılmıştır."
+            }
+          ],
+          "notes": null
+        },
+        {
+          "period_id": "kdv_2014",
+          "type": "tax_year",
+          "start": "2014-01-01",
+          "end": "2014-12-31",
+          "label": "2014 takvim yılı",
+          "verified": true,
+          "evidence": [
+            {
+              "evidence_id": "ev_6736_m5f3_subject_2014",
+              "kind": "statute_text",
+              "source_document_id": "kanun_6736",
+              "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/08/20160819-1.pdf",
+              "citation": "6736 sayılı Kanun m.5/3-a",
+              "verified": true,
+              "notes": "KDV artırımı kapsamında 2014 yılı açıkça sayılmıştır."
+            }
+          ],
+          "notes": null
+        },
+        {
+          "period_id": "kdv_2015",
+          "type": "tax_year",
+          "start": "2015-01-01",
+          "end": "2015-12-31",
+          "label": "2015 takvim yılı",
+          "verified": true,
+          "evidence": [
+            {
+              "evidence_id": "ev_6736_m5f3_subject_2015",
+              "kind": "statute_text",
+              "source_document_id": "kanun_6736",
+              "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/08/20160819-1.pdf",
+              "citation": "6736 sayılı Kanun m.5/3-a",
+              "verified": true,
+              "notes": "KDV artırımı kapsamında 2015 yılı açıkça sayılmıştır."
+            }
+          ],
+          "notes": null
+        }
+      ],
+      "relations": [],
+      "notes": "6736 sayılı Kanunun 5. maddesinin 3. fıkrasına ilişkin applicability ve subject-period verileri doğrulanmıştır. İlk son başvuru tarihi 31.10.2016 olup 2016/9385 sayılı Bakanlar Kurulu Kararıyla 25.11.2016 tarihine kadar uzatılmıştır. Provision-level güncel formal yürürlük durumu ayrı doğrulama gerektirdiğinden formal.verified=false bırakılmıştır."
+    },
+    {
+      "provision_id": "kanun_2577_m7_f1",
+      "provision_version_id": "kanun_2577_m7_f1_v1",
+      "document_id": "kanun_2577",
+      "enabled": true,
+      "verification_state": "verified",
+      "locator": {
+        "madde": "7",
+        "fikra": "1",
+        "bent": null
+      },
+      "formal": {
+        "verified": true,
+        "status": "active",
+        "valid_from": "1982-01-20",
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": [
+          {
+            "evidence_id": "ev_2577_m7_f1_original_statute",
+            "kind": "statute_text",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www5.tbmm.gov.tr/tutanaklar/KANUNLAR_KARARLAR/kanuntbmmc065/kanunmgkc065/kanunmgkc06502577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.7/1",
+            "verified": true,
+            "notes": "2577 sayılı Kanunun yayımlanan kanun metnindeki hüküm."
+          },
+          {
+            "evidence_id": "ev_2577_m7_f1_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.7/1 - güncel konsolide mevzuat",
+            "verified": true,
+            "notes": "Mevzuat Bilgi Sistemi güncel konsolide metin kontrolü."
+          }
+        ]
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": "Provision-level tüm özel uygulama pencereleri exhaustively modellenmemiştir. Deadline Rule Selection Policy özel kanun ve case applicability kontrollerini ayrıca uygulamalıdır."
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "Özel kanunda ayrı süre bulunmayan hallerde vergi mahkemelerinde genel dava açma süresine ilişkin provision."
+    },
+    {
+      "provision_id": "kanun_2577_m7_f2_b",
+      "provision_version_id": "kanun_2577_m7_f2_b_v1",
+      "document_id": "kanun_2577",
+      "enabled": true,
+      "verification_state": "verified",
+      "locator": {
+        "madde": "7",
+        "fikra": "2",
+        "bent": "b"
+      },
+      "formal": {
+        "verified": true,
+        "status": "active",
+        "valid_from": "1982-01-20",
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": [
+          {
+            "evidence_id": "ev_2577_m7_f2_b_original_statute",
+            "kind": "statute_text",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www5.tbmm.gov.tr/tutanaklar/KANUNLAR_KARARLAR/kanuntbmmc065/kanunmgkc065/kanunmgkc06502577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.7/2-b",
+            "verified": true,
+            "notes": "2577 sayılı Kanunun yayımlanan kanun metnindeki hüküm."
+          },
+          {
+            "evidence_id": "ev_2577_m7_f2_b_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.7/2-b - güncel konsolide mevzuat",
+            "verified": true,
+            "notes": "Mevzuat Bilgi Sistemi güncel konsolide metin kontrolü."
+          }
+        ]
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": "Provision-level tüm özel uygulama pencereleri exhaustively modellenmemiştir. Deadline Rule Selection Policy özel kanun ve case applicability kontrollerini ayrıca uygulamalıdır."
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "Vergi, resim, harç ve benzeri mali yükümlülükler ile zam ve cezalarından doğan uyuşmazlıklarda dava süresinin başlangıç olaylarına ilişkin provision."
+    },
+    {
+      "provision_id": "kanun_2577_m8_f1",
+      "provision_version_id": "kanun_2577_m8_f1_v1",
+      "document_id": "kanun_2577",
+      "enabled": true,
+      "verification_state": "verified",
+      "locator": {
+        "madde": "8",
+        "fikra": "1",
+        "bent": null
+      },
+      "formal": {
+        "verified": true,
+        "status": "active",
+        "valid_from": "1982-01-20",
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": [
+          {
+            "evidence_id": "ev_2577_m8_f1_original_statute",
+            "kind": "statute_text",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www5.tbmm.gov.tr/tutanaklar/KANUNLAR_KARARLAR/kanuntbmmc065/kanunmgkc065/kanunmgkc06502577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.8/1",
+            "verified": true,
+            "notes": "2577 sayılı Kanunun yayımlanan kanun metnindeki hüküm."
+          },
+          {
+            "evidence_id": "ev_2577_m8_f1_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.8/1 - güncel konsolide mevzuat",
+            "verified": true,
+            "notes": "Mevzuat Bilgi Sistemi güncel konsolide metin kontrolü."
+          }
+        ]
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": "Provision-level tüm özel uygulama pencereleri exhaustively modellenmemiştir. Deadline Rule Selection Policy özel kanun ve case applicability kontrollerini ayrıca uygulamalıdır."
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "Sürelerin tebliğ, yayın veya ilan tarihini izleyen günden itibaren işlemeye başlamasına ilişkin genel süre provision'ı."
+    },
+    {
+      "provision_id": "kanun_2577_m8_f2",
+      "provision_version_id": "kanun_2577_m8_f2_v1",
+      "document_id": "kanun_2577",
+      "enabled": true,
+      "verification_state": "verified",
+      "locator": {
+        "madde": "8",
+        "fikra": "2",
+        "bent": null
+      },
+      "formal": {
+        "verified": true,
+        "status": "active",
+        "valid_from": "1982-01-20",
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": [
+          {
+            "evidence_id": "ev_2577_m8_f2_original_statute",
+            "kind": "statute_text",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www5.tbmm.gov.tr/tutanaklar/KANUNLAR_KARARLAR/kanuntbmmc065/kanunmgkc065/kanunmgkc06502577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.8/2",
+            "verified": true,
+            "notes": "2577 sayılı Kanunun yayımlanan kanun metnindeki hüküm."
+          },
+          {
+            "evidence_id": "ev_2577_m8_f2_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.8/2 - güncel konsolide mevzuat",
+            "verified": true,
+            "notes": "Mevzuat Bilgi Sistemi güncel konsolide metin kontrolü."
+          }
+        ]
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": "Provision-level tüm özel uygulama pencereleri exhaustively modellenmemiştir. Deadline Rule Selection Policy özel kanun ve case applicability kontrollerini ayrıca uygulamalıdır."
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "Tatil günlerinin süre hesabına dahil edilmesi ve son günün tatil gününe rastlaması durumuna ilişkin provision."
+    },
+    {
+      "provision_id": "kanun_2577_m8_f3",
+      "provision_version_id": "kanun_2577_m8_f3_v1",
+      "document_id": "kanun_2577",
+      "enabled": true,
+      "verification_state": "verified",
+      "locator": {
+        "madde": "8",
+        "fikra": "3",
+        "bent": null
+      },
+      "formal": {
+        "verified": true,
+        "status": "active",
+        "valid_from": "1982-01-20",
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": [
+          {
+            "evidence_id": "ev_2577_m8_f3_original_statute",
+            "kind": "statute_text",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www5.tbmm.gov.tr/tutanaklar/KANUNLAR_KARARLAR/kanuntbmmc065/kanunmgkc065/kanunmgkc06502577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.8/3",
+            "verified": true,
+            "notes": "2577 sayılı Kanunun yayımlanan kanun metnindeki çalışmaya ara verme süresi hükmü."
+          },
+          {
+            "evidence_id": "ev_2577_m8_f3_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.8/3 - güncel konsolide mevzuat",
+            "verified": true,
+            "notes": "Güncel konsolide hüküm kontrolü."
+          }
+        ]
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": "Çalışmaya ara verme kuralının somut olaya uygulanabilirliği Deadline Calculator Policy tarafından ayrıca değerlendirilecektir."
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "İYUK m.8/3. Bu Kanunda yazılı sürelerin bitişinin çalışmaya ara verme dönemine rastlamasına ilişkin deadline extension provision'ı."
+    },
+    {
+      "provision_id": "kanun_2577_m61_f1",
+      "provision_version_id": "kanun_2577_m61_f1_v1",
+      "document_id": "kanun_2577",
+      "enabled": true,
+      "verification_state": "verified",
+      "locator": {
+        "madde": "61",
+        "fikra": "1",
+        "bent": null
+      },
+      "formal": {
+        "verified": true,
+        "status": "active",
+        "valid_from": "2016-07-23",
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": [
+          {
+            "evidence_id": "ev_2577_m61_f1_6494_m18",
+            "kind": "amending_law",
+            "source_document_id": null,
+            "source_url": "https://cdn.tbmm.gov.tr/KKBSPublicFile/D24/Y3/T1/KanunMetni/ba728d4d-08d9-46a8-9fb8-3e2464dd21f1.html",
+            "citation": "6494 sayılı Kanun m.18; 2577 sayılı Kanun m.61/1 birinci cümlesinin yeniden düzenlenmesi",
+            "verified": true,
+            "notes": "Bölge idare, idare ve vergi mahkemelerinin çalışmaya ara verme döneminin 20 Temmuz - 31 Ağustos olduğunu düzenleyen değişiklik."
+          },
+          {
+            "evidence_id": "ev_2577_m61_f1_6723_m14",
+            "kind": "amending_law",
+            "source_document_id": null,
+            "source_url": "https://cdn.tbmm.gov.tr/KKBSPublicFile/D26/Y1/T1/KanunMetni/81724b0e-e747-4f29-885a-7db9cb1b2324.html",
+            "citation": "6723 sayılı Kanun m.14; 2577 sayılı Kanun m.61/1 ikinci cümlesinin değiştirilmesi",
+            "verified": true,
+            "notes": "Çalışmaya ara vermeden yararlanamayan bazı idari yargı mercilerine ilişkin mevcut istisna metninin dayanağı."
+          },
+          {
+            "evidence_id": "ev_2577_m61_f1_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_2577",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2577.pdf",
+            "citation": "2577 sayılı İdari Yargılama Usulü Kanunu m.61/1 - güncel konsolide mevzuat",
+            "verified": true,
+            "notes": "Current provision text için konsolide mevzuat kontrolü."
+          }
+        ]
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": "m.61/1 yalnız dönem tarihlerini değil, çalışmaya ara vermeden yararlanamayan bazı idari yargı mercilerine ilişkin istisnayı da içerir. Bu nedenle somut mahkeme bakımından judicial-recess applicability ayrıca deterministik olarak çözülmelidir."
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "İYUK m.61/1 current provision version. Deadline Calculator'ın m.8/3 kapsamındaki çalışmaya ara verme düzeltmesinde kullanılacak canonical dönem ve istisna dayanağıdır."
+    }
+  ]
+}

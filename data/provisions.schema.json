@@ -1,0 +1,510 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vergi-ai.local/schemas/provisions.schema.json",
+  "title": "Vergi AI Provision Manifest Schema",
+  "description": "Madde, fıkra ve bent düzeyinde formal hukuki durum, uygulanabilirlik pencereleri, completeness evidence ve konu dönemlerini modelleyen şema.",
+  "type": "object",
+
+  "required": [
+    "schema_version",
+    "provisions"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+
+    "provisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/provision"
+      }
+    }
+  },
+
+  "additionalProperties": false,
+
+  "$defs": {
+
+    "nullableDate": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "nullableString": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "evidence": {
+      "type": "object",
+
+      "required": [
+        "evidence_id",
+        "kind",
+        "verified"
+      ],
+
+      "properties": {
+
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "kind": {
+          "type": "string",
+          "enum": [
+            "statute_text",
+            "amending_law",
+            "presidential_decision",
+            "council_of_ministers_decision",
+            "regulation",
+            "communique",
+            "circular",
+            "official_gazette",
+            "administrative_source",
+            "judgment",
+            "consolidated_legislation",
+            "other"
+          ]
+        },
+
+        "source_document_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "source_url": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "citation": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "verified": {
+          "type": "boolean"
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+
+      "additionalProperties": false
+    },
+
+    "locator": {
+      "type": "object",
+
+      "required": [
+        "madde",
+        "fikra",
+        "bent"
+      ],
+
+      "properties": {
+
+        "madde": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "fikra": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "bent": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+
+      "additionalProperties": false
+    },
+
+    "formal": {
+      "type": "object",
+
+      "required": [
+        "verified",
+        "status",
+        "valid_from",
+        "valid_through",
+        "repeal_effective_date",
+        "evidence"
+      ],
+
+      "properties": {
+
+        "verified": {
+          "type": "boolean"
+        },
+
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "amended",
+            "partially_repealed",
+            "repealed",
+            "historical",
+            "unknown"
+          ]
+        },
+
+        "valid_from": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "valid_through": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "repeal_effective_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      },
+
+      "additionalProperties": false
+    },
+
+    "applicabilityWindow": {
+      "type": "object",
+
+      "required": [
+        "window_id",
+        "type",
+        "start",
+        "end",
+        "start_inclusive",
+        "end_inclusive",
+        "verified",
+        "legal_basis",
+        "evidence",
+        "notes"
+      ],
+
+      "properties": {
+
+        "window_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "type": {
+          "type": "string",
+          "enum": [
+            "application",
+            "application_extension",
+            "declaration",
+            "payment",
+            "election",
+            "benefit",
+            "compliance",
+            "other"
+          ]
+        },
+
+        "start": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "end": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "start_inclusive": {
+          "type": "boolean"
+        },
+
+        "end_inclusive": {
+          "type": "boolean"
+        },
+
+        "verified": {
+          "type": "boolean"
+        },
+
+        "legal_basis": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+
+      "additionalProperties": false
+    },
+
+    "applicability": {
+      "type": "object",
+
+      "required": [
+        "windows_complete",
+        "windows_complete_verified",
+        "completion_evidence",
+        "windows",
+        "notes"
+      ],
+
+      "properties": {
+
+        "windows_complete": {
+          "type": "boolean"
+        },
+
+        "windows_complete_verified": {
+          "type": "boolean"
+        },
+
+        "completion_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+
+        "windows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/applicabilityWindow"
+          }
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+
+      "additionalProperties": false
+    },
+
+    "subjectPeriod": {
+      "type": "object",
+
+      "required": [
+        "period_id",
+        "type",
+        "start",
+        "end",
+        "label",
+        "verified",
+        "evidence",
+        "notes"
+      ],
+
+      "properties": {
+
+        "period_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "type": {
+          "type": "string",
+          "enum": [
+            "tax_year",
+            "tax_period",
+            "date_range",
+            "fiscal_year",
+            "other"
+          ]
+        },
+
+        "start": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "end": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "label": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "verified": {
+          "type": "boolean"
+        },
+
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+
+      "additionalProperties": false
+    },
+
+    "relation": {
+      "type": "object",
+
+      "required": [
+        "type",
+        "target_provision_id",
+        "target_provision_version_id",
+        "verified",
+        "evidence",
+        "notes"
+      ],
+
+      "properties": {
+
+        "type": {
+          "type": "string",
+          "enum": [
+            "amends",
+            "supersedes",
+            "extends_application",
+            "limits_application",
+            "references",
+            "implements",
+            "related_to",
+            "other"
+          ]
+        },
+
+        "target_provision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "target_provision_version_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "verified": {
+          "type": "boolean"
+        },
+
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+
+      "additionalProperties": false
+    },
+
+    "provision": {
+      "type": "object",
+
+      "required": [
+        "provision_id",
+        "provision_version_id",
+        "document_id",
+        "enabled",
+        "verification_state",
+        "locator",
+        "formal",
+        "applicability",
+        "subject_periods",
+        "relations",
+        "notes"
+      ],
+
+      "properties": {
+
+        "provision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "provision_version_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "document_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "enabled": {
+          "type": "boolean"
+        },
+
+        "verification_state": {
+          "type": "string",
+          "enum": [
+            "unverified",
+            "partially_verified",
+            "verified"
+          ]
+        },
+
+        "locator": {
+          "$ref": "#/$defs/locator"
+        },
+
+        "formal": {
+          "$ref": "#/$defs/formal"
+        },
+
+        "applicability": {
+          "$ref": "#/$defs/applicability"
+        },
+
+        "subject_periods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/subjectPeriod"
+          }
+        },
+
+        "relations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "ruleset_id": "tr_tax_deadline_rules_v1",
+  "jurisdiction": "TR",
+  "rules": [],
+  "notes": "Vergi AI Deadline Rule Registry V1. Yalnız doğrulanmış hukuki dayanağa sahip kurallar active olarak eklenebilir. Henüz production deadline rule eklenmemiştir."
+}

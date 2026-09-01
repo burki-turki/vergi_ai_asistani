@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+
+  "extraction_id": "extract_vir_001_v1",
+
+  "case_id": "case_0001",
+
+  "source_document_id": "vir_001",
+
+  "status": "completed",
+
+  "extractor": {
+    "method": "manual",
+    "provider": null,
+    "model": null,
+    "extractor_version": "1",
+    "prompt_version": null,
+    "run_at": null
+  },
+
+  "facts": [
+    {
+      "fact_id": "fact_vir_001_001",
+
+      "fact_kind": "date_fact",
+
+      "statement": "Vergi inceleme raporunun tarihi 20.01.2026 olarak belirtilmiştir.",
+
+      "normalized_statement": "Vergi inceleme raporu 2026-01-20 tarihinde düzenlenmiştir.",
+
+      "extraction_basis": "document_metadata",
+
+      "attributed_party_id": null,
+
+      "attributed_actor_label": "Vergi Denetim Kurulu Başkanlığı",
+
+      "source": {
+        "page": null,
+        "section": "Rapor Bilgileri",
+        "paragraph": null,
+        "text_excerpt": "Rapor tarihi: 20.01.2026"
+      },
+
+      "structured_values": [
+        {
+          "value_type": "date",
+          "label": "rapor_tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-01-20",
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+
+      "related_party_ids": [],
+
+      "related_document_ids": [],
+
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+
+      "confidence": 1.0,
+
+      "verification_state": "unverified",
+
+      "notes": "Sentetik extraction test kaydıdır."
+    },
+
+    {
+      "fact_id": "fact_vir_001_002",
+
+      "fact_kind": "administrative_claim",
+
+      "statement": "İnceleme raporunda mükellefin 2024/03 döneminde haksız KDV indirimi yaptığı ileri sürülmektedir.",
+
+      "normalized_statement": "İdare, mükellefin 2024/03 dönemindeki KDV indiriminin haksız olduğunu iddia etmektedir.",
+
+      "extraction_basis": "explicit_text",
+
+      "attributed_party_id": null,
+
+      "attributed_actor_label": "Vergi inceleme raporunu düzenleyen idare",
+
+      "source": {
+        "page": null,
+        "section": "Eleştiri Konusu",
+        "paragraph": null,
+        "text_excerpt": "Mükellefin ilgili dönemde haksız KDV indiriminden yararlandığı değerlendirilmiştir."
+      },
+
+      "structured_values": [
+        {
+          "value_type": "string",
+          "label": "vergilendirme_donemi",
+          "string_value": "2024/03",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+
+      "related_document_ids": [],
+
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+
+      "confidence": 0.98,
+
+      "verification_state": "unverified",
+
+      "notes": "Bu kayıt idarenin iddiasını temsil eder; iddianın maddi doğruluğunu kabul etmez."
+    },
+
+    {
+      "fact_id": "fact_vir_001_003",
+
+      "fact_kind": "monetary_fact",
+
+      "statement": "İnceleme raporunda eleştiri konusu KDV tutarı 850.000,00 TL olarak belirtilmektedir.",
+
+      "normalized_statement": "Eleştiri konusu KDV tutarı 850000.00 TRY'dir.",
+
+      "extraction_basis": "explicit_text",
+
+      "attributed_party_id": null,
+
+      "attributed_actor_label": "Vergi inceleme raporunu düzenleyen idare",
+
+      "source": {
+        "page": null,
+        "section": "Hesaplama",
+        "paragraph": null,
+        "text_excerpt": "Eleştiri konusu KDV: 850.000,00 TL"
+      },
+
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "elestiri_konusu_kdv",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        }
+      ],
+
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+
+      "related_document_ids": [],
+
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+
+      "confidence": 0.99,
+
+      "verification_state": "unverified",
+
+      "notes": "Tutar sentetik test verisidir."
+    },
+
+    {
+      "fact_id": "fact_vir_001_004",
+
+      "fact_kind": "legal_reference",
+
+      "statement": "Vergi inceleme raporunda KDV Kanununun 29 uncu maddesine atıf yapılmaktadır.",
+
+      "normalized_statement": "Raporda KDVK madde 29 hukuki dayanak olarak gösterilmiştir.",
+
+      "extraction_basis": "explicit_text",
+
+      "attributed_party_id": null,
+
+      "attributed_actor_label": "Vergi inceleme raporunu düzenleyen idare",
+
+      "source": {
+        "page": null,
+        "section": "Yasal Dayanak",
+        "paragraph": null,
+        "text_excerpt": "3065 sayılı Katma Değer Vergisi Kanununun 29 uncu maddesi"
+      },
+
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "hukuki_dayanak",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "KDVK_m29"
+        }
+      ],
+
+      "related_party_ids": [],
+
+      "related_document_ids": [],
+
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+
+      "confidence": 0.99,
+
+      "verification_state": "unverified",
+
+      "notes": "Bu fact yalnızca raporda yapılan hukuki atfı kaydeder; atfın doğru veya uygulanabilir olduğunu belirlemez."
+    },
+
+    {
+      "fact_id": "fact_vir_001_005",
+
+      "fact_kind": "document_finding",
+
+      "statement": "İnceleme raporunda tarhiyat yapılması gerektiği sonucuna varıldığı belirtilmektedir.",
+
+      "normalized_statement": "Vergi inceleme raporu KDV tarhiyatı önerisi içermektedir.",
+
+      "extraction_basis": "explicit_text",
+
+      "attributed_party_id": null,
+
+      "attributed_actor_label": "Vergi inceleme raporunu düzenleyen idare",
+
+      "source": {
+        "page": null,
+        "section": "Sonuç",
+        "paragraph": null,
+        "text_excerpt": "Yapılan inceleme sonucunda gerekli tarhiyatın yapılması gerektiği kanaatine varılmıştır."
+      },
+
+      "structured_values": [],
+
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+
+      "related_document_ids": [
+        "ihbarname_001"
+      ],
+
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+
+      "confidence": 0.97,
+
+      "verification_state": "unverified",
+
+      "notes": "Raporun sonucunu temsil eden sentetik extraction kaydıdır."
+    }
+  ],
+
+  "warnings": [],
+
+  "notes": "Fact Extraction Schema V1 ve ileride kurulacak Fact Extraction Engine'i sınamak amacıyla hazırlanmış sentetik extraction çıktısıdır. Gerçek belge metninden üretilmemiştir."
+}

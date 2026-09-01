@@ -1,0 +1,40 @@
+{
+  "audit_type": "deadline_rule_activation",
+  "activation_version": "1",
+  "activated_at": "2026-09-01T22:22:46.745341+03:00",
+  "rule_id": "iyuk_tax_court_general_lawsuit_filing",
+  "before": {
+    "status": "draft",
+    "calculation_enabled": false,
+    "ruleset_sha256": "4d147a4f57081fc4eefa0d27d9986d1fbbb9c78977c83ac3db171102d04594a3"
+  },
+  "after": {
+    "status": "active",
+    "calculation_enabled": true,
+    "requires_human_review": true,
+    "ruleset_sha256": "d4aa2d8ebb52c75e3a9228e266d54734a6167ec8d0f8febb50f06a1753c73d47"
+  },
+  "legal_basis": {
+    "resolver_version": "1.2",
+    "all_resolved": true,
+    "all_basis_verified": true,
+    "activation_eligible": true,
+    "legal_basis_count": 5,
+    "legal_basis_refs": [
+      "IYUK_2577_m7_1",
+      "IYUK_2577_m7_2_b",
+      "IYUK_2577_m8_1",
+      "IYUK_2577_m8_2",
+      "IYUK_2577_m8_3"
+    ],
+    "selected_provision_version_ids": [
+      "kanun_2577_m7_f1_v1",
+      "kanun_2577_m7_f2_b_v1",
+      "kanun_2577_m8_f1_v1",
+      "kanun_2577_m8_f2_v1",
+      "kanun_2577_m8_f3_v1"
+    ]
+  },
+  "backup_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\deadline_rules\\deadline_rules.json.before_activation_20260901_222246.bak",
+  "notes": "Rule activation yalnız lifecycle ve calculation_enabled durumunu değiştirir. requires_human_review=True korunmuştur. Bu kayıt deadline hesabı veya somut olay doğrulaması değildir."
+}

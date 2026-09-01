@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+
+  "case_id": "case_0001",
+
+  "active": true,
+
+  "title": "KDV Tarhiyatı ve Vergi Ziyaı Cezası - Demo Uyuşmazlık",
+
+  "case_type": "assessment_and_penalty",
+
+  "case_status": "pending",
+
+  "stage": "first_instance",
+
+  "client_side": "taxpayer",
+
+  "confidentiality_level": "confidential",
+
+  "jurisdiction": "TR",
+
+  "language": "tr",
+
+  "reference_code": "DEMO-2026-001",
+
+  "summary": "2024/03 vergilendirme dönemine ilişkin KDV tarhiyatı ve vergi ziyaı cezasından doğan örnek vergi uyuşmazlığıdır. Bu kayıt yalnızca Case Model V1 veri yapısını test etmek amacıyla oluşturulmuştur.",
+
+  "parties": [
+    {
+      "party_id": "party_taxpayer_001",
+
+      "role": "taxpayer",
+
+      "party_type": "company",
+
+      "display_name": "ABC Ltd. Şti. - Demo",
+
+      "reference_code": "CLIENT-001",
+
+      "notes": "Sentetik mükellef kaydı."
+    },
+
+    {
+      "party_id": "party_admin_001",
+
+      "role": "administration",
+
+      "party_type": "public_authority",
+
+      "display_name": "Örnek Vergi Dairesi Müdürlüğü",
+
+      "reference_code": null,
+
+      "notes": "Sentetik idare kaydı."
+    }
+  ],
+
+  "dispute_items": [
+    {
+      "dispute_item_id": "dispute_kdv_2024_03",
+
+      "tax_type": "KDV",
+
+      "period": {
+        "kind": "month",
+
+        "label": "2024/03",
+
+        "start_date": "2024-03-01",
+
+        "end_date": "2024-03-31"
+      },
+
+      "principal_tax": {
+        "amount": "850000.00",
+
+        "currency": "TRY"
+      },
+
+      "penalty_type": "vergi_ziyayi_cezasi",
+
+      "penalty_amount": {
+        "amount": "850000.00",
+
+        "currency": "TRY"
+      },
+
+      "total_amount": {
+        "amount": "1700000.00",
+
+        "currency": "TRY"
+      },
+
+      "asserted_legal_basis_refs": [
+        "KDVK_m29",
+        "VUK_m341"
+      ],
+
+      "source_document_ids": [
+        "vir_001",
+        "ihbarname_001"
+      ],
+
+      "verification_state": "unverified",
+
+      "notes": "Tutarlar ve hukuki dayanak referansları örnek amaçlıdır; henüz Case Document Layer tarafından doğrulanmamıştır."
+    }
+  ],
+
+  "administrative_actions": [
+    {
+      "action_id": "action_tarhiyat_001",
+
+      "action_category": "assessment_and_penalty",
+
+      "action_type": "KDV tarhiyatı ve vergi ziyaı cezası",
+
+      "issuing_authority": "Örnek Vergi Dairesi Müdürlüğü",
+
+      "action_date": "2026-02-05",
+
+      "notification_date": "2026-02-10",
+
+      "source_document_id": "ihbarname_001",
+
+      "verification_state": "unverified",
+
+      "notes": "İşlem ve tebliğ tarihleri sentetik test verisidir."
+    },
+
+    {
+      "action_id": "action_audit_001",
+
+      "action_category": "audit",
+
+      "action_type": "Vergi incelemesi",
+
+      "issuing_authority": "Vergi Denetim Kurulu Başkanlığı",
+
+      "action_date": "2026-01-20",
+
+      "notification_date": null,
+
+      "source_document_id": "vir_001",
+
+      "verification_state": "unverified",
+
+      "notes": "Vergi inceleme raporu tarihini temsil eden sentetik kayıttır."
+    }
+  ],
+
+  "events": [
+    {
+      "event_id": "event_vir_001",
+
+      "event_category": "audit",
+
+      "event_type": "audit_report_issued",
+
+      "title": "Vergi inceleme raporu düzenlendi",
+
+      "event_date": "2026-01-20",
+
+      "date_precision": "exact",
+
+      "description": "Uyuşmazlığa konu KDV tarhiyatına dayanak olarak gösterilen vergi inceleme raporunun düzenlendiği kabul edilen sentetik tarihtir.",
+
+      "source_document_ids": [
+        "vir_001"
+      ],
+
+      "verification_state": "unverified"
+    },
+
+    {
+      "event_id": "event_ihbarname_001",
+
+      "event_category": "administrative_action",
+
+      "event_type": "tax_penalty_notice_issued",
+
+      "title": "Vergi ve ceza ihbarnamesi düzenlendi",
+
+      "event_date": "2026-02-05",
+
+      "date_precision": "exact",
+
+      "description": "KDV tarhiyatı ve vergi ziyaı cezasına ilişkin ihbarnamenin düzenlenme tarihidir.",
+
+      "source_document_ids": [
+        "ihbarname_001"
+      ],
+
+      "verification_state": "unverified"
+    },
+
+    {
+      "event_id": "event_notification_001",
+
+      "event_category": "notification",
+
+      "event_type": "tax_penalty_notice_served",
+
+      "title": "Vergi ve ceza ihbarnamesi tebliğ edildi",
+
+      "event_date": "2026-02-10",
+
+      "date_precision": "exact",
+
+      "description": "Vergi ve ceza ihbarnamesinin mükellefe tebliğ edildiği kabul edilen sentetik tarihtir.",
+
+      "source_document_ids": [
+        "ihbarname_001"
+      ],
+
+      "verification_state": "unverified"
+    },
+
+    {
+      "event_id": "event_lawsuit_001",
+
+      "event_category": "litigation",
+
+      "event_type": "lawsuit_filed",
+
+      "title": "Vergi davası açıldı",
+
+      "event_date": "2026-03-05",
+
+      "date_precision": "exact",
+
+      "description": "Tarhiyat ve cezaya karşı vergi mahkemesinde dava açıldığı kabul edilen sentetik tarihtir.",
+
+      "source_document_ids": [
+        "dava_dilekcesi_001"
+      ],
+
+      "verification_state": "unverified"
+    }
+  ],
+
+  "proceedings": [
+    {
+      "proceeding_id": "proceeding_first_instance_001",
+
+      "level": "first_instance",
+
+      "forum_type": "tax_court",
+
+      "court_name": "İstanbul Vergi Mahkemesi - Demo",
+
+      "case_number": "2026/1234",
+
+      "decision_number": null,
+
+      "filing_date": "2026-03-05",
+
+      "decision_date": null,
+
+      "status": "pending",
+
+      "source_document_ids": [
+        "dava_dilekcesi_001"
+      ],
+
+      "notes": "Mahkeme ve esas numarası sentetik test verisidir."
+    }
+  ],
+
+  "case_document_refs": [
+    {
+      "document_id": "vir_001",
+
+      "relation_type": "audit_report",
+
+      "primary": false,
+
+      "notes": "Tarhiyata dayanak vergi inceleme raporu."
+    },
+
+    {
+      "document_id": "ihbarname_001",
+
+      "relation_type": "notice",
+
+      "primary": true,
+
+      "notes": "Uyuşmazlığın doğrudan konusu olan vergi ve ceza ihbarnamesi."
+    },
+
+    {
+      "document_id": "dava_dilekcesi_001",
+
+      "relation_type": "petition",
+
+      "primary": false,
+
+      "notes": "Mükellef adına açılan davaya ilişkin dilekçe."
+    }
+  ],
+
+  "related_cases": [],
+
+  "tags": [
+    "kdv",
+    "tarhiyat",
+    "vergi_ziyayi",
+    "vergi_incelemesi",
+    "ilk_derece",
+    "demo"
+  ],
+
+  "notes": "Case Model V1 doğrulaması için hazırlanmış sentetik uyuşmazlık dosyasıdır. Hiçbir gerçek mükellefi, idari işlemi veya mahkeme dosyasını temsil etmez."
+}

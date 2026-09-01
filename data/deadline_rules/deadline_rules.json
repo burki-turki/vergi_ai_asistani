@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "ruleset_id": "tr_tax_deadline_rules_v1",
+  "jurisdiction": "TR",
+  "rules": [
+    {
+      "rule_id": "iyuk_tax_court_general_lawsuit_filing",
+      "rule_version": "1.0",
+      "name": "Vergi Mahkemesinde Genel Dava Açma Süresi",
+      "status": "active",
+      "deadline_type": "lawsuit_filing",
+      "anchor_event_types": [
+        "notification_date"
+      ],
+      "applicability": {
+        "case_types": [],
+        "tax_types": [],
+        "document_types": [
+          "vergi_ceza_ihbarnamesi"
+        ],
+        "case_stages": []
+      },
+      "legal_basis_refs": [
+        "IYUK_2577_m7_1",
+        "IYUK_2577_m7_2_b",
+        "IYUK_2577_m8_1",
+        "IYUK_2577_m8_2",
+        "IYUK_2577_m8_3",
+        "IYUK_2577_m61_1"
+      ],
+      "duration": {
+        "value": 30,
+        "unit": "day"
+      },
+      "start_rule": "next_day",
+      "day_count_policy": "calendar_days",
+      "end_day_policy": "next_business_day_if_holiday",
+      "required_anchor_verification": "verified",
+      "calculation_enabled": true,
+      "effective_from": null,
+      "effective_to": null,
+      "priority": 100,
+      "requires_human_review": true,
+      "notes": "İYUK m.7/1, m.7/2-b, m.8 ve m.61/1 esas alınarak oluşturulmuş genel vergi mahkemesi dava açma süresi kuralıdır. Hukuki dayanaklar Legal Knowledge Engine üzerinden canonical ve verified provision version'lara bağlanmıştır. Özel kanunda farklı süre bulunması, somut anchor event'in doğrulama durumu ve çalışmaya ara verme uygulanabilirliği ayrıca deterministik policy katmanları tarafından değerlendirilmelidir."
+    }
+  ],
+  "notes": "Vergi AI Deadline Rule Registry V1. Hukuki dayanağı Legal Knowledge Engine üzerinden canonical olarak çözümlenmeyen kurallar draft ve calculation_enabled=false tutulur."
+}

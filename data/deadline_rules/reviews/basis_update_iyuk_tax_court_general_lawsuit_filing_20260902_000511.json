@@ -1,0 +1,39 @@
+{
+  "audit_type": "deadline_rule_legal_basis_update",
+  "update_version": "1",
+  "updated_at": "2026-09-02T00:05:11.032500+03:00",
+  "rule_id": "iyuk_tax_court_general_lawsuit_filing",
+  "added_legal_basis_ref": "IYUK_2577_m61_1",
+  "before_ruleset_sha256": "d4aa2d8ebb52c75e3a9228e266d54734a6167ec8d0f8febb50f06a1753c73d47",
+  "after_ruleset_sha256": "4637b88b6da53d2af8f2bbffd69e68c2e13daf1faf04382231bc53c5a092bd39",
+  "backup_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\deadline_rules\\deadline_rules.json.before_m61_basis_20260902_000511.bak",
+  "rule_state": {
+    "status": "active",
+    "calculation_enabled": true,
+    "requires_human_review": true
+  },
+  "legal_basis": {
+    "resolver_version": "1.2",
+    "legal_basis_count": 6,
+    "all_resolved": true,
+    "all_basis_verified": true,
+    "activation_eligible": true,
+    "refs": [
+      "IYUK_2577_m7_1",
+      "IYUK_2577_m7_2_b",
+      "IYUK_2577_m8_1",
+      "IYUK_2577_m8_2",
+      "IYUK_2577_m8_3",
+      "IYUK_2577_m61_1"
+    ],
+    "selected_versions": [
+      "kanun_2577_m7_f1_v1",
+      "kanun_2577_m7_f2_b_v1",
+      "kanun_2577_m8_f1_v1",
+      "kanun_2577_m8_f2_v1",
+      "kanun_2577_m8_f3_v1",
+      "kanun_2577_m61_f1_v1"
+    ]
+  },
+  "notes": "IYUK m.61/1 legal basis aktif deadline rule'a eklenmiştir. Rule lifecycle değişmemiştir. Bu audit herhangi bir deadline hesabı değildir."
+}

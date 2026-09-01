@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "timeline_id": "timeline_case_0001_v1",
+  "case_id": "case_0001",
+  "status": "completed",
+  "generated_at": "2026-09-01T18:11:29.992138+03:00",
+  "events": [
+    {
+      "event_id": "timeline_event_001",
+      "event_type": "document_date",
+      "date": "2026-01-20",
+      "date_precision": "exact",
+      "statement": "Davacı, ihbarnamenin 20.01.2026 tarihli ve VIR-DEMO-2026-001 sayılı Vergi İnceleme Raporundaki tespitlere dayandığını beyan etmektedir.",
+      "source_fact_ids": [
+        "fact_dava_dilekcesi_001_llm_v1_3_20260901_130225_004"
+      ],
+      "source_document_ids": [
+        "dava_dilekcesi_001"
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "verification_state": "unverified",
+      "confidence": 0.97,
+      "deadline_relevant": false,
+      "notes": "Structured date label: Vergi İnceleme Raporu Tarihi. Bu beyan davacının dava dilekçesinde yer almaktadır; ihbarname ile inceleme raporu arasındaki ilişki davacı tarafından aktarılmaktadır."
+    },
+    {
+      "event_id": "timeline_event_002",
+      "event_type": "document_date",
+      "date": "2026-01-20",
+      "date_precision": "exact",
+      "statement": "İhbarnamede, işbu ihbarnamenin 20.01.2026 tarihli VIR-DEMO-2026-001 sayılı Vergi İnceleme Raporunda yer alan tespitler esas alınarak düzenlendiği belirtilmektedir.",
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_002"
+      ],
+      "source_document_ids": [
+        "ihbarname_001"
+      ],
+      "related_party_ids": [
+        "party_admin_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "verification_state": "unverified",
+      "confidence": 0.99,
+      "deadline_relevant": false,
+      "notes": "Structured date label: Vergi İnceleme Raporu Tarihi."
+    },
+    {
+      "event_id": "timeline_event_003",
+      "event_type": "report_date",
+      "date": "2026-01-20",
+      "date_precision": "exact",
+      "statement": "Vergi İnceleme Raporu 20.01.2026 tarihinde düzenlenmiştir.",
+      "source_fact_ids": [
+        "fact_vir_001_llm_v1_1_20260901_105342_002"
+      ],
+      "source_document_ids": [
+        "vir_001"
+      ],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [],
+      "verification_state": "unverified",
+      "confidence": 0.99,
+      "deadline_relevant": false,
+      "notes": "Structured date label: Rapor Tarihi."
+    },
+    {
+      "event_id": "timeline_event_004",
+      "event_type": "document_date",
+      "date": "2026-02-05",
+      "date_precision": "exact",
+      "statement": "Davacı, 2024/03 vergilendirme dönemi için IHB-DEMO-2026-001 sayılı ihbarname ile tarh edilen 850.000,00 TL Katma Değer Vergisi ile kesilen 850.000,00 TL vergi ziyaı cezasının iptalini talep etmektedir.",
+      "source_fact_ids": [
+        "fact_dava_dilekcesi_001_llm_v1_3_20260901_130225_002"
+      ],
+      "source_document_ids": [
+        "dava_dilekcesi_001"
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "verification_state": "unverified",
+      "confidence": 0.99,
+      "deadline_relevant": false,
+      "notes": "Structured date label: İhbarname Tarihi."
+    },
+    {
+      "event_id": "timeline_event_005",
+      "event_type": "document_date",
+      "date": "2026-02-05",
+      "date_precision": "exact",
+      "statement": "İhbarname No: IHB-DEMO-2026-001 olan vergi ve ceza ihbarnamesi, Örnek Vergi Dairesi Müdürlüğü tarafından 05.02.2026 tarihinde düzenlenmiştir.",
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_001"
+      ],
+      "source_document_ids": [
+        "ihbarname_001"
+      ],
+      "related_party_ids": [
+        "party_admin_001",
+        "party_taxpayer_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "verification_state": "unverified",
+      "confidence": 0.99,
+      "deadline_relevant": false,
+      "notes": "Structured date label: Düzenleme Tarihi."
+    },
+    {
+      "event_id": "timeline_event_006",
+      "event_type": "notification_date",
+      "date": "2026-02-10",
+      "date_precision": "exact",
+      "statement": "Davacı, dava konusu IHB-DEMO-2026-001 sayılı Vergi ve Ceza İhbarnamesi'nin kendisine 10.02.2026 tarihinde tebliğ edildiğini beyan etmektedir.",
+      "source_fact_ids": [
+        "fact_dava_dilekcesi_001_llm_v1_3_20260901_130225_003"
+      ],
+      "source_document_ids": [
+        "dava_dilekcesi_001"
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "verification_state": "unverified",
+      "confidence": 0.97,
+      "deadline_relevant": true,
+      "notes": "Structured date label: Tebliğ Tarihi. Tebliğ tarihi davacının dava dilekçesindeki beyanına dayanmaktadır; bağımsız olarak doğrulanmamıştır."
+    },
+    {
+      "event_id": "timeline_event_007",
+      "event_type": "notification_date",
+      "date": "2026-02-10",
+      "date_precision": "exact",
+      "statement": "İhbarnamede, söz konusu ihbarnamenin mükellef ABC Ltd. Şti.'ye 10.02.2026 tarihinde tebliğ edildiği belirtilmektedir.",
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_008"
+      ],
+      "source_document_ids": [
+        "ihbarname_001"
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "verification_state": "unverified",
+      "confidence": 0.95,
+      "deadline_relevant": true,
+      "notes": "Structured date label: Tebliğ Tarihi. Tebliğ tarihi yalnızca ihbarnamenin kendi metnine dayanmaktadır; harici bir tebliğ belgesiyle doğrulanmamıştır."
+    },
+    {
+      "event_id": "timeline_event_008",
+      "event_type": "document_date",
+      "date": "2026-03-05",
+      "date_precision": "exact",
+      "statement": "Dava dilekçesinde dava tarihi 05.03.2026 olarak belirtilmiştir.",
+      "source_fact_ids": [
+        "fact_dava_dilekcesi_001_llm_v1_3_20260901_130225_001"
+      ],
+      "source_document_ids": [
+        "dava_dilekcesi_001"
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "verification_state": "unverified",
+      "confidence": 0.99,
+      "deadline_relevant": false,
+      "notes": "Structured date label: Dava Tarihi. Dava tarihi dilekçede belirtilmektedir; mahkemeye sunulma veya dava açılma olayı kaynak metinden çıkarılmamıştır. Bu event yalnızca dava dilekçesinde belirtilen dava tarihini temsil eder; filing_date olarak yorumlanmamıştır."
+    }
+  ],
+  "warnings": [
+    "timeline_event_006: notification_date 2026-02-10 deadline açısından potansiyel olarak önemlidir ancak verification_state='unverified'.",
+    "timeline_event_007: notification_date 2026-02-10 deadline açısından potansiyel olarak önemlidir ancak verification_state='unverified'.",
+    "timeline_event_008: Dava dilekçesinde belirtilen tarih filing_date olarak yorumlanmamıştır."
+  ],
+  "notes": "Timeline Engine V1 tarafından yalnız canonical Fact Repository içindeki structured date değerlerinden deterministik olarak oluşturulmuş pending timeline'dır. Hukuki süre hesabı yapılmamıştır."
+}

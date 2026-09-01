@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "document_id": "vir_001",
+  "case_id": "case_0001",
+  "active": true,
+
+  "title": "Vergi İnceleme Raporu - Demo",
+
+  "document_category": "audit",
+  "document_type": "vergi_inceleme_raporu",
+  "document_subtype": "KDV incelemesi",
+
+  "confidentiality_level": "confidential",
+
+  "jurisdiction": "TR",
+  "language": "tr",
+
+  "summary": "2024/03 vergilendirme dönemine ilişkin KDV tarhiyatına dayanak olarak kullanılan sentetik vergi inceleme raporu kaydıdır.",
+
+  "file": {
+    "file_name": "vir_001.pdf",
+    "relative_path": "cases/case_0001/documents/vir_001/vir_001.pdf",
+    "format": "pdf",
+    "mime_type": "application/pdf",
+    "sha256": null,
+    "page_count": null,
+    "size_bytes": null
+  },
+
+  "provenance": {
+    "source_origin": "generated",
+    "source_description": "Case Document Layer V1 testi için oluşturulmuş sentetik belge.",
+    "source_url": null,
+    "original_file_name": null,
+    "received_at": null,
+    "uploaded_by_ref": null
+  },
+
+  "issuer_party_id": null,
+
+  "recipient_party_ids": [
+    "party_taxpayer_001"
+  ],
+
+  "dates": [
+    {
+      "date_type": "report_date",
+      "date": "2026-01-20",
+      "precision": "exact",
+      "source_page": null,
+      "verification_state": "unverified"
+    }
+  ],
+
+  "reference_numbers": [
+    {
+      "reference_type": "report_number",
+      "value": "VIR-DEMO-2026-001",
+      "issuing_body": "Vergi Denetim Kurulu Başkanlığı",
+      "verification_state": "unverified"
+    }
+  ],
+
+  "relations": [
+    {
+      "type": "basis_for",
+      "document_id": "ihbarname_001",
+      "notes": "Vergi ve ceza ihbarnamesine dayanak rapor olarak modellenmiştir."
+    }
+  ],
+
+  "processing": {
+    "ingest_enabled": false,
+    "parser": "case_pdf",
+    "chunk_strategy": "document_sections",
+    "ocr_required": false,
+    "ocr_completed": false,
+    "text_extraction_status": "not_started",
+    "index_status": "not_indexed",
+    "extracted_text_path": null,
+    "parser_version": null
+  },
+
+  "verification_state": "unverified",
+
+  "tags": [
+    "vergi_inceleme_raporu",
+    "kdv",
+    "tarhiyat",
+    "demo"
+  ],
+
+  "notes": "Sentetik test belgesidir. Gerçek bir vergi inceleme raporunu temsil etmez."
+}

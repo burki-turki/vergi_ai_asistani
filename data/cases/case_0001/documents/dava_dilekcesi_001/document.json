@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "document_id": "dava_dilekcesi_001",
+  "case_id": "case_0001",
+  "active": true,
+
+  "title": "Vergi Mahkemesi Dava Dilekçesi - Demo",
+
+  "document_category": "litigation",
+  "document_type": "dava_dilekcesi",
+  "document_subtype": "tarhiyat_ve_ceza_iptal_davasi",
+
+  "confidentiality_level": "confidential",
+
+  "jurisdiction": "TR",
+  "language": "tr",
+
+  "summary": "KDV tarhiyatı ve vergi ziyaı cezasının iptali istemiyle açıldığı varsayılan sentetik vergi davası dilekçesidir.",
+
+  "file": {
+    "file_name": "dava_dilekcesi_001.pdf",
+    "relative_path": "cases/case_0001/documents/dava_dilekcesi_001/dava_dilekcesi_001.pdf",
+    "format": "pdf",
+    "mime_type": "application/pdf",
+    "sha256": null,
+    "page_count": null,
+    "size_bytes": null
+  },
+
+  "provenance": {
+    "source_origin": "generated",
+    "source_description": "Case Document Layer V1 testi için oluşturulmuş sentetik dava dilekçesi.",
+    "source_url": null,
+    "original_file_name": null,
+    "received_at": null,
+    "uploaded_by_ref": null
+  },
+
+  "issuer_party_id": "party_taxpayer_001",
+
+  "recipient_party_ids": [],
+
+  "dates": [
+    {
+      "date_type": "filing_date",
+      "date": "2026-03-05",
+      "precision": "exact",
+      "source_page": null,
+      "verification_state": "unverified"
+    }
+  ],
+
+  "reference_numbers": [
+    {
+      "reference_type": "case_number",
+      "value": "2026/1234",
+      "issuing_body": "İstanbul Vergi Mahkemesi - Demo",
+      "verification_state": "unverified"
+    }
+  ],
+
+  "relations": [
+    {
+      "type": "responds_to",
+      "document_id": "ihbarname_001",
+      "notes": "Dava konusu olarak modellenen vergi ve ceza ihbarnamesine karşı oluşturulmuştur."
+    }
+  ],
+
+  "processing": {
+    "ingest_enabled": false,
+    "parser": "case_pdf",
+    "chunk_strategy": "document_sections",
+    "ocr_required": false,
+    "ocr_completed": false,
+    "text_extraction_status": "not_started",
+    "index_status": "not_indexed",
+    "extracted_text_path": null,
+    "parser_version": null
+  },
+
+  "verification_state": "unverified",
+
+  "tags": [
+    "dava_dilekcesi",
+    "vergi_mahkemesi",
+    "iptal_davasi",
+    "demo"
+  ],
+
+  "notes": "Sentetik test belgesidir. Gerçek bir dava dilekçesini veya mahkeme dosyasını temsil etmez."
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "deadline_analysis_id": "deadline_case_0001_demo_v1",
+  "case_id": "case_0001",
+  "status": "completed",
+  "generated_at": "2026-09-01T18:47:05.481215+03:00",
+  "deadlines": [
+    {
+      "deadline_id": "deadline_001",
+      "deadline_type": "lawsuit_filing",
+      "description": "İhbarname tebliğine bağlı olası dava açma süresi adayı.",
+      "anchor_event_id": "timeline_event_003",
+      "anchor_date": "2026-02-10",
+      "anchor_verification_state": "unverified",
+      "rule_id": "rule_pending_tax_lawsuit_filing_v1",
+      "legal_basis_refs": [],
+      "duration": {
+        "value": 30,
+        "unit": "day",
+        "day_type": "calendar"
+      },
+      "start_rule": "next_day",
+      "calculation_state": "blocked_unverified_anchor",
+      "calculated_deadline": "2026-03-12",
+      "expiry_state": "not_evaluated",
+      "confidence": 0.95,
+      "requires_human_review": true,
+      "notes": "Canonical anchor event verified olmadığı için kesin deadline hesaplanmamıştır."
+    }
+  ],
+  "warnings": [
+    "Canonical anchor event doğrulanmadığı için kesin son tarih üretilmemiştir."
+  ],
+  "notes": "Deadline Validator V1 self-test fixture. Hukuki süre hesabı yapılmamıştır."
+}

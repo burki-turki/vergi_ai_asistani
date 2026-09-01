@@ -1,0 +1,461 @@
+{
+  "schema_version": 1,
+  "extraction_id": "extract_vir_001_llm_v1_20260901_104242",
+  "case_id": "case_0001",
+  "source_document_id": "vir_001",
+  "status": "completed",
+  "extractor": {
+    "method": "llm",
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "extractor_version": "1",
+    "prompt_version": "fact_extraction_v1",
+    "run_at": "2026-09-01T10:42:42.250767+03:00"
+  },
+  "facts": [
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_001",
+      "fact_kind": "document_finding",
+      "statement": "Raporun numarası VIR-DEMO-2026-001'dir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": null,
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": null,
+        "paragraph": null,
+        "text_excerpt": "Rapor No: VIR-DEMO-2026-001"
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "Rapor No",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "VIR-DEMO-2026-001"
+        }
+      ],
+      "related_party_ids": [],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_002",
+      "fact_kind": "date_fact",
+      "statement": "Raporun tarihi 20.01.2026'dır.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": null,
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": null,
+        "paragraph": null,
+        "text_excerpt": "Rapor Tarihi: 20.01.2026"
+      },
+      "structured_values": [
+        {
+          "value_type": "date",
+          "label": "Rapor Tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-01-20",
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_003",
+      "fact_kind": "party_fact",
+      "statement": "İnceleme raporunda mükellef olarak ABC Ltd. Şti. - Demo gösterilmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": null,
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": null,
+        "paragraph": null,
+        "text_excerpt": "Mükellef: ABC Ltd. Şti. - Demo"
+      },
+      "structured_values": [
+        {
+          "value_type": "string",
+          "label": "Mükellef Adı",
+          "string_value": "ABC Ltd. Şti. - Demo",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_004",
+      "fact_kind": "procedural_fact",
+      "statement": "İnceleme konusu vergi türü Katma Değer Vergisi'dir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": null,
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": null,
+        "paragraph": null,
+        "text_excerpt": "İncelenen Vergi: Katma Değer Vergisi"
+      },
+      "structured_values": [
+        {
+          "value_type": "string",
+          "label": "İncelenen Vergi Türü",
+          "string_value": "Katma Değer Vergisi",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_005",
+      "fact_kind": "procedural_fact",
+      "statement": "İncelenen vergilendirme dönemi 2024/03'tür.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": null,
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": null,
+        "paragraph": null,
+        "text_excerpt": "İncelenen Vergilendirme Dönemi: 2024/03"
+      },
+      "structured_values": [
+        {
+          "value_type": "string",
+          "label": "Vergilendirme Dönemi",
+          "string_value": "2024/03",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_006",
+      "fact_kind": "administrative_claim",
+      "statement": "İnceleme makamına göre mükellef, 2024/03 vergilendirme döneminde 850.000,00 TL tutarında Katma Değer Vergisini indirim konusu yapmıştır.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": "2. TESPİTLER",
+        "paragraph": null,
+        "text_excerpt": "mükellefin ilgili vergilendirme döneminde 850.000,00 TL tutarında Katma Değer Vergisini indirim konusu yaptığı tespit edilmiştir."
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "İndirim Konusu Yapılan KDV Tutarı",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.0",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        },
+        {
+          "value_type": "string",
+          "label": "Vergilendirme Dönemi",
+          "string_value": "2024/03",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_007",
+      "fact_kind": "administrative_claim",
+      "statement": "İnceleme makamı, mükellefin 2024/03 döneminde 850.000,00 TL tutarında haksız KDV indiriminden yararlandığı kanaatine varmıştır.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": "2. TESPİTLER",
+        "paragraph": null,
+        "text_excerpt": "mükellefin 2024/03 vergilendirme döneminde 850.000,00 TL tutarında haksız KDV indiriminden yararlandığı kanaatine varılmıştır."
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "Haksız KDV İndirimi Tutarı (İddia)",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.0",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        },
+        {
+          "value_type": "string",
+          "label": "Vergilendirme Dönemi",
+          "string_value": "2024/03",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": "İnceleme makamının kanaatini yansıtmaktadır; maddi gerçekliği doğrulanmamıştır."
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_008",
+      "fact_kind": "legal_reference",
+      "statement": "Raporda, indirim hakkına ilişkin yasal dayanak olarak 3065 sayılı Katma Değer Vergisi Kanunu'nun 29. maddesi gösterilmiştir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": "3. YASAL DAYANAK",
+        "paragraph": null,
+        "text_excerpt": "3065 sayılı Katma Değer Vergisi Kanununun 29 uncu maddesi kapsamında indirim hakkına ilişkin hükümler değerlendirilmiştir."
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "Yasal Dayanak",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "KDVK_m29"
+        }
+      ],
+      "related_party_ids": [],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_009",
+      "fact_kind": "legal_reference",
+      "statement": "Raporda, vergi ziyaına ilişkin yasal dayanak olarak 213 sayılı Vergi Usul Kanunu'nun 341. maddesi gösterilmiştir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": "3. YASAL DAYANAK",
+        "paragraph": null,
+        "text_excerpt": "vergi ziyaına ilişkin olarak 213 sayılı Vergi Usul Kanununun 341 inci maddesi dikkate alınmıştır."
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "Yasal Dayanak",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "VUK_m341"
+        }
+      ],
+      "related_party_ids": [],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_010",
+      "fact_kind": "administrative_claim",
+      "statement": "İnceleme makamı, 2024/03 vergilendirme dönemine ilişkin 850.000,00 TL KDV yönünden tarhiyat yapılması gerektiği sonucuna varmıştır.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": "4. SONUÇ",
+        "paragraph": null,
+        "text_excerpt": "2024/03 vergilendirme dönemine ilişkin 850.000,00 TL KDV yönünden gerekli tarhiyatın yapılması gerektiği sonucuna varılmıştır."
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "Tarhiyat Tutarı (İddia)",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.0",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        },
+        {
+          "value_type": "string",
+          "label": "Vergi Türü",
+          "string_value": "KDV",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        },
+        {
+          "value_type": "string",
+          "label": "Vergilendirme Dönemi",
+          "string_value": "2024/03",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": "İnceleme makamının sonuç kanaatini yansıtmaktadır; tarhiyatın gerçekleşip gerçekleşmediği bu belgeden doğrulanamaz."
+    },
+    {
+      "fact_id": "fact_vir_001_llm_20260901_104242_011",
+      "fact_kind": "other",
+      "statement": "Belge, gerçek bir vergi inceleme raporu olmayıp Vergi AI geliştirme sürecinde kullanılmak üzere oluşturulmuş sentetik test verisidir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": null,
+      "attributed_actor_label": null,
+      "source": {
+        "page": null,
+        "section": null,
+        "paragraph": null,
+        "text_excerpt": "Bu metin Vergi AI geliştirme sürecinde kullanılmak üzere oluşturulmuş sentetik test verisidir ve gerçek bir vergi inceleme raporu değildir."
+      },
+      "structured_values": [],
+      "related_party_ids": [],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [],
+      "confidence": 1.0,
+      "verification_state": "unverified",
+      "notes": "Belgenin kendisi tarafından açıkça beyan edilmiştir."
+    }
+  ],
+  "warnings": [
+    "Belgede indirim konusu yapılan belgelerin içeriğine veya niteliğine ilişkin herhangi bir ayrıntı bulunmamaktadır; 'haksız indirim' iddiasının dayanakları bu belgeden çıkarılamamaktadır.",
+    "Tarhiyatın fiilen gerçekleşip gerçekleşmediğine dair bilgi bu belgede yer almamaktadır.",
+    "Belge sentetik/demo niteliğindedir; gerçek bir vergi uyuşmazlığını yansıtmayabilir."
+  ],
+  "notes": "Fact Extraction Engine V1 tarafından üretilmiş pending LLM extraction çıktısıdır. İnsan onayı olmadan canonical fact kaydı değildir."
+}

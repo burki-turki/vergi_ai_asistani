@@ -1,0 +1,26 @@
+{
+  "approval_schema_version": 1,
+  "approval_version": "1",
+  "timeline_id": "timeline_case_0001_v1_1",
+  "case_id": "case_0001",
+  "pending_file": "data\\cases\\case_0001\\timeline\\timeline_v1_1.json.pending",
+  "canonical_file": "data\\cases\\case_0001\\timeline\\timeline.json",
+  "pending_sha256": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8",
+  "approved": true,
+  "approved_at": "2026-09-01T18:41:44.673357+03:00",
+  "rollback": false,
+  "backup_file": null,
+  "event_count": 4,
+  "event_types": {
+    "report_date": 1,
+    "document_date": 2,
+    "notification_date": 1
+  },
+  "verification_states": {
+    "unverified": 4
+  },
+  "warnings": [
+    "timeline_event_003: deadline_relevant=True ancak verification_state='unverified'. Deadline Engine bu tarihi kesin doğrulanmış tarih olarak kullanmamalıdır."
+  ],
+  "notes": "Timeline approval canonical promotion işlemidir. Timeline event'lerinin maddi doğruluğunu veya verification_state seviyesini değiştirmez."
+}

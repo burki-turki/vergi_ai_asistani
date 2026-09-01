@@ -1,0 +1,381 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "documents.schema.json",
+
+  "title": "Vergi AI Document Manifest Schema V2.1",
+
+  "type": "object",
+
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "documents"
+  ],
+
+  "properties": {
+
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "documents": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/document"
+      }
+    }
+  },
+
+  "$defs": {
+
+    "nullableDate": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+
+    "relation": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "type",
+        "document_id"
+      ],
+
+      "properties": {
+
+        "type": {
+          "type": "string",
+
+          "enum": [
+            "amends",
+            "amended_by",
+            "repeals",
+            "repealed_by",
+            "implements",
+            "implemented_by",
+            "extends_deadline",
+            "deadline_extended_by",
+            "related_to",
+            "refers_to",
+            "interprets"
+          ]
+        },
+
+        "document_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "article": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "fikra": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "bent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "effective_date": {
+          "$ref": "#/$defs/nullableDate"
+        }
+      }
+    },
+
+    "ingest": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "enabled",
+        "parser",
+        "chunk_strategy",
+        "ocr_required"
+      ],
+
+      "properties": {
+
+        "enabled": {
+          "type": "boolean"
+        },
+
+        "parser": {
+          "type": "string",
+
+          "enum": [
+            "legal_pdf",
+            "judgment_pdf",
+            "html_legal",
+            "plain_text"
+          ]
+        },
+
+        "chunk_strategy": {
+          "type": "string",
+
+          "enum": [
+            "legal_hierarchy",
+            "judgment_sections",
+            "paragraph",
+            "fixed"
+          ]
+        },
+
+        "ocr_required": {
+          "type": "boolean"
+        }
+      }
+    },
+
+    "document": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "document_id",
+        "file_name",
+        "active",
+        "belge_turu",
+        "title",
+        "short_title",
+        "official_source",
+        "status",
+        "version",
+        "jurisdiction",
+        "language",
+        "tags",
+        "relations",
+        "ingest"
+      ],
+
+      "properties": {
+
+        "document_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 3
+        },
+
+        "file_name": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "active": {
+          "type": "boolean"
+        },
+
+        "belge_turu": {
+          "type": "string",
+
+          "enum": [
+            "Kanun",
+            "Bakanlar Kurulu Kararı",
+            "Cumhurbaşkanı Kararı",
+            "Yönetmelik",
+            "Genel Tebliğ",
+            "Tebliğ",
+            "Sirküler",
+            "Özelge",
+            "Yargı Kararı",
+            "Diğer"
+          ]
+        },
+
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "short_title": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "kanun_no": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "document_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "kaynak_kurum": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "official_source": {
+          "type": "boolean"
+        },
+
+        "source_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "karar_tarihi": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "resmi_gazete_tarihi": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "resmi_gazete_sayisi": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "yayin_tarihi": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "yururluk_tarihi": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "gecerlilik_baslangici": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "gecerlilik_sonu": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "mulga_tarihi": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "status": {
+          "type": "string",
+
+          "enum": [
+            "active",
+            "amended",
+            "partially_repealed",
+            "repealed",
+            "historical"
+          ]
+        },
+
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "previous_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "next_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "supersedes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "superseded_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "jurisdiction": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+
+        "language": {
+          "type": "string",
+          "pattern": "^[a-z]{2}$"
+        },
+
+        "tags": {
+          "type": "array",
+
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "uniqueItems": true
+        },
+
+        "relations": {
+          "type": "array",
+
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
+        },
+
+        "ingest": {
+          "$ref": "#/$defs/ingest"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

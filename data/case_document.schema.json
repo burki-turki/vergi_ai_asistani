@@ -1,0 +1,598 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case_document.schema.json",
+
+  "title": "Vergi AI Case Document Schema V1",
+
+  "type": "object",
+
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "document_id",
+    "case_id",
+    "active",
+    "title",
+    "document_category",
+    "document_type",
+    "confidentiality_level",
+    "jurisdiction",
+    "language",
+    "file",
+    "provenance",
+    "issuer_party_id",
+    "recipient_party_ids",
+    "dates",
+    "reference_numbers",
+    "relations",
+    "processing",
+    "verification_state",
+    "tags"
+  ],
+
+  "properties": {
+
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "document_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "minLength": 3
+    },
+
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "minLength": 3
+    },
+
+    "active": {
+      "type": "boolean"
+    },
+
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "document_category": {
+      "type": "string",
+
+      "enum": [
+        "administrative_action",
+        "audit",
+        "litigation",
+        "evidence",
+        "financial",
+        "correspondence",
+        "notification",
+        "expert",
+        "other"
+      ]
+    },
+
+    "document_type": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "document_subtype": {
+      "$ref": "#/$defs/nullableString"
+    },
+
+    "confidentiality_level": {
+      "type": "string",
+
+      "enum": [
+        "standard",
+        "confidential",
+        "highly_confidential"
+      ]
+    },
+
+    "jurisdiction": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}$"
+    },
+
+    "summary": {
+      "$ref": "#/$defs/nullableString"
+    },
+
+    "file": {
+      "$ref": "#/$defs/file"
+    },
+
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+
+    "issuer_party_id": {
+      "$ref": "#/$defs/nullableString"
+    },
+
+    "recipient_party_ids": {
+      "type": "array",
+
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+
+      "uniqueItems": true
+    },
+
+    "dates": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/documentDate"
+      }
+    },
+
+    "reference_numbers": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/referenceNumber"
+      }
+    },
+
+    "relations": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/documentRelation"
+      }
+    },
+
+    "processing": {
+      "$ref": "#/$defs/processing"
+    },
+
+    "verification_state": {
+      "$ref": "#/$defs/verificationState"
+    },
+
+    "tags": {
+      "type": "array",
+
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+
+      "uniqueItems": true
+    },
+
+    "notes": {
+      "$ref": "#/$defs/nullableString"
+    }
+  },
+
+  "$defs": {
+
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+
+    "nullableDate": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "nullableDateTime": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "nullableInteger": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+
+    "verificationState": {
+      "type": "string",
+
+      "enum": [
+        "verified",
+        "partially_verified",
+        "unverified"
+      ]
+    },
+
+    "file": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "file_name",
+        "relative_path",
+        "format",
+        "mime_type",
+        "sha256",
+        "page_count",
+        "size_bytes"
+      ],
+
+      "properties": {
+
+        "file_name": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "relative_path": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "format": {
+          "type": "string",
+
+          "enum": [
+            "pdf",
+            "image",
+            "docx",
+            "xlsx",
+            "csv",
+            "txt",
+            "html",
+            "email",
+            "other"
+          ]
+        },
+
+        "mime_type": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+
+        "page_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+
+        "size_bytes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "source_origin",
+        "source_description",
+        "source_url",
+        "original_file_name",
+        "received_at",
+        "uploaded_by_ref"
+      ],
+
+      "properties": {
+
+        "source_origin": {
+          "type": "string",
+
+          "enum": [
+            "user_upload",
+            "email",
+            "e_notification",
+            "administration_portal",
+            "court_portal",
+            "external_system_export",
+            "scanned_copy",
+            "generated",
+            "other"
+          ]
+        },
+
+        "source_description": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "source_url": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "original_file_name": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "received_at": {
+          "$ref": "#/$defs/nullableDateTime"
+        },
+
+        "uploaded_by_ref": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+
+    "documentDate": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "date_type",
+        "date",
+        "precision",
+        "source_page",
+        "verification_state"
+      ],
+
+      "properties": {
+
+        "date_type": {
+          "type": "string",
+
+          "enum": [
+            "document_date",
+            "issue_date",
+            "report_date",
+            "notification_date",
+            "service_date",
+            "receipt_date",
+            "payment_date",
+            "filing_date",
+            "decision_date",
+            "due_date",
+            "other"
+          ]
+        },
+
+        "date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "precision": {
+          "type": "string",
+
+          "enum": [
+            "exact",
+            "month",
+            "year",
+            "unknown"
+          ]
+        },
+
+        "source_page": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+
+        "verification_state": {
+          "$ref": "#/$defs/verificationState"
+        }
+      }
+    },
+
+    "referenceNumber": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "reference_type",
+        "value",
+        "issuing_body",
+        "verification_state"
+      ],
+
+      "properties": {
+
+        "reference_type": {
+          "type": "string",
+
+          "enum": [
+            "document_number",
+            "report_number",
+            "notice_number",
+            "assessment_number",
+            "case_number",
+            "decision_number",
+            "payment_order_number",
+            "invoice_number",
+            "other"
+          ]
+        },
+
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "issuing_body": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "verification_state": {
+          "$ref": "#/$defs/verificationState"
+        }
+      }
+    },
+
+    "documentRelation": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "type",
+        "document_id",
+        "notes"
+      ],
+
+      "properties": {
+
+        "type": {
+          "type": "string",
+
+          "enum": [
+            "attachment_of",
+            "supports",
+            "contradicts",
+            "responds_to",
+            "basis_for",
+            "served_with",
+            "refers_to",
+            "supersedes",
+            "superseded_by",
+            "related_to"
+          ]
+        },
+
+        "document_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+
+    "processing": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "ingest_enabled",
+        "parser",
+        "chunk_strategy",
+        "ocr_required",
+        "ocr_completed",
+        "text_extraction_status",
+        "index_status",
+        "extracted_text_path",
+        "parser_version"
+      ],
+
+      "properties": {
+
+        "ingest_enabled": {
+          "type": "boolean"
+        },
+
+        "parser": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "chunk_strategy": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "ocr_required": {
+          "type": "boolean"
+        },
+
+        "ocr_completed": {
+          "type": "boolean"
+        },
+
+        "text_extraction_status": {
+          "type": "string",
+
+          "enum": [
+            "not_started",
+            "pending",
+            "completed",
+            "partial",
+            "failed",
+            "not_required"
+          ]
+        },
+
+        "index_status": {
+          "type": "string",
+
+          "enum": [
+            "not_indexed",
+            "pending",
+            "indexed",
+            "failed"
+          ]
+        },
+
+        "extracted_text_path": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "parser_version": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    }
+  }
+}

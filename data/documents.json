@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "document_id": "kanun_6736",
+      "file_name": "ornek.pdf",
+      "active": true,
+      "belge_turu": "Kanun",
+      "title": "Bazı Alacakların Yeniden Yapılandırılmasına İlişkin Kanun",
+      "short_title": "6736 sayılı Kanun",
+      "kanun_no": "6736",
+      "document_number": "6736",
+      "kaynak_kurum": "Gelir İdaresi Başkanlığı",
+      "official_source": true,
+      "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/08/20160819-1.pdf",
+      "resmi_gazete_tarihi": "2016-08-19",
+      "resmi_gazete_sayisi": "29806",
+      "yayin_tarihi": "2016-08-19",
+      "yururluk_tarihi": "2016-08-19",
+      "gecerlilik_baslangici": null,
+      "gecerlilik_sonu": null,
+      "mulga_tarihi": null,
+      "status": "active",
+      "version": "1",
+      "previous_version": null,
+      "next_version": null,
+      "supersedes": null,
+      "superseded_by": null,
+      "jurisdiction": "TR",
+      "language": "tr",
+      "tags": [
+        "yapilandirma",
+        "vergi",
+        "matrah_artirimi",
+        "vergi_artirimi"
+      ],
+      "relations": [
+        {
+          "type": "deadline_extended_by",
+          "document_id": "bkk_2016_9385",
+          "article": "5",
+          "fikra": null,
+          "bent": null,
+          "effective_date": "2016-10-26"
+        }
+      ],
+      "ingest": {
+        "enabled": true,
+        "parser": "legal_pdf",
+        "chunk_strategy": "legal_hierarchy",
+        "ocr_required": false
+      },
+      "notes": "Kanun 03.08.2016 tarihinde kabul edilmiş, 19.08.2016 tarihli ve 29806 sayılı Resmi Gazete'de yayımlanarak aynı tarihte yürürlüğe girmiştir. Kanunun tamamı için doğrulanmış bir mülga tarihi bulunmadığından mulga_tarihi ve gecerlilik_sonu boş bırakılmıştır. Madde bazındaki uygulama dönemleri belge düzeyindeki yürürlük durumundan ayrı modellenmelidir. 5 inci madde kapsamındaki başvuru süresi, 25.10.2016 tarihli ve 2016/9385 sayılı Bakanlar Kurulu Kararı ile uzatılmıştır."
+    },
+    {
+      "document_id": "bkk_2016_9385",
+      "file_name": "bkk_2016_9385.pdf",
+      "active": true,
+      "belge_turu": "Bakanlar Kurulu Kararı",
+      "title": "6736 Sayılı Bazı Alacakların Yeniden Yapılandırılmasına İlişkin Kanunda Yer Alan Bazı Sürelerin Uzatılması Hakkında Karar",
+      "short_title": "2016/9385 sayılı BKK",
+      "kanun_no": null,
+      "document_number": "2016/9385",
+      "kaynak_kurum": "Bakanlar Kurulu",
+      "official_source": true,
+      "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/10/20161026-1.pdf",
+      "karar_tarihi": "2016-10-25",
+      "resmi_gazete_tarihi": "2016-10-26",
+      "resmi_gazete_sayisi": "29869",
+      "yayin_tarihi": "2016-10-26",
+      "yururluk_tarihi": "2016-10-26",
+      "gecerlilik_baslangici": null,
+      "gecerlilik_sonu": null,
+      "mulga_tarihi": null,
+      "status": "active",
+      "version": "1",
+      "previous_version": null,
+      "next_version": null,
+      "supersedes": null,
+      "superseded_by": null,
+      "jurisdiction": "TR",
+      "language": "tr",
+      "tags": [
+        "6736",
+        "yapilandirma",
+        "sure_uzatimi",
+        "basvuru_suresi",
+        "bakanlar_kurulu_karari"
+      ],
+      "relations": [
+        {
+          "type": "extends_deadline",
+          "document_id": "kanun_6736",
+          "article": "5",
+          "fikra": null,
+          "bent": null,
+          "effective_date": "2016-10-26"
+        }
+      ],
+      "ingest": {
+        "enabled": true,
+        "parser": "legal_pdf",
+        "chunk_strategy": "legal_hierarchy",
+        "ocr_required": false
+      },
+      "notes": "Karar 25.10.2016 tarihinde Bakanlar Kurulunca alınmış, 26.10.2016 tarihli ve 29869 sayılı Resmi Gazete'de yayımlanarak aynı tarihte yürürlüğe girmiştir. Kararın 1 inci maddesinin birinci fıkrası, 6736 sayılı Kanunda yer alan başvuru sürelerini Kanunun 4 üncü maddesinin birinci fıkrası ile 6 ncı maddesi saklı kalmak üzere 25.11.2016 tarihine kadar uzatmıştır. Bu nedenle 6736 sayılı Kanunun 5 inci maddesi kapsamındaki başvuru süresi de kararın kapsamındadır. Başvuru süresinin sona ermiş olması, kararın formal olarak mülga olduğu anlamına gelmediğinden doğrulanmış bir mülga tarihi bulunmadan mulga_tarihi veya gecerlilik_sonu girilmemiştir."
+    },
+    {
+      "document_id": "kanun_2577",
+      "file_name": "2577.pdf",
+      "active": true,
+      "belge_turu": "Kanun",
+      "title": "İdari Yargılama Usulü Kanunu",
+      "short_title": "2577 sayılı İYUK",
+      "kanun_no": "2577",
+      "document_number": "2577",
+      "kaynak_kurum": "T.C. Cumhurbaşkanlığı Mevzuat Bilgi Sistemi",
+      "official_source": true,
+      "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2577.pdf",
+      "resmi_gazete_tarihi": "1982-01-20",
+      "resmi_gazete_sayisi": "17580",
+      "yayin_tarihi": "1982-01-20",
+      "yururluk_tarihi": "1982-01-20",
+      "gecerlilik_baslangici": "1982-01-20",
+      "gecerlilik_sonu": null,
+      "mulga_tarihi": null,
+      "status": "active",
+      "version": "1",
+      "previous_version": null,
+      "next_version": null,
+      "supersedes": null,
+      "superseded_by": null,
+      "jurisdiction": "TR",
+      "language": "tr",
+      "tags": [
+        "idari_yargi",
+        "vergi_davasi",
+        "dava_acma_suresi",
+        "sureler",
+        "iyuk"
+      ],
+      "relations": [],
+      "ingest": {
+        "enabled": false,
+        "parser": "legal_pdf",
+        "chunk_strategy": "legal_hierarchy",
+        "ocr_required": false
+      },
+      "notes": "2577 sayılı İdari Yargılama Usulü Kanunu. Deadline Engine V1 için m.7/1, m.7/2-b, m.8/1 ve m.8/2 provision kayıtları canonical Legal Knowledge Engine'e eklenmiştir. Fiziksel PDF ingest işlemi ayrı adımda yapılacaktır."
+    }
+  ]
+}

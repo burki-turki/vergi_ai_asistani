@@ -1,0 +1,503 @@
+{
+  "schema_version": 1,
+  "extraction_id": "extract_dava_dilekcesi_001_llm_v1_2_1_20260901_125006",
+  "case_id": "case_0001",
+  "source_document_id": "dava_dilekcesi_001",
+  "status": "completed",
+  "extractor": {
+    "method": "llm",
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "extractor_version": "1.2.1",
+    "prompt_version": "fact_extraction_v1_2",
+    "run_at": "2026-09-01T12:50:06.621914+03:00"
+  },
+  "facts": [
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_001",
+      "fact_kind": "procedural_fact",
+      "statement": "IHB-DEMO-2026-001 sayılı Vergi ve Ceza İhbarnamesi 05.02.2026 tarihlidir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "DAVA KONUSU",
+        "paragraph": null,
+        "text_excerpt": "05.02.2026 tarihli ve IHB-DEMO-2026-001 sayılı Vergi ve Ceza İhbarnamesi"
+      },
+      "structured_values": [
+        {
+          "value_type": "date",
+          "label": "İhbarname Tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-02-05",
+          "money_value": null,
+          "reference_value": null
+        },
+        {
+          "value_type": "reference",
+          "label": "Vergi ve Ceza İhbarnamesi No",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "IHB-DEMO-2026-001"
+        }
+      ],
+      "related_party_ids": [
+        "party_admin_001"
+      ],
+      "related_document_ids": [
+        "ihbarname_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_002",
+      "fact_kind": "procedural_fact",
+      "statement": "İhbarnamede, 2024/03 vergilendirme dönemi için mükellef adına 850.000,00 TL Katma Değer Vergisi tarh edildiği belirtilmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "DAVA KONUSU",
+        "paragraph": null,
+        "text_excerpt": "2024/03 vergilendirme dönemi için tarh edilen 850.000,00 TL Katma Değer Vergisi"
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "Tarh Edilen KDV Tutarı",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        },
+        {
+          "value_type": "string",
+          "label": "Vergilendirme Dönemi",
+          "string_value": "2024/03",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_003",
+      "fact_kind": "procedural_fact",
+      "statement": "İhbarnamede, mükellef adına 850.000,00 TL vergi ziyaı cezası kesildiği belirtilmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "DAVA KONUSU",
+        "paragraph": null,
+        "text_excerpt": "kesilen 850.000,00 TL vergi ziyaı cezasının iptali talebidir."
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "Kesilen Vergi Ziyaı Cezası Tutarı",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_004",
+      "fact_kind": "procedural_fact",
+      "statement": "IHB-DEMO-2026-001 sayılı Vergi ve Ceza İhbarnamesi davacı şirkete 10.02.2026 tarihinde tebliğ edilmiştir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "1. İHBARNAME VE DAYANAK RAPOR",
+        "paragraph": null,
+        "text_excerpt": "Dava konusu IHB-DEMO-2026-001 sayılı Vergi ve Ceza İhbarnamesi davacı şirkete 10.02.2026 tarihinde tebliğ edilmiştir."
+      },
+      "structured_values": [
+        {
+          "value_type": "date",
+          "label": "İhbarname Tebliğ Tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-02-10",
+          "money_value": null,
+          "reference_value": null
+        },
+        {
+          "value_type": "reference",
+          "label": "Vergi ve Ceza İhbarnamesi No",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "IHB-DEMO-2026-001"
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [
+        "ihbarname_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.97,
+      "verification_state": "unverified",
+      "notes": "Tebliğ tarihi dava dilekçesinde davacı tarafından beyan edilmektedir."
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_005",
+      "fact_kind": "document_finding",
+      "statement": "IHB-DEMO-2026-001 sayılı İhbarname, 20.01.2026 tarihli ve VIR-DEMO-2026-001 sayılı Vergi İnceleme Raporunda yer alan tespitlere dayanmaktadır.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "1. İHBARNAME VE DAYANAK RAPOR",
+        "paragraph": null,
+        "text_excerpt": "İhbarname, 20.01.2026 tarihli ve VIR-DEMO-2026-001 sayılı Vergi İnceleme Raporunda yer alan tespitlere dayanmaktadır."
+      },
+      "structured_values": [
+        {
+          "value_type": "date",
+          "label": "Vergi İnceleme Raporu Tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-01-20",
+          "money_value": null,
+          "reference_value": null
+        },
+        {
+          "value_type": "reference",
+          "label": "Vergi İnceleme Raporu No",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "VIR-DEMO-2026-001"
+        }
+      ],
+      "related_party_ids": [],
+      "related_document_ids": [
+        "vir_001",
+        "ihbarname_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.97,
+      "verification_state": "unverified",
+      "notes": "Bu bilgi dava dilekçesinde davacı tarafından beyan edilmektedir; ihbarnamenin dayanağının bu rapor olduğu doğrudan rapordan teyit edilmemiştir."
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_006",
+      "fact_kind": "taxpayer_claim",
+      "statement": "Davacı, 2024/03 vergilendirme döneminde indirim konusu yapılan 850.000,00 TL KDV'nin gerçek mal ve hizmet alımlarına dayandığını ileri sürmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "2. DAVACININ İDDİALARI",
+        "paragraph": null,
+        "text_excerpt": "2024/03 vergilendirme döneminde indirim konusu yapılan 850.000,00 TL Katma Değer Vergisinin gerçek mal ve hizmet alımlarına dayandığını ileri sürmektedir."
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "İndirim Konusu Yapılan KDV Tutarı (Davacı Beyanı)",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_007",
+      "fact_kind": "taxpayer_claim",
+      "statement": "Davacı, söz konusu KDV indiriminin haksız olduğu yönündeki Vergi İnceleme Raporu değerlendirmesini kabul etmemektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "2. DAVACININ İDDİALARI",
+        "paragraph": null,
+        "text_excerpt": "Davacı, söz konusu KDV indiriminin haksız olduğu yönündeki Vergi İnceleme Raporu değerlendirmesini kabul etmemektedir."
+      },
+      "structured_values": [],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.97,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_008",
+      "fact_kind": "taxpayer_claim",
+      "statement": "Davacı, vergi ziyaı cezası kesilmesini gerektiren şartların oluşmadığını ileri sürmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "2. DAVACININ İDDİALARI",
+        "paragraph": null,
+        "text_excerpt": "Davacı ayrıca, vergi ziyaı cezası kesilmesini gerektiren şartların oluşmadığını ileri sürmektedir."
+      },
+      "structured_values": [],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.97,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_009",
+      "fact_kind": "legal_reference",
+      "statement": "Davacı, 3065 sayılı Katma Değer Vergisi Kanununun 29 uncu maddesi uyarınca indirim hakkının bulunduğunu ileri sürmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "3. HUKUKİ DAYANAKLARA İLİŞKİN BEYAN",
+        "paragraph": null,
+        "text_excerpt": "Davacı, 3065 sayılı Katma Değer Vergisi Kanununun 29 uncu maddesi uyarınca indirim hakkının bulunduğunu ileri sürmektedir."
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "Hukuki Dayanak",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "KDVK_m29"
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.97,
+      "verification_state": "unverified",
+      "notes": "Bu atıf davacı tarafından yapılmaktadır; kanun maddesinin olaya uygulanabilir olduğu iddia edilmekte olup mahkemece değerlendirilecektir."
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_010",
+      "fact_kind": "taxpayer_claim",
+      "statement": "Davacı, 213 sayılı Vergi Usul Kanununun 341 inci maddesine dayanılarak yapılan vergi ziyaı cezası değerlendirmesinin somut olay bakımından hukuka uygun olmadığını iddia etmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "3. HUKUKİ DAYANAKLARA İLİŞKİN BEYAN",
+        "paragraph": null,
+        "text_excerpt": "Vergi ziyaı cezası yönünden 213 sayılı Vergi Usul Kanununun 341 inci maddesine dayanılarak yapılan değerlendirmenin somut olay bakımından hukuka uygun olmadığını iddia etmektedir."
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "Atıfta Bulunulan Hukuki Düzenleme",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "VUK_m341"
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.97,
+      "verification_state": "unverified",
+      "notes": "Davacı bu maddeye dayanılarak yapılan işlemin hukuka uygun olmadığını ileri sürmektedir; maddenin uygulanabilirliği mahkemece değerlendirilecektir."
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_011",
+      "fact_kind": "procedural_fact",
+      "statement": "Dava dilekçesi 05.03.2026 tarihinde İstanbul Vergi Mahkemesi Başkanlığına sunulmuştur.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "Dava Tarihi",
+        "paragraph": null,
+        "text_excerpt": "Dava Tarihi: 05.03.2026"
+      },
+      "structured_values": [
+        {
+          "value_type": "date",
+          "label": "Dava Tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-03-05",
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_012",
+      "fact_kind": "procedural_fact",
+      "statement": "Davacı, 2024/03 dönemi için tarh edilen 850.000,00 TL KDV ile kesilen 850.000,00 TL vergi ziyaı cezasının iptaline karar verilmesini talep etmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_taxpayer_001",
+      "attributed_actor_label": "ABC Ltd. Şti. - Demo",
+      "source": {
+        "page": null,
+        "section": "4. SONUÇ VE İSTEM",
+        "paragraph": null,
+        "text_excerpt": "2024/03 dönemi için tarh edilen 850.000,00 TL Katma Değer Vergisinin, buna bağlı olarak kesilen 850.000,00 TL vergi ziyaı cezasının, iptaline karar verilmesini talep etmektedir."
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "İptali Talep Edilen KDV Tutarı",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        },
+        {
+          "value_type": "money",
+          "label": "İptali Talep Edilen Vergi Ziyaı Cezası Tutarı",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.98,
+      "verification_state": "unverified",
+      "notes": null
+    }
+  ],
+  "warnings": [
+    "İhbarname tebliğ tarihi (10.02.2026) davacı beyanına dayanmaktadır; tebligat evrakından teyit edilmemiştir.",
+    "VIR-DEMO-2026-001 sayılı Vergi İnceleme Raporuna yapılan atıf davacı tarafından yapılmaktadır; raporun içeriği bu belgeden doğrulanamaz.",
+    "Document reference resolver: fact_dava_dilekcesi_001_llm_v1_2_1_20260901_125006_005 içinde VIR-DEMO-2026-001 reference-number ile çözüldü ancak document relation desteği bulunamadı."
+  ],
+  "notes": "Fact Extraction Engine V1.2.1 tarafından üretilmiş pending LLM extraction çıktısıdır. related_document_ids alanları Document Reference Resolver V1 tarafından deterministik olarak oluşturulmuştur. İnsan onayı olmadan canonical değildir."
+}

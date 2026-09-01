@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "deadline_analysis_id": "deadline_case_0001_v1",
+  "case_id": "case_0001",
+  "status": "completed",
+  "generated_at": "2026-09-02T00:13:25.959470+03:00",
+  "deadlines": [
+    {
+      "deadline_id": "deadline_001",
+      "deadline_type": "lawsuit_filing",
+      "description": "Vergi Mahkemesinde Genel Dava Açma Süresi",
+      "anchor_event_id": "timeline_event_003",
+      "anchor_date": "2026-02-10",
+      "anchor_verification_state": "unverified",
+      "rule_id": "iyuk_tax_court_general_lawsuit_filing",
+      "legal_basis_refs": [
+        "IYUK_2577_m7_1",
+        "IYUK_2577_m7_2_b",
+        "IYUK_2577_m8_1",
+        "IYUK_2577_m8_2",
+        "IYUK_2577_m8_3",
+        "IYUK_2577_m61_1"
+      ],
+      "duration": {
+        "value": 30,
+        "unit": "day",
+        "day_type": "calendar"
+      },
+      "start_rule": "next_day",
+      "expiry_state": "not_evaluated",
+      "confidence": 0.95,
+      "requires_human_review": true,
+      "calculation_state": "blocked_unverified_anchor",
+      "calculated_deadline": null,
+      "notes": "Canonical anchor event verified olmadığı için deadline hesaplanmadı."
+    }
+  ],
+  "warnings": [
+    "Canonical anchor event doğrulanmadığı için kesin son tarih üretilmedi."
+  ],
+  "notes": "Deadline Engine V1 production candidate. Bu çıktı pending durumundadır ve human approval olmadan canonical deadline repository'ye alınmaz."
+}

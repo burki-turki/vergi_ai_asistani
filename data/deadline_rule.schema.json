@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "deadline_rule.schema.json",
+  "title": "Vergi AI Deadline Rule Schema V1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "ruleset_id",
+    "jurisdiction",
+    "rules",
+    "notes"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "ruleset_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "jurisdiction": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/deadline_rule"
+      }
+    },
+
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+
+  "$defs": {
+    "deadline_rule": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "rule_id",
+        "rule_version",
+        "name",
+        "status",
+        "deadline_type",
+        "anchor_event_types",
+        "applicability",
+        "legal_basis_refs",
+        "duration",
+        "start_rule",
+        "day_count_policy",
+        "end_day_policy",
+        "required_anchor_verification",
+        "calculation_enabled",
+        "effective_from",
+        "effective_to",
+        "priority",
+        "requires_human_review",
+        "notes"
+      ],
+
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "rule_version": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "active",
+            "deprecated"
+          ]
+        },
+
+        "deadline_type": {
+          "type": "string",
+          "enum": [
+            "lawsuit_filing",
+            "administrative_application",
+            "payment",
+            "appeal",
+            "cassation",
+            "response",
+            "objection",
+            "other"
+          ]
+        },
+
+        "anchor_event_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "document_date",
+              "report_date",
+              "assessment_date",
+              "penalty_date",
+              "notification_date",
+              "filing_date",
+              "payment_date",
+              "administrative_application_date",
+              "administrative_decision_date",
+              "court_decision_date",
+              "appeal_date",
+              "other"
+            ]
+          }
+        },
+
+        "applicability": {
+          "$ref": "#/$defs/applicability"
+        },
+
+        "legal_basis_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+
+        "start_rule": {
+          "type": "string",
+          "enum": [
+            "same_day",
+            "next_day",
+            "custom"
+          ]
+        },
+
+        "day_count_policy": {
+          "type": "string",
+          "enum": [
+            "calendar_days",
+            "business_days",
+            "calendar_month",
+            "calendar_year",
+            "custom"
+          ]
+        },
+
+        "end_day_policy": {
+          "type": "string",
+          "enum": [
+            "exact_duration",
+            "next_business_day_if_holiday",
+            "previous_business_day_if_holiday",
+            "custom"
+          ]
+        },
+
+        "required_anchor_verification": {
+          "type": "string",
+          "const": "verified"
+        },
+
+        "calculation_enabled": {
+          "type": "boolean"
+        },
+
+        "effective_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+
+        "effective_to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+
+        "priority": {
+          "type": "integer",
+          "minimum": 0
+        },
+
+        "requires_human_review": {
+          "type": "boolean"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "case_types",
+        "tax_types",
+        "document_types",
+        "case_stages"
+      ],
+
+      "properties": {
+        "case_types": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "tax_types": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "document_types": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "case_stages": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+
+    "duration": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "value",
+        "unit"
+      ],
+
+      "properties": {
+        "value": {
+          "type": "integer",
+          "minimum": 0
+        },
+
+        "unit": {
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
+        }
+      }
+    }
+  }
+}

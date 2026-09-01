@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case_timeline.schema.json",
+  "title": "Vergi AI Case Timeline Schema V1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "timeline_id",
+    "case_id",
+    "status",
+    "generated_at",
+    "events",
+    "warnings",
+    "notes"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "timeline_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "partial",
+        "failed"
+      ]
+    },
+
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/timeline_event"
+      }
+    },
+
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+
+  "$defs": {
+    "timeline_event": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "event_id",
+        "event_type",
+        "date",
+        "date_precision",
+        "statement",
+        "source_fact_ids",
+        "source_document_ids",
+        "related_party_ids",
+        "related_dispute_item_ids",
+        "verification_state",
+        "confidence",
+        "deadline_relevant",
+        "notes"
+      ],
+
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "document_date",
+            "report_date",
+            "assessment_date",
+            "penalty_date",
+            "notification_date",
+            "filing_date",
+            "payment_date",
+            "administrative_application_date",
+            "administrative_decision_date",
+            "court_decision_date",
+            "appeal_date",
+            "other"
+          ]
+        },
+
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+
+        "date_precision": {
+          "type": "string",
+          "enum": [
+            "exact",
+            "month",
+            "year",
+            "approximate",
+            "unknown"
+          ]
+        },
+
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "source_fact_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "source_document_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "related_party_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "related_dispute_item_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "verification_state": {
+          "type": "string",
+          "enum": [
+            "unverified",
+            "partially_verified",
+            "verified",
+            "disputed",
+            "rejected"
+          ]
+        },
+
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+
+        "deadline_relevant": {
+          "type": "boolean"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

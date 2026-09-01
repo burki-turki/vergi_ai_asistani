@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "ruleset_id": "deadline_rules_validator_fixture_v1",
+  "jurisdiction": "TR",
+  "rules": [
+    {
+      "rule_id": "fixture_rule_001",
+      "rule_version": "1.0",
+      "name": "Deadline Rule Validator Fixture",
+      "status": "active",
+      "deadline_type": "other",
+      "anchor_event_types": [
+        "notification_date"
+      ],
+      "applicability": {
+        "case_types": [],
+        "tax_types": [],
+        "document_types": [],
+        "case_stages": []
+      },
+      "legal_basis_refs": [
+        "fixture_legal_ref_001"
+      ],
+      "duration": {
+        "value": 1,
+        "unit": "day"
+      },
+      "start_rule": "next_day",
+      "day_count_policy": "calendar_days",
+      "end_day_policy": "exact_duration",
+      "required_anchor_verification": "verified",
+      "calculation_enabled": true,
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "priority": 100,
+      "requires_human_review": false,
+      "notes": "Validator fixture'dır. Gerçek hukuk kuralı değildir."
+    }
+  ],
+  "notes": "Deadline Rule Validator V1 self-test fixture."
+}

@@ -1,0 +1,373 @@
+{
+  "schema_version": 1,
+  "extraction_id": "extract_ihbarname_001_llm_v1_2_1_20260901_122652",
+  "case_id": "case_0001",
+  "source_document_id": "ihbarname_001",
+  "status": "completed",
+  "extractor": {
+    "method": "llm",
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "extractor_version": "1.2.1",
+    "prompt_version": "fact_extraction_v1_2",
+    "run_at": "2026-09-01T12:26:52.868213+03:00"
+  },
+  "facts": [
+    {
+      "fact_id": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_001",
+      "fact_kind": "document_finding",
+      "statement": "İhbarname No: IHB-DEMO-2026-001 olan vergi ve ceza ihbarnamesi, Örnek Vergi Dairesi Müdürlüğü tarafından 05.02.2026 tarihinde düzenlenmiştir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "Belge Başlığı / Üst Bilgi",
+        "paragraph": null,
+        "text_excerpt": "İhbarname No: IHB-DEMO-2026-001\nDüzenleme Tarihi: 05.02.2026"
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "İhbarname No",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "IHB-DEMO-2026-001"
+        },
+        {
+          "value_type": "date",
+          "label": "Düzenleme Tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-02-05",
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_admin_001",
+        "party_taxpayer_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_002",
+      "fact_kind": "document_finding",
+      "statement": "İhbarnamede, işbu ihbarnamenin 20.01.2026 tarihli VIR-DEMO-2026-001 sayılı Vergi İnceleme Raporunda yer alan tespitler esas alınarak düzenlendiği belirtilmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "1. DAYANAK",
+        "paragraph": null,
+        "text_excerpt": "20.01.2026 tarihli VIR-DEMO-2026-001 sayılı Vergi İnceleme Raporunda yer alan tespitler esas alınarak işbu vergi ve ceza ihbarnamesi düzenlenmiştir."
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "Vergi İnceleme Raporu No",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "VIR-DEMO-2026-001"
+        },
+        {
+          "value_type": "date",
+          "label": "Vergi İnceleme Raporu Tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-01-20",
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_admin_001"
+      ],
+      "related_document_ids": [
+        "vir_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_003",
+      "fact_kind": "procedural_fact",
+      "statement": "İhbarnamede, ABC Ltd. Şti. adına 2024/03 vergilendirme dönemine ilişkin olarak 850.000,00 TL Katma Değer Vergisi tarh edildiği belirtilmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "2. TARH EDİLEN VERGİ",
+        "paragraph": null,
+        "text_excerpt": "2024/03 vergilendirme dönemine ilişkin olarak mükellef adına 850.000,00 TL Katma Değer Vergisi tarh edilmiştir."
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "Tarh Edilen KDV Tutarı",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        },
+        {
+          "value_type": "string",
+          "label": "Vergilendirme Dönemi",
+          "string_value": "2024/03",
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_004",
+      "fact_kind": "procedural_fact",
+      "statement": "İhbarnamede, tarh edilen vergiye bağlı olarak ABC Ltd. Şti. adına 850.000,00 TL vergi ziyaı cezası kesildiği belirtilmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "3. VERGİ ZİYAI CEZASI",
+        "paragraph": null,
+        "text_excerpt": "Tarh edilen vergiye bağlı olarak mükellef adına 850.000,00 TL vergi ziyaı cezası kesilmiştir."
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "Vergi Ziyaı Cezası Tutarı",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_005",
+      "fact_kind": "monetary_fact",
+      "statement": "İhbarnamede, vergi aslı ve vergi ziyaı cezasının toplamı olarak 1.700.000,00 TL toplam tutar belirtilmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "4. TOPLAM TUTAR",
+        "paragraph": null,
+        "text_excerpt": "Vergi aslı:\n850.000,00 TL\n\nVergi ziyaı cezası:\n850.000,00 TL\n\nToplam:\n1.700.000,00 TL"
+      },
+      "structured_values": [
+        {
+          "value_type": "money",
+          "label": "Vergi Aslı",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        },
+        {
+          "value_type": "money",
+          "label": "Vergi Ziyaı Cezası",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "850000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        },
+        {
+          "value_type": "money",
+          "label": "Toplam Tutar",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": {
+            "amount": "1700000.00",
+            "currency": "TRY"
+          },
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": null
+    },
+    {
+      "fact_id": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_006",
+      "fact_kind": "legal_reference",
+      "statement": "İhbarnamede, 3065 sayılı Katma Değer Vergisi Kanununun 29 uncu maddesine atıf yapılmaktadır.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "5. YASAL DAYANAK",
+        "paragraph": null,
+        "text_excerpt": "3065 sayılı Katma Değer Vergisi Kanununun 29 uncu maddesi ile 213 sayılı Vergi Usul Kanununun 341 inci maddesi dikkate alınmıştır."
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "Yasal Dayanak",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "KDVK_m29"
+        }
+      ],
+      "related_party_ids": [],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": "Belgenin bu hukuki kaynağa atıf yaptığını gösterir; maddenin olaya uygulanabilirliği veya hukuki geçerliliği hakkında değerlendirme yapılmamıştır."
+    },
+    {
+      "fact_id": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_007",
+      "fact_kind": "legal_reference",
+      "statement": "İhbarnamede, 213 sayılı Vergi Usul Kanununun 341 inci maddesine atıf yapılmaktadır.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "5. YASAL DAYANAK",
+        "paragraph": null,
+        "text_excerpt": "3065 sayılı Katma Değer Vergisi Kanununun 29 uncu maddesi ile 213 sayılı Vergi Usul Kanununun 341 inci maddesi dikkate alınmıştır."
+      },
+      "structured_values": [
+        {
+          "value_type": "reference",
+          "label": "Yasal Dayanak",
+          "string_value": null,
+          "number_value": null,
+          "date_value": null,
+          "money_value": null,
+          "reference_value": "VUK_m341"
+        }
+      ],
+      "related_party_ids": [],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "verification_state": "unverified",
+      "notes": "Belgenin bu hukuki kaynağa atıf yaptığını gösterir; maddenin olaya uygulanabilirliği veya hukuki geçerliliği hakkında değerlendirme yapılmamıştır."
+    },
+    {
+      "fact_id": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_008",
+      "fact_kind": "procedural_fact",
+      "statement": "İhbarnamede, söz konusu ihbarnamenin mükellef ABC Ltd. Şti.'ye 10.02.2026 tarihinde tebliğ edildiği belirtilmektedir.",
+      "normalized_statement": null,
+      "extraction_basis": "explicit_text",
+      "attributed_party_id": "party_admin_001",
+      "attributed_actor_label": "Örnek Vergi Dairesi Müdürlüğü",
+      "source": {
+        "page": null,
+        "section": "6. TEBLİĞ",
+        "paragraph": null,
+        "text_excerpt": "İhbarname mükellefe 10.02.2026 tarihinde tebliğ edilmiştir."
+      },
+      "structured_values": [
+        {
+          "value_type": "date",
+          "label": "Tebliğ Tarihi",
+          "string_value": null,
+          "number_value": null,
+          "date_value": "2026-02-10",
+          "money_value": null,
+          "reference_value": null
+        }
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_document_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.95,
+      "verification_state": "unverified",
+      "notes": "Tebliğ tarihi yalnızca ihbarnamenin kendi metnine dayanmaktadır; harici bir tebliğ belgesiyle doğrulanmamıştır."
+    }
+  ],
+  "warnings": [
+    "Tebliğ tarihine ilişkin fact yalnızca ihbarnamenin kendi beyanına dayanmaktadır; ayrı bir tebliğ belgesiyle teyit edilmemiştir.",
+    "İhbarname metninde mükellefin vergi türü olarak 'Katma Değer Vergisi' belirtilmiş, ancak KDV'nin hangi işlem veya fatura kaynaklı olduğuna dair tespit bu belgede yer almamaktadır; detay için dayanak Vergi İnceleme Raporuna (VIR-DEMO-2026-001) başvurulması gerekmektedir."
+  ],
+  "notes": "Fact Extraction Engine V1.2.1 tarafından üretilmiş pending LLM extraction çıktısıdır. related_document_ids alanları Document Reference Resolver V1 tarafından deterministik olarak oluşturulmuştur. İnsan onayı olmadan canonical değildir."
+}

@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case_deadline.schema.json",
+  "title": "Vergi AI Case Deadline Schema V1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "deadline_analysis_id",
+    "case_id",
+    "status",
+    "generated_at",
+    "deadlines",
+    "warnings",
+    "notes"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "deadline_analysis_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "partial",
+        "failed"
+      ]
+    },
+
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "deadlines": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/deadline"
+      }
+    },
+
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+
+  "$defs": {
+    "deadline": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "deadline_id",
+        "deadline_type",
+        "description",
+        "anchor_event_id",
+        "anchor_date",
+        "anchor_verification_state",
+        "rule_id",
+        "legal_basis_refs",
+        "duration",
+        "start_rule",
+        "calculation_state",
+        "calculated_deadline",
+        "expiry_state",
+        "confidence",
+        "requires_human_review",
+        "notes"
+      ],
+
+      "properties": {
+        "deadline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "deadline_type": {
+          "type": "string",
+          "enum": [
+            "lawsuit_filing",
+            "administrative_application",
+            "payment",
+            "appeal",
+            "cassation",
+            "response",
+            "objection",
+            "other"
+          ]
+        },
+
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "anchor_event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "anchor_date": {
+          "type": "string",
+          "format": "date"
+        },
+
+        "anchor_verification_state": {
+          "type": "string",
+          "enum": [
+            "unverified",
+            "partially_verified",
+            "verified",
+            "disputed",
+            "rejected"
+          ]
+        },
+
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "legal_basis_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "duration": {
+          "$ref": "#/$defs/duration"
+        },
+
+        "start_rule": {
+          "type": "string",
+          "enum": [
+            "same_day",
+            "next_day",
+            "custom",
+            "unknown"
+          ]
+        },
+
+        "calculation_state": {
+          "type": "string",
+          "enum": [
+            "calculated",
+            "blocked_unverified_anchor",
+            "blocked_missing_rule",
+            "blocked_ambiguous_rule",
+            "needs_review",
+            "not_applicable"
+          ]
+        },
+
+        "calculated_deadline": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+
+        "expiry_state": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "active",
+            "expired",
+            "unknown"
+          ]
+        },
+
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+
+        "requires_human_review": {
+          "type": "boolean"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+
+    "duration": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "value",
+        "unit",
+        "day_type"
+      ],
+
+      "properties": {
+        "value": {
+          "type": "integer",
+          "minimum": 0
+        },
+
+        "unit": {
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
+        },
+
+        "day_type": {
+          "type": "string",
+          "enum": [
+            "calendar",
+            "business",
+            "not_applicable"
+          ]
+        }
+      }
+    }
+  }
+}

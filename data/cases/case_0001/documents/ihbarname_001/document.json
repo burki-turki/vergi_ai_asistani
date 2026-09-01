@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "document_id": "ihbarname_001",
+  "case_id": "case_0001",
+  "active": true,
+
+  "title": "Vergi ve Ceza İhbarnamesi - Demo",
+
+  "document_category": "administrative_action",
+  "document_type": "vergi_ceza_ihbarnamesi",
+  "document_subtype": "KDV ve vergi ziyaı cezası",
+
+  "confidentiality_level": "confidential",
+
+  "jurisdiction": "TR",
+  "language": "tr",
+
+  "summary": "2024/03 dönemine ilişkin KDV tarhiyatı ve vergi ziyaı cezasını içeren sentetik vergi ve ceza ihbarnamesidir.",
+
+  "file": {
+    "file_name": "ihbarname_001.pdf",
+    "relative_path": "cases/case_0001/documents/ihbarname_001/ihbarname_001.pdf",
+    "format": "pdf",
+    "mime_type": "application/pdf",
+    "sha256": null,
+    "page_count": null,
+    "size_bytes": null
+  },
+
+  "provenance": {
+    "source_origin": "generated",
+    "source_description": "Case Document Layer V1 testi için oluşturulmuş sentetik ihbarname.",
+    "source_url": null,
+    "original_file_name": null,
+    "received_at": null,
+    "uploaded_by_ref": null
+  },
+
+  "issuer_party_id": "party_admin_001",
+
+  "recipient_party_ids": [
+    "party_taxpayer_001"
+  ],
+
+  "dates": [
+    {
+      "date_type": "issue_date",
+      "date": "2026-02-05",
+      "precision": "exact",
+      "source_page": null,
+      "verification_state": "unverified"
+    },
+    {
+      "date_type": "notification_date",
+      "date": "2026-02-10",
+      "precision": "exact",
+      "source_page": null,
+      "verification_state": "unverified"
+    }
+  ],
+
+  "reference_numbers": [
+    {
+      "reference_type": "notice_number",
+      "value": "IHB-DEMO-2026-001",
+      "issuing_body": "Örnek Vergi Dairesi Müdürlüğü",
+      "verification_state": "unverified"
+    }
+  ],
+
+  "relations": [
+    {
+      "type": "refers_to",
+      "document_id": "vir_001",
+      "notes": "Tarhiyatın dayanağı olarak modellenen vergi inceleme raporuna ilişkindir."
+    },
+    {
+      "type": "basis_for",
+      "document_id": "dava_dilekcesi_001",
+      "notes": "Dava konusu idari işlem olarak modellenmiştir."
+    }
+  ],
+
+  "processing": {
+    "ingest_enabled": false,
+    "parser": "case_pdf",
+    "chunk_strategy": "document_sections",
+    "ocr_required": false,
+    "ocr_completed": false,
+    "text_extraction_status": "not_started",
+    "index_status": "not_indexed",
+    "extracted_text_path": null,
+    "parser_version": null
+  },
+
+  "verification_state": "unverified",
+
+  "tags": [
+    "ihbarname",
+    "kdv",
+    "vergi_ziyayi",
+    "idari_islem",
+    "demo"
+  ],
+
+  "notes": "Sentetik test belgesidir. Gerçek bir ihbarnameyi temsil etmez."
+}

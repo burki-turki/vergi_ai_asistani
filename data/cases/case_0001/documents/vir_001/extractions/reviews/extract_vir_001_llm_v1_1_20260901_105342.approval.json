@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "approval_id": "approval_extract_vir_001_llm_v1_1_20260901_105342_20260901_105957",
+  "approval_version": "1",
+  "decision": "approved_for_canonical_use",
+  "approval_scope": "extraction_accuracy_review",
+  "case_id": "case_0001",
+  "source_document_id": "vir_001",
+  "extraction_id": "extract_vir_001_llm_v1_1_20260901_105342",
+  "fact_count": 8,
+  "reviewer_ref": "human_review",
+  "reviewed_at": "2026-09-01T10:59:57.798965+03:00",
+  "review_note": "Fact Extraction Engine V1.1 çıktısı insan tarafından incelendi.",
+  "source_pending_file": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts_llm_v1_1.json.pending",
+  "source_pending_sha256": "3bc13f6734b51ba07ddd5c04f8eced22f56a8080c0e82ca262e45a8f43f0706d",
+  "canonical_file": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+  "canonical_sha256": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907",
+  "previous_canonical_backup": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\history\\facts_before_promotion_20260901_105957_c06a35e2.json",
+  "verification_semantics": "Approval extraction doğruluğunu temsil eder; fact verification_state değerlerini değiştirmez."
+}

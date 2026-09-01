@@ -1,0 +1,26 @@
+{
+  "audit_type": "deadline_analysis_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-02T00:16:30.884237+03:00",
+  "case_id": "case_0001",
+  "deadline_analysis_id": "deadline_case_0001_v1",
+  "source_pending_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline_case_0001_v1.json.pending",
+  "canonical_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
+  "pending_sha256": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff",
+  "canonical_sha256": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff",
+  "content_identical": true,
+  "previous_canonical_backup": null,
+  "deadline_count": 1,
+  "deadline_states": [
+    {
+      "deadline_id": "deadline_001",
+      "anchor_event_id": "timeline_event_003",
+      "anchor_verification_state": "unverified",
+      "rule_id": "iyuk_tax_court_general_lawsuit_filing",
+      "calculation_state": "blocked_unverified_anchor",
+      "calculated_deadline": null,
+      "requires_human_review": true
+    }
+  ],
+  "approval_semantics": "Bu approval deadline analysis kaydını canonical repository'ye kabul eder. Anchor event verification değildir ve hesaplanmamış bir deadline'ı hesaplanmış hale getirmez."
+}

@@ -1,0 +1,813 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case.schema.json",
+
+  "title": "Vergi AI Case Schema V1",
+
+  "type": "object",
+
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "case_id",
+    "active",
+    "title",
+    "case_type",
+    "case_status",
+    "stage",
+    "client_side",
+    "confidentiality_level",
+    "jurisdiction",
+    "language",
+    "parties",
+    "dispute_items",
+    "administrative_actions",
+    "events",
+    "proceedings",
+    "case_document_refs",
+    "related_cases",
+    "tags"
+  ],
+
+  "properties": {
+
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "minLength": 3
+    },
+
+    "active": {
+      "type": "boolean"
+    },
+
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "case_type": {
+      "type": "string",
+
+      "enum": [
+        "assessment",
+        "tax_penalty",
+        "assessment_and_penalty",
+        "payment_order",
+        "collection_enforcement",
+        "refund",
+        "correction_complaint",
+        "audit_related",
+        "other"
+      ]
+    },
+
+    "case_status": {
+      "type": "string",
+
+      "enum": [
+        "open",
+        "pending",
+        "stayed",
+        "finalized",
+        "closed",
+        "archived"
+      ]
+    },
+
+    "stage": {
+      "type": "string",
+
+      "enum": [
+        "pre_litigation",
+        "first_instance",
+        "appeal",
+        "cassation",
+        "enforcement",
+        "post_judgment",
+        "closed"
+      ]
+    },
+
+    "client_side": {
+      "type": "string",
+
+      "enum": [
+        "taxpayer",
+        "tax_responsible",
+        "third_party",
+        "administration",
+        "other"
+      ]
+    },
+
+    "confidentiality_level": {
+      "type": "string",
+
+      "enum": [
+        "standard",
+        "confidential",
+        "highly_confidential"
+      ]
+    },
+
+    "jurisdiction": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$"
+    },
+
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}$"
+    },
+
+    "reference_code": {
+      "$ref": "#/$defs/nullableString"
+    },
+
+    "summary": {
+      "$ref": "#/$defs/nullableString"
+    },
+
+    "parties": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/party"
+      },
+
+      "minItems": 1
+    },
+
+    "dispute_items": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/disputeItem"
+      }
+    },
+
+    "administrative_actions": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/administrativeAction"
+      }
+    },
+
+    "events": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    },
+
+    "proceedings": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/proceeding"
+      }
+    },
+
+    "case_document_refs": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/documentRef"
+      }
+    },
+
+    "related_cases": {
+      "type": "array",
+
+      "items": {
+        "$ref": "#/$defs/caseRelation"
+      }
+    },
+
+    "tags": {
+      "type": "array",
+
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+
+      "uniqueItems": true
+    },
+
+    "notes": {
+      "$ref": "#/$defs/nullableString"
+    }
+  },
+
+  "$defs": {
+
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+
+    "nullableDate": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "verificationState": {
+      "type": "string",
+
+      "enum": [
+        "verified",
+        "partially_verified",
+        "unverified"
+      ]
+    },
+
+    "money": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "amount",
+        "currency"
+      ],
+
+      "properties": {
+
+        "amount": {
+          "type": "string",
+          "pattern": "^-?\\d+(\\.\\d{1,2})?$"
+        },
+
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      }
+    },
+
+    "nullableMoney": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/money"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "period": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "kind",
+        "label",
+        "start_date",
+        "end_date"
+      ],
+
+      "properties": {
+
+        "kind": {
+          "type": "string",
+
+          "enum": [
+            "year",
+            "month",
+            "quarter",
+            "date_range",
+            "single_date",
+            "other"
+          ]
+        },
+
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "start_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "end_date": {
+          "$ref": "#/$defs/nullableDate"
+        }
+      }
+    },
+
+    "party": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "party_id",
+        "role",
+        "party_type",
+        "display_name",
+        "reference_code",
+        "notes"
+      ],
+
+      "properties": {
+
+        "party_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 3
+        },
+
+        "role": {
+          "type": "string",
+
+          "enum": [
+            "taxpayer",
+            "tax_responsible",
+            "administration",
+            "third_party",
+            "other"
+          ]
+        },
+
+        "party_type": {
+          "type": "string",
+
+          "enum": [
+            "individual",
+            "company",
+            "public_authority",
+            "other"
+          ]
+        },
+
+        "display_name": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "reference_code": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+
+    "disputeItem": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "dispute_item_id",
+        "tax_type",
+        "period",
+        "principal_tax",
+        "penalty_type",
+        "penalty_amount",
+        "total_amount",
+        "asserted_legal_basis_refs",
+        "source_document_ids",
+        "verification_state",
+        "notes"
+      ],
+
+      "properties": {
+
+        "dispute_item_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 3
+        },
+
+        "tax_type": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "period": {
+          "$ref": "#/$defs/period"
+        },
+
+        "principal_tax": {
+          "$ref": "#/$defs/nullableMoney"
+        },
+
+        "penalty_type": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "penalty_amount": {
+          "$ref": "#/$defs/nullableMoney"
+        },
+
+        "total_amount": {
+          "$ref": "#/$defs/nullableMoney"
+        },
+
+        "asserted_legal_basis_refs": {
+          "type": "array",
+
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "uniqueItems": true
+        },
+
+        "source_document_ids": {
+          "type": "array",
+
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "uniqueItems": true
+        },
+
+        "verification_state": {
+          "$ref": "#/$defs/verificationState"
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+
+    "administrativeAction": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "action_id",
+        "action_category",
+        "action_type",
+        "issuing_authority",
+        "action_date",
+        "notification_date",
+        "source_document_id",
+        "verification_state",
+        "notes"
+      ],
+
+      "properties": {
+
+        "action_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 3
+        },
+
+        "action_category": {
+          "type": "string",
+
+          "enum": [
+            "assessment",
+            "penalty",
+            "assessment_and_penalty",
+            "payment_order",
+            "collection",
+            "audit",
+            "refund",
+            "correction_complaint",
+            "settlement",
+            "notification",
+            "other"
+          ]
+        },
+
+        "action_type": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "issuing_authority": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "action_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "notification_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "source_document_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "verification_state": {
+          "$ref": "#/$defs/verificationState"
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+
+    "event": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "event_id",
+        "event_category",
+        "event_type",
+        "title",
+        "event_date",
+        "date_precision",
+        "description",
+        "source_document_ids",
+        "verification_state"
+      ],
+
+      "properties": {
+
+        "event_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 3
+        },
+
+        "event_category": {
+          "type": "string",
+
+          "enum": [
+            "tax_event",
+            "administrative_action",
+            "notification",
+            "payment",
+            "audit",
+            "litigation",
+            "evidence",
+            "other"
+          ]
+        },
+
+        "event_type": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "event_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "date_precision": {
+          "type": "string",
+
+          "enum": [
+            "exact",
+            "month",
+            "year",
+            "unknown"
+          ]
+        },
+
+        "description": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "source_document_ids": {
+          "type": "array",
+
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "uniqueItems": true
+        },
+
+        "verification_state": {
+          "$ref": "#/$defs/verificationState"
+        }
+      }
+    },
+
+    "proceeding": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "proceeding_id",
+        "level",
+        "forum_type",
+        "court_name",
+        "case_number",
+        "decision_number",
+        "filing_date",
+        "decision_date",
+        "status",
+        "source_document_ids",
+        "notes"
+      ],
+
+      "properties": {
+
+        "proceeding_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 3
+        },
+
+        "level": {
+          "type": "string",
+
+          "enum": [
+            "pre_litigation",
+            "first_instance",
+            "appeal",
+            "cassation",
+            "enforcement",
+            "other"
+          ]
+        },
+
+        "forum_type": {
+          "type": "string",
+
+          "enum": [
+            "tax_court",
+            "regional_administrative_court",
+            "council_of_state",
+            "administrative_authority",
+            "enforcement_authority",
+            "other"
+          ]
+        },
+
+        "court_name": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "case_number": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "decision_number": {
+          "$ref": "#/$defs/nullableString"
+        },
+
+        "filing_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "decision_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "status": {
+          "type": "string",
+
+          "enum": [
+            "planned",
+            "pending",
+            "decided",
+            "appealed",
+            "finalized",
+            "closed"
+          ]
+        },
+
+        "source_document_ids": {
+          "type": "array",
+
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+
+          "uniqueItems": true
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+
+    "documentRef": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "document_id",
+        "relation_type",
+        "primary",
+        "notes"
+      ],
+
+      "properties": {
+
+        "document_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "relation_type": {
+          "type": "string",
+
+          "enum": [
+            "primary_action",
+            "audit_report",
+            "technical_report",
+            "notice",
+            "payment_order",
+            "evidence",
+            "petition",
+            "defense",
+            "court_decision",
+            "expert_report",
+            "correspondence",
+            "other"
+          ]
+        },
+
+        "primary": {
+          "type": "boolean"
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+
+    "caseRelation": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "type",
+        "case_id",
+        "notes"
+      ],
+
+      "properties": {
+
+        "type": {
+          "type": "string",
+
+          "enum": [
+            "appeal_of",
+            "enforcement_of",
+            "consolidated_with",
+            "related_to",
+            "same_transaction",
+            "same_tax_period",
+            "other"
+          ]
+        },
+
+        "case_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_-]+$",
+          "minLength": 3
+        },
+
+        "notes": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    }
+  }
+}
