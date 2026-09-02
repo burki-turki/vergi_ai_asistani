@@ -125,8 +125,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 9. Issue Spotting Agent — **DONE / LOCKED**
 10. Legal Research Agent — **DONE / LOCKED**
 11. Case Law Agent — **DONE / LOCKED**
-12. **Evidence Agent — ACTIVE / NEXT**
-13. Argument Agent
+12. Evidence Agent — **DONE / LOCKED**
+13. **Argument Agent — ACTIVE / NEXT**
 14. Risk / Strategy Agent
 15. Drafting Agent
 16. QA Agent
@@ -158,8 +158,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-11 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 12 — EVIDENCE AGENT** (henüz implement
+- Rows 1-12 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 13 — ARGUMENT AGENT** (henüz implement
   edilmedi)
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
@@ -213,11 +213,74 @@ ve agent suggestion'lar hâlâ verified fact/legal conclusion/case outcome DEĞ�
 const kısıtı ve `applicability_result` alanının yalnızca `null`/`"unknown"`/
 `"needs_review"` değerlerini kabul etmesi).
 
-### Row 12 — Evidence Agent (ACTIVE / NEXT)
+### Row 12 — Evidence Agent (DONE / LOCKED — checkpoint özeti)
 
-Henüz implement edilmedi. Row 9/10/11 tamamlanma paterni (deterministic policy/engine →
-validator → agent/LLM task → approval) referans alınmalı; standart geliştirme sırası
-için bkz. §4 "Her row için standart geliştirme sırası".
+**Status: LOCKED.**
+
+**Schema boundary** — `data/case_evidence.schema.json`, dört ayrı üst-düzey alan:
+`evidence_coverage` (issue başına tam 1), `evidence_candidates` (0..N, issue+fact+
+document+source_location+relationship_candidate atomik üçlüsü), `evidence_agent_suggestions`
+(0..N, yalnız şemada tanımlı 6 suggestion türünden biri), `analysis_metadata`
+(issues/facts/active-documents input hash manifesti).
+
+**Deterministic source boundary** — Evidence Agent (`evidence_discovery.py` +
+`evidence_policy.py`) yalnız canonical issues (`issues.json`), approved canonical
+facts (`*/extractions/facts.json`, `timeline_validator.load_canonical_fact_index`
+üzerinden) ve active canonical case document kayıtları (`*/document.json`,
+`case_document_validator.load_case_documents` üzerinden) üzerinde çalışır; yeni
+issue/fact/document/source_location icat edemez — allowlist tamamen bu üç canonical
+kaynaktan deterministik olarak türetilir.
+
+**Agent boundary** — `evidence_agent.py`, LLM'i yalnız deterministik allowlist
+içinden `relationship_candidate ∈ {supports, contradicts}` seçimine ve izin verilen
+6 suggestion türünden birini önermeye sınırlar (`ALLOWED_LLM_CANDIDATE_KEYS`/
+`ALLOWED_LLM_SUGGESTION_KEYS` allowlist'i + free-text safety + network safety gate).
+Agent candidate'a `confidence`/`strength`/`priority`/`admissibility` gibi hukuki/
+delil ağırlığı alanı EKLEYEMEZ (şema düzeyinde bu alanlar `evidence_candidate`
+tipinde TANIMLI DEĞİLDİR). Agent yalnız `review_state`/`suggestion_review_state`
+için `needs_review` üretebilir; `confirmed`/`rejected`/`accepted_for_follow_up`/
+`dismissed` agent/engine tarafından ASLA üretilemez (bkz. `evidence_engine.py`
+`validate_engine_output_semantics`, `evidence_approval.py`
+`validate_approval_semantics`).
+
+**Layer A / Layer B separation (LOCKED contract)** — İki bağımsız insan-onay
+katmanı:
+
+- **Layer A** (`evidence_approval.py`): yalnız pending evidence package →
+  canonical evidence package promosyonunu yapar (Row 9-11 deseni: backup → atomic
+  write → post-write validation → SHA256 eşitliği → approval audit → rollback).
+  Layer A candidate/suggestion için semantic review YAPMAZ; yalnız
+  `review_state`/`suggestion_review_state`'i hâlâ `needs_review` olan bir paketi
+  kabul edebilir.
+- **Layer B** (`evidence_review.py`): yalnız zaten canonical olmuş bireysel
+  candidate/suggestion kayıtlarının `needs_review → confirmed|rejected` (candidate)
+  veya `needs_review → accepted_for_follow_up|dismissed` (suggestion) geçişini
+  yapar; pending package approval mekanizması DEĞİLDİR.
+- Audit/rollback bağımsızlığı: Layer A `reviews/` (`*.approval.json`,
+  `evidence.json.before_approval_*.bak`); Layer B ayrı alt dizin
+  `reviews/evidence_reviews/` (`*.review_audit.json`,
+  `evidence.json.before_review_*.bak`) — farklı fonksiyonlar, farklı `audit_type`.
+
+**Safety** — network varsayılan KAPALI (`network_allowed=False` varsayılan); gerçek
+LLM/API çağrısı yalnız `--with-agent` + `--allow-network` ile; Fake/injected client
+test amaçlı serbest; allowlist grounding + free-text safety zorunlu; stale-input hash
+validation zorunlu (`analysis_metadata` içindeki issues/facts/active-documents
+hash'leri güncel canonical veriyle eşleşmezse validator FAIL döner); canonical
+`evidence.json` insan onayı (Layer A `--approve`) olmadan OLUŞTURULAMAZ.
+
+**Pending baseline checkpoint** — `case_0001` için yalnız pending analiz üretildi
+(`data/cases/case_0001/evidence/evidence_case_0001_v1.json.pending`, SHA256
+`084056de5a0242f4bac57c0916e532acba581e2eb8418d0d54187c37ec2acdce`): 6 coverage
+(canonical issue ile 1:1), 0 candidate, 0 suggestion, `execution_state:
+analysis_not_run` × 6 (network/agent bu session'da hiç kullanılmadı). **Canonical
+`evidence.json` HENÜZ OLUŞTURULMADI** — Layer A approval bu checkpoint'e kadar
+kasıtlı olarak çalıştırılmamıştır; bu satırın kendisi Row 12'nin mimari/contract
+LOCK'udur, canonical veri promosyonu ayrı ve sonraki bir kullanıcı onayı gerektirir.
+
+Future row'lar (Row 13+) Row 12 contractını (şema, deterministic source boundary,
+agent boundary, Layer A/Layer B ayrımı) sessizce değiştiremez veya yeniden
+yorumlayamaz. **Row 12 contract changes require an explicit unlock/review before
+modification.**
 
 ## 6. Cross-Cutting Backlog
 
