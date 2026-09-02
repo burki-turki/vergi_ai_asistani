@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "research_analysis_id": "legal_research_case_0001_v1",
+  "case_id": "case_0001",
+  "status": "completed",
+  "generated_at": "2026-09-02T15:07:46.272689+03:00",
+  "research_candidates": [
+    {
+      "research_type": "provision_resolution",
+      "source_issue_id": "issue_002",
+      "title": "Deadline kaydının hukuki dayanakları Legal Knowledge Engine üzerinden araştırıldı",
+      "description": "'IYUK_2577_m7_1' → kanun_2577_m7_f1 (2577 sayılı İYUK). Deterministik Legal Knowledge Engine bulgusu: formal_result='valid' (Hedef tarih doğrulanmış provision formal validity aralığında.), applicability_result='unknown' (Hedef tarih doğrulanmış bir window içinde değil; ancak bütün application/extension windows doğrulanmış olmadığı için not_applicable sonucu verilemez.). 'IYUK_2577_m7_2_b' → kanun_2577_m7_f2_b (2577 sayılı İYUK). Deterministik Legal Knowledge Engine bulgusu: formal_result='valid' (Hedef tarih doğrulanmış provision formal validity aralığında.), applicability_result='unknown' (Hedef tarih doğrulanmış bir window içinde değil; ancak bütün application/extension windows doğrulanmış olmadığı için not_applicable sonucu verilemez.). 'IYUK_2577_m8_1' → kanun_2577_m8_f1 (2577 sayılı İYUK). Deterministik Legal Knowledge Engine bulgusu: formal_result='valid' (Hedef tarih doğrulanmış provision formal validity aralığında.), applicability_result='unknown' (Hedef tarih doğrulanmış bir window içinde değil; ancak bütün application/extension windows doğrulanmış olmadığı için not_applicable sonucu verilemez.). 'IYUK_2577_m8_2' → kanun_2577_m8_f2 (2577 sayılı İYUK). Deterministik Legal Knowledge Engine bulgusu: formal_result='valid' (Hedef tarih doğrulanmış provision formal validity aralığında.), applicability_result='unknown' (Hedef tarih doğrulanmış bir window içinde değil; ancak bütün application/extension windows doğrulanmış olmadığı için not_applicable sonucu verilemez.). 'IYUK_2577_m8_3' → kanun_2577_m8_f3 (2577 sayılı İYUK). Deterministik Legal Knowledge Engine bulgusu: formal_result='valid' (Hedef tarih doğrulanmış provision formal validity aralığında.), applicability_result='unknown' (Hedef tarih doğrulanmış bir window içinde değil; ancak bütün application/extension windows doğrulanmış olmadığı için not_applicable sonucu verilemez.). 'IYUK_2577_m61_1' → kanun_2577_m61_f1 (2577 sayılı İYUK). Deterministik Legal Knowledge Engine bulgusu: formal_result='valid' (Hedef tarih doğrulanmış provision formal validity aralığında.), applicability_result='unknown' (Hedef tarih doğrulanmış bir window içinde değil; ancak bütün application/extension windows doğrulanmış olmadığı için not_applicable sonucu verilemez.). Bu kayıt, deterministik Legal Knowledge Engine (provision_repository + provision_version_policy + provision_policy) tarafından üretilmiş bir araştırma adayıdır. Hükmün yürürlükte olduğunu, uygulanabilir olduğunu, davanın sonucunu veya kesin bir hukuki sonucu KESİNLEŞTİRMEZ; insan onayı gerektirir.",
+      "trigger_rule_id": "research_rule_deadline_legal_basis_v1",
+      "citation_refs": [
+        "IYUK_2577_m7_1",
+        "IYUK_2577_m7_2_b",
+        "IYUK_2577_m8_1",
+        "IYUK_2577_m8_2",
+        "IYUK_2577_m8_3",
+        "IYUK_2577_m61_1"
+      ],
+      "resolved_provision_ids": [
+        "kanun_2577_m7_f1",
+        "kanun_2577_m7_f2_b",
+        "kanun_2577_m8_f1",
+        "kanun_2577_m8_f2",
+        "kanun_2577_m8_f3",
+        "kanun_2577_m61_f1"
+      ],
+      "finding_status": "provision_resolved",
+      "formal_result": "valid",
+      "applicability_result": "unknown",
+      "retrieval_query": null,
+      "source_fact_ids": [],
+      "source_timeline_event_ids": [
+        "timeline_event_003"
+      ],
+      "source_deadline_ids": [
+        "deadline_001"
+      ],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [],
+      "confidence": 0.9,
+      "requires_human_review": true,
+      "notes": null,
+      "research_id": "research_001",
+      "status": "candidate"
+    },
+    {
+      "research_type": "provision_resolution",
+      "source_issue_id": "issue_003",
+      "title": "Fact'te atıf yapılan hukuki dayanak Legal Knowledge Engine üzerinden araştırıldı",
+      "description": "'KDVK_m29' → Legal Knowledge Engine'de eşleşen bir kayıt bulunamadı (not_found). Bu kayıt, deterministik Legal Knowledge Engine (provision_repository + provision_version_policy + provision_policy) tarafından üretilmiş bir araştırma adayıdır. Hükmün yürürlükte olduğunu, uygulanabilir olduğunu, davanın sonucunu veya kesin bir hukuki sonucu KESİNLEŞTİRMEZ; insan onayı gerektirir.",
+      "trigger_rule_id": "research_rule_fact_legal_reference_v1",
+      "citation_refs": [
+        "KDVK_m29"
+      ],
+      "resolved_provision_ids": [],
+      "finding_status": "not_found",
+      "formal_result": null,
+      "applicability_result": null,
+      "retrieval_query": null,
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_006"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.3,
+      "requires_human_review": true,
+      "notes": null,
+      "research_id": "research_002",
+      "status": "candidate"
+    },
+    {
+      "research_type": "provision_resolution",
+      "source_issue_id": "issue_004",
+      "title": "Fact'te atıf yapılan hukuki dayanak Legal Knowledge Engine üzerinden araştırıldı",
+      "description": "'VUK_m341' → Legal Knowledge Engine'de eşleşen bir kayıt bulunamadı (not_found). Bu kayıt, deterministik Legal Knowledge Engine (provision_repository + provision_version_policy + provision_policy) tarafından üretilmiş bir araştırma adayıdır. Hükmün yürürlükte olduğunu, uygulanabilir olduğunu, davanın sonucunu veya kesin bir hukuki sonucu KESİNLEŞTİRMEZ; insan onayı gerektirir.",
+      "trigger_rule_id": "research_rule_fact_legal_reference_v1",
+      "citation_refs": [
+        "VUK_m341"
+      ],
+      "resolved_provision_ids": [],
+      "finding_status": "not_found",
+      "formal_result": null,
+      "applicability_result": null,
+      "retrieval_query": null,
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_007"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.3,
+      "requires_human_review": true,
+      "notes": null,
+      "research_id": "research_003",
+      "status": "candidate"
+    },
+    {
+      "research_type": "provision_resolution",
+      "source_issue_id": "issue_005",
+      "title": "Fact'te atıf yapılan hukuki dayanak Legal Knowledge Engine üzerinden araştırıldı",
+      "description": "'KDVK_m29' → Legal Knowledge Engine'de eşleşen bir kayıt bulunamadı (not_found). Bu kayıt, deterministik Legal Knowledge Engine (provision_repository + provision_version_policy + provision_policy) tarafından üretilmiş bir araştırma adayıdır. Hükmün yürürlükte olduğunu, uygulanabilir olduğunu, davanın sonucunu veya kesin bir hukuki sonucu KESİNLEŞTİRMEZ; insan onayı gerektirir.",
+      "trigger_rule_id": "research_rule_fact_legal_reference_v1",
+      "citation_refs": [
+        "KDVK_m29"
+      ],
+      "resolved_provision_ids": [],
+      "finding_status": "not_found",
+      "formal_result": null,
+      "applicability_result": null,
+      "retrieval_query": null,
+      "source_fact_ids": [
+        "fact_vir_001_llm_v1_1_20260901_105342_006"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.3,
+      "requires_human_review": true,
+      "notes": null,
+      "research_id": "research_004",
+      "status": "candidate"
+    },
+    {
+      "research_type": "provision_resolution",
+      "source_issue_id": "issue_006",
+      "title": "Fact'te atıf yapılan hukuki dayanak Legal Knowledge Engine üzerinden araştırıldı",
+      "description": "'VUK_m341' → Legal Knowledge Engine'de eşleşen bir kayıt bulunamadı (not_found). Bu kayıt, deterministik Legal Knowledge Engine (provision_repository + provision_version_policy + provision_policy) tarafından üretilmiş bir araştırma adayıdır. Hükmün yürürlükte olduğunu, uygulanabilir olduğunu, davanın sonucunu veya kesin bir hukuki sonucu KESİNLEŞTİRMEZ; insan onayı gerektirir.",
+      "trigger_rule_id": "research_rule_fact_legal_reference_v1",
+      "citation_refs": [
+        "VUK_m341"
+      ],
+      "resolved_provision_ids": [],
+      "finding_status": "not_found",
+      "formal_result": null,
+      "applicability_result": null,
+      "retrieval_query": null,
+      "source_fact_ids": [
+        "fact_vir_001_llm_v1_1_20260901_105342_007"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.3,
+      "requires_human_review": true,
+      "notes": null,
+      "research_id": "research_005",
+      "status": "candidate"
+    },
+    {
+      "research_type": "issue_driven_discovery",
+      "source_issue_id": "issue_001",
+      "title": "Issue için araştırma intent'i oluştu; retrieval henüz çalıştırılmadı",
+      "description": "'tebliğ tarihinin idari yargıda dava açma süresine etkisi' konusunda bir araştırma intent'i (research intent) tespit edilmiştir; ancak network erişimi açık olmadığı (network_allowed=False / --allow-network verilmedi) için retrieval HENÜZ ÇALIŞTIRILMAMIŞTIR. Bu kayıt bir kaynağın bulunduğunu veya bulunmadığını İDDİA ETMEZ; yalnızca bu issue için ileride retrieval çalıştırılması gerektiğini işaretler. Bu kayıt, deterministik Legal Knowledge Engine (provision_repository + provision_version_policy + provision_policy) tarafından üretilmiş bir araştırma adayıdır. Hükmün yürürlükte olduğunu, uygulanabilir olduğunu, davanın sonucunu veya kesin bir hukuki sonucu KESİNLEŞTİRMEZ; insan onayı gerektirir.",
+      "trigger_rule_id": "research_rule_issue_driven_discovery_v1",
+      "citation_refs": [],
+      "resolved_provision_ids": [],
+      "finding_status": "retrieval_not_run",
+      "formal_result": null,
+      "applicability_result": null,
+      "retrieval_query": "tebliğ tarihinin idari yargıda dava açma süresine etkisi",
+      "source_fact_ids": [],
+      "source_timeline_event_ids": [
+        "timeline_event_003"
+      ],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [],
+      "confidence": 0.1,
+      "requires_human_review": true,
+      "notes": null,
+      "research_id": "research_006",
+      "status": "candidate"
+    }
+  ],
+  "warnings": [
+    "Network access disabled (network_allowed=False, --allow-network verilmedi); issue-driven discovery bu issue için ÇALIŞTIRILAMADI (coverage kaydı retrieval_not_run olarak üretiliyor): issue_001"
+  ],
+  "notes": "Legal Research Engine V1 çekirdeği (deterministik Legal Knowledge Engine: provision_repository + provision_version_policy + provision_policy) canonical issues.json içindeki her issue için hukuki dayanak atıflarını çözümler ve source of truth / safety boundary'dir. Bu çalıştırmada Legal Research Agent (LLM) devre dışıdır; yalnız deterministik Legal Knowledge Engine sorgulaması uygulanmıştır. Bu çalıştırmada Issue-Driven Discovery V1 (query_parser + retriever üzerinden retrieval) da etkinleştirilmiştir; açık citation taşımayan issue'lar için Legal Knowledge Engine'de retrieval tabanlı araştırma denenmiştir. Üretilen kayıtlar (kaynağı ne olursa olsun) research candidate'tır; hükmün yürürlükte olduğunu, uygulanabilir olduğunu, davanın sonucunu veya kesin bir hukuki sonucu kesinleştirmez."
+}

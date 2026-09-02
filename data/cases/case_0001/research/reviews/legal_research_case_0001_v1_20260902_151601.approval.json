@@ -1,0 +1,59 @@
+{
+  "audit_type": "legal_research_analysis_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-02T15:16:01.106864+03:00",
+  "case_id": "case_0001",
+  "research_analysis_id": "legal_research_case_0001_v1",
+  "source_pending_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\legal_research_case_0001_v1.json.pending",
+  "canonical_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
+  "pending_sha256": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089",
+  "canonical_sha256": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089",
+  "content_identical": true,
+  "previous_canonical_backup": null,
+  "research_candidate_count": 6,
+  "research_summaries": [
+    {
+      "research_id": "research_001",
+      "source_issue_id": "issue_002",
+      "finding_status": "provision_resolved",
+      "trigger_rule_id": "research_rule_deadline_legal_basis_v1",
+      "status": "candidate"
+    },
+    {
+      "research_id": "research_002",
+      "source_issue_id": "issue_003",
+      "finding_status": "not_found",
+      "trigger_rule_id": "research_rule_fact_legal_reference_v1",
+      "status": "candidate"
+    },
+    {
+      "research_id": "research_003",
+      "source_issue_id": "issue_004",
+      "finding_status": "not_found",
+      "trigger_rule_id": "research_rule_fact_legal_reference_v1",
+      "status": "candidate"
+    },
+    {
+      "research_id": "research_004",
+      "source_issue_id": "issue_005",
+      "finding_status": "not_found",
+      "trigger_rule_id": "research_rule_fact_legal_reference_v1",
+      "status": "candidate"
+    },
+    {
+      "research_id": "research_005",
+      "source_issue_id": "issue_006",
+      "finding_status": "not_found",
+      "trigger_rule_id": "research_rule_fact_legal_reference_v1",
+      "status": "candidate"
+    },
+    {
+      "research_id": "research_006",
+      "source_issue_id": "issue_001",
+      "finding_status": "retrieval_not_run",
+      "trigger_rule_id": "research_rule_issue_driven_discovery_v1",
+      "status": "candidate"
+    }
+  ],
+  "approval_semantics": "Bu approval research analysis kaydını canonical repository'ye kabul eder. Hiçbir research candidate'ın bir hükmün yürürlükte olduğunu, uygulanabilir olduğunu, davanın sonucunu veya kesin bir hukuki sonucu kesinleştirdiği anlamına gelmez."
+}

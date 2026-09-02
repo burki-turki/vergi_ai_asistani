@@ -123,8 +123,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 7. Timeline Agent / Engine — **DONE / LOCKED**
 8. Deadline Engine — **DONE / LOCKED**
 9. Issue Spotting Agent — **DONE / LOCKED**
-10. **Legal Research Agent — ACTIVE / NEXT**
-11. Case Law Agent
+10. Legal Research Agent — **DONE / LOCKED**
+11. **Case Law Agent — ACTIVE / NEXT**
 12. Evidence Agent
 13. Argument Agent
 14. Risk / Strategy Agent
@@ -158,8 +158,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-9 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 10 — LEGAL RESEARCH AGENT** (henüz implement
+- Rows 1-10 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 11 — CASE LAW AGENT** (henüz implement
   edilmedi)
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
@@ -174,9 +174,27 @@ katkı sağlamadı). Issue candidate'lar hâlâ verified fact/legal conclusion/c
 outcome/deadline determination DEĞİLDİR (bkz. Prensip 7, 8; `case_issue_spotting.schema.json`
 içindeki `status: "candidate"` const kısıtı).
 
-### Row 10 — Legal Research Agent (ACTIVE / NEXT)
+### Row 10 — Legal Research Agent (DONE / LOCKED — checkpoint özeti)
 
-Henüz implement edilmedi. Row 9 tamamlanma paterni (deterministic policy/engine →
+Deterministik Policy/Engine (`legal_research_policy.py`, `legal_research_engine.py`,
+`resolve_provision_locator()` ortak çözümleyici) + Issue-Driven Discovery katmanı
+(`legal_research_discovery.py`, `query_parser.py`/`retriever.py` mevcut altyapısı
+üzerinden, üç ayrı execution-state semantiğiyle: `retrieval_not_run` /
+`retrieval_failed` / `no_research_evidence`) + LLM Agent katmanı
+(`legal_research_agent.py`, yapılandırılmış sinyal + deterministik template
+rendering, free-text safety + network safety gate) + Validator
+(`legal_research_validator.py`) + Approval (`legal_research_approval.py`) tamamlandı.
+`case_0001` için canonical `data/cases/case_0001/research/research.json` insan
+onayıyla (`--approve`) promote edildi (6 research candidate: 5 `provision_resolution`,
+1 `issue_driven_discovery`; agent katkısı 0). `finding_status` alanı yalnız
+citation/provision-level teknik çözümü ifade eder — hiçbir değer hukuki meselenin
+çözüldüğü, hükmün uygulanabilir olduğu veya case outcome anlamına GELMEZ (bkz.
+Prensip 7; `case_legal_research.schema.json` içindeki `finding_status`/`status`
+alan açıklamaları).
+
+### Row 11 — Case Law Agent (ACTIVE / NEXT)
+
+Henüz implement edilmedi. Row 9/10 tamamlanma paterni (deterministic policy/engine →
 validator → agent/LLM task → approval) referans alınmalı; standart geliştirme sırası
 için bkz. §4 "Her row için standart geliştirme sırası".
 

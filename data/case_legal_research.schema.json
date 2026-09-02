@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case_legal_research.schema.json",
+  "title": "Vergi AI Case Legal Research Schema V1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "research_analysis_id",
+    "case_id",
+    "status",
+    "generated_at",
+    "research_candidates",
+    "warnings",
+    "notes"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "research_analysis_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "partial",
+        "failed"
+      ]
+    },
+
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "research_candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/research_candidate"
+      }
+    },
+
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+
+  "$defs": {
+    "research_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "research_id",
+        "research_type",
+        "source_issue_id",
+        "title",
+        "description",
+        "trigger_rule_id",
+        "citation_refs",
+        "resolved_provision_ids",
+        "finding_status",
+        "formal_result",
+        "applicability_result",
+        "retrieval_query",
+        "source_fact_ids",
+        "source_timeline_event_ids",
+        "source_deadline_ids",
+        "related_party_ids",
+        "related_dispute_item_ids",
+        "confidence",
+        "requires_human_review",
+        "status",
+        "notes"
+      ],
+
+      "properties": {
+        "research_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "research_type": {
+          "type": "string",
+          "description": "provision_resolution: canonical bir fact/deadline'daki AÇIK (explicit) citation'ın deterministik çözümlenmesi. issue_driven_discovery: açık citation taşımayan bir issue için, deterministik query_parser+retriever üzerinden yapılan retrieval-tabanlı araştırma (yine deterministik provision_repository/version_policy/provision_policy ile çözümlenir). agent_suggestion: LLM'in önerdiği, deterministik motora hiç girmemiş, salt 'ayrıca bakılsın' işaretidir.",
+          "enum": [
+            "provision_resolution",
+            "issue_driven_discovery",
+            "agent_suggestion"
+          ]
+        },
+
+        "source_issue_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "trigger_rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "citation_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "resolved_provision_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "finding_status": {
+          "type": "string",
+          "description": "KRİTİK SEMANTİK: bu alan YALNIZ citation/provision-level teknik çözümleme veya retrieval EXECUTION durumunu ifade eder (Legal Knowledge Engine sorgu sonucu). Hiçbir değer, hukuki meselenin çözüldüğü, bir hükmün nihai olarak uygulanabilir olduğu veya davanın sonucu anlamına GELMEZ. 'provision_resolved' yalnız şu anlama gelir: ilgili madde/fıkra/bent canonical provisions.json içinde bulunmuş VE version/temporal sorgusu tek bir sürüme ulaşmıştır. formal_result/applicability_result alanları BUNDAN TAMAMEN AYRI, kendi başlarına değerlendirilmesi gereken bulgulardır; applicability_result='unknown' iken hiçbir finding_status değeri 'uygulanabilirlik çözüldü' anlamına gelmez. ÜÇ AYRI EXECUTION-STATE ANLAMI (birbirine dönüştürülemez): 'retrieval_not_run' = bu issue için research intent oluştu ama retrieval HENÜZ DENENMEDİ (ör. network kapalı) - 'aranmadı' ASLA 'bulunamadı' demek değildir. 'retrieval_failed' = retrieval DENENDİ ama teknik olarak çöktü/başarısız oldu - 'çöktü' ASLA 'kaynak yok' demek değildir. 'no_research_evidence' = retrieval BAŞARIYLA çalıştı ve mekanik olarak hiçbir aday bulamadı - yalnız bu üçüncü durum gerçekten 'arandı ve bulunamadı' anlamına gelir. 'agent_suggested': LLM önerisi, deterministik çözüm içermez.",
+          "enum": [
+            "provision_resolved",
+            "provision_resolved_version_unknown",
+            "version_conflict",
+            "version_unresolved",
+            "no_valid_version",
+            "mixed_provision_candidates",
+            "ambiguous",
+            "not_found",
+            "unparseable_citation",
+            "retrieval_not_run",
+            "retrieval_failed",
+            "no_research_evidence",
+            "agent_suggested"
+          ]
+        },
+
+        "formal_result": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "provision_policy.py tarafından üretilen deterministik, fail-closed bulgudur (doğrulanmamışsa 'unknown' döner). 'valid' dahi tek başına 'bu hüküm bu davada uygulanır' anlamına gelmez; yalnız formal geçerlilik bulgusudur.",
+          "enum": [
+            "neutral",
+            "valid",
+            "invalid",
+            "unknown",
+            null
+          ]
+        },
+
+        "applicability_result": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "provision_policy.py tarafından üretilen deterministik, fail-closed bulgudur. 'applicable' yalnız zaman penceresi bakımından uygunluğu gösterir; case outcome veya kesin hukuki sonuç anlamına gelmez. 'unknown' iken hiçbir kayıt applicability'nin çözüldüğü şeklinde yorumlanamaz.",
+          "enum": [
+            "neutral",
+            "applicable",
+            "not_applicable",
+            "unknown",
+            null
+          ]
+        },
+
+        "retrieval_query": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "research_type='issue_driven_discovery' için, build_research_intent() tarafından deterministik olarak üretilmiş arama sorgusu (LLM tarafından yazılmamıştır). Diğer research_type değerleri için null olmalıdır."
+        },
+
+        "source_fact_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "source_timeline_event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "source_deadline_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "related_party_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "related_dispute_item_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+
+        "requires_human_review": {
+          "type": "boolean"
+        },
+
+        "status": {
+          "type": "string",
+          "const": "candidate"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
