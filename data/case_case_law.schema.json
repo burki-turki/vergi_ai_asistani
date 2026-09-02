@@ -1,0 +1,455 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case_case_law.schema.json",
+  "title": "Vergi AI Case Law Research Schema V2",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "case_law_analysis_id",
+    "case_id",
+    "status",
+    "generated_at",
+    "case_law_coverage",
+    "case_law_decisions",
+    "case_law_agent_suggestions",
+    "warnings",
+    "notes"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2
+    },
+
+    "case_law_analysis_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "partial",
+        "failed"
+      ]
+    },
+
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "case_law_coverage": {
+      "type": "array",
+      "description": "HER canonical issue için TAM OLARAK BİR kayıt - o issue'nun case-law retrieval'inin execution/coverage durumunu izler. Bir karar candidate'ı DEĞİLDİR ve hiçbir court metadata alanı taşımaz (yapısal olarak - schema'da böyle bir alan yoktur).",
+      "items": {
+        "$ref": "#/$defs/coverage_record"
+      }
+    },
+
+    "case_law_decisions": {
+      "type": "array",
+      "description": "Bir issue için 0..N adet olabilir. Her biri, deterministik retrieval + canonical documents.json doğrulaması sonrasında GERÇEKTEN doğrulanmış (grounded) bir 'Yargı Kararı' kaydını temsil eder. LLM tarafından ASLA üretilemez/değiştirilemez.",
+      "items": {
+        "$ref": "#/$defs/decision_candidate"
+      }
+    },
+
+    "case_law_agent_suggestions": {
+      "type": "array",
+      "description": "LLM'in önerdiği, hiçbir grounded court metadata İÇEREMEYEN, salt 'ayrıca bakılsın' işaretleridir. Şema düzeyinde court_name/case_number/decision_date/source_url gibi bir alan dahi TANIMLANMAMIŞTIR.",
+      "items": {
+        "$ref": "#/$defs/agent_suggestion"
+      }
+    },
+
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+
+  "$defs": {
+    "coverage_record": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "coverage_id",
+        "source_issue_id",
+        "execution_state",
+        "retrieval_query",
+        "decision_count",
+        "trigger_rule_id",
+        "citation_refs",
+        "title",
+        "description",
+        "confidence",
+        "requires_human_review",
+        "status",
+        "notes"
+      ],
+
+      "properties": {
+        "coverage_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "source_issue_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "execution_state": {
+          "type": "string",
+          "description": "DÖRT AYRI ANLAM - birbirine dönüştürülemez. 'retrieval_not_run': intent oluştu, retrieval HENÜZ DENENMEDİ. 'retrieval_failed': retrieval DENENDİ, teknik olarak çöktü. 'no_case_law_evidence': retrieval BAŞARIYLA çalıştı, doğrulanmış (grounded) hiçbir 'Yargı Kararı' bulunamadı (decision_count=0). 'retrieval_completed': retrieval BAŞARIYLA çalıştı VE en az bir grounded karar bulundu (decision_count>=1, ilgili kayıtlar case_law_decisions içindedir). Bu alan KARAR SAYISINI TEMSİL ETMEZ - yalnız yürütme durumunu gösterir; sayı decision_count'tadır.",
+          "enum": [
+            "retrieval_not_run",
+            "retrieval_failed",
+            "no_case_law_evidence",
+            "retrieval_completed"
+          ]
+        },
+
+        "retrieval_query": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Deterministik olarak üretilmiş arama sorgusu (LLM tarafından yazılmamıştır)."
+        },
+
+        "decision_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Bu coverage kaydına bağlı case_law_decisions öğelerinin sayısı. execution_state='retrieval_completed' değilse 0 olmalıdır."
+        },
+
+        "trigger_rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "citation_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+
+        "requires_human_review": {
+          "type": "boolean",
+          "const": true
+        },
+
+        "status": {
+          "type": "string",
+          "const": "candidate"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+
+    "decision_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "decision_id",
+        "source_issue_id",
+        "source_research_ids",
+        "source_coverage_id",
+        "source_document_id",
+        "court_name",
+        "court_unit",
+        "case_number",
+        "decision_number",
+        "decision_date",
+        "source_url",
+        "retrieved_chunk_id",
+        "provenance_status",
+        "applicability_result",
+        "title",
+        "description",
+        "trigger_rule_id",
+        "confidence",
+        "requires_human_review",
+        "status",
+        "notes"
+      ],
+
+      "properties": {
+        "decision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "source_issue_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "source_research_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "source_coverage_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Bu decision'ı üreten coverage kaydının coverage_id'si."
+        },
+
+        "source_document_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Canonical documents.json içinde belge_turu='Yargı Kararı' olarak doğrulanmış GERÇEK bir document_id olmalıdır."
+        },
+
+        "court_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Yalnız canonical documents.json kaydının kaynak_kurum alanından. Kaynakta yoksa null. LLM ASLA üretemez."
+        },
+
+        "court_unit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Daire/kurul - yalnız canonical kayıtta varsa. Kaynakta yoksa null (tahmin edilmez)."
+        },
+
+        "case_number": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Esas no - yalnız canonical kayıtta varsa. Kaynakta yoksa null."
+        },
+
+        "decision_number": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Karar no - yalnız canonical kayıtta AYRI bir alan olarak varsa. Kaynakta yoksa null (case_number ile karıştırılmaz)."
+        },
+
+        "decision_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Yalnız canonical documents.json kaydının karar_tarihi (veya resmi_gazete_tarihi) alanından. Kaynakta yoksa null."
+        },
+
+        "source_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+
+        "retrieved_chunk_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Retriever'ın döndürdüğü chunk/source referansı (audit amaçlı); yoksa null."
+        },
+
+        "provenance_status": {
+          "type": "string",
+          "const": "verified_against_canonical_documents",
+          "description": "Bu decision'ın var olma nedeni: source_document_id canonical documents.json'a karşı doğrulanmıştır. Başka bir provenance yolu V1'de yoktur."
+        },
+
+        "applicability_result": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Bir kararın somut uyuşmazlığa uygulanabilirliği yalnız insan hukuki değerlendirmesiyle belirlenir. İzin verilen tek non-null değerler 'unknown' ve 'needs_review'dir - ASLA 'applicable'.",
+          "enum": [
+            "unknown",
+            "needs_review",
+            null
+          ]
+        },
+
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "trigger_rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+
+        "requires_human_review": {
+          "type": "boolean",
+          "const": true
+        },
+
+        "status": {
+          "type": "string",
+          "const": "candidate"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+
+    "agent_suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "description": "Bu tipte court_name/case_number/decision_number/decision_date/source_url/source_document_id gibi bir alan KASITLI OLARAK TANIMLANMAMIŞTIR - LLM'in bunları üretmesi yapısal olarak imkânsızdır.",
+
+      "required": [
+        "suggestion_id",
+        "source_issue_id",
+        "source_research_ids",
+        "reason_code",
+        "title",
+        "description",
+        "trigger_rule_id",
+        "confidence",
+        "requires_human_review",
+        "status",
+        "notes"
+      ],
+
+      "properties": {
+        "suggestion_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "source_issue_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "source_research_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "reason_code": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "trigger_rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+
+        "requires_human_review": {
+          "type": "boolean",
+          "const": true
+        },
+
+        "status": {
+          "type": "string",
+          "const": "candidate"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

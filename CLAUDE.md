@@ -124,8 +124,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 8. Deadline Engine — **DONE / LOCKED**
 9. Issue Spotting Agent — **DONE / LOCKED**
 10. Legal Research Agent — **DONE / LOCKED**
-11. **Case Law Agent — ACTIVE / NEXT**
-12. Evidence Agent
+11. Case Law Agent — **DONE / LOCKED**
+12. **Evidence Agent — ACTIVE / NEXT**
 13. Argument Agent
 14. Risk / Strategy Agent
 15. Drafting Agent
@@ -158,8 +158,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-10 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 11 — CASE LAW AGENT** (henüz implement
+- Rows 1-11 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 12 — EVIDENCE AGENT** (henüz implement
   edilmedi)
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
@@ -192,9 +192,30 @@ citation/provision-level teknik çözümü ifade eder — hiçbir değer hukuki 
 Prensip 7; `case_legal_research.schema.json` içindeki `finding_status`/`status`
 alan açıklamaları).
 
-### Row 11 — Case Law Agent (ACTIVE / NEXT)
+### Row 11 — Case Law Agent (DONE / LOCKED — checkpoint özeti)
 
-Henüz implement edilmedi. Row 9/10 tamamlanma paterni (deterministic policy/engine →
+Deterministik Policy/Discovery katmanı (`case_law_policy.py`, `case_law_discovery.py`,
+`build_case_law_intent()` — citation-öncelikli, `legal_research_discovery.build_research_intent()`
+fallback'i yeniden kullanır) + coverage/decision ayrımı (her canonical issue için tam
+1 coverage kaydı, `execution_state ∈ {retrieval_not_run, retrieval_failed,
+no_case_law_evidence, retrieval_completed}`; her issue için 0..N bağımsız
+`source_document_id`'ye göre dedup edilmiş decision kaydı, her decision canonical
+`documents.json`'a karşı çift aşamalı grounding ile doğrulanır) + ayrı
+`agent_suggestion` tipi (şema seviyesinde hiçbir mahkeme-metadata alanı yok) + LLM
+Agent katmanı (`case_law_agent.py`, yapılandırılmış sinyal + free-text safety +
+network safety gate) + Validator (`case_law_validator.py`, 14 test) + Approval
+(`case_law_approval.py`) tamamlandı. `case_0001` için canonical
+`data/cases/case_0001/case_law/case_law.json` insan onayıyla (`--approve`) promote
+edildi (6 coverage kaydı, tümü `execution_state: retrieval_not_run`; 0 decision;
+0 agent suggestion — network bu session'da hiç kullanılmadı). Decision candidate'lar
+ve agent suggestion'lar hâlâ verified fact/legal conclusion/case outcome DEĞİLDİR
+(bkz. Prensip 7; `case_case_law.schema.json` içindeki `requires_human_review: true`
+const kısıtı ve `applicability_result` alanının yalnızca `null`/`"unknown"`/
+`"needs_review"` değerlerini kabul etmesi).
+
+### Row 12 — Evidence Agent (ACTIVE / NEXT)
+
+Henüz implement edilmedi. Row 9/10/11 tamamlanma paterni (deterministic policy/engine →
 validator → agent/LLM task → approval) referans alınmalı; standart geliştirme sırası
 için bkz. §4 "Her row için standart geliştirme sırası".
 

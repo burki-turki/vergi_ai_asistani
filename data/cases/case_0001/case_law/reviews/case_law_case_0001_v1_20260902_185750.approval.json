@@ -1,0 +1,62 @@
+{
+  "audit_type": "case_law_analysis_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-02T18:57:50.242529+03:00",
+  "case_id": "case_0001",
+  "case_law_analysis_id": "case_law_case_0001_v1",
+  "source_pending_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law_case_0001_v1.json.pending",
+  "canonical_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
+  "pending_sha256": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf",
+  "canonical_sha256": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf",
+  "content_identical": true,
+  "previous_canonical_backup": null,
+  "coverage_count": 6,
+  "decision_count": 0,
+  "agent_suggestion_count": 0,
+  "coverage_summaries": [
+    {
+      "coverage_id": "coverage_issue_001",
+      "source_issue_id": "issue_001",
+      "execution_state": "retrieval_not_run",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_topic_based_v1__event_type_notification_date"
+    },
+    {
+      "coverage_id": "coverage_issue_002",
+      "source_issue_id": "issue_002",
+      "execution_state": "retrieval_not_run",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1"
+    },
+    {
+      "coverage_id": "coverage_issue_003",
+      "source_issue_id": "issue_003",
+      "execution_state": "retrieval_not_run",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1"
+    },
+    {
+      "coverage_id": "coverage_issue_004",
+      "source_issue_id": "issue_004",
+      "execution_state": "retrieval_not_run",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1"
+    },
+    {
+      "coverage_id": "coverage_issue_005",
+      "source_issue_id": "issue_005",
+      "execution_state": "retrieval_not_run",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1"
+    },
+    {
+      "coverage_id": "coverage_issue_006",
+      "source_issue_id": "issue_006",
+      "execution_state": "retrieval_not_run",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1"
+    }
+  ],
+  "decision_summaries": [],
+  "approval_semantics": "Bu approval case law analysis kaydını canonical repository'ye kabul eder. Hiçbir case-law candidate'ın gerçek bir mahkeme kararı olduğunu (belge_turu='Yargı Kararı' + canonical documents.json grounding hariç), bir emsalin uyuşmazlığa uygulanabilir olduğunu veya davanın sonucunu kesinleştirdiği anlamına gelmez."
+}

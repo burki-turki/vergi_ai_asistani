@@ -1,0 +1,125 @@
+{
+  "schema_version": 2,
+  "case_law_analysis_id": "case_law_case_0001_v1",
+  "case_id": "case_0001",
+  "status": "completed",
+  "generated_at": "2026-09-02T18:44:02.183872+03:00",
+  "case_law_coverage": [
+    {
+      "coverage_id": "coverage_issue_001",
+      "source_issue_id": "issue_001",
+      "execution_state": "retrieval_not_run",
+      "retrieval_query": "tebliğ tarihinin idari yargıda dava açma süresine etkisi hakkında emsal yargı kararı",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_topic_based_v1__event_type_notification_date",
+      "citation_refs": [],
+      "title": "Issue için case-law araştırma intent'i oluştu; retrieval henüz çalıştırılmadı",
+      "description": "'tebliğ tarihinin idari yargıda dava açma süresine etkisi hakkında emsal yargı kararı' konusunda bir case-law araştırma intent'i tespit edilmiştir; ancak network erişimi açık olmadığı için retrieval HENÜZ ÇALIŞTIRILMAMIŞTIR. Bu kayıt bir emsal kararın bulunduğunu veya bulunmadığını İDDİA ETMEZ. Bu kayıt bir mahkeme kararının uyuşmazlığa uygulanabilir olduğunu KESİNLEŞTİRMEZ; case outcome tahmini veya yerleşik içtihat iddiası içermez. Bulunan (varsa) kararın somut olaya uygulanabilirliği yalnız insan hukuki değerlendirmesiyle belirlenebilir; applicability_result bu nedenle yalnız 'unknown'/'needs_review' olabilir.",
+      "confidence": 0.1,
+      "requires_human_review": true,
+      "notes": null,
+      "status": "candidate"
+    },
+    {
+      "coverage_id": "coverage_issue_002",
+      "source_issue_id": "issue_002",
+      "execution_state": "retrieval_not_run",
+      "retrieval_query": "IYUK_2577_m7_1, IYUK_2577_m7_2_b maddesinin uygulanmasına ilişkin yargı kararı",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1",
+      "citation_refs": [
+        "IYUK_2577_m7_1",
+        "IYUK_2577_m7_2_b",
+        "IYUK_2577_m8_1",
+        "IYUK_2577_m8_2",
+        "IYUK_2577_m8_3",
+        "IYUK_2577_m61_1"
+      ],
+      "title": "Issue için case-law araştırma intent'i oluştu; retrieval henüz çalıştırılmadı",
+      "description": "'IYUK_2577_m7_1, IYUK_2577_m7_2_b maddesinin uygulanmasına ilişkin yargı kararı' konusunda bir case-law araştırma intent'i tespit edilmiştir; ancak network erişimi açık olmadığı için retrieval HENÜZ ÇALIŞTIRILMAMIŞTIR. Bu kayıt bir emsal kararın bulunduğunu veya bulunmadığını İDDİA ETMEZ. Bu kayıt bir mahkeme kararının uyuşmazlığa uygulanabilir olduğunu KESİNLEŞTİRMEZ; case outcome tahmini veya yerleşik içtihat iddiası içermez. Bulunan (varsa) kararın somut olaya uygulanabilirliği yalnız insan hukuki değerlendirmesiyle belirlenebilir; applicability_result bu nedenle yalnız 'unknown'/'needs_review' olabilir.",
+      "confidence": 0.1,
+      "requires_human_review": true,
+      "notes": null,
+      "status": "candidate"
+    },
+    {
+      "coverage_id": "coverage_issue_003",
+      "source_issue_id": "issue_003",
+      "execution_state": "retrieval_not_run",
+      "retrieval_query": "KDVK_m29 maddesinin uygulanmasına ilişkin yargı kararı",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1",
+      "citation_refs": [
+        "KDVK_m29"
+      ],
+      "title": "Issue için case-law araştırma intent'i oluştu; retrieval henüz çalıştırılmadı",
+      "description": "'KDVK_m29 maddesinin uygulanmasına ilişkin yargı kararı' konusunda bir case-law araştırma intent'i tespit edilmiştir; ancak network erişimi açık olmadığı için retrieval HENÜZ ÇALIŞTIRILMAMIŞTIR. Bu kayıt bir emsal kararın bulunduğunu veya bulunmadığını İDDİA ETMEZ. Bu kayıt bir mahkeme kararının uyuşmazlığa uygulanabilir olduğunu KESİNLEŞTİRMEZ; case outcome tahmini veya yerleşik içtihat iddiası içermez. Bulunan (varsa) kararın somut olaya uygulanabilirliği yalnız insan hukuki değerlendirmesiyle belirlenebilir; applicability_result bu nedenle yalnız 'unknown'/'needs_review' olabilir.",
+      "confidence": 0.1,
+      "requires_human_review": true,
+      "notes": null,
+      "status": "candidate"
+    },
+    {
+      "coverage_id": "coverage_issue_004",
+      "source_issue_id": "issue_004",
+      "execution_state": "retrieval_not_run",
+      "retrieval_query": "VUK_m341 maddesinin uygulanmasına ilişkin yargı kararı",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1",
+      "citation_refs": [
+        "VUK_m341"
+      ],
+      "title": "Issue için case-law araştırma intent'i oluştu; retrieval henüz çalıştırılmadı",
+      "description": "'VUK_m341 maddesinin uygulanmasına ilişkin yargı kararı' konusunda bir case-law araştırma intent'i tespit edilmiştir; ancak network erişimi açık olmadığı için retrieval HENÜZ ÇALIŞTIRILMAMIŞTIR. Bu kayıt bir emsal kararın bulunduğunu veya bulunmadığını İDDİA ETMEZ. Bu kayıt bir mahkeme kararının uyuşmazlığa uygulanabilir olduğunu KESİNLEŞTİRMEZ; case outcome tahmini veya yerleşik içtihat iddiası içermez. Bulunan (varsa) kararın somut olaya uygulanabilirliği yalnız insan hukuki değerlendirmesiyle belirlenebilir; applicability_result bu nedenle yalnız 'unknown'/'needs_review' olabilir.",
+      "confidence": 0.1,
+      "requires_human_review": true,
+      "notes": null,
+      "status": "candidate"
+    },
+    {
+      "coverage_id": "coverage_issue_005",
+      "source_issue_id": "issue_005",
+      "execution_state": "retrieval_not_run",
+      "retrieval_query": "KDVK_m29 maddesinin uygulanmasına ilişkin yargı kararı",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1",
+      "citation_refs": [
+        "KDVK_m29"
+      ],
+      "title": "Issue için case-law araştırma intent'i oluştu; retrieval henüz çalıştırılmadı",
+      "description": "'KDVK_m29 maddesinin uygulanmasına ilişkin yargı kararı' konusunda bir case-law araştırma intent'i tespit edilmiştir; ancak network erişimi açık olmadığı için retrieval HENÜZ ÇALIŞTIRILMAMIŞTIR. Bu kayıt bir emsal kararın bulunduğunu veya bulunmadığını İDDİA ETMEZ. Bu kayıt bir mahkeme kararının uyuşmazlığa uygulanabilir olduğunu KESİNLEŞTİRMEZ; case outcome tahmini veya yerleşik içtihat iddiası içermez. Bulunan (varsa) kararın somut olaya uygulanabilirliği yalnız insan hukuki değerlendirmesiyle belirlenebilir; applicability_result bu nedenle yalnız 'unknown'/'needs_review' olabilir.",
+      "confidence": 0.1,
+      "requires_human_review": true,
+      "notes": null,
+      "status": "candidate"
+    },
+    {
+      "coverage_id": "coverage_issue_006",
+      "source_issue_id": "issue_006",
+      "execution_state": "retrieval_not_run",
+      "retrieval_query": "VUK_m341 maddesinin uygulanmasına ilişkin yargı kararı",
+      "decision_count": 0,
+      "trigger_rule_id": "case_law_rule_citation_based_v1",
+      "citation_refs": [
+        "VUK_m341"
+      ],
+      "title": "Issue için case-law araştırma intent'i oluştu; retrieval henüz çalıştırılmadı",
+      "description": "'VUK_m341 maddesinin uygulanmasına ilişkin yargı kararı' konusunda bir case-law araştırma intent'i tespit edilmiştir; ancak network erişimi açık olmadığı için retrieval HENÜZ ÇALIŞTIRILMAMIŞTIR. Bu kayıt bir emsal kararın bulunduğunu veya bulunmadığını İDDİA ETMEZ. Bu kayıt bir mahkeme kararının uyuşmazlığa uygulanabilir olduğunu KESİNLEŞTİRMEZ; case outcome tahmini veya yerleşik içtihat iddiası içermez. Bulunan (varsa) kararın somut olaya uygulanabilirliği yalnız insan hukuki değerlendirmesiyle belirlenebilir; applicability_result bu nedenle yalnız 'unknown'/'needs_review' olabilir.",
+      "confidence": 0.1,
+      "requires_human_review": true,
+      "notes": null,
+      "status": "candidate"
+    }
+  ],
+  "case_law_decisions": [],
+  "case_law_agent_suggestions": [],
+  "warnings": [
+    "Network access disabled (network_allowed=False, --allow-network verilmedi); case-law discovery bu issue için ÇALIŞTIRILAMADI (coverage kaydı retrieval_not_run olarak üretiliyor): issue_001",
+    "Network access disabled (network_allowed=False, --allow-network verilmedi); case-law discovery bu issue için ÇALIŞTIRILAMADI (coverage kaydı retrieval_not_run olarak üretiliyor): issue_002",
+    "Network access disabled (network_allowed=False, --allow-network verilmedi); case-law discovery bu issue için ÇALIŞTIRILAMADI (coverage kaydı retrieval_not_run olarak üretiliyor): issue_003",
+    "Network access disabled (network_allowed=False, --allow-network verilmedi); case-law discovery bu issue için ÇALIŞTIRILAMADI (coverage kaydı retrieval_not_run olarak üretiliyor): issue_004",
+    "Network access disabled (network_allowed=False, --allow-network verilmedi); case-law discovery bu issue için ÇALIŞTIRILAMADI (coverage kaydı retrieval_not_run olarak üretiliyor): issue_005",
+    "Network access disabled (network_allowed=False, --allow-network verilmedi); case-law discovery bu issue için ÇALIŞTIRILAMADI (coverage kaydı retrieval_not_run olarak üretiliyor): issue_006"
+  ],
+  "notes": "Case Law Engine V2 çekirdeği (deterministik Case Law Policy + Case Law Discovery: query_parser + retriever, canonical documents.json ile çift doğrulama) canonical issues.json içindeki HER issue için tam olarak bir coverage kaydı ve o issue'ya bağlı 0..N grounded decision kaydı üretir; source of truth / safety boundary'dir. Retrieval sıralaması hiçbir hukuki üstünlük/emsal gücü ifade etmez. Bu çalıştırmada Case Law Agent (LLM) devre dışıdır. Hiçbir decision, bir mahkeme kararının uyuşmazlığa uygulanabilir olduğunu veya case outcome'u kesinleştirmez."
+}
