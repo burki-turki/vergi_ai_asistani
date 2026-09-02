@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case_issue_spotting.schema.json",
+  "title": "Vergi AI Case Issue Spotting Schema V1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "issue_analysis_id",
+    "case_id",
+    "status",
+    "generated_at",
+    "issues",
+    "warnings",
+    "notes"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "issue_analysis_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "partial",
+        "failed"
+      ]
+    },
+
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/issue_candidate"
+      }
+    },
+
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+
+  "$defs": {
+    "issue_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "issue_id",
+        "issue_type",
+        "title",
+        "description",
+        "trigger_rule_id",
+        "source_fact_ids",
+        "source_timeline_event_ids",
+        "source_deadline_ids",
+        "related_party_ids",
+        "related_dispute_item_ids",
+        "confidence",
+        "requires_human_review",
+        "status",
+        "notes"
+      ],
+
+      "properties": {
+        "issue_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "issue_type": {
+          "type": "string",
+          "enum": [
+            "verification_gap",
+            "deadline_risk",
+            "legal_basis_reference",
+            "procedural_risk",
+            "other"
+          ]
+        },
+
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "trigger_rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+
+        "source_fact_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "source_timeline_event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "source_deadline_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "related_party_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "related_dispute_item_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+
+        "requires_human_review": {
+          "type": "boolean"
+        },
+
+        "status": {
+          "type": "string",
+          "const": "candidate"
+        },
+
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

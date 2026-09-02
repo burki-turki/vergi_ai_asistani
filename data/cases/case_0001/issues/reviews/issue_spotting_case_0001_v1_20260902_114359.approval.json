@@ -1,0 +1,53 @@
+{
+  "audit_type": "issue_spotting_analysis_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-02T11:43:59.213667+03:00",
+  "case_id": "case_0001",
+  "issue_analysis_id": "issue_spotting_case_0001_v1",
+  "source_pending_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issue_spotting_case_0001_v1.json.pending",
+  "canonical_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
+  "pending_sha256": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e",
+  "canonical_sha256": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e",
+  "content_identical": true,
+  "previous_canonical_backup": null,
+  "issue_count": 6,
+  "issue_summaries": [
+    {
+      "issue_id": "issue_001",
+      "issue_type": "verification_gap",
+      "trigger_rule_id": "issue_rule_unverified_deadline_relevant_event_v1",
+      "status": "candidate"
+    },
+    {
+      "issue_id": "issue_002",
+      "issue_type": "deadline_risk",
+      "trigger_rule_id": "issue_rule_blocked_unverified_anchor_deadline_v1",
+      "status": "candidate"
+    },
+    {
+      "issue_id": "issue_003",
+      "issue_type": "legal_basis_reference",
+      "trigger_rule_id": "issue_rule_legal_reference_fact_v1",
+      "status": "candidate"
+    },
+    {
+      "issue_id": "issue_004",
+      "issue_type": "legal_basis_reference",
+      "trigger_rule_id": "issue_rule_legal_reference_fact_v1",
+      "status": "candidate"
+    },
+    {
+      "issue_id": "issue_005",
+      "issue_type": "legal_basis_reference",
+      "trigger_rule_id": "issue_rule_legal_reference_fact_v1",
+      "status": "candidate"
+    },
+    {
+      "issue_id": "issue_006",
+      "issue_type": "legal_basis_reference",
+      "trigger_rule_id": "issue_rule_legal_reference_fact_v1",
+      "status": "candidate"
+    }
+  ],
+  "approval_semantics": "Bu approval issue analysis kaydını canonical repository'ye kabul eder. Hiçbir issue candidate'ın maddi olarak doğru olduğu, hukuki bir sonuca vardığı, davanın sonucunu belirlediği veya kesin bir süre tespit ettiği anlamına gelmez."
+}

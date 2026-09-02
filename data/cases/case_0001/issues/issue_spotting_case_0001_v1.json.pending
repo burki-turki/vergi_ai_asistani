@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "issue_analysis_id": "issue_spotting_case_0001_v1",
+  "case_id": "case_0001",
+  "status": "completed",
+  "generated_at": "2026-09-02T11:15:07.443832+03:00",
+  "issues": [
+    {
+      "issue_type": "verification_gap",
+      "title": "Süre açısından önemli olayın doğrulanması gerekebilir",
+      "description": "notification_date tipindeki 2026-02-10 tarihli olay (timeline_event_003) süre hesabı açısından önemli olabilir; ancak verification_state='unverified' durumundadır. Bu tarihin bağımsız olarak doğrulanması önerilir.",
+      "trigger_rule_id": "issue_rule_unverified_deadline_relevant_event_v1",
+      "source_fact_ids": [
+        "fact_dava_dilekcesi_001_llm_v1_3_20260901_130225_003",
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_008"
+      ],
+      "source_timeline_event_ids": [
+        "timeline_event_003"
+      ],
+      "source_deadline_ids": [],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.95,
+      "requires_human_review": true,
+      "notes": null,
+      "issue_id": "issue_001",
+      "status": "candidate"
+    },
+    {
+      "issue_type": "deadline_risk",
+      "title": "Süre hesaplaması doğrulanmamış olay nedeniyle bloklanmıştır",
+      "description": "deadline_001 kaydı için süre hesaplaması, anchor_event_id=timeline_event_003 olayının doğrulanmamış olması nedeniyle yapılamamıştır. Bu durum davanın süresinde açılıp açılmadığına dair bir belirleme içermez; yalnızca anchor olayın bağımsız olarak doğrulanması gerektiğini gösterir.",
+      "trigger_rule_id": "issue_rule_blocked_unverified_anchor_deadline_v1",
+      "source_fact_ids": [
+        "fact_dava_dilekcesi_001_llm_v1_3_20260901_130225_003",
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_008"
+      ],
+      "source_timeline_event_ids": [
+        "timeline_event_003"
+      ],
+      "source_deadline_ids": [
+        "deadline_001"
+      ],
+      "related_party_ids": [
+        "party_taxpayer_001",
+        "party_admin_001"
+      ],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.95,
+      "requires_human_review": true,
+      "notes": null,
+      "issue_id": "issue_002",
+      "status": "candidate"
+    },
+    {
+      "issue_type": "legal_basis_reference",
+      "title": "Belgede atıf yapılan hukuki dayanağın uygulanabilirliği değerlendirilmelidir",
+      "description": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_006 kaydında şu ifadeye yer verilmektedir: \"İhbarnamede, 3065 sayılı Katma Değer Vergisi Kanununun 29 uncu maddesine atıf yapılmaktadır.\" Belgede bir hukuki dayanağa atıf yapılmış olması, bu dayanağın olaya uygulanabilirliğini, yürürlüğünü veya doğruluğunu tek başına göstermez; ayrıca değerlendirilmesi önerilir.",
+      "trigger_rule_id": "issue_rule_legal_reference_fact_v1",
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_006"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "requires_human_review": true,
+      "notes": null,
+      "issue_id": "issue_003",
+      "status": "candidate"
+    },
+    {
+      "issue_type": "legal_basis_reference",
+      "title": "Belgede atıf yapılan hukuki dayanağın uygulanabilirliği değerlendirilmelidir",
+      "description": "fact_ihbarname_001_llm_v1_2_1_20260901_122652_007 kaydında şu ifadeye yer verilmektedir: \"İhbarnamede, 213 sayılı Vergi Usul Kanununun 341 inci maddesine atıf yapılmaktadır.\" Belgede bir hukuki dayanağa atıf yapılmış olması, bu dayanağın olaya uygulanabilirliğini, yürürlüğünü veya doğruluğunu tek başına göstermez; ayrıca değerlendirilmesi önerilir.",
+      "trigger_rule_id": "issue_rule_legal_reference_fact_v1",
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_007"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "requires_human_review": true,
+      "notes": null,
+      "issue_id": "issue_004",
+      "status": "candidate"
+    },
+    {
+      "issue_type": "legal_basis_reference",
+      "title": "Belgede atıf yapılan hukuki dayanağın uygulanabilirliği değerlendirilmelidir",
+      "description": "fact_vir_001_llm_v1_1_20260901_105342_006 kaydında şu ifadeye yer verilmektedir: \"İnceleme raporunda KDV indirimi hakkına ilişkin yasal dayanak olarak 3065 sayılı Katma Değer Vergisi Kanununun 29. maddesi gösterilmiştir.\" Belgede bir hukuki dayanağa atıf yapılmış olması, bu dayanağın olaya uygulanabilirliğini, yürürlüğünü veya doğruluğunu tek başına göstermez; ayrıca değerlendirilmesi önerilir.",
+      "trigger_rule_id": "issue_rule_legal_reference_fact_v1",
+      "source_fact_ids": [
+        "fact_vir_001_llm_v1_1_20260901_105342_006"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "requires_human_review": true,
+      "notes": null,
+      "issue_id": "issue_005",
+      "status": "candidate"
+    },
+    {
+      "issue_type": "legal_basis_reference",
+      "title": "Belgede atıf yapılan hukuki dayanağın uygulanabilirliği değerlendirilmelidir",
+      "description": "fact_vir_001_llm_v1_1_20260901_105342_007 kaydında şu ifadeye yer verilmektedir: \"İnceleme raporunda vergi ziyaına ilişkin yasal dayanak olarak 213 sayılı Vergi Usul Kanununun 341. maddesi gösterilmiştir.\" Belgede bir hukuki dayanağa atıf yapılmış olması, bu dayanağın olaya uygulanabilirliğini, yürürlüğünü veya doğruluğunu tek başına göstermez; ayrıca değerlendirilmesi önerilir.",
+      "trigger_rule_id": "issue_rule_legal_reference_fact_v1",
+      "source_fact_ids": [
+        "fact_vir_001_llm_v1_1_20260901_105342_007"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "related_party_ids": [],
+      "related_dispute_item_ids": [
+        "dispute_kdv_2024_03"
+      ],
+      "confidence": 0.99,
+      "requires_human_review": true,
+      "notes": null,
+      "issue_id": "issue_006",
+      "status": "candidate"
+    }
+  ],
+  "warnings": [],
+  "notes": "Issue Spotting Engine V1 çekirdeği (deterministik kurallar, issue_spotting_policy.py) canonical facts, canonical timeline ve (varsa) canonical deadline analysis üzerinden çalışır ve source of truth / safety boundary'dir. Bu çalıştırmada Issue Spotting Agent (LLM) devre dışıdır; yalnız deterministik kurallar uygulanmıştır. Üretilen kayıtlar (kaynağı ne olursa olsun) issue candidate'tır; verified fact, legal conclusion, case outcome, guaranteed applicability veya deadline determination değildir."
+}

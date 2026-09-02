@@ -122,8 +122,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 6. Fact Approval / Repository — **DONE / LOCKED**
 7. Timeline Agent / Engine — **DONE / LOCKED**
 8. Deadline Engine — **DONE / LOCKED**
-9. **Issue Spotting Agent — ACTIVE / NEXT**
-10. Legal Research Agent
+9. Issue Spotting Agent — **DONE / LOCKED**
+10. **Legal Research Agent — ACTIVE / NEXT**
 11. Case Law Agent
 12. Evidence Agent
 13. Argument Agent
@@ -158,27 +158,27 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-8 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 9 — ISSUE SPOTTING AGENT** (henüz implement
+- Rows 1-9 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 10 — LEGAL RESEARCH AGENT** (henüz implement
   edilmedi)
 
-### Row 9 — Issue Spotting Agent tanımı
+### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
-Girdi: canonical case facts (`facts.json`), canonical timeline (`timeline.json`),
-canonical deadline analysis (`deadline.json`), ileride Legal Knowledge Engine context.
+Deterministik Policy/Engine (`issue_spotting_policy.py`, `issue_spotting_engine.py`) +
+LLM Agent katmanı (`issue_spotting_agent.py`, yapılandırılmış sinyal + deterministik
+template rendering, free-text safety + network safety gate) + Validator
+(`issue_spotting_validator.py`) + Approval (`issue_spotting_approval.py`) tamamlandı.
+`case_0001` için canonical `data/cases/case_0001/issues/issues.json` insan onayıyla
+(`--approve`) promote edildi (6 deterministic issue candidate; agent bu approval'a
+katkı sağlamadı). Issue candidate'lar hâlâ verified fact/legal conclusion/case
+outcome/deadline determination DEĞİLDİR (bkz. Prensip 7, 8; `case_issue_spotting.schema.json`
+içindeki `status: "candidate"` const kısıtı).
 
-Çıktı: hukuki **issue candidate**'lar.
+### Row 10 — Legal Research Agent (ACTIVE / NEXT)
 
-Issue candidate ŞUNLARDAN HİÇBİRİ DEĞİLDİR:
-- verified fact
-- legal conclusion
-- case outcome
-- guaranteed applicability
-- deadline determination
-
-Örnek — kabul edilir: *"Tebliğ tarihinin doğrulanması gerekli olabilir."*
-Örnek — kabul edilmez: *"Dava süresi geçmiştir."* (kesin sonuç; bunu ancak deterministic
-deadline katmanı, verified bir anchor'la üretebilir — bkz. Prensip 7, 8.)
+Henüz implement edilmedi. Row 9 tamamlanma paterni (deterministic policy/engine →
+validator → agent/LLM task → approval) referans alınmalı; standart geliştirme sırası
+için bkz. §4 "Her row için standart geliştirme sırası".
 
 ## 6. Cross-Cutting Backlog
 
