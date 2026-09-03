@@ -126,8 +126,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 10. Legal Research Agent — **DONE / LOCKED**
 11. Case Law Agent — **DONE / LOCKED**
 12. Evidence Agent — **DONE / LOCKED**
-13. **Argument Agent — ACTIVE / NEXT**
-14. Risk / Strategy Agent
+13. Argument Agent — **DONE / LOCKED**
+14. **Risk / Strategy Agent — ACTIVE / NEXT**
 15. Drafting Agent
 16. QA Agent
 17. Product Orchestrator Agent
@@ -158,9 +158,9 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-12 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 13 — ARGUMENT AGENT** (henüz implement
-  edilmedi)
+- Rows 1-13 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 14 — RISK / STRATEGY AGENT** (henüz
+  implement edilmedi)
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -281,6 +281,57 @@ Future row'lar (Row 13+) Row 12 contractını (şema, deterministic source bound
 agent boundary, Layer A/Layer B ayrımı) sessizce değiştiremez veya yeniden
 yorumlayamaz. **Row 12 contract changes require an explicit unlock/review before
 modification.**
+
+### Row 13 — Argument Agent (DONE / LOCKED — checkpoint özeti)
+
+Normalized `claim` / `counterargument` / `rebuttal` modeli (ayrı flat array'ler,
+ID referanslarıyla bağlı — gömülü/nested argument graph DEĞİL) + deterministik
+`argument_coverage` (issue başına tam 1 kayıt) + deterministik allowlist
+(`argument_discovery.py`, canonical issue/approved fact/(varsa) canonical
+evidence-research-case_law-timeline-deadline'dan; `allowlist_count` validator
+tarafından aynı saf fonksiyonla bağımsız yeniden hesaplanır, pending/canonical
+değerine güvenilmez) + `evidence_agent_suggestions`'a paralel, kendi yapısal
+izolasyonuna sahip `argument_agent_suggestions` (fact/document grounding alanı
+KAZANMAZ; free-text `grounded_explanation` hem agent hem validator katmanında
+bağımsız guard setinden geçer: forbidden phrase, ID-smuggling, unverified quote,
+unsupported date/amount) + deterministik `depends_on_unconfirmed_evidence` /
+`depends_on_unconfirmed_authority` / `missing_legal_authority` bayrakları (agent
+set edemez) + versioned structural update ile safe review carry-forward
+(fingerprint + upstream hash birebir eşleşmesi + önceki review_state
+'needs_review' olmaması şartıyla, ayrı `history/carry_forward/*.json` audit
+kaydıyla).
+
+**Layer A / Layer B** — Layer A (`argument_approval.py`) pending → canonical
+promosyonunu Row 9-12 deseniyle tamamladı. Layer B (`argument_review.py`)
+**top-down parent-dependency** ile LOCKED: bir child (counterargument'ın parent'ı
+claim; rebuttal'ın parent'ı counterargument) ancak parent terminal state'e
+(`confirmed`/`rejected`) geldiyse review edilebilir; parent `rejected` ise child
+YALNIZ `rejected` olabilir (`confirmed` reddedilir). **Bu session'da Layer B
+üzerinde gerçek bir review mutation ÇALIŞTIRILMADI** — yalnız izole tempdir
+self-testleri çalıştı.
+
+**Canonical promosyon** — `case_0001` için canonical
+`data/cases/case_0001/arguments/arguments.json` insan onayıyla (`--approve`)
+promote edildi: `coverage=6`, `claims=0`, `counterarguments=0`, `rebuttals=0`,
+`suggestions=0`, tüm `execution_state: analysis_not_run` (agent bu session'da hiç
+çalıştırılmadı). Pending ve canonical SHA256 birebir aynı:
+`24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742`. Approval audit
+kaydı `data/cases/case_0001/arguments/reviews/` altında mevcut.
+
+**Final doğrulama** — validator 17/17, agent 26/26, engine 14/14, approval 10/10,
+review 9/9 PASS; Rows 1-12 regresyon testleri PASS; bu session boyunca hiçbir
+gerçek network/API çağrısı yapılmadı. Claim/counterargument/rebuttal/suggestion
+candidate'lar hâlâ verified fact/legal conclusion/nihai hukuki sonuç/case outcome
+DEĞİLDİR (bkz. Prensip 7; `case_arguments.schema.json`'da confidence/strength/
+priority/admissibility/sufficiency/win_probability/recommended_outcome/
+success_probability alanlarının hiçbirinin tanımlı olmaması).
+
+### Row 14 — Risk / Strategy Agent (ACTIVE / NEXT)
+
+Henüz implement edilmedi. Row 9-13 tamamlanma paterni (deterministic
+policy/engine → validator → agent/LLM task → Layer A/Layer B approval)
+referans alınmalı; mimari/contract planlamasıyla başlanacak. Standart
+geliştirme sırası için bkz. §4 "Her row için standart geliştirme sırası".
 
 ## 6. Cross-Cutting Backlog
 

@@ -1,0 +1,19 @@
+{
+  "audit_type": "argument_analysis_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-03T14:27:08.802883+03:00",
+  "case_id": "case_0001",
+  "argument_analysis_id": "arguments_case_0001_v1",
+  "source_pending_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments_case_0001_v1.json.pending",
+  "canonical_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
+  "pending_sha256": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742",
+  "canonical_sha256": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742",
+  "content_identical": true,
+  "previous_canonical_backup": null,
+  "coverage_count": 6,
+  "claim_count": 0,
+  "counterargument_count": 0,
+  "rebuttal_count": 0,
+  "suggestion_count": 0,
+  "approval_semantics": "Bu approval argument analysis kaydını canonical repository'ye kabul eder. Hiçbir claim/counterargument/rebuttal'ın avukat tarafından doğrulandığı, nihai hukuki sonuç, dava kazanma ihtimali veya admissibility/strength/sufficiency taşıdığı anlamına gelmez. review_state yükseltmesi (confirmed/rejected/accepted_for_follow_up/dismissed) yalnız ayrı bir Layer B human review (argument_review.py) ile mümkündür."
+}

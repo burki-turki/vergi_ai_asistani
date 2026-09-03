@@ -1,0 +1,408 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case_arguments.schema.json",
+  "title": "Vergi AI Case Arguments Schema V1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "argument_analysis_id",
+    "case_id",
+    "status",
+    "generated_at",
+    "analysis_metadata",
+    "argument_coverage",
+    "argument_claims",
+    "argument_counterarguments",
+    "argument_rebuttals",
+    "argument_agent_suggestions",
+    "warnings",
+    "notes"
+  ],
+
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "argument_analysis_id": { "type": "string", "minLength": 1 },
+    "case_id": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "partial", "failed"]
+    },
+    "generated_at": { "type": "string", "format": "date-time" },
+
+    "analysis_metadata": { "$ref": "#/$defs/analysis_metadata" },
+
+    "argument_coverage": {
+      "type": "array",
+      "description": "HER canonical issue için TAM OLARAK BİR kayıt. Yalnız deterministik alanlar taşır - confidence/title/description/review_state/strength/priority/win_probability/notes YAPISAL OLARAK TANIMLI DEĞİLDİR.",
+      "items": { "$ref": "#/$defs/coverage_record" }
+    },
+
+    "argument_claims": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/claim" }
+    },
+
+    "argument_counterarguments": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/counterargument" }
+    },
+
+    "argument_rebuttals": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rebuttal" }
+    },
+
+    "argument_agent_suggestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent_suggestion" }
+    },
+
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "notes": { "type": ["string", "null"] }
+  },
+
+  "$defs": {
+
+    "nullableHash": {
+      "anyOf": [
+        { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        { "type": "null" }
+      ]
+    },
+
+    "analysis_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Yalnız gerçekten bu çalıştırmada okunup kullanılan canonical girdilerin hash'leri. Kullanılmayan optional kaynaklar null kalır - kullanılmış gibi GÖSTERİLMEZ.",
+      "required": [
+        "issues_input_hash",
+        "facts_input_hash",
+        "evidence_input_hash",
+        "legal_research_input_hash",
+        "case_law_input_hash",
+        "timeline_input_hash",
+        "deadline_input_hash"
+      ],
+      "properties": {
+        "issues_input_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "facts_input_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "evidence_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "legal_research_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "case_law_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "timeline_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "deadline_input_hash": { "$ref": "#/$defs/nullableHash" }
+      }
+    },
+
+    "coverage_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage_id",
+        "source_issue_id",
+        "execution_state",
+        "allowlist_count",
+        "claim_count",
+        "counterargument_count",
+        "rebuttal_count",
+        "suggestion_count",
+        "reason_codes",
+        "trigger_rule_id",
+        "requires_human_review",
+        "status"
+      ],
+      "properties": {
+        "coverage_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": "string", "minLength": 1 },
+        "execution_state": {
+          "type": "string",
+          "enum": [
+            "analysis_not_run",
+            "analysis_completed",
+            "analysis_partial",
+            "blocked_missing_input",
+            "analysis_failed"
+          ]
+        },
+        "allowlist_count": { "type": "integer", "minimum": 0 },
+        "claim_count": { "type": "integer", "minimum": 0 },
+        "counterargument_count": { "type": "integer", "minimum": 0 },
+        "rebuttal_count": { "type": "integer", "minimum": 0 },
+        "suggestion_count": { "type": "integer", "minimum": 0 },
+        "reason_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "trigger_rule_id": { "type": "string", "minLength": 1 },
+        "requires_human_review": { "type": "boolean", "const": true },
+        "status": { "type": "string", "const": "candidate" }
+      }
+    },
+
+    "sourceRefSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_fact_ids",
+        "source_evidence_candidate_ids",
+        "source_legal_research_ids",
+        "source_case_law_ids",
+        "source_timeline_event_ids",
+        "source_deadline_ids"
+      ],
+      "properties": {
+        "source_fact_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_evidence_candidate_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_legal_research_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_case_law_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_timeline_event_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_deadline_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "confidence/strength/priority/admissibility/sufficiency/win_probability/recommended_outcome/success_probability alanı KASITLI OLARAK TANIMLANMAMIŞTIR.",
+      "required": [
+        "claim_id",
+        "source_issue_id",
+        "claim_type",
+        "claim_text",
+        "source_fact_ids",
+        "source_evidence_candidate_ids",
+        "source_legal_research_ids",
+        "source_case_law_ids",
+        "source_timeline_event_ids",
+        "source_deadline_ids",
+        "depends_on_unconfirmed_evidence",
+        "depends_on_unconfirmed_authority",
+        "missing_legal_authority",
+        "reason_code",
+        "grounded_explanation",
+        "claim_review_state",
+        "requires_human_review",
+        "status"
+      ],
+      "properties": {
+        "claim_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": "string", "minLength": 1 },
+        "claim_type": {
+          "type": "string",
+          "enum": [
+            "procedural_challenge",
+            "substantive_legal_challenge",
+            "factual_challenge",
+            "evidentiary_insufficiency",
+            "calculation_challenge",
+            "limitation_or_deadline_challenge",
+            "authority_or_jurisdiction_challenge",
+            "penalty_specific_challenge"
+          ]
+        },
+        "claim_text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "source_fact_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_evidence_candidate_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_legal_research_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_case_law_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_timeline_event_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_deadline_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "depends_on_unconfirmed_evidence": { "type": "boolean" },
+        "depends_on_unconfirmed_authority": { "type": "boolean" },
+        "missing_legal_authority": { "type": "boolean" },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "grounded_explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "claim_review_state": {
+          "type": "string",
+          "enum": ["needs_review", "confirmed", "rejected"]
+        },
+        "requires_human_review": { "type": "boolean", "const": true },
+        "status": { "type": "string", "const": "candidate" }
+      }
+    },
+
+    "counterargument": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "confidence/strength/priority/admissibility/sufficiency/win_probability/recommended_outcome/success_probability alanı KASITLI OLARAK TANIMLANMAMIŞTIR.",
+      "required": [
+        "counterargument_id",
+        "source_claim_id",
+        "source_issue_id",
+        "counter_type",
+        "counterargument_text",
+        "source_fact_ids",
+        "source_evidence_candidate_ids",
+        "source_legal_research_ids",
+        "source_case_law_ids",
+        "source_timeline_event_ids",
+        "source_deadline_ids",
+        "depends_on_unconfirmed_evidence",
+        "depends_on_unconfirmed_authority",
+        "missing_legal_authority",
+        "reason_code",
+        "grounded_explanation",
+        "counter_review_state",
+        "requires_human_review",
+        "status"
+      ],
+      "properties": {
+        "counterargument_id": { "type": "string", "minLength": 1 },
+        "source_claim_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": "string", "minLength": 1 },
+        "counter_type": {
+          "type": "string",
+          "enum": [
+            "factual_denial",
+            "legal_opposition",
+            "procedural_compliance",
+            "evidence_sufficiency",
+            "calculation_defense",
+            "timeliness_defense",
+            "authority_or_jurisdiction_defense",
+            "alternative_explanation",
+            "authority_distinction"
+          ]
+        },
+        "counterargument_text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "source_fact_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_evidence_candidate_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_legal_research_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_case_law_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_timeline_event_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_deadline_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "depends_on_unconfirmed_evidence": { "type": "boolean" },
+        "depends_on_unconfirmed_authority": { "type": "boolean" },
+        "missing_legal_authority": { "type": "boolean" },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "grounded_explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "counter_review_state": {
+          "type": "string",
+          "enum": ["needs_review", "confirmed", "rejected"]
+        },
+        "requires_human_review": { "type": "boolean", "const": true },
+        "status": { "type": "string", "const": "candidate" }
+      }
+    },
+
+    "rebuttal": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "confidence/strength/priority/admissibility/sufficiency/win_probability/recommended_outcome/success_probability alanı KASITLI OLARAK TANIMLANMAMIŞTIR.",
+      "required": [
+        "rebuttal_id",
+        "source_claim_id",
+        "source_counterargument_id",
+        "source_issue_id",
+        "rebuttal_type",
+        "rebuttal_text",
+        "source_fact_ids",
+        "source_evidence_candidate_ids",
+        "source_legal_research_ids",
+        "source_case_law_ids",
+        "source_timeline_event_ids",
+        "source_deadline_ids",
+        "depends_on_unconfirmed_evidence",
+        "depends_on_unconfirmed_authority",
+        "missing_legal_authority",
+        "reason_code",
+        "grounded_explanation",
+        "rebuttal_review_state",
+        "requires_human_review",
+        "status"
+      ],
+      "properties": {
+        "rebuttal_id": { "type": "string", "minLength": 1 },
+        "source_claim_id": { "type": "string", "minLength": 1 },
+        "source_counterargument_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": "string", "minLength": 1 },
+        "rebuttal_type": {
+          "type": "string",
+          "enum": [
+            "factual_refutation",
+            "legal_refutation",
+            "procedural_refutation",
+            "evidentiary_refutation",
+            "calculation_refutation",
+            "timeliness_response",
+            "authority_or_jurisdiction_response",
+            "alternative_explanation_response",
+            "authority_distinction_response"
+          ]
+        },
+        "rebuttal_text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "source_fact_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_evidence_candidate_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_legal_research_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_case_law_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_timeline_event_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "source_deadline_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "depends_on_unconfirmed_evidence": { "type": "boolean" },
+        "depends_on_unconfirmed_authority": { "type": "boolean" },
+        "missing_legal_authority": { "type": "boolean" },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "grounded_explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "rebuttal_review_state": {
+          "type": "string",
+          "enum": ["needs_review", "confirmed", "rejected"]
+        },
+        "requires_human_review": { "type": "boolean", "const": true },
+        "status": { "type": "string", "const": "candidate" }
+      }
+    },
+
+    "agent_suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suggestion_id",
+        "source_issue_id",
+        "suggestion_type",
+        "source_claim_id",
+        "source_counterargument_id",
+        "related_reference_ids",
+        "reason_code",
+        "grounded_explanation",
+        "suggestion_review_state",
+        "requires_human_review",
+        "status"
+      ],
+      "properties": {
+        "suggestion_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": "string", "minLength": 1 },
+        "suggestion_type": {
+          "type": "string",
+          "enum": [
+            "missing_supporting_fact",
+            "unresolved_counterargument",
+            "conflicting_authority",
+            "additional_research_needed",
+            "argument_taxonomy_gap"
+          ]
+        },
+        "source_claim_id": { "type": ["string", "null"] },
+        "source_counterargument_id": { "type": ["string", "null"] },
+        "related_reference_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "grounded_explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "suggestion_review_state": {
+          "type": "string",
+          "enum": ["needs_review", "accepted_for_follow_up", "dismissed"]
+        },
+        "requires_human_review": { "type": "boolean", "const": true },
+        "status": { "type": "string", "const": "candidate" }
+      }
+    }
+  }
+}
