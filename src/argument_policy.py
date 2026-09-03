@@ -531,9 +531,20 @@ def compute_depends_on_unconfirmed_authority(
 
         decision = case_law_decision_index.get(decision_id)
 
-        if decision is not None and decision.get(
-            "applicability_result"
-        ) in ("unknown", "needs_review"):
+        if decision is None:
+
+            continue
+
+        # Şema (case_case_law.schema.json) applicability_result için
+        # yalnız "unknown", "needs_review" veya null'a izin verir - hiçbir
+        # zaman "applicable"/"confirmed" değeri yoktur. null, en az
+        # "unknown" kadar doğrulanmamıştır (hiç değerlendirilmemiş
+        # olabilir); onaylanmış uygulanabilirlik olarak yorumlanamaz.
+        if decision.get("applicability_result") in (
+            "unknown",
+            "needs_review",
+            None,
+        ):
 
             return True
 

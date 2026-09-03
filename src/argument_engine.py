@@ -943,11 +943,40 @@ def build_argument_engine_output(
 
             warnings.append(f"Argument Agent cevabı parse edilemedi: {error}")
 
+            # Row 13 corrective maintenance (C3): herhangi bir önceki
+            # aşama (örn. claim) başarıyla finalize edilmiş olsa bile,
+            # pipeline bu noktada bir bütün olarak başarısız sayılır -
+            # coverage TÜM issue'lara uniform şekilde "analysis_failed"
+            # damgalar (aşağıda) ve bu, claim/counterargument/rebuttal/
+            # suggestion count'larının TAMAMEN 0 olmasını şart koşar
+            # (ZERO_CLAIM_EXECUTION_STATES / ZERO_SUGGESTION_EXECUTION_
+            # STATES). Kısmi finalize edilmiş entity'ler temizlenmezse
+            # validate_engine_output_semantics uncaught ArgumentEngineError
+            # fırlatır - temiz fail-closed pending yerine crash.
+            finalized_claims = []
+
+            finalized_counterarguments = []
+
+            finalized_rebuttals = []
+
+            finalized_suggestions = []
+
         except Exception as error:  # noqa: BLE001
 
             agent_call_failed = True
 
             warnings.append(f"Argument Agent çağrısı başarısız oldu: {error}")
+
+            # Row 13 corrective maintenance (C3): bkz. yukarıdaki
+            # json.JSONDecodeError bloğundaki gerekçe - aynı temizlik
+            # burada da zorunludur.
+            finalized_claims = []
+
+            finalized_counterarguments = []
+
+            finalized_rebuttals = []
+
+            finalized_suggestions = []
 
     # ------------------------------------------------------------
     # ANALYSIS METADATA (önce hesapla - carry-forward eşitlik
@@ -2006,6 +2035,145 @@ def run_self_test(case_id="case_0001"):
         "PASS",
     )
 
+    # ==============================================================
+    # ROW 13 CORRECTIVE MAINTENANCE (CLAUDE.md §9 açık-bug istisnası)
+    # C3: ARA-AŞAMA (mid-pipeline) HATASI -> önceki başarılı aşamaların
+    # kısmi finalize edilmiş entity'leri temizlenmeli, tüm coverage
+    # kayıtları uniform "analysis_failed" + count=0 olmalı, engine
+    # semantic validator PASS etmeli, HİÇBİR uncaught ArgumentEngineError
+    # fırlatılmamalı (temiz fail-closed pending) - gerçek network
+    # çağrısı YOK, yalnız izole Fake client kullanılıyor.
+    # ==============================================================
+
+    class StageFailingClient:
+
+        def __init__(self, responses, fail_at_call):
+
+            self.responses = responses
+            self.fail_at_call = fail_at_call
+            self.call_count = 0
+
+        def generate(self, prompt):
+
+            self.call_count += 1
+
+            if self.call_count == self.fail_at_call:
+
+                raise RuntimeError(
+                    "Simulated transient agent failure (self-test, "
+                    "no real network call)."
+                )
+
+            index = min(self.call_count - 1, len(self.responses) - 1)
+
+            return self.responses[index]
+
+    def assert_clean_fail_closed_after_partial_stage_failure(
+        stage_label, responses, fail_at_call,
+    ):
+
+        client = StageFailingClient(responses, fail_at_call)
+
+        crashed = False
+
+        try:
+
+            result = build_argument_engine_output(
+                case_id, use_agent=True, llm_client=client,
+                network_allowed=False,
+            )
+
+        except ArgumentEngineError:
+
+            crashed = True
+
+        assert crashed is False, (
+            f"{stage_label} failure after prior stage(s) succeeded "
+            "must produce a clean fail-closed result, not an uncaught "
+            "ArgumentEngineError."
+        )
+
+        assert result["claim_count"] == 0
+        assert result["counterargument_count"] == 0
+        assert result["rebuttal_count"] == 0
+        assert result["suggestion_count"] == 0
+
+        grounded_coverage = next(
+            c for c in result["analysis"]["argument_coverage"]
+            if c["source_issue_id"] == grounded_issue_id
+        )
+
+        assert grounded_coverage["execution_state"] == "analysis_failed"
+
+        assert all(
+            c["execution_state"] in ("analysis_failed", "blocked_missing_input")
+            for c in result["analysis"]["argument_coverage"]
+        )
+
+        temp_dir_local = tempfile.TemporaryDirectory(
+            prefix="argument_engine_c3_selftest_"
+        )
+
+        try:
+
+            pending_path = Path(temp_dir_local.name) / "arguments.json"
+
+            with open(pending_path, "w", encoding="utf-8") as file:
+
+                json.dump(result["analysis"], file, ensure_ascii=False)
+
+            validation = validate_argument_analysis(pending_path, case_id)
+
+            if not validation["valid"]:
+
+                for error in validation["errors"]:
+
+                    print("-", error)
+
+            assert validation["valid"] is True
+
+        finally:
+
+            temp_dir_local.cleanup()
+
+    assert_clean_fail_closed_after_partial_stage_failure(
+        "Stage 2 (counterargument)", [claim_response], fail_at_call=2,
+    )
+
+    print(
+        "T15 C3 Stage 2 (counterargument) failure after stage 1 "
+        "(claim) success -> clean fail-closed analysis_failed, "
+        "count invariants 0, validator PASS, no crash:",
+        "PASS",
+    )
+
+    assert_clean_fail_closed_after_partial_stage_failure(
+        "Stage 3 (rebuttal)", [claim_response, counter_response],
+        fail_at_call=3,
+    )
+
+    print(
+        "T16 C3 Stage 3 (rebuttal) failure after stage 1-2 "
+        "(claim+counterargument) success -> clean fail-closed "
+        "analysis_failed, count invariants 0, validator PASS, no "
+        "crash:",
+        "PASS",
+    )
+
+    assert_clean_fail_closed_after_partial_stage_failure(
+        "Stage 4 (suggestion)",
+        [claim_response, counter_response, rebuttal_response],
+        fail_at_call=4,
+    )
+
+    print(
+        "T17 C3 Stage 4 (suggestion) failure after stage 1-3 "
+        "(claim+counterargument+rebuttal) success -> clean "
+        "fail-closed analysis_failed, count invariants 0, validator "
+        "PASS, no crash:",
+        "PASS",
+    )
+
     assert_real_arguments_tree_unchanged(
         case_id, real_tree_before,
         "End of self-test (post-approval invariant, full suite)",
@@ -2013,7 +2181,7 @@ def run_self_test(case_id="case_0001"):
 
     print()
     print("======================================")
-    print(" ARGUMENT ENGINE V1: 14/14 PASS")
+    print(" ARGUMENT ENGINE V1: 17/17 PASS")
     print("======================================")
 
 
