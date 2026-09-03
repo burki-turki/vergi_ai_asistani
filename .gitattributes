@@ -1,0 +1,3 @@
+# Audit-sensitive structured artifacts must retain byte-stable LF endings.
+*.json text eol=lf
+*.json.pending text eol=lf
