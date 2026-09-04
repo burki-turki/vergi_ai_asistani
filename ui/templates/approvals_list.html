@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Onaylar - {{ case_id }}{% endblock %}
+{% block content %}
+  <p><a href="/cases/{{ case_id }}">&larr; {{ case_id }}</a></p>
+  <h1>Onaylar - {{ case_id }}</h1>
+  <p class="muted">
+    Bu ekran yalnız Layer A (pending &rarr; canonical) onaylarını listeler.
+    Layer B (kayıt bazlı inceleme kararları) ve Row 15 (yapılandırılmış
+    avukat talebi) bu fazda (18a) YOKTUR - sonraki fazlarda eklenecek.
+  </p>
+
+  <table class="grid">
+    <thead>
+      <tr><th>Row</th><th>Adım</th><th>Durum</th><th>Aksiyon</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.row_no }}</td>
+          <td>{{ row.label }}</td>
+          <td>
+            {% if row.kind == "case_scoped" %}
+              {% if row.pending_exists %}
+                <span class="badge badge-pending">pending var</span>
+              {% else %}
+                <span class="muted">pending yok</span>
+              {% endif %}
+              {% if row.canonical_exists %}
+                <span class="badge badge-ok">canonical var</span>
+              {% else %}
+                <span class="muted">canonical yok</span>
+              {% endif %}
+            {% elif row.kind == "unsupported_pending_resolution" %}
+              <span class="badge badge-pending">{{ row.pending_count }} pending bulundu</span>
+              {% if row.historical_count %}
+                <span class="muted">({{ row.historical_count }} zaten onaylanmış)</span>
+              {% endif %}
+              <span class="muted">- web üzerinden onay desteklenmiyor</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.kind == "case_scoped" %}
+              {% if row.pending_exists %}
+                <a class="button" href="/cases/{{ case_id }}/approvals/{{ row.key }}">İncele</a>
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            {% elif row.kind == "unsupported_pending_resolution" %}
+              <span class="muted" title="{{ row.unsupported_reason }}">
+                Bu ailede web üzerinden onay desteklenmiyor - mevcut CLI aracını kullanın.
+              </span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

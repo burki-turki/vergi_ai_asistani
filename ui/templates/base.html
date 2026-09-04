@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Vergi AI - Avukat Arayüzü{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">Vergi AI - Avukat Arayüzü</a>
+    <span class="env-tag">yerel · 127.0.0.1 · tek kullanıcılı · Row 18a</span>
+  </header>
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    Bu arayüz yalnız yerel değerlendirme içindir; kimlik doğrulama, çoklu
+    kullanıcı ve production sertleştirme kapsamında değildir (Row 19).
+  </footer>
+</body>
+</html>

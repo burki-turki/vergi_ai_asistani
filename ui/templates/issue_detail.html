@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}{{ issue.issue_id }} - {{ case_id }}{% endblock %}
+{% block content %}
+  <p><a href="/cases/{{ case_id }}">&larr; {{ case_id }}</a></p>
+  <h1>{{ issue.issue_id }}</h1>
+  <p class="muted">{{ issue.title }}</p>
+  {{ m.render_value(issue) }}
+{% endblock %}

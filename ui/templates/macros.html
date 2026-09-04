@@ -1,0 +1,43 @@
+{# ============================================================
+   VERGİ AI - LAWYER UI, GENEL DEĞER GÖRÜNTÜLEYİCİ (Row 18a)
+
+   `common.py`'deki `summarize_json_value` yorumundaki aynı ilke:
+   12 farklı onay modülünün alan adlarını burada TEKRAR İCAT ETMEK/
+   YORUMLAMAK yerine, HERHANGİ bir dict/list/skaler değeri genel ve
+   KAYIPSIZ biçimde (özetlemeden, ham haliyle) gösteririz. Bu sayede
+   bir şemanın alanı yanlış etiketlenmiş/atlanmış olmaz (Prensip 9).
+   ============================================================ #}
+
+{% macro render_value(value) %}
+{%- if value is mapping -%}
+  {%- if value|length == 0 -%}
+    <span class="muted">(boş nesne)</span>
+  {%- else -%}
+  <table class="kv">
+    {%- for k, v in value.items() %}
+    <tr><th>{{ k }}</th><td>{{ render_value(v) }}</td></tr>
+    {%- endfor %}
+  </table>
+  {%- endif -%}
+{%- elif value is string or value is number or value is none -%}
+  {%- if value is none -%}
+    <span class="muted">—</span>
+  {%- elif value == "" -%}
+    <span class="muted">(boş)</span>
+  {%- else -%}
+    {{ value }}
+  {%- endif -%}
+{%- elif value is iterable -%}
+  {%- if value|length == 0 -%}
+    <span class="muted">(boş liste)</span>
+  {%- else -%}
+  <ol class="list">
+    {%- for item in value %}
+    <li>{{ render_value(item) }}</li>
+    {%- endfor %}
+  </ol>
+  {%- endif -%}
+{%- else -%}
+  {{ value }}
+{%- endif -%}
+{% endmacro %}

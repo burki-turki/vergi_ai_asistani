@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}{{ case_id }} - Case View{% endblock %}
+{% block content %}
+  <p><a href="/">&larr; Dosyalar</a></p>
+  <h1>{{ case_id }}
+    {% if view.case_summary %}
+      <span class="muted">— {{ view.case_summary.title }}</span>
+    {% endif %}
+  </h1>
+
+  <p>
+    <a class="button" href="/cases/{{ case_id }}/approvals">Onay ekranına git</a>
+  </p>
+
+  {% if not has_canonical %}
+    <div class="banner banner-warn">
+      Bu dosya için henüz onaylanmış (canonical) bir <code>case_view.json</code>
+      yok. Aşağıdaki görünüm, Row 17'nin canlı derleyicisiyle (
+      <code>build_case_view</code>) şu anki kaynaklardan ANLIK üretilmiştir -
+      hiçbir diske YAZILMAMIŞTIR.
+    </div>
+  {% elif is_stale %}
+    <div class="banner banner-warn">
+      <strong>Görünüm güncel değil.</strong> Bu canlı görünüm, en son onaylanmış
+      <code>case_view.json</code> snapshot'ından FARKLI (bir veya daha fazla alt
+      kayıt son onaydan sonra değişmiş). Aşağıda gösterilen veriler kaynaklardan
+      ANLIK derlenmiştir; canonical snapshot'ı güncellemek için Row 17'nin
+      onay akışı (case_view row'u, "Onaylar" ekranından) yeniden çalıştırılmalı.
+    </div>
+  {% else %}
+    <div class="banner banner-ok">
+      Bu görünüm, en son onaylanmış <code>case_view.json</code> ile birebir uyumlu.
+    </div>
+  {% endif %}
+
+  {% if view.generation_status %}
+    <p>Genel durum: <span class="badge">{{ view.generation_status }}</span></p>
+  {% endif %}
+
+  {% if view.issue_panel %}
+    <h2>Issue Paneli ({{ view.issue_panel|length }})</h2>
+    <table class="grid">
+      <thead>
+        <tr><th>ID</th><th>Tür</th><th>Başlık</th><th>Durum</th><th>İnceleme gerekli mi</th></tr>
+      </thead>
+      <tbody>
+        {% for issue in view.issue_panel %}
+        <tr>
+          <td><a href="/cases/{{ case_id }}/issues/{{ issue.issue_id }}">{{ issue.issue_id }}</a></td>
+          <td>{{ issue.issue_type }}</td>
+          <td>{{ issue.title }}</td>
+          <td>{{ issue.status }}</td>
+          <td>{{ "evet" if issue.requires_human_review else "hayır" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  <h2>Diğer paneller (ham veri)</h2>
+  <p class="muted">
+    Aşağıdaki paneller, hiçbir şema bilgisi hardcode edilmeden, olduğu gibi
+    gösterilir - hiçbir alan gizlenmez veya yorumlanmaz.
+  </p>
+  {% for key, value in view.items() %}
+    {% if key not in ["case_summary", "issue_panel"] %}
+      <details>
+        <summary>{{ key }}</summary>
+        {{ m.render_value(value) }}
+      </details>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

@@ -1,0 +1,12 @@
+# Row 18a - Lawyer UI bağımlılıkları. Kök requirements.txt'den AYRIDIR
+# (o dosya UTF-16 kodlanmış ve Row 18 ile ilgisiz anomali içeriyor -
+# önceki turlarda doğrulandı). Sürümler, hedef vergi_ui_runtime
+# ortamında 117/117 test geçişiyle DOĞRULANMIŞ tam sürümlerdir.
+fastapi==0.141.1
+starlette==1.6.0
+httpx==0.28.1
+jsonschema==4.26.0
+pydantic==2.13.5
+uvicorn==0.52.4
+python-multipart==0.0.32
+Jinja2==3.1.6

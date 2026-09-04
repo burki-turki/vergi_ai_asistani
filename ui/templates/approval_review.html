@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}İncele - {{ row.label }}{% endblock %}
+{% block content %}
+  <p><a href="{{ back_url }}">&larr; Geri</a></p>
+  <h1>İncele: {{ row.label }} (Row {{ row.row_no }})</h1>
+
+  <div class="banner banner-info">
+    Bu, ilgili modülün KENDİ validator'ı ve semantik kontrolüyle üretilmiş
+    SALT OKUNUR bir incelemedir - hiçbir şey henüz yazılmadı.
+  </div>
+
+  <p>Pending dosya hash'i (SHA-256):<br><code class="hash">{{ pending_hash }}</code></p>
+
+  <h2>Kayıt içeriği</h2>
+  {{ m.render_value(analysis) }}
+
+  <h2>Onay</h2>
+  <form method="post" action="{{ confirm_action }}" class="confirm-form">
+    <input type="hidden" name="expected_hash" value="{{ pending_hash }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <p>
+      Onayladığınızda: (1) yukarıdaki hash işlem anında yeniden kontrol
+      edilir - bu ekran açıldıktan sonra pending dosya değiştiyse işlem
+      REDDEDİLİR; (2) ilgili modülün kendi onay fonksiyonu çağrılır
+      (yedekleme/atomik yazma/rollback dahil); (3) sonuçta yeni canonical
+      hash ve audit kaydının yolu gösterilir.
+    </p>
+    <label class="confirm-check">
+      <input type="checkbox" required>
+      Yukarıdaki kaydı inceledim ve canonical'a yükseltilmesini onaylıyorum.
+    </label>
+    <button type="submit" class="button button-confirm">Onayla ve Canonical'a Yükselt</button>
+  </form>
+{% endblock %}

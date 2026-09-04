@@ -159,8 +159,17 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
 - Rows 1-17 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 18 — LAWYER UI**
-  (henüz implement edilmedi)
+- Sıradaki canonical development row: **ROW 18 — LAWYER UI** (İLERLEME
+  HALİNDE, tam Row 18 için henüz LOCK YOK) — kullanıcı kararıyla
+  18a/18b/18c olarak fazlandırıldı (bkz. Row 18 checkpoint özeti, §5
+  sonrası). **18a** (tüm canonical katmanların görüntülenmesi + yalnız
+  registry-supported aileler için Layer A onay tetikleme; fact/timeline
+  onayı `unsupported_pending_resolution` olarak fail-closed)
+  **DONE / LOCKED** — hedeflenen `vergi_ui_runtime` ortamında `pip
+  check` PASS ve 117/117 test PASS ile kullanıcı tarafından
+  doğrulandı ve onaylandı. **18b** (Layer B inceleme kararları)
+  **ACTIVE / NEXT**. **18c** (Row 15 yapılandırılmış avukat talebi
+  girişi) henüz BAŞLAMADI.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -690,6 +699,136 @@ kullanıcının terminal çıktısında hem bu session'ın kendi bağımsız hes
 mevcut. **Orchestrator hiçbir yeni hukuki fact/olasılık/sonuç İCAT ETMEMİŞTİR** —
 yalnız Row 1-16'nın zaten canonical olan çıktılarını issue etrafında yeniden
 gruplamıştır (bkz. Prensip 1, 2, 7).
+
+**EK (kullanıcı kararı, 2026-09-04, Row 18 tasarımı sırasında eklendi) —
+canonical snapshot / canlı deterministik görünüm ayrımı**: `case_view.json`
+**onaylı, audit'li bir SNAPSHOT olarak kalır** — Row 18 (Lawyer UI) tam
+etkileşimli olduğu için, avukatın Layer A/B'de verdiği HER küçük karardan
+sonra bu snapshot ANINDA stale olabilir; avukatın her seferinde Row 17'nin
+onay akışını yeniden çalıştırması pratik DEĞİLDİR. Bu yüzden Row 18 kendi
+ekranlarını canonical `case_view.json`'ı OKUYARAK değil,
+`orchestrator_engine.build_case_view(case_id)`'i (Row 17'nin AYNI saf,
+yan etkisiz fonksiyonu) DOĞRUDAN çağırıp bellekte ANLIK bir "canlı görünüm"
+üreterek doldurur — bu görünüm HİÇBİR dosyaya yazılmaz/promote edilmez. Bu
+karar **Row 17'nin kodunda hiçbir değişiklik gerektirmedi** (fonksiyon zaten
+bağımsız çağrılabilir saf bir fonksiyondu — `orchestrator_validator.py` da
+aynı şekilde kullanıyor); yalnız Row 18'in `ui/services/live_view.py`
+modülünde tüketildi. Canlı görünüm ile en son onaylı canonical snapshot
+(varsa) zaman damgası alanları HARİÇ karşılaştırılır; farklıysa UI'da açıkça
+"görünüm güncel değil" uyarısı gösterilir (canonical snapshot'ı güncellemek
+avukatın Row 17 onay akışını — "Onaylar" ekranından case_view row'unu —
+tekrar çalıştırmasını gerektirir). Bir mutasyon işlemi (onay), sayfa
+render edildiğinde hesaplanan bir pending hash'ine dayanıyorsa ve işlem
+anında o hash değişmişse REDDEDİLİR (bkz. Row 18 checkpoint özeti,
+`StaleViewError`) — canlı görünümün kendisi asla bir onayın DOĞRUDAN
+girdisi değildir, yalnız görüntüleme amaçlıdır.
+
+### Row 18 — Lawyer UI (İLERLEME HALİNDE / NOT LOCKED — 18a: DONE/LOCKED, 18b: ACTIVE/NEXT — checkpoint özeti)
+
+**Kapsam kararı (kullanıcı, 2026-09-04): Seçenek C** — tam etkileşimli kapsam
+(dosya/kaynak görüntüleme, Layer A onay tetikleme, Layer B inceleme kararları,
+Row 15 yapılandırılmış avukat talebi girişi, sonuç/hata/audit görüntüleme) +
+**yerel, tek kullanıcılı FastAPI + Jinja2 (server-rendered) web uygulaması**,
+yalnız `127.0.0.1` üzerinde. Kimlik doğrulama, çoklu kullanıcı, HTTPS/production
+deployment, kalıcı oturum/veritabanı Row 19'a bırakıldı. Kullanıcı işi
+**18a/18b/18c** olarak fazlandırdı; her faz kendi içinde test edilip
+onaylanacak, tam Row 18 LOCK'u yalnız üçü de bittiğinde verilecek.
+
+**Mutasyon sınırı (kullanıcı spesifikasyonu, her mutasyon için ZORUNLU)**:
+(a) ilgili validator işlem anında yeniden çalışır, (b) kullanıcıya hedef kayıt/
+mevcut durum/değişiklik gösterilir, (c) açık ikinci onay istenir (checkbox +
+ayrı submit), (d) görüntülenen kaynak hash'i işlem anında yeniden kontrol
+edilir ve değiştiyse işlem REDDEDİLİR, (e) yalnız var olan approval/review
+Python fonksiyonları DOĞRUDAN çağrılır (asla shell/subprocess ile
+`python ... --approve` çalıştırılmaz), (f) başarıda audit yolu + yeni hash
+gösterilir, (g) hatada ASLA başarı ekranı gösterilmez. Generic "dosya yaz",
+"komut çalıştır" veya kullanıcıdan keyfi path alan endpoint YOKTUR — bir
+pending dosya kimliği yalnız ilgili modülün KENDİ listeleme fonksiyonunun
+döndürdüğü gerçek bir adayla eşleşiyorsa kabul edilir (path traversal engeli).
+
+**18a kapsamı — DONE / LOCKED** (kullanıcı onayı, hedeflenen
+`vergi_ui_runtime` ortamında `pip check` PASS + 117/117 test PASS ile):
+tüm 12 row için görüntüleme + Layer A onay tetikleme (Layer B ve Row 15
+girişi 18a'da YOK — 18b/18c'ye bırakıldı). 23 dosya, tamamı `ui/` altında,
+tamamı untracked: `main.py`, `__init__.py`, `requirements.txt`,
+`services/{__init__,paths,common,live_view,security,approval_registry}.py`,
+`templates/*.html` (9 dosya) + `static/style.css`,
+`tests/{__init__,test_routes,test_service_isolated,test_templates_isolated}.py`.
+
+**18a final güvenlik/mimari durumu** (bir statik inceleme + hedefli
+remediation turu + iki route-test düzeltme turuyla ulaşıldı — kod tekrar
+okunarak doğrulandı, varsayılmadı):
+
+- **Yerel-only FastAPI/Jinja2 avukat arayüzü**: `ui/` gerçek bir Python
+  paketi (`__init__.py`'lar, bağıl importlar) — desteklenen tek çalıştırma
+  biçimi `python -m ui.main` / `uvicorn ui.main:app`; eski sys.path
+  bootstrap'ı kaldırıldı.
+- **Canonical/canlı case-view ayrımı korunuyor** (bkz. yukarıdaki EK) —
+  görüntüleme öncesi canlı görünüm Row 17'nin gerçek
+  `orchestrator_validator` fonksiyonlarından (`validate_schema`,
+  `validate_case_id`, `validate_generated_at`,
+  `validate_generation_status_consistency`) geçiyor; doğrulama
+  başarısızsa fail-closed genel hata sayfası (`LiveViewInvalidError`),
+  görünüm ASLA doğrulanmadan render edilmiyor.
+- **Yalnız Layer A onay tetikleme** — case-scoped 10 modül (Row 8-17)
+  `get_pending_path`/`get_canonical_path`/`inspect_pending`/`run_approve`
+  tekdüze arayüzüyle tetikleniyor.
+- **Fact (Row 6) / Timeline (Row 7) onayı DEVRE DIŞI** — kaynak kod
+  (`fact_approval.py`, `timeline_approval.py`) tam okunarak doğrulandı:
+  case_id başına "hangi pending güncel" sorusunu çözen yetkili bir
+  resolver YOK. Bu iki aile `kind="unsupported_pending_resolution"`
+  olarak yalnız bilgi amaçlı listeleniyor, onay butonu/route'u YOK — Row
+  1-17'ye bu boşluğu kapatan bir resolver İCAT EDİLMEDİ.
+- **Enumerated case_id ve row_key kontrolü** — tek bir allowlist
+  çözücü (`paths.resolve_case_id`) hem route hem servis katmanında, her
+  case_id alan noktanın başında; traversal/encode edilmiş
+  traversal/separator/bilinmeyen-case reddi doğrudan test edildi.
+  `row_key` sabit `CASE_SCOPED_ROWS_BY_KEY` evrenine karşı kontrol
+  ediliyor.
+- **Loopback-only middleware** — gerçek bağlanan istemci IP'sini
+  kontrol ediyor, bind adresine güvenmiyor (`--host 0.0.0.0` yanlışlıkla
+  verilse bile LAN'dan gelen istekler reddedilir).
+- **HMAC CSRF token** — case_id + row_key + expected_hash'e bağlı,
+  süreç-ömürlü sırla üretilen, sabit-zamanlı (`hmac.compare_digest`)
+  doğrulanan token; expected-hash kontrolünün YERİNE GEÇMİYOR, ayrı bir
+  katman.
+- **Aynı-origin (Origin/Referer) doğrulaması** — header varsa host
+  eşleşmesi zorunlu, CSRF token'a ek bir katman.
+- **Mutasyon öncesi stale-hash koruması** — review ekranı render
+  edildiğindeki pending hash, onay anında yeniden kontrol ediliyor;
+  değiştiyse `run_approve` HİÇ ÇAĞRILMIYOR (`StaleViewError`).
+- **Tarayıcıya genel hatalar** — `str(exception)`/ham mutlak path asla
+  HTTP yanıtına girmiyor; sabit kod/mesaj tablosu kullanılıyor, ayrıntılı
+  exception yalnız yerel konsola (`logging`) yazılıyor, repoya/dosyaya
+  YAZILMIYOR.
+- **Repo-göreli sonuç path'leri** — `approval_result.html`'e geçen
+  canonical/audit path'leri `paths.to_repo_relative()`'ten geçiyor.
+- **İzole mutasyon testleri + gerçek data/src byte-bütünlüğü** — tüm
+  mutasyon/rollback/audit-failure testleri `TemporaryDirectory` + sahte
+  adaptör modülüyle çalışıyor; eski `VERGI_UI_RUN_DESTRUCTIVE_TEST`
+  yıkıcı test yolu tamamen kaldırıldı; gerçek `data/`/`src/` ağacının
+  test öncesi/sonrası byte-düzeyinde değişmediği her test turunda
+  ayrıca kanıtlandı.
+- **`pip check` PASS ve 117/117 test sonucu** — 50 (saf-servis) + 17
+  (Jinja2 şablon) + 50 (FastAPI route, TestClient) — hedeflenen
+  `vergi_ui_runtime` ortamında kullanıcı tarafından fiilen çalıştırıldı.
+- **Pinned `ui/requirements.txt`** — kök (UTF-16, ilgisiz anomalili)
+  `requirements.txt`'den AYRI: `fastapi==0.141.1`, `starlette==1.6.0`,
+  `httpx==0.28.1`, `jsonschema==4.26.0`, `pydantic==2.13.5`,
+  `uvicorn==0.52.4`, `python-multipart==0.0.32`, `Jinja2==3.1.6`.
+- **Bilinen, bloklayıcı olmayan backlog maddesi**: `StarletteDeprecationWarning:
+  Using httpx with starlette.testclient is deprecated; install httpx2
+  instead.` — yalnız test altyapısını (`TestClient`) ilgilendiriyor,
+  üretim `uvicorn`/`fastapi` çalışma zamanını ETKİLEMİYOR; 117/117
+  fonksiyonel geçiş bunu doğruluyor. `httpx2` bu fazda KURULMADI/ikame
+  EDİLMEDİ (kullanıcı kararı) - gelecekteki bir bağımlılık yükseltme
+  turuna bırakıldı.
+
+**18a KAPSAM DIŞI (bilinçli, Row 19/18b/18c'ye bırakıldı)**: Layer B
+inceleme kararları, Row 15 yapılandırılmış avukat talebi girişi, kimlik
+doğrulama, çoklu kullanıcı erişimi, production/dış deployment.
+
+**Sonraki adım**: **18b** (Layer B inceleme kararları) — **ACTIVE / NEXT**.
 
 ## 6. Cross-Cutting Backlog
 

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Dosyalar - Vergi AI{% endblock %}
+{% block content %}
+  <h1>Dosyalar</h1>
+  {% if case_ids|length == 0 %}
+    <p class="muted">Hiç dosya (case) bulunamadı. `data/cases/` altında bir dosya klasörü yok.</p>
+  {% else %}
+    <ul class="case-list">
+      {% for case_id in case_ids %}
+        <li>
+          <a href="/cases/{{ case_id }}">{{ case_id }}</a>
+          <span class="sep">·</span>
+          <a href="/cases/{{ case_id }}/approvals">onaylar</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}

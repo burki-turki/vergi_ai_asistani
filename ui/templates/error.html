@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+  <div class="banner banner-error">
+    <strong>{{ title }}</strong>
+    <p>{{ message }}</p>
+    {% if code %}<p class="muted">Hata kodu: <code>{{ code }}</code></p>{% endif %}
+  </div>
+  <p><a class="button" href="{{ back_url }}">&larr; Geri dön</a></p>
+{% endblock %}
