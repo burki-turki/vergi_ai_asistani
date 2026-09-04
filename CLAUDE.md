@@ -128,8 +128,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 12. Evidence Agent — **DONE / LOCKED**
 13. Argument Agent — **DONE / LOCKED**
 14. Risk / Strategy Agent — **DONE / LOCKED**
-15. **Drafting Agent — ACTIVE / NEXT**
-16. QA Agent
+15. Drafting Agent — **DONE / LOCKED**
+16. QA Agent — **ACTIVE / NEXT**
 17. Product Orchestrator Agent
 18. Lawyer UI
 19. Production / Security
@@ -158,8 +158,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-14 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 15 — DRAFTING AGENT** (henüz
+- Rows 1-15 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 16 — QA AGENT** (henüz
   implement edilmedi)
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
@@ -420,9 +420,100 @@ legal conclusion/nihai hukuki sonuç/case outcome DEĞİLDİR (bkz. Prensip 7;
 `case_risk_strategy.schema.json`'da confidence/strength/severity/risk_score/
 win_probability gibi alanların hiçbirinin tanımlı olmaması).
 
-### Row 15 — Drafting Agent (ACTIVE / NEXT)
+### Row 15 — Drafting Agent (DONE / LOCKED — checkpoint özeti)
 
-Henüz implement edilmedi. Row 9-14 tamamlanma paterni (deterministic
+**Schema boundary** — `data/case_drafting.schema.json`: beş ayrı üst-düzey alan
+birbirinden kesin olarak izole: `draft_coverage[]` (issue başına tam 1 kayıt,
+6/6), `draft_sections[]` (`section_type ∈ {facts_summary, legal_basis,
+argument_summary, request, procedural_history}`), `draft_source_refs[]`
+(section'lara ID referanslarıyla bağlı, gömülü değil), `draft_review_notes[]`
+(deterministik gap/disputed/agent-suggested-citation notları) ve
+`draft_agent_suggestions[]` (0..N, kendi yapısal izolasyonuna sahip).
+`submission_status` HER section'da SABİT `"draft_only"`dır.
+
+**Lawyer-input / selection sınırları ve talep yetkilendirmesi (Q1/Q2 ayrımı)** —
+İki AYRI soru kesin olarak ayrılır: Q1 (`is_grounded_advocacy` — dayanak var
+mı?) confirmed argüman referansı VEYA geçerli avukat girdisiyle karşılanabilir;
+Q2 (`request_authorized` — avukat AÇIKÇA bu ÜRETİMİ istedi mi?) YALNIZ yapısal
+olarak geçerli `request_input` (`is_valid_request_input` — dict, yalnız
+`request_type`/`request_text`, ikisi de trim sonrası boş olmayan string) VEYA
+boş/whitespace olmayan `lawyer_provided_text` (`has_valid_lawyer_text`) ile
+karşılanabilir. Confirmed argument/risk/strateji TEK BAŞINA Q2'ye asla yetki
+veremez; `section_type="request"` üretimi Q2 olmadan hem agent hem bağımsız
+validator katmanında reddedilir.
+
+**Canonical kaynak uygunluğu, bağımsız doğrulama, kaynağa-bağlı render,
+stale-source review güvencesi** — Section/suggestion serbest metni yalnız
+canonical issue allowlist'inden (`drafting_discovery.build_allowlists_for_issues`,
+Row 4-14 üzerinden türetilen fact/timeline/deadline/legal_research/case_law/
+evidence/claim/counterargument/rebuttal/risk/strategy eligible-set'i) atıf
+alabilir; her referans `direct` (confirmed/aktif) veya `flagged` (henüz
+incelenmemiş/confirmed olmayan) olarak sınıflandırılır (`is_ref_direct`), ve
+her flagged referansın `claim_span`'i section_text içinde GERÇEKTEN var olmalı
+VE kendi içinde bir belirsizlik ifadesi (`HEDGE_PHRASES`) taşımalıdır
+(`find_refs_missing_hedge`) — tek bir genel uyarı tüm flagged referansları
+meşrulaştırmaz. `contains_unreviewed_source` bağımsız olarak yeniden
+hesaplanır, agent'ın kendi bildirdiği değere güvenilmez.
+
+**Ghost-ID/beyan edilmemiş referans kontrolü ve sınırlı sonuç-garantisi
+kontrolü** — `find_id_reference_issues` (Row 15'e özgü), serbest metindeki
+gerçek canonical ID biçimlerini (13 bilinen prefix: `fact_`, `timeline_event_`,
+`deadline_`, `research_`, `case_law_decision_`, `evidence_candidate_`,
+`argument_claim_`, `argument_counter_`, `argument_rebuttal_`, `risk_`,
+`strategy_`, `issue_`, `draft_section_`) tarayıp üç kategoriye ayırır: declared
+(izinli), `smuggled` (gerçek ama başka issue'ya ait veya beyan edilmemiş),
+`fabricated` (canonical'da hiç yok) — ikisi de reddedilir, hem agent hem
+bağımsız validator'da, hem section hem suggestion metninde. Ayrıca
+`OUTCOME_GUARANTEE_PATTERN`, sabit ifadelerin (Row 14'ten miras
+`UNIVERSAL_FORBIDDEN_PHRASES`) ötesinde kesinlik-zarfı + kazan/kaybet fiil
+çekimi kombinasyonlarını (normalize edilmiş metinde, aynı cümle içinde) yakalar
+— meşru, yetkilendirilmiş savunma/talep dili (ör. "işlemin iptalini talep
+ediyoruz") bu kontrollerden ETKİLENMEZ, ayrı bir bağlamsal kapı
+(`CONDITIONAL_ADVOCACY_PHRASES`, yalnız `section_type='request'` VE Q1
+karşılanmışken) ile korunur.
+
+**Layer A / Layer B** — Layer A (`drafting_approval.py`) pending → canonical
+promosyonunu Row 9-14 deseniyle (backup → atomic write → post-write validation
+→ semantic guard → SHA256 eşitliği → audit) tamamladı. **Bu session'da Layer B
+(`drafting_review.py`) üzerinde gerçek bir review mutation ÇALIŞTIRILMADI** —
+yalnız izole tempdir self-testleri çalıştı.
+
+**İçerik-duyarlı review carry-forward ve canonical mevcutken izole regresyon**
+— Row 13/14 desenine paralel `*_dedup_fingerprint`/`*_content_fingerprint`
+ayrımı ve versioned carry-forward korunur. Canonical `drafting.json` promote
+edildikten SONRA dört self-test paketi tekrar izole biçimde (approval/review
+kendi `tempfile.TemporaryDirectory()`'sine yönlendirilerek) çalıştırılıp gerçek
+case_0001 `drafting/` ağacının değişmediği ayrı ayrı doğrulandı.
+
+**Final doğrulama** — engine 59/59, validator 6/6, approval 8/8, review 10/10
+PASS; canonical `drafting.json` üzerinde bağımsız tam validator ve approval
+semantic-guard salt-okunur PASS verdi. Pending ve canonical SHA256 birebir
+aynı: `eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536`.
+Approval audit kaydı
+`data/cases/case_0001/drafting/reviews/drafting_case_0001_v1_20260904_171024.approval.json`'da
+mevcut.
+
+**Canonical promosyon (offline baseline)** — `case_0001` için canonical
+`data/cases/case_0001/drafting/drafting.json` insan onayıyla (`--approve`)
+promote edildi: `draft_coverage=6` (canonical issue setiyle 1:1),
+`selection_scope=selection_not_provided` ×6, `execution_state=
+analysis_not_run` ×6, `block_reason=blocked_missing_lawyer_input` ×6,
+`draft_sections=draft_source_refs=draft_review_notes=draft_agent_suggestions=0`.
+On canonical input hash'ten `evidence_input_hash=null` (canonical
+`evidence.json` henüz yok — bkz. Row 12), diğer dokuzu (`issues, facts,
+documents, timeline, deadline, legal_research, case_law, arguments,
+risk_strategy`) non-null; ayrı olarak `lawyer_input_hash=null`. **Bu dağılım
+"taslak üretildi" veya "hukuki analiz tamamlandı" anlamına GELMEZ** — bu
+session'da avukat girdisi sağlanmadı, Drafting Agent hiç çalıştırılmadı; bu
+saf bir offline baseline'dır (bkz. Prensip 7). Section/suggestion candidate'lar
+hâlâ verified fact/legal conclusion/nihai hukuki sonuç/dava sonucu DEĞİLDİR;
+lexical/ID/outcome-garantisi kontrolleri metnin TAM anlamsal doğruluğunu
+KANITLAMAZ, ve `lawyer_input_hash` yalnız içerik tutarlılığı sağlar — avukat
+kimliğinin doğrulanması (authentication) anlamına GELMEZ.
+
+### Row 16 — QA Agent (henüz başlanmadı)
+
+Henüz implement edilmedi. Row 9-15 tamamlanma paterni (deterministic
 policy/engine → validator → agent/LLM task → Layer A/Layer B approval)
 referans alınmalı; mimari/contract planlamasıyla başlanacak. Standart
 geliştirme sırası için bkz. §4 "Her row için standart geliştirme sırası".

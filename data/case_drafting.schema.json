@@ -1,0 +1,463 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vergi-ai.local/schema/case_drafting.schema.json",
+  "title": "Vergi AI Case Drafting Schema V1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "drafting_analysis_id",
+    "case_id",
+    "generation_status",
+    "generated_at",
+    "analysis_metadata",
+    "draft_coverage",
+    "draft_sections",
+    "draft_source_refs",
+    "draft_review_notes",
+    "draft_agent_suggestions",
+    "warnings",
+    "notes"
+  ],
+
+  "properties": {
+
+    "schema_version": { "type": "integer", "const": 1 },
+
+    "drafting_analysis_id": { "type": "string", "minLength": 1 },
+
+    "case_id": { "type": "string", "pattern": "^[a-z0-9_-]+$", "minLength": 3 },
+
+    "generation_status": {
+      "type": "string",
+      "enum": ["completed", "failed"],
+      "description": "Yalnız bu analiz artefaktının üretim sürecinin kendisi bitti mi anlamına gelir. 'completed', tüm draft_coverage'ların analysis_not_run olduğu bir durumla eş zamanlı olabilir; bu ASLA 'taslak hazır' veya 'metin üretildi' anlamına GELMEZ."
+    },
+
+    "generated_at": { "type": "string", "format": "date-time" },
+
+    "analysis_metadata": { "$ref": "#/$defs/analysis_metadata" },
+
+    "draft_coverage": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/draft_coverage_record" }
+    },
+
+    "draft_sections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/draft_section" }
+    },
+
+    "draft_source_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/draft_source_ref" }
+    },
+
+    "draft_review_notes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/draft_review_note" }
+    },
+
+    "draft_agent_suggestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/draft_agent_suggestion" }
+    },
+
+    "warnings": { "type": "array", "items": { "type": "string" } },
+
+    "notes": { "type": ["string", "null"] }
+  },
+
+  "$defs": {
+
+    "nullableHash": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+
+    "draftIntentType": {
+      "type": ["string", "null"],
+      "enum": [
+        "initial_lawsuit_petition",
+        "response_petition",
+        "statement_on_merits",
+        "appeal_petition",
+        "supplementary_petition",
+        null
+      ]
+    },
+
+    "appealLevel": {
+      "type": ["string", "null"],
+      "enum": ["istinaf", "temyiz", null]
+    },
+
+    "requestInput": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["request_type", "request_text"],
+      "properties": {
+        "request_type": { "type": "string", "minLength": 1 },
+        "request_text": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "lawyer_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "draft_intent_type",
+        "appeal_level",
+        "selected_issue_ids",
+        "selected_source_ids",
+        "request_input",
+        "lawyer_provided_text"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "draft_intent_type": { "const": "appeal_petition" } },
+            "required": ["draft_intent_type"]
+          },
+          "then": {
+            "properties": { "appeal_level": { "enum": ["istinaf", "temyiz"] } }
+          },
+          "else": {
+            "properties": { "appeal_level": { "const": null } }
+          }
+        }
+      ],
+      "properties": {
+        "draft_intent_type": { "$ref": "#/$defs/draftIntentType" },
+        "appeal_level": { "$ref": "#/$defs/appealLevel" },
+        "selected_issue_ids": {
+          "type": ["array", "null"],
+          "items": { "type": "string", "minLength": 1 },
+          "description": "null = avukat hiç seçim sağlamadı (selection_not_provided). [] = avukat bilinçli olarak hiçbir issue seçmedi (not_selected_by_lawyer, tüm issue'lar için). [...] = kısmi/tam seçim."
+        },
+        "selected_source_ids": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "selected_claim_ids": { "type": "array", "items": { "type": "string" } },
+            "selected_counterargument_ids": { "type": "array", "items": { "type": "string" } },
+            "selected_rebuttal_ids": { "type": "array", "items": { "type": "string" } },
+            "selected_risk_ids": { "type": "array", "items": { "type": "string" } },
+            "selected_strategy_ids": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "request_input": { "$ref": "#/$defs/requestInput" },
+        "lawyer_provided_text": { "type": ["string", "null"] }
+      }
+    },
+
+    "analysis_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issues_input_hash",
+        "facts_input_hash",
+        "documents_input_hash",
+        "timeline_input_hash",
+        "deadline_input_hash",
+        "legal_research_input_hash",
+        "case_law_input_hash",
+        "evidence_input_hash",
+        "arguments_input_hash",
+        "risk_strategy_input_hash",
+        "lawyer_input_hash",
+        "generation_policy_version",
+        "lawyer_input",
+        "total_issue_count",
+        "total_section_count",
+        "total_suggestion_count"
+      ],
+      "properties": {
+        "issues_input_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "facts_input_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "documents_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "timeline_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "deadline_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "legal_research_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "case_law_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "evidence_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "arguments_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "risk_strategy_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "lawyer_input_hash": {
+          "$ref": "#/$defs/nullableHash",
+          "description": "null yalnız avukat girdisi TAMAMEN sağlanmadığında (draft_intent_type, selected_issue_ids, request_input, lawyer_provided_text hepsi boş/null)."
+        },
+        "generation_policy_version": { "type": "string", "const": "1" },
+        "lawyer_input": { "$ref": "#/$defs/lawyer_input" },
+        "total_issue_count": { "type": "integer", "minimum": 0 },
+        "total_section_count": { "type": "integer", "minimum": 0 },
+        "total_suggestion_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "sourceObservation": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["observed_states", "record_count"],
+      "properties": {
+        "observed_states": { "type": "object" },
+        "record_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "upstream_execution_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documents", "facts", "timeline", "deadline", "evidence",
+        "legal_research", "case_law", "arguments", "risk_strategy"
+      ],
+      "properties": {
+        "documents": { "$ref": "#/$defs/sourceObservation" },
+        "facts": { "$ref": "#/$defs/sourceObservation" },
+        "timeline": { "$ref": "#/$defs/sourceObservation" },
+        "deadline": { "$ref": "#/$defs/sourceObservation" },
+        "evidence": { "$ref": "#/$defs/sourceObservation" },
+        "legal_research": { "$ref": "#/$defs/sourceObservation" },
+        "case_law": { "$ref": "#/$defs/sourceObservation" },
+        "arguments": { "$ref": "#/$defs/sourceObservation" },
+        "risk_strategy": { "$ref": "#/$defs/sourceObservation" }
+      }
+    },
+
+    "selectionScope": {
+      "type": "string",
+      "enum": ["selection_not_provided", "selected", "not_selected_by_lawyer"]
+    },
+
+    "executionState": {
+      "type": "string",
+      "enum": [
+        "analysis_not_run",
+        "blocked_missing_input",
+        "blocked_upstream_not_run",
+        "analysis_failed",
+        "no_section_produced",
+        "analysis_partial",
+        "analysis_completed"
+      ]
+    },
+
+    "blockReason": {
+      "type": ["string", "null"],
+      "enum": [
+        "no_confirmed_source_for_issue",
+        "blocked_missing_lawyer_input",
+        "source_hard_denied",
+        "all_candidate_sources_rejected",
+        null
+      ]
+    },
+
+    "draft_coverage_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage_id",
+        "source_issue_id",
+        "selection_scope",
+        "execution_state",
+        "block_reason",
+        "produced_section_count",
+        "allowlist_count",
+        "upstream_execution_snapshot",
+        "reason_codes"
+      ],
+      "properties": {
+        "coverage_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": "string", "minLength": 1 },
+        "selection_scope": { "$ref": "#/$defs/selectionScope" },
+        "execution_state": { "$ref": "#/$defs/executionState" },
+        "block_reason": { "$ref": "#/$defs/blockReason" },
+        "produced_section_count": { "type": "integer", "minimum": 0 },
+        "allowlist_count": { "type": "integer", "minimum": 0 },
+        "upstream_execution_snapshot": { "$ref": "#/$defs/upstream_execution_snapshot" },
+        "reason_codes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "sectionType": {
+      "type": "string",
+      "enum": [
+        "facts_summary",
+        "legal_basis",
+        "argument_summary",
+        "request",
+        "procedural_history"
+      ]
+    },
+
+    "sectionReviewState": {
+      "type": "string",
+      "enum": ["needs_review", "confirmed", "rejected"]
+    },
+
+    "draft_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "section_id",
+        "source_issue_ids",
+        "section_type",
+        "section_text",
+        "contains_unreviewed_source",
+        "section_review_state",
+        "requires_human_review",
+        "status",
+        "submission_status"
+      ],
+      "properties": {
+        "section_id": { "type": "string", "minLength": 1 },
+        "source_issue_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "section_type": { "$ref": "#/$defs/sectionType" },
+        "section_text": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "contains_unreviewed_source": { "type": "boolean" },
+        "section_review_state": { "$ref": "#/$defs/sectionReviewState" },
+        "requires_human_review": { "type": "boolean", "const": true },
+        "status": { "type": "string", "const": "candidate" },
+        "submission_status": { "type": "string", "const": "draft_only" }
+      }
+    },
+
+    "sourceField": {
+      "type": "string",
+      "enum": [
+        "source_fact_ids",
+        "source_timeline_event_ids",
+        "source_deadline_ids",
+        "source_legal_research_ids",
+        "source_case_law_ids",
+        "source_evidence_candidate_ids",
+        "source_claim_ids",
+        "source_counterargument_ids",
+        "source_rebuttal_ids",
+        "source_risk_ids",
+        "source_strategy_ids"
+      ]
+    },
+
+    "renderingMode": {
+      "type": "string",
+      "enum": ["direct_quote", "paraphrase", "citation_only"]
+    },
+
+    "draft_source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_ref_id",
+        "section_id",
+        "claim_span",
+        "source_field",
+        "source_id",
+        "rendering_mode"
+      ],
+      "allOf": [
+        {
+          "if": { "properties": { "rendering_mode": { "const": "direct_quote" } } },
+          "then": { "properties": { "source_field": { "const": "source_fact_ids" } } }
+        }
+      ],
+      "properties": {
+        "source_ref_id": { "type": "string", "minLength": 1 },
+        "section_id": { "type": "string", "minLength": 1 },
+        "claim_span": { "type": ["string", "null"] },
+        "source_field": { "$ref": "#/$defs/sourceField" },
+        "source_id": { "type": "string", "minLength": 1 },
+        "rendering_mode": { "$ref": "#/$defs/renderingMode" }
+      }
+    },
+
+    "noteType": {
+      "type": "string",
+      "enum": [
+        "disputed_content",
+        "needs_review_flagged",
+        "agent_suggested_citation_only",
+        "gap_note"
+      ]
+    },
+
+    "draft_review_note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_note_id",
+        "source_issue_id",
+        "note_type",
+        "source_field",
+        "source_id",
+        "note_text"
+      ],
+      "properties": {
+        "review_note_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": ["string", "null"] },
+        "note_type": { "$ref": "#/$defs/noteType" },
+        "source_field": { "anyOf": [{ "$ref": "#/$defs/sourceField" }, { "type": "null" }] },
+        "source_id": { "type": ["string", "null"] },
+        "note_text": { "type": "string", "minLength": 1, "maxLength": 2000 }
+      }
+    },
+
+    "suggestionType": {
+      "type": "string",
+      "enum": [
+        "missing_source_grounding",
+        "unaddressed_issue",
+        "request_input_needed",
+        "additional_review_needed"
+      ]
+    },
+
+    "reasonCode": {
+      "type": "string",
+      "enum": [
+        "explicit_textual_match",
+        "lawyer_selected_source",
+        "deterministic_gap_note",
+        "general_contextual_relevance"
+      ]
+    },
+
+    "suggestionReviewState": {
+      "type": "string",
+      "enum": ["needs_review", "accepted_for_follow_up", "dismissed"]
+    },
+
+    "draft_agent_suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suggestion_id",
+        "source_issue_id",
+        "related_reference_ids",
+        "suggestion_type",
+        "reason_code",
+        "grounded_explanation",
+        "suggestion_review_state",
+        "requires_human_review",
+        "status"
+      ],
+      "properties": {
+        "suggestion_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": ["string", "null"] },
+        "related_reference_ids": { "type": "array", "items": { "type": "string" } },
+        "suggestion_type": { "$ref": "#/$defs/suggestionType" },
+        "reason_code": { "$ref": "#/$defs/reasonCode" },
+        "grounded_explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "suggestion_review_state": { "$ref": "#/$defs/suggestionReviewState" },
+        "requires_human_review": { "type": "boolean", "const": true },
+        "status": { "type": "string", "const": "candidate" }
+      }
+    }
+  }
+}

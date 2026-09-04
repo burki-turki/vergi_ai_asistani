@@ -1,0 +1,17 @@
+{
+  "audit_type": "drafting_analysis_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-04T17:10:24.275399+03:00",
+  "case_id": "case_0001",
+  "drafting_analysis_id": "drafting_case_0001_v1",
+  "source_pending_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting_case_0001_v1.json.pending",
+  "canonical_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
+  "pending_sha256": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536",
+  "canonical_sha256": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536",
+  "content_identical": true,
+  "previous_canonical_backup": null,
+  "draft_coverage_count": 6,
+  "section_count": 0,
+  "suggestion_count": 0,
+  "approval_semantics": "Bu approval taslak analiz kaydını canonical repository'ye kabul eder. Hiçbir section'ın avukat tarafından hukuki içerik olarak onaylandığı VEYA gönderime hazır olduğu anlamına gelmez. submission_status HER ZAMAN 'draft_only' kalır. review_state yükseltmesi (confirmed/rejected/accepted_for_follow_up/dismissed) yalnız ayrı bir Layer B human review (drafting_review.py) ile mümkündür."
+}

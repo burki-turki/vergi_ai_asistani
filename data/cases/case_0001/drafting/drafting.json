@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "drafting_analysis_id": "drafting_case_0001_v1",
+  "case_id": "case_0001",
+  "generation_status": "completed",
+  "generated_at": "2026-09-04T15:43:10.431321+03:00",
+  "analysis_metadata": {
+    "issues_input_hash": "03acaec305fd96d72bc6346d0ee48377197d18229ca508ad014001e057951f1c",
+    "facts_input_hash": "b7e1e72d273850783fde1ceb64f2925d42a877913f20f756637a4e8f6c6b9a9a",
+    "documents_input_hash": "bde05c0c1742f6a226e6ce40af4558f77dc675dea0ad0e8b4017f6300aa94bdb",
+    "timeline_input_hash": "89e783bf2e971cd1462a8ddd41c1aa73579752e1757e03b2ba781a482e56e195",
+    "deadline_input_hash": "0d6fa6d4bda1580dbf60297d16e99b36c3c0000db371f28b512a638d16f9e9e8",
+    "legal_research_input_hash": "fc77eb358c0f03b3b08a8fb51c9b8dceffc97762791c1f70629d1133137d04ec",
+    "case_law_input_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "evidence_input_hash": null,
+    "arguments_input_hash": "6666c7e309a558e80b0ea7b47beebeec2441ea748b8801337a454eb470fe2425",
+    "risk_strategy_input_hash": "55395f04e7c27439893965e68c1ead902e2149f0fb6289b5e989f9363fc74ed0",
+    "lawyer_input_hash": null,
+    "generation_policy_version": "1",
+    "lawyer_input": {
+      "draft_intent_type": null,
+      "appeal_level": null,
+      "selected_issue_ids": null,
+      "selected_source_ids": {
+        "selected_claim_ids": [],
+        "selected_counterargument_ids": [],
+        "selected_rebuttal_ids": [],
+        "selected_risk_ids": [],
+        "selected_strategy_ids": []
+      },
+      "request_input": null,
+      "lawyer_provided_text": null
+    },
+    "total_issue_count": 6,
+    "total_section_count": 0,
+    "total_suggestion_count": 0
+  },
+  "draft_coverage": [
+    {
+      "coverage_id": "draft_coverage_issue_001",
+      "source_issue_id": "issue_001",
+      "selection_scope": "selection_not_provided",
+      "execution_state": "analysis_not_run",
+      "block_reason": "blocked_missing_lawyer_input",
+      "produced_section_count": 0,
+      "allowlist_count": 3,
+      "upstream_execution_snapshot": {
+        "documents": null,
+        "facts": {
+          "observed_states": {
+            "unverified": 2
+          },
+          "record_count": 2
+        },
+        "timeline": {
+          "observed_states": {
+            "unverified": 1
+          },
+          "record_count": 1
+        },
+        "deadline": null,
+        "evidence": null,
+        "legal_research": {
+          "observed_states": {
+            "retrieval_not_run": 1
+          },
+          "record_count": 1
+        },
+        "case_law": null,
+        "arguments": null,
+        "risk_strategy": null
+      },
+      "reason_codes": []
+    },
+    {
+      "coverage_id": "draft_coverage_issue_002",
+      "source_issue_id": "issue_002",
+      "selection_scope": "selection_not_provided",
+      "execution_state": "analysis_not_run",
+      "block_reason": "blocked_missing_lawyer_input",
+      "produced_section_count": 0,
+      "allowlist_count": 5,
+      "upstream_execution_snapshot": {
+        "documents": null,
+        "facts": {
+          "observed_states": {
+            "unverified": 2
+          },
+          "record_count": 2
+        },
+        "timeline": {
+          "observed_states": {
+            "unverified": 1
+          },
+          "record_count": 1
+        },
+        "deadline": {
+          "observed_states": {
+            "blocked_unverified_anchor": 1
+          },
+          "record_count": 1
+        },
+        "evidence": null,
+        "legal_research": {
+          "observed_states": {
+            "provision_resolved": 1
+          },
+          "record_count": 1
+        },
+        "case_law": null,
+        "arguments": null,
+        "risk_strategy": null
+      },
+      "reason_codes": []
+    },
+    {
+      "coverage_id": "draft_coverage_issue_003",
+      "source_issue_id": "issue_003",
+      "selection_scope": "selection_not_provided",
+      "execution_state": "analysis_not_run",
+      "block_reason": "blocked_missing_lawyer_input",
+      "produced_section_count": 0,
+      "allowlist_count": 1,
+      "upstream_execution_snapshot": {
+        "documents": null,
+        "facts": {
+          "observed_states": {
+            "unverified": 1
+          },
+          "record_count": 1
+        },
+        "timeline": null,
+        "deadline": null,
+        "evidence": null,
+        "legal_research": {
+          "observed_states": {
+            "not_found": 1
+          },
+          "record_count": 1
+        },
+        "case_law": null,
+        "arguments": null,
+        "risk_strategy": null
+      },
+      "reason_codes": []
+    },
+    {
+      "coverage_id": "draft_coverage_issue_004",
+      "source_issue_id": "issue_004",
+      "selection_scope": "selection_not_provided",
+      "execution_state": "analysis_not_run",
+      "block_reason": "blocked_missing_lawyer_input",
+      "produced_section_count": 0,
+      "allowlist_count": 1,
+      "upstream_execution_snapshot": {
+        "documents": null,
+        "facts": {
+          "observed_states": {
+            "unverified": 1
+          },
+          "record_count": 1
+        },
+        "timeline": null,
+        "deadline": null,
+        "evidence": null,
+        "legal_research": {
+          "observed_states": {
+            "not_found": 1
+          },
+          "record_count": 1
+        },
+        "case_law": null,
+        "arguments": null,
+        "risk_strategy": null
+      },
+      "reason_codes": []
+    },
+    {
+      "coverage_id": "draft_coverage_issue_005",
+      "source_issue_id": "issue_005",
+      "selection_scope": "selection_not_provided",
+      "execution_state": "analysis_not_run",
+      "block_reason": "blocked_missing_lawyer_input",
+      "produced_section_count": 0,
+      "allowlist_count": 1,
+      "upstream_execution_snapshot": {
+        "documents": null,
+        "facts": {
+          "observed_states": {
+            "unverified": 1
+          },
+          "record_count": 1
+        },
+        "timeline": null,
+        "deadline": null,
+        "evidence": null,
+        "legal_research": {
+          "observed_states": {
+            "not_found": 1
+          },
+          "record_count": 1
+        },
+        "case_law": null,
+        "arguments": null,
+        "risk_strategy": null
+      },
+      "reason_codes": []
+    },
+    {
+      "coverage_id": "draft_coverage_issue_006",
+      "source_issue_id": "issue_006",
+      "selection_scope": "selection_not_provided",
+      "execution_state": "analysis_not_run",
+      "block_reason": "blocked_missing_lawyer_input",
+      "produced_section_count": 0,
+      "allowlist_count": 1,
+      "upstream_execution_snapshot": {
+        "documents": null,
+        "facts": {
+          "observed_states": {
+            "unverified": 1
+          },
+          "record_count": 1
+        },
+        "timeline": null,
+        "deadline": null,
+        "evidence": null,
+        "legal_research": {
+          "observed_states": {
+            "not_found": 1
+          },
+          "record_count": 1
+        },
+        "case_law": null,
+        "arguments": null,
+        "risk_strategy": null
+      },
+      "reason_codes": []
+    }
+  ],
+  "draft_sections": [],
+  "draft_source_refs": [],
+  "draft_review_notes": [],
+  "draft_agent_suggestions": [],
+  "warnings": [],
+  "notes": "Drafting Engine V1 - deterministik coverage/muhasebe + (varsa) sınırlı agent seçimi/paraphrase. Hiçbir taslak bölümü hukuki sonuç, dava kazanma ihtimali, gönderim yetkisi veya avukatın talebi anlamına gelmez; tüm section/suggestion adayları insan incelemesi gerektirir (submission_status='draft_only')."
+}
