@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Row 17 - Product Orchestrator Case View V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "case_view_id",
+    "case_id",
+    "generation_status",
+    "generated_at",
+    "analysis_metadata",
+    "case_summary",
+    "timeline_summary",
+    "deadline_panel",
+    "issue_panel",
+    "evidence_panel",
+    "case_scope_panel",
+    "open_items_panel",
+    "qa_health_panel",
+    "warnings",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "case_view_id": { "type": "string", "minLength": 1 },
+    "case_id": { "type": "string", "minLength": 1 },
+
+    "generation_status": {
+      "type": "string",
+      "enum": ["completed", "completed_with_errors", "aborted_source_changed", "failed"],
+      "description": "Row 16 (qa_engine) ile aynı semantik: completed = tam muhasebe, 0 error, 0 not_run. Orchestrator KENDİSİ hiçbir upstream 'failed'/'blocked' bulgusunu bu alanla gizlemez/etkilemez - yalnız kendi tarama sürecinin bütünlüğünü ifade eder."
+    },
+
+    "generated_at": { "type": "string", "format": "date-time" },
+
+    "analysis_metadata": { "$ref": "#/$defs/analysis_metadata" },
+
+    "case_summary": { "$ref": "#/$defs/case_summary" },
+    "timeline_summary": { "$ref": "#/$defs/timeline_summary" },
+    "deadline_panel": { "$ref": "#/$defs/deadline_panel" },
+
+    "issue_panel": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/issue_panel_entry" }
+    },
+
+    "evidence_panel": { "$ref": "#/$defs/evidence_panel" },
+    "case_scope_panel": { "$ref": "#/$defs/case_scope_panel" },
+
+    "open_items_panel": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/open_item" }
+    },
+
+    "qa_health_panel": { "$ref": "#/$defs/qa_health_panel" },
+
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+
+  "$defs": {
+
+    "dependency_manifest_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_ref", "raw_byte_sha256", "artifact_state"],
+      "properties": {
+        "artifact_ref": { "type": "string", "minLength": 1 },
+        "raw_byte_sha256": { "type": ["string", "null"] },
+        "artifact_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"]
+        }
+      }
+    },
+
+    "analysis_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dependency_manifest", "scan_started_at", "scan_completed_at"],
+      "properties": {
+        "dependency_manifest": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dependency_manifest_entry" },
+          "description": "Row 17'nin okuduğu HER canonical/pending kaynağın (case.json, timeline.json, deadline.json, issues.json, research.json, case_law.json, evidence.json (varsa), arguments.json, risk_strategy.json, drafting.json, qa.json) tarama anındaki durumu ve sha256'sı. Orchestrator bu listeyi kendisi ÜRETİR, upstream'den kopyalamaz - kaynağın GERÇEK okunma sonucu neyse odur."
+        },
+        "scan_started_at": { "type": "string", "format": "date-time" },
+        "scan_completed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "case_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_state", "case_id", "title", "case_type", "case_status", "stage"],
+      "properties": {
+        "source_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"],
+          "description": "case.json diğer 9 zorunlu kaynaktan biridir (yalnız 'evidence' opsiyoneldir); present_valid dışı bir değer generation_status'un 'failed' olması demektir - ama bu panel yine de şema-geçerli, boş/null içerikli olarak üretilir."
+        },
+        "case_id": { "type": "string", "minLength": 1 },
+        "title": { "type": ["string", "null"] },
+        "reference_code": { "type": ["string", "null"] },
+        "case_type": { "type": ["string", "null"] },
+        "case_status": { "type": ["string", "null"] },
+        "stage": { "type": ["string", "null"] }
+      },
+      "description": "case.json'un kendi alanlarının doğrudan pass-through'u - Orchestrator burada YENİ bir değer üretmez, yalnız case.json'daki required alanları taşır."
+    },
+
+    "timeline_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_state", "timeline_id", "status", "event_count", "earliest_event_date", "latest_event_date"],
+      "properties": {
+        "source_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"]
+        },
+        "timeline_id": { "type": ["string", "null"] },
+        "status": { "type": ["string", "null"] },
+        "event_count": { "type": ["integer", "null"], "minimum": 0 },
+        "earliest_event_date": { "type": ["string", "null"] },
+        "latest_event_date": { "type": ["string", "null"] }
+      }
+    },
+
+    "deadline_entry_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deadline_id", "deadline_type", "calculation_state", "calculated_deadline", "expiry_state", "requires_human_review"],
+      "properties": {
+        "deadline_id": { "type": "string" },
+        "deadline_type": { "type": "string" },
+        "calculation_state": { "type": "string" },
+        "calculated_deadline": { "type": ["string", "null"] },
+        "expiry_state": { "type": ["string", "null"] },
+        "requires_human_review": { "type": "boolean" }
+      }
+    },
+
+    "deadline_panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_state", "deadline_analysis_id", "deadlines"],
+      "properties": {
+        "source_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"]
+        },
+        "deadline_analysis_id": { "type": ["string", "null"] },
+        "deadlines": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/deadline_entry_ref" },
+          "description": "deadline.json'daki TÜM kayıtların pass-through'u, calculated_deadline'a göre artan sırada (null'lar sona). Orchestrator hiçbir deadline'ı FİLTRELEMEZ veya önceliklendirmez - sıralama saf deterministik bir GÖRÜNTÜLEME kolaylığıdır, hukuki bir önem sırası İDDİASI DEĞİLDİR."
+        }
+      }
+    },
+
+    "issue_panel_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issue_id", "issue_type", "title", "status", "requires_human_review",
+        "source_fact_ids", "source_timeline_event_ids", "source_deadline_ids",
+        "legal_research_ids", "case_law", "evidence", "arguments",
+        "risk_strategy", "drafting", "qa_related_check_result_ids"
+      ],
+      "properties": {
+        "issue_id": { "type": "string" },
+        "issue_type": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "requires_human_review": { "type": "boolean" },
+
+        "source_fact_ids": { "type": "array", "items": { "type": "string" } },
+        "source_timeline_event_ids": { "type": "array", "items": { "type": "string" } },
+        "source_deadline_ids": { "type": "array", "items": { "type": "string" } },
+
+        "legal_research_ids": {
+          "type": "array", "items": { "type": "string" },
+          "description": "case_legal_research.research_candidates[] icinde source_issue_id == bu issue_id olan research_id'lerin listesi."
+        },
+
+        "case_law": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coverage_id", "execution_state", "decision_ids"],
+          "properties": {
+            "coverage_id": { "type": ["string", "null"] },
+            "execution_state": { "type": ["string", "null"] },
+            "decision_ids": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source_state", "coverage_id", "execution_state", "supports_candidate_ids", "contradicts_candidate_ids"],
+          "properties": {
+            "source_state": {
+              "type": "string",
+              "enum": ["present_valid", "present_invalid", "absent", "unreadable"],
+              "description": "'absent' = case_0001'de olduğu gibi Row 12 canonical evidence.json henüz yok - bu bir HATA DEĞİLDİR, fail-closed bir durumdur (bkz. Row 12 checkpoint)."
+            },
+            "coverage_id": { "type": ["string", "null"] },
+            "execution_state": { "type": ["string", "null"] },
+            "supports_candidate_ids": { "type": "array", "items": { "type": "string" } },
+            "contradicts_candidate_ids": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+
+        "arguments": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coverage_id", "execution_state", "claim_ids", "counterargument_ids", "rebuttal_ids"],
+          "properties": {
+            "coverage_id": { "type": ["string", "null"] },
+            "execution_state": { "type": ["string", "null"] },
+            "claim_ids": { "type": "array", "items": { "type": "string" } },
+            "counterargument_ids": { "type": "array", "items": { "type": "string" } },
+            "rebuttal_ids": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+
+        "risk_strategy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coverage_id", "risk_execution_state", "strategy_execution_state", "risk_ids", "strategy_ids"],
+          "properties": {
+            "coverage_id": { "type": ["string", "null"] },
+            "risk_execution_state": { "type": ["string", "null"] },
+            "strategy_execution_state": { "type": ["string", "null"] },
+            "risk_ids": { "type": "array", "items": { "type": "string" } },
+            "strategy_ids": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+
+        "drafting": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coverage_id", "execution_state", "section_ids"],
+          "properties": {
+            "coverage_id": { "type": ["string", "null"] },
+            "execution_state": { "type": ["string", "null"] },
+            "section_ids": {
+              "type": "array", "items": { "type": "string" },
+              "description": "draft_sections[] icinde source_issue_ids (COGUL) bu issue_id'yi ICEREN section_id'ler - bir section birden fazla issue'ya ait olabilir, bu yuzden bir section_id BIRDEN FAZLA issue_panel_entry altinda gorunebilir (COPYALAMA DEGIL, gercek coklu-uyelik)."
+            }
+          }
+        },
+
+        "qa_related_check_result_ids": {
+          "type": "array", "items": { "type": "string" },
+          "description": "qa.json.qa_check_results[] icinde related_issue_id == bu issue_id olan check_result_id'ler."
+        }
+      }
+    },
+
+    "evidence_panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_state", "reason", "evidence_analysis_id", "total_candidates", "supports_count", "contradicts_count", "needs_review_count"],
+      "properties": {
+        "source_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"]
+        },
+        "reason": { "type": ["string", "null"] },
+        "evidence_analysis_id": { "type": ["string", "null"] },
+        "total_candidates": { "type": "integer", "minimum": 0 },
+        "supports_count": { "type": "integer", "minimum": 0 },
+        "contradicts_count": { "type": "integer", "minimum": 0 },
+        "needs_review_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "open_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_kind", "source_scope", "source_record_id", "source_issue_id", "reason_code"],
+      "properties": {
+        "item_kind": {
+          "type": "string",
+          "enum": ["requires_human_review", "needs_review_state", "qa_blocked", "qa_failed"],
+          "description": "Bu satirin qa.json/issues/research/case_law/evidence/arguments/risk_strategy/drafting icindeki HANGI gercek alandan geldigi - Orchestrator YENI bir siniflandirma ICAT ETMEZ, yalnix var olan requires_human_review=true / *_review_state=needs_review / qa_result in (blocked,failed) kayitlarini TEK LISTEYE toplar."
+        },
+        "source_scope": { "type": "string" },
+        "source_record_id": { "type": "string" },
+        "source_issue_id": { "type": ["string", "null"] },
+        "reason_code": { "type": ["string", "null"] }
+      }
+    },
+
+    "case_scope_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coverage_id", "source_case_scope", "input_state", "execution_state"],
+      "properties": {
+        "coverage_id": { "type": "string" },
+        "source_case_scope": { "type": "string" },
+        "input_state": { "type": ["string", "null"] },
+        "execution_state": { "type": ["string", "null"] }
+      },
+      "description": "risk_strategy.json.case_scope_coverage[] icin issue-bagimsiz, case-geneli 7 sabit kapsamin (documentary_record, fact_verification, timeline_verification, deadline_calculability, legal_authority_coverage, case_law_coverage, procedural_posture) pass-through'u. source_issue_id TASIMAZ - bu yuzden issue_panel'in DISINDA, ayri bir panel olarak tutulur."
+    },
+
+    "case_scope_panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_state", "entries"],
+      "properties": {
+        "source_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"],
+          "description": "risk_strategy.json'un KENDİ artifact_state'i - case_scope_coverage bu dosyanın bir parçasıdır, ayrı bir kaynak dosyası değildir."
+        },
+        "entries": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/case_scope_entry" }
+        }
+      }
+    },
+
+    "qa_health_panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_state", "qa_analysis_id", "qa_generation_status", "qa_agent_execution_status", "totals_by_result", "totals_by_scope"],
+      "properties": {
+        "source_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"]
+        },
+        "qa_analysis_id": { "type": ["string", "null"] },
+        "qa_generation_status": { "type": ["string", "null"] },
+        "qa_agent_execution_status": { "type": ["string", "null"] },
+        "totals_by_result": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 },
+          "description": "qa.json.qa_check_results icindeki qa_result degerlerinin BAGIMSIZCA yeniden sayilmis dagilimi - qa.json'daki gercek degerle validator tarafindan cross-check edilir."
+        },
+        "totals_by_scope": {
+          "type": "object",
+          "description": "scope_id -> {qa_result: count} - qa.json'dan bagimsizca yeniden hesaplanir."
+        }
+      }
+    }
+  }
+}

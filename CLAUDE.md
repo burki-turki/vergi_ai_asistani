@@ -130,8 +130,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 14. Risk / Strategy Agent — **DONE / LOCKED**
 15. Drafting Agent — **DONE / LOCKED**
 16. QA Agent — **DONE / LOCKED**
-17. Product Orchestrator Agent — **ACTIVE / NEXT**
-18. Lawyer UI
+17. Product Orchestrator Agent — **DONE / LOCKED**
+18. Lawyer UI — **ACTIVE / NEXT**
 19. Production / Security
 20. Pilot / Evaluation
 21. Commercial V1
@@ -158,8 +158,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-16 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 17 — PRODUCT ORCHESTRATOR AGENT**
+- Rows 1-17 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 18 — LAWYER UI**
   (henüz implement edilmedi)
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
@@ -591,6 +591,105 @@ mevcut. **Bu dağılım "dosyalar hatasız" veya "QA analizi tamamlandı"
 anlamına GELMEZ** — agent bu session'da hiç çalıştırılmadı, 7 blocked
 sonuç yalnızca Row 12'nin bilinen eksik canonical girdisini yansıtır; bu
 saf bir offline baseline'dır (bkz. Prensip 7).
+
+### Row 17 — Product Orchestrator Agent (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam kararı (kullanıcı, 2026-09-04): Seçenek A** — Row 17 **saf deterministik
+birleştirmedir, agent/LLM katmanı YOKTUR**. `case_view.json`, Row 1-16'nın zaten
+canonical olan çıktılarını issue etrafında yeniden gruplayan **tek bir salt-okunur
+rollup belgesidir** — diğer row'ların aksine ayrı `*_candidates`/`*_agent_suggestions`
+üst-düzey alanları YOKTUR; agent/LLM'in hiçbir zaman dokunmadığı bir katmandır (bkz.
+Prensip 1/2/7).
+
+**Schema boundary** — `data/case_view.schema.json`: `case_summary`,
+`timeline_summary`, `deadline_panel`, `issue_panel[]` (canonical issue başına tam 1
+kayıt, her biri case_law/evidence/arguments/risk_strategy/drafting alt-nesnelerini
+ve `qa_related_check_result_ids`'i taşır), `evidence_panel` (case-geneli özet),
+`case_scope_panel` (Row 14'ün 7 sabit `case_scope_coverage` girdisi — issue-scoped
+DEĞİLDİR, `issue_panel`'e dahil edilmez), `open_items_panel[]` (var olan
+`requires_human_review`/`needs_review`/`qa_result∈{blocked,failed}` alanlarının
+yeniden listelenmesi — YENİ bir sınıflandırma icat edilmez), `qa_health_panel`
+(qa.json'un kendi özetine güvenmeden `qa_check_results`'tan bağımsızca yeniden
+sayılmış dağılım), `analysis_metadata.dependency_manifest` (11 sabit kaynağın
+artifact_state + raw_byte_sha256'ı). 11 sabit kaynak `orchestrator_policy.py`'de
+FIXED REGISTRY: `case, timeline, deadline, issues, legal_research, case_law,
+evidence, arguments, risk_strategy, drafting, qa` — `evidence` tek opsiyonel
+kaynaktır (Row 12'de canonical `evidence.json` henüz yok).
+
+**Dolaylı linkajlar, tekilleştirilmeden korunur** — `strategy_candidates`'ın
+`source_issue_id` alanı YOKTUR; issue'ya yalnız `addresses_risk_ids` →
+`risk_candidates[].source_issue_id` üzerinden dolaylı bağlanır (bir strateji birden
+fazla issue'nun riskini adresliyorsa, HEPSİ altında görünür). `draft_sections[]`
+`source_issue_ids` (ÇOĞUL) taşır — gerçek çoklu-üyelik, kopyalama hatası değildir;
+`group_by_issue_id_membership()` bu ayrımı ayrı bir fonksiyon olarak taşır
+(`group_by_issue_id()`'den kasıtlı olarak ayrı).
+
+**QA → issue linkaj politikası (kullanıcı kararı, 2026-09-04)** — Bir
+`qa_check_result` YALNIZ `related_issue_id` alanı dolu ve deterministik olarak
+çözülebiliyorsa `issue_panel[].qa_related_check_result_ids`'e eklenir; bağlantı
+kurulamıyorsa kayıp DEĞİLDİR — `qa_health_panel` (toplam sayaç) ve gerektiğinde
+scope-seviyeli `open_items_panel`'de görünmeye devam eder. Metinden veya isim/kelime
+benzerliğinden issue ilişkisi ASLA tahmin edilmez. **Tespit edilen gerçek durum**:
+`qa_engine.py` (Row 16, LOCKED) şu an `related_issue_id`'yi HİÇBİR check için
+doldurmuyor — case_0001'in 83 check_result'ının tamamında bu alan `null`'dır (kod
+incelemesiyle doğrulandı: `qa_engine.py` içinde bu parametreye gerçek bir değer
+geçen tek bir çağrı yok). Bu Row 17'nin hatası DEĞİLDİR, Row 16'nın önceden var
+olan, bilinen bir sınırıdır; **şimdilik yamanmamasına karar verildi**. İleride
+gerçek ihtiyaç doğarsa Row 16 için ayrı bir bakım yaması değerlendirilecek ve olası
+alan TEKİL `related_issue_id` değil, ÇOĞUL `related_issue_ids[]` olacaktır (bir
+check birden fazla issue'yu ilgilendirebilir).
+
+**Bağımsız validator — Row 16'dan farklı mekanizma, aynı disiplin** —
+`orchestrator_validator.py`, kayıtlı `case_view`'a güvenmez;
+`orchestrator_engine.build_case_view()`'ı yeniden çağırıp üç zaman-damgası alanı
+(`generated_at`, `analysis_metadata.scan_started_at/scan_completed_at`) HARİÇ **tam
+belge eşitliği** karşılaştırması yapar (genel-amaçlı `_deep_diff()` ile yol-etiketli
+fark raporu). Row 16'nın check-by-check karşılaştırmasından farklıdır çünkü Row 17
+saf deterministik bir birleştirmedir — aynı girdi her zaman birebir aynı çıktıyı
+ÜRETMEK ZORUNDADIR; herhangi bir fark tahrifat/tutarsızlık şüphesidir. Stale
+snapshot (11 kaynağın güncel SHA256'sıyla uyuşmazlık) ayrı bir hata sınıfı olarak
+(tahrifat DENMEDEN) sınıflandırılır.
+
+**`generation_status` — geniş şema, dar motor, daha dar promosyon (üç ayrı
+kullanıcı kararı)** — Şema 4 değer taşır (`completed, completed_with_errors,
+aborted_source_changed, failed` — Row 16 ile aynı sözlük, kasıtlı olarak
+DARALTILMADI), ama v1 saf deterministik motoru yalnız `completed`/`failed`
+üretebilir (`orchestrator_validator.validate_generation_status_consistency` bunu
+ayrıca doğrular). **Layer A (`orchestrator_approval.py`) yalnız
+`generation_status='completed'` olan bir case_view'i canonical'a promote eder** —
+`'failed'` (bir veya daha fazla zorunlu kaynak eksik) kendi içinde tutarlı ve
+şema-geçerli olsa BİLE reddedilir; motor yine de HER ZAMAN `'failed'` için
+şema-geçerli, hatasız bir case_view üretmeye devam eder (bu yalnız
+görüntüleme/hata-toleransı içindir, promosyon için değil).
+
+**Layer A / Layer B** — Yalnız Layer A vardır (`orchestrator_approval.py`, Row 9-16
+deseniyle: backup → PRE/POST-write bağımlılık karşılaştırması → atomic write →
+post-write validation → semantic guard → SHA256 eşitliği → audit → rollback).
+**Layer B YOKTUR** — case_view'de bireysel review_state taşıyan bir kayıt tipi
+bulunmaz (saf rollup, kendi review lifecycle'ı yok); bir alt-kaydın review_state'i
+DEĞİŞTİRİLECEKSE bu her zaman kendi kaynak row'unda (ör. `evidence_review.py`) olur,
+Row 17'de DEĞİL.
+
+**Final doğrulama** — engine 10/10, validator 8/8, approval 10/10 PASS (toplam
+28/28); tüm self-testler bu session'da case_0001'in gerçek canonical verisiyle
+(makineye bağlı device bridge üzerinden dosyalar bizzat çekilip izole bir ortamda
+çalıştırılarak) doğrulandı, salt terminal çıktısına güvenilmedi. Kullanıcı da
+kendi makinesinde aynı üç self-test'i bağımsız olarak çalıştırıp birebir aynı
+sonucu (10/10, 8/8, 10/10) aldı.
+
+**Canonical promosyon** — `case_0001` için canonical
+`data/cases/case_0001/case_view/case_view.json` insan onayıyla (`--approve`)
+promote edildi: `case_view_id=case_view_case_0001_v1`, `generation_status=completed`,
+`issue_panel=6` (canonical issue setiyle 1:1), `open_items_panel=25`,
+`warnings=1` (yukarıdaki QA linkaj politikasının dürüst yansıması: "83
+qa_check_result related_issue_id olmadan"). Pending ve canonical SHA256 birebir
+aynı: `357e1d48b0cca73626a980d6e2bb84d785bab4236a539de9966e161e7b393a42` — bu hem
+kullanıcının terminal çıktısında hem bu session'ın kendi bağımsız hesaplamasında
+(makineden dosyalar tekrar çekilerek) doğrulandı. Approval audit kaydı
+`data/cases/case_0001/case_view/reviews/case_view_case_0001_v1_20260904_212319.approval.json`'da
+mevcut. **Orchestrator hiçbir yeni hukuki fact/olasılık/sonuç İCAT ETMEMİŞTİR** —
+yalnız Row 1-16'nın zaten canonical olan çıktılarını issue etrafında yeniden
+gruplamıştır (bkz. Prensip 1, 2, 7).
 
 ## 6. Cross-Cutting Backlog
 

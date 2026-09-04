@@ -1,0 +1,18 @@
+{
+  "audit_type": "case_view_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-04T21:23:19.213795+03:00",
+  "case_id": "case_0001",
+  "case_view_id": "case_view_case_0001_v1",
+  "source_pending_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_view\\case_view_case_0001_v1.json.pending",
+  "canonical_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_view\\case_view.json",
+  "pending_sha256": "357e1d48b0cca73626a980d6e2bb84d785bab4236a539de9966e161e7b393a42",
+  "canonical_sha256": "357e1d48b0cca73626a980d6e2bb84d785bab4236a539de9966e161e7b393a42",
+  "content_identical": true,
+  "previous_canonical_backup": null,
+  "generation_status": "completed",
+  "issue_panel_count": 6,
+  "open_items_count": 25,
+  "warnings_count": 1,
+  "approval_semantics": "Bu approval case_view'i canonical repository'ye kabul eder. Orchestrator HİÇBİR yeni hukuki fact/olasılık/sonuç İCAT ETMEZ - yalnız Row 1-16'nın zaten canonical olan çıktılarını issue etrafında yeniden gruplar. generation_status yalnız 'completed' olabilir - bir veya daha fazla zorunlu kaynak eksikken üretilen 'failed' bir case_view (kendi içinde tutarlı ve şema-geçerli olsa BİLE) Layer A tarafından REDDEDİLİR (kullanıcı kararı, 2026-09-04)."
+}

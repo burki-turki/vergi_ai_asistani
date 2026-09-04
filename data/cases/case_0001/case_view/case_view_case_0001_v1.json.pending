@@ -1,0 +1,682 @@
+{
+  "schema_version": 1,
+  "case_view_id": "case_view_case_0001_v1",
+  "case_id": "case_0001",
+  "generation_status": "completed",
+  "generated_at": "2026-09-04T18:21:21.928166+00:00",
+  "analysis_metadata": {
+    "dependency_manifest": [
+      {
+        "artifact_ref": "case",
+        "raw_byte_sha256": "f0bc0d2f45a18e534a12e9dec73bd02449a25488451b1cfba948f5fbad019c39",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "timeline",
+        "raw_byte_sha256": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "deadline",
+        "raw_byte_sha256": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "issues",
+        "raw_byte_sha256": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "legal_research",
+        "raw_byte_sha256": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "case_law",
+        "raw_byte_sha256": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "evidence",
+        "raw_byte_sha256": null,
+        "artifact_state": "absent"
+      },
+      {
+        "artifact_ref": "arguments",
+        "raw_byte_sha256": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "risk_strategy",
+        "raw_byte_sha256": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "drafting",
+        "raw_byte_sha256": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536",
+        "artifact_state": "present_valid"
+      },
+      {
+        "artifact_ref": "qa",
+        "raw_byte_sha256": "a4af057af4e21e6994823378bae6b1127a799cbc6db3ca7dc1b4b207d31aec40",
+        "artifact_state": "present_valid"
+      }
+    ],
+    "scan_started_at": "2026-09-04T18:21:21.926432+00:00",
+    "scan_completed_at": "2026-09-04T18:21:21.928166+00:00"
+  },
+  "case_summary": {
+    "source_state": "present_valid",
+    "case_id": "case_0001",
+    "title": "KDV Tarhiyatı ve Vergi Ziyaı Cezası - Demo Uyuşmazlık",
+    "reference_code": "DEMO-2026-001",
+    "case_type": "assessment_and_penalty",
+    "case_status": "pending",
+    "stage": "first_instance"
+  },
+  "timeline_summary": {
+    "source_state": "present_valid",
+    "timeline_id": "timeline_case_0001_v1_1",
+    "status": "completed",
+    "event_count": 4,
+    "earliest_event_date": "2026-01-20",
+    "latest_event_date": "2026-03-05"
+  },
+  "deadline_panel": {
+    "source_state": "present_valid",
+    "deadline_analysis_id": "deadline_case_0001_v1",
+    "deadlines": [
+      {
+        "deadline_id": "deadline_001",
+        "deadline_type": "lawsuit_filing",
+        "calculation_state": "blocked_unverified_anchor",
+        "calculated_deadline": null,
+        "expiry_state": "not_evaluated",
+        "requires_human_review": true
+      }
+    ]
+  },
+  "issue_panel": [
+    {
+      "issue_id": "issue_001",
+      "issue_type": "verification_gap",
+      "title": "Süre açısından önemli olayın doğrulanması gerekebilir",
+      "status": "candidate",
+      "requires_human_review": true,
+      "source_fact_ids": [
+        "fact_dava_dilekcesi_001_llm_v1_3_20260901_130225_003",
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_008"
+      ],
+      "source_timeline_event_ids": [
+        "timeline_event_003"
+      ],
+      "source_deadline_ids": [],
+      "legal_research_ids": [
+        "research_006"
+      ],
+      "case_law": {
+        "coverage_id": "coverage_issue_001",
+        "execution_state": "retrieval_not_run",
+        "decision_ids": []
+      },
+      "evidence": {
+        "source_state": "absent",
+        "coverage_id": null,
+        "execution_state": null,
+        "supports_candidate_ids": [],
+        "contradicts_candidate_ids": []
+      },
+      "arguments": {
+        "coverage_id": "coverage_issue_001",
+        "execution_state": "analysis_not_run",
+        "claim_ids": [],
+        "counterargument_ids": [],
+        "rebuttal_ids": []
+      },
+      "risk_strategy": {
+        "coverage_id": "risk_coverage_issue_001",
+        "risk_execution_state": "analysis_not_run",
+        "strategy_execution_state": "analysis_not_run",
+        "risk_ids": [],
+        "strategy_ids": []
+      },
+      "drafting": {
+        "coverage_id": "draft_coverage_issue_001",
+        "execution_state": "analysis_not_run",
+        "section_ids": []
+      },
+      "qa_related_check_result_ids": []
+    },
+    {
+      "issue_id": "issue_002",
+      "issue_type": "deadline_risk",
+      "title": "Süre hesaplaması doğrulanmamış olay nedeniyle bloklanmıştır",
+      "status": "candidate",
+      "requires_human_review": true,
+      "source_fact_ids": [
+        "fact_dava_dilekcesi_001_llm_v1_3_20260901_130225_003",
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_008"
+      ],
+      "source_timeline_event_ids": [
+        "timeline_event_003"
+      ],
+      "source_deadline_ids": [
+        "deadline_001"
+      ],
+      "legal_research_ids": [
+        "research_001"
+      ],
+      "case_law": {
+        "coverage_id": "coverage_issue_002",
+        "execution_state": "retrieval_not_run",
+        "decision_ids": []
+      },
+      "evidence": {
+        "source_state": "absent",
+        "coverage_id": null,
+        "execution_state": null,
+        "supports_candidate_ids": [],
+        "contradicts_candidate_ids": []
+      },
+      "arguments": {
+        "coverage_id": "coverage_issue_002",
+        "execution_state": "analysis_not_run",
+        "claim_ids": [],
+        "counterargument_ids": [],
+        "rebuttal_ids": []
+      },
+      "risk_strategy": {
+        "coverage_id": "risk_coverage_issue_002",
+        "risk_execution_state": "analysis_not_run",
+        "strategy_execution_state": "analysis_not_run",
+        "risk_ids": [],
+        "strategy_ids": []
+      },
+      "drafting": {
+        "coverage_id": "draft_coverage_issue_002",
+        "execution_state": "analysis_not_run",
+        "section_ids": []
+      },
+      "qa_related_check_result_ids": []
+    },
+    {
+      "issue_id": "issue_003",
+      "issue_type": "legal_basis_reference",
+      "title": "Belgede atıf yapılan hukuki dayanağın uygulanabilirliği değerlendirilmelidir",
+      "status": "candidate",
+      "requires_human_review": true,
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_006"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "legal_research_ids": [
+        "research_002"
+      ],
+      "case_law": {
+        "coverage_id": "coverage_issue_003",
+        "execution_state": "retrieval_not_run",
+        "decision_ids": []
+      },
+      "evidence": {
+        "source_state": "absent",
+        "coverage_id": null,
+        "execution_state": null,
+        "supports_candidate_ids": [],
+        "contradicts_candidate_ids": []
+      },
+      "arguments": {
+        "coverage_id": "coverage_issue_003",
+        "execution_state": "analysis_not_run",
+        "claim_ids": [],
+        "counterargument_ids": [],
+        "rebuttal_ids": []
+      },
+      "risk_strategy": {
+        "coverage_id": "risk_coverage_issue_003",
+        "risk_execution_state": "analysis_not_run",
+        "strategy_execution_state": "analysis_not_run",
+        "risk_ids": [],
+        "strategy_ids": []
+      },
+      "drafting": {
+        "coverage_id": "draft_coverage_issue_003",
+        "execution_state": "analysis_not_run",
+        "section_ids": []
+      },
+      "qa_related_check_result_ids": []
+    },
+    {
+      "issue_id": "issue_004",
+      "issue_type": "legal_basis_reference",
+      "title": "Belgede atıf yapılan hukuki dayanağın uygulanabilirliği değerlendirilmelidir",
+      "status": "candidate",
+      "requires_human_review": true,
+      "source_fact_ids": [
+        "fact_ihbarname_001_llm_v1_2_1_20260901_122652_007"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "legal_research_ids": [
+        "research_003"
+      ],
+      "case_law": {
+        "coverage_id": "coverage_issue_004",
+        "execution_state": "retrieval_not_run",
+        "decision_ids": []
+      },
+      "evidence": {
+        "source_state": "absent",
+        "coverage_id": null,
+        "execution_state": null,
+        "supports_candidate_ids": [],
+        "contradicts_candidate_ids": []
+      },
+      "arguments": {
+        "coverage_id": "coverage_issue_004",
+        "execution_state": "analysis_not_run",
+        "claim_ids": [],
+        "counterargument_ids": [],
+        "rebuttal_ids": []
+      },
+      "risk_strategy": {
+        "coverage_id": "risk_coverage_issue_004",
+        "risk_execution_state": "analysis_not_run",
+        "strategy_execution_state": "analysis_not_run",
+        "risk_ids": [],
+        "strategy_ids": []
+      },
+      "drafting": {
+        "coverage_id": "draft_coverage_issue_004",
+        "execution_state": "analysis_not_run",
+        "section_ids": []
+      },
+      "qa_related_check_result_ids": []
+    },
+    {
+      "issue_id": "issue_005",
+      "issue_type": "legal_basis_reference",
+      "title": "Belgede atıf yapılan hukuki dayanağın uygulanabilirliği değerlendirilmelidir",
+      "status": "candidate",
+      "requires_human_review": true,
+      "source_fact_ids": [
+        "fact_vir_001_llm_v1_1_20260901_105342_006"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "legal_research_ids": [
+        "research_004"
+      ],
+      "case_law": {
+        "coverage_id": "coverage_issue_005",
+        "execution_state": "retrieval_not_run",
+        "decision_ids": []
+      },
+      "evidence": {
+        "source_state": "absent",
+        "coverage_id": null,
+        "execution_state": null,
+        "supports_candidate_ids": [],
+        "contradicts_candidate_ids": []
+      },
+      "arguments": {
+        "coverage_id": "coverage_issue_005",
+        "execution_state": "analysis_not_run",
+        "claim_ids": [],
+        "counterargument_ids": [],
+        "rebuttal_ids": []
+      },
+      "risk_strategy": {
+        "coverage_id": "risk_coverage_issue_005",
+        "risk_execution_state": "analysis_not_run",
+        "strategy_execution_state": "analysis_not_run",
+        "risk_ids": [],
+        "strategy_ids": []
+      },
+      "drafting": {
+        "coverage_id": "draft_coverage_issue_005",
+        "execution_state": "analysis_not_run",
+        "section_ids": []
+      },
+      "qa_related_check_result_ids": []
+    },
+    {
+      "issue_id": "issue_006",
+      "issue_type": "legal_basis_reference",
+      "title": "Belgede atıf yapılan hukuki dayanağın uygulanabilirliği değerlendirilmelidir",
+      "status": "candidate",
+      "requires_human_review": true,
+      "source_fact_ids": [
+        "fact_vir_001_llm_v1_1_20260901_105342_007"
+      ],
+      "source_timeline_event_ids": [],
+      "source_deadline_ids": [],
+      "legal_research_ids": [
+        "research_005"
+      ],
+      "case_law": {
+        "coverage_id": "coverage_issue_006",
+        "execution_state": "retrieval_not_run",
+        "decision_ids": []
+      },
+      "evidence": {
+        "source_state": "absent",
+        "coverage_id": null,
+        "execution_state": null,
+        "supports_candidate_ids": [],
+        "contradicts_candidate_ids": []
+      },
+      "arguments": {
+        "coverage_id": "coverage_issue_006",
+        "execution_state": "analysis_not_run",
+        "claim_ids": [],
+        "counterargument_ids": [],
+        "rebuttal_ids": []
+      },
+      "risk_strategy": {
+        "coverage_id": "risk_coverage_issue_006",
+        "risk_execution_state": "analysis_not_run",
+        "strategy_execution_state": "analysis_not_run",
+        "risk_ids": [],
+        "strategy_ids": []
+      },
+      "drafting": {
+        "coverage_id": "draft_coverage_issue_006",
+        "execution_state": "analysis_not_run",
+        "section_ids": []
+      },
+      "qa_related_check_result_ids": []
+    }
+  ],
+  "evidence_panel": {
+    "source_state": "absent",
+    "reason": "canonical evidence.json henüz oluşturulmadı (Row 12 offline baseline, yalnız pending mevcut)",
+    "evidence_analysis_id": null,
+    "total_candidates": 0,
+    "supports_count": 0,
+    "contradicts_count": 0,
+    "needs_review_count": 0
+  },
+  "case_scope_panel": {
+    "source_state": "present_valid",
+    "entries": [
+      {
+        "coverage_id": "case_scope_documentary_record",
+        "source_case_scope": "documentary_record",
+        "input_state": "no_canonical_input",
+        "execution_state": "analysis_not_run"
+      },
+      {
+        "coverage_id": "case_scope_fact_verification",
+        "source_case_scope": "fact_verification",
+        "input_state": "canonical_input_present",
+        "execution_state": "analysis_not_run"
+      },
+      {
+        "coverage_id": "case_scope_timeline_verification",
+        "source_case_scope": "timeline_verification",
+        "input_state": "canonical_input_present",
+        "execution_state": "analysis_not_run"
+      },
+      {
+        "coverage_id": "case_scope_deadline_calculability",
+        "source_case_scope": "deadline_calculability",
+        "input_state": "canonical_input_present",
+        "execution_state": "analysis_not_run"
+      },
+      {
+        "coverage_id": "case_scope_legal_authority_coverage",
+        "source_case_scope": "legal_authority_coverage",
+        "input_state": "canonical_input_present",
+        "execution_state": "analysis_not_run"
+      },
+      {
+        "coverage_id": "case_scope_case_law_coverage",
+        "source_case_scope": "case_law_coverage",
+        "input_state": "canonical_input_present",
+        "execution_state": "analysis_not_run"
+      },
+      {
+        "coverage_id": "case_scope_procedural_posture",
+        "source_case_scope": "procedural_posture",
+        "input_state": "canonical_input_present",
+        "execution_state": "analysis_not_run"
+      }
+    ]
+  },
+  "open_items_panel": [
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "issues",
+      "source_record_id": "issue_001",
+      "source_issue_id": "issue_001",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "issues",
+      "source_record_id": "issue_002",
+      "source_issue_id": "issue_002",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "issues",
+      "source_record_id": "issue_003",
+      "source_issue_id": "issue_003",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "issues",
+      "source_record_id": "issue_004",
+      "source_issue_id": "issue_004",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "issues",
+      "source_record_id": "issue_005",
+      "source_issue_id": "issue_005",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "issues",
+      "source_record_id": "issue_006",
+      "source_issue_id": "issue_006",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "legal_research",
+      "source_record_id": "research_001",
+      "source_issue_id": "issue_002",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "legal_research",
+      "source_record_id": "research_002",
+      "source_issue_id": "issue_003",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "legal_research",
+      "source_record_id": "research_003",
+      "source_issue_id": "issue_004",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "legal_research",
+      "source_record_id": "research_004",
+      "source_issue_id": "issue_005",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "legal_research",
+      "source_record_id": "research_005",
+      "source_issue_id": "issue_006",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "legal_research",
+      "source_record_id": "research_006",
+      "source_issue_id": "issue_001",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "case_law",
+      "source_record_id": "coverage_issue_001",
+      "source_issue_id": "issue_001",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "case_law",
+      "source_record_id": "coverage_issue_002",
+      "source_issue_id": "issue_002",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "case_law",
+      "source_record_id": "coverage_issue_003",
+      "source_issue_id": "issue_003",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "case_law",
+      "source_record_id": "coverage_issue_004",
+      "source_issue_id": "issue_004",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "case_law",
+      "source_record_id": "coverage_issue_005",
+      "source_issue_id": "issue_005",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "requires_human_review",
+      "source_scope": "case_law",
+      "source_record_id": "coverage_issue_006",
+      "source_issue_id": "issue_006",
+      "reason_code": "candidate"
+    },
+    {
+      "item_kind": "qa_blocked",
+      "source_scope": "qa",
+      "source_record_id": "qa_check_result_035",
+      "source_issue_id": null,
+      "reason_code": "prerequisite_unmet"
+    },
+    {
+      "item_kind": "qa_blocked",
+      "source_scope": "qa",
+      "source_record_id": "qa_check_result_036",
+      "source_issue_id": null,
+      "reason_code": "prerequisite_unmet"
+    },
+    {
+      "item_kind": "qa_blocked",
+      "source_scope": "qa",
+      "source_record_id": "qa_check_result_056",
+      "source_issue_id": null,
+      "reason_code": "prerequisite_unmet"
+    },
+    {
+      "item_kind": "qa_blocked",
+      "source_scope": "qa",
+      "source_record_id": "qa_check_result_060",
+      "source_issue_id": null,
+      "reason_code": "prerequisite_unmet"
+    },
+    {
+      "item_kind": "qa_blocked",
+      "source_scope": "qa",
+      "source_record_id": "qa_check_result_065",
+      "source_issue_id": null,
+      "reason_code": "prerequisite_unmet"
+    },
+    {
+      "item_kind": "qa_blocked",
+      "source_scope": "qa",
+      "source_record_id": "qa_check_result_072",
+      "source_issue_id": null,
+      "reason_code": "prerequisite_unmet"
+    },
+    {
+      "item_kind": "qa_blocked",
+      "source_scope": "qa",
+      "source_record_id": "qa_check_result_076",
+      "source_issue_id": null,
+      "reason_code": "prerequisite_unmet"
+    }
+  ],
+  "qa_health_panel": {
+    "source_state": "present_valid",
+    "qa_analysis_id": "qa_case_0001_v1",
+    "qa_generation_status": "completed",
+    "qa_agent_execution_status": "not_requested",
+    "totals_by_result": {
+      "passed": 72,
+      "blocked": 7,
+      "not_applicable": 4
+    },
+    "totals_by_scope": {
+      "documents": {
+        "passed": 11
+      },
+      "facts": {
+        "passed": 12
+      },
+      "timeline": {
+        "passed": 4
+      },
+      "deadline": {
+        "passed": 5
+      },
+      "issues": {
+        "passed": 4
+      },
+      "legal_research": {
+        "passed": 5
+      },
+      "case_law": {
+        "passed": 6,
+        "not_applicable": 1
+      },
+      "evidence": {
+        "passed": 1,
+        "blocked": 7
+      },
+      "arguments": {
+        "passed": 8,
+        "not_applicable": 1
+      },
+      "risk_strategy": {
+        "passed": 8,
+        "not_applicable": 1
+      },
+      "drafting": {
+        "passed": 8,
+        "not_applicable": 1
+      }
+    }
+  },
+  "warnings": [
+    "83 qa_check_result related_issue_id olmadan (scope-seviyeli check'ler için normal)."
+  ],
+  "notes": [
+    "v1 kapsam sınırı: risk_strategy.json.case_scope_coverage[] case_scope_panel'de temsil edilir ama issue_panel'e dahil değildir (source_issue_id taşımaz, source_case_scope taşır).",
+    "v1 kapsam sınırı: drafting.json.draft_source_refs[] (bölüm-içi tekil atıf kayıtları) case_view'de temsil edilmez; yalnız section_id seviyesinde özet vardır."
+  ]
+}
