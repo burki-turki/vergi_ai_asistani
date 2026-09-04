@@ -127,8 +127,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 11. Case Law Agent — **DONE / LOCKED**
 12. Evidence Agent — **DONE / LOCKED**
 13. Argument Agent — **DONE / LOCKED**
-14. **Risk / Strategy Agent — ACTIVE / NEXT**
-15. Drafting Agent
+14. Risk / Strategy Agent — **DONE / LOCKED**
+15. **Drafting Agent — ACTIVE / NEXT**
 16. QA Agent
 17. Product Orchestrator Agent
 18. Lawyer UI
@@ -158,8 +158,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-13 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 14 — RISK / STRATEGY AGENT** (henüz
+- Rows 1-14 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 15 — DRAFTING AGENT** (henüz
   implement edilmedi)
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
@@ -326,9 +326,103 @@ DEĞİLDİR (bkz. Prensip 7; `case_arguments.schema.json`'da confidence/strength
 priority/admissibility/sufficiency/win_probability/recommended_outcome/
 success_probability alanlarının hiçbirinin tanımlı olmaması).
 
-### Row 14 — Risk / Strategy Agent (ACTIVE / NEXT)
+### Row 14 — Risk / Strategy Agent (DONE / LOCKED — checkpoint özeti)
 
-Henüz implement edilmedi. Row 9-13 tamamlanma paterni (deterministic
+**Schema boundary** — `data/case_risk_strategy.schema.json`: `risk_coverage[]`
+(canonical issue başına tam 1 kayıt, 6/6) ve `case_scope_coverage[]` (7 sabit
+scope başına tam 1 kayıt: `documentary_record, fact_verification,
+timeline_verification, deadline_calculability, legal_authority_coverage,
+case_law_coverage, procedural_posture`) birbirinden ayrı, saf deterministik
+muhasebe katmanlarıdır — issue-seviyesi ve case-geneli kapsam ayrı ayrı izlenir.
+`risk_candidates[]` (`risk_kind ∈ {identified, gap}`), `strategy_candidates[]`
+(`record_kind: "suggested_next_action"` const, `requires_human_decision: true`
+const) ve `risk_strategy_agent_suggestions[]` üç ayrı ve yapısal olarak izole
+üst-düzey alandır.
+
+**Deterministic gap generation ve proof-of-looking sınırı** — Gap risk'ler
+(`absence_basis` yalnızca 6 sabit değerden biri: `no_confirmed_evidence_for_issue,
+no_resolved_legal_authority_for_issue, no_grounded_case_law_for_issue,
+deadline_not_computable, anchor_event_unverified, no_confirmed_argument_for_issue`)
+YALNIZ deterministik motor tarafından üretilir — agent asla gap risk
+seçemez/üretemez. Bir gap risk yalnız upstream kaynağın KENDİ gerçek
+execution/finding-status alanı gerçekten tamamlanmış-ama-boş bir durum
+gösterdiğinde üretilebilir (ör. Row 11 `case_law_coverage.execution_state=
+no_case_law_evidence`); salt dosya yokluğu veya `*_not_run`/`*_failed`
+durumları asla bir gap risk üretmez, yalnızca coverage/snapshot sinyali veya
+agent suggestion üretebilir.
+
+**Dokuz canonical input hash ve stale-input kontrolü** —
+`analysis_metadata` içinde `issues_input_hash, facts_input_hash,
+documents_input_hash, timeline_input_hash, deadline_input_hash,
+legal_research_input_hash, case_law_input_hash, evidence_input_hash,
+arguments_input_hash`; `evidence_input_hash` case_0001 için `null` (canonical
+`evidence.json` henüz yok — bkz. Row 12), diğer 8 hash non-null. Validator bu
+hash'leri güncel canonical girdilerle bağımsız yeniden hesaplayıp stale-input
+durumunda FAIL döner.
+
+**Birleşik yasak ifade politikası ve bağımsız validator** —
+`risk_strategy_policy.ALL_FORBIDDEN_PHRASES`, Row 9'un prosedürel/deadline-
+kesinliği ifadeleriyle Row 14'ün kazanma-olasılığı/kesinlik/garanti
+ifadelerinin birleşimidir; validator ve engine bu TEK paylaşılan listeyi ve
+paylaşılan `check_forbidden_phrases` fonksiyonunu import eder (agent'ın
+yüksek-seviye `check_text_safety()` sarmalayıcısı asla import edilmez —
+yalnız düşük seviye saf fonksiyonlar paylaşılır). `risk_description`/
+`strategy_description` ayrıca deterministik template renderer'ın çıktısıyla
+byte-for-byte eşitlik kontrolünden geçer (hem engine hem validator seviyesinde,
+bağımsız olarak).
+
+**Ayrı semantic dedup/content fingerprint'leri** — Her risk/strategy/suggestion
+için iki ayrı fingerprint hesaplanır: `*_dedup_fingerprint` (serbest metin
+hariç, aynı-çalışma içi duplicate tespiti için) ve `*_content_fingerprint`
+(serbest metin + referanslar + bayraklar dahil, yalnız Layer B safe
+carry-forward eşleştirmesi için) — reworded bir kayıt asla önceki bir insan
+review_state'ini sessizce miras almaz.
+
+**Güvenli, diskten yeniden yüklemeyle doğrulanmış review carry-forward** —
+Carry-forward mantığı, izole bir tempdir'de gerçek Layer A (`run_approve`) ve
+gerçek Layer B (`apply_review_transition`) çağrıları üzerinden uçtan uca
+doğrulandı: canonical JSON diskten `json.loads()` ile taze okunup aynı-içerik
+yeniden üretimde review_state'in korunduğu, farklı-metin yeniden üretimde ise
+`needs_review`'a resetlendiği ayrı ayrı kanıtlandı.
+
+**Layer A / Layer B** — Layer A (`risk_strategy_approval.py`) `case_0001` için
+canonical promosyonu **tamamladı** (Row 9-13 deseni: backup → atomic write →
+post-write validation → SHA256 eşitliği → approval audit → rollback). Layer B
+(`risk_strategy_review.py`) many-to-many parent-dependency kurallarıyla
+(R1: needs_review herhangi bir parent varsa child review edilemez; R2: tüm
+parent'lar rejected ise yalnız dismissed; R3: tüm parent'lar terminal ve en az
+1 confirmed ise hem accepted_for_follow_up hem dismissed insan tercihine
+bırakılır; R4: otomatik cascade yok; R5: audit tam `parent_states_at_review_time`
+haritası taşır; R6: suggestion yaşam döngüsü risk/strategy parent zincirinden
+tamamen bağımsız) doğrulandı — **bu session'da Layer B üzerinde gerçek bir
+review mutation ÇALIŞTIRILMADI**, yalnız izole tempdir self-testleri çalıştı.
+
+**Canonical promosyon** — `case_0001` için canonical
+`data/cases/case_0001/risk_strategy/risk_strategy.json` insan onayıyla
+(`--approve`) promote edildi: `risk_coverage=6`, `case_scope_coverage=7`,
+`risk_candidates=0`, `strategy_candidates=0`, `risk_strategy_agent_suggestions=0`.
+Risk execution_state × 6 = `analysis_not_run`, strategy execution_state × 6 =
+`analysis_not_run`, case-scope execution_state × 7 = `analysis_not_run`. **Bu
+dağılım "risk yok" veya "risk analizi tamamlandı" sonucu DEĞİLDİR** — agent bu
+session'da hiç çalıştırılmadı; bu saf bir offline baseline'dır (bkz. Prensip 7).
+Pending ve canonical SHA256 birebir aynı:
+`4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f`. Approval
+audit kaydı `data/cases/case_0001/risk_strategy/reviews/
+risk_strategy_case_0001_v1_20260904_112002.approval.json`'da mevcut.
+
+**Final doğrulama** — validator 30/30, engine 24/24, approval 8/8, review
+11/11 PASS; post-approval final lock-readiness review'da tüm dört self-test
+paketi canonical dosya gerçekten mevcutken yeniden çalıştırılıp aynı sonuçla
+doğrulandı, canonical üzerinde bağımsız validator ve approval semantic-guard
+salt-okunur olarak PASS verdi, `data/` dosya manifesti ve git index turlar
+arasında değişmedi. Risk/strategy/suggestion candidate'lar hâlâ verified fact/
+legal conclusion/nihai hukuki sonuç/case outcome DEĞİLDİR (bkz. Prensip 7;
+`case_risk_strategy.schema.json`'da confidence/strength/severity/risk_score/
+win_probability gibi alanların hiçbirinin tanımlı olmaması).
+
+### Row 15 — Drafting Agent (ACTIVE / NEXT)
+
+Henüz implement edilmedi. Row 9-14 tamamlanma paterni (deterministic
 policy/engine → validator → agent/LLM task → Layer A/Layer B approval)
 referans alınmalı; mimari/contract planlamasıyla başlanacak. Standart
 geliştirme sırası için bkz. §4 "Her row için standart geliştirme sırası".

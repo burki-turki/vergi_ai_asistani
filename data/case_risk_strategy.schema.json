@@ -1,0 +1,477 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vergi-ai.local/schemas/case_risk_strategy.schema.json",
+  "title": "Case Risk / Strategy Analysis V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "risk_strategy_analysis_id",
+    "case_id",
+    "generation_status",
+    "generated_at",
+    "analysis_metadata",
+    "risk_coverage",
+    "case_scope_coverage",
+    "risk_candidates",
+    "strategy_candidates",
+    "risk_strategy_agent_suggestions",
+    "warnings",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "risk_strategy_analysis_id": { "type": "string", "minLength": 1 },
+    "case_id": { "type": "string", "minLength": 1 },
+    "generation_status": {
+      "type": "string",
+      "description": "Yalnız artefakt üretim sürecinin kendisinin tamamlanıp tamamlanmadığını gösterir. 'completed', tüm risk/strategy execution_state'lerinin analysis_not_run olduğu bir durumla eş zamanlı olabilir; bu ASLA 'risk analizi tamamlandı' veya 'risk yok' anlamına gelmez.",
+      "enum": ["completed", "failed"]
+    },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "analysis_metadata": { "$ref": "#/$defs/analysis_metadata" },
+    "risk_coverage": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/risk_coverage_record" }
+    },
+    "case_scope_coverage": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/case_scope_coverage_record" }
+    },
+    "risk_candidates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/risk_candidate" }
+    },
+    "strategy_candidates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/strategy_candidate" }
+    },
+    "risk_strategy_agent_suggestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent_suggestion" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notes": { "type": ["string", "null"] }
+  },
+
+  "$defs": {
+
+    "nullableHash": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+
+    "sourceObservation": {
+      "description": "Bir upstream kaynağın GERÇEK execution/calculation/finding durumunun gözlemlenmiş dağılımı - dosya varlığı/hash/count TEK BAŞINA bunun yerine geçemez.",
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["observed_states", "record_count"],
+      "properties": {
+        "observed_states": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "record_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "upstream_execution_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documents", "facts", "timeline", "deadline",
+        "evidence", "legal_research", "case_law", "arguments"
+      ],
+      "properties": {
+        "documents": { "$ref": "#/$defs/sourceObservation" },
+        "facts": { "$ref": "#/$defs/sourceObservation" },
+        "timeline": { "$ref": "#/$defs/sourceObservation" },
+        "deadline": { "$ref": "#/$defs/sourceObservation" },
+        "evidence": { "$ref": "#/$defs/sourceObservation" },
+        "legal_research": { "$ref": "#/$defs/sourceObservation" },
+        "case_law": { "$ref": "#/$defs/sourceObservation" },
+        "arguments": { "$ref": "#/$defs/sourceObservation" }
+      }
+    },
+
+    "analysis_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issues_input_hash",
+        "facts_input_hash",
+        "documents_input_hash",
+        "timeline_input_hash",
+        "deadline_input_hash",
+        "legal_research_input_hash",
+        "case_law_input_hash",
+        "evidence_input_hash",
+        "arguments_input_hash",
+        "total_issue_count",
+        "total_case_scope_count",
+        "total_distinct_strategy_count",
+        "total_suggestion_count"
+      ],
+      "properties": {
+        "issues_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "facts_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "documents_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "timeline_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "deadline_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "legal_research_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "case_law_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "evidence_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "arguments_input_hash": { "$ref": "#/$defs/nullableHash" },
+        "total_issue_count": { "type": "integer", "minimum": 0 },
+        "total_case_scope_count": { "const": 7 },
+        "total_distinct_strategy_count": { "type": "integer", "minimum": 0 },
+        "total_suggestion_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "executionState": {
+      "type": "string",
+      "enum": [
+        "analysis_not_run",
+        "blocked_missing_input",
+        "blocked_upstream_not_run",
+        "analysis_failed",
+        "no_risk_identified",
+        "analysis_partial",
+        "analysis_completed"
+      ]
+    },
+
+    "strategyExecutionState": {
+      "type": "string",
+      "enum": [
+        "analysis_not_run",
+        "blocked_missing_input",
+        "blocked_upstream_not_run",
+        "analysis_failed",
+        "no_strategy_identified",
+        "analysis_partial",
+        "analysis_completed"
+      ]
+    },
+
+    "risk_coverage_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage_id",
+        "source_issue_id",
+        "risk_execution_state",
+        "strategy_execution_state",
+        "allowlist_count",
+        "gap_risk_count",
+        "identified_risk_count",
+        "strategy_reference_count",
+        "suggestion_count",
+        "upstream_execution_snapshot",
+        "reason_codes"
+      ],
+      "properties": {
+        "coverage_id": { "type": "string", "minLength": 1 },
+        "source_issue_id": { "type": "string", "minLength": 1 },
+        "risk_execution_state": { "$ref": "#/$defs/executionState" },
+        "strategy_execution_state": { "$ref": "#/$defs/strategyExecutionState" },
+        "allowlist_count": { "type": "integer", "minimum": 0 },
+        "gap_risk_count": { "type": "integer", "minimum": 0 },
+        "identified_risk_count": { "type": "integer", "minimum": 0 },
+        "strategy_reference_count": { "type": "integer", "minimum": 0 },
+        "suggestion_count": { "type": "integer", "minimum": 0 },
+        "upstream_execution_snapshot": { "$ref": "#/$defs/upstream_execution_snapshot" },
+        "reason_codes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "case_scope_coverage_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage_id",
+        "source_case_scope",
+        "input_state",
+        "execution_state",
+        "upstream_execution_snapshot",
+        "depends_on_input_hash_fields",
+        "reason_codes"
+      ],
+      "properties": {
+        "coverage_id": { "type": "string", "minLength": 1 },
+        "source_case_scope": {
+          "type": "string",
+          "enum": [
+            "documentary_record",
+            "fact_verification",
+            "timeline_verification",
+            "deadline_calculability",
+            "legal_authority_coverage",
+            "case_law_coverage",
+            "procedural_posture"
+          ]
+        },
+        "input_state": {
+          "type": "string",
+          "enum": ["no_canonical_input", "canonical_input_present"]
+        },
+        "execution_state": { "$ref": "#/$defs/executionState" },
+        "upstream_execution_snapshot": { "$ref": "#/$defs/upstream_execution_snapshot" },
+        "depends_on_input_hash_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "issues_input_hash", "facts_input_hash", "documents_input_hash",
+              "timeline_input_hash", "deadline_input_hash",
+              "legal_research_input_hash", "case_law_input_hash",
+              "evidence_input_hash", "arguments_input_hash"
+            ]
+          }
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "sourceRefSet": {
+      "type": "object",
+      "properties": {
+        "source_fact_ids": { "type": "array", "items": { "type": "string" } },
+        "source_claim_ids": { "type": "array", "items": { "type": "string" } },
+        "source_counterargument_ids": { "type": "array", "items": { "type": "string" } },
+        "source_rebuttal_ids": { "type": "array", "items": { "type": "string" } },
+        "source_evidence_candidate_ids": { "type": "array", "items": { "type": "string" } },
+        "source_legal_research_ids": { "type": "array", "items": { "type": "string" } },
+        "source_case_law_ids": { "type": "array", "items": { "type": "string" } },
+        "source_timeline_event_ids": { "type": "array", "items": { "type": "string" } },
+        "source_deadline_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "deterministicFlags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "derived_from_unverified_fact",
+        "derived_from_unverified_timeline_event",
+        "deadline_calculation_blocked",
+        "deadline_expiry_not_evaluated",
+        "depends_on_unconfirmed_evidence",
+        "depends_on_unconfirmed_authority",
+        "depends_on_unreviewed_argument",
+        "depends_on_unresolved_authority_version",
+        "missing_legal_authority",
+        "upstream_analysis_not_run"
+      ],
+      "properties": {
+        "derived_from_unverified_fact": { "type": "boolean" },
+        "derived_from_unverified_timeline_event": { "type": "boolean" },
+        "deadline_calculation_blocked": { "type": "boolean" },
+        "deadline_expiry_not_evaluated": { "type": "boolean" },
+        "depends_on_unconfirmed_evidence": { "type": "boolean" },
+        "depends_on_unconfirmed_authority": { "type": "boolean" },
+        "depends_on_unreviewed_argument": { "type": "boolean" },
+        "depends_on_unresolved_authority_version": { "type": "boolean" },
+        "missing_legal_authority": { "type": "boolean" },
+        "upstream_analysis_not_run": { "type": "boolean" }
+      }
+    },
+
+    "risk_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "risk_id", "risk_kind", "risk_type", "source_issue_id",
+        "source_fact_ids", "source_claim_ids", "source_counterargument_ids",
+        "source_rebuttal_ids", "source_evidence_candidate_ids",
+        "source_legal_research_ids", "source_case_law_ids",
+        "source_timeline_event_ids", "source_deadline_ids",
+        "absence_basis", "reason_code", "risk_description",
+        "grounded_explanation", "flags",
+        "risk_review_state", "requires_human_review", "status"
+      ],
+      "properties": {
+        "risk_id": { "type": "string", "minLength": 1 },
+        "risk_kind": { "type": "string", "enum": ["identified", "gap"] },
+        "risk_type": {
+          "type": "string",
+          "enum": [
+            "unverified_fact_dependency",
+            "unverified_timeline_dependency",
+            "deadline_calculation_blocked",
+            "missing_legal_authority",
+            "unconfirmed_case_law_authority",
+            "unconfirmed_evidence_dependency",
+            "unreviewed_argument_dependency",
+            "no_confirmed_evidence_for_issue",
+            "no_resolved_legal_authority_for_issue",
+            "no_grounded_case_law_for_issue",
+            "deadline_not_computable",
+            "anchor_event_unverified",
+            "no_confirmed_argument_for_issue"
+          ]
+        },
+        "source_issue_id": { "type": "string", "minLength": 1 },
+        "source_fact_ids": { "type": "array", "items": { "type": "string" } },
+        "source_claim_ids": { "type": "array", "items": { "type": "string" } },
+        "source_counterargument_ids": { "type": "array", "items": { "type": "string" } },
+        "source_rebuttal_ids": { "type": "array", "items": { "type": "string" } },
+        "source_evidence_candidate_ids": { "type": "array", "items": { "type": "string" } },
+        "source_legal_research_ids": { "type": "array", "items": { "type": "string" } },
+        "source_case_law_ids": { "type": "array", "items": { "type": "string" } },
+        "source_timeline_event_ids": { "type": "array", "items": { "type": "string" } },
+        "source_deadline_ids": { "type": "array", "items": { "type": "string" } },
+        "absence_basis": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "no_confirmed_evidence_for_issue",
+            "no_resolved_legal_authority_for_issue",
+            "no_grounded_case_law_for_issue",
+            "deadline_not_computable",
+            "anchor_event_unverified",
+            "no_confirmed_argument_for_issue"
+          ]
+        },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "risk_description": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "grounded_explanation": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "flags": { "$ref": "#/$defs/deterministicFlags" },
+        "risk_review_state": {
+          "type": "string",
+          "enum": ["needs_review", "confirmed", "rejected"]
+        },
+        "requires_human_review": { "const": true },
+        "status": { "const": "candidate" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "risk_kind": { "const": "gap" } } },
+          "then": {
+            "properties": { "grounded_explanation": { "const": null } },
+            "required": ["absence_basis"],
+            "not": { "properties": { "absence_basis": { "const": null } } }
+          }
+        },
+        {
+          "if": { "properties": { "risk_kind": { "const": "identified" } } },
+          "then": {
+            "properties": {
+              "grounded_explanation": { "type": "string" },
+              "absence_basis": { "const": null }
+            }
+          }
+        }
+      ]
+    },
+
+    "strategy_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strategy_id", "addresses_risk_ids", "strategy_action_type",
+        "strategy_description", "grounded_explanation",
+        "source_fact_ids", "source_claim_ids", "source_counterargument_ids",
+        "source_rebuttal_ids", "source_evidence_candidate_ids",
+        "source_legal_research_ids", "source_case_law_ids",
+        "source_timeline_event_ids", "source_deadline_ids",
+        "flags", "depends_on_gap_only",
+        "record_kind", "requires_human_decision",
+        "strategy_review_state", "requires_human_review", "status"
+      ],
+      "properties": {
+        "strategy_id": { "type": "string", "minLength": 1 },
+        "addresses_risk_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "strategy_action_type": {
+          "type": "string",
+          "enum": [
+            "commission_fact_verification",
+            "commission_timeline_verification",
+            "escalate_deadline_verification",
+            "commission_additional_legal_research",
+            "commission_additional_case_law_research",
+            "commission_evidentiary_review",
+            "commission_argument_review",
+            "request_human_risk_assessment"
+          ]
+        },
+        "strategy_description": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "grounded_explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "source_fact_ids": { "type": "array", "items": { "type": "string" } },
+        "source_claim_ids": { "type": "array", "items": { "type": "string" } },
+        "source_counterargument_ids": { "type": "array", "items": { "type": "string" } },
+        "source_rebuttal_ids": { "type": "array", "items": { "type": "string" } },
+        "source_evidence_candidate_ids": { "type": "array", "items": { "type": "string" } },
+        "source_legal_research_ids": { "type": "array", "items": { "type": "string" } },
+        "source_case_law_ids": { "type": "array", "items": { "type": "string" } },
+        "source_timeline_event_ids": { "type": "array", "items": { "type": "string" } },
+        "source_deadline_ids": { "type": "array", "items": { "type": "string" } },
+        "flags": { "$ref": "#/$defs/deterministicFlags" },
+        "depends_on_gap_only": { "type": "boolean" },
+        "record_kind": { "const": "suggested_next_action" },
+        "requires_human_decision": { "const": true },
+        "strategy_review_state": {
+          "type": "string",
+          "enum": ["needs_review", "accepted_for_follow_up", "dismissed"]
+        },
+        "requires_human_review": { "const": true },
+        "status": { "const": "candidate" }
+      }
+    },
+
+    "agent_suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suggestion_id", "suggestion_type", "source_issue_id",
+        "related_reference_ids", "reason_code", "grounded_explanation",
+        "suggestion_review_state", "requires_human_review", "status"
+      ],
+      "properties": {
+        "suggestion_id": { "type": "string", "minLength": 1 },
+        "suggestion_type": {
+          "type": "string",
+          "enum": [
+            "missing_risk_grounding",
+            "unaddressed_risk",
+            "conflicting_strategy_prerequisite",
+            "additional_analysis_needed",
+            "risk_taxonomy_gap"
+          ]
+        },
+        "source_issue_id": { "type": ["string", "null"] },
+        "related_reference_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "grounded_explanation": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "suggestion_review_state": {
+          "type": "string",
+          "enum": ["needs_review", "accepted_for_follow_up", "dismissed"]
+        },
+        "requires_human_review": { "const": true },
+        "status": { "const": "candidate" }
+      }
+    }
+  }
+}
