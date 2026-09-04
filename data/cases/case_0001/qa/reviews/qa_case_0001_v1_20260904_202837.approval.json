@@ -1,0 +1,18 @@
+{
+  "audit_type": "qa_analysis_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-04T20:28:37.554880+03:00",
+  "case_id": "case_0001",
+  "qa_analysis_id": "qa_case_0001_v1",
+  "source_pending_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\qa\\qa_case_0001_v1.json.pending",
+  "canonical_path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\qa\\qa.json",
+  "pending_sha256": "a4af057af4e21e6994823378bae6b1127a799cbc6db3ca7dc1b4b207d31aec40",
+  "canonical_sha256": "a4af057af4e21e6994823378bae6b1127a799cbc6db3ca7dc1b4b207d31aec40",
+  "content_identical": true,
+  "previous_canonical_backup": null,
+  "qa_coverage_count": 11,
+  "qa_check_results_count": 83,
+  "qa_agent_suggestions_count": 0,
+  "qa_generation_status": "completed",
+  "approval_semantics": "Bu approval QA raporunu canonical repository'ye kabul eder. İçindeki GERÇEK 'failed'/'blocked' bulguların doğru şekilde kaydedilmiş olması onaya ENGEL DEĞİLDİR - bu approval, incelenen upstream artefaktların hukuken/teknik olarak DOĞRU olduğunu SERTİFİKALANDIRMAZ, yalnız bu QA taramasının kendi iç tutarlılığını kabul eder. suggestion_review_state yükseltmesi (accepted_for_follow_up/dismissed) yalnız ayrı bir Layer B human review (qa_review.py) ile mümkündür."
+}

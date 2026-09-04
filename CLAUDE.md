@@ -129,8 +129,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 13. Argument Agent — **DONE / LOCKED**
 14. Risk / Strategy Agent — **DONE / LOCKED**
 15. Drafting Agent — **DONE / LOCKED**
-16. QA Agent — **ACTIVE / NEXT**
-17. Product Orchestrator Agent
+16. QA Agent — **DONE / LOCKED**
+17. Product Orchestrator Agent — **ACTIVE / NEXT**
 18. Lawyer UI
 19. Production / Security
 20. Pilot / Evaluation
@@ -158,9 +158,9 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-15 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 16 — QA AGENT** (henüz
-  implement edilmedi)
+- Rows 1-16 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 17 — PRODUCT ORCHESTRATOR AGENT**
+  (henüz implement edilmedi)
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -511,12 +511,86 @@ lexical/ID/outcome-garantisi kontrolleri metnin TAM anlamsal doğruluğunu
 KANITLAMAZ, ve `lawyer_input_hash` yalnız içerik tutarlılığı sağlar — avukat
 kimliğinin doğrulanması (authentication) anlamına GELMEZ.
 
-### Row 16 — QA Agent (henüz başlanmadı)
+### Row 16 — QA Agent (DONE / LOCKED — checkpoint özeti)
 
-Henüz implement edilmedi. Row 9-15 tamamlanma paterni (deterministic
-policy/engine → validator → agent/LLM task → Layer A/Layer B approval)
-referans alınmalı; mimari/contract planlamasıyla başlanacak. Standart
-geliştirme sırası için bkz. §4 "Her row için standart geliştirme sırası".
+**Schema boundary** — `data/case_qa.schema.json`: `qa_coverage[]` (11 sabit
+scope — `documents, facts, timeline, deadline, issues, legal_research,
+case_law, evidence, arguments, risk_strategy, drafting` — başına tam 1
+kayıt), `qa_check_results[]` (12 sabit `check_id` registry'sinden üretilen
+instance'lar), `qa_agent_suggestions[]` (0..N, kendi yapısal izolasyonuna
+sahip), `analysis_metadata` (dependency manifest + pre/post-scan manifest
+karşılaştırması). 11 scope ve 12 check_id `qa_policy.py`'de FIXED REGISTRY
+olarak donduruldu — yeni scope/check icat edilmez. `evidence` tek opsiyonel
+scope'tur (Row 12'de canonical `evidence.json` henüz yok); `documents`/
+`facts` çok-dosyalı aile, diğer 9 tek-dosyalı.
+
+**Deterministik check katmanı** — 12 check_id, Row 1-15'in canonical/pending
+artefaktlarını okuyup artefakt varlığı/okunabilirlik/JSON geçerliliği,
+üyelik enumerasyonu, şema+referans geçerliliği, stale-input hash
+tutarlılığı, coverage completeness/1:1, execution-state muhasebesi,
+bekleyen human-review backlog sayımı ve yasaklı ifade/sonuç-garantisi
+yokluğunu kontrol eder. Alan isimleri hiçbir zaman zorla ortaklaştırılmaz —
+ör. `risk_strategy` için `risk_execution_state`/`strategy_execution_state`/
+case-scope `execution_state` üç ayrı dağılım olarak korunur; `case_law`'ın
+review-lifecycle alanı olmadığı için #11
+(`pending_human_review_backlog_count`) bu scope'ta
+`not_applicable`/`no_review_lifecycle_field_in_schema` döner — boş küme
+icat edilmez.
+
+**QA'ya özgü ID-biçimi ve metin-güvenlik izolasyonu** — Row 15'in
+`ID_SHAPE_PATTERN`'i (`drafting_policy.py`, LOCKED) yalnız Row 1-15 prefix
+ailesini tanır; `qa_check_result_`/`qa_agent_suggestion_` bu listede yoktur
+ve Row 15 değiştirilemediği için QA kendi dar `QA_ID_SHAPE_PATTERN`'ini ve
+üç-kategori (declared/smuggled/fabricated) sınıflandırmasını `qa_policy.py`
+içinde ayrı tanımlar. QA'nın kendi serbest metni (agent suggestion
+`grounded_explanation`) için yasaklı-ifade/sonuç-garantisi kontrolü, Row
+15'in `check_forbidden_phrases_context` fonksiyonu sabit
+`section_type="facts_summary"`, `is_grounded_advocacy=False` ile (yani her
+zaman en katı mod) çağrılarak yeniden kullanılır — kilitli fonksiyon
+değiştirilmez.
+
+**Bağımsız validator** — `qa_validator.py`, kayıtlı
+`qa_check_results`/`qa_coverage`'a güvenmez; `qa_engine.build_qa_engine_output()`'u
+yeniden çağırıp kayıtla tek tek karşılaştırır (tahrif edilmiş/gizlenmiş/
+eksik/fazladan kayıt tespiti) ve stale snapshot'ı ayrı bir hata sınıfı
+olarak (tahrifat DENMEDEN) sınıflandırır. Not: bu "bağımsızlık" kayıtlı
+veriye karşı tahrifat/tutarsızlığa karşıdır — `qa_engine.py`'nin check
+mantığındaki olası bir hataya karşı değildir, çünkü doğrulama AYNI
+fonksiyonları yeniden çağırır.
+
+**Layer A / Layer B** — Layer A (`qa_approval.py`) pending → canonical
+promosyonunu Row 9-15 deseniyle (backup → pre/post-write manifest
+karşılaştırması → atomic write → post-write validation → semantic guard →
+SHA256 eşitliği → audit) tamamladı. Layer B (`qa_review.py`) bu session'da
+çalıştırılmadı — `qa_agent_suggestions=0` olduğu için henüz review
+edilecek bir kayıt yok.
+
+**Final doğrulama** — qa_engine 13/13, qa_validator 9/9, qa_approval 9/9,
+qa_review 8/8, qa_agent 7/7 PASS (toplam 46/46); self-test'ler gerçek
+`case_0001/qa/` ağacına hiç dokunmadığını ayrıca doğruladı; implementasyon
+öncesi/sonrası git-tracked dosya SHA256 manifesti birebir aynı kaldı
+(yalnız 9 yeni dosya eklendi, hiçbiri var olan dosyayı değiştirmedi/
+silmedi).
+
+**Canonical promosyon (offline baseline)** — `case_0001` için canonical
+`data/cases/case_0001/qa/qa.json` insan onayıyla (`--approve`) promote
+edildi: `qa_coverage=11`, `qa_check_results=83`
+(`passed=72, blocked=7, not_applicable=4, failed=0, error=0`),
+`qa_agent_suggestions=0`, `qa_generation_status=completed`,
+`qa_agent_execution_status=not_requested` (agent bu session'da hiç
+çağrılmadı — yalnız izole self-testlerde Fake client ile test edildi).
+7 `blocked` sonucun TAMAMI `evidence` scope'undadır ve tek nedeni
+`prerequisite_unmet`/`artifact_absent`'tir — yani Row 12'de canonical
+`evidence.json`'ın henüz oluşturulmamış olmasının doğrudan, deterministik
+sonucudur (bkz. Row 12 checkpoint), başka bir upstream hata değildir.
+Pending ve canonical SHA256 birebir aynı:
+`a4af057af4e21e6994823378bae6b1127a799cbc6db3ca7dc1b4b207d31aec40`.
+Approval audit kaydı
+`data/cases/case_0001/qa/reviews/qa_case_0001_v1_20260904_202837.approval.json`'da
+mevcut. **Bu dağılım "dosyalar hatasız" veya "QA analizi tamamlandı"
+anlamına GELMEZ** — agent bu session'da hiç çalıştırılmadı, 7 blocked
+sonuç yalnızca Row 12'nin bilinen eksik canonical girdisini yansıtır; bu
+saf bir offline baseline'dır (bkz. Prensip 7).
 
 ## 6. Cross-Cutting Backlog
 

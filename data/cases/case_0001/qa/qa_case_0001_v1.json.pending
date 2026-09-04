@@ -1,0 +1,1940 @@
+{
+  "schema_version": 1,
+  "qa_analysis_id": "qa_case_0001_v1",
+  "case_id": "case_0001",
+  "qa_generation_status": "completed",
+  "qa_agent_execution_status": "not_requested",
+  "generated_at": "2026-09-04T19:24:35.725065+03:00",
+  "analysis_metadata": {
+    "dependency_manifest": [
+      {
+        "artifact_ref": "case.json",
+        "raw_byte_sha256": "f0bc0d2f45a18e534a12e9dec73bd02449a25488451b1cfba948f5fbad019c39",
+        "artifact_state": "present_valid",
+        "is_membership_source": true
+      },
+      {
+        "artifact_ref": "timeline",
+        "raw_byte_sha256": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "deadline",
+        "raw_byte_sha256": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "issues",
+        "raw_byte_sha256": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "legal_research",
+        "raw_byte_sha256": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "case_law",
+        "raw_byte_sha256": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "evidence",
+        "raw_byte_sha256": null,
+        "artifact_state": "absent",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "arguments",
+        "raw_byte_sha256": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "risk_strategy",
+        "raw_byte_sha256": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "drafting",
+        "raw_byte_sha256": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "documents:vir_001",
+        "raw_byte_sha256": "f20add0fa6bab63968d31aa581b275284a9b27be04ee14c8cb62b22b42a1ba7a",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "facts:vir_001",
+        "raw_byte_sha256": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "documents:ihbarname_001",
+        "raw_byte_sha256": "3731671efe6ed7aa4e5b9f21bd2f82d10a9af4f26f994dbe9d7811fdb4186fbc",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "facts:ihbarname_001",
+        "raw_byte_sha256": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "documents:dava_dilekcesi_001",
+        "raw_byte_sha256": "860a162bd47fbaeecf0011a7ad63cb863d3b506105b5a4dc2b93f1b4d4387df5",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      },
+      {
+        "artifact_ref": "facts:dava_dilekcesi_001",
+        "raw_byte_sha256": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec",
+        "artifact_state": "present_valid",
+        "is_membership_source": false
+      }
+    ],
+    "check_registry_version": "1",
+    "scan_started_at": "2026-09-04T19:24:35.487339+03:00",
+    "scan_completed_at": "2026-09-04T19:24:35.720580+03:00",
+    "pre_scan_manifest_comparison": {
+      "consistent": true,
+      "changed_refs": []
+    },
+    "post_scan_manifest_comparison": {
+      "consistent": true,
+      "changed_refs": []
+    }
+  },
+  "qa_coverage": [
+    {
+      "scope_id": "documents",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "resolved",
+      "expected_member_count": 3
+    },
+    {
+      "scope_id": "facts",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "resolved",
+      "expected_member_count": 3
+    },
+    {
+      "scope_id": "timeline",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    },
+    {
+      "scope_id": "deadline",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    },
+    {
+      "scope_id": "issues",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    },
+    {
+      "scope_id": "legal_research",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    },
+    {
+      "scope_id": "case_law",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    },
+    {
+      "scope_id": "evidence",
+      "artifact_state": "absent",
+      "required": false,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    },
+    {
+      "scope_id": "arguments",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    },
+    {
+      "scope_id": "risk_strategy",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    },
+    {
+      "scope_id": "drafting",
+      "artifact_state": "present_valid",
+      "required": true,
+      "member_enumeration_state": "not_applicable_single_file",
+      "expected_member_count": null
+    }
+  ],
+  "qa_check_results": [
+    {
+      "check_result_id": "qa_check_result_001",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "vir_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\document.json",
+        "raw_byte_sha256_at_scan": "f20add0fa6bab63968d31aa581b275284a9b27be04ee14c8cb62b22b42a1ba7a"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_002",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "vir_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\document.json",
+        "raw_byte_sha256_at_scan": "f20add0fa6bab63968d31aa581b275284a9b27be04ee14c8cb62b22b42a1ba7a"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_003",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "vir_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\document.json",
+        "raw_byte_sha256_at_scan": "f20add0fa6bab63968d31aa581b275284a9b27be04ee14c8cb62b22b42a1ba7a"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_004",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "ihbarname_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\document.json",
+        "raw_byte_sha256_at_scan": "3731671efe6ed7aa4e5b9f21bd2f82d10a9af4f26f994dbe9d7811fdb4186fbc"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_005",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "ihbarname_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\document.json",
+        "raw_byte_sha256_at_scan": "3731671efe6ed7aa4e5b9f21bd2f82d10a9af4f26f994dbe9d7811fdb4186fbc"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_006",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "ihbarname_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\document.json",
+        "raw_byte_sha256_at_scan": "3731671efe6ed7aa4e5b9f21bd2f82d10a9af4f26f994dbe9d7811fdb4186fbc"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_007",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "dava_dilekcesi_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\document.json",
+        "raw_byte_sha256_at_scan": "860a162bd47fbaeecf0011a7ad63cb863d3b506105b5a4dc2b93f1b4d4387df5"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_008",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "dava_dilekcesi_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\document.json",
+        "raw_byte_sha256_at_scan": "860a162bd47fbaeecf0011a7ad63cb863d3b506105b5a4dc2b93f1b4d4387df5"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_009",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": "dava_dilekcesi_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\document.json",
+        "raw_byte_sha256_at_scan": "860a162bd47fbaeecf0011a7ad63cb863d3b506105b5a4dc2b93f1b4d4387df5"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_010",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "vir_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_011",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "vir_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_012",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "vir_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_013",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "ihbarname_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_014",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "ihbarname_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_015",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "ihbarname_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_016",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "dava_dilekcesi_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_017",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "dava_dilekcesi_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_018",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "dava_dilekcesi_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_019",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "timeline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "timeline",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\timeline\\timeline.json",
+        "raw_byte_sha256_at_scan": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_020",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "timeline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "timeline",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\timeline\\timeline.json",
+        "raw_byte_sha256_at_scan": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_021",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "timeline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "timeline",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\timeline\\timeline.json",
+        "raw_byte_sha256_at_scan": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_022",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "deadline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "deadline",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
+        "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_023",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "deadline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "deadline",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
+        "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_024",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "deadline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "deadline",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
+        "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_025",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "issues",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "issues",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
+        "raw_byte_sha256_at_scan": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_026",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "issues",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "issues",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
+        "raw_byte_sha256_at_scan": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_027",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "issues",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "issues",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
+        "raw_byte_sha256_at_scan": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_028",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "legal_research",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "legal_research",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
+        "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_029",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "legal_research",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "legal_research",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
+        "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_030",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "legal_research",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "legal_research",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
+        "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_031",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "case_law",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "case_law",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
+        "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_032",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "case_law",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "case_law",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
+        "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_033",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "case_law",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "case_law",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
+        "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_034",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "evidence",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "absent",
+        "required": false
+      },
+      "reason_code": "artifact_absent_optional",
+      "artifact_locator": {
+        "scope_id": "evidence",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\evidence\\evidence.json",
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_035",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "evidence",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "blocked",
+      "evidence": {
+        "reason": "artifact_absent"
+      },
+      "reason_code": "prerequisite_unmet",
+      "artifact_locator": {
+        "scope_id": "evidence",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\evidence\\evidence.json",
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_036",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "evidence",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "blocked",
+      "evidence": {
+        "reason": "artifact_absent"
+      },
+      "reason_code": "prerequisite_unmet",
+      "artifact_locator": {
+        "scope_id": "evidence",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\evidence\\evidence.json",
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_037",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_038",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_039",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_040",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\risk_strategy\\risk_strategy.json",
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_041",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\risk_strategy\\risk_strategy.json",
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_042",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\risk_strategy\\risk_strategy.json",
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_043",
+      "check_id": "artifact_presence",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "artifact_state": "present_valid",
+        "required": true
+      },
+      "reason_code": "artifact_present",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_044",
+      "check_id": "raw_byte_readability",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "artifact_readable",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_045",
+      "check_id": "json_validity",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {},
+      "reason_code": "json_valid",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_046",
+      "check_id": "document_membership_enumerable",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "document_ids": [
+          "vir_001",
+          "ihbarname_001",
+          "dava_dilekcesi_001"
+        ]
+      },
+      "reason_code": "membership_resolved",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": null,
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_047",
+      "check_id": "document_metadata_present_and_valid",
+      "check_version": "1",
+      "scope_id": "documents",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "documents",
+        "path": null,
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_048",
+      "check_id": "fact_extraction_present_and_valid",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "vir_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_049",
+      "check_id": "fact_extraction_present_and_valid",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "ihbarname_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_050",
+      "check_id": "fact_extraction_present_and_valid",
+      "check_version": "1",
+      "scope_id": "facts",
+      "member_id": "dava_dilekcesi_001",
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "facts",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_051",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "timeline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "timeline",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\timeline\\timeline.json",
+        "raw_byte_sha256_at_scan": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_052",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "deadline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "deadline",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
+        "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_053",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "issues",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "issues",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
+        "raw_byte_sha256_at_scan": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_054",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "legal_research",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "legal_research",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
+        "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_055",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "case_law",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "case_law",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
+        "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_056",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "evidence",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "blocked",
+      "evidence": {
+        "reason": "json_validity=absent"
+      },
+      "reason_code": "prerequisite_unmet",
+      "artifact_locator": {
+        "scope_id": "evidence",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\evidence\\evidence.json",
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_057",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_058",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\risk_strategy\\risk_strategy.json",
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_059",
+      "check_id": "row_schema_and_reference_validity",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "errors": []
+      },
+      "reason_code": "row_validator_result",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_060",
+      "check_id": "stale_input_hash_consistency",
+      "check_version": "1",
+      "scope_id": "evidence",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "blocked",
+      "evidence": {
+        "reason": "downstream json_validity=absent"
+      },
+      "reason_code": "prerequisite_unmet",
+      "artifact_locator": {
+        "scope_id": "evidence",
+        "path": null,
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_061",
+      "check_id": "stale_input_hash_consistency",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "per_input_results": {
+          "issues_input_hash": {
+            "recorded": "03acaec305fd96d72bc6346d0ee48377197d18229ca508ad014001e057951f1c",
+            "current": "03acaec305fd96d72bc6346d0ee48377197d18229ca508ad014001e057951f1c",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "facts_input_hash": {
+            "recorded": "b7e1e72d273850783fde1ceb64f2925d42a877913f20f756637a4e8f6c6b9a9a",
+            "current": "b7e1e72d273850783fde1ceb64f2925d42a877913f20f756637a4e8f6c6b9a9a",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "evidence_input_hash": {
+            "recorded": null,
+            "current": null,
+            "upstream_exists": false,
+            "outcome": "passed"
+          },
+          "legal_research_input_hash": {
+            "recorded": "fc77eb358c0f03b3b08a8fb51c9b8dceffc97762791c1f70629d1133137d04ec",
+            "current": "fc77eb358c0f03b3b08a8fb51c9b8dceffc97762791c1f70629d1133137d04ec",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "case_law_input_hash": {
+            "recorded": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "current": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "timeline_input_hash": {
+            "recorded": "89e783bf2e971cd1462a8ddd41c1aa73579752e1757e03b2ba781a482e56e195",
+            "current": "89e783bf2e971cd1462a8ddd41c1aa73579752e1757e03b2ba781a482e56e195",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "deadline_input_hash": {
+            "recorded": "d4f80c80f48059a5fea58f954b6e2528f38b6cf191bc57e2dd49cde2f8dadaef",
+            "current": "d4f80c80f48059a5fea58f954b6e2528f38b6cf191bc57e2dd49cde2f8dadaef",
+            "upstream_exists": true,
+            "outcome": "passed"
+          }
+        }
+      },
+      "reason_code": "hash_comparison_result",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": null,
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_062",
+      "check_id": "stale_input_hash_consistency",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "per_input_results": {
+          "issues_input_hash": {
+            "recorded": "03acaec305fd96d72bc6346d0ee48377197d18229ca508ad014001e057951f1c",
+            "current": "03acaec305fd96d72bc6346d0ee48377197d18229ca508ad014001e057951f1c",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "facts_input_hash": {
+            "recorded": "b7e1e72d273850783fde1ceb64f2925d42a877913f20f756637a4e8f6c6b9a9a",
+            "current": "b7e1e72d273850783fde1ceb64f2925d42a877913f20f756637a4e8f6c6b9a9a",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "documents_input_hash": {
+            "recorded": "bde05c0c1742f6a226e6ce40af4558f77dc675dea0ad0e8b4017f6300aa94bdb",
+            "current": "bde05c0c1742f6a226e6ce40af4558f77dc675dea0ad0e8b4017f6300aa94bdb",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "timeline_input_hash": {
+            "recorded": "89e783bf2e971cd1462a8ddd41c1aa73579752e1757e03b2ba781a482e56e195",
+            "current": "89e783bf2e971cd1462a8ddd41c1aa73579752e1757e03b2ba781a482e56e195",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "deadline_input_hash": {
+            "recorded": "0d6fa6d4bda1580dbf60297d16e99b36c3c0000db371f28b512a638d16f9e9e8",
+            "current": "0d6fa6d4bda1580dbf60297d16e99b36c3c0000db371f28b512a638d16f9e9e8",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "legal_research_input_hash": {
+            "recorded": "fc77eb358c0f03b3b08a8fb51c9b8dceffc97762791c1f70629d1133137d04ec",
+            "current": "fc77eb358c0f03b3b08a8fb51c9b8dceffc97762791c1f70629d1133137d04ec",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "case_law_input_hash": {
+            "recorded": "893cd6494bd98219af7704734cfd9991bab11a0145151551e561e563b2852c18",
+            "current": "893cd6494bd98219af7704734cfd9991bab11a0145151551e561e563b2852c18",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "evidence_input_hash": {
+            "recorded": null,
+            "current": null,
+            "upstream_exists": false,
+            "outcome": "passed"
+          },
+          "arguments_input_hash": {
+            "recorded": "79657b0c00653f302863e16686f2c2299a6b9e65e4f167e4f256be1920305ade",
+            "current": "79657b0c00653f302863e16686f2c2299a6b9e65e4f167e4f256be1920305ade",
+            "upstream_exists": true,
+            "outcome": "passed"
+          }
+        }
+      },
+      "reason_code": "hash_comparison_result",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": null,
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_063",
+      "check_id": "stale_input_hash_consistency",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "per_input_results": {
+          "issues_input_hash": {
+            "recorded": "03acaec305fd96d72bc6346d0ee48377197d18229ca508ad014001e057951f1c",
+            "current": "03acaec305fd96d72bc6346d0ee48377197d18229ca508ad014001e057951f1c",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "facts_input_hash": {
+            "recorded": "b7e1e72d273850783fde1ceb64f2925d42a877913f20f756637a4e8f6c6b9a9a",
+            "current": "b7e1e72d273850783fde1ceb64f2925d42a877913f20f756637a4e8f6c6b9a9a",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "documents_input_hash": {
+            "recorded": "bde05c0c1742f6a226e6ce40af4558f77dc675dea0ad0e8b4017f6300aa94bdb",
+            "current": "bde05c0c1742f6a226e6ce40af4558f77dc675dea0ad0e8b4017f6300aa94bdb",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "timeline_input_hash": {
+            "recorded": "89e783bf2e971cd1462a8ddd41c1aa73579752e1757e03b2ba781a482e56e195",
+            "current": "89e783bf2e971cd1462a8ddd41c1aa73579752e1757e03b2ba781a482e56e195",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "deadline_input_hash": {
+            "recorded": "0d6fa6d4bda1580dbf60297d16e99b36c3c0000db371f28b512a638d16f9e9e8",
+            "current": "0d6fa6d4bda1580dbf60297d16e99b36c3c0000db371f28b512a638d16f9e9e8",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "legal_research_input_hash": {
+            "recorded": "fc77eb358c0f03b3b08a8fb51c9b8dceffc97762791c1f70629d1133137d04ec",
+            "current": "fc77eb358c0f03b3b08a8fb51c9b8dceffc97762791c1f70629d1133137d04ec",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "case_law_input_hash": {
+            "recorded": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "current": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "evidence_input_hash": {
+            "recorded": null,
+            "current": null,
+            "upstream_exists": false,
+            "outcome": "passed"
+          },
+          "arguments_input_hash": {
+            "recorded": "6666c7e309a558e80b0ea7b47beebeec2441ea748b8801337a454eb470fe2425",
+            "current": "6666c7e309a558e80b0ea7b47beebeec2441ea748b8801337a454eb470fe2425",
+            "upstream_exists": true,
+            "outcome": "passed"
+          },
+          "risk_strategy_input_hash": {
+            "recorded": "55395f04e7c27439893965e68c1ead902e2149f0fb6289b5e989f9363fc74ed0",
+            "current": "55395f04e7c27439893965e68c1ead902e2149f0fb6289b5e989f9363fc74ed0",
+            "upstream_exists": true,
+            "outcome": "passed"
+          }
+        }
+      },
+      "reason_code": "hash_comparison_result",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": null,
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_064",
+      "check_id": "coverage_completeness_and_1to1",
+      "check_version": "1",
+      "scope_id": "case_law",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "expected": [
+          "issue_001",
+          "issue_002",
+          "issue_003",
+          "issue_004",
+          "issue_005",
+          "issue_006"
+        ],
+        "actual": [
+          "issue_001",
+          "issue_002",
+          "issue_003",
+          "issue_004",
+          "issue_005",
+          "issue_006"
+        ],
+        "match": true
+      },
+      "reason_code": "coverage_1to1_result",
+      "artifact_locator": {
+        "scope_id": "case_law",
+        "path": null,
+        "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_065",
+      "check_id": "coverage_completeness_and_1to1",
+      "check_version": "1",
+      "scope_id": "evidence",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "blocked",
+      "evidence": {
+        "reason": "json_validity=absent"
+      },
+      "reason_code": "prerequisite_unmet",
+      "artifact_locator": {
+        "scope_id": "evidence",
+        "path": null,
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_066",
+      "check_id": "coverage_completeness_and_1to1",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "expected": [
+          "issue_001",
+          "issue_002",
+          "issue_003",
+          "issue_004",
+          "issue_005",
+          "issue_006"
+        ],
+        "actual": [
+          "issue_001",
+          "issue_002",
+          "issue_003",
+          "issue_004",
+          "issue_005",
+          "issue_006"
+        ],
+        "match": true
+      },
+      "reason_code": "coverage_1to1_result",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": null,
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_067",
+      "check_id": "coverage_completeness_and_1to1",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "risk_coverage_comparison": {
+          "expected": [
+            "issue_001",
+            "issue_002",
+            "issue_003",
+            "issue_004",
+            "issue_005",
+            "issue_006"
+          ],
+          "actual": [
+            "issue_001",
+            "issue_002",
+            "issue_003",
+            "issue_004",
+            "issue_005",
+            "issue_006"
+          ],
+          "match": true
+        },
+        "case_scope_coverage_comparison": {
+          "expected": [
+            "case_law_coverage",
+            "deadline_calculability",
+            "documentary_record",
+            "fact_verification",
+            "legal_authority_coverage",
+            "procedural_posture",
+            "timeline_verification"
+          ],
+          "actual": [
+            "case_law_coverage",
+            "deadline_calculability",
+            "documentary_record",
+            "fact_verification",
+            "legal_authority_coverage",
+            "procedural_posture",
+            "timeline_verification"
+          ],
+          "match": true
+        }
+      },
+      "reason_code": "coverage_1to1_result",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": null,
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_068",
+      "check_id": "coverage_completeness_and_1to1",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "expected": [
+          "issue_001",
+          "issue_002",
+          "issue_003",
+          "issue_004",
+          "issue_005",
+          "issue_006"
+        ],
+        "actual": [
+          "issue_001",
+          "issue_002",
+          "issue_003",
+          "issue_004",
+          "issue_005",
+          "issue_006"
+        ],
+        "match": true
+      },
+      "reason_code": "coverage_1to1_result",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": null,
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_069",
+      "check_id": "coverage_execution_state_accounted_for",
+      "check_version": "1",
+      "scope_id": "legal_research",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "finding_status_distribution": {
+          "provision_resolved": 1,
+          "not_found": 4,
+          "retrieval_not_run": 1
+        }
+      },
+      "reason_code": "state_distribution_recorded",
+      "artifact_locator": {
+        "scope_id": "legal_research",
+        "path": null,
+        "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_070",
+      "check_id": "coverage_execution_state_accounted_for",
+      "check_version": "1",
+      "scope_id": "deadline",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "calculation_state_distribution": {
+          "blocked_unverified_anchor": 1
+        }
+      },
+      "reason_code": "state_distribution_recorded",
+      "artifact_locator": {
+        "scope_id": "deadline",
+        "path": null,
+        "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_071",
+      "check_id": "coverage_execution_state_accounted_for",
+      "check_version": "1",
+      "scope_id": "case_law",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "execution_state_distribution": {
+          "retrieval_not_run": 6
+        }
+      },
+      "reason_code": "state_distribution_recorded",
+      "artifact_locator": {
+        "scope_id": "case_law",
+        "path": null,
+        "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_072",
+      "check_id": "coverage_execution_state_accounted_for",
+      "check_version": "1",
+      "scope_id": "evidence",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "blocked",
+      "evidence": {
+        "reason": "json_validity=absent"
+      },
+      "reason_code": "prerequisite_unmet",
+      "artifact_locator": {
+        "scope_id": "evidence",
+        "path": null,
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_073",
+      "check_id": "coverage_execution_state_accounted_for",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "execution_state_distribution": {
+          "analysis_not_run": 6
+        }
+      },
+      "reason_code": "state_distribution_recorded",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": null,
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_074",
+      "check_id": "coverage_execution_state_accounted_for",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "risk_execution_state_distribution": {
+          "analysis_not_run": 6
+        },
+        "strategy_execution_state_distribution": {
+          "analysis_not_run": 6
+        },
+        "case_scope_execution_state_distribution": {
+          "analysis_not_run": 7
+        }
+      },
+      "reason_code": "state_distribution_recorded",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": null,
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_075",
+      "check_id": "coverage_execution_state_accounted_for",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "execution_state_distribution": {
+          "analysis_not_run": 6
+        }
+      },
+      "reason_code": "state_distribution_recorded",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": null,
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_076",
+      "check_id": "pending_human_review_backlog_count",
+      "check_version": "1",
+      "scope_id": "evidence",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "blocked",
+      "evidence": {
+        "reason": "json_validity=absent"
+      },
+      "reason_code": "prerequisite_unmet",
+      "artifact_locator": {
+        "scope_id": "evidence",
+        "path": null,
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_077",
+      "check_id": "pending_human_review_backlog_count",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "per_entity_counts": {
+          "argument_claims.claim_review_state": 0,
+          "argument_counterarguments.counter_review_state": 0,
+          "argument_rebuttals.rebuttal_review_state": 0,
+          "argument_agent_suggestions.suggestion_review_state": 0
+        }
+      },
+      "reason_code": "count_computed",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": null,
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_078",
+      "check_id": "pending_human_review_backlog_count",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "per_entity_counts": {
+          "risk_candidates.risk_review_state": 0,
+          "strategy_candidates.strategy_review_state": 0,
+          "risk_strategy_agent_suggestions.suggestion_review_state": 0
+        }
+      },
+      "reason_code": "count_computed",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": null,
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_079",
+      "check_id": "pending_human_review_backlog_count",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "passed",
+      "evidence": {
+        "per_entity_counts": {
+          "draft_sections.section_review_state": 0,
+          "draft_agent_suggestions.suggestion_review_state": 0
+        }
+      },
+      "reason_code": "count_computed",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": null,
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_080",
+      "check_id": "pending_human_review_backlog_count",
+      "check_version": "1",
+      "scope_id": "case_law",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "not_applicable",
+      "evidence": {
+        "reason": "case_law schema requires_human_review=const true taşır, ama needs_review-style bir lifecycle alanı YOK"
+      },
+      "reason_code": "no_review_lifecycle_field_in_schema",
+      "artifact_locator": {
+        "scope_id": "case_law",
+        "path": null,
+        "raw_byte_sha256_at_scan": null
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_081",
+      "check_id": "forbidden_phrase_and_outcome_guarantee_absence",
+      "check_version": "1",
+      "scope_id": "drafting",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "not_applicable",
+      "evidence": {
+        "reason": "no_free_text_entities_present"
+      },
+      "reason_code": "no_applicable_entities",
+      "artifact_locator": {
+        "scope_id": "drafting",
+        "path": null,
+        "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_082",
+      "check_id": "forbidden_phrase_and_outcome_guarantee_absence",
+      "check_version": "1",
+      "scope_id": "risk_strategy",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "not_applicable",
+      "evidence": {
+        "reason": "no_free_text_entities_present"
+      },
+      "reason_code": "no_applicable_entities",
+      "artifact_locator": {
+        "scope_id": "risk_strategy",
+        "path": null,
+        "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+      }
+    },
+    {
+      "check_result_id": "qa_check_result_083",
+      "check_id": "forbidden_phrase_and_outcome_guarantee_absence",
+      "check_version": "1",
+      "scope_id": "arguments",
+      "member_id": null,
+      "related_issue_id": null,
+      "qa_result": "not_applicable",
+      "evidence": {
+        "reason": "no_free_text_entities_present"
+      },
+      "reason_code": "no_applicable_entities",
+      "artifact_locator": {
+        "scope_id": "arguments",
+        "path": null,
+        "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+      }
+    }
+  ],
+  "qa_agent_suggestions": [],
+  "warnings": [],
+  "notes": [
+    "legal_research ve case_law icin KENDI uretim zamanindaki girdi tazeligi dogrulanamaz (bu iki semada analysis_metadata yok); yalniz GUNCEL iceriklerinin sonraki satirlarca dogru hash'lendigi dogrulanabilir."
+  ]
+}

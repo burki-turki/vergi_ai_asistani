@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Row 16 - QA Analysis V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "qa_analysis_id",
+    "case_id",
+    "qa_generation_status",
+    "qa_agent_execution_status",
+    "generated_at",
+    "analysis_metadata",
+    "qa_coverage",
+    "qa_check_results",
+    "qa_agent_suggestions",
+    "warnings",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+
+    "qa_analysis_id": { "type": "string", "minLength": 1 },
+
+    "case_id": { "type": "string", "minLength": 1 },
+
+    "qa_generation_status": {
+      "type": "string",
+      "enum": ["completed", "completed_with_errors", "aborted_source_changed", "failed"],
+      "description": "completed: tam instance muhasebesi, 0 error, 0 not_run. completed_with_errors: tam muhasebe, >=1 error, 0 not_run. aborted_source_changed/failed: PROMOTE EDİLEMEZ. Gerçek upstream 'failed' bulgular bu alanı ASLA etkilemez - yalnız checker'ın KENDİ 'error' sonucu completed_with_errors'a düşürür."
+    },
+
+    "qa_agent_execution_status": {
+      "type": "string",
+      "enum": ["not_requested", "skipped_network_disabled", "completed", "failed"],
+      "description": "12 deterministik check'ten TAMAMEN bağımsızdır. Bu alanın değeri hiçbir qa_check_results kaydını etkilemez/etkileyemez."
+    },
+
+    "generated_at": { "type": "string", "format": "date-time" },
+
+    "analysis_metadata": { "$ref": "#/$defs/analysis_metadata" },
+
+    "qa_coverage": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": { "$ref": "#/$defs/qa_coverage_record" }
+    },
+
+    "qa_check_results": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/qa_check_result" }
+    },
+
+    "qa_agent_suggestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/qa_agent_suggestion" }
+    },
+
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+
+  "$defs": {
+    "scopeId": {
+      "type": "string",
+      "enum": [
+        "documents", "facts", "timeline", "deadline", "issues",
+        "legal_research", "case_law", "evidence", "arguments",
+        "risk_strategy", "drafting"
+      ]
+    },
+
+    "checkId": {
+      "type": "string",
+      "enum": [
+        "artifact_presence",
+        "raw_byte_readability",
+        "json_validity",
+        "document_membership_enumerable",
+        "document_metadata_present_and_valid",
+        "fact_extraction_present_and_valid",
+        "row_schema_and_reference_validity",
+        "stale_input_hash_consistency",
+        "coverage_completeness_and_1to1",
+        "coverage_execution_state_accounted_for",
+        "pending_human_review_backlog_count",
+        "forbidden_phrase_and_outcome_guarantee_absence"
+      ]
+    },
+
+    "qaResult": {
+      "type": "string",
+      "enum": ["passed", "failed", "blocked", "not_run", "not_applicable", "error"]
+    },
+
+    "dependency_manifest_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_ref", "raw_byte_sha256", "artifact_state", "is_membership_source"],
+      "properties": {
+        "artifact_ref": { "type": "string", "minLength": 1 },
+        "raw_byte_sha256": { "type": ["string", "null"] },
+        "artifact_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"]
+        },
+        "is_membership_source": { "type": "boolean" }
+      }
+    },
+
+    "manifest_comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consistent", "changed_refs"],
+      "properties": {
+        "consistent": { "type": "boolean" },
+        "changed_refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "analysis_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dependency_manifest", "check_registry_version",
+        "scan_started_at", "scan_completed_at",
+        "pre_scan_manifest_comparison", "post_scan_manifest_comparison"
+      ],
+      "properties": {
+        "dependency_manifest": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dependency_manifest_entry" }
+        },
+        "check_registry_version": { "type": "string", "const": "1" },
+        "scan_started_at": { "type": "string", "format": "date-time" },
+        "scan_completed_at": { "type": "string", "format": "date-time" },
+        "pre_scan_manifest_comparison": { "$ref": "#/$defs/manifest_comparison" },
+        "post_scan_manifest_comparison": { "$ref": "#/$defs/manifest_comparison" }
+      }
+    },
+
+    "qa_coverage_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_id", "artifact_state", "required",
+        "member_enumeration_state", "expected_member_count"
+      ],
+      "properties": {
+        "scope_id": { "$ref": "#/$defs/scopeId" },
+        "artifact_state": {
+          "type": "string",
+          "enum": ["present_valid", "present_invalid", "absent", "unreadable"]
+        },
+        "required": { "type": "boolean" },
+        "member_enumeration_state": {
+          "type": "string",
+          "enum": ["not_applicable_single_file", "resolved", "unresolvable"]
+        },
+        "expected_member_count": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+
+    "artifact_locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope_id", "path", "raw_byte_sha256_at_scan"],
+      "properties": {
+        "scope_id": { "$ref": "#/$defs/scopeId" },
+        "path": { "type": ["string", "null"] },
+        "raw_byte_sha256_at_scan": { "type": ["string", "null"] }
+      }
+    },
+
+    "qa_check_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_result_id", "check_id", "check_version", "scope_id",
+        "member_id", "related_issue_id", "qa_result", "evidence",
+        "reason_code", "artifact_locator"
+      ],
+      "properties": {
+        "check_result_id": { "type": "string", "minLength": 1 },
+        "check_id": { "$ref": "#/$defs/checkId" },
+        "check_version": { "type": "string", "const": "1" },
+        "scope_id": { "$ref": "#/$defs/scopeId" },
+        "member_id": { "type": ["string", "null"] },
+        "related_issue_id": { "type": ["string", "null"] },
+        "qa_result": { "$ref": "#/$defs/qaResult" },
+        "evidence": {
+          "type": "object",
+          "description": "Check'e özgü yapılandırılmış tanı verisi - kapalı bir global şema İCAT EDİLMEDİ, her check_id kendi evidence alt-alanlarını belgeler (qa_policy.py docstring'leri)."
+        },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "artifact_locator": { "$ref": "#/$defs/artifact_locator" }
+      }
+    },
+
+    "qa_agent_suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suggestion_id", "suggestion_type", "related_check_result_id",
+        "related_scope_id", "related_issue_id", "grounded_explanation",
+        "suggestion_review_state", "suggestion_dedup_fingerprint",
+        "suggestion_content_fingerprint"
+      ],
+      "properties": {
+        "suggestion_id": { "type": "string", "minLength": 1 },
+        "suggestion_type": {
+          "type": "string",
+          "enum": [
+            "possible_semantic_inconsistency",
+            "unexplained_state_pattern",
+            "needs_deeper_human_review",
+            "cross_row_observation"
+          ]
+        },
+        "related_check_result_id": { "type": ["string", "null"] },
+        "related_scope_id": { "$ref": "#/$defs/scopeId" },
+        "related_issue_id": { "type": ["string", "null"] },
+        "grounded_explanation": { "type": "string", "minLength": 1 },
+        "suggestion_review_state": {
+          "type": "string",
+          "enum": ["needs_review", "accepted_for_follow_up", "dismissed"],
+          "description": "Agent yalnız 'needs_review' üretebilir. 'accepted_for_follow_up'/'dismissed' yalnız Layer B (qa_review.py) ile mümkündür."
+        },
+        "suggestion_dedup_fingerprint": { "type": "string", "minLength": 1 },
+        "suggestion_content_fingerprint": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
