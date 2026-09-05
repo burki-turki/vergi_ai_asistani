@@ -62,13 +62,27 @@ from fastapi.templating import Jinja2Templates
 
 from .services import paths, live_view, security
 from .services import approval_registry as reg
+from .services import review_registry as reviewreg
 from .services.common import (
     ApprovalUiError,
     StaleViewError,
     PendingNotFoundError,
     UnknownCaseError,
     LiveViewInvalidError,
+    ReviewUiError,
+    UnknownReviewKindError,
+    ReviewRecordNotFoundError,
+    ReviewStaleViewError,
+    ReviewLiveViewInvalidError,
+    InvalidReviewNoteError,
 )
+
+# Row 18b - Layer B'nin 5 GERÇEK domain hata sınıfı allowlist'i TEK
+# yerde (`review_registry.py`) tanımlıdır - burada KOPYALANMAZ,
+# doğrudan oradan import edilir (kullanıcı kararı, 2026-09-04: "yalnız
+# doğrulanmış beş domain exception sınıfının kontrollü mesajı
+# gösterilecek").
+_REVIEW_DOMAIN_ERRORS = reviewreg.DOMAIN_REVIEW_ERROR_TYPES
 
 from pathlib import Path
 
@@ -140,6 +154,24 @@ _ERROR_MESSAGES = {
     "CSRF_INVALID": "Güvenlik doğrulaması başarısız oldu (oturum/origin uyuşmazlığı). Lütfen sayfayı yeniden açıp tekrar deneyin.",
     "LIVE_VIEW_INVALID": "Bu case için canlı görünüm şu anda doğrulanamıyor ve görüntülenemiyor.",
     "ISSUE_NOT_FOUND": "Issue bulunamadı.",
+    # --- Row 18b (Layer B inceleme kararları) ---
+    "UNKNOWN_REVIEW_KIND": "Bilinmeyen inceleme türü.",
+    "REVIEW_RECORD_NOT_FOUND": "İncelenecek kayıt artık mevcut değil (durumu değişmiş olabilir) - liste güncellenmiş olabilir.",
+    "REVIEW_STALE_VIEW": "Görünüm bu ekran açıldıktan sonra değişti - işlem iptal edildi. Lütfen sayfayı yenileyip tekrar deneyin.",
+    "REVIEW_FAMILY_INVALID": "Bu ailenin canonical verisi şu anda doğrulanamıyor ve görüntülenemiyor.",
+    "REVIEW_NOTE_INVALID": "İnceleme notu boş olamaz ve en fazla 2000 karakter olabilir.",
+    "REVIEW_TRANSITION_FAILED": "İnceleme işlemi tamamlanamadı.",
+    # FINAL DOMAIN-ERROR REDACTION REMEDIATION (2026-09-05): 5 LOCKED
+    # review backend'inin (evidence/argument/risk_strategy/drafting/qa)
+    # fırlattığı domain-reddi mesajları ARTIK OLDUĞU GİBİ gösterilmez -
+    # bu mesajlar bazı durumlarda mutlak dosya yolu içerebiliyor (bkz.
+    # `_domain_error_page` docstring'i). Bunun yerine HER ZAMAN bu tek
+    # sabit metin gösterilir; gerçek ayrıntı yalnız logger'a yazılır.
+    "REVIEW_DOMAIN_REJECTED": (
+        "İnceleme işlemi ilgili modülün kendi iş kuralı gereği reddedildi. "
+        "Lütfen sayfayı yenileyip kaydı yeniden inceleyin; sorun devam "
+        "ederse case verisini kontrol edin."
+    ),
 }
 
 
@@ -158,6 +190,49 @@ def _error_page(request, code, back_url, exc=None):
         request, "error.html",
         title="Hata", message=_ERROR_MESSAGES.get(code, "Beklenmeyen bir hata oluştu."),
         code=code, back_url=back_url,
+    )
+
+
+def _domain_error_page(request, error, back_url):
+    """
+    Row 18b - Layer B'nin 5 GERÇEK domain hata sınıfı
+    (`_REVIEW_DOMAIN_ERRORS`) için çağrılır.
+
+    FINAL DOMAIN-ERROR REDACTION REMEDIATION (2026-09-05): önceki
+    turun varsayımı - bu 5 sınıfın mesajlarının HER ZAMAN sabit,
+    ham-path/traceback İÇERMEYEN iş-kuralı cümleleri olduğu - YANLIŞ
+    olduğu kanıtlandı: 5 LOCKED backend'in (evidence/argument/
+    risk_strategy/drafting/qa) TAMAMI, "Canonical X.json bulunamadı:
+    \n{canonical_path}" biçiminde AYNI domain sınıflarından biriyle
+    MUTLAK bir dosya yolu içeren bir mesaj fırlatabiliyor. Bu yüzden
+    `str(error)` (veya review_note içeriği, traceback metni, vb.)
+    ARTIK HİÇBİR ZAMAN tarayıcıya geçirilmez:
+
+      - orijinal exception TÜRÜ ve TAM mesajı yalnız yerel `logger`'a
+        yazılır (konsol/log - repoya/diske ayrı bir dosya olarak
+        YAZILMAZ, tanı için tam ayrıntı burada saklı kalır);
+      - tarayıcıya YALNIZ `_ERROR_MESSAGES["REVIEW_DOMAIN_REJECTED"]`
+        sabit metni gösterilir - işlemin reddedildiğini ve kaydın
+        yenilenip incelenmesi gerektiğini açıklar, ham backend metni
+        İÇERMEZ.
+
+    Sınıflandırma (bunun bir "domain reddi" olduğu, generic bir hata
+    olmadığı) `code="REVIEW_DOMAIN_REJECTED"` ile KORUNUR - değişen
+    yalnız tarayıcıya giden MESAJ metnidir, sabit koda çevrilmiştir.
+    Beklenmeyen HERHANGİ bir başka exception türü buradan ASLA
+    geçirilmez - yalnız `_REVIEW_DOMAIN_ERRORS` allowlist'indeki 5
+    sınıf için çağrılır.
+    """
+
+    logger.warning(
+        "Layer B domain reddi [%s]: %s", type(error).__name__, error,
+    )
+
+    return render(
+        request, "error.html",
+        title="İnceleme reddedildi",
+        message=_ERROR_MESSAGES["REVIEW_DOMAIN_REJECTED"],
+        code="REVIEW_DOMAIN_REJECTED", back_url=back_url,
     )
 
 
@@ -359,6 +434,202 @@ def case_scoped_confirm(
         label=result["row"]["label"],
         canonical_path=paths.to_repo_relative(result["canonical_path"]),
         canonical_hash=result["canonical_hash"],
+        audit_path=paths.to_repo_relative(audit_path) if audit_path else None,
+    )
+
+
+# ============================================================
+# LAYER B İNCELEME AKIŞI (Row 18b) - 12 review_kind, tek registry
+# üzerinden. Parent-dependency/R1-R6/stale-source kuralları BURADA
+# YENİDEN UYGULANMAZ - `review_registry.apply_transition` gerçek
+# `apply_review_transition`'ı çağırır, backend TEK OTORİTE kalır.
+# ============================================================
+
+@app.get("/cases/{case_id}/reviews")
+def reviews_list(request: Request, case_id: str):
+
+    case_id = _resolve_case(case_id)
+
+    try:
+
+        rows = reviewreg.full_case_review_status(case_id)
+
+    except Exception as error:
+
+        # Savunma derinliği: `full_case_review_status` kendi başına
+        # her review_kind için `ReviewLiveViewInvalidError`'ı zaten
+        # yakalayıp o satırı "invalid" işaretliyor (bkz.
+        # `review_registry.py`) - bu except BLOĞU yalnız gerçekten
+        # ÖNGÖRÜLMEMİŞ bir hata için EK bir fail-closed katmanıdır,
+        # ana savunma DEĞİLDİR.
+        return _error_page(request, "REVIEW_FAMILY_INVALID", "/", exc=error)
+
+    return render(request, "reviews_list.html", case_id=case_id, rows=rows)
+
+
+@app.get("/cases/{case_id}/reviews/{review_kind}/{record_id}")
+def review_detail_page(request: Request, case_id: str, review_kind: str, record_id: str):
+
+    case_id = _resolve_case(case_id)
+
+    if review_kind not in reviewreg.REVIEW_KIND_REGISTRY:
+
+        raise HTTPException(status_code=404, detail="Bilinmeyen inceleme türü.")
+
+    back_url = f"/cases/{case_id}/reviews"
+    entry = reviewreg.REVIEW_KIND_REGISTRY[review_kind]
+
+    try:
+
+        found = reviewreg.get_review_record(review_kind, case_id, record_id)
+
+    except ReviewRecordNotFoundError as error:
+
+        return _error_page(request, "REVIEW_RECORD_NOT_FOUND", back_url, exc=error)
+
+    except ReviewLiveViewInvalidError as error:
+
+        return _error_page(request, "REVIEW_FAMILY_INVALID", back_url, exc=error)
+
+    except Exception as error:
+
+        # Savunma derinliği (targeted remediation, 2026-09-05):
+        # `review_registry._load_and_validate_canonical` artık
+        # BEKLENMEYEN her exception'ı zaten `ReviewLiveViewInvalidError`'a
+        # ÇEVİRİYOR (kök neden düzeltmesi orada) - bu blok yalnız
+        # registry'nin KENDİSİNDE öngörülmemiş bambaşka bir hata
+        # (ör. bir KeyError) için EK bir son-çare fail-closed
+        # katmanıdır; ham exception/traceback ASLA tarayıcıya sızmaz.
+        return _error_page(request, "REVIEW_FAMILY_INVALID", back_url, exc=error)
+
+    # CSRF token BEŞ parçaya BAĞLIDIR: case_id + review_kind +
+    # record_id + target_state + o anki canonical hash (targeted
+    # remediation, 2026-09-05 - önceki turda target_state KASITLI
+    # olarak dışarıda bırakılmıştı; artık her BEŞ değerden herhangi
+    # biri POST anında değişirse - yalnız hash değil, seçilen hedef
+    # durum da - işlem adaptöre ULAŞMADAN reddedilir). target_state
+    # GET anında henüz seçilmediğinden, `allowed_targets`'taki HER
+    # olası hedef için AYRI bir token üretilip sayfaya gömülür;
+    # tarayıcıda `<select>` değiştikçe gizli `csrf_token` alanı
+    # JS ile o hedefin token'ına güncellenir (bkz. review_detail.html).
+    allowed_targets = sorted(reviewreg.get_allowed_targets(review_kind))
+
+    csrf_tokens_by_target = {
+        target: security.make_csrf_token(
+            _CSRF_SECRET, case_id, review_kind, record_id, target, found["canonical_hash"],
+        )
+        for target in allowed_targets
+    }
+
+    return render(
+        request, "review_detail.html", case_id=case_id, record_id=record_id,
+        label=entry["label"], record=found["record"],
+        canonical_hash=found["canonical_hash"],
+        allowed_targets=allowed_targets,
+        # SCRIPT-CONTEXT JSON SERIALIZATION HARDENING (2026-09-05): ham
+        # bir sözlük geçiriliyor - önceden burada elle `json.dumps(...)`
+        # ile üretilip `|safe` ile HTML-escape'ten muaf tutularak
+        # gömülen bir string vardı (gereksiz bir script-context güven
+        # sınırı). Artık şablon, Jinja'nın KENDİ `|tojson` filtresiyle
+        # (script-context için güvenli - `<`, `>`, `&`, `'` Unicode
+        # escape edilir, `</script>` KAÇIŞI dahil) serileştiriyor.
+        csrf_tokens_by_target=csrf_tokens_by_target,
+        csrf_token=csrf_tokens_by_target[allowed_targets[0]],
+        confirm_action=f"/cases/{case_id}/reviews/{review_kind}/{record_id}/confirm",
+        back_url=back_url,
+    )
+
+
+@app.post("/cases/{case_id}/reviews/{review_kind}/{record_id}/confirm")
+def review_confirm(
+    request: Request, case_id: str, review_kind: str, record_id: str,
+    target_state: str = Form(...), review_note: str = Form(...),
+    expected_hash: str = Form(...), csrf_token: str = Form(...),
+):
+
+    case_id = _resolve_case(case_id)
+
+    if review_kind not in reviewreg.REVIEW_KIND_REGISTRY:
+
+        raise HTTPException(status_code=404, detail="Bilinmeyen inceleme türü.")
+
+    entry = reviewreg.REVIEW_KIND_REGISTRY[review_kind]
+    back_url = f"/cases/{case_id}/reviews/{review_kind}/{record_id}"
+
+    # CSRF + aynı-origin kontrolü, HERHANGİ bir review adaptörüne
+    # ULAŞMADAN ÖNCE, expected_hash tazelik kontrolünden BAĞIMSIZ bir
+    # katman olarak yapılır (18a ile AYNI ilke). Parça sırası
+    # `review_detail_page`'deki üretim sırasıyla BİREBİR AYNI olmalı:
+    # case_id + review_kind + record_id + target_state + expected_hash
+    # (targeted remediation, 2026-09-05 - target_state artık BAĞLAYICI
+    # bir parça: submit edilen `target_state` GET anında token'ın
+    # üretildiği hedeften FARKLIYSA, token doğrulaması BAŞARISIZ olur).
+    if not _check_csrf_and_origin(
+        request, _CSRF_SECRET, csrf_token, case_id, review_kind, record_id, target_state, expected_hash,
+    ):
+
+        return _error_page(request, "CSRF_INVALID", back_url)
+
+    # review_note doğrulaması TAMAMEN `review_registry.normalize_review_note`
+    # üzerinden yapılır (ikinci bir elle yazılmış kopya YOK) - route
+    # burada bu paylaşılan fonksiyonu ÇAĞIRARAK sunucu tarafı zorunlu
+    # kontrolü uygular; HTML `maxlength` tek başına YETERLİ DEĞİLDİR.
+    try:
+
+        reviewreg.normalize_review_note(review_note)
+
+    except InvalidReviewNoteError as error:
+
+        return _error_page(request, "REVIEW_NOTE_INVALID", back_url, exc=error)
+
+    try:
+
+        result = reviewreg.apply_transition(
+            review_kind, case_id, record_id, target_state, review_note, expected_hash,
+        )
+
+    except ReviewStaleViewError as error:
+
+        return _error_page(request, "REVIEW_STALE_VIEW", back_url, exc=error)
+
+    except ReviewRecordNotFoundError as error:
+
+        return _error_page(request, "REVIEW_RECORD_NOT_FOUND", back_url, exc=error)
+
+    except _REVIEW_DOMAIN_ERRORS as error:
+
+        # FINAL DOMAIN-ERROR REDACTION REMEDIATION (2026-09-05): bu 5
+        # GERÇEK, doğrulanmış domain hata sınıfı için ARTIK `str(error)`
+        # tarayıcıya geçirilmez - `_domain_error_page` yalnız SABİT,
+        # redakte edilmiş bir mesaj render eder; orijinal exception
+        # NESNESİ (mesaj DEĞİL, ham metin asla değil) buraya geçirilir
+        # ve ham ayrıntı yalnız `_domain_error_page` içinde logger'a
+        # yazılır (bkz. o fonksiyonun docstring'i - önceki turun "bu
+        # mesajlar zaten path-free" varsayımı YANLIŞ çıktı).
+        return _domain_error_page(request, error, back_url)
+
+    except ReviewUiError as error:
+
+        return _error_page(request, "REVIEW_TRANSITION_FAILED", back_url, exc=error)
+
+    except Exception as error:
+
+        # Beklenmeyen HERHANGİ bir exception türü - generic kalır,
+        # ham mesaj/traceback ASLA tarayıcıya gösterilmez.
+        return _error_page(request, "REVIEW_TRANSITION_FAILED", back_url, exc=error)
+
+    # 5 review modülünün de `apply_review_transition` dönüş sözlüğü
+    # (kaynak kodu okunarak doğrulandı) her zaman `canonical_path`/
+    # `audit_path`/`post_sha256`/`previous_state`/`new_state`
+    # anahtarlarını taşır - registry bunu YENİDEN YORUMLAMAZ.
+    audit_path = result["audit_path"]
+
+    return render(
+        request, "review_result.html", case_id=case_id, record_id=record_id,
+        label=entry["label"],
+        previous_state=result["previous_state"], new_state=result["new_state"],
+        canonical_path=paths.to_repo_relative(result["canonical_path"]),
+        canonical_hash=result["post_sha256"],
         audit_path=paths.to_repo_relative(audit_path) if audit_path else None,
     )
 

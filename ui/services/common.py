@@ -55,6 +55,60 @@ class LiveViewInvalidError(ApprovalUiError):
     görünüm ASLA doğrulanmadan render edilmez."""
 
 
+# ============================================================
+# ROW 18b - LAYER B (İNCELEME KARARLARI) HATA SINIFLARI
+#
+# `ApprovalUiError` hiyerarşisinin YANINA (onun YERİNE değil) yeni bir
+# taban sınıf eklenir - Layer A (onay) ve Layer B (inceleme) hataları
+# main.py'de KASITLI olarak AYRI except bloklarıyla ele alınır, ortak
+# bir üst sınıfa indirgenip birbirine KARIŞTIRILMAZ.
+# ============================================================
+
+class ReviewUiError(Exception):
+    """Row 18b'ye (Layer B inceleme kararları) özgü hatalar için taban
+    sınıf - review modüllerinin (`evidence_review.py` vb.) KENDİ hata
+    sınıflarının (`EvidenceReviewError` vb.) YERİNE GEÇMEZ; bunlar ayrı,
+    doğrulanmış bir allowlist olarak main.py'de doğrudan import edilip
+    kontrollü mesajlarıyla gösterilir (kullanıcı kararı, 2026-09-04)."""
+
+
+class UnknownReviewKindError(ReviewUiError):
+    """`review_kind`, `review_registry.REVIEW_KIND_REGISTRY`'nin sabit
+    12 değerlik allowlist'ine TAM eşleşmiyor."""
+
+
+class ReviewRecordNotFoundError(ReviewUiError):
+    """`review_kind` + `record_id` ikilisi, canonical dosyanın GERÇEK
+    ilgili array'inde `needs_review` durumunda bulunamadı (zaten
+    incelenmiş, silinmiş veya hiç var olmamış olabilir)."""
+
+
+class ReviewStaleViewError(ReviewUiError):
+    """İnceleme ekranı render edildikten SONRA canonical dosya
+    değişmiş (hash uyuşmuyor) - ilgili `apply_review_transition`
+    HİÇ ÇAĞRILMAZ (fail-closed, Layer A'daki `StaleViewError` ile
+    AYNI ilke, ayrı sınıf)."""
+
+
+class ReviewLiveViewInvalidError(ReviewUiError):
+    """İlgili ailenin (evidence/argument/risk_strategy/drafting/qa)
+    canonical dosyası KENDİ gerçek validator fonksiyonundan
+    (`raise_on_error=False`) GEÇEMEDİ - fail-closed: hiçbir kayıt
+    ASLA doğrulanmadan listelenmez/render edilmez. Bu, Layer A'daki
+    `LiveViewInvalidError` ile AYNI ilkedir ama Layer B'nin 5 ayrı
+    ailesi için ayrı bir sınıftır. Tarayıcıya YALNIZ sabit/genel bir
+    mesaj gösterilir - bu sınıfın `str()` içeriği asla render
+    edilmez, yalnız yerel loglanır (LiveViewInvalidError ile aynı
+    kural)."""
+
+
+class InvalidReviewNoteError(ReviewUiError):
+    """`review_note` (avukatın serbest metin inceleme notu), trim
+    sonrası boş veya `REVIEW_NOTE_MAX_LENGTH`'i aşıyor. İçerik
+    güvenliği/yasaklı ifade kontrolü KASITLI olarak UYGULANMAZ
+    (kullanıcı kararı, 2026-09-04) - yalnız boşluk/uzunluk kontrolü."""
+
+
 def sha256_file(path):
 
     path = Path(path)

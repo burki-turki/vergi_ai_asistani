@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}İncele - {{ label }}{% endblock %}
+{% block content %}
+  <p><a href="{{ back_url }}">&larr; Geri</a></p>
+  <h1>İncele: {{ label }}</h1>
+  <p class="muted">Kayıt kimliği: <code>{{ record_id }}</code></p>
+
+  <div class="banner banner-info">
+    Bu, ilgili modülün KENDİ inceleme fonksiyonuyla (parent-dependency/
+    stale-source kuralları dahil) uygulanacak bir Layer B karardır -
+    henüz hiçbir şey yazılmadı. Yalnız hâlâ <code>needs_review</code>
+    durumundaki kayıtlar burada görüntülenebilir.
+  </div>
+
+  <p>Canonical dosya hash'i (SHA-256):<br><code class="hash">{{ canonical_hash }}</code></p>
+
+  <h2>Kayıt içeriği</h2>
+  {{ m.render_value(record) }}
+
+  <h2>İnceleme kararı</h2>
+  <form method="post" action="{{ confirm_action }}" class="confirm-form">
+    <input type="hidden" name="expected_hash" value="{{ canonical_hash }}">
+    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token }}">
+
+    <p>
+      <label for="target_state">Hedef durum</label><br>
+      <!--
+        CSRF token BEŞ parçaya bağlıdır: case_id + review_kind +
+        record_id + target_state + canonical_hash (targeted
+        remediation, 2026-09-05). target_state GET anında henüz
+        seçilmediğinden, sunucu her olası hedef için AYRI bir token
+        üretip aşağıdaki JS haritasına gömer; seçim değiştikçe gizli
+        `csrf_token` alanı o hedefin token'ına güncellenir - böylece
+        POST anında gönderilen target_state, token'ın üretildiği
+        hedeften FARKLIYSA doğrulama sunucu tarafında BAŞARISIZ olur.
+      -->
+      <select name="target_state" id="target_state" required onchange="document.getElementById('csrf_token').value = CSRF_TOKENS_BY_TARGET[this.value];">
+        {% for target in allowed_targets %}
+          <option value="{{ target }}">{{ target }}</option>
+        {% endfor %}
+      </select>
+    </p>
+
+    <p>
+      <label for="review_note">İnceleme notu (zorunlu, en fazla 2000 karakter)</label><br>
+      <textarea name="review_note" id="review_note" rows="5" maxlength="2000" required></textarea>
+    </p>
+
+    <p>
+      Onayladığınızda: (1) yukarıdaki hash işlem anında yeniden kontrol
+      edilir - bu ekran açıldıktan sonra canonical dosya değiştiyse
+      işlem REDDEDİLİR; (2) ilgili modülün kendi inceleme fonksiyonu
+      çağrılır (parent-dependency/stale-source kuralları dahil,
+      yedekleme/atomik yazma/rollback dahil); (3) sonuçta yeni
+      canonical hash ve audit kaydının yolu gösterilir.
+    </p>
+    <label class="confirm-check">
+      <input type="checkbox" required>
+      Yukarıdaki kaydı inceledim ve seçtiğim durumu onaylıyorum.
+    </label>
+    <button type="submit" class="button button-confirm">İncelemeyi Kaydet</button>
+  </form>
+  <script>
+    // Yalnız sunucu tarafında üretilen sabit hedef-durum dizeleri
+    // (allowed_targets) ve hex CSRF token'ları içerir - hiçbir
+    // kullanıcı girdisi burada YOKTUR. SCRIPT-CONTEXT JSON
+    // SERIALIZATION HARDENING (2026-09-05): `csrf_tokens_by_target`
+    // artık main.py'den HAM bir Python sözlüğü olarak geçiriliyor -
+    // burada Jinja'nın KENDİ `|tojson` filtresiyle (elle
+    // `json.dumps(...)` + `|safe` YERİNE) serileştirilir. `|tojson`
+    // script-context için güvenlidir: `<`, `>`, `&`, `'` Unicode
+    // kaçış dizilerine çevrilir, bu yüzden `</script>` gibi
+    // script-kıran diziler HİÇBİR ZAMAN ham/çalıştırılabilir
+    // biçimde görünmez - `|safe` KULLANILMAZ (gereksiz bir
+    // script-context güven sınırı ORTADAN KALKAR).
+    const CSRF_TOKENS_BY_TARGET = {{ csrf_tokens_by_target | tojson }};
+  </script>
+{% endblock %}

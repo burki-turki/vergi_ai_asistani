@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}İncelendi - {{ label }}{% endblock %}
+{% block content %}
+  <p><a href="/cases/{{ case_id }}/reviews">&larr; İncelemeler</a></p>
+
+  <div class="banner banner-ok">
+    <strong>{{ label }}</strong> - kayıt <code>{{ record_id }}</code>
+    "{{ previous_state }}" durumundan "{{ new_state }}" durumuna
+    başarıyla geçirildi.
+  </div>
+
+  <table class="kv">
+    <tr><th>Canonical dosya</th><td><code>{{ canonical_path }}</code></td></tr>
+    <tr><th>Yeni canonical hash (SHA-256)</th><td><code class="hash">{{ canonical_hash }}</code></td></tr>
+    <tr><th>Audit kaydı</th><td><code>{{ audit_path if audit_path else "bulunamadı" }}</code></td></tr>
+  </table>
+
+  <p><a class="button" href="/cases/{{ case_id }}/reviews">İncelemeler listesine dön</a></p>
+{% endblock %}

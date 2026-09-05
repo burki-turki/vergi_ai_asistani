@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}İncelemeler - {{ case_id }}{% endblock %}
+{% block content %}
+  <p><a href="/cases/{{ case_id }}">&larr; {{ case_id }}</a></p>
+  <h1>İncelemeler (Layer B) - {{ case_id }}</h1>
+  <p class="muted">
+    Bu ekran yalnız Layer B (zaten canonical olmuş bireysel kayıtların
+    <code>needs_review</code> &rarr; terminal durum geçişi) inceleme
+    kararlarını listeler. Layer A onayları için
+    <a href="/cases/{{ case_id }}/approvals">Onaylar</a> ekranına bakın.
+  </p>
+
+  <table class="grid">
+    <thead>
+      <tr><th>Row</th><th>Aile</th><th>Durum</th><th>İncelenecek kayıtlar</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.row_no }}</td>
+          <td>{{ row.label }}</td>
+          <td>
+            {% if row.kind == "invalid" %}
+              <span class="badge badge-pending">doğrulanamıyor</span>
+            {% elif not row.canonical_exists %}
+              <span class="muted">canonical yok</span>
+            {% elif row.pending_count == 0 %}
+              <span class="badge badge-ok">incelenecek kayıt yok</span>
+            {% else %}
+              <span class="badge badge-pending">{{ row.pending_count }} kayıt bekliyor</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.kind == "reviewable" and row['items'] %}
+              <ul class="inline-list">
+                {% for item in row['items'] %}
+                  <li>
+                    <a href="/cases/{{ case_id }}/reviews/{{ row.review_kind }}/{{ item[row.id_field] }}">
+                      {{ item[row.id_field] }}
+                    </a>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

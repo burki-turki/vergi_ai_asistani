@@ -167,9 +167,14 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   onayı `unsupported_pending_resolution` olarak fail-closed)
   **DONE / LOCKED** — hedeflenen `vergi_ui_runtime` ortamında `pip
   check` PASS ve 117/117 test PASS ile kullanıcı tarafından
-  doğrulandı ve onaylandı. **18b** (Layer B inceleme kararları)
-  **ACTIVE / NEXT**. **18c** (Row 15 yapılandırılmış avukat talebi
-  girişi) henüz BAŞLAMADI.
+  doğrulandı ve onaylandı. **18b** (Layer B inceleme kararları — 12
+  review-kind adaptörü, 5 aile: Evidence/Argument/Risk-Strategy/
+  Drafting/QA) **DONE / LOCKED** — hedeflenen `vergi_ui_runtime`
+  ortamında `pip check` PASS ve Row 18A 117/117 + Row 18B servis
+  69/69 + şablon 42/42 + route 115/115 = **343/343** test PASS ile
+  kullanıcı tarafından doğrulandı ve onaylandı (bkz. Row 18 checkpoint
+  özeti, §5 sonrası). **18c** (Row 15 yapılandırılmış avukat talebi
+  girişi) **ACTIVE / NEXT** — henüz implementasyona BAŞLANMADI.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -723,7 +728,7 @@ anında o hash değişmişse REDDEDİLİR (bkz. Row 18 checkpoint özeti,
 `StaleViewError`) — canlı görünümün kendisi asla bir onayın DOĞRUDAN
 girdisi değildir, yalnız görüntüleme amaçlıdır.
 
-### Row 18 — Lawyer UI (İLERLEME HALİNDE / NOT LOCKED — 18a: DONE/LOCKED, 18b: ACTIVE/NEXT — checkpoint özeti)
+### Row 18 — Lawyer UI (İLERLEME HALİNDE / NOT LOCKED — 18a: DONE/LOCKED, 18b: DONE/LOCKED, 18c: ACTIVE/NEXT — checkpoint özeti)
 
 **Kapsam kararı (kullanıcı, 2026-09-04): Seçenek C** — tam etkileşimli kapsam
 (dosya/kaynak görüntüleme, Layer A onay tetikleme, Layer B inceleme kararları,
@@ -828,7 +833,121 @@ okunarak doğrulandı, varsayılmadı):
 inceleme kararları, Row 15 yapılandırılmış avukat talebi girişi, kimlik
 doğrulama, çoklu kullanıcı erişimi, production/dış deployment.
 
-**Sonraki adım**: **18b** (Layer B inceleme kararları) — **ACTIVE / NEXT**.
+**18b kapsamı — DONE / LOCKED** (kullanıcı onayı, hedeflenen
+`vergi_ui_runtime` ortamında `pip check` PASS + Row 18A 117/117 + Row
+18B servis 69/69 + şablon 42/42 + route 115/115 = **343/343** test PASS
+ile): mevcut Layer B ("kayıt bazlı inceleme kararı": `needs_review` ->
+`confirmed`/`rejected` veya `needs_review` -> `accepted_for_follow_up`/
+`dismissed`) akışı, 5 ailenin (Evidence/Argument/Risk-Strategy/
+Drafting/QA) **12 review-kind adaptörü** üzerinden TEK bir arayüzde
+toplanır: `evidence.candidate`, `evidence.suggestion`,
+`argument.claim`, `argument.counterargument`, `argument.rebuttal`,
+`argument.suggestion`, `risk_strategy.risk`, `risk_strategy.strategy`,
+`risk_strategy.suggestion`, `drafting.section`, `drafting.suggestion`,
+`qa.suggestion`. Tam **11 dosyalık** Row 18B uygulama kapsamı — 4'ü
+18a'nın var olan `ui/` dosyalarında değişiklik, 7'si yeni dosya:
+`main.py` (değişiklik — Layer B route seti + CSRF üretim/doğrulama
+yardımcıları eklendi), `services/common.py` (değişiklik — 6 yeni
+`ReviewUiError` alt sınıfı eklendi), `static/style.css` (değişiklik —
+salt-sunumsal `.confirm-form`/`.confirm-check`/`code.hash` eklendi),
+`templates/case_view.html` (değişiklik — "İncelemeler (Layer B)" nav
+linki eklendi), `services/review_registry.py` (yeni — 12 review-kind
+registry), `templates/review_detail.html`, `templates/review_result.html`,
+`templates/reviews_list.html` (yeni), `tests/test_review_routes.py`,
+`tests/test_review_service_isolated.py`, `tests/test_review_templates_isolated.py`
+(yeni).
+
+**18b final güvenlik/mimari durumu** (bir hedefli remediation turu, bir
+script-context JSON serialization sertleştirme turu, bir salt-okunur
+LOCK-hazırlık incelemesi ve bir domain-error redaksiyon remediation
+turuyla ulaşıldı — kod tekrar okunarak doğrulandı, varsayılmadı):
+
+- **Backend-otoriter doğrulama/hedef-durum/geçiş kuralları** —
+  `review_registry.py` var olan `src/*_review.py` (Row 12-16) modüllerinin
+  İÇ MANTIĞINI (parent-dependency, R1-R6, stale-source, previous_state
+  kontrolü, backup/atomic-write/rollback) YENİDEN YAZMAZ/KOPYALAMAZ;
+  array/id/state alan adları ve hedef-durum allowlist'i HER ZAMAN ilgili
+  backend modülünün KENDİ canlı sabitinden okunur (evidence/qa için
+  registry'nin kendi, koddan doğrulanmış sabit metadata'sı — bu iki modül
+  BY_TYPE sözlüğü taşımadığı için). R1-R6 parent-dependency semantiği
+  aynen korunur; Risk/Strategy R2 hem reddi HEM DE `dismissed` kabul
+  yolu, backend'in kendi `run_self_test()` fixture-üretim deseni
+  (`FakeRiskStrategyLLMClient` + `build_risk_strategy_engine_output` +
+  `_recompute_coverage`) yeniden kullanılarak bağımsız doğrulandı.
+- **case_id ve review_kind allowlist'leri** — `_resolve_case` (case_id)
+  ve `REVIEW_KIND_REGISTRY` (review_kind, sabit 12 değer) her route'un
+  en başında; bilinmeyen/geçersiz değer her zaman aynı genel 404/hata.
+- **Loopback-only erişim + aynı-origin doğrulaması** — 18a'nın middleware/
+  `_check_csrf_and_origin` deseniyle AYNI, Layer B route'larında da
+  uygulanıyor.
+- **Beş parçalı CSRF bağlama** — `case_id + review_kind + record_id +
+  target_state + canonical_hash` (HMAC, sabit-zamanlı doğrulama);
+  `target_state` GET anında henüz seçilmediğinden her olası hedef için
+  ayrı bir token üretilip sayfaya gömülür, `<select>` değiştikçe JS ile
+  o hedefin token'ına güncellenir — POST anındaki `target_state` üretim
+  hedefinden FARKLIYSA doğrulama BAŞARISIZ olur.
+- **Mutasyon öncesi stale canonical-hash reddi** — `reviewreg.apply_transition`
+  dosya varlığı + güncel hash'i, HERHANGİ bir backend adaptörü
+  çağrılmadan ÖNCE kontrol eder; değiştiyse `ReviewStaleViewError`, sıfır
+  mutasyon.
+- **Fail-closed canonical yükleme/doğrulama** — `_load_and_validate_canonical`
+  dosya okuma + ilgili ailenin KENDİ validator'ını (`raise_on_error=False`)
+  TEK korumalı blokta çalıştırır; validator'ın ÖN KOŞUL yüklemesinde
+  (`raise_on_error` bayrağından bağımsız) fırlayabilecek HERHANGİ bir
+  beklenmeyen exception `ReviewLiveViewInvalidError`'a çevrilir — hiçbir
+  kayıt doğrulanmadan render edilmez.
+- **Tarayıcıya sabit, güvenli hata mesajları; domain exception'lar
+  redakte edilir** — `_error_page` 18a'daki ilkeyle AYNI (sabit kod/mesaj
+  tablosu, ham `str(exception)`/traceback/mutlak path asla yanıta
+  girmez). Ayrıca 5 GERÇEK backend domain hata sınıfı
+  (`EvidenceReviewError`/`ArgumentReviewError`/`RiskStrategyReviewError`/
+  `DraftingReviewError`/`QaReviewError`) için `_domain_error_page`
+  **ARTIK bu sınıfların KENDİ mesajını (`str(error)`) DA tarayıcıya
+  geçirmez** — LOCK-hazırlık incelemesinde 5 backend'in TAMAMININ aynı
+  domain sınıflarıyla mutlak dosya yolu içeren bir mesaj ("Canonical
+  X.json bulunamadı:\n{mutlak_path}") fırlatabildiği kanıtlandı; tarayıcı
+  artık HER ZAMAN tek bir sabit `REVIEW_DOMAIN_REJECTED` mesajı görür,
+  orijinal exception TÜRÜ + TAM mesaj yalnız yerel `logging`'e (repoya/
+  diske YAZILMADAN) yazılır — tanı için tam ayrıntı yerelde SAKLI kalır.
+- **Script-context güvenli JSON serialization** — `review_detail.html`
+  beş hedefe ait CSRF token haritasını (`csrf_tokens_by_target`) ham
+  Python sözlüğü olarak main.py'den alır ve Jinja'nın KENDİ `|tojson`
+  filtresiyle (elle `json.dumps(...)` + `|safe` YERİNE) serileştirir —
+  `<`, `>`, `&`, `'` Unicode kaçışa çevrilir, `</script>` gibi
+  script-kıran diziler HİÇBİR ZAMAN ham/çalıştırılabilir biçimde
+  görünmez; script-breakout test kapsamı bunu doğrudan kanıtlıyor.
+- **İzole mutasyon testleri + gerçek data/src byte-bütünlüğü** — tüm
+  Row 18B mutasyon/CSRF/stale-hash/domain-redaksiyon testleri
+  `TemporaryDirectory` + sahte/geçici olarak değiştirilmiş modül
+  attribute'larıyla (backend'in KENDİ kodu hiç değiştirilmeden) çalışır;
+  gerçek `data/`/`src/` ağacının test öncesi/sonrası byte-düzeyinde
+  DEĞİŞMEDİĞİ her test turunda ayrıca kanıtlandı. `case_0001` üzerinde
+  GERÇEK bir Layer B inceleme mutasyonu HİÇ ÇALIŞTIRILMADI; Row 18B
+  testleri hiçbir canonical, approval-audit, review-audit, history veya
+  backup verisi ÜRETMEDİ.
+- **`pip check` PASS ve 343/343 toplam test sonucu** — Row 18A 117/117 +
+  Row 18B servis (saf-Python) 69/69 + Row 18B şablon (Jinja2) 42/42 +
+  Row 18B route (FastAPI, TestClient) 115/115 — hedeflenen
+  `vergi_ui_runtime` ortamında kullanıcı tarafından fiilen çalıştırıldı.
+
+**18b KAPSAM DIŞI (bilinçli, Row 19/18c'ye bırakıldı, DÜZELTİLMEYECEK)**:
+
+- `StarletteDeprecationWarning: Using httpx with starlette.testclient is
+  deprecated; install httpx2 instead.` — 18a'dan devralınan, yalnız test
+  altyapısını ilgilendiren, üretim çalışma zamanını ETKİLEMEYEN bağımlılık
+  bakım backlog maddesi; `httpx2` bu fazda KURULMADI/ikame EDİLMEDİ.
+- **Çapraz-süreç eşzamanlılık / lost-update koruması** — mevcut
+  stale-hash kontrolü atomik bir compare-and-swap DEĞİLDİR; backend'in
+  kendi bağımsız yeniden-okumasıyla arada dar bir TOCTOU penceresi
+  vardır (18a'nın `approval_registry.case_scoped_approve`'ıyla AYNI
+  şekilde, zaten kabul edilmiş desen). Atomik CAS/kilitleme, kimlik
+  doğrulama, çoklu kullanıcı yetkilendirme ve ilgili production
+  sertleştirme kontrolleri Row 19'a bırakıldı.
+- Row 18b, 18a ile AYNI şekilde yerel, loopback, tek-kullanıcılı bir araç
+  sınırı içinde kalır.
+
+**Sonraki adım**: **18c** (Row 15 yapılandırılmış avukat talebi girişi) —
+**ACTIVE / NEXT** — henüz implementasyona BAŞLANMADI.
 
 ## 6. Cross-Cutting Backlog
 
