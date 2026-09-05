@@ -109,6 +109,78 @@ class InvalidReviewNoteError(ReviewUiError):
     (kullanıcı kararı, 2026-09-04) - yalnız boşluk/uzunluk kontrolü."""
 
 
+# ============================================================
+# ROW 18C - YAPILANDIRILMIŞ AVUKAT GİRDİSİ HATA SINIFLARI
+#
+# `ApprovalUiError`/`ReviewUiError` hiyerarşilerinin YANINA (onların
+# YERİNE değil) yeni, üçüncü bir taban sınıf eklenir - Row 18C hiçbir
+# onay/inceleme adaptörünü ÇAĞIRMAZ (Option A-prime: HTTP yalnız
+# görüntüler/doğrular/kaydeder, Drafting Engine'i/bir agent'ı/network
+# çağrısını HİÇBİR ZAMAN tetiklemez - bu yalnız ayrı, elle çalıştırılan
+# `ui/run_drafting_request.py` CLI köprüsünün işidir). Bu yüzden bu
+# hatalar KASITLI olarak `ApprovalUiError`/`ReviewUiError`'dan AYRI bir
+# hiyerarşidir - main.py'de KENDİ except bloklarıyla ele alınır, diğer
+# ikisiyle KARIŞTIRILMAZ.
+# ============================================================
+
+class DraftingRequestUiError(Exception):
+    """Row 18C'ye (yapılandırılmış avukat talebi girişi) özgü hatalar
+    için taban sınıf. `request_text`/`lawyer_provided_text` İÇERİĞİ bu
+    hiyerarşideki HİÇBİR mesajda YER ALMAZ - yalnız alan adları,
+    uzunluk sınırları, sabit hata kodları ve (varsa) hash'ler."""
+
+
+class DraftingRequestFormError(DraftingRequestUiError):
+    """Gönderilen form alanları yapısal olarak geçersiz (uzunluk sınırı
+    aşımı, geçersiz seçim, kısmen doldurulmuş request_input çifti,
+    yinelenen issue seçimi, boş `select_specific` seçimi vb.) - hiçbir
+    dosya YAZILMADAN, hiçbir paylaşılan doğrulayıcı ÇAĞRILMADAN
+    reddedilir."""
+
+
+class DraftingRequestValidationError(DraftingRequestUiError):
+    """Paylaşılan TAM wrapper doğrulayıcısı (şema + yerel `$ref` +
+    case_id eşleşmesi + `source` sabiti + Row 15 `normalize_lawyer_input`
+    semantiği + GÜNCEL canonical issue üyeliği + yinelenen/sahte issue
+    reddi + deterministik sıralama + saklanan `lawyer_input_hash`
+    tutarlılığı) başarısız oldu. `errors` - insan-okur, alan-adı bazlı,
+    ASLA request_text/lawyer_provided_text İÇERİĞİ TAŞIMAYAN bir liste."""
+
+    def __init__(self, message, errors=None):
+        super().__init__(message)
+        self.errors = list(errors) if errors else [message]
+
+
+class DraftingRequestStaleInputError(DraftingRequestUiError):
+    """Kaydetme anında yeniden hesaplanan GÜNCEL dosyanın ham-bayt
+    SHA256'sı (veya dosya yoksa `no_existing_input` sabiti), ekran
+    açıldığında gönderilen `expected_current_input_hash` ile
+    UYUŞMUYOR - kaydetme fonksiyonu HİÇ ÇAĞRILMADAN, sıfır mutasyon ve
+    sıfır audit ile reddedilir (fail-closed, Layer A/B'deki
+    `StaleViewError`/`ReviewStaleViewError` ile AYNI ilke, ayrı sınıf)."""
+
+
+class DraftingRequestNamingCollisionError(DraftingRequestUiError):
+    """Geçmiş/audit dosyası için UTC mikrosaniye damgası + sayısal
+    çakışma soneki (`_01`, `_02`, ...) sınırlı deneme sayısı içinde
+    BENZERSİZ bir ad üretemedi (dosya adı `os.O_CREAT|os.O_EXCL` ile
+    zaten VARDI) - kapalı-tarafa düşülür, hiçbir şey yazılmaz."""
+
+
+class DraftingRequestSaveFailedError(DraftingRequestUiError):
+    """Yazma/post-write doğrulama/audit adımlarından biri başarısız
+    oldu; ilgili rollback (ilk-kayıt: yeni oluşturulan dosya TAMAMEN
+    silinir; üzerine-yazma: orijinal içerik bayt-bayt VE izinleriyle
+    GERİ YÜKLENİR) zaten UYGULANDIKTAN SONRA bu hata fırlatılır - hiçbir
+    başarı audit'i asla kalmaz."""
+
+
+class DraftingRequestCsrfError(DraftingRequestUiError):
+    """CSRF token eksik/geçersiz veya Origin/Referer aynı-origin
+    kontrolünden geçemedi - kaydetme fonksiyonu HİÇ ÇAĞRILMADAN
+    reddedilir."""
+
+
 def sha256_file(path):
 
     path = Path(path)

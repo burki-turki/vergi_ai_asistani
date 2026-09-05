@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Girdi Kaydedildi - {{ case_id }}{% endblock %}
+{% block content %}
+  <p><a href="{{ back_url }}">&larr; Yapılandırılmış Avukat Girdisi</a></p>
+
+  <div class="banner banner-ok">
+    Avukat girdisi <code>{{ case_id }}</code> için başarıyla kaydedildi.
+  </div>
+
+  <table class="kv">
+    <tr><th>Kaydedilme zamanı</th><td><code>{{ saved_at }}</code></td></tr>
+    <tr><th>lawyer_input_hash</th><td><code class="hash">{{ lawyer_input_hash or "(boş girdi - hash yok)" }}</code></td></tr>
+  </table>
+
+  <div class="banner banner-warn">
+    <strong>Bu kaydetme İŞLEMİ AŞAĞIDAKİLERDEN HİÇBİRİ ANLAMINA GELMEZ:</strong>
+    <ul>
+      <li>bir taslak (draft) ÜRETİLMEDİ;</li>
+      <li>Drafting Agent veya herhangi bir LLM ÇALIŞTIRILMADI;</li>
+      <li>bu gönderim, kimliği doğrulanmış bir avukattan geldiği anlamına GELMEZ
+        (bu arayüzde kimlik doğrulama YOKTUR - Row 19'a bırakıldı);</li>
+      <li>canonical drafting çıktısı (varsa) DEĞİŞMEDİ.</li>
+    </ul>
+    Gerçek üretim yalnız ayrı, elle çalıştırılan bir CLI komutuyla mümkündür:
+    <code>python -m ui.run_drafting_request --case {{ case_id }} --generate-pending</code>
+  </div>
+
+  <p>
+    <a class="button" href="{{ back_url }}">Girdi ekranına dön</a>
+    <a class="button" href="{{ case_home_url }}">Dosyaya dön</a>
+  </p>
+{% endblock %}

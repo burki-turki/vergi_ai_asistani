@@ -219,3 +219,44 @@ details summary {
   border-radius: 4px;
   box-sizing: border-box;
 }
+
+.confirm-form input[type="text"] {
+  width: 100%;
+  max-width: 40rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Row 18C - tri-state issue seçimi ve uzun canonical issue listeleri */
+.radio-group {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+}
+
+.radio-group legend {
+  font-weight: 600;
+  padding: 0 0.3rem;
+}
+
+.checkbox-list {
+  max-height: 12rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  background: var(--bg-alt);
+}
+
+.field-limit-hint {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}

@@ -60,9 +60,12 @@ from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from typing import List
+
 from .services import paths, live_view, security
 from .services import approval_registry as reg
 from .services import review_registry as reviewreg
+from .services import drafting_request as draftreq
 from .services.common import (
     ApprovalUiError,
     StaleViewError,
@@ -75,6 +78,10 @@ from .services.common import (
     ReviewStaleViewError,
     ReviewLiveViewInvalidError,
     InvalidReviewNoteError,
+    DraftingRequestUiError,
+    DraftingRequestFormError,
+    DraftingRequestValidationError,
+    DraftingRequestStaleInputError,
 )
 
 # Row 18b - Layer B'nin 5 GERÇEK domain hata sınıfı allowlist'i TEK
@@ -132,6 +139,213 @@ async def _loopback_only_middleware(request: Request, call_next):
 
 
 # ============================================================
+# ROW 18C - POST GÖVDE BOYUTU SINIRI (yalnız
+# `.../drafting-request/confirm`'e ÖZGÜ - kontrat madde 7: "must be
+# route-specific... must not change the behavior of existing Row
+# 18A/18B routes"). `@app.middleware("http")` (BaseHTTPMiddleware)
+# YERİNE HAM bir ASGI middleware sınıfı kullanılır - BaseHTTPMiddleware
+# `receive`'i GÜVENİLİR şekilde sarmalamayı/akan bayt sayısını
+# SAYMAYI DESTEKLEMEZ (kendi içinde gövdeyi erken tüketebilir). Bu
+# sınıf, Starlette'in `Form(...)` ayrıştırmasına ULAŞMADAN ÖNCE İKİ
+# bağımsız kontrol uygular:
+#   1) `Content-Length` header'ı VARSA ve sınırı aşıyorsa, gövde HİÇ
+#      OKUNMADAN 413 döner;
+#   2) header YOKSA/YANLIŞSA, `receive`'i sarmalayıp GERÇEKTEN alınan
+#      bayt sayısını sayar - sınır aşılırsa akan isteği bir istisna ile
+#      KESER ve 413 döner.
+# İkisi de SABİT, genel bir metin döner - gönderilen alan İÇERİĞİ asla
+# yanıta/loga YANSIMAZ (kontrat madde 7).
+#
+# TARGETED ROUTE SAFETY REMEDIATION (kök-neden düzeltmesi): (2) kontrolü
+# `receive`'i SARMALAR ama gövdeyi KENDİSİ OKUMAZ - fiili okuma, aşağıdaki
+# `drafting_request_confirm` route'unun KENDİSİNİN `await request.form()`
+# çağırmasıyla gerçekleşir (route ARTIK FastAPI'nin otomatik `Form(...)`
+# bağımlılık çözümünü KULLANMIYOR - bkz. route'un kendi docstring'i).
+# Sınır aşıldığında `_counting_receive` içinde fırlatılan
+# `_DraftingRequestBodyTooLarge`, route'un KENDİ `try/except`'i
+# tarafından DOĞRUDAN yakalanır (hiçbir framework-içi Form ayrıştırma
+# sarmalayıcısına UĞRAMADAN) - bu yüzden istisna asla farklı bir hataya
+# (ör. FastAPI'nin kendi 400/422'sine) dönüştürülüp YUTULMAZ. Bu
+# middleware'in kendi `try/except`'i (aşağıda) yalnız EK bir savunma
+# katmanı olarak kalır.
+# ============================================================
+
+_DRAFTING_REQUEST_CONFIRM_SUFFIX = "/drafting-request/confirm"
+_DRAFTING_REQUEST_MAX_BODY_BYTES = 128 * 1024
+
+# TARGETED ROUTE SAFETY REMEDIATION (bu bölüm) - hem ASGI middleware'i
+# hem de aşağıdaki route'un KENDİSİ AYNI sabit metni döndürür - TEK
+# kaynak, iki yazım arasında sürüklenme riski YOK.
+_DRAFTING_REQUEST_BODY_TOO_LARGE_MESSAGE = "İstek gövdesi izin verilen azami boyutu aşıyor."
+
+
+class _DraftingRequestBodyTooLarge(Exception):
+    pass
+
+
+def _exception_tree_contains_body_too_large(error):
+    """
+    `error` içinde (doğrudan VEYA bir `ExceptionGroup` ağacının
+    HERHANGİ bir derinliğinde) bir `_DraftingRequestBodyTooLarge`
+    örneği olup olmadığını YİNELEMELİ olarak kontrol eder.
+
+    NEDEN GEREKLİ: AnyIO/Starlette'in task-group tabanlı iptal
+    mekanizması, `_counting_receive` içinde fırlatılan
+    `_DraftingRequestBodyTooLarge`'ı doğrudan yaymak yerine bir
+    `ExceptionGroup` İÇİNE SARMALAYABİLİR - bu durumda
+    `except _DraftingRequestBodyTooLarge:` KENDİSİ artık eşleşmez
+    (bir ExceptionGroup, sardığı istisna türünün alt sınıfı DEĞİLDİR).
+
+    BASEEXCEPTION SAFETY ORDER CORRECTION (bu fonksiyonun EN ÖNEMLİ
+    kuralı): `error` normal `Exception` ailesine AİT DEĞİLSE (ör.
+    `asyncio.CancelledError`, `SystemExit`, `KeyboardInterrupt`, VEYA
+    bunlardan birini İÇEREN KARIŞIK bir grup), fonksiyon alt ağaca HİÇ
+    İNMEDEN doğrudan `False` döner. Bu, en dış çağrı için OLDUĞU KADAR
+    her YİNELEMELİ alt-çağrı için de GEÇERLİDİR - fonksiyon HER
+    seviyede önce bu kontrolü yapar. Python'un kendi grup kurma kuralı
+    gereği, İÇİNDE herhangi bir Exception-olmayan üye barındıran bir
+    grup ASLA `ExceptionGroup` (Exception alt sınıfı) OLARAK
+    KURULMAZ - her zaman yalnız `BaseExceptionGroup` kalır (bir
+    `Exception` örneği DEĞİLDİR) - ve bu özellik iç içe gruplarda da
+    YUKARI DOĞRU YAYILIR. Sonuç: içinde GERÇEKTEN
+    `_DraftingRequestBodyTooLarge` bulunsa BİLE, yanında bir iptal/
+    kontrol-akışı istisnası TAŞIYAN karışık bir grup ASLA "gövde çok
+    büyük" olarak SINIFLANDIRILMAZ - bu, o karışık grubun kontrolsüzce
+    413'e dönüştürülüp yanındaki BaseException sinyalinin YUTULMASINI
+    önler (çağıran taraf zaten `except Exception` kullandığı için böyle
+    bir grup pratikte BURAYA hiç ULAŞMAZ - bu, o garantiyi YARDIMCI
+    FONKSİYONUN KENDİSİNDE de bağımsız olarak doğrulayan bir savunma
+    katmanıdır).
+
+    Bu fonksiyon YALNIZ tür ağacını (`.exceptions`) GERÇEKTEN yürüyerek
+    karar verir:
+      - istisna adı/mesajı üzerinde HİÇBİR string eşleştirmesi YAPMAZ
+        (yalnız `isinstance`/tür kimliği);
+      - HER ExceptionGroup'u kör bir şekilde "gövde çok büyük" olarak
+        SINIFLANDIRMAZ - yalnız ağacında GERÇEKTEN
+        `_DraftingRequestBodyTooLarge` barındıran, TAMAMEN
+        `Exception` ailesinden oluşan grupları `True` sayar.
+    """
+
+    if not isinstance(error, Exception):
+
+        return False
+
+    if isinstance(error, _DraftingRequestBodyTooLarge):
+
+        return True
+
+    if isinstance(error, BaseExceptionGroup):
+
+        return any(_exception_tree_contains_body_too_large(sub) for sub in error.exceptions)
+
+    return False
+
+
+class _DraftingRequestBodySizeASGIMiddleware:
+
+    def __init__(self, app):
+
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+
+        if (
+            scope.get("type") != "http"
+            or scope.get("method") != "POST"
+            or not str(scope.get("path", "")).endswith(_DRAFTING_REQUEST_CONFIRM_SUFFIX)
+        ):
+
+            await self.app(scope, receive, send)
+
+            return
+
+        headers = dict(scope.get("headers") or [])
+        content_length_raw = headers.get(b"content-length")
+
+        if content_length_raw is not None:
+
+            try:
+
+                declared_length = int(content_length_raw)
+
+            except ValueError:
+
+                declared_length = None
+
+            if declared_length is not None and declared_length > _DRAFTING_REQUEST_MAX_BODY_BYTES:
+
+                logger.warning(
+                    "Row 18C: Content-Length beyan edilen boyut sınırı aşıyor: %s", declared_length,
+                )
+
+                response = PlainTextResponse(
+                    _DRAFTING_REQUEST_BODY_TOO_LARGE_MESSAGE, status_code=413,
+                )
+
+                await response(scope, receive, send)
+
+                return
+
+        received_total = 0
+
+        async def _counting_receive():
+
+            nonlocal received_total
+
+            message = await receive()
+
+            if message.get("type") == "http.request":
+
+                received_total += len(message.get("body") or b"")
+
+                if received_total > _DRAFTING_REQUEST_MAX_BODY_BYTES:
+
+                    raise _DraftingRequestBodyTooLarge()
+
+            return message
+
+        try:
+
+            await self.app(scope, _counting_receive, send)
+
+        except Exception as error:
+
+            # BASEEXCEPTION SAFETY ORDER CORRECTION: bilinçli olarak
+            # `except BaseException` DEĞİL, `except Exception`
+            # kullanılıyor - bir iptal/`CancelledError`/`SystemExit`/
+            # `KeyboardInterrupt` (veya bunlardan birini İÇEREN karışık
+            # bir `BaseExceptionGroup`, ki bu HİÇBİR ZAMAN bir
+            # `Exception` örneği DEĞİLDİR) burada YAKALANMADAN otomatik
+            # olarak YUKARI YAYILMALI - kontrol-akışı sinyali ASLA
+            # YUTULMAMALI. Bu, route'un KENDİ `try/except`'inin
+            # (aşağıda, `drafting_request_confirm`) ARKASINDA kalan
+            # yalnız EK bir savunma katmanıdır - normal akışta istisna
+            # zaten route seviyesinde yakalanır. Yine de burada da
+            # AnyIO/Starlette'in `_DraftingRequestBodyTooLarge`'ı
+            # (yalnız Exception alt sınıflarından oluşan) bir
+            # `ExceptionGroup` içine sarmalamış olma ihtimaline karşı
+            # AYNI yinelemeli ağaç kontrolü kullanılır - saf
+            # `isinstance`, string eşleştirmesi YOK.
+            if not _exception_tree_contains_body_too_large(error):
+
+                raise
+
+            logger.warning(
+                "Row 18C: gerçek alınan bayt sayısı sınırı aşıyor (Content-Length eksik/yanlış).",
+            )
+
+            response = PlainTextResponse(
+                _DRAFTING_REQUEST_BODY_TOO_LARGE_MESSAGE, status_code=413,
+            )
+
+            await response(scope, receive, send)
+
+
+app.add_middleware(_DraftingRequestBodySizeASGIMiddleware)
+
+
+# ============================================================
 # ORTAK YARDIMCILAR
 # ============================================================
 
@@ -171,6 +385,26 @@ _ERROR_MESSAGES = {
         "İnceleme işlemi ilgili modülün kendi iş kuralı gereği reddedildi. "
         "Lütfen sayfayı yenileyip kaydı yeniden inceleyin; sorun devam "
         "ederse case verisini kontrol edin."
+    ),
+    # --- Row 18C (yapılandırılmış avukat girdisi) ---
+    "DRAFTING_REQUEST_VIEW_INVALID": (
+        "Bu case için avukat girdisi ekranı şu anda görüntülenemiyor "
+        "(kayıtlı girdi, canonical issue listesi veya pending/canonical "
+        "karşılaştırması okunamadı/doğrulanamadı)."
+    ),
+    "DRAFTING_REQUEST_STALE": (
+        "Girdi bu ekran açıldıktan sonra değişti - kaydetme iptal edildi. "
+        "Lütfen sayfayı yenileyip tekrar deneyin."
+    ),
+    "DRAFTING_REQUEST_FORM_INVALID": (
+        "Gönderilen form geçerli değil (uzunluk sınırı, geçersiz seçim veya "
+        "eksik/çelişkili alan). Lütfen alanları kontrol edip tekrar deneyin."
+    ),
+    "DRAFTING_REQUEST_CONFIRM_REQUIRED": (
+        "Kaydetmeden önce onay kutusunu işaretlemelisiniz."
+    ),
+    "DRAFTING_REQUEST_SAVE_FAILED": (
+        "Kaydetme işlemi tamamlanamadı - hiçbir değişiklik kalıcı olmadı."
     ),
 }
 
@@ -631,6 +865,217 @@ def review_confirm(
         canonical_path=paths.to_repo_relative(result["canonical_path"]),
         canonical_hash=result["post_sha256"],
         audit_path=paths.to_repo_relative(audit_path) if audit_path else None,
+    )
+
+
+# ============================================================
+# ROW 18C - YAPILANDIRILMIŞ AVUKAT GİRDİSİ (Option A-prime, kontrat
+# 2026-09-05). Bu route'lar YALNIZ `ui.services.drafting_request`'i
+# çağırır - Drafting Engine'i/bir agent'ı/network'ü HİÇBİR ZAMAN
+# TETİKLEMEZ (bu, yalnız ayrı `ui/run_drafting_request.py` CLI
+# köprüsünün işidir - main.py bu modülü ASLA import ETMEZ).
+# ============================================================
+
+@app.get("/cases/{case_id}/drafting-request")
+def drafting_request_page(request: Request, case_id: str):
+
+    case_id = _resolve_case(case_id)
+
+    back_url = f"/cases/{case_id}"
+
+    try:
+
+        view = draftreq.build_drafting_request_view(case_id)
+
+    except Exception as error:
+
+        return _error_page(request, "DRAFTING_REQUEST_VIEW_INVALID", back_url, exc=error)
+
+    csrf_token = security.make_csrf_token(
+        _CSRF_SECRET, case_id, "drafting_request", "save", view["expected_current_input_hash"],
+    )
+
+    return render(
+        request, "drafting_request.html", case_id=case_id,
+        current_wrapper=view["current_wrapper"],
+        current_validation_errors=view["current_validation_errors"],
+        expected_current_input_hash=view["expected_current_input_hash"],
+        pending_status=view["pending_status"], canonical_status=view["canonical_status"],
+        canonical_issues=view["canonical_issues"],
+        draft_intent_types=sorted(draftreq.DRAFT_INTENT_TYPES),
+        appeal_levels=sorted(draftreq.APPEAL_LEVELS),
+        request_authorized_explanation=view["request_authorized_explanation"],
+        csrf_token=csrf_token,
+        confirm_action=f"/cases/{case_id}/drafting-request/confirm",
+        back_url=back_url,
+        limits=draftreq.FIELD_LIMITS,
+    )
+
+
+@app.post("/cases/{case_id}/drafting-request/confirm")
+async def drafting_request_confirm(request: Request, case_id: str):
+
+    # TARGETED ROUTE SAFETY REMEDIATION (kök-neden): bu route ARTIK
+    # FastAPI'nin otomatik `Form(...)` parametre bağımlılık çözümünü
+    # KULLANMIYOR. O mekanizma TÜM Form alanlarını route gövdesi HİÇ
+    # başlamadan ÖNCE ayrıştırıp doğruluyordu - bu da üç bağımsız
+    # sorununa yol açıyordu: (a) case_id allowlist kontrolüne
+    # ULAŞMADAN ÖNCE eksik bir form alanı 422'ye düşüyordu; (b) form
+    # gövdesi okuma/ayrıştırma sırasında oluşan istisnalar (ör. bizim
+    # kendi `_DraftingRequestBodyTooLarge`'ımız) FastAPI'nin KENDİ
+    # bağımlılık-çözümleme katmanı tarafından YUTULUP farklı bir hataya
+    # dönüştürülebiliyordu. Aşağıdaki sıra artık TAMAMEN bu route'un
+    # kendi kontrolünde: (1) case_id çözümü - gövdeye HİÇ dokunmadan;
+    # (2) gövde boyutu zaten ASGI middleware'i tarafından sınırlanmış
+    # durumdayken, form'un MANUEL ayrıştırılması; (3) CSRF/aynı-origin/
+    # onay-kutusu kontrolleri; (4) anlamsal doğrulama + kaydetme.
+    case_id = _resolve_case(case_id)
+
+    back_url = f"/cases/{case_id}/drafting-request"
+
+    try:
+
+        form_data = await request.form()
+
+    except Exception as error:
+
+        # BASEEXCEPTION SAFETY ORDER CORRECTION: bilinçli olarak
+        # `except BaseException` DEĞİL, `except Exception` kullanılıyor
+        # - bir iptal/`asyncio.CancelledError`/`SystemExit`/
+        # `KeyboardInterrupt` (veya bunlardan birini İÇEREN karışık bir
+        # grup, ki Python'un kendi kuralı gereği bu HİÇBİR ZAMAN bir
+        # `Exception` örneği DEĞİLDİR - yalnız `BaseExceptionGroup`
+        # kalır) burada HİÇ YAKALANMAZ, otomatik olarak YUKARI YAYILIR -
+        # ASGI/asyncio'nun kendi kontrol-akışı sinyali ASLA YUTULMAZ.
+        #
+        # `request.form()` artık BİZİM tarafımızdan çağrılıyor
+        # (FastAPI'nin otomatik Form ayrıştırma sarmalayıcısı ARADA
+        # YOK), ama AnyIO/Starlette'in KENDİ task-group tabanlı iptal
+        # mekanizması, `_counting_receive` içinde fırlatılan
+        # `_DraftingRequestBodyTooLarge`'ı doğrudan yaymak yerine
+        # (yalnız Exception alt sınıflarından oluşan) bir
+        # `ExceptionGroup` İÇİNE SARMALAYABİLİR - bu durumda
+        # `except _DraftingRequestBodyTooLarge:` KENDİSİ artık
+        # eşleşmez. Bu yüzden `_exception_tree_contains_body_too_large`
+        # ile ağaç GERÇEKTEN yürünerek karar verilir - istisna adı/
+        # mesajı üzerinde HİÇBİR string eşleştirmesi YOK, ve HER
+        # ExceptionGroup KÖRÜ KÖRÜNE "gövde çok büyük" SAYILMIYOR (o
+        # yardımcı fonksiyon KENDİSİ de, üstteki `except Exception`
+        # garantisinden BAĞIMSIZ olarak, karışık/Exception-olmayan
+        # ağaçları ayrıca reddeder - bkz. fonksiyonun kendi docstring'i).
+        if _exception_tree_contains_body_too_large(error):
+
+            # ASGI middleware'inin ürettiğiyle BİREBİR AYNI sabit
+            # metin/kod - tek kaynak
+            # (`_DRAFTING_REQUEST_BODY_TOO_LARGE_MESSAGE`).
+            logger.warning(
+                "Row 18C: gerçek alınan bayt sayısı sınırı aşıyor (route-seviyesi yakalama).",
+            )
+
+            return PlainTextResponse(_DRAFTING_REQUEST_BODY_TOO_LARGE_MESSAGE, status_code=413)
+
+        # Gövde bozuk/ayrıştırılamıyor (ör. geçersiz multipart sınırı)
+        # - sabit, genel bir form hatası; ham exception mesajı yalnız
+        # logger'a yazılır.
+        logger.warning("Row 18C: form gövdesi ayrıştırılamadı: %s", type(error).__name__)
+
+        return _error_page(request, "DRAFTING_REQUEST_FORM_INVALID", back_url)
+
+    # Aşağıdaki `.get(...)` çağrıları, alan TAMAMEN YOKSA `None` döner
+    # (eskiden `Form(...)` ZORUNLU olan alanlar için bunu AÇIKÇA ele
+    # alıyoruz), alan AÇIKÇA BOŞ gönderilmişse `""` döner - bu ikisi
+    # ARTIK BİRBİRİNE KARIŞMIYOR (targeted remediation §3).
+    def _text_field(name, default):
+
+        value = form_data.get(name, default)
+
+        return value if isinstance(value, str) else default
+
+    draft_intent_type = _text_field("draft_intent_type", draftreq.DRAFT_INTENT_NOT_SET)
+    appeal_level = _text_field("appeal_level", "")
+    request_type = _text_field("request_type", "")
+    request_text = _text_field("request_text", "")
+    lawyer_provided_text = _text_field("lawyer_provided_text", "")
+
+    selected_issue_ids: List[str] = [
+        value for value in form_data.getlist("selected_issue_ids") if isinstance(value, str)
+    ]
+
+    issue_selection_mode = form_data.get("issue_selection_mode")
+    expected_current_input_hash = form_data.get("expected_current_input_hash")
+    csrf_token = form_data.get("csrf_token")
+    confirm_save = form_data.get("confirm_save")
+
+    # `issue_selection_mode`/`expected_current_input_hash` eskiden
+    # `Form(...)` ile ZORUNLU idi - TAMAMEN YOKSA (None) veya string
+    # DEĞİLSE (ör. yanlışlıkla bir dosya alanı) sabit, genel bir form
+    # hatasıdır - servis katmanına HİÇ ULAŞMAZ.
+    if not isinstance(issue_selection_mode, str) or not isinstance(expected_current_input_hash, str):
+
+        return _error_page(request, "DRAFTING_REQUEST_FORM_INVALID", back_url)
+
+    # `csrf_token` TAMAMEN YOKSA `verify_csrf_token`'ın "boş/None ->
+    # HER ZAMAN reddet" kuralına düşmesi için boş string'e sabitlenir -
+    # `security.verify_csrf_token` zaten `not token` için `False` döner
+    # (CSRF zayıflatılmıyor, yalnız None/"" AYNI reddi üretiyor).
+    if not isinstance(csrf_token, str):
+
+        csrf_token = ""
+
+    # CSRF + aynı-origin kontrolü, HERHANGİ bir doğrulama/kaydetme
+    # adımından ÖNCE (18a/18b ile AYNI ilke). Parça sırası GET
+    # route'undaki üretim sırasıyla BİREBİR AYNI olmalı: case_id +
+    # "drafting_request" + "save" + expected_current_input_hash.
+    if not _check_csrf_and_origin(
+        request, _CSRF_SECRET, csrf_token, case_id, "drafting_request", "save", expected_current_input_hash,
+    ):
+
+        return _error_page(request, "CSRF_INVALID", back_url)
+
+    # Onay kutusu ZORUNLU - işaretlenmemiş bir checkbox form verisinde
+    # HİÇ GÖNDERİLMEZ (Starlette bunu `None` olarak çözer), bu yüzden
+    # yalnız TARAYICININ gönderdiği "on" değeri kabul edilir.
+    if confirm_save != "on":
+
+        return _error_page(request, "DRAFTING_REQUEST_CONFIRM_REQUIRED", back_url)
+
+    try:
+
+        wrapper = draftreq.save_lawyer_input_from_form(
+            case_id=case_id,
+            draft_intent_type_choice=draft_intent_type,
+            appeal_level_choice=appeal_level,
+            issue_selection_mode=issue_selection_mode,
+            selected_issue_ids_raw=selected_issue_ids,
+            request_type_raw=request_type,
+            request_text_raw=request_text,
+            lawyer_provided_text_raw=lawyer_provided_text,
+            expected_current_input_hash=expected_current_input_hash,
+        )
+
+    except DraftingRequestStaleInputError as error:
+
+        return _error_page(request, "DRAFTING_REQUEST_STALE", back_url, exc=error)
+
+    except (DraftingRequestFormError, DraftingRequestValidationError) as error:
+
+        return _error_page(request, "DRAFTING_REQUEST_FORM_INVALID", back_url, exc=error)
+
+    except DraftingRequestUiError as error:
+
+        return _error_page(request, "DRAFTING_REQUEST_SAVE_FAILED", back_url, exc=error)
+
+    except Exception as error:
+
+        # Beklenmeyen HERHANGİ bir exception türü - generic kalır, ham
+        # mesaj/traceback ASLA tarayıcıya gösterilmez (mevcut 18a/18b
+        # ilkesiyle AYNI, bkz. `_error_page`).
+        return _error_page(request, "DRAFTING_REQUEST_SAVE_FAILED", back_url, exc=error)
+
+    return render(
+        request, "drafting_request_result.html", case_id=case_id,
+        lawyer_input_hash=wrapper.get("lawyer_input_hash"), saved_at=wrapper.get("saved_at"),
+        back_url=f"/cases/{case_id}/drafting-request", case_home_url=f"/cases/{case_id}",
     )
 
 

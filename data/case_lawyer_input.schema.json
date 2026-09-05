@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vergi-ai.local/schema/case_lawyer_input.schema.json",
+  "title": "Vergi AI Row 18C - Yapilandirilmis Avukat Girdisi Wrapper Schema V1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "case_id",
+    "saved_at",
+    "source",
+    "lawyer_input_hash",
+    "lawyer_input"
+  ],
+
+  "properties": {
+
+    "schema_version": { "type": "integer", "const": 1 },
+
+    "case_id": { "type": "string", "pattern": "^[a-z0-9_-]+$", "minLength": 3 },
+
+    "saved_at": { "type": "string", "format": "date-time" },
+
+    "source": { "type": "string", "const": "local_lawyer_ui_submission" },
+
+    "lawyer_input_hash": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+
+    "lawyer_input": {
+      "$ref": "https://vergi-ai.local/schema/case_drafting.schema.json#/$defs/lawyer_input"
+    }
+  }
+}

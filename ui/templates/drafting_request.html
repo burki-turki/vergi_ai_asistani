@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}Yapılandırılmış Avukat Girdisi - {{ case_id }}{% endblock %}
+{% block content %}
+  <p><a href="{{ back_url }}">&larr; Dosyaya dön</a></p>
+  <h1>Yapılandırılmış Avukat Girdisi</h1>
+  <p class="muted">Case: <code>{{ case_id }}</code></p>
+
+  <div class="banner banner-info">
+    Bu ekran YALNIZ Row 15 (Drafting Engine) için avukatın amaç/talep/seçim
+    girdisini görüntüler, doğrular ve kaydeder. <strong>Kaydetmek, bir taslak
+    ÜRETMEZ</strong> - Drafting Engine, bir agent veya herhangi bir network/API
+    çağrısı bu ekrandan HİÇBİR ZAMAN TETİKLENMEZ. Gerçek üretim yalnız ayrı,
+    elle çalıştırılan bir komut satırı aracıyla (<code>python -m
+    ui.run_drafting_request --case {{ case_id }} --generate-pending</code>)
+    mümkündür.
+  </div>
+
+  <h2>Mevcut kayıtlı girdi durumu</h2>
+  {% if current_wrapper is none %}
+    <div class="banner banner-warn">Bu case için henüz kaydedilmiş bir avukat girdisi yok.</div>
+  {% elif current_validation_errors %}
+    <div class="banner banner-error">
+      Kayıtlı dosya doğrulamadan GEÇEMEDİ - aşağıdaki form yine de doldurulup
+      kaydedilebilir (kaydetme, bu doğrulamayı YENİDEN ÇALIŞTIRIR):
+      <ul>
+        {% for err in current_validation_errors %}<li><code>{{ err }}</code></li>{% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="banner banner-ok">
+      Kayıtlı girdi doğrulamadan GEÇTİ. Kaydedilme zamanı:
+      <code>{{ current_wrapper.saved_at }}</code><br>
+      lawyer_input_hash: <code class="hash">{{ current_wrapper.lawyer_input_hash or "(boş girdi - hash yok)" }}</code>
+    </div>
+  {% endif %}
+
+  <table class="kv">
+    <tr>
+      <th>Pending (Row 15) ile eşleşme</th>
+      <td>
+        {% if not pending_status.exists %}yok
+        {% elif pending_status.unreadable %}mevcut ama okunamadı/geçersiz
+        {% else %}lawyer_input_hash eşleşiyor mu: {{ "evet" if pending_status.matches_saved else "hayır" }}
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>Canonical (Row 15) ile eşleşme</th>
+      <td>
+        {% if not canonical_status.exists %}yok
+        {% elif canonical_status.unreadable %}mevcut ama okunamadı/geçersiz
+        {% else %}lawyer_input_hash eşleşiyor mu: {{ "evet" if canonical_status.matches_saved else "hayır" }}
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  {% if request_authorized_explanation %}
+    <div class="banner banner-warn">{{ request_authorized_explanation }}</div>
+  {% endif %}
+
+  <h2>Yeni girdi kaydet</h2>
+  <form method="post" action="{{ confirm_action }}" class="confirm-form">
+    <input type="hidden" name="expected_current_input_hash" value="{{ expected_current_input_hash }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <p>
+      <label for="draft_intent_type">Taslak amacı (draft_intent_type)</label><br>
+      <select name="draft_intent_type" id="draft_intent_type">
+        <option value="not_set"
+          {{ "selected" if not current_wrapper or not current_wrapper.lawyer_input.draft_intent_type else "" }}
+        >(belirtilmedi)</option>
+        {% for value in draft_intent_types %}
+        <option value="{{ value }}"
+          {{ "selected" if current_wrapper and current_wrapper.lawyer_input.draft_intent_type == value else "" }}
+        >{{ value }}</option>
+        {% endfor %}
+      </select>
+    </p>
+
+    <p>
+      <label for="appeal_level">İstinaf/temyiz seviyesi (yalnız appeal_petition için)</label><br>
+      <select name="appeal_level" id="appeal_level">
+        <option value="">(boş)</option>
+        {% for value in appeal_levels %}
+        <option value="{{ value }}"
+          {{ "selected" if current_wrapper and current_wrapper.lawyer_input.appeal_level == value else "" }}
+        >{{ value }}</option>
+        {% endfor %}
+      </select>
+      <br><span class="field-limit-hint">draft_intent_type = appeal_petition DEĞİLSE bu alan boş bırakılmalıdır - sunucu bu kuralı bağımsız olarak yeniden doğrular.</span>
+    </p>
+
+    <fieldset class="radio-group">
+      <legend>Issue seçimi</legend>
+      <label><input type="radio" name="issue_selection_mode" value="not_provided"
+        {{ "checked" if not current_wrapper or current_wrapper.lawyer_input.selected_issue_ids is none else "" }}>
+        Hiç seçim sağlanmadı (selection_not_provided)</label><br>
+      <label><input type="radio" name="issue_selection_mode" value="none"
+        {{ "checked" if current_wrapper and current_wrapper.lawyer_input.selected_issue_ids == [] else "" }}>
+        Bilinçli olarak hiçbir issue seçilmedi (tüm issue'lar için)</label><br>
+      <label><input type="radio" name="issue_selection_mode" value="specific"
+        {{ "checked" if current_wrapper and current_wrapper.lawyer_input.selected_issue_ids else "" }}>
+        Belirli issue'lar seç (aşağıdan işaretleyin)</label>
+
+      {% if canonical_issues %}
+      <div class="checkbox-list">
+        {% for issue in canonical_issues %}
+        <label><input type="checkbox" name="selected_issue_ids" value="{{ issue.issue_id }}"
+          {{ "checked" if current_wrapper and current_wrapper.lawyer_input.selected_issue_ids and issue.issue_id in current_wrapper.lawyer_input.selected_issue_ids else "" }}>
+          <code>{{ issue.issue_id }}</code>{% if issue.title %} - {{ issue.title }}{% endif %}</label><br>
+        {% endfor %}
+      </div>
+      {% else %}
+        <p class="muted">Bu case için henüz canonical issue listesi yok - "Belirli issue'lar seç" seçiliyken hiçbir id geçerli kabul edilmeyecektir.</p>
+      {% endif %}
+      <span class="field-limit-hint">Yinelenen veya canonical listede olmayan bir id, TÜM kaydı reddeder (sessizce yok sayılmaz).</span>
+    </fieldset>
+
+    <h3>Talep girdisi (request_input) - opsiyonel</h3>
+    <p class="muted">İkisi birden doldurulmalı ya da ikisi de boş bırakılmalı.</p>
+    <p>
+      <label for="request_type">Talep türü (en fazla {{ limits.request_type }} karakter)</label><br>
+      <input type="text" name="request_type" id="request_type" maxlength="{{ limits.request_type }}"
+        value="{{ current_wrapper.lawyer_input.request_input.request_type if current_wrapper and current_wrapper.lawyer_input.request_input else '' }}">
+    </p>
+    <p>
+      <label for="request_text">Talep metni (en fazla {{ limits.request_text }} karakter)</label><br>
+      <textarea name="request_text" id="request_text" rows="4" maxlength="{{ limits.request_text }}"
+        >{{ current_wrapper.lawyer_input.request_input.request_text if current_wrapper and current_wrapper.lawyer_input.request_input else '' }}</textarea>
+    </p>
+
+    <h3>Avukat tarafından sağlanan metin (lawyer_provided_text) - opsiyonel</h3>
+    <p>
+      <label for="lawyer_provided_text">En fazla {{ limits.lawyer_provided_text }} karakter</label><br>
+      <textarea name="lawyer_provided_text" id="lawyer_provided_text" rows="6" maxlength="{{ limits.lawyer_provided_text }}"
+        >{{ current_wrapper.lawyer_input.lawyer_provided_text if current_wrapper else '' }}</textarea>
+    </p>
+
+    <div class="banner banner-warn">
+      Kaydettiğinizde: (1) bu girdi HİÇBİR üretim ÇALIŞTIRMAZ; (2) yukarıdaki
+      hash bu ekran açıldığından beri değişmişse kaydetme REDDEDİLİR; (3)
+      "selected_source_ids" (kaynak/argüman/risk/strateji seçimi) bu ekranda
+      DÜZENLENEMEZ - rezerve/pasif alan olarak boş kaydedilir.
+    </div>
+
+    <label class="confirm-check">
+      <input type="checkbox" name="confirm_save" required>
+      Yukarıdaki girdiyi kaydetmek istediğimi onaylıyorum (bunun bir taslak
+      ÜRETMEDİĞİNİ anlıyorum).
+    </label>
+    <button type="submit" class="button button-confirm">Girdiyi Kaydet</button>
+  </form>
+
+  <script>
+    // Yalnız sunucu tarafında üretilen sabit değerler (DRAFT_INTENT_TYPES
+    // allowlist'i) içerir - hiçbir kullanıcı girdisi burada YOKTUR.
+    const APPEAL_PETITION_VALUE = {{ "appeal_petition" | tojson }};
+    document.getElementById("draft_intent_type").addEventListener("change", function () {
+      var appealField = document.getElementById("appeal_level");
+      if (this.value !== APPEAL_PETITION_VALUE) {
+        appealField.value = "";
+      }
+    });
+  </script>
+{% endblock %}

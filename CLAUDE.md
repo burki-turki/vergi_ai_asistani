@@ -131,8 +131,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 15. Drafting Agent — **DONE / LOCKED**
 16. QA Agent — **DONE / LOCKED**
 17. Product Orchestrator Agent — **DONE / LOCKED**
-18. Lawyer UI — **ACTIVE / NEXT**
-19. Production / Security
+18. Lawyer UI — **DONE / LOCKED**
+19. Production / Security — **ACTIVE / NEXT**
 20. Pilot / Evaluation
 21. Commercial V1
 
@@ -158,11 +158,13 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - Development branch: **`claude-dev`** ← burada çalış
 - `main` branch üzerinde geliştirme yapılmaz
 - `v0.8-pre-claude` tag'i değiştirilmez veya silinmez
-- Rows 1-17 tamamlandı ve **LOCKED**
-- Sıradaki canonical development row: **ROW 18 — LAWYER UI** (İLERLEME
-  HALİNDE, tam Row 18 için henüz LOCK YOK) — kullanıcı kararıyla
-  18a/18b/18c olarak fazlandırıldı (bkz. Row 18 checkpoint özeti, §5
-  sonrası). **18a** (tüm canonical katmanların görüntülenmesi + yalnız
+- Rows 1-18 tamamlandı ve **LOCKED**
+- Sıradaki canonical development row: **ROW 19 — PRODUCTION / SECURITY**
+  — henüz implementasyona BAŞLANMADI.
+- **ROW 18 — LAWYER UI** artık **DONE / LOCKED** — kullanıcı kararıyla
+  18a/18b/18c olarak fazlandırılmış, üçü de tamamlanmış, test edilmiş
+  ve onaylanmıştır (bkz. Row 18 checkpoint özeti, §5 sonrası). **18a**
+  (tüm canonical katmanların görüntülenmesi + yalnız
   registry-supported aileler için Layer A onay tetikleme; fact/timeline
   onayı `unsupported_pending_resolution` olarak fail-closed)
   **DONE / LOCKED** — hedeflenen `vergi_ui_runtime` ortamında `pip
@@ -174,7 +176,14 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   69/69 + şablon 42/42 + route 115/115 = **343/343** test PASS ile
   kullanıcı tarafından doğrulandı ve onaylandı (bkz. Row 18 checkpoint
   özeti, §5 sonrası). **18c** (Row 15 yapılandırılmış avukat talebi
-  girişi) **ACTIVE / NEXT** — henüz implementasyona BAŞLANMADI.
+  girişi — görüntüleme/doğrulama/kaydetme; Drafting Engine/agent/
+  network HİÇBİR ZAMAN tetiklenmez) **DONE / LOCKED** — bağımsız bir
+  salt-okunur LOCK-hazırlık incelemesinden geçmiş, hedeflenen
+  `vergi_ui_runtime` ortamında `pip check` PASS ve Row 18A 117/117 +
+  Row 18B 226/226 + Row 18C 169/169 (servis 77/77 + şablon 15/15 +
+  route 51/51 + CLI 26/26) = **Row 18 toplamı 512/512** test PASS ile
+  kullanıcı tarafından doğrulandı ve onaylandı (bkz. Row 18 checkpoint
+  özeti, §5 sonrası, "18c final güvenlik/mimari durumu").
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -728,7 +737,7 @@ anında o hash değişmişse REDDEDİLİR (bkz. Row 18 checkpoint özeti,
 `StaleViewError`) — canlı görünümün kendisi asla bir onayın DOĞRUDAN
 girdisi değildir, yalnız görüntüleme amaçlıdır.
 
-### Row 18 — Lawyer UI (İLERLEME HALİNDE / NOT LOCKED — 18a: DONE/LOCKED, 18b: DONE/LOCKED, 18c: ACTIVE/NEXT — checkpoint özeti)
+### Row 18 — Lawyer UI (DONE / LOCKED — 18a: DONE/LOCKED, 18b: DONE/LOCKED, 18c: DONE/LOCKED — checkpoint özeti)
 
 **Kapsam kararı (kullanıcı, 2026-09-04): Seçenek C** — tam etkileşimli kapsam
 (dosya/kaynak görüntüleme, Layer A onay tetikleme, Layer B inceleme kararları,
@@ -946,8 +955,156 @@ turuyla ulaşıldı — kod tekrar okunarak doğrulandı, varsayılmadı):
 - Row 18b, 18a ile AYNI şekilde yerel, loopback, tek-kullanıcılı bir araç
   sınırı içinde kalır.
 
-**Sonraki adım**: **18c** (Row 15 yapılandırılmış avukat talebi girişi) —
-**ACTIVE / NEXT** — henüz implementasyona BAŞLANMADI.
+**18c kapsamı — DONE / LOCKED** (kullanıcı onayı ve bağımsız bir
+salt-okunur LOCK-hazırlık incelemesi, hedeflenen `vergi_ui_runtime`
+ortamında `pip check` PASS + Row 18A 117/117 + Row 18B 226/226 + Row
+18C servis 77/77 + şablon 15/15 + route 51/51 + CLI 26/26 =
+**169/169** (Row 18 toplamı **512/512**) test PASS ile): Row 15'in
+yapılandırılmış avukat talebi girişinin görüntülenmesi, doğrulanması
+ve kaydedilmesi. Row 18C uygulama kapsamı — 4'ü 18a/18b'nin var olan
+`ui/` dosyalarında değişiklik, geri kalanı yeni dosya: `main.py`
+(değişiklik — Row 18C route seti + case_id'ye özgü 128 KiB ASGI
+gövde-boyutu ara-katmanı eklendi), `services/common.py` (değişiklik —
+yeni `DraftingRequestUiError` alt sınıfları eklendi), `static/
+style.css` (değişiklik — salt-sunumsal eklemeler), `templates/
+case_view.html` (değişiklik — "Yapılandırılmış Avukat Girdisi (Row
+18C)" nav linki eklendi), `data/case_lawyer_input.schema.json` (yeni
+— wrapper şeması), `services/drafting_request.py` (yeni — Row 18C
+servis katmanı), `templates/drafting_request.html`, `templates/
+drafting_request_result.html` (yeni), `run_drafting_request.py` (yeni
+— salt-okunur varsayılan CLI köprüsü), `tests/
+test_drafting_request_service_isolated.py`, `tests/
+test_drafting_request_templates_isolated.py`, `tests/
+test_drafting_request_routes.py`, `tests/
+test_run_drafting_request_isolated.py` (yeni).
+
+**18c final güvenlik/mimari durumu** (bir hedefli route-safety
+remediation turu, bir ExceptionGroup body-limit remediation turu, bir
+BaseException safety-order düzeltme turu ve bağımsız bir salt-okunur
+LOCK-hazırlık incelemesiyle ulaşıldı — kod tekrar okunarak doğrulandı,
+varsayılmadı):
+
+- **Mimari sınır (Option A-prime, kullanıcı kararı)** — Row 18C
+  route'ları YALNIZ `ui.services.drafting_request`'i çağırır; Drafting
+  Engine'i (`build_drafting_engine_output`), `write_pending`'i, bir
+  agent'ı veya bir network/LLM çağrısını HİÇBİR ZAMAN TETİKLEMEZ.
+  Gerçek üretim yalnız ayrı, elle çalıştırılan `ui/run_drafting_request.py`
+  CLI köprüsünün (`--generate-pending` bayrağı ARKASINDA) işidir;
+  `main.py` bu modülü ASLA import ETMEZ.
+- **Sabit case-scoped kayıt yolu** — `data/cases/<case_id>/drafting/
+  inputs/lawyer_input.json`; kullanıcı-kontrollü path YOK.
+- **Yerel `$ref` ile şema bütünlüğü** — `case_lawyer_input.schema.json`,
+  `lawyer_input` alanı için YEREL, önceden diskten yüklenmiş bir
+  `referencing.Registry` üzerinden Row 15'in LOCKED
+  `case_drafting.schema.json#/$defs/lawyer_input` tanımına atıf yapar;
+  hiçbir `retrieve=` callback'i TANIMLANMAZ (network'e ULAŞAMAZ),
+  kayıtlı olmayan bir referans fail-closed `Unresolvable` fırlatır.
+- **Issue seçim tri-state'i + canonical üyelik** — "sağlanmadı" /
+  "açıkça hiçbiri" / "açıkça seçilmiş" ayrımı korunuyor; yinelenen/
+  sahte/bilinmeyen issue id'leri reddediliyor, kabul edilenler
+  deterministik (lexicographic) sıralanıyor. `selected_source_ids`
+  editable UI'da HİÇ GÖSTERİLMİYOR, her zaman onaylı boş yapı olarak
+  kaydediliyor.
+- **request_input / lawyer_provided_text bağımsızlığı** — Row 15'in
+  Q1 (dayanak var mı) / Q2 (avukat açıkça üretim istedi mi) ayrımı
+  DEĞİŞTİRİLMEDEN kullanılıyor; boş/yalnız-boşluk değerler YETKİ
+  ÜRETMİYOR.
+- **Atomik yazma + tam rollback** — kaydetme öncesi TAM paylaşılan
+  doğrulayıcı (pre-write), atomik `os.replace` yazımı, post-write
+  yeniden doğrulama, ve başarısızlıkta TAM rollback: ilk-kayıt
+  başarısızlığı yeni dosyayı/audit'i/history'yi/`.tmp`'yi tamamen
+  temizliyor; üzerine-yazma başarısızlığı orijinal içeriği BAYT-BAYT
+  ve izin bitleriyle GERİ YÜKLÜYOR; audit-yazma başarısızlığı da AYNI
+  rollback'i tetikliyor. Geçmiş/audit dosya adları `O_CREAT|O_EXCL` +
+  sayısal sonekle çakışmaya dayanıklı. Audit kayıtları yalnız
+  metadata/hash taşıyor, asla hukuki serbest metin.
+- **Mutasyon öncesi zorunlu kontroller** — case_id allowlist çözümü,
+  loopback-only erişim, aynı-origin doğrulaması, HMAC CSRF (case_id +
+  "drafting_request" + "save" + expected_current_input_hash'e bağlı),
+  onay checkbox'ı ve stale-hash reddi HEPSİ herhangi bir mutasyondan
+  ÖNCE uygulanıyor; loopback ara-katmanı, Row 18C'ye özgü gövde-boyutu
+  ara-katmanından ÖNCE çalışıyor (Starlette middleware sırası doğrudan
+  doğrulandı).
+- **128 KiB gövde sınırı + ExceptionGroup/BaseExceptionGroup güvenliği**
+  — hem beyan edilen `Content-Length` hem GERÇEK kümülatif bayt sayımı
+  kontrol ediliyor; tam 128 KiB kabul, 128 KiB+1 red. AnyIO/Starlette'in
+  hedef istisnayı bir `ExceptionGroup` içine sarmalayabilmesi
+  ihtimaline karşı, saf `isinstance` tabanlı yinelemeli bir ağaç
+  kontrolü (`_exception_tree_contains_body_too_large`) kullanılıyor -
+  string eşleştirmesi YOK. **BaseException güvenlik sırası**: hem
+  route'un hem ara-katmanın yakalama noktaları `except BaseException`
+  DEĞİL `except Exception` kullanıyor, ve yardımcı fonksiyon en dış
+  çağrıda dahi önce `isinstance(error, Exception)` kontrolü yapıyor -
+  bu yüzden `_DraftingRequestBodyTooLarge` + iptal/`CancelledError`/
+  `SystemExit`/`KeyboardInterrupt` TAŞIYAN karışık bir
+  `BaseExceptionGroup` ASLA 413'e dönüştürülüp kontrol-akışı sinyali
+  YUTULMUYOR (standalone script + gömülü birim testleriyle doğrudan
+  doğrulandı).
+- **Tarayıcıya sabit, güvenli hata mesajları** — `_error_page` 18a/18b
+  ile AYNI ilkeyle çalışıyor; ham exception/traceback/mutlak path/
+  gönderilen hukuki serbest metin ASLA yanıta/audit'e/dosya adına
+  YANSIMIYOR.
+- **Script-context güvenli şablonlar** — `drafting_request.html`
+  yalnız sabit bir sunucu-sabiti `|tojson` ile JS'e gömüyor; hiçbir
+  kullanıcı girdisi `<script>` içine GİRMİYOR; üç Row 18C şablonunda
+  da `|safe` bypass'ı YOK (Jinja2 varsayılan autoescape korunuyor).
+- **Salt-okunur varsayılan CLI köprüsü** — `python -m ui.run_drafting_request
+  --case <case_id>` bayraksız TAMAMEN salt-okunur; `--generate-pending`
+  olmadan üretim/agent/network TETİKLENEMEZ; `--with-agent`/
+  `--allow-network`, `--generate-pending` olmadan veya `--allow-network`,
+  `--with-agent` olmadan verilirse hiçbir mutasyon olmadan reddediliyor;
+  üretim öncesi kaydedilmiş wrapper yeniden doğrulanıyor; `--case`
+  DIŞINDA hiçbir path/dosya argümanı YOK.
+- **İzole mutasyon testleri + gerçek data/src byte-bütünlüğü** — tüm
+  Row 18C mutasyon/rollback/audit/CSRF/stale-hash/body-limit testleri
+  `TemporaryDirectory` + sentetik case_id ile çalışıyor; gerçek
+  `data/`/`src/` ağacının ve gerçek `case_0001`'in test öncesi/sonrası
+  byte-düzeyinde DEĞİŞMEDİĞİ her test turunda ayrıca kanıtlandı.
+  `case_0001` üzerinde GERÇEK bir Row 18C girdi kaydı HİÇ ÇALIŞTIRILMADI;
+  implementasyon/test boyunca hiçbir gerçek Drafting Engine/LLM/network
+  çalıştırması YAPILMADI ve hiçbir gerçek case verisi mutasyona
+  uğratılMADI.
+- **`pip check` PASS ve Row 18C 169/169 test sonucu** — servis
+  (saf-Python) 77/77 + şablon (Jinja2) 15/15 + route (FastAPI,
+  TestClient) 51/51 + CLI 26/26 — hedeflenen `vergi_ui_runtime`
+  ortamında kullanıcı tarafından fiilen çalıştırıldı; Row 18A 117/117
+  + Row 18B 226/226 ile birlikte **Row 18 toplamı 512/512**.
+- **Bağımsız salt-okunur LOCK-hazırlık incelemesi** — ayrı bir
+  incelemede git preflight (branch/HEAD/staged set/13 dosyalık kapsam),
+  şema/$ref izolasyonu, storage/rollback sırası, HTTP/CSRF/loopback/
+  body-limit/exception-safety davranışı ve CLI kapıları KODUN
+  KENDİSİNDEN doğrudan yeniden doğrulandı (yalnız test isimlerine/
+  raporlara güvenilmedi); hiçbir engelleyici bulgu RAPORLANMADI - tek
+  kozmetik not aşağıda listeleniyor.
+
+**18c KAPSAM DIŞI / bilinen backlog (bilinçli, Row 19'a bırakıldı,
+DÜZELTİLMEYECEK)**:
+
+- `DraftingRequestCsrfError` (`services/common.py`) şu an TANIMLI ama
+  hiç fırlatılmıyor - kullanılmayan ölü kod, güvenlik açığı DEĞİL
+  (CSRF zaten `_check_csrf_and_origin` ile ayrıca uygulanıyor); yalnız
+  kozmetik bir temizlik maddesi.
+- `StarletteDeprecationWarning: Using httpx with starlette.testclient
+  is deprecated; install httpx2 instead.` — 18a'dan devralınan, yalnız
+  test altyapısını ilgilendiren bağımlılık bakım backlog maddesi;
+  `httpx2` bu fazda KURULMADI/ikame EDİLMEDİ.
+- Kimlik doğrulama, çoklu kullanıcı yetkilendirme, production/dış
+  deployment ve çapraz-süreç eşzamanlılık/atomik CAS koruması (18b'de
+  de not edilen TOCTOU penceresiyle AYNI, zaten kabul edilmiş desen)
+  — Row 18'in TAMAMI için Row 19'a bırakılmış kapsam dışı maddelerdir.
+- Row 18c, 18a/18b ile AYNI şekilde yerel, loopback, tek-kullanıcılı
+  bir araç sınırı içinde kalır.
+- **Önemli netlik**: bu fazda bir avukat girdisinin KAYDEDİLMESİ, bir
+  taslağın (draft) ÜRETİLDİĞİ anlamına GELMEZ - kaydetme ve pending
+  taslak üretimi (yalnız ayrı CLI köprüsüyle, `--generate-pending` ile)
+  TAMAMEN AYRI işlemlerdir.
+
+**ROW 18 — LAWYER UI TAMAMLANDI VE LOCKED** (18a + 18b + 18c üçü de
+DONE/LOCKED) — kullanıcı onayı ve bağımsız bir salt-okunur
+LOCK-hazırlık incelemesiyle.
+
+**Sonraki adım**: **ROW 19 — PRODUCTION / SECURITY** — **ACTIVE / NEXT**
+— henüz implementasyona BAŞLANMADI.
 
 ## 6. Cross-Cutting Backlog
 
