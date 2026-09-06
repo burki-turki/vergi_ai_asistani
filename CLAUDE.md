@@ -198,10 +198,22 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   allowlist (25 yeni + 18 değiştirilmiş dosya) üzerinde implement
   edildi, yerel testlerle doğrulandı ve bağımsız, salt-okunur bir
   LOCK-hazırlık incelemesinden geçti (bkz. Row 19B checkpoint özeti,
-  §5 sonrası). Rows 1-18 ve Row 19A contract'ları değişmedi. Sıradaki
-  alt-faz: **ROW 19C — Mutation Integrity** — **ACTIVE / NEXT** —
-  henüz implementasyona BAŞLANMADI (kendi dosya allowlist'i henüz
-  sunulmadı/onaylanmadı).
+  §5 sonrası). Rows 1-18 ve Row 19A contract'ları değişmedi.
+- **ROW 19C-1 — Coordinator Core & Path Safety** artık **DONE /
+  LOCKED** — kullanıcı tarafından ayrıca onaylanmış 15 dosyalık
+  allowlist (10 yeni + 5 değiştirilmiş dosya) üzerinde implement
+  edildi, gerçek/disposable bir PostgreSQL örneğine karşı yerel
+  testlerle doğrulandı ve bağımsız, salt-okunur bir LOCK-hazırlık
+  incelemesinden geçti (bkz. Row 19C-1 checkpoint özeti, §5 sonrası).
+  Rows 1-18, Row 19A ve Row 19B contract'ları değişmedi. Bu
+  checkpoint'in kendisi de (19A/19B örneğinde olduğu gibi) yalnız
+  `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir —
+  hiçbir kaynak/migration/test/production dosyasına dokunmaz. Sıradaki
+  alt-faz: **ROW 19C-2** — **ACTIVE / NEXT** — henüz implementasyona
+  BAŞLANMADI; kendi tam dosya allowlist'i implementasyondan ÖNCE ayrıca
+  sunulup onaylatılmalıdır (Row 19A'nın dosya-değişiklik sınırı kararı
+  uyarınca) — genel Row 19C-1 onayı Row 19C-2'nin dosya değişikliğini
+  ÖNCEDEN yetkilendirmez.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -1388,6 +1400,159 @@ production konfigürasyonuna bırakıldı)**:
 - **Row 19D — Operations & Recovery**: deployment, TLS/reverse proxy,
   secret/KMS yönetimi, backup/restore, OS ACL'leri ve operasyonel
   sertleştirme.
+
+### Row 19C-1 — Coordinator Core & Path Safety (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış 15
+dosyalık allowlist üzerinde tamamlandı: **10 yeni dosya + 5
+değiştirilmiş dosya**; allowlist dışında hiçbir dosyaya dokunulmadı.
+
+- Yeni (10): `db/migrations/0003_mutation_journal.sql`,
+  `src/mutation_guard.py`, `ui/services/mutation_coordinator.py`,
+  `ui/services/mutation_registry.py`,
+  `ui/tests/test_mutation_guard_isolated.py`,
+  `ui/tests/test_mutation_coordinator_isolated.py`,
+  `ui/tests/test_reconciliation_isolated.py`,
+  `ui/tests/test_mutation_journal_postgres.py`,
+  `ui/tests/test_path_containment_isolated.py`,
+  `ui/tests/test_path_containment_windows.py`.
+- Değiştirilmiş (5): `ui/services/db.py`, `ui/services/mutation_lock.py`,
+  `ui/services/paths.py`, `ui/tests/test_iam_migrations_isolated.py`,
+  `ui/tests/test_mutation_lock_isolated.py`.
+
+**Kilitleme birimi** — Row 19A'da onaylanan tasarım aynen uygulandı:
+`mutation.mutation_resources` (BIGINT `advisory_lock_id`, veritabanı
+tarafından atanır) TEK resource-key→advisory-lock-id registry'sidir; bu
+migration İKİNCİ bir registry OLUŞTURMAZ. Kilitler
+`pg_advisory_lock(advisory_lock_id)` ile session-seviyelidir (bağlantı
+kopmasında otomatik serbest bırakılır).
+
+**Journal modeli** — Ayrı, kalıcı `mutation.mutation_journal` tablosu:
+`prepared → executing → {completed | reconciliation_required | failed}`
+state makinesi. `idempotency_key` KOŞULSUZ ve tablonun TÜM geçmişi
+boyunca UNIQUE'tir (`failed` dahil) — bir istemci başarısız bir
+denemeyi yeniden denemek isterse yeni bir `MutationIntent`'ten
+(ör. taze `pre_hash`/`pre_revision`) türetilmiş YENİ bir
+`idempotency_key` üretmelidir; `run_mutation()` var olan bir
+`idempotency_key` için asla ikinci bir satır oluşturmaz. Authz ve
+precondition kontrolleri `prepared` satırı oluşturulmadan ÖNCE
+tamamlanır. Writer başladıktan (`executing`) SONRA fırlatılan HER
+exception, satırı `completed`/`failed` yerine
+`reconciliation_required`'a taşır — hiçbir yazma-sonrası hata satırı
+sessizce terminal bir state'e düşürmez.
+
+**Tek, kilit-altı reconciliation akışı** —
+`reconcile_and_apply_journal_entry(conn, journal_id, registry)` TEK
+kamuya açık giriş noktasıdır: kilit öncesi yalnız `resource_key`
+okunur (hangi kilidin alınacağına karar vermek için) → ilgili kilit
+alınır → satırın TAMAMI kilit ALTINDA otoriter biçimde yeniden okunur
+→ karar bu otoriter okumaya göre verilir → guarded UPDATE
+(`rowcount == 1` kontrolüyle) AYNI kilit altında uygulanır → kilit
+`finally` içinde her koşulda bırakılır. Karar hiçbir zaman kilit
+öncesi okumaya veya varsayıma dayanmaz.
+
+**`prepared` kurtarma semantiği (bu turun asıl düzeltmesi)** — Bir
+`prepared` satırı (writer HİÇ çağrılmamış) yalnız pre-state'in
+DEĞİŞMEDİĞİ kanıtlandığında (`pre_state_confirmed_unchanged=True AND
+post_state_verified=False`) `failed` + sabit
+`reconciled_failed_prepared_never_executed` resolution_code'una
+çözülür — bu TEK durumda `executing_at` NULL kalır (gerçekleşmemiş bir
+yürütme için ASLA sahte bir zaman damgası üretilmez). Kanıt yetersiz,
+çelişkili veya yalnızca post-state'i doğrularsa (writer'ın hiç
+çağrılmadığını KANITLAMAZ), `_decide_outcome()` yeni
+`PreparedJournalUnresolvedError`'ı fırlatır: **sıfır UPDATE** issue
+edilir, satır (`state`/`executing_at`/`resolved_at`/`resolution_code`)
+TAMAMEN dokunulmamış kalır, kaynak hâlâ gated'dir, kilit yine de
+normal şekilde bırakılır — operasyon daha güçlü kanıtla daha sonra
+tekrar denenebilir. DB CHECK constraint'leri
+(`mutation_journal_executing_at_matches_state`,
+`mutation_journal_prepared_never_executed_code_is_exclusive`) bu iki
+durumu (NULL/NOT NULL `executing_at`) veritabanı seviyesinde de
+zorunlu kılar; SQL NULL three-valued-logic'in bu CHECK'lerde fail-open
+bir boşluk YARATMADIĞI bağımsız incelemede doğrulandı.
+
+**Path containment (T15 düzeltmesi)** — `ui/services/paths.py`'nin
+case-yolu çözümleme choke point'i artık symlink/junction escape'e
+karşı `realpath()`/containment kontrolü uygular
+(`ui/tests/test_path_containment_isolated.py` POSIX symlink ile,
+`ui/tests/test_path_containment_windows.py` Windows NTFS junction ile
+kanıtlar). Bu kod-seviyesi kontrol TEK BAŞINA yeterli bir TOCTOU
+çözümü değildir — Row 19A kararı uyarınca OS ACL'leri (Row 19D
+kapsamı) zorunlu kalır.
+
+**Production writer durumu** — Bu turda coordinator'a HİÇBİR gerçek
+production writer BAĞLANMADI; Row 19C-1 tamamen altyapı katmanıdır
+(kilit + journal + reconciliation + path-safety primitive'leri).
+
+**Test kanıtı (yalnız fiilen çalıştırılmış sonuçlar)** — Bu checkpoint
+öncesi, gerçek/disposable bir PostgreSQL 16 örneğine karşı (migration
+0001+0002+0003 uygulanmış, sonra iz bırakmadan DROP edilmiş) 8 test
+modülünün TAMAMI yeniden çalıştırıldı:
+`test_mutation_guard_isolated` 22/22,
+`test_iam_migrations_isolated` 38/38,
+`test_mutation_lock_isolated` 26/26,
+`test_mutation_coordinator_isolated` 77/77,
+`test_reconciliation_isolated` 71/71,
+`test_mutation_journal_postgres` 49/49,
+`test_path_containment_isolated` 20/20 — **toplam 303/303 PASS, 0
+FAIL**, hepsi exit code 0. `test_path_containment_windows` bu Linux
+sandbox'ında kendi tasarımı gereği SKIP olur (`sys.platform='linux'`)
+— NTFS junction kontrolünün otoriter kanıtı yalnız gerçek Windows
+hedef ortamında (`test_path_containment_isolated.py`'nin POSIX
+eşdeğeri bu ortamda 20/20 PASS ile geçti). Bu sandbox'ta `psycopg`
+import edilemediği için tüm gerçek-DB testleri `psql`-subprocess
+shim yedek backend'i üzerinden çalıştı (üretim sürücüsü `psycopg`,
+Windows hedef ortamında kullanılmalıdır — bkz. ilgili test
+dosyalarının kendi başlık yorumları).
+
+**Bağımsız inceleme** — Bağımsız, salt-okunur bir LOCK-hazırlık
+incelemesi yapıldı; final verdict: **ROW 19C-1 LOCK-READY**. İnceleme
+0 BLOCKER/HIGH, 3 MEDIUM, 2 LOW, 1 NON-BLOCKING bulgu tespit etti —
+hiçbiri LOCK'u engellemedi, ama hepsi aşağıda Row 19C-2'nin açılış
+kapısına taşındı (bilinçli olarak Row 19C-1'in kendisine değil).
+
+**ROW 19C-2 MANDATORY OPENING GATE (19C-1'in blocker'ı veya tamamlanmış
+işi DEĞİL — 19C-2 implementasyonuna başlamadan ÖNCE kapatılması
+gereken listedir)**:
+
+1. `mutation_coordinator.py`'nin writer'dan gelen bare
+   `BaseException` ve `_mark_completed()` UPDATE'inin kendisinin
+   başarısız olması yollarının kilit-temizliği için GERÇEK PostgreSQL'e
+   karşı test edilmesi (şu an yalnız fake-conn ile kanıtlanmış).
+2. `state='prepared' + resolution_code='reconciled_failed_prepared_never_executed'
+   + executing_at IS NULL` kombinasyonunun GERÇEK veritabanına karşı
+   açık bir negative-constraint testinin eklenmesi (şu an yalnız
+   analitik olarak kanıtlanmış, gerçek DB'de test edilmemiş).
+3. `mutation_coordinator.py:60` civarındaki, kaldırılmış
+   `ui.services.mutation_registry.reconcile_journal_entry()`
+   fonksiyonunu hâlâ adlandıran eski yorumun güncellenmesi.
+4. `mutation_lock.py`'nin `release_lock_session()` dönüş değeri
+   `False` olduğunda bunun görünür/fail-closed hale getirilmesi —
+   dokümante edilmiş kontrat şu an hiçbir çağıran tarafından fiilen
+   onurlandırılmıyor.
+5. Coordinator'ın kendi `_mark_executing`/`_mark_completed`/
+   `_mark_reconciliation_required` UPDATE'lerine (reconciliation'ın
+   guarded UPDATE'i gibi) `rowcount == 1` doğrulaması eklenmesi.
+6. İlk gerçek production writer coordinator'a bağlanmadan ÖNCE bir
+   reconciliation operatör/CLI aracının eklenmesi.
+7. `ui/services/paths.py`'nin `CASES_DIR`'i DOĞRUDAN kullanan ~30
+   dosya + bunu import eden 8 dosya için path-containment borcunun,
+   ilgili CLI/writer entegrasyonu sırasında kapatılması.
+
+**Migration history note** — `db/migrations/0003_mutation_journal.sql`
+bu commit'e kadar YALNIZ disposable/tek-kullanımlık test
+veritabanlarına uygulandı (hiçbir zaman kalıcı/paylaşılan bir
+veritabanına) ve o test veritabanları test'lerin kendi
+`DROP DATABASE`/teardown adımlarıyla zaten kaldırıldı — bu nedenle
+migration'ın önceki taslak sürümlerini kalıcı bir veritabanında
+yükseltecek ayrı bir upgrade migration'ına GEREK YOKTUR. Bu commit'ten
+İTİBAREN `0003` **immutable** kabul edilir; gelecekteki HERHANGİ bir
+şema değişikliği (constraint, kolon, index) `0003`'ü değiştirmek
+yerine YENİ, ayrı numaralı bir migration dosyasına gitmelidir
+(`CREATE TABLE IF NOT EXISTS` deseni var olan bir tabloyu ASLA
+yükseltmez — bu, gelecekte gerçek bir kalıcı veritabanı üzerinde
+`0003` sonrası bir değişiklik gerektiğinde hatırlanması gereken genel
+bir kısıttır, yalnız bu migration'a özgü değildir).
 
 ## 6. Cross-Cutting Backlog
 

@@ -142,6 +142,128 @@ check(
 )
 
 # ----------------------------------------------------------------
+# 1b) Row 19C-1 - fake-connection tests of the NEW session-level
+#     primitives (case_resource_key / acquire_case_lock_session /
+#     acquire_global_lock_session / release_lock_session). A separate,
+#     purpose-built fake (rather than extending FakeCursor above) so
+#     the pre-existing IAM fake-conn tests above stay byte-for-byte
+#     unaffected by this addition.
+# ----------------------------------------------------------------
+
+class SessionLockFakeCursor:
+    def __init__(self, registry, calls, next_identity):
+        self._registry = registry
+        self._calls = calls
+        self._next_identity = next_identity  # mutable single-item list, shared across cursors
+        self._last_result = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        self._calls.append((normalized.split()[0], params))
+        if normalized.startswith("INSERT INTO mutation.mutation_resources"):
+            key = params[0]
+            if key in self._registry:
+                self._last_result = None  # ON CONFLICT DO NOTHING -> no RETURNING row
+            else:
+                new_id = self._next_identity[0]
+                self._next_identity[0] += 1
+                self._registry[key] = new_id
+                self._last_result = (new_id,)
+            self._calls.append(("INSERT_ATTEMPTED", key))
+        elif normalized.startswith("SELECT advisory_lock_id FROM mutation.mutation_resources"):
+            key = params[0]
+            self._last_result = (self._registry[key],) if key in self._registry else None
+        elif "pg_advisory_lock(" in normalized and "xact" not in normalized:
+            self._calls.append(("SESSION_LOCK_ACQUIRED", params[0]))
+            self._last_result = None
+        elif "pg_advisory_unlock(" in normalized:
+            released = params[0] in self._calls_locked()
+            self._calls.append(("SESSION_UNLOCK_CALLED", params[0]))
+            self._last_result = (released,)
+        else:
+            raise AssertionError(f"unexpected SQL: {sql}")
+
+    def _calls_locked(self):
+        return {c[1] for c in self._calls if c[0] == "SESSION_LOCK_ACQUIRED"}
+
+    def fetchone(self):
+        return self._last_result
+
+
+class SessionLockFakeConn:
+    def __init__(self, registry=None, next_identity=1):
+        self._registry = dict(registry or {})
+        self._next_identity = [next_identity]
+        self.calls = []
+
+    def cursor(self):
+        return SessionLockFakeCursor(self._registry, self.calls, self._next_identity)
+
+
+check(
+    "case_resource_key() formats WITHOUT validating case_id itself",
+    ml.case_resource_key("case_0001") == "case:case_0001",
+)
+
+fresh = SessionLockFakeConn()
+lock_id = ml.acquire_case_lock_session(fresh, "case_0001")
+check(
+    "acquire_case_lock_session creates a NEW case: resource row when none existed",
+    ("INSERT_ATTEMPTED", "case:case_0001") in fresh.calls,
+)
+check(
+    "acquire_case_lock_session takes a SESSION lock (pg_advisory_lock), not a transaction lock",
+    ("SESSION_LOCK_ACQUIRED", lock_id) in fresh.calls,
+)
+check(
+    "acquire_case_lock_session's lock id is the DB-assigned identity value, not re-derived",
+    lock_id == 1,
+)
+
+already_exists = SessionLockFakeConn(registry={"case:case_0002": 42})
+lock_id_2 = ml.acquire_case_lock_session(already_exists, "case_0002")
+check(
+    "acquire_case_lock_session reuses an EXISTING case: resource row's id rather than creating a second one",
+    lock_id_2 == 42,
+)
+check(
+    "acquire_case_lock_session falls back to SELECT when INSERT ... ON CONFLICT DO NOTHING found an existing row",
+    any(c[0] == "SELECT" for c in already_exists.calls),
+)
+
+release_result = ml.release_lock_session(fresh, lock_id)
+check(
+    "release_lock_session returns True when the lock was actually held by this session",
+    release_result is True,
+)
+
+never_locked = SessionLockFakeConn(registry={"global:rag_index": 7})
+release_of_unheld = ml.release_lock_session(never_locked, 7)
+check(
+    "release_lock_session returns False (not an exception) when the lock was never held by this session",
+    release_of_unheld is False,
+)
+
+global_fake = SessionLockFakeConn(registry={"global:rag_index": 7})
+global_lock_id = ml.acquire_global_lock_session(global_fake, "global:rag_index")
+check(
+    "acquire_global_lock_session locks an EXISTING global resource without creating anything",
+    global_lock_id == 7 and all(c[0] != "INSERT_ATTEMPTED" for c in global_fake.calls),
+)
+
+expect_raises(
+    ml.UnknownMutationResourceError,
+    lambda: ml.acquire_global_lock_session(SessionLockFakeConn(), "global:does-not-exist"),
+    "acquire_global_lock_session fails closed on an unseeded global resource_key (never creates one on the fly)",
+)
+
+# ----------------------------------------------------------------
 # 2) COMMAND-CONSTRUCTION LAYER (pure - no subprocess call here) -
 #    kept separate from `psql()` below so it can be unit-tested in
 #    isolation, independent of whether a real PostgreSQL/psql is
@@ -293,6 +415,63 @@ else:
             # is run via the shell harness in the delivery report, not
             # re-duplicated here to keep this test file's runtime bounded)
             check("real DB: pg_advisory_xact_lock + pg_sleep + COMMIT completes without error", True)
+
+            # ------------------------------------------------------
+            # Row 19C-1 - real-DB smoke check of the SESSION-level
+            # primitives' underlying SQL, single connection (one psql
+            # -c invocation = one session). Does NOT depend on
+            # 0003_mutation_journal.sql having been applied to this
+            # DSN - a `case:` resource row is created directly here,
+            # independent of 0003's seeded GLOBAL rows, so this file
+            # stays runnable against any DSN that already has
+            # 0001+0002 applied. The cross-CONNECTION serialization
+            # proof (two real sessions) lives in the dedicated
+            # ui/tests/test_mutation_journal_postgres.py, not here.
+            # ------------------------------------------------------
+            # NOTE: the INSERT is wrapped in a `WITH ... SELECT` (a SELECT
+            # statement) rather than issued as a bare `INSERT ... RETURNING`
+            # - psql (unlike psycopg, which mutation_lock.py actually uses
+            # in production) prints an "INSERT 0 1" command-tag line
+            # alongside a bare INSERT's RETURNING output even under `-t -A`,
+            # which would corrupt this test harness's captured value. This
+            # is a psql-CLI-output quirk of the TEST HARNESS only - it has
+            # no bearing on `_get_or_create_resource_advisory_lock_id`'s
+            # actual (already fake-conn-tested above) psycopg-based SQL.
+            case_resource_id = psql(
+                PSQL_BIN,
+                "WITH ins AS ("
+                "  INSERT INTO mutation.mutation_resources (resource_key) "
+                "  VALUES ('case:__test_case_session_lock__') "
+                "  ON CONFLICT (resource_key) DO NOTHING RETURNING advisory_lock_id"
+                ") SELECT advisory_lock_id FROM ins;",
+                PG_DB,
+            )
+            if not case_resource_id:
+                case_resource_id = psql(
+                    PSQL_BIN,
+                    "SELECT advisory_lock_id FROM mutation.mutation_resources "
+                    "WHERE resource_key='case:__test_case_session_lock__';",
+                    PG_DB,
+                )
+            check("real DB: case: resource row get-or-create produced a usable advisory_lock_id", case_resource_id.isdigit())
+
+            round_trip = psql(
+                PSQL_BIN,
+                f"SELECT pg_advisory_lock({case_resource_id}); SELECT pg_advisory_unlock({case_resource_id});",
+                PG_DB,
+            ).splitlines()
+            check(
+                "real DB: pg_advisory_lock + pg_advisory_unlock round trip in ONE session releases cleanly (t)",
+                round_trip[-1:] == ["t"],
+                f"got {round_trip!r}",
+            )
+
+            unlock_without_holding = psql(PSQL_BIN, f"SELECT pg_advisory_unlock({case_resource_id});", PG_DB)
+            check(
+                "real DB: pg_advisory_unlock on a lock NOT held by this (new) session returns false (f), never an error",
+                unlock_without_holding == "f",
+                f"got {unlock_without_holding!r}",
+            )
         except Exception as error:
             check("real DB: advisory-lock contract checks completed without error", False, repr(error))
 

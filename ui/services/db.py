@@ -65,3 +65,45 @@ def transaction() -> Iterator["object"]:
         raise
     finally:
         conn.close()
+
+
+def get_session_lock_connection():
+    """Row 19C-1 addition (UNCHANGED: `get_connection()`/`transaction()`
+    above remain exactly as Row 19B left them - this is a new,
+    additive function, not a modification of either).
+
+    Returns a NEW psycopg connection in autocommit mode - every
+    statement commits immediately, with no explicit `conn.commit()`
+    call needed or expected from the caller. This is ONLY for
+    `ui.services.mutation_coordinator`, which must hold a
+    session-level `pg_advisory_lock` (see
+    `ui.services.mutation_lock.acquire_case_lock_session`/
+    `acquire_global_lock_session`) across several SEPARATELY-durable
+    writes (a journal `prepared` row, then an `executing` update, then
+    the real file mutation running OUTSIDE any Postgres transaction,
+    then a final `completed`/`failed` update) - each step must become
+    visible to a concurrent reconciliation process as soon as it
+    happens, not sit inside one long transaction that could still be
+    rolled back.
+
+    Autocommit mode does not, by itself, change when the advisory lock
+    releases - `pg_advisory_lock` is tied to the SESSION (this
+    connection), never to any one transaction, autocommit or not. What
+    autocommit mode buys here is simply that the caller does not have
+    to remember to call `conn.commit()` after every one of those
+    several separate writes. The lock still auto-releases if this
+    connection drops uncleanly (crash, network loss) - that is
+    PostgreSQL's own guarantee for `pg_advisory_lock`, not something
+    this function implements.
+
+    The caller is fully responsible for eventually releasing the lock
+    (`mutation_lock.release_lock_session`) and closing this connection
+    in a `finally` block - this function does not return a context
+    manager, unlike `transaction()`, because a single `with`-scoped
+    commit/rollback cycle is not the right shape for a lock that must
+    outlive several independent commits."""
+    import psycopg  # lazy import, matches get_connection()
+
+    conn = psycopg.connect(get_dsn())
+    conn.autocommit = True
+    return conn
