@@ -35,6 +35,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from ui.services import paths as real_paths                    # noqa: E402
 from ui.services import review_registry as reviewreg            # noqa: E402
+from ui.services import authz as _authz                         # noqa: E402 (Row 19B)
 from ui.services.common import (                                 # noqa: E402
     UnknownReviewKindError,
     ReviewRecordNotFoundError,
@@ -43,6 +44,26 @@ from ui.services.common import (                                 # noqa: E402
     InvalidReviewNoteError,
     ReviewUiError,
 )
+
+
+# Row 19B: apply_transition() now REQUIRES `principal` and independently
+# re-checks authorization. This suite already fakes case_id resolution
+# (fake_case_registered) to isolate the review-registry's OWN mutation
+# logic from real case data - the same isolation principle applies here:
+# an "allow-all-as-lawyer" fake repository, so every test below keeps
+# testing what it was already testing (target-state/note/hash validation,
+# call-shape correctness), not authorization (which has its OWN full
+# suite in test_authz_isolated.py).
+class _AllowAllAsLawyerRepository(_authz.InMemoryAuthzRepository):
+    def get_session_authz_state(self, principal):
+        return _authz.SessionRecord(user_id=principal.user_id, current_authz_version=principal.role_version_at_issue, disabled=False)
+
+    def get_active_case_assignment(self, user_id, case_id):
+        return _authz.CaseAssignmentRecord(role="lawyer")
+
+
+_izole_authz_repo = _AllowAllAsLawyerRepository()
+_izole_lawyer_principal = _authz.Principal(user_id=1, session_id=1, role_version_at_issue=1)
 
 passed = 0
 failed = 0
@@ -258,6 +279,7 @@ if _valid_case:
                 reviewreg.apply_transition(
                     "qa.suggestion", _valid_case, "qas_1", "dismissed", "izole test notu",
                     expected_hash, canonical_path_override=qa_canonical, audit_dir_override=qa_audit_dir,
+                    principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
                 )
             except Exception:
                 # Gerçek backend'in tazelik/tutarlılık kontrolü sentetik
@@ -315,6 +337,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 "evidence.candidate", "case_iso_evidence", "ec_1", "APPROVED_FOREVER",
                 "not", expected_hash, canonical_path_override=ev_canonical,
                 audit_dir_override=tmp_path / "reviews",
+                principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
             ),
             "geçersiz target_state ('APPROVED_FOREVER') reddedilir",
         )
@@ -757,6 +780,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 lambda: reviewreg.apply_transition(
                     "evidence.candidate", "case_iso_stale", "ec_1", "confirmed", "not",
                     stale_expected_hash, canonical_path_override=ev_canonical, audit_dir_override=audit_dir,
+                    principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
                 ),
                 "stale hash -> ReviewStaleViewError, GERÇEK apply_review_transition HİÇ ÇAĞRILMADI",
             )

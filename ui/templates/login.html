@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Giriş Yap{% endblock %}
+{% block content %}
+  <h1>Giriş Yap</h1>
+  <p>
+    Bu uygulamaya erişmek için kurumsal kimliğinizle giriş yapmanız
+    gerekiyor. Giriş, kuruluşunuzun Microsoft Entra ID kiracısı üzerinden
+    (OIDC Authorization Code + PKCE) yapılır - kullanıcı adı/parola bu
+    uygulamaya HİÇBİR ZAMAN girilmez/geçmez.
+  </p>
+  <p>
+    <a class="button button-confirm" href="/auth/login">Kurumsal kimlikle giriş yap</a>
+  </p>
+{% endblock %}

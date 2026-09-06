@@ -172,13 +172,21 @@ if _real_reviewable:
     }
     _csrf = _tokens_by_target[_allowed[0]]
 
-    html = check("review_detail.html (GERÇEK needs_review kaydı)", lambda: env.get_template("review_detail.html").render(
+    # TARGETED RECONCILIATION (Row 19B): review_detail.html now gates its
+    # confirm-form (and the CSRF-token-map script block) on `can_mutate`
+    # (role-aware rendering, added this Row - see
+    # ui/templates/review_detail.html). Every fixture in this file
+    # represents a successful-mutation scenario (a lawyer reviewing a
+    # record), so each must explicitly pass can_mutate=True - the
+    # read-only (analyst) rendering path has its own dedicated coverage
+    # in test_role_aware_rendering.py and is left untouched here.
+    html = check("review_detail.html (GERÇEK needs_review kaydı, can_mutate=True)", lambda: env.get_template("review_detail.html").render(
         case_id=CASE_ID, record_id=_record_id, label=_real_reviewable["label"],
         record=_found["record"], canonical_hash=_found["canonical_hash"],
         allowed_targets=_allowed,
         csrf_tokens_by_target=_tokens_by_target,
         csrf_token=_csrf, confirm_action=f"/cases/{CASE_ID}/reviews/{_review_kind}/{_record_id}/confirm",
-        back_url=f"/cases/{CASE_ID}/reviews",
+        back_url=f"/cases/{CASE_ID}/reviews", can_mutate=True,
     ))
     check_contains("review_detail.html: csrf_token gizli alanı render edildi", html, 'name="csrf_token"', _csrf)
     check_contains("review_detail.html: expected_hash gizli alanı render edildi", html, 'name="expected_hash"', _found["canonical_hash"])
@@ -203,14 +211,14 @@ _malicious_record = {
     "attacker_field": "\" onmouseover=\"alert(1)",
 }
 _synthetic_tokens_by_target = {"confirmed": "dummy_csrf_token_confirmed", "rejected": "dummy_csrf_token_rejected"}
-html = check("review_detail.html (sentetik - autoescape/XSS)", lambda: env.get_template("review_detail.html").render(
+html = check("review_detail.html (sentetik - autoescape/XSS, can_mutate=True)", lambda: env.get_template("review_detail.html").render(
     case_id=CASE_ID, record_id="c_xss_test", label="İddialar (sentetik)",
     record=_malicious_record, canonical_hash="c" * 64,
     allowed_targets=["confirmed", "rejected"],
     csrf_tokens_by_target=_synthetic_tokens_by_target,
     csrf_token=_synthetic_tokens_by_target["confirmed"],
     confirm_action=f"/cases/{CASE_ID}/reviews/argument.claim/c_xss_test/confirm",
-    back_url=f"/cases/{CASE_ID}/reviews",
+    back_url=f"/cases/{CASE_ID}/reviews", can_mutate=True,
 ))
 check_not_contains(
     "review_detail.html: kayıt içindeki <script> HAM olarak SIZMIYOR (autoescape çalışıyor)",
@@ -254,7 +262,7 @@ _xss_tokens_by_target = {
     "rejected": "dummy_csrf_token_rejected",
 }
 html = check(
-    "review_detail.html (NEGATİF - CSRF token DEĞERİ script-kıran karakterler içeriyor)",
+    "review_detail.html (NEGATİF - CSRF token DEĞERİ script-kıran karakterler içeriyor, can_mutate=True)",
     lambda: env.get_template("review_detail.html").render(
         case_id=CASE_ID, record_id="c_xss_probe", label="İddialar (script-context sertleştirme probu)",
         record={"claim_id": "c_xss_probe", "claim_review_state": "needs_review"},
@@ -263,7 +271,7 @@ html = check(
         csrf_tokens_by_target=_xss_tokens_by_target,
         csrf_token=_xss_probe_value,
         confirm_action=f"/cases/{CASE_ID}/reviews/argument.claim/c_xss_probe/confirm",
-        back_url=f"/cases/{CASE_ID}/reviews",
+        back_url=f"/cases/{CASE_ID}/reviews", can_mutate=True,
     ),
 )
 check_not_contains(

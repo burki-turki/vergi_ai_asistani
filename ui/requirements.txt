@@ -10,3 +10,60 @@ pydantic==2.13.5
 uvicorn==0.52.4
 python-multipart==0.0.32
 Jinja2==3.1.6
+
+# ============================================================
+# ROW 19B - Identity/Session/Authorization dependencies (NEW).
+#
+# RUNTIME COMPATIBILITY: PENDING - none of the four packages below
+# could be installed or imported in the cloud sandbox this Row was
+# implemented in (its outbound network proxy returns HTTP 403 "Host
+# not in allowlist" for pypi.org/files.pythonhosted.org - an
+# org-level Admin Settings -> Capabilities restriction, not something
+# this session could change; confirmed on two separate attempts,
+# including after an explicit temporary-access authorization). Every
+# version below was chosen from each package's own authoritative
+# release metadata (PyPI project page / project documentation,
+# fetched 2026-09-06 - see the delivery report's dependency table for
+# the exact source per package) - NOT fabricated, NOT guessed, and NOT
+# verified by an actual local import/test run. Do not treat these pins
+# as "confirmed working" until they have actually been installed and
+# ui/tests/test_routes.py + test_review_routes.py +
+# test_drafting_request_routes.py + test_auth_routes.py have actually
+# been run against them on vergi_ui_runtime.
+#
+# Authlib==1.8.0 - OAuth2/OIDC client (PKCE, state, authorization-code
+#   + token exchange - ui/services/oidc_client.py's
+#   build_authorization_url/exchange_code_for_tokens). PyPI project
+#   page lists this as the latest release (2026-08-30); classifiers
+#   list Python 3.10-3.14 (CPython and PyPy) - 3.14 support is STATED
+#   by the package's own classifiers, not independently verified here.
+Authlib==1.8.0
+
+# joserfc==1.7.5 - JOSE (JWS/JWE/JWK) implementation used ONLY for ID
+#   token signature verification against the provider's JWKS
+#   (ui/services/oidc_client.py's fetch_and_verify_id_token) - chosen
+#   over python-jose (unmaintained) per the approved Row 19B contract.
+#   The project's own pyproject.toml states `requires-python = ">=3.10"`
+#   with classifiers through Python 3.14 - again STATED, not
+#   independently verified here.
+joserfc==1.7.5
+
+# psycopg[binary,pool]==3.3.5 - PostgreSQL driver for the iam.* schema
+#   (ui/services/db.py). [binary] = precompiled C extension, no local
+#   build toolchain/libpq-dev needed; [pool] = psycopg_pool, released
+#   on its own cycle per upstream docs, hence pinned as an extra rather
+#   than a separate unpinned dependency. PyPI project page lists this
+#   as the latest stable release (2026-08-31), "Python >=3.10" stated
+#   requirement.
+psycopg[binary,pool]==3.3.5
+
+# cryptography==50.0.1 - AES-256-GCM (ui/services/transient_secrets.py's
+#   PKCE-verifier AEAD) and HKDF (ui/services/session_store.py's
+#   per-request CSRF-secret derivation). Already exercised for real in
+#   this sandbox via the OS-provided cryptography 46.0.7 - pinned here
+#   to the CURRENT PyPI latest release (2026-08-25) rather than the
+#   sandbox's incidentally-preinstalled version, since the sandbox's
+#   version was never chosen deliberately for this project. PyPI
+#   project page states "Python !=3.9.0,!=3.9.1,>=3.9", classifiers
+#   through Python 3.14.
+cryptography==50.0.1

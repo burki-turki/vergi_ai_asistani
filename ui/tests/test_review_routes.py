@@ -111,7 +111,9 @@ if not _FASTAPI_AVAILABLE:
 from ui.services import paths as svc_paths
 from ui.services import security
 from ui.services import review_registry as reviewreg
-from ui.main import app, _CSRF_SECRET
+from ui.services import authz as _authz
+import ui.main as main_module
+from ui.main import app
 
 import evidence_review
 import evidence_validator
@@ -119,6 +121,67 @@ import argument_review
 import risk_strategy_review
 import drafting_review
 import qa_review
+
+# ============================================================
+# Row 19B - AUTHENTICATED-SESSION TEST FIXTURE
+#
+# Every route now requires require_principal()/authorize_case_access()
+# (see ui/main.py's Row 19B route-layer remediation notes) - the old
+# process-lifetime `_CSRF_SECRET` this file used to import from
+# ui.main no longer exists there (replaced by a per-request-derived
+# secret, ui.auth_routes.csrf_secret_for_request). This file tests
+# ROUTE MECHANICS (CSRF, cross-origin, stale-hash, domain-error
+# redaction) - NOT the auth/session/authorization layer itself, which
+# has its own dedicated suites (ui/tests/test_auth_routes.py,
+# ui/tests/test_authz_isolated.py - 15/15). `ui.main`'s OWN bound
+# names (imported BY VALUE from ui.auth_routes at ui.main's import
+# time - patching ui.auth_routes's names afterwards would have NO
+# effect on ui.main's routes) are monkeypatched to a fixed test
+# principal + an always-allow (lawyer) in-memory authorization
+# repository, and to a fixed `_TEST_CSRF_SECRET` standing in for the
+# real per-request HKDF derivation - every route's real call sites
+# still run, only the session/DB lookup underneath them is faked.
+# ============================================================
+
+
+class _AllowAllAsLawyerRepository(_authz.InMemoryAuthzRepository):
+    """Grants the fixed test principal a 'lawyer' assignment on ANY
+    case_id, and a valid/current session state - this file's tests
+    exercise route MECHANICS, not authorization DECISIONS (those are
+    covered by test_authz_isolated.py/test_auth_routes.py)."""
+
+    def get_session_authz_state(self, principal):
+        return _authz.SessionRecord(
+            user_id=principal.user_id, current_authz_version=principal.role_version_at_issue, disabled=False,
+        )
+
+    def get_active_case_assignment(self, user_id, case_id):
+        return _authz.CaseAssignmentRecord(role="lawyer")
+
+
+_TEST_PRINCIPAL = _authz.Principal(user_id=999, session_id=999, role_version_at_issue=1)
+_TEST_REPO = _AllowAllAsLawyerRepository()
+_TEST_CSRF_SECRET = b"test-only-fixed-csrf-secret-32b"
+
+main_module.require_principal = lambda request: _TEST_PRINCIPAL
+main_module.authorize_or_redirect = lambda request, case_id, capability: _authz.authorize_case_access(
+    _TEST_PRINCIPAL, case_id, capability, repository=_TEST_REPO,
+)
+main_module.require_principal_and_case = lambda request, case_id, capability: (
+    _TEST_PRINCIPAL,
+    _authz.authorize_case_access(_TEST_PRINCIPAL, case_id, capability, repository=_TEST_REPO),
+)
+main_module.csrf_secret_for_request = lambda request, principal: _TEST_CSRF_SECRET
+main_module.has_capability = lambda request, principal, case_id, capability: True
+
+# The service layer independently RE-RUNS authz.authorize_case_access
+# with its OWN default repository (a real Postgres-backed one) unless a
+# route passes authz_repository= explicitly - main.py does NOT (by
+# design: production always uses the real repository). Route-mechanic
+# tests below therefore override the service module's
+# _default_authz_repository() directly, rather than main.py's call
+# sites (which must stay production-faithful).
+reviewreg._default_authz_repository = lambda: _TEST_REPO
 
 # targeted remediation ile AYNI ilke - TestClient'ın istemci adresini
 # AÇIKÇA loopback yapıyoruz; bu dosya DIŞINDA hiçbir yerde test-host
@@ -216,7 +279,7 @@ def isolated_review_fixture(initial_state="needs_review", validator_exception=No
         allowed_targets = sorted(evidence_review.CANDIDATE_ALLOWED_TARGETS)
         csrf_tokens_by_target = {
             target: security.make_csrf_token(
-                _CSRF_SECRET, fake_case_id, review_kind, record_id, target, expected_hash,
+                _TEST_CSRF_SECRET, fake_case_id, review_kind, record_id, target, expected_hash,
             )
             for target in allowed_targets
         }
@@ -316,7 +379,7 @@ def isolated_domain_error_fixture(review_kind, injected_error, review_note="test
         target_state = sorted(reviewreg.get_allowed_targets(review_kind))[0]
 
         csrf_token = security.make_csrf_token(
-            _CSRF_SECRET, fake_case_id, review_kind, record_id, target_state, expected_hash,
+            _TEST_CSRF_SECRET, fake_case_id, review_kind, record_id, target_state, expected_hash,
         )
 
         calls = {"n": 0}
@@ -629,11 +692,11 @@ _m_record_id = "ec_route_1"
 _m_target_state = "confirmed"
 _m_expected_hash = "a" * 64
 _m_parts = (_m_case_id, _m_review_kind, _m_record_id, _m_target_state, _m_expected_hash)
-_m_token = security.make_csrf_token(_CSRF_SECRET, *_m_parts)
+_m_token = security.make_csrf_token(_TEST_CSRF_SECRET, *_m_parts)
 
 check(
     "T13 (pozitif kontrol) 5 parçanın TAMAMI değişmeden verify_csrf_token BAŞARILI",
-    security.verify_csrf_token(_CSRF_SECRET, _m_token, *_m_parts) is True,
+    security.verify_csrf_token(_TEST_CSRF_SECRET, _m_token, *_m_parts) is True,
 )
 
 _m_part_names = ("case_id", "review_kind", "record_id", "target_state", "expected_hash")
@@ -642,7 +705,7 @@ for _m_index, _m_name in enumerate(_m_part_names):
     _m_tampered_parts[_m_index] = _m_tampered_parts[_m_index] + "_TAMPERED"
     check(
         f"T13 CSRF 5-parça matrisi: yalnız '{_m_name}' değiştirilince verify_csrf_token BAŞARISIZ olur",
-        security.verify_csrf_token(_CSRF_SECRET, _m_token, *_m_tampered_parts) is False,
+        security.verify_csrf_token(_TEST_CSRF_SECRET, _m_token, *_m_tampered_parts) is False,
     )
 
 # --- T15: FINAL DOMAIN-ERROR REDACTION REMEDIATION (2026-09-05) -

@@ -32,11 +32,31 @@ if str(REPO_ROOT) not in sys.path:
 
 from ui.services import paths as real_paths                      # noqa: E402
 from ui.services import drafting_request as dr                    # noqa: E402
+from ui.services import authz as _authz                            # noqa: E402 (Row 19B)
 from ui import run_drafting_request as cli                        # noqa: E402
 from ui.services.common import UnknownCaseError                   # noqa: E402
 
 import drafting_engine                                            # noqa: E402
 import legal_research_validator as lrv                            # noqa: E402
+
+# TARGETED RECONCILIATION (Row 19B): `save_lawyer_input_from_form` now
+# REQUIRES `principal` and independently re-checks authorization - same
+# isolation principle as test_drafting_request_service_isolated.py's
+# _AllowAllAsLawyerRepository. This CLI test only ever uses
+# save_lawyer_input_from_form once, to seed a "already has a saved
+# input" fixture state before invoking the CLI bridge - it does not test
+# authorization itself (that has its own full suite in
+# test_authz_isolated.py).
+class _AllowAllAsLawyerRepository(_authz.InMemoryAuthzRepository):
+    def get_session_authz_state(self, principal):
+        return _authz.SessionRecord(user_id=principal.user_id, current_authz_version=principal.role_version_at_issue, disabled=False)
+
+    def get_active_case_assignment(self, user_id, case_id):
+        return _authz.CaseAssignmentRecord(role="lawyer")
+
+
+_izole_authz_repo = _AllowAllAsLawyerRepository()
+_izole_lawyer_principal = _authz.Principal(user_id=1, session_id=1, role_version_at_issue=1)
 
 passed = 0
 failed = 0
@@ -180,6 +200,7 @@ with isolated_case() as (case_id, tmp_path):
             issue_selection_mode="not_provided", selected_issue_ids_raw=[],
             request_type_raw="", request_text_raw="", lawyer_provided_text_raw="cli test metni",
             expected_current_input_hash=token,
+            principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
         )
         audit_count_before = len(list(dr.get_input_audit_dir(case_id).glob("*")))
 

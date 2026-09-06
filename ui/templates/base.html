@@ -9,14 +9,16 @@
 <body>
   <header class="topbar">
     <a class="brand" href="/">Vergi AI - Avukat Arayüzü</a>
-    <span class="env-tag">yerel · 127.0.0.1 · tek kullanıcılı · Row 18a</span>
+    <span class="env-tag">yerel · 127.0.0.1 · Row 19B kimlik/oturum/yetkilendirme</span>
   </header>
   <main class="content">
     {% block content %}{% endblock %}
   </main>
   <footer class="footer">
-    Bu arayüz yalnız yerel değerlendirme içindir; kimlik doğrulama, çoklu
-    kullanıcı ve production sertleştirme kapsamında değildir (Row 19).
+    Bu arayüz yalnız yerel değerlendirme içindir. Kimlik doğrulama, oturum ve
+    case bazlı yetkilendirme Row 19B ile eklenmiştir; production sertleştirme
+    (gerçek Entra P1/kiracı, KMS tabanlı anahtar saklama) Row 19D'ye
+    bırakılmıştır.
   </footer>
 </body>
 </html>

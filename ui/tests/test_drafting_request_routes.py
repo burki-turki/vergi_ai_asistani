@@ -67,13 +67,81 @@ if not _FASTAPI_AVAILABLE:
 from ui.services import paths as svc_paths
 from ui.services import security
 from ui.services import drafting_request as draftreq
+from ui.services import authz as _authz
+import ui.main as main_module
 from ui.main import (
-    app, _CSRF_SECRET, _DRAFTING_REQUEST_MAX_BODY_BYTES,
+    app, _DRAFTING_REQUEST_MAX_BODY_BYTES,
     _DRAFTING_REQUEST_BODY_TOO_LARGE_MESSAGE, _DraftingRequestBodyTooLarge,
     _exception_tree_contains_body_too_large,
 )
 
 import legal_research_validator as lrv
+
+# ============================================================
+# Row 19B - AUTHENTICATED-SESSION TEST FIXTURE
+#
+# Every route now requires require_principal()/authorize_case_access()
+# (see ui/main.py's Row 19B route-layer remediation notes) - the old
+# process-lifetime `_CSRF_SECRET` this file used to import from
+# ui.main no longer exists there (replaced by a per-request-derived
+# secret, ui.auth_routes.csrf_secret_for_request). This file tests
+# ROUTE MECHANICS (CSRF, cross-origin, body-size limits, form parsing) -
+# NOT the auth/session/authorization layer itself, which has its own
+# dedicated suites (ui/tests/test_auth_routes.py,
+# ui/tests/test_authz_isolated.py - 15/15). `ui.main`'s OWN bound
+# names (imported BY VALUE from ui.auth_routes at ui.main's import
+# time - patching ui.auth_routes's names afterwards would have NO
+# effect on ui.main's routes) are monkeypatched to a fixed test
+# principal + an always-allow (lawyer) in-memory authorization
+# repository, and to a fixed `_TEST_CSRF_SECRET` standing in for the
+# real per-request HKDF derivation - every route's real call sites
+# still run, only the session/DB lookup underneath them is faked. Note
+# `/cases/{case_id}/drafting-request` (GET) now requires "mutate", not
+# "read" (Row 19B: lawyer-only) - the always-lawyer fixture below
+# satisfies that for every scenario in this file, matching this file's
+# existing scope (it never tested analyst-vs-lawyer access - that is
+# test_role_aware_rendering.py's and test_auth_routes.py's job).
+# ============================================================
+
+
+class _AllowAllAsLawyerRepository(_authz.InMemoryAuthzRepository):
+    """Grants the fixed test principal a 'lawyer' assignment on ANY
+    case_id, and a valid/current session state - this file's tests
+    exercise route MECHANICS, not authorization DECISIONS (those are
+    covered by test_authz_isolated.py/test_auth_routes.py)."""
+
+    def get_session_authz_state(self, principal):
+        return _authz.SessionRecord(
+            user_id=principal.user_id, current_authz_version=principal.role_version_at_issue, disabled=False,
+        )
+
+    def get_active_case_assignment(self, user_id, case_id):
+        return _authz.CaseAssignmentRecord(role="lawyer")
+
+
+_TEST_PRINCIPAL = _authz.Principal(user_id=999, session_id=999, role_version_at_issue=1)
+_TEST_REPO = _AllowAllAsLawyerRepository()
+_TEST_CSRF_SECRET = b"test-only-fixed-csrf-secret-32b"
+
+main_module.require_principal = lambda request: _TEST_PRINCIPAL
+main_module.authorize_or_redirect = lambda request, case_id, capability: _authz.authorize_case_access(
+    _TEST_PRINCIPAL, case_id, capability, repository=_TEST_REPO,
+)
+main_module.require_principal_and_case = lambda request, case_id, capability: (
+    _TEST_PRINCIPAL,
+    _authz.authorize_case_access(_TEST_PRINCIPAL, case_id, capability, repository=_TEST_REPO),
+)
+main_module.csrf_secret_for_request = lambda request, principal: _TEST_CSRF_SECRET
+main_module.has_capability = lambda request, principal, case_id, capability: True
+
+# The service layer independently RE-RUNS authz.authorize_case_access
+# with its OWN default repository (a real Postgres-backed one) unless a
+# route passes authz_repository= explicitly - main.py does NOT (by
+# design: production always uses the real repository). Route-mechanic
+# tests below therefore override the service module's
+# _default_authz_repository() directly, rather than main.py's call
+# sites (which must stay production-faithful).
+draftreq._default_authz_repository = lambda: _TEST_REPO
 
 # targeted remediation ile AYNI ilke - TestClient'ın istemci adresini
 # AÇIKÇA loopback yapıyoruz; bu dosya DIŞINDA hiçbir yerde test-host
@@ -377,7 +445,7 @@ with isolated_case():
     # 4c) başka bir case için üretilmiş token (case_id parçası farklı)
     with isolated_case():
         pass  # yalnız iki ayrı case_id simüle etmek için CSRF'i elle üretiyoruz
-    foreign_token = security.make_csrf_token(_CSRF_SECRET, "baska_case", "drafting_request", "save", expected_hash)
+    foreign_token = security.make_csrf_token(_TEST_CSRF_SECRET, "baska_case", "drafting_request", "save", expected_hash)
     form = dict(_BASE_FORM, expected_current_input_hash=expected_hash, csrf_token=foreign_token)
     resp = client.post(f"/cases/{CASE_ID}/drafting-request/confirm", data=form)
     check("T11 başka bir case_id için üretilmiş token reddediliyor", "Güvenlik doğrulaması başarısız" in resp.text)

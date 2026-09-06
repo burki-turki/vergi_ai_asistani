@@ -192,9 +192,16 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   `CLAUDE.md`'yi değiştirebilir; 19B, 19C ve 19D'nin HER BİRİ kendi tam
   dosya allowlist'ini implementasyondan ÖNCE ayrıca sunup onaylatmalıdır
   — genel Row 19 onayı hiçbir alt-fazın dosya değişikliğini ÖNCEDEN
-  yetkilendirmez. Sıradaki alt-faz: **ROW 19B — Identity / Session /
-  Authorization** — **ACTIVE / NEXT** — henüz implementasyona
-  BAŞLANMADI (kendi dosya allowlist'i henüz sunulmadı/onaylanmadı).
+  yetkilendirmez.
+- **ROW 19B — Identity / Session / Authorization** artık **DONE /
+  LOCKED** — kullanıcı tarafından ayrıca onaylanmış 43 dosyalık
+  allowlist (25 yeni + 18 değiştirilmiş dosya) üzerinde implement
+  edildi, yerel testlerle doğrulandı ve bağımsız, salt-okunur bir
+  LOCK-hazırlık incelemesinden geçti (bkz. Row 19B checkpoint özeti,
+  §5 sonrası). Rows 1-18 ve Row 19A contract'ları değişmedi. Sıradaki
+  alt-faz: **ROW 19C — Mutation Integrity** — **ACTIVE / NEXT** —
+  henüz implementasyona BAŞLANMADI (kendi dosya allowlist'i henüz
+  sunulmadı/onaylanmadı).
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -1292,6 +1299,95 @@ edildikten SONRA geçerli olacaktır). **Kullanıcı açıkça "implementasyona
 henüz başlanmasın" talimatı vermiştir** — 19B/19C/19D için hiçbir kod/
 şema değişikliği bu checkpoint ile YETKİLENDİRİLMEZ; her alt-fazın
 implementasyonu kendi ayrı dosya allowlist onayını gerektirir.
+
+### Row 19B — Identity / Session / Authorization (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış 43
+dosyalık allowlist üzerinde tamamlandı: **25 yeni dosya + 18
+değiştirilmiş dosya**; allowlist dışında hiçbir dosyaya dokunulmadı.
+
+**Kimlik doğrulama akışı** — OIDC Authorization Code + PKCE (S256)
+akışı; `state`/`nonce` tek-kullanımlık (single-use) olarak aynı
+veritabanı transaction'ı içinde tüketilir. Entra ID sağlayıcı modeli:
+P1 (ücretli) tier için `acrs: list[str]` üzerinde katı exact-membership
+MFA doğrulaması uygulanır; Free tier için MFA iddiası KOŞULSUZ
+fail-closed reddedilir. Issuer/audience/tenant/nonce doğrulaması katı;
+çoklu-audience (liste tipi `aud`) durumunda `azp` claim'i ZORUNLUDUR ve
+tam/case-sensitive eşleşmesi gerekir. **NO-JIT**: bilinmeyen kimlik
+login sırasında ASLA yeni kullanıcı oluşturmaz — kullanıcı yalnız ayrı,
+açık bir admin işlemi olan `provision-user` CLI komutuyla oluşturulur.
+
+**Veri modeli** — PostgreSQL şeması: `iam.users`, external identities,
+roller, case assignments, sessions, security events; tümü
+yeniden-çalıştırılabilir (re-runnable) migration'larla sürüm
+kontrollüdür; advisory lock ID'leri veritabanı tarafından atanır
+(Row 19A kararıyla tutarlı — `hashtext()` tabanlı çözüm kullanılmaz).
+
+**Oturum / CSRF** — `__Host-session` cookie (Secure, HttpOnly,
+SameSite=Lax, Path=/); idle timeout 30 dakika, absolute timeout 8
+saat; remember-me veya refresh-token YOKTUR. CSRF token'ı oturuma
+bağlı (session-bound) ve HKDF ile türetilir.
+
+**Rol modeli ve yetkilendirme** — `admin`: kimlik/rol/atama yönetimi
+yapar ama case erişimi veya case enumeration ALMAZ (koşulsuz veto —
+ayrıca lawyer/analyst olarak atanmış olsa bile bu listeleme
+fonksiyonunda sıfır case görür). `analyst`: yalnız kendisine atanmış
+case'lerde salt-okunur erişim. `lawyer`: yalnız kendisine atanmış
+case'lerde okuma + izin verilen mutasyonlar. `GET /` yalnız aktif,
+kullanıcıya atanmış ve dosya sisteminde hâlâ çözülebilir
+(filesystem-resolvable) case'leri listeler; iptal edilmiş (revoked),
+başka kullanıcıya ait veya stale (artık dosya sisteminde
+çözülemeyen) atamalar bu listede GÖRÜNMEZ. Yetkilendirme kontrolü hem
+route hem servis katmanında ZORUNLU olarak uygulanır — tek katmana
+güvenilmez.
+
+**IAM admin CLI** — Bootstrap sonrası 8 admin komutunun HER BİRİ açık
+`--actor-user-id` parametresi GEREKTİRİR; bu actor, mutasyondan ÖNCE
+aynı `global:iam` kilidi altında ve aynı transaction içinde
+var/aktif/admin olarak doğrulanır. IAM mutasyonu ile buna karşılık
+gelen tipli security event kaydı AYNI transaction içinde birlikte
+commit/rollback edilir (kısmi/yetim event kaydı imkânsızdır).
+`bootstrap-first-admin` ve `provision-user` kendi NO-JIT/idempotency
+sınırlarını korur (bootstrap yalnız ilk admin için, sonraki
+çalıştırmalarda idempotent şekilde no-op/hata; `provision-user` var
+olan bir external identity'yi sessizce ikinci kez oluşturmaz).
+
+**Hata / gözlemlenebilirlik** — Tarayıcıya dönen hata mesajları
+redaksiyonludur (iç detay sızdırmaz); security event'ler kapalı
+(closed) bir `reason_code` sözlüğü ile CHECK-constrained tutulur.
+
+**Bağımlılıklar** — Authlib 1.8.0, joserfc 1.7.5, psycopg 3.3.5,
+cryptography 50.0.1 pinned; `pip check` PASS.
+
+**Doğrulama** — Gerçek, disposable bir PostgreSQL 16.15 örneğine karşı
+migration/lock/event akışları ve IAM CLI FK/rollback davranışı
+(actor bulunamadı / disabled / admin-değil senaryoları dahil)
+doğrulandı. Final test özeti: Row 18'in kilitli 512 testi değişmeden
+PASS; Row 19B'nin genişletilmiş 337 doğrulaması PASS; **toplam
+849/849 PASS**.
+
+**Bağımsız inceleme** — Bağımsız, salt-okunur bir LOCK-hazırlık
+incelemesi yapıldı; final verdict: **ROW 19B LOCK-READY**.
+
+**19B KAPSAM DIŞI / bilinen backlog (bilinçli, 19C/19D'ye veya
+production konfigürasyonuna bırakıldı)**:
+
+- `StarletteDeprecationWarning: Using httpx with starlette.testclient
+  is deprecated; install httpx2 instead.` — yalnız test altyapısını
+  ilgilendiren, engelleyici olmayan bağımlılık bakım maddesi.
+- Gerçek harici OIDC tenant/sağlayıcı bağlantı testi production
+  konfigürasyonuna bırakıldı — izole testler gerçek dış OIDC
+  sağlayıcısına bağlanmaz.
+- `origin_mismatch` reason-code ayrımı şu an kullanılmamaktadır
+  (kozmetik).
+- `ui/services/security.py` dosyasının eski "no session/cookie" üst
+  yorumu güncel değildir (kozmetik dokümantasyon temizliği).
+- **Row 19C — Mutation Integrity** (sıradaki alt-faz): coordinator/
+  idempotency/journal ve case/global kilitlemenin TÜM production
+  mutator'larına genişletilmesi.
+- **Row 19D — Operations & Recovery**: deployment, TLS/reverse proxy,
+  secret/KMS yönetimi, backup/restore, OS ACL'leri ve operasyonel
+  sertleştirme.
 
 ## 6. Cross-Cutting Backlog
 

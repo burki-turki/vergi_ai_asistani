@@ -19,6 +19,7 @@
   {{ m.render_value(record) }}
 
   <h2>İnceleme kararı</h2>
+  {% if can_mutate %}
   <form method="post" action="{{ confirm_action }}" class="confirm-form">
     <input type="hidden" name="expected_hash" value="{{ canonical_hash }}">
     <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token }}">
@@ -76,4 +77,11 @@
     // script-context güven sınırı ORTADAN KALKAR).
     const CSRF_TOKENS_BY_TARGET = {{ csrf_tokens_by_target | tojson }};
   </script>
+  {% else %}
+  <div class="banner banner-info">
+    Bu kaydı inceleme yetkiniz yok - hesabınız yalnız salt-okunur (analyst)
+    erişimine sahip. İnceleme kararı yalnız bu case'e lawyer rolüyle
+    atanmış bir kullanıcı tarafından verilebilir.
+  </div>
+  {% endif %}
 {% endblock %}

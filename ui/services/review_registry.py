@@ -57,6 +57,7 @@ import json
 from pathlib import Path
 
 from . import paths
+from . import authz as _authz
 from .common import (
     ReviewUiError,
     UnknownReviewKindError,
@@ -66,6 +67,21 @@ from .common import (
     InvalidReviewNoteError,
     sha256_file,
 )
+
+# ============================================================
+# Row 19B: module-level (not a local closure) so tests can monkeypatch
+# it directly - same DI pattern as
+# `approval_registry._default_authz_repository`. Lazy-imports `db` (and
+# through it, psycopg) so this module stays importable without psycopg
+# installed; only actually CALLING this (in production, when
+# `apply_transition` is not given an explicit `authz_repository=`)
+# requires it.
+# ============================================================
+
+
+def _default_authz_repository():
+    from . import db as _db
+    return _authz.PostgresAuthzRepository(_db.get_connection())
 
 # ============================================================
 # 5 GERÇEK domain hata sınıfı (allowlist) - main.py'nin FastAPI
@@ -537,9 +553,23 @@ REVIEWER_REF = "local_lawyer_ui"
 def apply_transition(
     review_kind, case_id, record_id, target_state, review_note, expected_hash,
     canonical_path_override=None, audit_dir_override=None,
+    *, principal=None, authz_repository=None,
 ):
+    """Row 19B: `principal` is REQUIRED for real callers (kept as a
+    keyword with no default sentinel error message deliberately, so
+    the very first line below fails loudly and immediately if a
+    caller forgets it - never silently mutates as an unauthenticated
+    principal). This function independently re-runs
+    `authz.authorize_case_access(principal, case_id, "mutate")` BEFORE
+    doing anything else, exactly like case_scoped_approve."""
 
-    case_id = paths.resolve_case_id(case_id)
+    if principal is None:
+        raise TypeError("apply_transition() requires principal= (Row 19B authorization)")
+
+    case_id = _authz.authorize_case_access(
+        principal, case_id, "mutate",
+        repository=authz_repository or _default_authz_repository(),
+    )
     entry = _get_entry(review_kind)
 
     trimmed_note = normalize_review_note(review_note)

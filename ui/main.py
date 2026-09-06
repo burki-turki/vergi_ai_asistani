@@ -1,9 +1,39 @@
 # ============================================================
-# VERGİ AI - LAWYER UI (Row 18a)
+# VERGİ AI - LAWYER UI (Row 18a, Row 19B kimlik/oturum/yetkilendirme
+# ile güncellendi)
 #
 # Yerel, tek kullanıcılı FastAPI uygulaması. Yalnız 127.0.0.1'den
-# gelen isteklere açıktır - auth/çoklu kullanıcı/production
-# sertleştirme Row 19'a bırakıldı (kullanıcı kararı, 2026-09-04).
+# gelen isteklere açıktır. Row 19B ile birlikte artık HER route
+# (yalnız `/`, `/auth/login`, `/auth/callback` hariç) geçerli bir
+# oturum GEREKTİRİR ve case_id alan HER route
+# `ui.services.authz.authorize_case_access` üzerinden (route katmanı +
+# servis katmanı, İKİ BAĞIMSIZ çağrı) yetkilendirilir - bkz.
+# `auth_routes.py` ve `services/authz.py` docstring'leri.
+#
+# ROW 19B ROUTE-LAYER REMEDIATION (bu turda main.py'ye uygulanan
+# değişiklikler, Row 18a'nın altındaki maddelere EK olarak):
+#
+#   8) Süreç-ömrü-boyunca sabit `_CSRF_SECRET` KALDIRILDI - CSRF gizli
+#      anahtarı artık HER İSTEKTE, o isteğin oturumunun KENDİ
+#      `token_hash`'inden HKDF ile taze türetiliyor
+#      (`auth_routes.csrf_secret_for_request`) - hiçbir yerde
+#      saklanmıyor/önbelleklenmiyor.
+#   9) `_resolve_case(case_id)` (yalnız `paths.resolve_case_id`)
+#      KALDIRILDI - case_id alan her route artık
+#      `auth_routes.require_principal_and_case`/`authorize_or_redirect`
+#      çağırıyor: (1) geçerli oturum, (2) case_id sözdizimi, (3) aktif
+#      case_assignment, (4) rol->capability eşleşmesi, (5) YALNIZ o
+#      zaman değişmemiş `paths.resolve_case_id`. Kimliği doğrulanmamış
+#      istek `/auth/login`'e YÖNLENDİRİLİR (`NotAuthenticatedError`);
+#      yetkisiz-ama-kimliği-doğrulanmış istek AYNI genel 404'ü alır
+#      (`CaseAccessDeniedError`) - iki durum da app-seviyesi exception
+#      handler'larla (aşağıda) TEK yerden ele alınır, her route'ta
+#      TEKRAR EDİLMEZ.
+#  10) `.../drafting-request` GET route'u KASITLI olarak "read" değil
+#      "mutate" capability'si İSTİYOR - yapılandırılmış avukat girdisi
+#      ekranı yalnız lawyer rolüne açık (analyst salt-okunur bile
+#      GÖREMEZ), çünkü bu ekran avukatın gireceği/kaydedeceği bir
+#      girdi formu, review amaçlı bir salt-okunur görünüm DEĞİL.
 #
 # GÜVENLİK SINIRI (kullanıcı spesifikasyonu): bu dosyada hiçbir
 # GENERIC "dosya yaz", "komut çalıştır" veya kullanıcıdan keyfi path
@@ -56,7 +86,7 @@
 import logging
 
 from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -66,11 +96,21 @@ from .services import paths, live_view, security
 from .services import approval_registry as reg
 from .services import review_registry as reviewreg
 from .services import drafting_request as draftreq
+from .services.authz import CaseAccessDeniedError
+from .auth_routes import (
+    router as auth_router,
+    require_principal,
+    require_principal_and_case,
+    authorize_or_redirect,
+    csrf_secret_for_request,
+    has_capability,
+    list_accessible_case_ids,
+    NotAuthenticatedError,
+)
 from .services.common import (
     ApprovalUiError,
     StaleViewError,
     PendingNotFoundError,
-    UnknownCaseError,
     LiveViewInvalidError,
     ReviewUiError,
     UnknownReviewKindError,
@@ -103,10 +143,55 @@ app.mount("/static", StaticFiles(directory=str(UI_DIR / "static")), name="static
 
 templates = Jinja2Templates(directory=str(UI_DIR / "templates"))
 
-# Süreç ömrü boyunca sabit CSRF gizli anahtarı - import anında BİR KEZ
-# üretilir, diske/repoya YAZILMAZ, sunucu yeniden başlatıldığında
-# yeniden üretilir (bkz. services/security.py docstring).
-_CSRF_SECRET = security.new_csrf_secret()
+# Row 19B: /auth/login, /auth/callback, /auth/logout - bkz. auth_routes.py.
+app.include_router(auth_router)
+
+
+# ============================================================
+# ROW 19B - UYGULAMA-SEVİYESİ EXCEPTION HANDLER'LARI
+#
+# `require_principal`/`require_principal_and_case`/`authorize_or_redirect`
+# (auth_routes.py) ve servis katmanındaki authz yeniden-kontrolleri
+# (approval_registry/review_registry/drafting_request) TAMAMI aynı iki
+# istisna türünden birini fırlatır - HER route'ta ayrı ayrı
+# yakalanmak/render edilmek YERİNE, TEK yerden ele alınır:
+#
+#   - `NotAuthenticatedError` (oturum yok/süresi dolmuş/iptal edilmiş):
+#     `/auth/login`'e 302 yönlendirme, `Cache-Control: no-store`.
+#   - `CaseAccessDeniedError` (kimlik doğrulandı ama case_id sözdizimi
+#     geçersiz / aktif atama yok / rol capability'yi karşılamıyor):
+#     Row 18a'nın `_resolve_case`'inin ürettiğiyle BİREBİR AYNI şekli
+#     (`HTTPException(404, detail="Case bulunamadı.")`nin FastAPI
+#     varsayılan JSON gövdesi) - hangi adımın reddettiği (sözdizimi mi,
+#     atama mı, capability mi) tarayıcıya ASLA sızdırılmaz, yalnız
+#     `logger.warning` ile (gerçek `reason_code` dahil) loglanır.
+# ============================================================
+
+@app.exception_handler(NotAuthenticatedError)
+async def _not_authenticated_handler(request: Request, exc: NotAuthenticatedError):
+
+    logger.info("Kimlik doğrulanmamış istek /login'e yönlendirildi: %s", exc)
+
+    # `/login` - bu dosyadaki basit bilgilendirme sayfası (login.html,
+    # yalnız `/auth/login`'e giden bir bağlantı) - GERÇEK OIDC akışını
+    # `/auth/login`'in KENDİSİ (auth_routes.py) başlatır. İki ayrı
+    # route: kullanıcı önce "giriş yap" sayfasını görür, ancak
+    # tıkladığında asıl PKCE/state/nonce üretimi ve IdP'ye yönlendirme
+    # gerçekleşir - beklenmedik bir GET isteğiyle (ör. bir tarayıcı
+    # ön-getirmesi/prefetch) yeni bir OIDC login transaction'ının
+    # sessizce başlatılmasını önler.
+    response = RedirectResponse("/login", status_code=302)
+    response.headers["Cache-Control"] = "no-store"
+
+    return response
+
+
+@app.exception_handler(CaseAccessDeniedError)
+async def _case_access_denied_handler(request: Request, exc: CaseAccessDeniedError):
+
+    logger.warning("Case erişimi reddedildi [%s]: %s", exc.reason_code, exc)
+
+    return JSONResponse({"detail": "Case bulunamadı."}, status_code=404)
 
 
 # ============================================================
@@ -470,23 +555,12 @@ def _domain_error_page(request, error, back_url):
     )
 
 
-def _resolve_case(case_id):
-    """
-    Targeted remediation §3: case_id'yi route katmanında da (servis
-    katmanına EK olarak) doğrular - hiçbir case_id, doğrulanmadan bir
-    sonraki koda geçemez. Bilinmeyen/geçersiz case_id her zaman AYNI
-    genel 404'e gider (hangi kontrolün tetiklendiği sızdırılmaz).
-    """
-
-    try:
-
-        return paths.resolve_case_id(case_id)
-
-    except UnknownCaseError as error:
-
-        logger.warning("Bilinmeyen/geçersiz case_id reddedildi: %r (%s)", case_id, error)
-
-        raise HTTPException(status_code=404, detail="Case bulunamadı.")
+# Row 19B: `_resolve_case(case_id)` (yalnız `paths.resolve_case_id`)
+# KALDIRILDI - case_id alan her route artık
+# `auth_routes.require_principal_and_case`/`authorize_or_redirect`
+# çağırıyor (bkz. modül başındaki Row 19B route-layer remediation
+# notu, madde 9). `paths.resolve_case_id`'nin KENDİSİ değişmedi - onu
+# artık `authz.authorize_case_access`'in 5. adımı çağırıyor.
 
 
 def _check_csrf_and_origin(request, secret, token, *parts):
@@ -511,19 +585,47 @@ def _check_csrf_and_origin(request, secret, token, *parts):
 
 
 # ============================================================
+# ROW 19B - GİRİŞ BİLGİLENDİRME SAYFASI
+#
+# `/login` yalnız statik bir bilgilendirme sayfası render eder
+# (login.html, tek içeriği `/auth/login`'e giden bir bağlantı) - hiçbir
+# oturum/DB işlemi YAPMAZ. Gerçek OIDC akışını (PKCE/state/nonce
+# üretimi, `iam.oidc_login_transactions`'a yazma, IdP'ye 302) yalnız
+# `/auth/login`'in KENDİSİ (auth_routes.py) başlatır - bu ayrım,
+# `NotAuthenticatedError` handler'ının (yukarıda) beklenmedik bir GET
+# isteğiyle sessizce yeni bir login transaction'ı BAŞLATMAMASI içindir.
+# ============================================================
+
+@app.get("/login")
+def login_page(request: Request):
+
+    return render(request, "login.html")
+
+
+# ============================================================
 # CASE LİSTESİ / CANLI CASE VIEW
 # ============================================================
 
 @app.get("/")
 def index(request: Request):
 
-    return render(request, "index.html", case_ids=paths.list_case_ids())
+    # Row 19B targeted remediation (finding 2): the list is now filtered
+    # in the authz layer (authz.list_accessible_case_ids, invoked via
+    # auth_routes.list_accessible_case_ids) - lawyer/analyst see only
+    # their own active, filesystem-resolvable case assignments; admin
+    # sees none; a revoked or stale/nonexistent assignment never
+    # appears. This is an authorization decision, not a template-only
+    # hiding - the previous, contract-violating `paths.list_case_ids()`
+    # (the full case_ids on disk, unfiltered) is no longer used here.
+    principal = require_principal(request)
+
+    return render(request, "index.html", case_ids=list_accessible_case_ids(request, principal))
 
 
 @app.get("/cases/{case_id}")
 def case_view(request: Request, case_id: str):
 
-    case_id = _resolve_case(case_id)
+    principal, case_id = require_principal_and_case(request, case_id, "read")
 
     try:
 
@@ -537,13 +639,18 @@ def case_view(request: Request, case_id: str):
         request, "case_view.html", case_id=case_id,
         view=data["live_view"], is_stale=data["is_stale"],
         has_canonical=data["has_canonical"],
+        # Row 19B: yalnız GÖRÜNÜM amaçlı - "Yapılandırılmış Avukat
+        # Girdisi" linkini analyst principal için gizler (o ekran
+        # yalnız lawyer'a açık - bkz. `drafting_request_page`'in KENDİ
+        # "mutate" capability kontrolü, ki gerçek yetki kararı ORADADIR).
+        can_view_drafting_request=has_capability(request, principal, case_id, "mutate"),
     )
 
 
 @app.get("/cases/{case_id}/issues/{issue_id}")
 def issue_detail(request: Request, case_id: str, issue_id: str):
 
-    case_id = _resolve_case(case_id)
+    case_id = authorize_or_redirect(request, case_id, "read")
 
     try:
 
@@ -569,7 +676,7 @@ def issue_detail(request: Request, case_id: str, issue_id: str):
 @app.get("/cases/{case_id}/approvals")
 def approvals_list(request: Request, case_id: str):
 
-    case_id = _resolve_case(case_id)
+    case_id = authorize_or_redirect(request, case_id, "read")
 
     rows = reg.full_case_approval_status(case_id)
 
@@ -585,7 +692,7 @@ def approvals_list(request: Request, case_id: str):
 @app.get("/cases/{case_id}/approvals/{row_key}")
 def case_scoped_review_page(request: Request, case_id: str, row_key: str):
 
-    case_id = _resolve_case(case_id)
+    principal, case_id = require_principal_and_case(request, case_id, "read")
 
     if row_key not in reg.CASE_SCOPED_ROWS_BY_KEY:
 
@@ -611,13 +718,22 @@ def case_scoped_review_page(request: Request, case_id: str, row_key: str):
 
     # CSRF token bu tam review'a (case_id + row_key + o anki pending
     # hash) BAĞLIDIR - başka bir case/row/pending için üretilmiş bir
-    # token burada asla geçerli olmaz (bkz. services/security.py).
-    csrf_token = security.make_csrf_token(_CSRF_SECRET, case_id, row_key, review["pending_hash"])
+    # token burada asla geçerli olmaz (bkz. services/security.py). Row
+    # 19B: gizli anahtar artık süreç-ömrü-boyunca sabit DEĞİL - bu
+    # isteğin oturumundan HKDF ile taze türetiliyor.
+    csrf_secret = csrf_secret_for_request(request, principal)
+    csrf_token = security.make_csrf_token(csrf_secret, case_id, row_key, review["pending_hash"])
 
     return render(
         request, "approval_review.html", case_id=case_id, row=review["row"],
         pending_hash=review["pending_hash"], analysis=review["analysis"],
         csrf_token=csrf_token,
+        # Row 19B: yalnız GÖRÜNÜM amaçlı - mutasyon <form>'u analyst
+        # principal için gizler. Gerçek yetki kontrolü, POST'ta
+        # `case_scoped_confirm`'in KENDİ `require_principal_and_case(...,
+        # "mutate")` çağrısı ve servis katmanının BAĞIMSIZ tekrar
+        # kontrolüdür - bu bayrak asla bir yetkilendirme kararı DEĞİLDİR.
+        can_mutate=has_capability(request, principal, case_id, "mutate"),
         confirm_action=f"/cases/{case_id}/approvals/{row_key}/confirm",
         back_url=back_url,
     )
@@ -629,7 +745,7 @@ def case_scoped_confirm(
     expected_hash: str = Form(...), csrf_token: str = Form(...),
 ):
 
-    case_id = _resolve_case(case_id)
+    principal, case_id = require_principal_and_case(request, case_id, "mutate")
 
     if row_key not in reg.CASE_SCOPED_ROWS_BY_KEY:
 
@@ -640,14 +756,31 @@ def case_scoped_confirm(
     # CSRF + aynı-origin kontrolü, HERHANGİ bir onay adaptörü
     # çağrılmadan ÖNCE, expected_hash tazelik kontrolünden BAĞIMSIZ
     # bir katman olarak yapılır (targeted remediation §8: "expected
-    # pending hash is not a substitute for a CSRF token").
-    if not _check_csrf_and_origin(request, _CSRF_SECRET, csrf_token, case_id, row_key, expected_hash):
+    # pending hash is not a substitute for a CSRF token"). Row 19B:
+    # gizli anahtar bu isteğin oturumundan taze türetiliyor.
+    csrf_secret = csrf_secret_for_request(request, principal)
+
+    if not _check_csrf_and_origin(request, csrf_secret, csrf_token, case_id, row_key, expected_hash):
 
         return _error_page(request, "CSRF_INVALID", back_url)
 
     try:
 
-        result = reg.case_scoped_approve(row_key, case_id, expected_hash)
+        # Row 19B: `principal=` GEÇİLİR - `case_scoped_approve` kendi
+        # `authz.authorize_case_access(principal, case_id, "mutate")`
+        # çağrısını BAĞIMSIZ olarak TEKRAR yapar (route katmanındaki
+        # yukarıdaki kontrolün YERİNE değil, ONA EK olarak).
+        result = reg.case_scoped_approve(row_key, case_id, expected_hash, principal=principal)
+
+    except CaseAccessDeniedError:
+
+        # Row 19B: servis katmanının BAĞIMSIZ yeniden-kontrolü reddetti
+        # (route katmanındaki kontrol geçtikten SONRA, örn. yarış
+        # koşuluyla iptal edilmiş bir atama) - app-seviyesi
+        # `_case_access_denied_handler`'ın AYNI genel 404'ü üretmesi
+        # için BİLEREK yeniden fırlatılır, burada YUTULMAZ/başka bir
+        # mesaja ÇEVRİLMEZ.
+        raise
 
     except StaleViewError as error:
 
@@ -682,7 +815,7 @@ def case_scoped_confirm(
 @app.get("/cases/{case_id}/reviews")
 def reviews_list(request: Request, case_id: str):
 
-    case_id = _resolve_case(case_id)
+    case_id = authorize_or_redirect(request, case_id, "read")
 
     try:
 
@@ -704,7 +837,7 @@ def reviews_list(request: Request, case_id: str):
 @app.get("/cases/{case_id}/reviews/{review_kind}/{record_id}")
 def review_detail_page(request: Request, case_id: str, review_kind: str, record_id: str):
 
-    case_id = _resolve_case(case_id)
+    principal, case_id = require_principal_and_case(request, case_id, "read")
 
     if review_kind not in reviewreg.REVIEW_KIND_REGISTRY:
 
@@ -748,9 +881,13 @@ def review_detail_page(request: Request, case_id: str, review_kind: str, record_
     # JS ile o hedefin token'ına güncellenir (bkz. review_detail.html).
     allowed_targets = sorted(reviewreg.get_allowed_targets(review_kind))
 
+    # Row 19B: gizli anahtar bu isteğin oturumundan taze türetiliyor
+    # (bkz. üstteki `case_scoped_review_page` ile AYNI ilke).
+    csrf_secret = csrf_secret_for_request(request, principal)
+
     csrf_tokens_by_target = {
         target: security.make_csrf_token(
-            _CSRF_SECRET, case_id, review_kind, record_id, target, found["canonical_hash"],
+            csrf_secret, case_id, review_kind, record_id, target, found["canonical_hash"],
         )
         for target in allowed_targets
     }
@@ -760,6 +897,9 @@ def review_detail_page(request: Request, case_id: str, review_kind: str, record_
         label=entry["label"], record=found["record"],
         canonical_hash=found["canonical_hash"],
         allowed_targets=allowed_targets,
+        # Row 19B: yalnız GÖRÜNÜM amaçlı (bkz. `case_scoped_review_page`
+        # ile AYNI not) - gerçek yetki kararı DEĞİL.
+        can_mutate=has_capability(request, principal, case_id, "mutate"),
         # SCRIPT-CONTEXT JSON SERIALIZATION HARDENING (2026-09-05): ham
         # bir sözlük geçiriliyor - önceden burada elle `json.dumps(...)`
         # ile üretilip `|safe` ile HTML-escape'ten muaf tutularak
@@ -781,7 +921,7 @@ def review_confirm(
     expected_hash: str = Form(...), csrf_token: str = Form(...),
 ):
 
-    case_id = _resolve_case(case_id)
+    principal, case_id = require_principal_and_case(request, case_id, "mutate")
 
     if review_kind not in reviewreg.REVIEW_KIND_REGISTRY:
 
@@ -798,8 +938,11 @@ def review_confirm(
     # (targeted remediation, 2026-09-05 - target_state artık BAĞLAYICI
     # bir parça: submit edilen `target_state` GET anında token'ın
     # üretildiği hedeften FARKLIYSA, token doğrulaması BAŞARISIZ olur).
+    # Row 19B: gizli anahtar bu isteğin oturumundan taze türetiliyor.
+    csrf_secret = csrf_secret_for_request(request, principal)
+
     if not _check_csrf_and_origin(
-        request, _CSRF_SECRET, csrf_token, case_id, review_kind, record_id, target_state, expected_hash,
+        request, csrf_secret, csrf_token, case_id, review_kind, record_id, target_state, expected_hash,
     ):
 
         return _error_page(request, "CSRF_INVALID", back_url)
@@ -818,9 +961,19 @@ def review_confirm(
 
     try:
 
+        # Row 19B: `principal=` GEÇİLİR - `apply_transition` kendi
+        # `authz.authorize_case_access(principal, case_id, "mutate")`
+        # çağrısını BAĞIMSIZ olarak TEKRAR yapar.
         result = reviewreg.apply_transition(
             review_kind, case_id, record_id, target_state, review_note, expected_hash,
+            principal=principal,
         )
+
+    except CaseAccessDeniedError:
+
+        # Bkz. `case_scoped_confirm`'deki AYNI not - app-seviyesi
+        # handler'ın genel 404'ü üretmesi için BİLEREK yeniden fırlatılır.
+        raise
 
     except ReviewStaleViewError as error:
 
@@ -879,7 +1032,12 @@ def review_confirm(
 @app.get("/cases/{case_id}/drafting-request")
 def drafting_request_page(request: Request, case_id: str):
 
-    case_id = _resolve_case(case_id)
+    # Row 19B: KASITLI olarak "read" DEĞİL "mutate" capability'si
+    # istiyor - bu ekran salt-okunur bir review görünümü DEĞİL, avukatın
+    # gireceği/kaydedeceği yapılandırılmış bir girdi formu; yalnız
+    # lawyer rolü görebilir (analyst GET'te bile 404 alır) - bkz. modül
+    # başındaki Row 19B route-layer remediation notu, madde 10.
+    principal, case_id = require_principal_and_case(request, case_id, "mutate")
 
     back_url = f"/cases/{case_id}"
 
@@ -891,8 +1049,9 @@ def drafting_request_page(request: Request, case_id: str):
 
         return _error_page(request, "DRAFTING_REQUEST_VIEW_INVALID", back_url, exc=error)
 
+    csrf_secret = csrf_secret_for_request(request, principal)
     csrf_token = security.make_csrf_token(
-        _CSRF_SECRET, case_id, "drafting_request", "save", view["expected_current_input_hash"],
+        csrf_secret, case_id, "drafting_request", "save", view["expected_current_input_hash"],
     )
 
     return render(
@@ -925,11 +1084,12 @@ async def drafting_request_confirm(request: Request, case_id: str):
     # kendi `_DraftingRequestBodyTooLarge`'ımız) FastAPI'nin KENDİ
     # bağımlılık-çözümleme katmanı tarafından YUTULUP farklı bir hataya
     # dönüştürülebiliyordu. Aşağıdaki sıra artık TAMAMEN bu route'un
-    # kendi kontrolünde: (1) case_id çözümü - gövdeye HİÇ dokunmadan;
-    # (2) gövde boyutu zaten ASGI middleware'i tarafından sınırlanmış
-    # durumdayken, form'un MANUEL ayrıştırılması; (3) CSRF/aynı-origin/
-    # onay-kutusu kontrolleri; (4) anlamsal doğrulama + kaydetme.
-    case_id = _resolve_case(case_id)
+    # kendi kontrolünde: (1) kimlik doğrulama + case_id çözümü ("mutate"
+    # capability'si - bkz. GET route'undaki AYNI not) - gövdeye HİÇ
+    # dokunmadan; (2) gövde boyutu zaten ASGI middleware'i tarafından
+    # sınırlanmış durumdayken, form'un MANUEL ayrıştırılması; (3) CSRF/
+    # aynı-origin/onay-kutusu kontrolleri; (4) anlamsal doğrulama + kaydetme.
+    principal, case_id = require_principal_and_case(request, case_id, "mutate")
 
     back_url = f"/cases/{case_id}/drafting-request"
 
@@ -1025,9 +1185,12 @@ async def drafting_request_confirm(request: Request, case_id: str):
     # CSRF + aynı-origin kontrolü, HERHANGİ bir doğrulama/kaydetme
     # adımından ÖNCE (18a/18b ile AYNI ilke). Parça sırası GET
     # route'undaki üretim sırasıyla BİREBİR AYNI olmalı: case_id +
-    # "drafting_request" + "save" + expected_current_input_hash.
+    # "drafting_request" + "save" + expected_current_input_hash. Row
+    # 19B: gizli anahtar bu isteğin oturumundan taze türetiliyor.
+    csrf_secret = csrf_secret_for_request(request, principal)
+
     if not _check_csrf_and_origin(
-        request, _CSRF_SECRET, csrf_token, case_id, "drafting_request", "save", expected_current_input_hash,
+        request, csrf_secret, csrf_token, case_id, "drafting_request", "save", expected_current_input_hash,
     ):
 
         return _error_page(request, "CSRF_INVALID", back_url)
@@ -1041,6 +1204,9 @@ async def drafting_request_confirm(request: Request, case_id: str):
 
     try:
 
+        # Row 19B: `principal=` GEÇİLİR - `save_lawyer_input_from_form`
+        # kendi `authz.authorize_case_access(principal, case_id,
+        # "mutate")` çağrısını BAĞIMSIZ olarak TEKRAR yapar.
         wrapper = draftreq.save_lawyer_input_from_form(
             case_id=case_id,
             draft_intent_type_choice=draft_intent_type,
@@ -1051,7 +1217,14 @@ async def drafting_request_confirm(request: Request, case_id: str):
             request_text_raw=request_text,
             lawyer_provided_text_raw=lawyer_provided_text,
             expected_current_input_hash=expected_current_input_hash,
+            principal=principal,
         )
+
+    except CaseAccessDeniedError:
+
+        # Bkz. `case_scoped_confirm`'deki AYNI not - app-seviyesi
+        # handler'ın genel 404'ü üretmesi için BİLEREK yeniden fırlatılır.
+        raise
 
     except DraftingRequestStaleInputError as error:
 

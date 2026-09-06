@@ -50,6 +50,7 @@ from referencing import Registry, Resource
 from jsonschema import Draft202012Validator, FormatChecker
 
 from .paths import CASES_DIR, DATA_DIR, to_repo_relative
+from . import authz as _authz
 from .common import (
     DraftingRequestUiError,
     DraftingRequestFormError,
@@ -59,6 +60,22 @@ from .common import (
     DraftingRequestSaveFailedError,
     sha256_file,
 )
+
+# ============================================================
+# Row 19B: module-level (not a local closure) so tests can monkeypatch
+# it directly - same DI pattern as
+# `approval_registry._default_authz_repository` /
+# `review_registry._default_authz_repository`. Lazy-imports `db` (and
+# through it, psycopg) so this module stays importable without psycopg
+# installed; only actually CALLING this (in production, when
+# `save_lawyer_input_from_form` is not given an explicit
+# `authz_repository=`) requires it.
+# ============================================================
+
+
+def _default_authz_repository():
+    from . import db as _db
+    return _authz.PostgresAuthzRepository(_db.get_connection())
 
 # `.paths` import'u SRC_DIR'i zaten sys.path'e ekledi (bkz. paths.py) -
 # bu yüzden src/ modülleri burada doğrudan import edilebilir (Prensip
@@ -783,11 +800,27 @@ def save_lawyer_input_from_form(
     request_text_raw,
     lawyer_provided_text_raw,
     expected_current_input_hash,
+    principal,
+    authz_repository=None,
 ):
     """Form -> (sözdizimsel doğrulama) -> (issue üyeliği + sıralama) ->
     (wrapper inşası) -> (TAM paylaşılan doğrulayıcı, ÖN-KONTROL olarak)
     -> (kaydetme yaşam döngüsü, TAZELİK kontrolü BURADA da tekrar
-    KENDİ İÇİNDE yapılır) sırasını uygular."""
+    KENDİ İÇİNDE yapılır) sırasını uygular.
+
+    Row 19B: `principal` is REQUIRED (keyword-only, no default) - this
+    function independently re-runs `authz.authorize_case_access(principal,
+    case_id, "mutate")` BEFORE any parsing/validation, exactly like
+    case_scoped_approve and apply_transition. Analysts (read-only) can
+    never reach this function - "mutate" capability is required, and
+    `GET .../drafting-request` itself is lawyer-only at the route layer
+    (the lawyer's free-text instructions are confidential even to a
+    read-only analyst on the same case)."""
+
+    case_id = _authz.authorize_case_access(
+        principal, case_id, "mutate",
+        repository=authz_repository or _default_authz_repository(),
+    )
 
     lawyer_input = build_lawyer_input_from_form(
         draft_intent_type_choice=draft_intent_type_choice,

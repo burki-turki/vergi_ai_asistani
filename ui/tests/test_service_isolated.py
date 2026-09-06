@@ -28,7 +28,18 @@ if str(REPO_ROOT) not in sys.path:
 from ui.services import paths as real_paths          # noqa: E402
 from ui.services import security                      # noqa: E402
 from ui.services import live_view                      # noqa: E402
+from ui.services import authz as _authz                # noqa: E402 (Row 19B)
 from ui.services.common import UnknownCaseError, LiveViewInvalidError  # noqa: E402
+
+# Row 19B: case_scoped_approve now REQUIRES a `principal` and
+# independently re-checks authorization via authz.authorize_case_access.
+# This isolated suite fakes a lawyer principal with a real assignment to
+# "case_iso_0001", via the InMemoryAuthzRepository - no psycopg/DB needed,
+# preserving this file's "no external deps" property.
+_izole_authz_repo = _authz.InMemoryAuthzRepository()
+_izole_authz_repo.sessions[1] = _authz.SessionRecord(user_id=1, current_authz_version=1, disabled=False)
+_izole_authz_repo.assignments[(1, "case_iso_0001")] = _authz.CaseAssignmentRecord(role="lawyer")
+_izole_lawyer_principal = _authz.Principal(user_id=1, session_id=1, role_version_at_issue=1)
 
 passed = 0
 failed = 0
@@ -339,7 +350,7 @@ def _run_isolated_mutation_scenario():
 
             expected_hash = reg.sha256_file(pending_path)
 
-            result = reg.case_scoped_approve("_izole_test_ok", "case_iso_0001", expected_hash)
+            result = reg.case_scoped_approve("_izole_test_ok", "case_iso_0001", expected_hash, principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo)
 
             check(
                 "izole mutasyon: başarılı onay -> canonical dosyası yazıldı",
@@ -354,7 +365,7 @@ def _run_isolated_mutation_scenario():
 
             expect_raises(
                 Exception,
-                lambda: reg.case_scoped_approve("_izole_test_ok", "case_iso_0001", "0" * 64),
+                lambda: reg.case_scoped_approve("_izole_test_ok", "case_iso_0001", "0" * 64, principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo),
                 "izole mutasyon: yanlış (stale) expected_hash -> StaleViewError",
             )
             check("izole mutasyon: stale hash durumunda run_approve HİÇ çağrılmadı", calls["run_approve"] == 0)
@@ -381,7 +392,7 @@ def _run_isolated_mutation_scenario():
 
             expect_raises(
                 RuntimeError,
-                lambda: reg.case_scoped_approve("_izole_test_fail", "case_iso_0001", expected_hash_2),
+                lambda: reg.case_scoped_approve("_izole_test_fail", "case_iso_0001", expected_hash_2, principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo),
                 "izole mutasyon: run_approve içinde hata -> istisna yukarı yayılır (sessizce yutulmaz)",
             )
             check("izole mutasyon: hata senaryosunda run_approve 1 kez denendi", calls["run_approve"] == 1)

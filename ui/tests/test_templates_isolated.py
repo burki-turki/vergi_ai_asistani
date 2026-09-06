@@ -135,10 +135,18 @@ check_contains(
     html, "web üzerinden onay desteklenmiyor",
 )
 
-html = check("approval_review.html (case_scoped, csrf_token ile)", lambda: env.get_template("approval_review.html").render(
+# TARGETED RECONCILIATION (Row 19B): approval_review.html now gates its
+# confirm-form on `can_mutate` (role-aware rendering, added this Row -
+# see ui/templates/approval_review.html). This fixture represents a
+# successful-mutation scenario (a lawyer viewing/approving a case_view
+# review), so it must explicitly pass can_mutate=True - the read-only
+# (analyst, can_mutate=False) rendering path already has its own
+# dedicated coverage in test_role_aware_rendering.py and is left
+# untouched here.
+html = check("approval_review.html (case_scoped, csrf_token ile, can_mutate=True)", lambda: env.get_template("approval_review.html").render(
     case_id=CASE_ID, row=cv_review["row"], pending_hash=cv_review["pending_hash"],
     analysis=cv_review["analysis"], confirm_action=f"/cases/{CASE_ID}/approvals/case_view/confirm",
-    back_url=f"/cases/{CASE_ID}/approvals", csrf_token=_csrf_token,
+    back_url=f"/cases/{CASE_ID}/approvals", csrf_token=_csrf_token, can_mutate=True,
 ))
 check_contains(
     "approval_review.html: csrf_token gizli alanı render edildi",

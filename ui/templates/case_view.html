@@ -12,7 +12,9 @@
   <p>
     <a class="button" href="/cases/{{ case_id }}/approvals">Onay ekranına git</a>
     <a class="button" href="/cases/{{ case_id }}/reviews">İncelemeler (Layer B)</a>
+    {% if can_view_drafting_request %}
     <a class="button" href="/cases/{{ case_id }}/drafting-request">Yapılandırılmış Avukat Girdisi (Row 18C)</a>
+    {% endif %}
   </p>
 
   {% if not has_canonical %}

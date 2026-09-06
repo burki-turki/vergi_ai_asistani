@@ -91,7 +91,118 @@ if not _FASTAPI_AVAILABLE:
 from ui.services import paths as svc_paths
 from ui.services import live_view
 from ui.services import approval_registry as reg
+from ui.services import authz as _authz
+from ui.services.common import UnknownCaseError
+import ui.main as main_module
 from ui.main import app
+
+# ============================================================
+# Row 19B - AUTHENTICATED-SESSION TEST FIXTURE
+#
+# Every route now requires require_principal()/authorize_case_access()
+# (see ui/main.py's Row 19B route-layer remediation notes). This file
+# tests ROUTE MECHANICS (CSRF, cross-origin, body-size limits, path
+# traversal, live-view fail-closed rendering) - NOT the auth/session/
+# authorization layer itself, which has its own dedicated suites
+# (ui/tests/test_auth_routes.py, ui/tests/test_authz_isolated.py -
+# 15/15). `ui.main`'s OWN bound names (imported BY VALUE from
+# ui.auth_routes at ui.main's import time - patching
+# ui.auth_routes's names afterwards would have NO effect on ui.main's
+# routes) are monkeypatched to a fixed test principal + an
+# always-allow (lawyer) in-memory authorization repository - every
+# route's real call sites still run, only the session/DB lookup
+# underneath them is faked. This file never imported a shared
+# `_CSRF_SECRET` (its tests always extract a real, server-rendered
+# token from the GET page first via `_extract_hidden_input` - see
+# below), so no separate test-CSRF-secret constant is needed here;
+# `csrf_secret_for_request` is monkeypatched to a fixed value purely
+# so GET-time generation and POST-time verification agree.
+# ============================================================
+
+
+class _AllowAllAsLawyerRepository(_authz.InMemoryAuthzRepository):
+    """Grants the fixed test principal a 'lawyer' assignment on ANY
+    case_id, and a valid/current session state - this file's tests
+    exercise route MECHANICS, not authorization DECISIONS (those are
+    covered by test_authz_isolated.py/test_auth_routes.py)."""
+
+    def get_session_authz_state(self, principal):
+        return _authz.SessionRecord(
+            user_id=principal.user_id, current_authz_version=principal.role_version_at_issue, disabled=False,
+        )
+
+    def get_active_case_assignment(self, user_id, case_id):
+        return _authz.CaseAssignmentRecord(role="lawyer")
+
+
+_TEST_PRINCIPAL = _authz.Principal(user_id=999, session_id=999, role_version_at_issue=1)
+_TEST_REPO = _AllowAllAsLawyerRepository()
+
+main_module.require_principal = lambda request: _TEST_PRINCIPAL
+main_module.authorize_or_redirect = lambda request, case_id, capability: _authz.authorize_case_access(
+    _TEST_PRINCIPAL, case_id, capability, repository=_TEST_REPO,
+)
+main_module.require_principal_and_case = lambda request, case_id, capability: (
+    _TEST_PRINCIPAL,
+    _authz.authorize_case_access(_TEST_PRINCIPAL, case_id, capability, repository=_TEST_REPO),
+)
+main_module.csrf_secret_for_request = lambda request, principal: b"test-only-fixed-csrf-secret-32b"
+main_module.has_capability = lambda request, principal, case_id, capability: True
+
+# ============================================================
+# Row 19B targeted remediation (finding 2) - GET / case-enumeration
+# route fixture.
+#
+# `ui.main.index()` now calls `list_accessible_case_ids(request,
+# principal)` (imported BY VALUE from ui.auth_routes at ui.main's
+# import time, same reason main_module.require_principal etc. above
+# are patched on ui.main directly rather than on ui.auth_routes).
+#
+# The fake below routes through the REAL `authz.list_accessible_case_ids`
+# decision function (not a hand-substituted list) against a fully
+# controllable InMemoryAuthzRepository - this exercises the ACTUAL
+# route wiring (main.py calls the authz-layer function and renders
+# EXACTLY what it returns, nothing more) while keeping the
+# role/assignment data itself test-controlled, exactly like
+# `_AllowAllAsLawyerRepository` does for the per-case routes above.
+# `_TEST_PRINCIPAL` (user_id=999) is fixed for the whole file (main_module.
+# require_principal always returns it) - different "roles" across the
+# scenarios below are expressed by reconfiguring what this repository
+# knows about user_id 999, not by swapping principals.
+# ============================================================
+
+_LISTING_REPO = _authz.InMemoryAuthzRepository()
+_LISTING_REPO.sessions[999] = _authz.SessionRecord(user_id=999, current_authz_version=1, disabled=False)
+# NOTE: the baseline "matches original T01b expectation" assignment
+# (999, case_id) is seeded further below, right after `case_id` is
+# first defined from the real case data (see "case_id = case_ids[0]") -
+# `case_id` does not exist yet at this point in the file, and seeding
+# it here unconditionally caused a NameError at import time.
+_LISTING_STALE_MARKER = "__row19b_stale_unresolvable_case__"
+
+
+def _listing_resolve_case_id(cid):
+    if cid == _LISTING_STALE_MARKER:
+        raise UnknownCaseError(f"{cid} does not exist on disk")
+    return cid
+
+
+def _fake_list_accessible_case_ids(request, principal):
+    return _authz.list_accessible_case_ids(
+        principal, repository=_LISTING_REPO, resolve_case_id=_listing_resolve_case_id,
+    )
+
+
+main_module.list_accessible_case_ids = _fake_list_accessible_case_ids
+
+# The service layer independently RE-RUNS authz.authorize_case_access
+# with its OWN default repository (a real Postgres-backed one) unless a
+# route passes authz_repository= explicitly - main.py does NOT (by
+# design: production always uses the real repository). Route-mechanic
+# tests below therefore override the service module's
+# _default_authz_repository() directly, rather than main.py's call
+# sites (which must stay production-faithful).
+reg._default_authz_repository = lambda: _TEST_REPO
 
 # targeted remediation §7/§9: TestClient'ın istemci adresini AÇIKÇA
 # loopback yapıyoruz - httpx/Starlette TestClient varsayılanı
@@ -236,6 +347,13 @@ if not case_ids:
 
 case_id = case_ids[0]
 
+# Row 19B test-harness reconciliation: this is the baseline assignment
+# T01b's original expectation depends on (`case_id in r_index.text`) -
+# moved here, after `case_id` is actually defined, instead of at
+# `_LISTING_REPO`'s construction above (where `case_id` did not exist
+# yet and referencing it raised a NameError at import time).
+_LISTING_REPO.assignments[(999, case_id)] = _authz.CaseAssignmentRecord(role="lawyer")
+
 # --- T00: loopback-only middleware gerçekten reddediyor mu? ---
 _loopback_test_client = TestClient(app, client=("203.0.113.7", 55555))
 r = _loopback_test_client.get("/")
@@ -245,6 +363,99 @@ check("T00 loopback olmayan istemci -> 403", r.status_code == 403, f"status={r.s
 r_index = client.get("/")
 check("T01 GET / -> 200", r_index.status_code == 200, f"status={r_index.status_code}")
 check("T01b GET / case_id'yi listeliyor", case_id in r_index.text)
+
+# ============================================================
+# T01c-T01h: Row 19B targeted remediation (finding 2) - GET / case
+# enumeration is now an AUTHZ-LAYER decision (authz.list_accessible_case_ids
+# via main_module.list_accessible_case_ids), not the unfiltered
+# `paths.list_case_ids()`. Each scenario reconfigures `_LISTING_REPO`
+# for the fixed test principal (user_id=999) and/or a second synthetic
+# user_id, then re-requests GET / and inspects the rendered page.
+# ============================================================
+
+_OTHER_CASE_A = "case_row19b_listing_a"
+_OTHER_CASE_B = "case_row19b_listing_b"
+
+
+def _reset_listing_repo():
+    _LISTING_REPO.assignments.clear()
+    _LISTING_REPO.admins.clear()
+    _LISTING_REPO.assignments[(999, case_id)] = _authz.CaseAssignmentRecord(role="lawyer")
+
+
+# --- T01c: lawyer sees exactly their own active, resolvable assigned cases ---
+_reset_listing_repo()
+_LISTING_REPO.assignments[(999, _OTHER_CASE_A)] = _authz.CaseAssignmentRecord(role="lawyer")
+r = client.get("/")
+check(
+    "T01c lawyer (GET /) sees ALL of their own active assigned+resolvable case ids",
+    case_id in r.text and _OTHER_CASE_A in r.text,
+    f"status={r.status_code}",
+)
+
+# --- T01d: analyst role behaves the same way for listing purposes (read-only capability does not affect visibility) ---
+_reset_listing_repo()
+_LISTING_REPO.assignments[(999, _OTHER_CASE_B)] = _authz.CaseAssignmentRecord(role="analyst")
+r = client.get("/")
+check(
+    "T01d analyst (GET /) sees their own active assigned case id",
+    _OTHER_CASE_B in r.text,
+    f"status={r.status_code}",
+)
+
+# --- T01e: global admin sees ZERO case ids, even when also explicitly assigned one ---
+_reset_listing_repo()
+_LISTING_REPO.admins.add(999)
+r = client.get("/")
+check(
+    "T01e admin (GET /) sees the ORIGINAL default assigned case_id nowhere on the page (unconditional admin veto)",
+    case_id not in r.text,
+    f"status={r.status_code}",
+)
+check(
+    "T01e (self-check) the admin-veto scenario actually starts from a repository that DOES carry an active assignment "
+    "for this user - proving the empty result comes from the admin check, not from an empty repository",
+    (999, case_id) in _LISTING_REPO.assignments,
+)
+
+# --- T01f: cross-user isolation - a case assigned to a DIFFERENT user_id must never appear in user 999's listing ---
+_reset_listing_repo()
+_LISTING_REPO.assignments[(888, "case_belongs_to_someone_else")] = _authz.CaseAssignmentRecord(role="lawyer")
+r = client.get("/")
+check(
+    "T01f GET / never renders a case id assigned to a DIFFERENT user_id (cross-user isolation)",
+    "case_belongs_to_someone_else" not in r.text,
+    f"status={r.status_code}",
+)
+check("T01f (sanity) the requesting user's own case_id is still listed alongside the isolation check", case_id in r.text)
+
+# --- T01g: a revoked assignment must not appear (simulated by removal, matching InMemoryAuthzRepository's existing convention throughout this test suite / test_authz_isolated.py) ---
+_reset_listing_repo()
+_LISTING_REPO.assignments[(999, "case_to_be_revoked")] = _authz.CaseAssignmentRecord(role="lawyer")
+del _LISTING_REPO.assignments[(999, "case_to_be_revoked")]
+r = client.get("/")
+check(
+    "T01g a revoked (removed) assignment does not appear in GET /'s listing",
+    "case_to_be_revoked" not in r.text,
+    f"status={r.status_code}",
+)
+
+# --- T01h: a stale/nonexistent assigned case (filesystem no longer resolves it) is silently omitted, page still renders 200 with the remaining valid case ids ---
+_reset_listing_repo()
+_LISTING_REPO.assignments[(999, _LISTING_STALE_MARKER)] = _authz.CaseAssignmentRecord(role="lawyer")
+r = client.get("/")
+check("T01h a stale/unresolvable assigned case does not crash GET / (still 200)", r.status_code == 200)
+check(
+    "T01h a stale/unresolvable assigned case_id is silently omitted from the rendered page",
+    _LISTING_STALE_MARKER not in r.text,
+)
+check(
+    "T01h the requesting user's other, genuinely resolvable assigned case_id still renders normally "
+    "(one stale entry does not blank out the whole listing)",
+    case_id in r.text,
+)
+
+_reset_listing_repo()  # restore the baseline the rest of this file (T02 onward) already depends on
 
 # --- T02: canlı case view ---
 r = client.get(f"/cases/{case_id}")

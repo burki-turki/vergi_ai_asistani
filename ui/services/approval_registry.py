@@ -48,6 +48,7 @@ import io
 from pathlib import Path
 
 from . import paths
+from . import authz as _authz
 from .common import (
     ApprovalUiError,
     StaleViewError,
@@ -56,6 +57,25 @@ from .common import (
     find_latest_audit,
     sha256_file,
 )
+
+# ============================================================
+# Row 19B - INDEPENDENT SERVICE-LAYER AUTHORIZATION (added this turn)
+#
+# `case_scoped_approve` is a MUTATION. Row 19B's threat model treats a
+# route-only authorization check as insufficient - every mutation
+# entry point calls `authz.authorize_case_access` itself, so a future
+# route bug (or a second unauthenticated call path) cannot bypass
+# authorization by construction. `principal` is now a REQUIRED
+# keyword-only parameter; `authz_repository` defaults to the real
+# Postgres-backed repository (lazy import, so this module still
+# imports cleanly without psycopg) and is only overridden by tests.
+# ============================================================
+
+
+def _default_authz_repository():
+    from . import db as _db  # lazy import (psycopg)
+    conn = _db.get_connection()
+    return _authz.PostgresAuthzRepository(conn)
 
 
 # ============================================================
@@ -222,7 +242,7 @@ def case_scoped_review(row_key, case_id):
     }
 
 
-def case_scoped_approve(row_key, case_id, expected_hash):
+def case_scoped_approve(row_key, case_id, expected_hash, *, principal, authz_repository=None):
     """
     MUTASYON. `expected_hash`, review ekranı render edildiğinde
     hesaplanan pending hash'idir - şu ANKİ pending hash'iyle
@@ -230,9 +250,20 @@ def case_scoped_approve(row_key, case_id, expected_hash):
     `run_approve` kendi içinde backup/pre-post-write manifest
     karşılaştırması/rollback yapar - Row 18 bunların HİÇBİRİNİ
     YENİDEN UYGULAMAZ, yalnız çağırır ve sonucu okur.
+
+    Row 19B: `principal` is REQUIRED. This function independently
+    re-runs `authz.authorize_case_access(principal, case_id, "mutate")`
+    BEFORE doing anything else - a route-level check alone is not
+    trusted. Filesystem-safe case_id resolution now comes FROM that
+    authorization call (its own 5th step), not from a separate direct
+    `paths.resolve_case_id()` call here - `paths.resolve_case_id`
+    itself is unchanged.
     """
 
-    case_id = paths.resolve_case_id(case_id)
+    case_id = _authz.authorize_case_access(
+        principal, case_id, "mutate",
+        repository=authz_repository or _default_authz_repository(),
+    )
 
     row = CASE_SCOPED_ROWS_BY_KEY[row_key]
 

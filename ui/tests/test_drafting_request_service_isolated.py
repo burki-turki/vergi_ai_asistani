@@ -34,6 +34,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from ui.services import paths as real_paths                       # noqa: E402
 from ui.services import drafting_request as dr                    # noqa: E402
+from ui.services import authz as _authz                            # noqa: E402 (Row 19B)
 from ui.services.common import (                                   # noqa: E402
     DraftingRequestUiError,
     DraftingRequestFormError,
@@ -42,6 +43,23 @@ from ui.services.common import (                                   # noqa: E402
     DraftingRequestNamingCollisionError,
     DraftingRequestSaveFailedError,
 )
+
+# Row 19B: save_lawyer_input_from_form() now REQUIRES `principal` and
+# independently re-checks authorization. Same isolation principle as
+# test_review_service_isolated.py's _AllowAllAsLawyerRepository - this
+# suite tests drafting_request's OWN form/validation/save-lifecycle
+# logic, not authorization (which has its own full suite in
+# test_authz_isolated.py).
+class _AllowAllAsLawyerRepository(_authz.InMemoryAuthzRepository):
+    def get_session_authz_state(self, principal):
+        return _authz.SessionRecord(user_id=principal.user_id, current_authz_version=principal.role_version_at_issue, disabled=False)
+
+    def get_active_case_assignment(self, user_id, case_id):
+        return _authz.CaseAssignmentRecord(role="lawyer")
+
+
+_izole_authz_repo = _AllowAllAsLawyerRepository()
+_izole_lawyer_principal = _authz.Principal(user_id=1, session_id=1, role_version_at_issue=1)
 
 import legal_research_validator as lrv                             # noqa: E402
 import drafting_policy                                             # noqa: E402
@@ -101,6 +119,7 @@ def isolated_case(issue_ids=("iss_a", "iss_b", "iss_c")):
 
     original_cases_dir = dr.CASES_DIR
     original_get_issues_dir = lrv.get_issues_dir
+    original_resolve_case_id = real_paths.resolve_case_id
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -127,11 +146,30 @@ def isolated_case(issue_ids=("iss_a", "iss_b", "iss_c")):
             tmp_path / cid / "legal_analysis" / "issue_spotting"
         )
 
+        # TARGETED RECONCILIATION (Row 19B): `save_lawyer_input_from_form`
+        # now independently re-runs `authz.authorize_case_access(...)`,
+        # whose step 5 calls the REAL, UNCHANGED `paths.resolve_case_id`
+        # (via a lazy per-call import inside authz.py) regardless of the
+        # `_AllowAllAsLawyerRepository` fake used below for steps 1-4 -
+        # that fake only ever controls session/assignment/capability, not
+        # filesystem-existence resolution. Without this, every call below
+        # would be denied (CaseAccessDeniedError) because this synthetic
+        # tempdir case_id does not exist under the REAL data/cases/ tree.
+        # This is the same narrow, test-lifetime resolver seam already
+        # used by test_run_drafting_request_isolated.py's isolated_case()
+        # - it accepts ONLY this test's own synthetic case_id and defers
+        # to the real resolver for anything else; no case is created in
+        # the real data/ tree, and it is restored in `finally` below.
+        real_paths.resolve_case_id = lambda cid, _case_id=case_id: (
+            cid if cid == _case_id else original_resolve_case_id(cid)
+        )
+
         try:
             yield (case_id, tmp_path)
         finally:
             dr.CASES_DIR = original_cases_dir
             lrv.get_issues_dir = original_get_issues_dir
+            real_paths.resolve_case_id = original_resolve_case_id
 
 
 _EMPTY_LI = {
@@ -163,6 +201,7 @@ with isolated_case() as (case_id, tmp_path):
         issue_selection_mode="specific", selected_issue_ids_raw=["iss_c", "iss_a"],
         request_type_raw="dilekce", request_text_raw="lutfen inceleyin",
         lawyer_provided_text_raw="", expected_current_input_hash=token0,
+        principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
     )
 
     check("T02 first-save: selected_issue_ids sıralı", wrapper1["lawyer_input"]["selected_issue_ids"] == ["iss_a", "iss_c"])
@@ -190,6 +229,7 @@ with isolated_case() as (case_id, tmp_path):
         issue_selection_mode="not_provided", selected_issue_ids_raw=[],
         request_type_raw="", request_text_raw="", lawyer_provided_text_raw="ilk metin",
         expected_current_input_hash=t0,
+        principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
     )
     t1 = dr.compute_current_freshness_token(case_id)
     check("T08 overwrite: ikinci freshness token ilkinden farklı", t1 != t0)
@@ -199,6 +239,7 @@ with isolated_case() as (case_id, tmp_path):
         issue_selection_mode="none", selected_issue_ids_raw=[],
         request_type_raw="", request_text_raw="", lawyer_provided_text_raw="ikinci metin",
         expected_current_input_hash=t1,
+        principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
     )
     check("T09 overwrite: selected_issue_ids == [] (bilinçli hiçbiri)", wrapper2["lawyer_input"]["selected_issue_ids"] == [])
     check(
@@ -227,6 +268,7 @@ with isolated_case() as (case_id, tmp_path):
         issue_selection_mode="not_provided", selected_issue_ids_raw=[],
         request_type_raw="", request_text_raw="", lawyer_provided_text_raw="x",
         expected_current_input_hash=t0,
+        principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
     )
     before_bytes = dr.get_current_input_path(case_id).read_bytes()
     audit_count_before = len(list(dr.get_input_audit_dir(case_id).glob("*")))
@@ -239,6 +281,7 @@ with isolated_case() as (case_id, tmp_path):
             issue_selection_mode="not_provided", selected_issue_ids_raw=[],
             request_type_raw="", request_text_raw="", lawyer_provided_text_raw="y",
             expected_current_input_hash="0" * 64,
+            principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
         ),
         "T14 stale-hash reddedildi (DraftingRequestStaleInputError)",
     )
@@ -585,6 +628,7 @@ with isolated_case() as (case_id, tmp_path):
         issue_selection_mode="not_provided", selected_issue_ids_raw=[],
         request_type_raw="", request_text_raw="", lawyer_provided_text_raw="orijinal metin",
         expected_current_input_hash=t0,
+        principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
     )
     current_path = dr.get_current_input_path(case_id)
     original_bytes = current_path.read_bytes()
