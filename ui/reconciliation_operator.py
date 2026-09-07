@@ -227,14 +227,23 @@ def _default_conn_factory():
 
 
 def _default_registry_factory() -> mr.MutationAdapterRegistry:
-    """ROW 19C-2a STEP 6 FORWARD REFERENCE - see this module's own
-    header comment. NEVER called by
+    """ROW 19C-2a STEP 6 / ROW 19C-2b: builds ONE merged registry
+    covering EVERY production mutation family this coordinator serves -
+    Layer A's 10 case-scoped approval families
+    (`mutation_approval_adapters.build_production_registry()`) PLUS
+    Layer B's 12 review_kind record-level review families
+    (`review_mutation_adapters.register_into()`, folded onto the same
+    registry rather than building a second, separate one) - so a human
+    operator can reconcile ANY journal row this project produces,
+    regardless of family, through this ONE CLI. NEVER called by
     `ui/tests/test_reconciliation_operator_isolated.py` (which always
     injects its own fake `registry_factory`) - only a real CLI
-    invocation reaches this, and only once Step 6 has landed."""
+    invocation reaches this."""
     from ui.services import mutation_approval_adapters  # lazy import - see module docstring
+    from ui.services import review_mutation_adapters  # lazy import - see module docstring
 
-    return mutation_approval_adapters.build_production_registry()
+    registry = mutation_approval_adapters.build_production_registry()
+    return review_mutation_adapters.register_into(registry)
 
 
 def _format_outcome_line(outcome: mr.ReconciliationOutcome) -> str:

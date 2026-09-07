@@ -219,14 +219,29 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   altyapısının İLK gerçek production writer'a bağlandığı alt-fazdır:
   on Layer A approval ailesinin tamamı. Rows 1-18, Row 19A, Row 19B ve
   Row 19C-1 contract'ları değişmedi.
-- Sıradaki canonical alt-faz: **ROW 19C-2b — Layer B review writer
-  entegrasyonu** — **ACTIVE / NEXT** — **henüz implementasyona
-  BAŞLANMADI**; kendi tam dosya allowlist'i implementasyondan ÖNCE
-  ayrıca sunulup onaylatılmalıdır (Row 19A'nın dosya-değişiklik sınırı
-  kararı uyarınca) — genel Row 19C-1 veya Row 19C-2a onayı Row
-  19C-2b'nin dosya değişikliğini ÖNCEDEN yetkilendirmez. Bu satır
-  yalnız SIRADAKİ KAPSAMIN ADINI belirtir; 19C-2b için henüz hiçbir
-  kod, şema veya allowlist belirleme çalışması yapılmamıştır.
+- **ROW 19C-2b — Layer B Review Mutation Integration** artık **DONE /
+  LOCKED** — kullanıcı tarafından ayrıca onaylanmış, dört ayrı
+  mekanik-netleştirme turuyla (advisor Fable 5 danışmalı) kesinleştirilmiş
+  20 dosyalık allowlist (4 yeni + 16 değiştirilmiş dosya) üzerinde
+  implement edildi, gerçek/disposable bir PostgreSQL örneğine karşı
+  yerel testlerle doğrulandı ve bağımsız, salt-okunur bir final
+  inceleme - iddia edilen test sonuçlarının rapora güvenilmeden
+  bağımsızca yeniden çalıştırılması dahil - `No blocking findings`
+  sonucuyla `ROW 19C-2b LOCK-READY` verdict'inden geçti (bkz. Row
+  19C-2b checkpoint özeti, §5 sonrası). Bu, mutation coordinator/journal altyapısının İKİNCİ gerçek
+  production writer ailesine bağlandığı alt-fazdır: 12 review_kind'ın
+  (Evidence/Argument/Risk-Strategy/Drafting/QA Layer B) tamamı. Rows
+  1-18, Row 19A, Row 19B, Row 19C-1 ve Row 19C-2a contract'ları
+  değişmedi.
+- Sıradaki canonical alt-faz: **ROW 19C-2c (adı henüz kesinleşmemiş) —
+  kalan CLI-only mutasyon giriş noktaları + Row 18C drafting-request
+  writer'ının coordinator'a bağlanması** — **ACTIVE / NEXT** — **henüz
+  implementasyona BAŞLANMADI**; kendi tam dosya allowlist'i
+  implementasyondan ÖNCE ayrıca sunulup onaylatılmalıdır (Row 19A'nın
+  dosya-değişiklik sınırı kararı uyarınca) — genel Row 19C-2b onayı bu
+  sıradaki alt-fazın dosya değişikliğini ÖNCEDEN yetkilendirmez. Bu
+  satır yalnız SIRADAKİ KAPSAMIN ADINI belirtir; bu alt-faz için henüz
+  hiçbir kod, şema veya allowlist belirleme çalışması yapılmamıştır.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -1735,6 +1750,262 @@ kapatıldı; geriye yalnız `ui/services/paths.py`'nin `CASES_DIR`'ini
 DOĞRUDAN kullanan dosyalar için path-containment borcunun ilgili
 writer/CLI entegrasyonu sırasında kapatılması kaldı (Layer A tarafı
 kapandı; Layer B/CLI tarafı 19C-2b/19C-2+ kapsamındadır).
+
+### Row 19C-2b — Layer B Review Mutation Integration (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından, dört ayrı mekanik-
+netleştirme turuyla (her turda advisor Fable 5'e danışılarak) kesinleştirilmiş
+20 dosyalık allowlist üzerinde tamamlandı: **4 YENİ + 16 DEĞİŞTİRİLMİŞ**;
+allowlist dışında hiçbir dosyaya dokunulmadı (git status ile ayrıca
+doğrulandı - tam 20 dosya, `data/` ağacı bütünüyle temiz).
+
+- Yeni (4): `ui/services/review_mutation_facade.py`,
+  `ui/services/review_mutation_adapters.py`,
+  `ui/tests/test_review_mutation_facade_isolated.py`,
+  `ui/tests/test_review_mutation_integration_postgres.py`.
+- Değiştirilmiş (16): `src/mutation_guard.py`, `src/evidence_review.py`,
+  `src/argument_review.py`, `src/risk_strategy_review.py`,
+  `src/drafting_review.py`, `src/qa_review.py`, `ui/services/common.py`,
+  `ui/services/review_registry.py`, `ui/services/mutation_registry.py`,
+  `ui/main.py`, `ui/reconciliation_operator.py`, `ui/tests/
+  test_review_service_isolated.py`, `ui/tests/test_review_routes.py`,
+  `ui/tests/test_mutation_guard_isolated.py`, `ui/tests/
+  test_reconciliation_isolated.py`, `ui/tests/
+  test_reconciliation_operator_isolated.py`.
+
+**İkinci gerçek production writer ailesi bağlantısı** — Row 19C-2a
+mutation coordinator/journal altyapısını Layer A'nın 10 case-scoped
+approval ailesine bağlamıştı. Bu alt-faz AYNI altyapıyı (Row 19C-1'in
+kilit/journal/reconciliation çekirdeği, HİÇ DEĞİŞTİRİLMEDEN) Layer B'nin
+12 review_kind kayıt-bazlı inceleme ailesinin (`evidence.candidate/
+suggestion`, `argument.claim/counterargument/rebuttal/suggestion`,
+`risk_strategy.risk/strategy/suggestion`, `drafting.section/suggestion`,
+`qa.suggestion`) TAMAMINA bağlar. `ui.services.review_registry.
+apply_transition()` artık kendi authz/hash-tazelik/writer-çağırma
+mantığını YÜRÜTMEZ - TÜMÜNÜ yeni `ui.services.review_mutation_facade.
+apply_review_mutation()`'a devreder (Row 19C-2a Step 7'nin
+`approval_registry.case_scoped_approve()` için yaptığı AYNI delegasyonun
+Layer B karşılığı). Diğer production mutator'lar (CLI-only giriş
+noktaları, Row 18C drafting-request writer) BİLİNÇLİ olarak
+bağlanmadan bırakıldı.
+
+**Import topolojisi (döngüsüz, kasıtlı)** — `review_registry.py` yeni
+facade'i import eder; facade `review_registry`'yi ASLA import ETMEZ
+(tüm review_kind-özgü metadata - modül nesnesi, `record_type`,
+`call_shape`, `state_field`, gerçek domain exception sınıfı, audit-dizini
+getter'ı, sabit `REVIEWER_REF` - `ReviewFamilyBinding` adlı TEK bir
+paket olarak `review_registry.apply_transition()` tarafından önceden
+çözülüp facade'e argüman olarak geçirilir). `review_mutation_adapters.py`
+İSE `review_registry`'yi DOĞRUDAN import eder (güvenli, tek yönlü kenar -
+`review_registry` hiçbir zaman adapters'ı import etmez) - `REVIEW_KIND_
+REGISTRY`'nin metadata'sını (artık `audit_dir_getter`/`domain_error_class`
+alanlarıyla genişletilmiş) tekrar türetmek yerine yeniden kullanmak için.
+
+**Composite pre-state snapshot (canonical + audit + backup)** —
+Writer'ın (`<family>_review.apply_review_transition()`) ÜÇ durable etkisi
+VAR: canonical dosya mutasyonu, YENİ bir `*.review_audit.json`, YENİ bir
+`*.before_review_*.bak` - kaynak kodu doğrudan okunarak doğrulandı, ÜÇÜ
+DE AYNI `reviews/<family>_reviews/` dizinine yazılır (Layer A'nın
+DAHA SIĞ `reviews/` dizininden TAMAMEN AYRI). `ReviewPreconditionSnapshot`
+canonical'ın varlık+hash'i ile bu dizindeki HER `*.review_audit.json` VE
+HER `*.before_review_*.bak` girişinin sıralı `(relative_name,
+content_sha256)` manifestini (sayı+digest) TEK bir composite digest'e
+birleştirir - `pre_hash` olarak kaydedilir, case kilidi altında yeniden
+hesaplanır. Manifest taraması her girişi `paths.verify_real_path_
+contained(entry, root=audit_dir)` ile doğrular (symlink/junction kaçışı,
+beklenmeyen giriş türü, yinelenen ad, kaybolan/okunamayan dosya HEPSİ
+TÜM taramayı fail-closed durdurur); `*.review_audit.json`-şekilli AMA
+içeriği ayrıştırılamayan bir dosya tarama-seviyesinde durdurmaz, aile-
+genelinde bir "bozuk aday" olarak SAYILIR.
+
+**Kayıt-bazlı audit admission gate (yeni journal satırından ÖNCE)** —
+Composite digest eşitliği TEK BAŞINA "bu kayıt için önceden mevcut bir
+audit YOK" ıspatlamaz (restore/re-review saldırısı: canonical, gerçek
+bir review'dan SONRA needs_review görünümüne geri yüklenebilir).
+`precondition_callback` bu yüzden case kilidi altında, family-genelinde
+`*.review_audit.json` dosyalarının TAMAMINI İÇERİKTEN (asla dosya adından
+ön-filtrelenerek DEĞİL) tarayıp bu TAM kayıt için content-eşleşen
+(case_id+record_type+record_id) "temiz" aday sayısını VE aile-genelindeki
+"bozuk" aday sayısını AYRI AYRI sayar. Faz-bağımlı eşik: **admission**
+(journal satırı/writer'dan ÖNCE) `bozuk==0 VE temiz==0` gerektirir;
+**post-write/replay doğrulaması** ve **reconciliation**
+`bozuk==0 VE temiz==1` gerektirir. Herhangi bir aile-genelinde bozuk
+aday, o ailedeki TÜM kayıtların admission'ını (ilgisiz bir kayıt DAHİL)
+bloke eder - kasıtlı, kabul edilmiş bir maliyet.
+
+**Guard-hoisting (kullanıcı kararı, uygulandı)** — 5 backend'in KENDİ
+public, saf fonksiyonları (`find_record`/`find_candidate`/
+`find_suggestion`, `check_parent_dependency`, `check_stale_sources`)
+case kilidi ALTINDA, `precondition_callback` içinde DOĞRUDAN çağrılır -
+YENİDEN YAZILMAZ/KOPYALANMAZ. Bu, sıradan bir domain reddini (kayıt zaten
+incelenmiş, parent henüz terminal değil) journal satırı SIFIR bırakan bir
+precondition-seviyesi red olarak tutar - `mutation_coordinator.py`'nin
+"writer'dan HERHANGİ bir exception -> reconciliation_required" kuralına
+YAKALANMASINI ÖNLER (aksi halde her gün yaşanan sıradan bir red, admin'e
+görünen bir olaya dönüşürdü).
+
+**`secondary_input_hash` - review_note kimliği, Layer A için byte-for-
+byte korunmuş** — `src/mutation_guard.py`'nin `MutationIntent`'ine YENİ,
+opsiyonel bir alan eklendi: yalnız normalize edilmiş `review_note`'un
+sha256 hex digest'ini taşır (asla ham metin). `_identity_fields()`'ten
+HARİÇ tutulur (yalnız `request_fingerprint`'e girer, `target_state` ile
+AYNI asimetri) - aynı kimlik + farklı not -> AYNI idempotency_key, FARKLI
+fingerprint -> mevcut `IdempotencyConflictError` mekanizması SIFIR
+değişiklikle bunu doğru ele alır. `compute_request_fingerprint()` bu alanı
+yalnız `None` DEĞİLKEN dict'e ekler (koşullu anahtar VARLIĞI, `null`
+değerli bir anahtar DEĞİL) - Layer A'nın HER çağrısı (`secondary_input_
+hash=None`, hiç değişmez) bu yüzden ESKİ formülle BAYT-BAYT AYNI
+fingerprint üretir; git HEAD'deki eski `mutation_guard.py` ile doğrudan
+karşılaştırılarak KANITLANDI (izole test).
+
+**14 semantik binding** — Safe-replay doğrulaması (facade, tek
+implementasyon) VE reconciliation (adapters, BAĞIMSIZ ikinci bir
+implementasyon - Layer A'nın `mutation_approval_adapters.py`'sinin AYNI
+"bir hata diğerini maskelemesin" ilkesiyle) idempotency key, resource key,
+case_id, record_type, record_id, actor (gerçek kimlik -
+`mutation_actor_ref`, YENİ additive audit alanı), reviewer sentinel
+(`reviewer_ref=="local_lawyer_ui"`, KİMLİK DEĞİL), target_state, normalize
+edilmiş not hash'i, pre/post SHA256, completed-replay observed-post SHA,
+canonical İÇİNDEKİ GERÇEK hedef kaydın state'i (asla yalnız tüm-dosya
+hash'ine güvenilmeden) ve audit alanlarından YENİDEN HESAPLANMIŞ request
+fingerprint'i doğrular. Üç YENİ additive, keyword-only audit alanı (5
+backend'in TAMAMINA, Row 19C-2a Step 5'in Layer A'ya yaptığı AYNI
+desenle eklendi): `mutation_idempotency_key`, `mutation_resource_key`,
+`mutation_actor_ref`.
+
+**`JournalEntrySnapshot` genişletmesi** — `ui.services.mutation_registry.
+JournalEntrySnapshot`'a İKİ yeni, sonda eklenmiş (mevcut pozisyonel
+construction'ları BOZMAYAN), zaten-NOT-NULL olan 0003 kolonlarından
+gelen alan eklendi: `request_fingerprint`, `actor_label` - reconciliation
+adapter'ının audit içeriğinden fingerprint'i yeniden hesaplayabilmesi VE
+gerçek aktör kimliğini bağlayabilmesi için. **Yeni migration GEREKMEDİ** -
+her iki alan da 0003'ün zaten var olan kolonlarından okunuyor.
+
+**HTTP eşlemesi - YENİ mesaj/kod YOK** — `ReviewPreconditionRaceDetectedError`
+(yeni, `ReviewStaleViewError`'ın alt sınıfı) mevcut `except
+ReviewStaleViewError` bloğu tarafından OTOMATİK yakalanır
+(`REVIEW_STALE_VIEW`, HTTP 200, kod değişikliği YOK). Layer A'nın ÜÇ
+mevcut 409 kodu (`MUTATION_REQUIRES_REVIEW`, `MUTATION_IDENTITY_CONFLICT`,
+`MUTATION_PERMANENTLY_FAILED`) AYNEN yeniden kullanıldı - `ui/main.py`'nin
+`review_confirm` route'una `case_scoped_confirm` ile BİREBİR AYNI
+gruplamayla yeni except blokları eklendi.
+
+**Test kanıtı (yalnız fiilen çalıştırılmış sonuçlar)** — Bu turda
+implementasyon sırasında GERÇEK bir bug (review_registry.py'nin
+`ReviewFamilyBinding` construction'ında eksik `review_kind` argümanı) VE
+GERÇEK bir test-izolasyon açığı (`isolated_domain_error_fixture`'ın
+placeholder canonical'ı yeni precondition-seviyesi guard-hoisting
+tarafından erken reddedilip domain-hata testinin amacını boşa
+çıkarıyordu) test çalıştırmaları SIRASINDA yakalanıp düzeltildi - bu
+belge yalnız düzeltmeler SONRASI, gerçekten elde edilmiş sonuçları
+raporlar:
+
+- `test_mutation_guard_isolated`: **39/39 PASS** (+9 yeni `secondary_
+  input_hash` kontrolü)
+- `test_reconciliation_isolated`: **125/125 PASS** (+17 yeni Layer B
+  reconciliation-adapter kontrolü, gerçek `ReviewMutationReconciliationAdapter`
+  ile)
+- `test_reconciliation_operator_isolated`: **78/78 PASS** (+5 yeni,
+  gerçek `_default_registry_factory()`'nin Layer A'nın 10 + Layer B'nin
+  12 = 22 aileyi BİRLEŞTİRDİĞİni doğrulayan kontrol)
+- `test_review_service_isolated`: **69/69 PASS**
+- `test_review_routes`: **115/115 PASS**
+- `test_review_mutation_facade_isolated` (YENİ): **50/50 PASS** -
+  fresh mutation, safe replay, iki ayrı idempotency-conflict senaryosu
+  (state + not), composite race, admission gate (önceden-mevcut +
+  bozuk audit), guard-hoisting (zaten incelenmiş + parent-dependency,
+  GERÇEK `evidence_review`/`argument_review` modülleriyle), outer authz
+  denial (sıfır bağlantı/kilit)
+- `test_review_mutation_integration_postgres` (YENİ): **47/47 PASS**,
+  gerçek disposable PostgreSQL üzerinde - aynı-case iki-bağlantı kilit
+  serialization'ı (PostgreSQL'in KENDİ `pg_locks` view'ı ile sunucu-
+  gözlemli kanıt), başarılı mutasyon, safe replay, fingerprint conflict,
+  writer crash -> `reconciliation_required`, GERÇEK Layer B production
+  adapter registry ile reconciliation + provenance doğrulaması (`
+  reconciled_by_actor_type`/`reconciled_by_actor_ref`) - kullanıcının
+  bağlayıcı talimatındaki ALTI zorunlu senaryonun TAMAMI
+- `test_mutation_approval_integration_postgres` (Layer A, READ-ONLY,
+  regresyon): **140/140 PASS**, gerçek disposable PostgreSQL üzerinde -
+  `JournalEntrySnapshot` genişletmesinin Layer A'yı BOZMADIĞININ kanıtı
+- `test_mutation_journal_postgres`, `test_mutation_reconciliation_
+  provenance_postgres` (READ-ONLY, regresyon): **61/61** ve **24/24 PASS**
+- **Tüm `ui/tests/` paketi (34 dosya) tek seferde çalıştırıldı**: gerçek
+  disposable PostgreSQL'e karşı, **33/33 dosya PASS (1733/1733 tekil
+  kontrol, 0 FAIL)**, sıfır regresyon
+- `pip check` temiz; 20 allowlist dosyasının TAMAMI `py_compile`'dan
+  GEÇTİ
+- Gerçek `data/` ağacı (özellikle `case_0001`) bu turun HİÇBİR testiyle
+  DEĞİŞMEDİ - hem yerel byte-snapshot kontrolleriyle hem de `git status`
+  ile AYRICA doğrulandı
+
+**Bilinçli olarak kapsam dışı bırakılan (Row 19C-2c'ye veya sonrasına
+taşınan)** — CLI-only mutasyon giriş noktaları (henüz coordinator'a
+bağlanmadı); Row 18C drafting-request writer'ı (`ui.services.
+drafting_request.save_lawyer_input_from_form`, HİÇ dokunulmadı); `ui/
+services/paths.py`'nin `CASES_DIR`'ini DOĞRUDAN kullanan dosyalar için
+path-containment borcu (bu turda gerçek entegrasyon test fixture'ında
+18 modülün KENDİ `CASES_DIR` kopyasını taşıdığı - ayrıca `qa_validator.py`'nin
+`BASE_DIR`'i qa_discovery'den BY VALUE import edip `CASES_DIR` yerine
+`BASE_DIR/"data"/"cases"` hardcode ettiği - doğrudan gözlemlendi, HENÜZ
+DÜZELTİLMEDİ, backlog'da kalmaya devam ediyor).
+
+**Bağımsız salt-okunur final inceleme** — Yukarıdaki tüm allowlist/
+kapsam/tasarım/test iddiaları, ayrı, salt-okunur bir incelemede kaynak
+koddan yeniden doğrulandı - rapora değil kodun kendisine bakılarak.
+İnceleme preflight'ı (branch `claude-dev`, HEAD
+`a0b88e561e7770f1353495c641838b81884d5cca`, boş staged set, tam 20
+dosyalık allowlist + `CLAUDE.md`, dokunulmamış `stash@{0}`) doğruladı;
+5 backend'in gerçek fonksiyon imzalarını facade/adapters'ın varsaydığı
+çağrı şekilleriyle tek tek karşılaştırdı; ve yukarıdaki test sonuçlarını
+RAPORA GÜVENMEDEN kendi başına, gerçek/disposable bir PostgreSQL 16
+kümesi kurup TEKRAR ÇALIŞTIRDI - birebir aynı sonuçlarla:
+`test_mutation_guard_isolated` **39/39**, `test_reconciliation_isolated`
+**125/125**, `test_reconciliation_operator_isolated` **78/78**,
+`test_review_service_isolated` **69/69**, `test_review_routes`
+**115/115**, `test_review_mutation_facade_isolated` **50/50**,
+`test_review_mutation_integration_postgres` (gerçek PostgreSQL)
+**47/47** (0 skip), Layer A gerçek PostgreSQL regresyonları
+`test_mutation_approval_integration_postgres` **140/140**,
+`test_mutation_journal_postgres` **61/61**,
+`test_mutation_reconciliation_provenance_postgres` **24/24**;
+`py_compile` ve `pip check` temiz. Disposable küme inceleme sonunda
+kaldırıldı; gerçek `data/` ağacının test öncesi/sonrası bayt-düzeyinde
+DEĞİŞMEDİĞİ `git status` ile ayrıca doğrulandı.
+
+İnceleme İKİ non-blocking, DÜŞÜK önemde gözlem raporladı (ikisi de bu
+alt-fazın LOCK'unu ENGELLEMEZ, bilinen düşük önemde notlar/backlog
+olarak kaydedilir):
+
+1. Backend'in writer sınırı (`executing`) GEÇİLDİKTEN SONRA kendi iç
+   guard'ının (ör. `check_parent_dependency`'nin, out-of-band bir
+   tamper altında tetiklenebilecek dahili tekrar-kontrolü) fırlattığı
+   HAM domain exception (`EvidenceReviewError` vb.), `mutation_
+   coordinator.run_mutation()`'ın orijinal exception'ı DEĞİŞTİRMEDEN
+   yeniden fırlatması nedeniyle `ui/main.py`'de `except _REVIEW_
+   DOMAIN_ERRORS` ile genel bir review-domain sonucu üretir - journal
+   satırı yine de doğru şekilde `reconciliation_required` olur, ama
+   tarayıcı mesajı bunu yansıtmaz. Bu, Row 19C-2a'nın Layer A için
+   ZATEN belgelediği/kabul ettiği AYNI, kasıtlı tasarımla TUTARLIDIR
+   (`main.py`'nin `case_scoped_confirm` route'unun kendi son `except
+   Exception` bloğunun yorumu: yalnız DÖRT tanımlı koşul HTTP 409
+   üretebilir, beklenmeyen bir exception ASLA bu sözleşmeye yeniden
+   sınıflandırılmaz) - Layer B burada YENİ bir sapma İCAT ETMEMİŞTİR,
+   önceden kabul edilmiş AYNI davranışı doğru şekilde miras almıştır.
+   **19C-2b blocker'ı DEĞİLDİR.**
+2. `src/qa_validator.py`'nin `BASE_DIR`'i `qa_discovery`'den BY VALUE
+   import edip `CASES_DIR` yerine `BASE_DIR/"data"/"cases"` hardcode
+   etmesi (bu turun gerçek entegrasyon test fixture'ında keşfedildi)
+   yalnız TEST-HARNESS'a özgü bir tuhaflıktır - production çalışma
+   zamanı `CASES_DIR`'i hiçbir zaman yönlendirmez/redirect etmez, bu
+   yüzden gerçek dağıtımda hiçbir etkisi yoktur. Backlog'da kalmaya
+   devam eder (yukarıdaki "Bilinçli olarak kapsam dışı bırakılan"
+   paragrafıyla AYNI madde). **19C-2b blocker'ı DEĞİLDİR.**
+
+**Final verdict: `ROW 19C-2b LOCK-READY` — No blocking findings.**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
+işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

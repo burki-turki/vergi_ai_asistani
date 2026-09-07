@@ -407,6 +407,10 @@ def write_review_audit(
     pre_sha256,
     post_sha256,
     backup_path,
+    *,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
 ):
 
     audit_dir = Path(
@@ -440,6 +444,33 @@ def write_review_audit(
 
         "case_id":
             case_id,
+
+        # ROW 19C-2b: additive, keyword-only, default None - identical
+        # in spirit and shape to Row 19C-2a's own `mutation_idempotency_
+        # key`/`mutation_resource_key` fields on the 10 Layer A
+        # `write_approval_audit()` functions (see e.g.
+        # src/deadline_approval.py). `None` for every direct CLI run of
+        # this module and every pre-Row-19C-2b audit record - a missing/
+        # blank value here is NEVER treated as automatic corroboration
+        # by any binding check that reads it.
+        "mutation_idempotency_key":
+            mutation_idempotency_key,
+
+        "mutation_resource_key":
+            mutation_resource_key,
+
+        # ROW 19C-2b: the REAL actor identity (`MutationIntent.actor_ref`,
+        # e.g. the IAM user id as a string) - deliberately SEPARATE from
+        # `reviewer_ref` below, which stays a FIXED, non-identity
+        # provenance sentinel ("local_lawyer_ui") per review_registry.py's
+        # own locked 2026-09-04 decision. This field exists so a
+        # reconciliation adapter can independently recompute this
+        # journal row's own `request_fingerprint` purely from this audit
+        # record's content (see ui/services/review_mutation_facade.py's
+        # own binding 14) - `reviewer_ref` alone cannot serve that
+        # purpose, since it never varies per request.
+        "mutation_actor_ref":
+            mutation_actor_ref,
 
         "evidence_analysis_id":
             evidence_analysis_id,
@@ -510,7 +541,20 @@ def apply_review_transition(
     review_note,
     canonical_path=None,
     audit_dir=None,
+    *,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
 ):
+    # ROW 19C-2b: the three keyword-only parameters above are threaded,
+    # unchanged, into `write_review_audit()` below - this function's
+    # OWN transition logic (record lookup, previous_state/parent-
+    # dependency/stale-source guards, backup/atomic-write/rollback) is
+    # completely UNCHANGED. Both default to None, which preserves this
+    # function's exact pre-Row-19C-2b behavior and CLI output for every
+    # caller that never passes them (`python src/evidence_review.py
+    # --confirm` etc. included) - mirrors Row 19C-2a Step 5's identical
+    # treatment of the 10 `src/*_approval.py` modules' `run_approve()`.
 
     if record_type not in (
         "candidate",
@@ -701,6 +745,15 @@ def apply_review_transition(
 
                 backup_path=
                     backup_path,
+
+                mutation_idempotency_key=
+                    mutation_idempotency_key,
+
+                mutation_resource_key=
+                    mutation_resource_key,
+
+                mutation_actor_ref=
+                    mutation_actor_ref,
             )
         )
 

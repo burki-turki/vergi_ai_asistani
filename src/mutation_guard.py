@@ -77,13 +77,60 @@
 # token, a cookie or a secret, because there is no field to put it in.
 # Validation error messages below only ever name a field, never echo
 # a rejected value's content.
+#
+# ROW 19C-2b ADDITION - `secondary_input_hash` (Layer B review-note
+# identity, byte-for-byte-preserving for Layer A)
+# -------------------------------------------------------------------
+# Layer B's review transitions carry ONE additional semantic input
+# Layer A's approval mutations never had: a free-text `review_note`.
+# The SAME "no free text anywhere on this dataclass" rule above still
+# holds - `secondary_input_hash` never carries the note itself, only a
+# pre-hashed, already-lowercase 64-hex-char sha256 digest of it (the
+# CALLER hashes the note; this module only validates the digest's
+# SHAPE, never its origin).
+#
+# `secondary_input_hash` is deliberately NOT part of `idempotency_key`
+# (see `_identity_fields()`'s own docstring) - it is part of
+# `request_fingerprint` ONLY, exactly like `target_state` already is,
+# and for the same reason: the "operation slot" identity is about
+# WHICH record from WHICH prior state is being acted on
+# (`pre_revision`); the requested OUTCOME - which now includes both
+# `target_state` AND the note attached to it - is what the fingerprint
+# captures. Same identity + a different normalized note therefore
+# yields the SAME `idempotency_key` but a DIFFERENT
+# `request_fingerprint` - `ui.services.mutation_coordinator.
+# run_mutation()`'s existing "same key, different fingerprint ->
+# IdempotencyConflictError" rule already handles this; nothing in that
+# module needs to change.
+#
+# BYTE-FOR-BYTE LAYER A PRESERVATION: `compute_request_fingerprint()`
+# includes the `secondary_input_hash` key in its serialized field dict
+# ONLY when `intent.secondary_input_hash is not None` - conditional KEY
+# PRESENCE, never a present-with-null value. Every Layer A caller
+# always constructs its `MutationIntent` with `secondary_input_hash`
+# left at its default (`None`), so the key is simply ABSENT from the
+# dict `_canonical_json()` serializes for every Layer A call, exactly
+# as it was before this field existed - the serialized bytes, and
+# therefore the sha256 digest, are byte-for-byte IDENTICAL to the
+# pre-Row-19C-2b formula. Layer B's own `MutationIntent`s are always
+# constructed with a real digest here (`review_registry.
+# normalize_review_note()` rejects an empty note, so a genuine Layer B
+# request can never legitimately produce `None`) - the two call
+# populations are structurally disjoint by construction, never by
+# convention alone.
 # ============================================================
 
 from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
+
+# 64 lowercase hex characters - exactly a sha256 hex digest's own
+# shape, never a raw note, never mixed-case, never a different-length
+# hash algorithm's output.
+_SECONDARY_INPUT_HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 class InvalidMutationIntentError(Exception):
@@ -233,6 +280,11 @@ class MutationIntent:
     target_state: str | None = None
     pre_hash: str | None = None
     pre_revision: str | None = None
+    # ROW 19C-2b: optional sha256 hex digest of a normalized free-text
+    # secondary input (Layer B's `review_note`) - see the module
+    # docstring's own "ROW 19C-2b ADDITION" section for the full
+    # rationale. `None` for every Layer A caller, unconditionally.
+    secondary_input_hash: str | None = None
 
 
 def validate_intent(intent: MutationIntent) -> None:
@@ -264,6 +316,20 @@ def validate_intent(intent: MutationIntent) -> None:
         # silently accepted as "first write".
         raise InvalidMutationIntentError(
             "pre_hash and pre_revision must be both None (first write) or both set"
+        )
+
+    # ROW 19C-2b: `secondary_input_hash`, when present, must be EXACTLY
+    # a sha256 hex digest's shape - never raw note text, never a
+    # different length/case. Checked as its own dedicated rule (the
+    # generic `_OPTIONAL_STRING_FIELDS` loop above only rejects
+    # None-vs-empty-string, not shape) — kept OUT of that tuple
+    # deliberately so this stricter check can never be silently
+    # weakened by a future edit to that generic loop.
+    if intent.secondary_input_hash is not None and not _SECONDARY_INPUT_HASH_RE.match(
+        intent.secondary_input_hash
+    ):
+        raise InvalidMutationIntentError(
+            "secondary_input_hash must be None or exactly 64 lowercase hex characters"
         )
 
 
@@ -303,12 +369,24 @@ def compute_idempotency_key(intent: MutationIntent) -> str:
 
 def compute_request_fingerprint(intent: MutationIntent) -> str:
     """sha256 hex digest over the FULL requested outcome (the slot
-    identity plus `target_state`) — see the module docstring. Two
-    intents that differ ONLY in a field not carried on MutationIntent
-    at all (there are none, by construction) can never produce
-    different fingerprints for "the same" request; two intents that
-    differ in `target_state` always do."""
+    identity plus `target_state`, plus - ROW 19C-2b - `secondary_input_
+    hash` when present) — see the module docstring. Two intents that
+    differ ONLY in a field not carried on MutationIntent at all (there
+    are none, by construction) can never produce different
+    fingerprints for "the same" request; two intents that differ in
+    `target_state` always do, and (Row 19C-2b) two intents that differ
+    in `secondary_input_hash` always do too.
+
+    ROW 19C-2b: `secondary_input_hash` is added to the serialized
+    field dict ONLY when it is not `None` - conditional KEY PRESENCE,
+    never a present-with-null value. This is what makes every Layer A
+    call (which never sets this field) produce a byte-for-byte
+    IDENTICAL `_canonical_json()` input, and therefore an identical
+    digest, to the pre-Row-19C-2b formula - see the module docstring's
+    own "ROW 19C-2b ADDITION" section."""
     validate_intent(intent)
     fields = _identity_fields(intent)
     fields["target_state"] = intent.target_state
+    if intent.secondary_input_hash is not None:
+        fields["secondary_input_hash"] = intent.secondary_input_hash
     return hashlib.sha256(_canonical_json(fields)).hexdigest()

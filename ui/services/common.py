@@ -119,6 +119,51 @@ class ReviewStaleViewError(ReviewUiError):
     AYNI ilke, ayrı sınıf)."""
 
 
+class ReviewPreconditionRaceDetectedError(ReviewStaleViewError):
+    """ROW 19C-2b - `ReviewStaleViewError`'ın bir ALT SINIFI (onun
+    yerine geçen ayrı bir hiyerarşi DEĞİL): case kilidi ALINDIKTAN
+    sonra `reviews/<family>_reviews/` dizininden YENİDEN hesaplanan
+    composite pre-state snapshot'ı (canonical SHA-256 + o dizindeki
+    audit dosyalarının sıralı `(relative_name, content_sha256)`
+    manifesti + backup dosyalarının AYNI şekildeki manifesti - bkz.
+    `ui.services.review_mutation_facade.ReviewPreconditionSnapshot`),
+    kilit BEKLENMEDEN ÖNCE hesaplanmış olan snapshot ile UYUŞMUYOR
+    - yani bu istek kilidi beklerken BAŞKA bir yazar aynı case
+    üzerinde gerçekten bir şeyi değiştirdi (audit/backup dahil, salt
+    canonical değil).
+
+    AYRICA bu sınıf, admission gate'in (bkz. o modülün kendi
+    docstring'i, "PRE-EXISTING RECORD AUDIT ADMISSION GATE")
+    `record_bound_count != 0` durumunda da fırlatılır - kilit
+    beklenirken hiçbir şey DEĞİŞMEMİŞ olsa bile, bu tam kayıt için
+    kilit ALTINDA halihazırda content-eşleşen bir audit bulunması
+    (restore/re-review saldırısı: canonical, gerçek bir review'dan
+    SONRA needs_review görünümüne geri yüklenmiş olabilir) TEK
+    BAŞINA yeterli bir red nedenidir - önceki (pre-lock) snapshot'ın
+    bunu ZATEN yansıtmış olması bu koşulu ATLAMAZ.
+
+    Neden `ReviewStaleViewError`'dan türer: dışarıdan (route/HTTP
+    katmanı ve mevcut her çağıran) bakıldığında sonuç AYNI kapalı
+    sözleşmedir - "gördüğünüz durum artık geçerli değil, sıfır
+    mutasyon yapıldı, sayfayı yenileyip tekrar deneyin"
+    (`REVIEW_STALE_VIEW`, HTTP 200). Mevcut `except
+    ReviewStaleViewError` blokları (ör. `ui/main.py`'nin
+    `review_confirm` route'u) bu yüzden HİÇBİR değişiklik GEREKTİRMEZ
+    ve bu yeni durumu otomatik olarak DOĞRU şekilde ele alır (Prensip
+    9: fail-closed). `ui.services.mutation_approval_facade.
+    PreconditionRaceDetectedError`'ın Layer B analoğudur - o sınıf
+    BİLEREK burada yeniden kullanılmaz/import edilmez (bağımsız
+    implementasyon ilkesi, bkz. `mutation_approval_adapters.py`'nin
+    kendi başlık yorumu: bir katmandaki hata diğerini MASKELEMEMELİ).
+
+    Bu hata fırlatıldığında `mutation.mutation_journal`'a HİÇBİR
+    `prepared` satırı YAZILMAZ ve writer (`apply_review_transition`)
+    HİÇ ÇAĞRILMAZ - kontrol, `run_mutation()`'ın sırasında
+    `precondition_callback` adımında, `_insert_prepared`'dan KESİN
+    OLARAK ÖNCE yapılır (bkz. `ui/services/mutation_coordinator.py`'nin
+    kendi AUTHORITATIVE ORDER'ı, adım 5 vs adım 6)."""
+
+
 class ReviewLiveViewInvalidError(ReviewUiError):
     """İlgili ailenin (evidence/argument/risk_strategy/drafting/qa)
     canonical dosyası KENDİ gerçek validator fonksiyonundan

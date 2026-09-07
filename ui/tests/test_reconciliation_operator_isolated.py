@@ -122,6 +122,7 @@ class FakeCursor:
                     row["id"], row["resource_key"], row["action_family"], row["target_ref"],
                     row["target_state"], row["pre_hash"], row["pre_revision"],
                     row["expected_post_hash"], row["state"], row["idempotency_key"],
+                    row["request_fingerprint"], row["actor_label"],  # ROW 19C-2b: appended fields
                 )
                 self.rowcount = 1
 
@@ -194,6 +195,8 @@ def make_journal_row(**overrides):
         resolution_code=None, observed_post_hash=None, resolved_at=None, executing_at="PRE_EXISTING_TS",
         idempotency_key="fake_idempotency_key_op_0001",
         reconciled_by_actor_type=None, reconciled_by_actor_ref=None,
+        # ROW 19C-2b: JournalEntrySnapshot's two newest appended fields.
+        request_fingerprint="fake_request_fingerprint_op_0001", actor_label="1",
     )
     row.update(overrides)
     return row
@@ -487,6 +490,49 @@ finally:
     ml.acquire_case_lock_session = _original_acquire_case
     ml.acquire_global_lock_session = _original_acquire_global
     ml.release_lock_session = _original_release
+
+
+# ============================================================
+# ROW 19C-2b - `_default_registry_factory()` merges Layer A's 10
+# case-scoped approval families AND Layer B's 12 review_kind families
+# into ONE registry - never called by any test above (which always
+# injects its OWN fake `registry_factory`, per this module's own
+# header comment), so this is the ONE place that ever exercises the
+# REAL default factory for real, proving a human operator's real CLI
+# invocation can reconcile a journal row from EITHER layer through the
+# SAME registry.
+# ============================================================
+
+_real_registry = op._default_registry_factory()
+_real_families = _real_registry.known_action_families()
+_approval_families = {f for f in _real_families if f.startswith("approval.")}
+_review_families = {f for f in _real_families if f.startswith("review.")}
+
+check(
+    "_default_registry_factory(): the merged registry contains exactly Layer A's 10 "
+    "'approval.*' families",
+    len(_approval_families) == 10, f"got {sorted(_approval_families)}",
+)
+check(
+    "_default_registry_factory(): the merged registry contains exactly Layer B's 12 "
+    "'review.*' families",
+    len(_review_families) == 12, f"got {sorted(_review_families)}",
+)
+check(
+    "_default_registry_factory(): the merged registry's total size is exactly 10 + 12 = 22 "
+    "(no overlap, no family lost, no family duplicated)",
+    len(_real_families) == 22, f"got {len(_real_families)}",
+)
+check(
+    "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "
+    "to a real adapter",
+    _real_registry.get("approval.deadline") is not None,
+)
+check(
+    "_default_registry_factory(): a representative Layer B family (review.evidence.candidate) "
+    "resolves to a real adapter",
+    _real_registry.get("review.evidence.candidate") is not None,
+)
 
 
 print(f"--- test_reconciliation_operator_isolated: {passed} passed, {failed} failed ---")

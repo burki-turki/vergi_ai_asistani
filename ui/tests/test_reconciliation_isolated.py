@@ -186,6 +186,7 @@ class FakeReconcileCursor:
                     row["target_state"], row["pre_hash"], row["pre_revision"],
                     row["expected_post_hash"], row["state"],
                     row["idempotency_key"],  # ROW 19C-2a: appended field - see JournalEntrySnapshot's own comment
+                    row["request_fingerprint"], row["actor_label"],  # ROW 19C-2b: appended fields
                 )
                 self.rowcount = 1
 
@@ -270,6 +271,10 @@ def make_journal_row(**overrides):
         resolution_code=None, observed_post_hash=None, resolved_at=None, executing_at="PRE_EXISTING_TS",
         idempotency_key="fake_idempotency_key_0001",  # ROW 19C-2a: JournalEntrySnapshot's new appended field
         reconciled_by_actor_type=None, reconciled_by_actor_ref=None,  # ROW 19C-2a: provenance, NULL by default
+        # ROW 19C-2b: JournalEntrySnapshot's two newest appended fields
+        # - existing NOT NULL columns since 0003, never blank in a real
+        # row.
+        request_fingerprint="fake_request_fingerprint_0001", actor_label="1",
     )
     row.update(overrides)
     return row
@@ -1052,6 +1057,15 @@ try:
             target_ref="fake.canonical", target_state="approved",
             pre_hash="composite", pre_revision=PENDING_HASH, expected_post_hash=None,
             state="reconciliation_required", idempotency_key=IDEM_KEY,
+            # ROW 19C-2b: JournalEntrySnapshot gained two new trailing,
+            # mandatory fields (request_fingerprint/actor_label) - this
+            # Layer A adapter test never exercises either (Layer A's
+            # own CaseScopedApprovalReconciliationAdapter has no
+            # fingerprint-recomputation binding), so fixed placeholder
+            # values are sufficient here; they exist only so this
+            # dataclass can be constructed at all.
+            request_fingerprint="fp_placeholder_not_checked_by_layer_a_adapter",
+            actor_label="1",
         )
         fields.update(overrides)
         return mr.JournalEntrySnapshot(**fields)
@@ -1142,6 +1156,221 @@ try:
     )
 finally:
     _shutil.rmtree(_adapter_tmp, ignore_errors=True)
+
+
+# ============================================================
+# ROW 19C-2b - REAL Layer B `ReviewMutationReconciliationAdapter`
+# (`ui.services.review_mutation_adapters`), exercised through the SAME
+# real `reconcile_and_apply_journal_entry()` this file already proves
+# correct for Layer A above - a fresh, isolated tempdir fixture (never
+# touching any real `data/cases/` content), the module's OWN 12-family
+# registry built for real via `build_production_registry()`, and a
+# fake canonical/audit-directory pair for `review.evidence.candidate`
+# specifically (chosen as a representative, non-parent-dependent
+# review_kind - the parent-dependency/stale-source guard-hoisting
+# itself is exercised by `ui/tests/test_review_mutation_facade_
+# isolated.py`, not reconciliation, since a stuck journal row is only
+# ever reachable AFTER a precondition/guard has already passed once).
+# ============================================================
+
+import ui.services.review_mutation_adapters as _review_adapters       # noqa: E402
+import ui.services.review_mutation_facade as _review_facade           # noqa: E402
+from mutation_guard import MutationIntent as _MutationIntent, compute_idempotency_key as _compute_idk, compute_request_fingerprint as _compute_fp  # noqa: E402
+
+_review_adapter_tmp = _Path(_tempfile.mkdtemp(prefix="vergi_recon_review_adapter_"))
+try:
+    REVIEW_CASE_ID = "case_review_adapter_bindings"
+    REVIEW_RECORD_ID = "evidence_candidate_recon_001"
+    REVIEW_KIND = "evidence.candidate"
+
+    review_case_dir = _review_adapter_tmp / REVIEW_CASE_ID
+    review_case_dir.mkdir(parents=True)
+    review_canonical_file = review_case_dir / "evidence.json"
+    review_audit_dir = review_case_dir / "reviews" / "evidence_reviews"
+
+    def write_review_canonical(state):
+        text = _json.dumps({"evidence_candidates": [{"candidate_id": REVIEW_RECORD_ID, "review_state": state}]})
+        review_canonical_file.write_text(text, encoding="utf-8")
+        return _hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+    review_registry_full = _review_adapters.build_production_registry()
+    real_review_adapter = review_registry_full.get(_review_facade.action_family_for(REVIEW_KIND))
+
+    # Isolate the adapter from the real data/cases/ tree entirely - the
+    # SAME monkeypatch-the-bound-module-attribute technique this
+    # module's own Layer A fixture above uses.
+    real_review_adapter._module.get_canonical_path = lambda cid: review_canonical_file
+    real_review_adapter._get_audit_dir_fn = lambda cid: review_audit_dir
+
+    NOTE_TEXT = "Row 19C-2b reconciliation adapter self-test note."
+    REVIEW_NOTE_HASH = _hashlib.sha256(NOTE_TEXT.encode("utf-8")).hexdigest()
+
+    def review_intent(**overrides):
+        base = dict(
+            actor_type="iam_user", actor_ref="7",
+            resource_key=f"case:{REVIEW_CASE_ID}", action_family=_review_facade.action_family_for(REVIEW_KIND),
+            target_ref=REVIEW_RECORD_ID, target_state="confirmed",
+            pre_hash="composite_placeholder", pre_revision="pending_screen_hash_placeholder",
+            secondary_input_hash=REVIEW_NOTE_HASH,
+        )
+        base.update(overrides)
+        return _MutationIntent(**base)
+
+    def review_entry(**overrides):
+        intent = review_intent()
+        fields = dict(
+            journal_id=1, resource_key=f"case:{REVIEW_CASE_ID}",
+            action_family=_review_facade.action_family_for(REVIEW_KIND),
+            target_ref=REVIEW_RECORD_ID, target_state="confirmed",
+            pre_hash=intent.pre_hash, pre_revision=intent.pre_revision, expected_post_hash=None,
+            state="reconciliation_required", idempotency_key=_compute_idk(intent),
+            request_fingerprint=_compute_fp(intent), actor_label="7",
+        )
+        fields.update(overrides)
+        return mr.JournalEntrySnapshot(**fields)
+
+    def write_review_audit(record, *, filename="evidence_review_" + REVIEW_RECORD_ID + "_20260101_000000.review_audit.json"):
+        review_audit_dir.mkdir(parents=True, exist_ok=True)
+        (review_audit_dir / filename).write_text(_json.dumps(record), encoding="utf-8")
+
+    def clear_review_audit_dir():
+        if review_audit_dir.exists():
+            _shutil.rmtree(review_audit_dir)
+
+    # ---- PRE-STATE: canonical shows needs_review, zero audits at all ----
+    write_review_canonical("needs_review")
+    clear_review_audit_dir()
+    pre_evidence = real_review_adapter.gather_evidence(review_entry())
+    check(
+        "Layer B real adapter: canonical needs_review + zero audits -> pre_state_confirmed_unchanged=True",
+        pre_evidence.pre_state_confirmed_unchanged is True and pre_evidence.post_state_verified is False,
+        f"got {pre_evidence!r}",
+    )
+
+    # ---- POST-STATE: canonical shows target_state + exactly one fully-bound audit ----
+    post_hash = write_review_canonical("confirmed")
+    good_audit = {
+        "case_id": REVIEW_CASE_ID, "record_type": "candidate", "record_id": REVIEW_RECORD_ID,
+        "review_note": NOTE_TEXT, "pre_sha256": review_intent().pre_revision, "post_sha256": post_hash,
+        "previous_state": "needs_review", "new_state": "confirmed", "reviewer_ref": "local_lawyer_ui",
+    }
+    entry_for_post = review_entry()
+    good_audit["mutation_idempotency_key"] = entry_for_post.idempotency_key
+    good_audit["mutation_resource_key"] = f"case:{REVIEW_CASE_ID}"
+    good_audit["mutation_actor_ref"] = "7"
+    write_review_audit(good_audit)
+    post_evidence = real_review_adapter.gather_evidence(entry_for_post)
+    check(
+        "Layer B real adapter: canonical target_state + 1 fully-bound audit -> post_state_verified=True "
+        "with the REAL canonical hash as observed_post_hash",
+        post_evidence.post_state_verified is True
+        and post_evidence.pre_state_confirmed_unchanged is False
+        and post_evidence.observed_post_hash == post_hash,
+        f"got {post_evidence!r}",
+    )
+
+    # ---- Binding tamper cases - each ONE field changed from the baseline ----
+    review_binding_cases = [
+        ("binding 1 (idempotency key) WRONG", {"mutation_idempotency_key": "other"}),
+        ("binding 2 (resource key) WRONG", {"mutation_resource_key": "case:other_case"}),
+        ("binding 3 (case_id) WRONG", {"case_id": "other_case"}),
+        ("binding 4 (record_type) WRONG", {"record_type": "suggestion"}),
+        ("binding 5 (record_id) WRONG", {"record_id": "some_other_record"}),
+        ("binding 6a (actor ref) WRONG", {"mutation_actor_ref": "999"}),
+        ("binding 6b (reviewer sentinel) WRONG", {"reviewer_ref": "not_the_lawyer_ui"}),
+        ("binding 7 (target/new state) WRONG", {"new_state": "rejected"}),
+        ("binding 9 (pre SHA) WRONG", {"pre_sha256": "0" * 64}),
+        ("binding 10 (post SHA) WRONG", {"post_sha256": "0" * 64}),
+    ]
+    for label, override in review_binding_cases:
+        write_review_audit({**good_audit, **override})
+        evidence = real_review_adapter.gather_evidence(review_entry())
+        check(
+            f"Layer B real adapter: {label} yields INCONCLUSIVE evidence (never post_state_verified)",
+            evidence.post_state_verified is False and evidence.pre_state_confirmed_unchanged is False,
+            f"got {evidence!r}",
+        )
+
+    # binding 14 (recomputed request fingerprint) - tamper the note text
+    # itself (which the audit stores as raw text) so the recomputed
+    # fingerprint can never match the journal's own, while every OTHER
+    # field stays correct.
+    write_review_audit({**good_audit, "review_note": "a tampered, different note"})
+    fp_evidence = real_review_adapter.gather_evidence(review_entry())
+    check(
+        "Layer B real adapter: binding 14 (recomputed request fingerprint via tampered review_note) "
+        "yields INCONCLUSIVE evidence",
+        fp_evidence.post_state_verified is False and fp_evidence.pre_state_confirmed_unchanged is False,
+        f"got {fp_evidence!r}",
+    )
+
+    # ---- Duplicate audit -> ambiguous, unconditionally ----
+    write_review_audit(good_audit, filename="evidence_review_" + REVIEW_RECORD_ID + "_20260101_000000.review_audit.json")
+    write_review_audit(good_audit, filename="evidence_review_" + REVIEW_RECORD_ID + "_20260101_000001.review_audit.json")
+    dup_evidence = real_review_adapter.gather_evidence(review_entry())
+    check(
+        "Layer B real adapter: 2 clean, identically-bound audit records for the SAME record -> "
+        "ambiguous, INCONCLUSIVE (never picks one)",
+        dup_evidence.post_state_verified is False and dup_evidence.pre_state_confirmed_unchanged is False,
+        f"got {dup_evidence!r}",
+    )
+
+    # ---- Family-wide corrupt audit blocks EVERY record, even an
+    #      otherwise-clean pre-state one ----
+    clear_review_audit_dir()
+    write_review_canonical("needs_review")
+    review_audit_dir.mkdir(parents=True, exist_ok=True)
+    (review_audit_dir / "evidence_review_some_other_record_20260101_000000.review_audit.json").write_text(
+        "not valid json {{{", encoding="utf-8",
+    )
+    corrupt_evidence = real_review_adapter.gather_evidence(review_entry())
+    check(
+        "Layer B real adapter: a family-wide corrupt audit-shaped file blocks pre_state_confirmed_unchanged "
+        "even for an UNRELATED record whose own canonical state is clean needs_review",
+        corrupt_evidence.pre_state_confirmed_unchanged is False and corrupt_evidence.post_state_verified is False,
+        f"got {corrupt_evidence!r}",
+    )
+
+    # ---- reconcile_and_apply_journal_entry() end to end, through the
+    #      real FakeReconcileConn machinery already proven above, using
+    #      the REAL Layer B adapter and a REAL clean post-state fixture. ----
+    clear_review_audit_dir()
+    post_hash2 = write_review_canonical("confirmed")
+    review_intent_2 = review_intent(pre_revision="pending_screen_hash_placeholder_2")
+    idem2 = _compute_idk(review_intent_2)
+    good_audit2 = {**good_audit, "pre_sha256": review_intent_2.pre_revision, "post_sha256": post_hash2, "mutation_idempotency_key": idem2}
+    write_review_audit(good_audit2)
+
+    review_e2e_registry = mr.MutationAdapterRegistry().with_adapter(
+        _review_facade.action_family_for(REVIEW_KIND), real_review_adapter,
+    )
+    review_e2e_conn = FakeReconcileConn([make_journal_row(
+        id=1, resource_key=f"case:{REVIEW_CASE_ID}", action_family=_review_facade.action_family_for(REVIEW_KIND),
+        target_ref=REVIEW_RECORD_ID, target_state="confirmed",
+        pre_hash=review_intent_2.pre_hash, pre_revision=review_intent_2.pre_revision,
+        state="reconciliation_required", idempotency_key=idem2,
+        request_fingerprint=_compute_fp(review_intent_2), actor_label="7",
+    )])
+    _lock_calls.clear()
+    ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+    ml.release_lock_session = _fake_release_lock_session
+    try:
+        review_e2e_outcome = mr.reconcile_and_apply_journal_entry(review_e2e_conn, 1, review_e2e_registry)
+    finally:
+        ml.acquire_case_lock_session = _original_acquire_case
+        ml.release_lock_session = _original_release
+    check(
+        "Layer B real adapter end-to-end through reconcile_and_apply_journal_entry(): resolves to "
+        "'completed' with the real canonical hash as observed_post_hash",
+        review_e2e_outcome.new_state == "completed" and review_e2e_outcome.observed_post_hash == post_hash2,
+        f"got {review_e2e_outcome!r}",
+    )
+    check(
+        "Layer B real adapter end-to-end: the journal row itself was durably updated to 'completed'",
+        review_e2e_conn.table[0]["state"] == "completed",
+    )
+finally:
+    _shutil.rmtree(_review_adapter_tmp, ignore_errors=True)
 
 
 print(f"--- test_reconciliation_isolated: {passed} passed, {failed} failed ---")

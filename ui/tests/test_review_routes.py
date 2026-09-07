@@ -111,6 +111,8 @@ if not _FASTAPI_AVAILABLE:
 from ui.services import paths as svc_paths
 from ui.services import security
 from ui.services import review_registry as reviewreg
+from ui.services import review_mutation_facade as reviewmutfacade
+from ui.services import mutation_lock as ml
 from ui.services import authz as _authz
 import ui.main as main_module
 from ui.main import app
@@ -174,14 +176,158 @@ main_module.require_principal_and_case = lambda request, case_id, capability: (
 main_module.csrf_secret_for_request = lambda request, principal: _TEST_CSRF_SECRET
 main_module.has_capability = lambda request, principal, case_id, capability: True
 
-# The service layer independently RE-RUNS authz.authorize_case_access
-# with its OWN default repository (a real Postgres-backed one) unless a
-# route passes authz_repository= explicitly - main.py does NOT (by
-# design: production always uses the real repository). Route-mechanic
-# tests below therefore override the service module's
-# _default_authz_repository() directly, rather than main.py's call
-# sites (which must stay production-faithful).
-reviewreg._default_authz_repository = lambda: _TEST_REPO
+# ROW 19C-2b: `reviewreg.apply_transition()` no longer has its own
+# `_default_authz_repository()` at all (Row 19C-2b removed it - the
+# function now delegates the ENTIRE mutation, authz re-check included,
+# to `review_mutation_facade.apply_review_mutation()`, whose OWN
+# `_default_authz_repository()` is what actually runs whenever
+# `main.py`'s route calls `apply_transition()` without an explicit
+# `authz_repository=`, exactly matching Row 19C-2a Step 8's identical
+# migration for Layer A - see `ui/tests/test_routes.py`'s own comment
+# on this exact rename). Patching the OLD, now-nonexistent-as-load-
+# bearing `reviewreg._default_authz_repository` name would silently do
+# NOTHING (Python happily sets an unused attribute on a module) - a
+# real, silent test gap this avoids.
+#
+# `_default_authz_repository()` now returns a `(repository, close)`
+# PAIR, not a bare repository - the facade calls `authorize_case_
+# access()` TWICE per review confirm (outer, before any connection/
+# lock/hash/journal SQL; inner, under the resource lock, authoritative)
+# against the SAME repository, closing the IAM connection exactly once
+# afterwards in a `finally`. `_TEST_REPO` is an in-memory repository
+# this file owns for its whole lifetime, so the closer is a no-op.
+reviewmutfacade._default_authz_repository = lambda: (_TEST_REPO, lambda: None)
+
+# ROW 19C-2b: `apply_transition()` now runs the ENTIRE review
+# transition as one journaled mutation via `mutation_coordinator.
+# run_mutation()`, which needs a `mutation.mutation_journal`-shaped
+# connection - `main.py`'s route never passes `conn_factory=` either
+# (production-faithful, same reasoning as `authz_repository` above), so
+# without faking this, EVERY confirm POST in this file would attempt a
+# REAL psycopg connection and fail in this FastAPI-only, no-Postgres-
+# needed test file. A fresh fake table per call (never one shared table
+# across this file's many scenarios) deliberately avoids any cross-
+# scenario idempotency-replay interaction this file's own tests never
+# intend to exercise - that is `ui/tests/test_review_mutation_
+# integration_postgres.py`'s own dedicated job. This is a file-local
+# copy of the SAME fake-journal-cursor shape `ui/tests/test_routes.py`/
+# `ui/tests/test_mutation_approval_facade_isolated.py`/`ui/tests/
+# test_review_service_isolated.py` already use (each proven correct
+# there against the real `run_mutation()`).
+
+
+class _RouteReviewFakeJournalCursor:
+    def __init__(self, table, calls):
+        self._table = table
+        self._calls = calls
+        self._last_result = None
+        self.rowcount = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def _row(self, journal_id):
+        for r in self._table:
+            if r["id"] == journal_id:
+                return r
+        raise AssertionError(f"sahte journal tablosunda id={journal_id} yok")
+
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        self._calls.append(normalized.split()[0])
+
+        if normalized.startswith("SELECT 1 FROM mutation.mutation_journal"):
+            (resource_key,) = params
+            hit = any(
+                r["resource_key"] == resource_key
+                and r["state"] in ("prepared", "executing", "reconciliation_required")
+                for r in self._table
+            )
+            self._last_result = (1,) if hit else None
+            self.rowcount = 1 if hit else 0
+
+        elif normalized.startswith("SELECT id, state, request_fingerprint, observed_post_hash"):
+            (idempotency_key,) = params
+            matches = [r for r in self._table if r["idempotency_key"] == idempotency_key]
+            if not matches:
+                self._last_result = None
+                self.rowcount = 0
+            else:
+                r = matches[0]
+                self._last_result = (
+                    r["id"], r["state"], r["request_fingerprint"], r["observed_post_hash"],
+                    r["failure_code"], r["resolution_code"],
+                )
+                self.rowcount = 1
+
+        elif normalized.startswith("INSERT INTO mutation.mutation_journal"):
+            (
+                resource_key, action_family, actor_user_id, actor_label, target_ref, target_state,
+                pre_hash, pre_revision, idempotency_key, request_fingerprint,
+            ) = params
+            new_id = len(self._table) + 1
+            self._table.append({
+                "id": new_id, "resource_key": resource_key, "action_family": action_family,
+                "actor_user_id": actor_user_id, "actor_label": actor_label, "target_ref": target_ref,
+                "target_state": target_state, "pre_hash": pre_hash, "pre_revision": pre_revision,
+                "idempotency_key": idempotency_key, "request_fingerprint": request_fingerprint,
+                "state": "prepared", "failure_code": None, "resolution_code": None,
+                "executing_at": None, "resolved_at": None, "observed_post_hash": None,
+            })
+            self._last_result = (new_id,)
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'executing'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "executing"
+            self._row(journal_id)["executing_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'completed'"):
+            observed_post_hash, journal_id = params
+            row = self._row(journal_id)
+            row["state"] = "completed"
+            row["observed_post_hash"] = observed_post_hash
+            row["resolved_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'reconciliation_required'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "reconciliation_required"
+            self.rowcount = 1
+
+        else:
+            raise AssertionError(f"beklenmeyen SQL: {sql}")
+
+    def fetchone(self):
+        return self._last_result
+
+
+class _RouteReviewFakeJournalConn:
+    def __init__(self):
+        self.table = []
+        self.calls = []
+        self.closed = False
+
+    def cursor(self):
+        return _RouteReviewFakeJournalCursor(self.table, self.calls)
+
+    def close(self):
+        self.closed = True
+
+
+reviewmutfacade._default_conn_factory = lambda: _RouteReviewFakeJournalConn()
+
+# `apply_review_mutation()` also calls `ui.services.mutation_lock.
+# acquire_case_lock_session`/`release_lock_session` directly (real
+# Postgres advisory locks) - faked here to always succeed, same pattern
+# already proven in `ui/tests/test_routes.py`/`ui/tests/test_mutation_
+# approval_facade_isolated.py`/`ui/tests/test_review_service_isolated.py`.
+ml.acquire_case_lock_session = lambda conn, case_id: 111
+ml.release_lock_session = lambda conn, advisory_lock_id: True
 
 # targeted remediation ile AYNI ilke - TestClient'ın istemci adresini
 # AÇIKÇA loopback yapıyoruz; bu dosya DIŞINDA hiçbir yerde test-host
@@ -373,7 +519,27 @@ def isolated_domain_error_fixture(review_kind, injected_error, review_note="test
         fake_case_id = f"case_iso_domain_{review_kind.replace('.', '_')}"
         record_id = "dom_err_record_1"
         canonical_path = tmp_path / "canonical.json"
-        canonical_path.write_text(json.dumps({"placeholder": True}), encoding="utf-8")
+
+        # ROW 19C-2b: the canonical fixture must contain a REAL,
+        # findable record in 'needs_review' state - `review_mutation_
+        # facade.py`'s own precondition_callback now calls the SAME
+        # real, public backend finder (find_record/find_candidate/
+        # find_suggestion) directly, under the case lock, BEFORE ever
+        # reaching the (stubbed) writer below (guard-hoisting - see
+        # that module's own header comment). A bare `{"placeholder":
+        # True}` fixture (this file's own pre-Row-19C-2b shape) would
+        # now be rejected at that EARLIER, precondition-level guard
+        # with `ReviewRecordNotFoundError`, never reaching the stubbed
+        # `apply_review_transition` at all - defeating this fixture's
+        # entire purpose (proving the REAL domain exception class's
+        # message is redacted). `array_field`/`id_field`/`state_field`
+        # are read LIVE from `reviewreg.get_field_names()` (no second,
+        # hand-maintained copy of this per-family shape mapping).
+        array_field, id_field, state_field = reviewreg.get_field_names(review_kind)
+        canonical_path.write_text(
+            json.dumps({array_field: [{id_field: record_id, state_field: "needs_review"}]}),
+            encoding="utf-8",
+        )
         expected_hash = hashlib.sha256(canonical_path.read_bytes()).hexdigest()
 
         target_state = sorted(reviewreg.get_allowed_targets(review_kind))[0]

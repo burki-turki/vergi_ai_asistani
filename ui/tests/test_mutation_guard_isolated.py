@@ -82,10 +82,14 @@ check(
     f"fields={_intent_fields}",
 )
 check(
-    "MutationIntent's field set is exactly the documented 8 fields",
+    # ROW 19C-2b: 9 fields now - `secondary_input_hash` added (a
+    # pre-hashed digest ONLY, never free text itself - see src/
+    # mutation_guard.py's own "ROW 19C-2b ADDITION" header section).
+    "MutationIntent's field set is exactly the documented 9 fields",
     _intent_fields == {
         "actor_type", "actor_ref", "resource_key", "action_family",
         "target_ref", "target_state", "pre_hash", "pre_revision",
+        "secondary_input_hash",
     },
     f"got {_intent_fields}",
 )
@@ -178,6 +182,86 @@ check(
     "(pre_revision is request identity, unaffected by this fix)",
     mg.compute_idempotency_key(make_intent(pre_revision="rev-1", pre_hash="a" * 64))
     != mg.compute_idempotency_key(make_intent(pre_revision="rev-2", pre_hash="a" * 64)),
+)
+
+# ----------------------------------------------------------------
+# 3c) ROW 19C-2b - `secondary_input_hash` (Layer B review-note
+#     identity): byte-for-byte Layer A preservation, fingerprint-only
+#     (never identity), shape validation, and idempotency-conflict
+#     behavior for "same identity, different note".
+# ----------------------------------------------------------------
+
+_NOTE_HASH_A = "a" * 64
+_NOTE_HASH_B = "b" * 64
+
+intent_no_note = make_intent(target_state="confirmed")  # secondary_input_hash left at its default None
+intent_with_note_a = make_intent(target_state="confirmed", secondary_input_hash=_NOTE_HASH_A)
+intent_with_note_b = make_intent(target_state="confirmed", secondary_input_hash=_NOTE_HASH_B)
+
+check(
+    "ROW 19C-2b: a MutationIntent with secondary_input_hash=None (every Layer A call) produces "
+    "a request_fingerprint BYTE-FOR-BYTE IDENTICAL to one built without the field existing at all",
+    mg.compute_request_fingerprint(intent_no_note) == mg.compute_request_fingerprint(make_intent(target_state="confirmed")),
+)
+check(
+    "ROW 19C-2b: secondary_input_hash=None does NOT change idempotency_key either",
+    mg.compute_idempotency_key(intent_no_note) == mg.compute_idempotency_key(make_intent(target_state="confirmed")),
+)
+check(
+    "ROW 19C-2b: secondary_input_hash is absent from _identity_fields()'s own output "
+    "(fingerprint-only, never identity - same asymmetry as target_state)",
+    "secondary_input_hash" not in mg._identity_fields(intent_with_note_a),
+)
+check(
+    "ROW 19C-2b: same identity, secondary_input_hash SET vs None -> SAME idempotency_key",
+    mg.compute_idempotency_key(intent_no_note) == mg.compute_idempotency_key(intent_with_note_a),
+)
+check(
+    "ROW 19C-2b: same identity, secondary_input_hash SET vs None -> DIFFERENT request_fingerprint",
+    mg.compute_request_fingerprint(intent_no_note) != mg.compute_request_fingerprint(intent_with_note_a),
+)
+check(
+    "ROW 19C-2b: same identity + target_state, DIFFERENT secondary_input_hash (different note) "
+    "-> SAME idempotency_key, DIFFERENT request_fingerprint (IdempotencyConflictError territory)",
+    mg.compute_idempotency_key(intent_with_note_a) == mg.compute_idempotency_key(intent_with_note_b)
+    and mg.compute_request_fingerprint(intent_with_note_a) != mg.compute_request_fingerprint(intent_with_note_b),
+)
+check(
+    "ROW 19C-2b: same identity + note, DIFFERENT target_state -> SAME idempotency_key, "
+    "DIFFERENT request_fingerprint (note and target_state are independent fingerprint inputs)",
+    mg.compute_idempotency_key(intent_with_note_a)
+    == mg.compute_idempotency_key(make_intent(target_state="rejected", secondary_input_hash=_NOTE_HASH_A))
+    and mg.compute_request_fingerprint(intent_with_note_a)
+    != mg.compute_request_fingerprint(make_intent(target_state="rejected", secondary_input_hash=_NOTE_HASH_A)),
+)
+
+expect_raises(
+    mg.InvalidMutationIntentError,
+    lambda: mg.validate_intent(make_intent(secondary_input_hash="not-a-hex-digest")),
+    "secondary_input_hash with the wrong shape (not 64 lowercase hex chars) is rejected",
+)
+expect_raises(
+    mg.InvalidMutationIntentError,
+    lambda: mg.validate_intent(make_intent(secondary_input_hash="A" * 64)),
+    "secondary_input_hash with UPPERCASE hex is rejected (must be lowercase)",
+)
+expect_raises(
+    mg.InvalidMutationIntentError,
+    lambda: mg.validate_intent(make_intent(secondary_input_hash="a" * 63)),
+    "secondary_input_hash one character short of 64 is rejected",
+)
+expect_raises(
+    mg.InvalidMutationIntentError,
+    lambda: mg.validate_intent(make_intent(secondary_input_hash="raw note text, not a hash")),
+    "raw note text (not a hash at all) passed as secondary_input_hash is rejected",
+)
+check(
+    "secondary_input_hash=None (the default) is VALID, not rejected",
+    mg.validate_intent(make_intent(secondary_input_hash=None)) is None,
+)
+check(
+    "a well-formed 64-lowercase-hex secondary_input_hash is VALID",
+    mg.validate_intent(make_intent(secondary_input_hash=_NOTE_HASH_A)) is None,
 )
 
 # ----------------------------------------------------------------

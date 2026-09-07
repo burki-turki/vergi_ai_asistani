@@ -99,6 +99,7 @@ from .services import drafting_request as draftreq
 from .services.authz import CaseAccessDeniedError
 from .services import mutation_coordinator as mutcoord
 from .services import mutation_approval_facade as mutfacade
+from .services import review_mutation_facade as reviewmutfacade
 from .auth_routes import (
     router as auth_router,
     require_principal,
@@ -1159,6 +1160,47 @@ def review_confirm(
 
         return _error_page(request, "REVIEW_RECORD_NOT_FOUND", back_url, exc=error)
 
+    # ROW 19C-2b: mutation_coordinator/review_mutation_facade's own new
+    # exception classes - the Layer B analogue of `case_scoped_confirm`'s
+    # own identically-grouped except clauses immediately above this
+    # route (see that route's own comments for the full rationale of
+    # each - unchanged here, only the Layer B-specific class names
+    # differ). `ReviewPreconditionRaceDetectedError` needs NO new except
+    # clause at all - it is a `ReviewStaleViewError` SUBCLASS, already
+    # caught by the existing `except ReviewStaleViewError` block above,
+    # at the SAME `REVIEW_STALE_VIEW`/HTTP 200 contract, automatically.
+    #
+    # `ResourceGatedError`/`JournalExecutingTransitionFailedError`/
+    # `JournalCompletionUncertainError` (mutcoord) and `review_mutation_
+    # facade.ReviewAuditBindingVerificationFailedError` all leave this
+    # case's mutation state genuinely unclear until a human resolves
+    # it - grouped under the SAME closed `MUTATION_REQUIRES_REVIEW`/
+    # HTTP 409 contract Layer A's identical four-way grouping already
+    # uses (`mutfacade.MUTATION_REQUIRES_REVIEW` - the SAME shared
+    # constant/message, never a second, Layer-B-specific string).
+    except (
+        mutcoord.ResourceGatedError,
+        mutcoord.JournalExecutingTransitionFailedError,
+        mutcoord.JournalCompletionUncertainError,
+        reviewmutfacade.ReviewAuditBindingVerificationFailedError,
+    ) as error:
+
+        return _error_page(request, mutfacade.MUTATION_REQUIRES_REVIEW, back_url, exc=error, status_code=409)
+
+    # `IdempotencyConflictError`: refused BEFORE the writer was ever
+    # invoked (zero domain effect from THIS attempt) - same reasoning
+    # as `case_scoped_confirm`'s own identical except clause.
+    except mutcoord.IdempotencyConflictError as error:
+
+        return _error_page(request, "MUTATION_IDENTITY_CONFLICT", back_url, exc=error, status_code=409)
+
+    # `PriorAttemptFailedError`: this EXACT content already has a
+    # TERMINAL 'failed' journal row on record - same reasoning as
+    # `case_scoped_confirm`'s own identical except clause.
+    except mutcoord.PriorAttemptFailedError as error:
+
+        return _error_page(request, "MUTATION_PERMANENTLY_FAILED", back_url, exc=error, status_code=409)
+
     except _REVIEW_DOMAIN_ERRORS as error:
 
         # FINAL DOMAIN-ERROR REDACTION REMEDIATION (2026-09-05): bu 5
@@ -1173,12 +1215,26 @@ def review_confirm(
 
     except ReviewUiError as error:
 
+        # ROW 19C-2b: this ALSO catches `review_mutation_facade.
+        # ReviewResolvedCaseIdMismatchError` and `ReviewDirectoryScanError`
+        # (both `ReviewUiError` subclasses) - deliberately, NEVER
+        # escalated to the `MUTATION_REQUIRES_REVIEW` group above, for
+        # the exact same reason `case_scoped_confirm`'s own generic
+        # handler names for `ResolvedCaseIdMismatchError`: neither
+        # carries positive evidence that a journal row exists for this
+        # attempt at all (both are precondition-level, zero-journal-row
+        # failures) - telling a lawyer "a system administrator must
+        # manually reconcile this" here would be a fabricated
+        # mutation-state claim.
         return _error_page(request, "REVIEW_TRANSITION_FAILED", back_url, exc=error)
 
     except Exception as error:
 
         # Beklenmeyen HERHANGİ bir exception türü - generic kalır,
-        # ham mesaj/traceback ASLA tarayıcıya gösterilmez.
+        # ham mesaj/traceback ASLA tarayıcıya gösterilmez. Same
+        # discipline as `case_scoped_confirm`'s own final handler: an
+        # arbitrary uncaught exception is NEVER reclassified into the
+        # mutation-state 409 contract above.
         return _error_page(request, "REVIEW_TRANSITION_FAILED", back_url, exc=error)
 
     # 5 review modülünün de `apply_review_transition` dönüş sözlüğü

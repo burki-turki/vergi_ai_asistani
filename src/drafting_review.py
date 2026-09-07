@@ -337,6 +337,8 @@ def check_stale_sources(case_id, analysis, section):
 def write_review_audit(
     audit_dir, case_id, drafting_analysis_id, record_type, record_id, previous_state, new_state,
     reviewer_ref, review_note, pre_sha256, post_sha256, backup_path,
+    *,
+    mutation_idempotency_key=None, mutation_resource_key=None, mutation_actor_ref=None,
 ):
 
     audit_dir = Path(audit_dir)
@@ -349,6 +351,12 @@ def write_review_audit(
         "audit_type": f"drafting_{record_type}_review",
         "review_version": DRAFTING_REVIEW_VERSION,
         "case_id": case_id,
+        # ROW 19C-2b: additive, keyword-only, default None - see
+        # evidence_review.py's own write_review_audit for the full
+        # rationale (mirrors Row 19C-2a's Layer A pattern exactly).
+        "mutation_idempotency_key": mutation_idempotency_key,
+        "mutation_resource_key": mutation_resource_key,
+        "mutation_actor_ref": mutation_actor_ref,
         "drafting_analysis_id": drafting_analysis_id,
         "record_type": record_type,
         "record_id": record_id,
@@ -380,7 +388,13 @@ def write_review_audit(
 def apply_review_transition(
     case_id, record_type, record_id, target_state, reviewer_ref, review_note,
     canonical_path=None, audit_dir=None,
+    *,
+    mutation_idempotency_key=None, mutation_resource_key=None, mutation_actor_ref=None,
 ):
+    # ROW 19C-2b: threaded, unchanged, into write_review_audit() below -
+    # this function's own transition logic (record lookup, previous_
+    # state/stale-source guard, backup/atomic-write/rollback) is
+    # completely UNCHANGED.
 
     if record_type not in ALLOWED_TARGETS_BY_TYPE:
 
@@ -454,6 +468,9 @@ def apply_review_transition(
         audit_path = write_review_audit(
             audit_dir, case_id, analysis.get("drafting_analysis_id"), record_type, record_id,
             previous_state, target_state, reviewer_ref, review_note, pre_sha256, post_sha256, backup_path,
+            mutation_idempotency_key=mutation_idempotency_key,
+            mutation_resource_key=mutation_resource_key,
+            mutation_actor_ref=mutation_actor_ref,
         )
 
     except Exception:

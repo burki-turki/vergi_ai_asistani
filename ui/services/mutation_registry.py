@@ -180,6 +180,28 @@ class JournalEntrySnapshot:
     # positional construction of this dataclass needs only ONE new
     # trailing argument, never a reshuffle.
     idempotency_key: str
+    # ROW 19C-2b: added so a Layer B reconciliation adapter (see
+    # ui/services/review_mutation_adapters.py) can independently
+    # recompute this journal row's OWN `request_fingerprint` purely
+    # from a candidate audit record's content (binding 14 - "audit
+    # alanlarından yeniden hesaplanan request fingerprint == journal
+    # request_fingerprint") and can bind the journal's own actor
+    # identity to that same audit record's `mutation_actor_ref` field
+    # (binding 6 - `reviewer_ref` alone is a FIXED, non-identity
+    # provenance sentinel and can never serve this purpose, see
+    # review_registry.py's own locked 2026-09-04 decision). Both are
+    # EXISTING, already-`NOT NULL` `mutation.mutation_journal` columns
+    # (db/migrations/0003_mutation_journal.sql) - no new migration.
+    # Appended at the end, exactly like `idempotency_key` above, for
+    # the identical reason: any pre-existing positional construction of
+    # this dataclass needs only two new trailing arguments, never a
+    # reshuffle. The ONLY production constructor
+    # (`_read_authoritative_entry()` below) is updated in this same
+    # commit; the only other `JournalEntrySnapshot(...)` construction
+    # site in this project is a test fixture
+    # (ui/tests/test_reconciliation_isolated.py), updated alongside it.
+    request_fingerprint: str
+    actor_label: str
 
 
 @dataclass(frozen=True)
@@ -402,7 +424,8 @@ def _read_authoritative_entry(conn, journal_id: int) -> JournalEntrySnapshot | N
     with conn.cursor() as cur:
         cur.execute(
             "SELECT id, resource_key, action_family, target_ref, target_state, "
-            "pre_hash, pre_revision, expected_post_hash, state, idempotency_key "
+            "pre_hash, pre_revision, expected_post_hash, state, idempotency_key, "
+            "request_fingerprint, actor_label "
             "FROM mutation.mutation_journal WHERE id = %s",
             (journal_id,),
         )

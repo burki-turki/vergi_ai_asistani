@@ -57,7 +57,7 @@ import json
 from pathlib import Path
 
 from . import paths
-from . import authz as _authz
+from . import review_mutation_facade as _review_mutation_facade
 from .common import (
     ReviewUiError,
     UnknownReviewKindError,
@@ -69,20 +69,24 @@ from .common import (
 )
 
 # ============================================================
-# Row 19B: module-level (not a local closure) so tests can monkeypatch
-# it directly - same DI pattern as
-# `approval_registry._default_authz_repository`. Lazy-imports `db` (and
-# through it, psycopg) so this module stays importable without psycopg
-# installed; only actually CALLING this (in production, when
-# `apply_transition` is not given an explicit `authz_repository=`)
-# requires it.
-# ============================================================
-
-
-def _default_authz_repository():
-    from . import db as _db
-    return _authz.PostgresAuthzRepository(_db.get_connection())
-
+# ROW 19C-2b: this module's OWN `_default_authz_repository()` -
+# formerly `apply_transition()`'s own fallback whenever a caller (in
+# production) passed `authz_repository=None` - is REMOVED.
+# `apply_transition()` no longer calls `authz.authorize_case_access()`
+# itself at all (it now delegates the ENTIRE mutation, authz included,
+# to `review_mutation_facade.apply_review_mutation()` - see that
+# function's own docstring) - so the fallback that actually applies
+# now, whenever `authz_repository=None` reaches the facade, is THAT
+# module's OWN `_default_authz_repository()` (mirrors Row 19C-2a Step 7's
+# identical removal of `approval_registry.py`'s own copy - see that
+# module's own header comment for the full rationale: a duplicated,
+# potentially-diverging SECOND authz call site is exactly what this
+# avoids). A test that used to monkeypatch `review_registry._default_
+# authz_repository` to affect `apply_transition()`'s production-default
+# authz repository must instead monkeypatch `ui.services.review_
+# mutation_facade._default_authz_repository` from this same commit
+# onward - mirrors `ui/tests/test_routes.py`'s own identical migration
+# for Layer A (Row 19C-2a Step 8).
 # ============================================================
 # 5 GERÇEK domain hata sınıfı (allowlist) - main.py'nin FastAPI
 # importu OLMADAN da (bu modül saf Python, `test_review_service_
@@ -127,6 +131,18 @@ REVIEW_NOTE_MAX_LENGTH = 2000
 # TUTULMAZ - her zaman `get_allowed_targets()` ile canlı okunur.
 # ============================================================
 
+# ROW 19C-2b: `audit_dir_getter`/`domain_error_class` are ADDITIVE
+# per-entry metadata for the new coordinated mutation path
+# (`review_mutation_facade.py`). `audit_dir_getter` names each
+# backend's OWN, differently-named audit-directory getter function
+# (`get_evidence_review_audit_dir`, `get_argument_review_audit_dir`,
+# ...) - kaynak kodu okunarak doğrulandı, HİÇBİR ortak string şablonu
+# İCAT EDİLMEDİ. `domain_error_class` is the ALREADY-imported (see
+# above) real exception class each backend raises - reused directly,
+# never re-derived from a name string. Both fields are keyed per
+# review_kind (repeating the same value across review_kinds that share
+# one module) - matching this registry's EXISTING style for
+# `validator_module`/`validator_fn` above.
 REVIEW_KIND_REGISTRY = {
     "evidence.candidate": {
         "review_kind": "evidence.candidate", "row_no": 12,
@@ -138,6 +154,8 @@ REVIEW_KIND_REGISTRY = {
         "record_type": "candidate", "call_shape": "with_record_type",
         "array_field": "evidence_candidates", "id_field": "candidate_id",
         "state_field": "review_state",
+        "audit_dir_getter": "get_evidence_review_audit_dir",
+        "domain_error_class": EvidenceReviewError,
     },
     "evidence.suggestion": {
         "review_kind": "evidence.suggestion", "row_no": 12,
@@ -149,6 +167,8 @@ REVIEW_KIND_REGISTRY = {
         "record_type": "suggestion", "call_shape": "with_record_type",
         "array_field": "evidence_agent_suggestions", "id_field": "suggestion_id",
         "state_field": "suggestion_review_state",
+        "audit_dir_getter": "get_evidence_review_audit_dir",
+        "domain_error_class": EvidenceReviewError,
     },
     "argument.claim": {
         "review_kind": "argument.claim", "row_no": 13,
@@ -158,6 +178,8 @@ REVIEW_KIND_REGISTRY = {
         "validator_fn": "validate_argument_analysis",
         "validator_path_kw": "arguments_path",
         "record_type": "claim", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_argument_review_audit_dir",
+        "domain_error_class": ArgumentReviewError,
     },
     "argument.counterargument": {
         "review_kind": "argument.counterargument", "row_no": 13,
@@ -167,6 +189,8 @@ REVIEW_KIND_REGISTRY = {
         "validator_fn": "validate_argument_analysis",
         "validator_path_kw": "arguments_path",
         "record_type": "counterargument", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_argument_review_audit_dir",
+        "domain_error_class": ArgumentReviewError,
     },
     "argument.rebuttal": {
         "review_kind": "argument.rebuttal", "row_no": 13,
@@ -176,6 +200,8 @@ REVIEW_KIND_REGISTRY = {
         "validator_fn": "validate_argument_analysis",
         "validator_path_kw": "arguments_path",
         "record_type": "rebuttal", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_argument_review_audit_dir",
+        "domain_error_class": ArgumentReviewError,
     },
     "argument.suggestion": {
         "review_kind": "argument.suggestion", "row_no": 13,
@@ -185,6 +211,8 @@ REVIEW_KIND_REGISTRY = {
         "validator_fn": "validate_argument_analysis",
         "validator_path_kw": "arguments_path",
         "record_type": "suggestion", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_argument_review_audit_dir",
+        "domain_error_class": ArgumentReviewError,
     },
     "risk_strategy.risk": {
         "review_kind": "risk_strategy.risk", "row_no": 14,
@@ -198,6 +226,8 @@ REVIEW_KIND_REGISTRY = {
         # `src/risk_strategy_validator.py` okunarak doğrulandı.
         "validator_path_kw": "arguments_path",
         "record_type": "risk", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_risk_strategy_review_audit_dir",
+        "domain_error_class": RiskStrategyReviewError,
     },
     "risk_strategy.strategy": {
         "review_kind": "risk_strategy.strategy", "row_no": 14,
@@ -207,6 +237,8 @@ REVIEW_KIND_REGISTRY = {
         "validator_fn": "validate_risk_strategy_analysis",
         "validator_path_kw": "arguments_path",
         "record_type": "strategy", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_risk_strategy_review_audit_dir",
+        "domain_error_class": RiskStrategyReviewError,
     },
     "risk_strategy.suggestion": {
         "review_kind": "risk_strategy.suggestion", "row_no": 14,
@@ -216,6 +248,8 @@ REVIEW_KIND_REGISTRY = {
         "validator_fn": "validate_risk_strategy_analysis",
         "validator_path_kw": "arguments_path",
         "record_type": "suggestion", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_risk_strategy_review_audit_dir",
+        "domain_error_class": RiskStrategyReviewError,
     },
     "drafting.section": {
         "review_kind": "drafting.section", "row_no": 15,
@@ -225,6 +259,8 @@ REVIEW_KIND_REGISTRY = {
         "validator_fn": "validate_drafting_analysis",
         "validator_path_kw": "drafting_path",
         "record_type": "section", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_drafting_review_audit_dir",
+        "domain_error_class": DraftingReviewError,
     },
     "drafting.suggestion": {
         "review_kind": "drafting.suggestion", "row_no": 15,
@@ -234,6 +270,8 @@ REVIEW_KIND_REGISTRY = {
         "validator_fn": "validate_drafting_analysis",
         "validator_path_kw": "drafting_path",
         "record_type": "suggestion", "call_shape": "with_record_type",
+        "audit_dir_getter": "get_drafting_review_audit_dir",
+        "domain_error_class": DraftingReviewError,
     },
     "qa.suggestion": {
         "review_kind": "qa.suggestion", "row_no": 16,
@@ -248,6 +286,8 @@ REVIEW_KIND_REGISTRY = {
         "record_type": None, "call_shape": "qa_special",
         "array_field": "qa_agent_suggestions", "id_field": "suggestion_id",
         "state_field": "suggestion_review_state",
+        "audit_dir_getter": "get_qa_review_audit_dir",
+        "domain_error_class": QaReviewError,
     },
 }
 
@@ -553,23 +593,49 @@ REVIEWER_REF = "local_lawyer_ui"
 def apply_transition(
     review_kind, case_id, record_id, target_state, review_note, expected_hash,
     canonical_path_override=None, audit_dir_override=None,
-    *, principal=None, authz_repository=None,
+    *, principal=None, authz_repository=None, conn_factory=None,
 ):
     """Row 19B: `principal` is REQUIRED for real callers (kept as a
     keyword with no default sentinel error message deliberately, so
     the very first line below fails loudly and immediately if a
     caller forgets it - never silently mutates as an unauthenticated
-    principal). This function independently re-runs
-    `authz.authorize_case_access(principal, case_id, "mutate")` BEFORE
-    doing anything else, exactly like case_scoped_approve."""
+    principal).
+
+    ROW 19C-2b: this function no longer runs its own authz/hash-
+    freshness/writer-invocation logic - it delegates the ENTIRE
+    mutation (Row 19C-1's journal/coordinator infrastructure, dual
+    authz, composite canonical+audit+backup pre-state snapshot, the
+    pre-existing-record-audit admission gate, and the 12 review_kind
+    transition tables) to `ui.services.review_mutation_facade.
+    apply_review_mutation()` - mirrors `ui.services.approval_registry.
+    case_scoped_approve()`'s own Row 19C-2a Step 7 delegation to
+    `mutation_approval_facade.approve_case_scoped_mutation()` exactly.
+    This function's own remaining job is exactly two things: (1)
+    resolve `review_kind` into a `ReviewFamilyBinding` bundle (the
+    module object, `record_type`, `call_shape`, `state_field`, the
+    real domain exception class, the audit-directory getter, and the
+    fixed `REVIEWER_REF` - all already-resolved `REVIEW_KIND_REGISTRY`
+    metadata this module already owns, per this module's own header
+    comment on why the facade itself never imports this registry); (2)
+    normalize `review_note` EXACTLY ONCE (`normalize_review_note()`
+    below) and pass the SAME normalized text both to the facade (for
+    hashing into `secondary_input_hash`) and, unchanged, all the way to
+    the writer - no second, independent normalization ever happens.
+    `target_state` is still validated against `get_allowed_targets()`
+    HERE, before the facade is ever reached, for a fast, zero-lock
+    rejection of a structurally invalid target - the facade's own
+    `precondition_callback` does not re-derive the allowed-targets set.
+
+    `canonical_path_override`/`audit_dir_override`/`conn_factory` are
+    TEST-ONLY dependency injection, threaded straight through to the
+    facade unchanged - production callers (`ui/main.py`) NEVER pass any
+    of the three; the facade's own production-default path always
+    derives canonical/audit paths from the case-lock-resolved case_id
+    and opens a real session-lock connection."""
 
     if principal is None:
         raise TypeError("apply_transition() requires principal= (Row 19B authorization)")
 
-    case_id = _authz.authorize_case_access(
-        principal, case_id, "mutate",
-        repository=authz_repository or _default_authz_repository(),
-    )
     entry = _get_entry(review_kind)
 
     trimmed_note = normalize_review_note(review_note)
@@ -585,51 +651,43 @@ def apply_transition(
 
     module = _import_module(entry["module"])
 
-    canonical_path = (
-        canonical_path_override
-        if canonical_path_override is not None
-        else module.get_canonical_path(case_id)
+    binding = _review_mutation_facade.ReviewFamilyBinding(
+        review_kind=review_kind,
+        module=module,
+        record_type=entry["record_type"] if entry["record_type"] is not None else "suggestion",
+        call_shape=entry["call_shape"],
+        state_field=get_field_names(review_kind)[2],
+        domain_error_class=entry["domain_error_class"],
+        get_audit_dir_fn=getattr(module, entry["audit_dir_getter"]),
+        reviewer_ref=REVIEWER_REF,
     )
 
-    if not canonical_path.exists():
+    result = _review_mutation_facade.apply_review_mutation(
+        review_kind, case_id, record_id, target_state, trimmed_note, expected_hash,
+        binding,
+        principal=principal,
+        authz_repository=authz_repository,
+        conn_factory=conn_factory,
+        canonical_path_override=canonical_path_override,
+        audit_dir_override=audit_dir_override,
+    )
 
-        raise ReviewRecordNotFoundError(f"Canonical dosya bulunamadı: {canonical_path}")
-
-    current_hash = sha256_file(canonical_path)
-
-    if current_hash != expected_hash:
-
-        raise ReviewStaleViewError(
-            "Bu inceleme ekranı açıldıktan sonra canonical dosya değişti "
-            f"(o zamanki hash: {expected_hash}, şimdiki: {current_hash}). "
-            "İşlem iptal edildi - lütfen sayfayı yenileyip tekrar deneyin."
-        )
-
-    call_kwargs = {}
-
-    if canonical_path_override is not None:
-
-        call_kwargs["canonical_path"] = canonical_path_override
-
-    if audit_dir_override is not None:
-
-        call_kwargs["audit_dir"] = audit_dir_override
-
-    if entry["call_shape"] == "qa_special":
-
-        result = module.apply_review_transition(
-            case_id, record_id, target_state, REVIEWER_REF, trimmed_note,
-            **call_kwargs,
-        )
-
-    else:
-
-        result = module.apply_review_transition(
-            case_id, entry["record_type"], record_id, target_state,
-            REVIEWER_REF, trimmed_note, **call_kwargs,
-        )
-
-    return result
+    return {
+        "canonical_path": result.canonical_path,
+        "audit_path": result.audit_path,
+        "post_sha256": result.canonical_hash,
+        "previous_state": result.previous_state,
+        "new_state": result.new_state,
+        # ROW 19C-2b: additive, non-breaking fields - no existing
+        # caller reads these two keys (main.py's own `review_confirm`
+        # route only ever reads `result["audit_path"]`/
+        # `result["previous_state"]`/`result["new_state"]`/
+        # `result["post_sha256"]`), kept for observability/future use -
+        # mirrors `approval_registry.case_scoped_approve()`'s own
+        # identical additive fields.
+        "journal_id": result.journal_id,
+        "replayed": result.replayed,
+    }
 
 
 # ============================================================
