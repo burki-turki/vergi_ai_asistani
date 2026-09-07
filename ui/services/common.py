@@ -18,6 +18,35 @@ class StaleViewError(ApprovalUiError):
     fonksiyonu HİÇ ÇAĞRILMAZ (Prensip 9: fail-closed)."""
 
 
+class PreconditionRaceDetectedError(StaleViewError):
+    """ROW 19C-2a - `StaleViewError`'ın bir ALT SINIFI (onun yerine
+    geçen ayrı bir hiyerarşi DEĞİL): mutasyon kilidi ALINDIKTAN sonra
+    dosya sisteminden YENİDEN hesaplanan composite pre-state snapshot'ı
+    (pending SHA-256 + canonical var/yok + canonical SHA-256 veya
+    yokluk göstergesi), kilit BEKLENMEDEN ÖNCE hesaplanmış olan
+    snapshot ile UYUŞMUYOR - yani bu istek kilidi beklerken BAŞKA bir
+    yazar aynı case üzerinde gerçekten bir şeyi değiştirdi.
+
+    Neden `StaleViewError`'dan türer: dışarıdan (route/HTTP katmanı ve
+    mevcut her çağıran) bakıldığında sonuç AYNI kapalı sözleşmedir -
+    "gördüğünüz durum artık geçerli değil, sıfır mutasyon yapıldı,
+    sayfayı yenileyip tekrar deneyin". Mevcut `except StaleViewError`
+    blokları bu yüzden hiçbir değişiklik GEREKTİRMEZ ve bu yeni durumu
+    otomatik olarak DOĞRU şekilde ele alır (Prensip 9: fail-closed).
+    Ayrı bir sınıf olması ise iki durumu birbirinden ayırt edilebilir
+    kılar: düz `StaleViewError` "istemcinin KENDİ beyan ettiği
+    `expected_hash` (pre_revision) güncel pending ile uyuşmuyor",
+    bu alt sınıf ise "istemcinin beyanı tutarlı olabilir ama kilit
+    beklenirken ilgili canonical/pending composite durumu DEĞİŞTİ".
+
+    Bu hata fırlatıldığında `mutation.mutation_journal`'a HİÇBİR
+    `prepared` satırı YAZILMAZ ve writer (`run_approve`) HİÇ
+    ÇAĞRILMAZ - kontrol, `run_mutation()`'ın sırasında
+    `precondition_callback` adımında, `_insert_prepared`'dan KESİN
+    OLARAK ÖNCE yapılır (bkz. `ui/services/mutation_coordinator.py`'nin
+    kendi AUTHORITATIVE ORDER'ı, adım 5 vs adım 6)."""
+
+
 class PendingNotFoundError(ApprovalUiError):
     """Onaylanmak istenen pending dosya artık yok (örn. sayfa açıkken
     başka bir yerden approve edilmiş/silinmiş)."""

@@ -208,12 +208,25 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   Rows 1-18, Row 19A ve Row 19B contract'ları değişmedi. Bu
   checkpoint'in kendisi de (19A/19B örneğinde olduğu gibi) yalnız
   `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir —
-  hiçbir kaynak/migration/test/production dosyasına dokunmaz. Sıradaki
-  alt-faz: **ROW 19C-2** — **ACTIVE / NEXT** — henüz implementasyona
-  BAŞLANMADI; kendi tam dosya allowlist'i implementasyondan ÖNCE ayrıca
-  sunulup onaylatılmalıdır (Row 19A'nın dosya-değişiklik sınırı kararı
-  uyarınca) — genel Row 19C-1 onayı Row 19C-2'nin dosya değişikliğini
-  ÖNCEDEN yetkilendirmez.
+  hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+- **ROW 19C-2a — Layer A Approval Mutation Integration** artık **DONE /
+  LOCKED** — kullanıcı tarafından ayrıca onaylanmış 31 dosyalık
+  allowlist (8 yeni + 23 değiştirilmiş dosya) üzerinde implement
+  edildi, gerçek/disposable bir PostgreSQL örneğine karşı yerel
+  testlerle doğrulandı ve bağımsız bir salt-okunur final inceleme +
+  dar kapsamlı bir remediation turundan geçti (bkz. Row 19C-2a
+  checkpoint özeti, §5 sonrası). Bu, mutation coordinator/journal
+  altyapısının İLK gerçek production writer'a bağlandığı alt-fazdır:
+  on Layer A approval ailesinin tamamı. Rows 1-18, Row 19A, Row 19B ve
+  Row 19C-1 contract'ları değişmedi.
+- Sıradaki canonical alt-faz: **ROW 19C-2b — Layer B review writer
+  entegrasyonu** — **ACTIVE / NEXT** — **henüz implementasyona
+  BAŞLANMADI**; kendi tam dosya allowlist'i implementasyondan ÖNCE
+  ayrıca sunulup onaylatılmalıdır (Row 19A'nın dosya-değişiklik sınırı
+  kararı uyarınca) — genel Row 19C-1 veya Row 19C-2a onayı Row
+  19C-2b'nin dosya değişikliğini ÖNCEDEN yetkilendirmez. Bu satır
+  yalnız SIRADAKİ KAPSAMIN ADINI belirtir; 19C-2b için henüz hiçbir
+  kod, şema veya allowlist belirleme çalışması yapılmamıştır.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -1554,6 +1567,175 @@ yükseltmez — bu, gelecekte gerçek bir kalıcı veritabanı üzerinde
 `0003` sonrası bir değişiklik gerektiğinde hatırlanması gereken genel
 bir kısıttır, yalnız bu migration'a özgü değildir).
 
+### Row 19C-2a — Layer A Approval Mutation Integration (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış 31
+dosyalık allowlist üzerinde tamamlandı: **8 NEW + 23 MODIFIED**;
+allowlist dışında hiçbir dosyaya dokunulmadı.
+
+- Yeni (8): `db/migrations/0004_mutation_reconciliation_provenance.sql`,
+  `ui/services/mutation_approval_facade.py`,
+  `ui/services/mutation_approval_adapters.py`,
+  `ui/reconciliation_operator.py`,
+  `ui/tests/test_mutation_approval_facade_isolated.py`,
+  `ui/tests/test_mutation_approval_integration_postgres.py`,
+  `ui/tests/test_mutation_reconciliation_provenance_postgres.py`,
+  `ui/tests/test_reconciliation_operator_isolated.py`.
+- Değiştirilmiş (23): `ui/services/{mutation_coordinator,
+  mutation_registry,approval_registry,common}.py`, `ui/main.py`,
+  `src/mutation_guard.py`, `ui/tests/{test_mutation_guard_isolated,
+  test_mutation_coordinator_isolated,test_mutation_journal_postgres,
+  test_service_isolated,test_routes,test_reconciliation_isolated,
+  test_path_containment_isolated}.py` ve 10 `src/*_approval.py`.
+
+**İlk gerçek production writer bağlantısı** — Row 19C-1 tamamen altyapı
+katmanıydı ve coordinator'a HİÇBİR gerçek writer bağlanmamıştı. Bu
+alt-fazda on Layer A approval ailesinin (`deadline, issue_spotting,
+legal_research, case_law, evidence, arguments, risk_strategy, drafting,
+qa, case_view`) GERÇEK production writer'ları
+`ui.services.mutation_approval_facade.approve_case_scoped_mutation()`
+üzerinden mutation coordinator/journal altyapısına bağlandı;
+`approval_registry.case_scoped_approve()` artık kendi mutasyon
+mantığını yürütmez, tümünü bu facade'e devreder. Diğer production
+mutator'lar (Layer B review, Row 18C drafting-request, CLI giriş
+noktaları) BİLİNÇLİ olarak bağlanmadan bırakıldı.
+
+**Dual authorization** — Dış (outer) `authorize_case_access()`
+kontrolü, HERHANGİ bir journal/lock connection'ı açılmadan, session
+advisory lock istenmeden, herhangi bir artefakt hash'i okunmadan ve
+dolayısıyla herhangi bir journal gate/idempotency SQL'i çalışmadan
+ÖNCE yapılır; yetkisiz bir çağıran bu dördünün SIFIRINA neden olur.
+İkinci (iç, otoriter) authz kontrolü ve composite pre-state
+doğrulaması case lock ALTINDA uygulanır — dış kontrol fail-fast/
+sızıntı-önleme filtresidir, otoriter kararın YERİNE GEÇMEZ.
+Existence-blindness her iki kontrolde de korunur (ikisi de aynı
+`CaseAccessDeniedError`'a düşer); gated ve ungated bir case'in reddi
+dışarıdan ayırt edilemez.
+
+**Composite pre-state ve yarış tespiti** — `pre_hash`, pending SHA-256
++ canonical var/yok + canonical SHA-256 üzerinden hesaplanan
+deterministik bir composite digest'tir (`pre_revision` ise isteğin
+kendi beyan ettiği `expected_hash` olarak kalır). Snapshot kilit
+öncesi hesaplanıp kilit altında dosya sisteminden YENİDEN hesaplanır;
+composite digest değiştiyse `PreconditionRaceDetectedError` (mevcut
+`StaleViewError`'ın bir ALT SINIFI, böylece var olan her
+`except StaleViewError` bloğu değişmeden çalışmaya devam eder), pending
+SHA-256 `pre_revision` ile uyuşmuyorsa düz `StaleViewError` fırlatılır.
+Her iki durumda da SIFIR `prepared` journal satırı yazılır ve writer
+HİÇ çağrılmaz. Yalnız-canonical değişiklikler de yakalanır (yalnız
+pending'e bakan bir kontrol bunları KAÇIRIRDI).
+
+**Korunan Row 19C-1 sözleşmeleri** — Case-scoped session advisory lock
+(`case:<case_id>`, aile başına değil case başına tek kilit), KOŞULSUZ
+idempotency identity (`pre_hash` kimliğe GİRMEZ, `pre_revision` girer),
+journal state machine (`prepared → executing → {completed |
+reconciliation_required | failed}`) ve fail-closed reconciliation
+sözleşmeleri (writer istisnası ASLA `failed` üretmez; `prepared`-origin
+belirsizliği hiçbir satırı uydurulmuş zaman damgasıyla çözmez) AYNEN
+korunur.
+
+**Eklenen katmanlar** — `0004_mutation_reconciliation_provenance.sql`
+(yalnız additive, idempotent, yeniden çalıştırılabilir; `0003`
+DEĞİŞTİRİLMEDİ; iki NULLable provenance kolonu + kapalı actor-type
+seti, non-blank ≤255 actor-ref, both-or-neither ve
+provenance⇒resolved CHECK'leri), `ui/reconciliation_operator.py`
+(dry-run varsayılan, `--apply --actor-ref` ile gerçek çözüm),
+approval facade + 10 aile için reconciliation adapter'ları ve gerçek
+PostgreSQL entegrasyon testi.
+
+**Journal/audit bağları — beş eşitlik, fail-closed** — Completed
+replay doğrulaması ve reconciliation, aşağıdakilerin TAMAMINI
+doğrular; eksik, boş, malformed veya uyuşmayan HERHANGİ bir değer
+otomatik başarı/completed SAYILMAZ:
+
+- `journal.idempotency_key == audit.mutation_idempotency_key`
+- `journal.resource_key == audit.mutation_resource_key ==
+  case:<case_id>` (eşitlik + `case:` biçim kontrolü)
+- `journal.observed_post_hash == güncel canonical SHA-256`
+- `audit.canonical_sha256 == güncel canonical SHA-256`
+- `audit.pending_sha256 == journal/request pre_revision` (idempotency
+  hash'inin bunu transitif taşımasına GÜVENİLMEZ, doğrudan kontrol
+  edilir)
+
+`mutation_idempotency_key` ve `mutation_resource_key`, on approval
+modülünün TAMAMINDA keyword-only ve geriye uyumlu (`None`) alanlar
+olarak audit yazıcısına aktarılır; `None` iken mevcut CLI davranışı
+DEĞİŞMEZ. Reconciliation adapter'ı, çözülmemiş bir satırda
+`observed_post_hash` yapısal olarak NULL olduğu için o tek bağı
+gerekçesiyle birlikte hariç tutar; diğer dördünü zorunlu kılar.
+
+**Taze canonical yeniden hash'leme** — Completed replay sırasında
+güncel canonical dosya YENİDEN hash'lenir ve doğrulanan bu taze değer
+`CaseScopedApprovalResult.canonical_hash` olarak döner; journal'daki
+eski hash KÖR BİÇİMDE başarı ekranına taşınMAZ. Fresh (replay
+olmayan) yolda ise bu alan writer'ın kendi az önce hesapladığı
+değerdir. Replay doğrulama yardımcısı PRIVATE'tır ve zorunlu bir
+`journal_state` parametresiyle KAPALIDIR — yalnız `completed`
+durumundan çağrılabilir.
+
+**Temizleme hataları sonucu maskelemez** — `release_lock_session()`
+yalnız `False` dönmekle kalmayıp EXCEPTION da fırlatabilir; her iki
+durum da CRITICAL loglanır ve hiçbiri durable/journal'a yazılmış
+`completed` sonucu veya aktif birincil exception'ı MASKELEMEZ.
+`conn.close()` kendi ayrı iç içe `finally`'sinde her koşulda çağrılır
+ve onun hatası da yalnız loglanır. `False` dönüş davranışı mevcut
+sözleşmeyle uyumlu şekilde görünür kalır.
+
+**Production-default authz repository lifecycle** — `_resolve_authz_
+repository(None)` / `_default_authz_repository()` yolu (üretimde
+`ui/main.py`'nin fiilen kullandığı yol) gerçek olarak test edildi:
+`(repository, close)` kontratı, gerçek `PostgresAuthzRepository`,
+bağlantının tam bir kez açılıp tam bir kez kapanması, dış+iç authz
+kontrollerinin gerçekten kendi SQL'lerini çalıştırması, exception
+yolunda da kapatılması, enjekte edilmiş repository'de sıfır bağlantı
+açılması ve fırlatan bir closer'ın sonucu değiştirmemesi.
+
+**Production veri durumu** — Bu alt-fazda HİÇBİR production case
+verisi değişmedi. Tüm mutasyon testleri geçici dizinlerde ve/veya
+disposable veritabanlarında çalıştı; gerçek `data/` ağacının test
+öncesi/sonrası bayt-düzeyinde DEĞİŞMEDİĞİ entegrasyon testi
+tarafından ayrıca kanıtlandı.
+
+**Test kanıtı (yalnız fiilen çalıştırılmış sonuçlar)**:
+
+- `test_mutation_approval_facade_isolated`: **145/145 PASS**
+- `test_reconciliation_isolated`: **108/108 PASS**
+- `test_reconciliation_operator_isolated`: **73/73 PASS**
+- `test_mutation_approval_integration_postgres`: **140/140 PASS**,
+  gerçek disposable PostgreSQL üzerinde **iki kez** (yeniden
+  çalıştırılabilirlik kanıtı)
+- `test_mutation_reconciliation_provenance_postgres`: **24/24 PASS**
+- `test_mutation_journal_postgres`: **61/61 PASS**
+- `test_mutation_coordinator_isolated`: **99/99 PASS**
+- `test_routes`: **60/60 PASS**
+- `test_service_isolated`: **55/55 PASS**
+- Windows yerel regresyon taraması: **31/31 modül exit 0**,
+  `pip check` temiz.
+- **Skip'ler PASS SAYILMAMIŞTIR**: DSN verilmeden yapılan son genel
+  taramada PostgreSQL bölümleri SKIP olmuştur. Yukarıdaki PostgreSQL
+  sonuçları AYRI, gerçek disposable PostgreSQL çalıştırmalarından
+  gelmektedir. Ayrıca `test_path_containment_isolated`'ın 2 POSIX-
+  symlink alt-kontrolü Windows'ta (Developer Mode/elevation olmadan)
+  SKIP olur; T15'in otoriter Windows kanıtı
+  `test_path_containment_windows`'un NTFS junction testidir (7/7 PASS).
+
+**Final karar** — Bağımsız salt-okunur final inceleme 0 BLOCKER / 0
+HIGH bulgusu bildirdi; tespit edilen M1/M2/M3/L1 maddeleri dar
+kapsamlı bir remediation turunda kapatıldı ve yukarıdaki test
+sonuçları o turdan SONRA alındı. Final verdict: **ROW 19C-2a
+LOCK-READY**.
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1 örneğinde olduğu gibi
+yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
+işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+**ROW 19C-2b'ye taşınan açık madde (Row 19C-2a blocker'ı DEĞİLDİR)** —
+Row 19C-2'nin açılış kapısındaki 7 maddenin tamamı bu alt-fazda
+kapatıldı; geriye yalnız `ui/services/paths.py`'nin `CASES_DIR`'ini
+DOĞRUDAN kullanan dosyalar için path-containment borcunun ilgili
+writer/CLI entegrasyonu sırasında kapatılması kaldı (Layer A tarafı
+kapandı; Layer B/CLI tarafı 19C-2b/19C-2+ kapsamındadır).
+
 ## 6. Cross-Cutting Backlog
 
 Bu maddeler gerçek engineering requirement'lardır ama **roadmap sırasını değiştirmez**.
@@ -1570,6 +1752,21 @@ Row 9 yerine geçirilmez; production/pilot öncesi kapatılmalıdır.
   (`__main__` koruması yok).
 - Otomatik/tekrarlanabilir regression test suite eksikliği (mevcut testler her
   modülün gömülü `run_self_test()`'i + `case_0001` üzerindeki tek gerçek koşu).
+- **Session-level advisory-lock için bounded acquisition / timeout**
+  (Row 19C-2a'nın bağımsız final incelemesinde tespit edildi; **Row
+  19C-2a'nın blocker'ı DEĞİLDİR ve o alt-fazın LOCK'unu engellememiştir**
+  — Row 19D deployment hardening kapsamına taşınmıştır). `ui/services/
+  mutation_lock.py` bloklayan `pg_advisory_lock` kullanır ve `ui/`,
+  `src/` veya `db/` içinde hiçbir `lock_timeout`/`statement_timeout`
+  tanımlı değildir; bu nedenle tutulan bir `case:<case_id>` kilidi bir
+  onay isteğini süresiz bekletebilir. Row 19C-2a ilk gerçek production
+  writer'ı bağladığı için bu durum artık fiilen erişilebilirdir. Olası
+  yön: session-lock bağlantısında `SET lock_timeout`, veya
+  `pg_try_advisory_lock` + sınırlı yeniden deneme, sonucu YENİ bir
+  outcome sınıfı icat etmek yerine mevcut gated/409
+  `MUTATION_REQUIRES_REVIEW` sözleşmesine eşleyerek. Bu turda
+  `mutation_lock.py` ve bağlantı katmanı KASITLI olarak
+  DEĞİŞTİRİLMEMİŞTİR.
 
 Bu maddeler Row 9'u bloke etmiyorsa **şimdi düzeltilmez**.
 

@@ -106,6 +106,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -122,6 +123,23 @@ from mutation_guard import (  # noqa: E402
 )
 
 from . import mutation_lock as _mutation_lock
+
+_logger = logging.getLogger("vergi_ai.mutation_registry")
+
+
+def _log_critical_safely(message: str) -> None:
+    """ROW 19C-2a: identical in spirit and purpose to
+    `ui.services.mutation_coordinator._log_critical_safely` - a logging
+    call that itself raises must NEVER be allowed to replace an
+    already-propagating exception, or, from a `finally` block, to
+    silently discard one. Kept as this module's own copy (rather than
+    importing the coordinator's) so this module's own lock-release/
+    reconciliation-anomaly logging has no dependency on the
+    coordinator module at all."""
+    try:
+        _logger.critical(message)
+    except Exception:
+        pass
 
 
 class UnknownActionFamilyError(Exception):
@@ -154,6 +172,14 @@ class JournalEntrySnapshot:
     pre_revision: str | None
     expected_post_hash: str | None
     state: str
+    # ROW 19C-2a: added so a reconciliation adapter can match this
+    # entry against an approval audit record's own bound
+    # `mutation_idempotency_key` field (see
+    # ui/services/mutation_approval_adapters.py) - appended at the end
+    # rather than reordering the existing fields, so any pre-existing
+    # positional construction of this dataclass needs only ONE new
+    # trailing argument, never a reshuffle.
+    idempotency_key: str
 
 
 @dataclass(frozen=True)
@@ -286,6 +312,35 @@ class ReconciliationApplyFailedError(Exception):
     the lock is still released via the caller's `finally`."""
 
 
+class LockReleaseAnomalyError(Exception):
+    """ROW 19C-2a: raised by `inspect_reconciliation()` when releasing
+    the session lock at the end of a DRY-RUN inspection returns False
+    (see `ui.services.mutation_lock.release_lock_session`'s own
+    contract) AND no other exception is already propagating from that
+    call. A dry-run inspection's entire point is to be a safe,
+    side-effect-free read - a caller must never be handed back what
+    looks like a normal, successful inspection result while this
+    process may still hold the resource's advisory lock; that could
+    silently block or deadlock a LATER real `--apply` reconciliation
+    attempt on the exact same resource. If another exception is ALREADY
+    propagating when this happens instead, the anomaly is only
+    CRITICALLY logged (via `_log_critical_safely`) and this is NEVER
+    raised in that case - it must not replace or mask a real,
+    already-in-flight error, the same non-masking discipline
+    `ui.services.mutation_coordinator`'s own failure classification
+    follows for its `_mark_reconciliation_required` transition
+    failures."""
+
+    def __init__(self, *, resource_key: str, advisory_lock_id: int):
+        self.resource_key = resource_key
+        self.advisory_lock_id = advisory_lock_id
+        super().__init__(
+            f"resource_key={resource_key!r}: release_lock_session() returned False while ending a dry-run "
+            f"inspect_reconciliation() call (advisory_lock_id={advisory_lock_id!r}) - this process may still "
+            "hold the resource's advisory lock; treat this as a genuine anomaly, never as a successful inspection"
+        )
+
+
 class PreparedJournalUnresolvedError(Exception):
     """ROW 19C-1 FINAL PREPARED-INCONCLUSIVE SEMANTICS CORRECTION -
     raised by `_decide_outcome()` when reconciling a `prepared`-origin
@@ -347,7 +402,7 @@ def _read_authoritative_entry(conn, journal_id: int) -> JournalEntrySnapshot | N
     with conn.cursor() as cur:
         cur.execute(
             "SELECT id, resource_key, action_family, target_ref, target_state, "
-            "pre_hash, pre_revision, expected_post_hash, state "
+            "pre_hash, pre_revision, expected_post_hash, state, idempotency_key "
             "FROM mutation.mutation_journal WHERE id = %s",
             (journal_id,),
         )
@@ -440,7 +495,14 @@ def _decide_outcome(entry: JournalEntrySnapshot, evidence: ReconciliationEvidenc
     return ReconciliationOutcome("reconciliation_required", None, evidence.observed_post_hash)
 
 
-def _apply_outcome_under_lock(conn, journal_id: int, outcome: ReconciliationOutcome) -> None:
+def _apply_outcome_under_lock(
+    conn,
+    journal_id: int,
+    outcome: ReconciliationOutcome,
+    *,
+    resolved_by_actor_type: str | None = None,
+    resolved_by_actor_ref: str | None = None,
+) -> None:
     """PRIVATE - deliberately not exported. Must be called ONLY while
     the caller (`reconcile_and_apply_journal_entry()`) still holds the
     SAME session-level resource lock it acquired for this row - there
@@ -511,7 +573,22 @@ def _apply_outcome_under_lock(conn, journal_id: int, outcome: ReconciliationOutc
 
     Requires `cur.rowcount == 1` - anything else raises
     `ReconciliationApplyFailedError` (see that class's own docstring)
-    rather than being treated as a silent success or no-op."""
+    rather than being treated as a silent success or no-op.
+
+    ROW 19C-2a RECONCILIATION PROVENANCE: `resolved_by_actor_type`/
+    `resolved_by_actor_ref` (0004_mutation_reconciliation_provenance.sql's
+    two new, additive, NULLable columns) are written ONLY on the two
+    TERMINAL branches below (`failed` with the prepared-never-executed
+    code, and the general `completed`/`failed` branch) - NEVER on the
+    `reconciliation_required` branch, which leaves `resolution_code`
+    NULL (nothing was actually resolved, so nothing is attributed to
+    anyone). Both default to `None` (no provenance recorded) so every
+    EXISTING caller of `reconcile_and_apply_journal_entry()` that does
+    not pass them keeps writing NULL for both columns, byte-identical
+    to this module's pre-Row-19C-2a behavior - 0004's own
+    `mutation_journal_reconciled_actor_both_or_neither` and
+    `..._provenance_implies_resolved` CHECK constraints both permit
+    this unconditionally (see that migration's own comments)."""
     with conn.cursor() as cur:
         if outcome.new_state == "reconciliation_required":
             cur.execute(
@@ -535,9 +612,13 @@ def _apply_outcome_under_lock(conn, journal_id: int, outcome: ReconciliationOutc
             # silently applying a contradictory combination.
             cur.execute(
                 "UPDATE mutation.mutation_journal "
-                "SET state = 'failed', resolution_code = %s, observed_post_hash = %s, resolved_at = now() "
+                "SET state = 'failed', resolution_code = %s, observed_post_hash = %s, resolved_at = now(), "
+                "    reconciled_by_actor_type = %s, reconciled_by_actor_ref = %s "
                 "WHERE id = %s AND state = 'prepared'",
-                (outcome.resolution_code, outcome.observed_post_hash, journal_id),
+                (
+                    outcome.resolution_code, outcome.observed_post_hash,
+                    resolved_by_actor_type, resolved_by_actor_ref, journal_id,
+                ),
             )
         elif outcome.new_state in ("completed", "failed"):
             # Reachable only for a row that already crossed the writer
@@ -549,9 +630,13 @@ def _apply_outcome_under_lock(conn, journal_id: int, outcome: ReconciliationOutc
             cur.execute(
                 "UPDATE mutation.mutation_journal "
                 "SET state = %s, resolution_code = %s, observed_post_hash = %s, resolved_at = now(), "
-                "    executing_at = COALESCE(executing_at, now()) "
+                "    executing_at = COALESCE(executing_at, now()), "
+                "    reconciled_by_actor_type = %s, reconciled_by_actor_ref = %s "
                 "WHERE id = %s AND state IN ('executing', 'reconciliation_required')",
-                (outcome.new_state, outcome.resolution_code, outcome.observed_post_hash, journal_id),
+                (
+                    outcome.new_state, outcome.resolution_code, outcome.observed_post_hash,
+                    resolved_by_actor_type, resolved_by_actor_ref, journal_id,
+                ),
             )
         else:
             raise ValueError(f"unexpected ReconciliationOutcome.new_state: {outcome.new_state!r}")
@@ -568,6 +653,9 @@ def reconcile_and_apply_journal_entry(
     conn,
     journal_id: int,
     registry: MutationAdapterRegistry,
+    *,
+    resolved_by_actor_type: str | None = None,
+    resolved_by_actor_ref: str | None = None,
 ) -> ReconciliationOutcome:
     """The ONE public reconciliation entry point - acquires the lock,
     authoritatively re-reads the row, decides, applies the decision,
@@ -633,7 +721,23 @@ def reconcile_and_apply_journal_entry(
       and the resource remains gated.
       8. Release the lock, always, via `finally` - only after step 7
          (or after step 6's raise, when reached instead of step 7),
-         never before.
+         never before. ROW 19C-2a: the lock-release RESULT is now
+         checked; a `False` result is CRITICALLY logged (never raised -
+         see `_log_critical_safely` - a stuck advisory lock is a
+         liveness concern to investigate out of band, and must never
+         mask or replace whatever this call itself already returned or
+         raised).
+
+    ROW 19C-2a RECONCILIATION PROVENANCE: `resolved_by_actor_type`/
+    `resolved_by_actor_ref` are optional, keyword-only, and default to
+    `None` - every EXISTING caller that does not pass them keeps
+    recording NULL provenance, byte-identical to this module's
+    pre-Row-19C-2a behavior. `ui/reconciliation_operator.py`'s own
+    `--apply --actor-ref <ref>` path is the only caller expected to
+    ever pass a real value (fixed `resolved_by_actor_type='cli_service'`
+    for v1). Threaded into `_apply_outcome_under_lock()`'s `completed`/
+    `failed` branches ONLY - see that function's own docstring for why
+    the `reconciliation_required` branch never receives them.
     """
 
     pre_lock_resource_key = _read_resource_key_only(conn, journal_id)
@@ -665,7 +769,129 @@ def reconcile_and_apply_journal_entry(
         evidence = adapter.gather_evidence(entry)
         outcome = _decide_outcome(entry, evidence)
 
-        _apply_outcome_under_lock(conn, journal_id, outcome)
+        _apply_outcome_under_lock(
+            conn, journal_id, outcome,
+            resolved_by_actor_type=resolved_by_actor_type,
+            resolved_by_actor_ref=resolved_by_actor_ref,
+        )
         return outcome
     finally:
-        _mutation_lock.release_lock_session(conn, advisory_lock_id)
+        released = _mutation_lock.release_lock_session(conn, advisory_lock_id)
+        if not released:
+            # ROW 19C-2a: previously discarded entirely. Logged only,
+            # NEVER raised from here - this finally block must never
+            # mask or replace whatever the try block above already
+            # returned or raised (an outcome that was already, for the
+            # "completed"/"failed" branches, durably committed to the
+            # database by the UPDATE this same autocommit connection
+            # already issued - a stuck advisory lock afterward is a
+            # liveness concern to investigate out of band, never a
+            # reason to hide a real result or a real exception).
+            _log_critical_safely(
+                f"CRITICAL: reconcile_and_apply_journal_entry() failed to release the session lock for "
+                f"resource_key={pre_lock_resource_key!r} (journal_id={journal_id}, "
+                f"advisory_lock_id={advisory_lock_id!r}) - this process may still hold the resource's "
+                "advisory lock; investigate out of band"
+            )
+
+
+def inspect_reconciliation(
+    conn,
+    journal_id: int,
+    registry: MutationAdapterRegistry,
+) -> ReconciliationOutcome:
+    """ROW 19C-2a - a DRY-RUN counterpart to
+    `reconcile_and_apply_journal_entry()`, for
+    `ui/reconciliation_operator.py`'s `--journal-id` (no `--apply`)
+    mode. Performs EXACTLY the same read-only steps 1-6
+    `reconcile_and_apply_journal_entry()` does - reuses the SAME
+    private helpers (`_read_resource_key_only`,
+    `_acquire_resource_lock_for`, `_read_authoritative_entry`,
+    `_decide_outcome`), takes the SAME session-level resource lock a
+    real `--apply` run would take - and returns the
+    `ReconciliationOutcome` a real `--apply` run WOULD write, but NEVER
+    calls `_apply_outcome_under_lock()`: this function issues ZERO
+    UPDATEs against `mutation.mutation_journal`, always, regardless of
+    what it finds. It raises the EXACT SAME exceptions
+    `reconcile_and_apply_journal_entry()` raises, for the exact same
+    reasons (`JournalEntryNotFoundError`, `ResourceKeyMismatchError`,
+    `UnsupportedJournalStateError`, `PreparedJournalUnresolvedError`) -
+    a dry-run reports what WOULD happen, including a case where nothing
+    can legitimately be resolved yet, and never swallows that
+    distinction to make the dry-run look more conclusive than the real
+    `--apply` run would actually be.
+
+    A REAL adapter's `gather_evidence()` is still invoked for real (per
+    its own read-only contract) - this is a live inspection against
+    live evidence, never a stale cached one - which is exactly why this
+    still needs the resource's session lock: evidence must be gathered
+    against a state that cannot shift underneath it mid-inspection, the
+    same reason the real `--apply` path takes it.
+
+    FAIL-CLOSED UNLOCK DISCIPLINE (ROW 19C-2a): if releasing the lock in
+    `finally` returns False (see
+    `ui.services.mutation_lock.release_lock_session`) AND no other
+    exception is already propagating from this call, this RAISES
+    `LockReleaseAnomalyError` - see that class's own docstring for why
+    a dry-run inspection must never look like a normal, successful
+    result while this process may still hold the resource's advisory
+    lock (unlike `reconcile_and_apply_journal_entry()`'s own finally
+    block, which only logs: THAT function's outcome, for its two
+    UPDATE-issuing branches, is already durably committed by the time
+    its own lock-release runs, so a stuck lock there is a pure liveness
+    concern; THIS function never issues any UPDATE at all, so a stuck
+    lock here is the ONLY thing that could possibly be wrong with an
+    otherwise-successful-looking call, and must not be hidden). If
+    another exception IS already propagating when the release fails,
+    the anomaly is instead only CRITICALLY logged
+    (`_log_critical_safely`) and NEVER raised - it must not replace or
+    mask a real, already-in-flight error.
+    """
+
+    pre_lock_resource_key = _read_resource_key_only(conn, journal_id)
+    if pre_lock_resource_key is None:
+        raise JournalEntryNotFoundError(
+            f"no mutation.mutation_journal row exists for journal_id={journal_id}"
+        )
+
+    advisory_lock_id = _acquire_resource_lock_for(conn, pre_lock_resource_key)
+    try:
+        entry = _read_authoritative_entry(conn, journal_id)
+        if entry is None:
+            raise JournalEntryNotFoundError(
+                f"journal_id={journal_id} existed before the lock was acquired but is gone now "
+                "(no code path in this project deletes journal rows - fail-closed regardless)"
+            )
+        if entry.resource_key != pre_lock_resource_key:
+            raise ResourceKeyMismatchError(
+                f"journal_id={journal_id}: pre-lock resource_key={pre_lock_resource_key!r} != "
+                f"authoritative (lock-held) resource_key={entry.resource_key!r}"
+            )
+        if entry.state not in _SUPPORTED_UNRESOLVED_STATES:
+            raise UnsupportedJournalStateError(
+                f"reconciliation only supports states {sorted(_SUPPORTED_UNRESOLVED_STATES)}, "
+                f"got AUTHORITATIVE state {entry.state!r} for journal_id={journal_id}"
+            )
+
+        adapter = registry.get(entry.action_family)
+        evidence = adapter.gather_evidence(entry)
+        # ROW 19C-2a DRY-RUN: decide, but NEVER call
+        # _apply_outcome_under_lock() - zero UPDATEs, always, whatever
+        # is decided (PreparedJournalUnresolvedError, when applicable,
+        # propagates from _decide_outcome() itself here exactly as it
+        # would from the real --apply path, before any UPDATE would
+        # ever have been attempted there either).
+        return _decide_outcome(entry, evidence)
+    finally:
+        released = _mutation_lock.release_lock_session(conn, advisory_lock_id)
+        if not released:
+            active_exception = sys.exc_info()[1]
+            if active_exception is None:
+                raise LockReleaseAnomalyError(resource_key=pre_lock_resource_key, advisory_lock_id=advisory_lock_id)
+            _log_critical_safely(
+                f"CRITICAL: inspect_reconciliation() failed to release the session lock for "
+                f"resource_key={pre_lock_resource_key!r} (journal_id={journal_id}, "
+                f"advisory_lock_id={advisory_lock_id!r}) while an exception was already propagating "
+                f"({active_exception!r}) - the ORIGINAL exception is being preserved and this lock-release "
+                "anomaly is only logged, never raised, to avoid masking it"
+            )

@@ -95,6 +95,14 @@ class FakeJournalCursor:
         self._table = table
         self._calls = calls
         self._last_result = None
+        # ROW 19C-2a: real psycopg cursors expose `.rowcount` after every
+        # execute() - `_mark_executing`/`_mark_completed`/
+        # `_mark_reconciliation_required` now all check it. The base
+        # cursor reports the "everything matched as expected" value for
+        # every statement; subclasses below override ONE specific
+        # UPDATE's rowcount to 0 to prove each of the three new
+        # rowcount-checked failure paths without needing a real DB.
+        self.rowcount = None
 
     def __enter__(self):
         return self
@@ -114,6 +122,7 @@ class FakeJournalCursor:
                 for r in self._table
             )
             self._last_result = (1,) if hit else None
+            self.rowcount = 1 if hit else 0
 
         elif normalized.startswith("SELECT id, state, request_fingerprint, observed_post_hash"):
             # Unconditional, ALL-state lookup - never filters by state.
@@ -123,12 +132,14 @@ class FakeJournalCursor:
             matches = [r for r in self._table if r["idempotency_key"] == idempotency_key]
             if not matches:
                 self._last_result = None
+                self.rowcount = 0
             else:
                 r = matches[0]
                 self._last_result = (
                     r["id"], r["state"], r["request_fingerprint"], r["observed_post_hash"],
                     r["failure_code"], r["resolution_code"],
                 )
+                self.rowcount = 1
 
         elif normalized.startswith("INSERT INTO mutation.mutation_journal"):
             (
@@ -164,11 +175,13 @@ class FakeJournalCursor:
                 "observed_post_hash": None,
             })
             self._last_result = (new_id,)
+            self.rowcount = 1
 
         elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'executing'"):
             (journal_id,) = params
             self._row(journal_id)["state"] = "executing"
             self._row(journal_id)["executing_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
 
         elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'completed'"):
             observed_post_hash, journal_id = params
@@ -176,10 +189,12 @@ class FakeJournalCursor:
             row["state"] = "completed"
             row["observed_post_hash"] = observed_post_hash
             row["resolved_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
 
         elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'reconciliation_required'"):
             (journal_id,) = params
             self._row(journal_id)["state"] = "reconciliation_required"
+            self.rowcount = 1
 
         else:
             # Row 19C-1 TARGETED CONTRACT REMEDIATION: there is
@@ -322,7 +337,11 @@ expect_raises(
     ),
     "an unresolved journal entry for the resource gates a brand-new, UNRELATED mutation attempt",
 )
-check("ResourceGatedError path never called authz", authz_calls2 == [])
+check(
+    "ROW 19C-2a: ResourceGatedError path DID call authz first (authz now runs before the gate check - "
+    "an unauthorized caller must never even reach this query)",
+    authz_calls2 == [True],
+)
 check("ResourceGatedError path never called precondition", precondition_calls2 == [])
 check("ResourceGatedError path never called the writer", writer_calls2 == [])
 check("ResourceGatedError path inserted NO new journal row", len(gated_conn.table) == 1)
@@ -354,7 +373,11 @@ expect_raises(
     ),
     "same idempotency slot, different target_state (different request_fingerprint), against a COMPLETED row, fails closed",
 )
-check("IdempotencyConflictError (vs completed) path never called authz", authz_calls3b == [])
+check(
+    "ROW 19C-2a: IdempotencyConflictError (vs completed) path DID call authz first (authz runs before "
+    "the idempotency lookup that could recognize the conflict)",
+    authz_calls3b == [True],
+)
 check("IdempotencyConflictError (vs completed) path never called precondition", precondition_calls3b == [])
 check("IdempotencyConflictError (vs completed) path never called the writer", writer_calls3b == [])
 check("IdempotencyConflictError (vs completed) path inserted NO new journal row", len(conflict_conn.table) == 1)
@@ -384,7 +407,11 @@ replay_outcome = mc.run_mutation(
 check("safe replay returns replayed=True", replay_outcome.replayed is True)
 check("safe replay returns state='completed' without re-running anything", replay_outcome.state == "completed")
 check("safe replay returns the ORIGINAL observed_post_hash, not a freshly recomputed one", replay_outcome.observed_post_hash == "hash_v1")
-check("safe replay never invoked authz a second time", authz_calls4b == [])
+check(
+    "ROW 19C-2a: a replay does NOT bypass authz - it still runs authz exactly once per call, "
+    "even though the writer itself is never re-invoked",
+    authz_calls4b == [True],
+)
 check("safe replay never invoked precondition a second time", precondition_calls4b == [])
 check("safe replay NEVER RE-INVOKED THE WRITER", writer_calls4b == [])
 check("safe replay inserted NO new journal row", len(replay_conn.table) == 1)
@@ -421,7 +448,11 @@ expect_raises(
     ),
     "a prior TERMINAL failed row for the identical idempotency slot is deterministically re-reported, never retried",
 )
-check("PriorAttemptFailedError path never called authz", authz_calls5 == [])
+check(
+    "ROW 19C-2a: PriorAttemptFailedError path DID call authz first (authz runs before the lookup that "
+    "finds the terminal failed row)",
+    authz_calls5 == [True],
+)
 check("PriorAttemptFailedError path never called precondition", precondition_calls5 == [])
 check("PriorAttemptFailedError path NEVER called the writer", writer_calls5 == [])
 check("PriorAttemptFailedError path inserted NO new journal row (still exactly 1 row)", len(failed_retry_conn.table) == 1)
@@ -476,7 +507,10 @@ expect_raises(
     ),
     "failed record + same idempotency_key + DIFFERENT fingerprint -> IdempotencyConflictError, not PriorAttemptFailedError",
 )
-check("IdempotencyConflictError (vs failed row) path never called authz", authz_calls6 == [])
+check(
+    "ROW 19C-2a: IdempotencyConflictError (vs failed row) path DID call authz first",
+    authz_calls6 == [True],
+)
 check("IdempotencyConflictError (vs failed row) path never called precondition", precondition_calls6 == [])
 check("IdempotencyConflictError (vs failed row) path never called the writer", writer_calls6 == [])
 check("IdempotencyConflictError (vs failed row) path inserted NO new journal row", len(failed_diff_fp_conn.table) == 1)
@@ -535,6 +569,71 @@ except MyAuthzError as caught:
 check("authz-denial path never called precondition", precondition_calls8 == [])
 check("authz-denial path never called the writer", writer_calls8 == [])
 check("authz-denial path created NO journal row at all", len(authz_fail_conn.table) == 0)
+check(
+    "ROW 19C-2a: authz-denial path issued NO SQL query at all - not even the gate check - "
+    "authz runs strictly before ANY journal query",
+    authz_fail_conn.calls == [],
+)
+
+# ----------------------------------------------------------------
+# 8b) ROW 19C-2a INFORMATION-NON-LEAKAGE PROOF: an authz denial raises
+#     the exact SAME exception, with NO journal query EVER issued,
+#     whether or not the resource already has an unresolved
+#     (gated) entry on record. Since NO SQL runs either way, an
+#     unauthorized caller has literally no observable signal to
+#     distinguish "no history" from "gated/conflicting/prior-failed" -
+#     the leak the ROW 19C-1 draft order permitted is structurally
+#     closed, not just usually avoided.
+# ----------------------------------------------------------------
+
+_leak_probe_authz_error = MyAuthzError("no you don't - leak probe")
+
+# Probe A: the resource has NO history at all.
+leak_probe_clean_conn = FakeJournalConn()
+authz_leak_a, precondition_leak_a, writer_leak_a, calls_leak_a, _precon_leak_a, _writer_leak_a = make_callbacks(
+    authz_raises=_leak_probe_authz_error,
+)
+try:
+    mc.run_mutation(
+        leak_probe_clean_conn, make_intent(resource_key="case:leak_probe", target_ref="t_leak_a"), actor_user_id=1,
+        authz_callback=authz_leak_a, precondition_callback=precondition_leak_a, writer_callback=writer_leak_a,
+    )
+    check("leak probe A (clean resource) raised an exception (unreachable line)", False, "no exception was raised")
+except MyAuthzError:
+    check(
+        "leak probe A (clean resource, no prior history): authz denial raised, with NO SQL issued at all",
+        leak_probe_clean_conn.calls == [],
+    )
+
+# Probe B: the resource ALREADY has an unresolved (gated) entry.
+leak_probe_gated_conn = FakeJournalConn(table=[{
+    "id": 1, "resource_key": "case:leak_probe", "action_family": "fam.other",
+    "actor_user_id": 1, "actor_label": "1", "target_ref": "t", "target_state": None,
+    "pre_hash": None, "pre_revision": None, "idempotency_key": "leak_probe_existing_key",
+    "request_fingerprint": "fp", "state": "executing", "failure_code": None,
+    "resolution_code": None, "executing_at": "x", "resolved_at": None, "observed_post_hash": None,
+}])
+authz_leak_b, precondition_leak_b, writer_leak_b, calls_leak_b, _precon_leak_b, _writer_leak_b = make_callbacks(
+    authz_raises=_leak_probe_authz_error,
+)
+try:
+    mc.run_mutation(
+        leak_probe_gated_conn, make_intent(resource_key="case:leak_probe", target_ref="t_leak_b"), actor_user_id=1,
+        authz_callback=authz_leak_b, precondition_callback=precondition_leak_b, writer_callback=writer_leak_b,
+    )
+    check("leak probe B (already-gated resource) raised an exception (unreachable line)", False, "no exception was raised")
+except MyAuthzError:
+    check(
+        "leak probe B (already-gated resource): authz denial raises the SAME exception, with NO SQL issued "
+        "either - an unauthorized caller cannot distinguish this from probe A by any observable signal",
+        leak_probe_gated_conn.calls == [],
+    )
+check(
+    "leak probes A and B are byte-identical in every observable way (both: 0 SQL calls, 0 rows created)",
+    leak_probe_clean_conn.calls == leak_probe_gated_conn.calls == []
+    and len(leak_probe_clean_conn.table) == 0
+    and len(leak_probe_gated_conn.table) == 1,  # gated conn's PRE-EXISTING row, untouched - not created by this call
+)
 
 # ----------------------------------------------------------------
 # 9) precondition_callback raises -> NO journal row is created at all
@@ -754,7 +853,231 @@ check(
 check("the caller's own finally block still runs around a run_mutation() call that raised a bare BaseException", lock_released_12b == [True])
 
 # ----------------------------------------------------------------
-# 13) is_stale_executing() - pure, never mutates anything.
+# 13) ROW 19C-2a FAILURE CLASSIFICATION - JournalExecutingTransitionFailedError.
+#     The 'prepared'->'executing' UPDATE affects 0 rows (simulated):
+#     writer_callback must NEVER be invoked, and the row is left exactly
+#     as the failed UPDATE found it (in practice, still 'prepared').
+# ----------------------------------------------------------------
+
+
+class MarkExecutingZeroRowcountCursor(FakeJournalCursor):
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        if normalized.startswith("UPDATE mutation.mutation_journal SET state = 'executing'"):
+            self._calls.append(normalized.split()[0])
+            self.rowcount = 0  # simulate a real UPDATE that matched 0 rows - table is left untouched
+            return
+        super().execute(sql, params)
+
+
+class MarkExecutingZeroRowcountConn(FakeJournalConn):
+    def cursor(self):
+        return MarkExecutingZeroRowcountCursor(self.table, self.calls)
+
+
+exec_wrong_conn = MarkExecutingZeroRowcountConn()
+intent_13 = make_intent(resource_key="case:case_0013", target_ref="t13")
+authz13, precondition13, writer13, authz_calls13, precondition_calls13, writer_calls13 = make_callbacks()
+expect_raises(
+    mc.JournalExecutingTransitionFailedError,
+    lambda: mc.run_mutation(
+        exec_wrong_conn, intent_13, actor_user_id=1,
+        authz_callback=authz13, precondition_callback=precondition13, writer_callback=writer13,
+    ),
+    "a 'prepared'->'executing' UPDATE affecting 0 rows raises JournalExecutingTransitionFailedError",
+)
+check("JournalExecutingTransitionFailedError path called authz and precondition (both ran before the transition)", authz_calls13 == [True] and precondition_calls13 == [True])
+check("JournalExecutingTransitionFailedError path NEVER called the writer", writer_calls13 == [])
+check("the row is left 'prepared' (untouched) when the executing-transition UPDATE affects 0 rows", exec_wrong_conn.table[0]["state"] == "prepared")
+
+
+def _get_executing_transition_error():
+    fresh_conn = MarkExecutingZeroRowcountConn()
+    fresh_authz, fresh_precondition, fresh_writer, _, _, _ = make_callbacks()
+    try:
+        mc.run_mutation(
+            fresh_conn, make_intent(resource_key="case:case_0013b", target_ref="t13b"), actor_user_id=1,
+            authz_callback=fresh_authz, precondition_callback=fresh_precondition, writer_callback=fresh_writer,
+        )
+    except mc.JournalExecutingTransitionFailedError as error:
+        return fresh_conn, error
+    raise AssertionError("expected JournalExecutingTransitionFailedError")
+
+
+_exec_fresh_conn, exec_error = _get_executing_transition_error()
+check("JournalExecutingTransitionFailedError carries the affected journal_id", exec_error.journal_id == _exec_fresh_conn.table[0]["id"])
+check("JournalExecutingTransitionFailedError carries the observed rowcount (0)", exec_error.rowcount == 0)
+
+# ----------------------------------------------------------------
+# 14) ROW 19C-2a FAILURE CLASSIFICATION - JournalCompletionUncertainError.
+#     The 'executing'->'completed' UPDATE affects 0 rows (simulated) -
+#     AFTER writer_callback has ALREADY returned successfully. This is
+#     genuinely ambiguous (the writer's own mutation may well have
+#     succeeded) and must NEVER be silently treated as either
+#     'completed' or 'failed' - only later reconciliation may resolve
+#     it. Distinct from section 12a above, which tests the UPDATE
+#     itself RAISING (e.g. a dropped connection) rather than merely
+#     affecting the wrong number of rows.
+# ----------------------------------------------------------------
+
+
+class MarkCompletedZeroRowcountCursor(FakeJournalCursor):
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        if normalized.startswith("UPDATE mutation.mutation_journal SET state = 'completed'"):
+            self._calls.append(normalized.split()[0])
+            self.rowcount = 0  # simulate a real UPDATE that matched 0 rows - table is left untouched
+            return
+        super().execute(sql, params)
+
+
+class MarkCompletedZeroRowcountConn(FakeJournalConn):
+    def cursor(self):
+        return MarkCompletedZeroRowcountCursor(self.table, self.calls)
+
+
+completed_wrong_conn = MarkCompletedZeroRowcountConn()
+intent_14 = make_intent(resource_key="case:case_0014", target_ref="t14")
+authz14, precondition14, writer14, authz_calls14, precondition_calls14, writer_calls14 = make_callbacks(
+    writer_result=mc.WriterResult(observed_post_hash="hash14", result="writer already succeeded"),
+)
+
+
+def _get_completion_uncertain_error():
+    try:
+        mc.run_mutation(
+            completed_wrong_conn, intent_14, actor_user_id=1,
+            authz_callback=authz14, precondition_callback=precondition14, writer_callback=writer14,
+        )
+    except mc.JournalCompletionUncertainError as error:
+        return error
+    raise AssertionError("expected JournalCompletionUncertainError")
+
+
+completion_error = _get_completion_uncertain_error()
+check("the writer WAS invoked exactly once before JournalCompletionUncertainError (it already succeeded)", writer_calls14 == [True])
+check("JournalCompletionUncertainError carries the affected journal_id", completion_error.journal_id == completed_wrong_conn.table[0]["id"])
+check("JournalCompletionUncertainError carries the observed rowcount (0)", completion_error.rowcount == 0)
+check("JournalCompletionUncertainError carries the writer's own observed_post_hash (for downstream reconciliation)", completion_error.observed_post_hash == "hash14")
+check("the row is left 'executing' (unresolved) when the completion UPDATE affects 0 rows - never silently 'completed'", completed_wrong_conn.table[0]["state"] == "executing")
+
+# ----------------------------------------------------------------
+# 15) ROW 19C-2a FAILURE CLASSIFICATION - JournalReconciliationTransitionFailedError
+#     MASKING-SAFETY PROOF. The writer raises its OWN real exception,
+#     AND the 'executing'->'reconciliation_required' UPDATE itself
+#     ALSO affects 0 rows. The ORIGINAL writer exception (exact type
+#     AND exact instance) must still be what propagates to the caller -
+#     the secondary transition failure must only be CRITICALLY logged,
+#     via `_log_critical_safely` (monkeypatched here to capture the
+#     call instead of writing to the real logger), NEVER substituted
+#     for the original exception and NEVER silently dropped either.
+# ----------------------------------------------------------------
+
+
+class MarkReconciliationZeroRowcountCursor(FakeJournalCursor):
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        if normalized.startswith("UPDATE mutation.mutation_journal SET state = 'reconciliation_required'"):
+            self._calls.append(normalized.split()[0])
+            self.rowcount = 0  # simulate a real UPDATE that matched 0 rows - table is left untouched
+            return
+        super().execute(sql, params)
+
+
+class MarkReconciliationZeroRowcountConn(FakeJournalConn):
+    def cursor(self):
+        return MarkReconciliationZeroRowcountCursor(self.table, self.calls)
+
+
+_original_log_critical_safely = mc._log_critical_safely
+_critical_log_calls = []
+mc._log_critical_safely = lambda message: _critical_log_calls.append(message)
+
+reconciliation_wrong_conn = MarkReconciliationZeroRowcountConn()
+intent_15 = make_intent(resource_key="case:case_0015", target_ref="t15")
+authz15, precondition15, writer15, authz_calls15, precondition_calls15, writer_calls15 = make_callbacks(
+    writer_raises=RuntimeError("writer's own real failure - must survive unmasked"),
+)
+try:
+    expect_raises(
+        RuntimeError,
+        lambda: mc.run_mutation(
+            reconciliation_wrong_conn, intent_15, actor_user_id=1,
+            authz_callback=authz15, precondition_callback=precondition15, writer_callback=writer15,
+        ),
+        "the ORIGINAL writer exception (RuntimeError) still propagates even when the "
+        "reconciliation_required transition ITSELF also fails its own rowcount check",
+    )
+    check(
+        "the reconciliation-transition failure was CRITICALLY logged exactly once, separate from the propagating exception",
+        len(_critical_log_calls) == 1,
+    )
+    check(
+        "the critical log message names the affected journal_id",
+        len(_critical_log_calls) == 1 and str(reconciliation_wrong_conn.table[0]["id"]) in _critical_log_calls[0],
+    )
+    check(
+        "the row is left 'executing' (neither 'reconciliation_required' nor anything else) when this "
+        "secondary transition itself fails",
+        reconciliation_wrong_conn.table[0]["state"] == "executing",
+    )
+
+    # Exact-INSTANCE proof (not just exception type) that the original
+    # writer exception is never replaced.
+    _sentinel_writer_exc = RuntimeError("writer's own real failure - exact instance must survive")
+    reconciliation_wrong_conn_b = MarkReconciliationZeroRowcountConn()
+    intent_15b = make_intent(resource_key="case:case_0015b", target_ref="t15b")
+    authz15b, precondition15b, _writer15b, authz_calls15b, precondition_calls15b, _writer_calls15b = make_callbacks()
+
+    def _writer_raises_sentinel():
+        raise _sentinel_writer_exc
+
+    _critical_log_calls.clear()
+    try:
+        mc.run_mutation(
+            reconciliation_wrong_conn_b, intent_15b, actor_user_id=1,
+            authz_callback=authz15b, precondition_callback=precondition15b, writer_callback=_writer_raises_sentinel,
+        )
+        check("the exact original writer exception instance propagates unchanged (unreachable line)", False, "no exception was raised")
+    except RuntimeError as caught:
+        check(
+            "the exact original writer exception INSTANCE propagates unchanged, never replaced by the "
+            "secondary transition failure",
+            caught is _sentinel_writer_exc,
+        )
+    check(
+        "the secondary transition failure was logged for this case too, exactly once",
+        len(_critical_log_calls) == 1,
+    )
+finally:
+    mc._log_critical_safely = _original_log_critical_safely
+
+# ----------------------------------------------------------------
+# 16) `_log_critical_safely` itself NEVER raises, even if the
+#     underlying logger call does - this is what makes it safe to call
+#     from inside an `except`/`finally` block without any risk of
+#     replacing an already-propagating exception.
+# ----------------------------------------------------------------
+
+
+class _RaisingLogger:
+    def critical(self, message):
+        raise RuntimeError("logging backend is down")
+
+
+_original_logger = mc._logger
+mc._logger = _RaisingLogger()
+try:
+    try:
+        mc._log_critical_safely("this must never raise even if the logger itself is broken")
+        check("_log_critical_safely swallows an exception raised by the underlying logger", True)
+    except Exception as error:
+        check("_log_critical_safely swallows an exception raised by the underlying logger", False, f"unexpected exception: {error!r}")
+finally:
+    mc._logger = _original_logger
+
+# ----------------------------------------------------------------
+# 17) is_stale_executing() - pure, never mutates anything.
 # ----------------------------------------------------------------
 
 check("is_stale_executing: well within the default 5-minute threshold -> not stale", mc.is_stale_executing(1000.0, now=1100.0) is False)

@@ -1,5 +1,5 @@
 # ============================================================
-# Row 19C-1 - isolated tests for src/mutation_guard.py.
+# Row 19C-1 / ROW 19C-2a - isolated tests for src/mutation_guard.py.
 #
 # Pure logic only - no database, no filesystem mutation, no network.
 # Proves: canonical-serialization determinism, the idempotency-key vs
@@ -8,6 +8,13 @@
 # fail-closed validation, and - by construction, via a field-set
 # check - that no free-text/secret-shaped field exists on
 # MutationIntent for a fingerprint (or an error message) to leak.
+#
+# ROW 19C-2a IDEMPOTENCY AND CONCURRENCY FINAL CORRECTION: also proves
+# the fix for the real race found during the first production writer
+# integration - `pre_hash` (authoritative, lock-held filesystem
+# evidence) must NEVER be part of either digest, only `pre_revision`
+# (the request's own claimed/expected pre-state) may be. See section 3b
+# below and src/mutation_guard.py's own module-header explanation.
 #
 # Run: python -m ui.tests.test_mutation_guard_isolated
 # ============================================================
@@ -132,11 +139,45 @@ check(
     and mg.compute_request_fingerprint(intent_a) != mg.compute_request_fingerprint(intent_different_actor),
 )
 
-intent_different_prehash = make_intent(pre_hash="a" * 64, pre_revision="rev-1")
+intent_different_prehash_and_revision = make_intent(pre_hash="a" * 64, pre_revision="rev-1")
 check(
-    "a different pre_hash/pre_revision changes BOTH idempotency_key and request_fingerprint",
-    mg.compute_idempotency_key(intent_a) != mg.compute_idempotency_key(intent_different_prehash)
-    and mg.compute_request_fingerprint(intent_a) != mg.compute_request_fingerprint(intent_different_prehash),
+    "a different pre_hash TOGETHER WITH a different pre_revision changes BOTH digests "
+    "(because pre_revision changed, not because pre_hash did - see 3b below)",
+    mg.compute_idempotency_key(intent_a) != mg.compute_idempotency_key(intent_different_prehash_and_revision)
+    and mg.compute_request_fingerprint(intent_a) != mg.compute_request_fingerprint(intent_different_prehash_and_revision),
+)
+
+# ----------------------------------------------------------------
+# 3b) ROW 19C-2a CORE FIX: `pre_hash` ALONE (same actor/resource/
+#     action_family/target_ref/target_state/pre_revision) must NEVER
+#     change either digest - this is the exact defect that let a
+#     concurrent duplicate request's writer run a second time, because
+#     a lock-held re-read of `pre_hash` legitimately differs between
+#     two callers of "the same" request purely due to scheduling.
+#     `pre_revision` is unaffected by this fix and stays part of
+#     identity - covered separately by 3a above.
+# ----------------------------------------------------------------
+
+intent_same_revision_hash_a = make_intent(pre_revision="rev-1", pre_hash="a" * 64)
+intent_same_revision_hash_b = make_intent(pre_revision="rev-1", pre_hash="b" * 64)  # ONLY pre_hash differs
+check(
+    "ROW 19C-2a: pre_hash ALONE (same pre_revision) does NOT change idempotency_key "
+    "(pre_hash is filesystem evidence, not request identity)",
+    mg.compute_idempotency_key(intent_same_revision_hash_a) == mg.compute_idempotency_key(intent_same_revision_hash_b),
+)
+check(
+    "ROW 19C-2a: pre_hash ALONE (same pre_revision) does NOT change request_fingerprint either",
+    mg.compute_request_fingerprint(intent_same_revision_hash_a) == mg.compute_request_fingerprint(intent_same_revision_hash_b),
+)
+check(
+    "ROW 19C-2a: pre_hash is absent from _identity_fields()'s own output",
+    "pre_hash" not in mg._identity_fields(intent_same_revision_hash_a),
+)
+check(
+    "ROW 19C-2a: pre_revision alone (same pre_hash) DOES change idempotency_key "
+    "(pre_revision is request identity, unaffected by this fix)",
+    mg.compute_idempotency_key(make_intent(pre_revision="rev-1", pre_hash="a" * 64))
+    != mg.compute_idempotency_key(make_intent(pre_revision="rev-2", pre_hash="a" * 64)),
 )
 
 # ----------------------------------------------------------------

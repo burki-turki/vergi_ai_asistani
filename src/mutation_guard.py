@@ -19,12 +19,12 @@
 # WHY TWO DIGESTS, NOT ONE
 # -------------------------
 # `idempotency_key` = sha256(actor_type, actor_ref, resource_key,
-#   action_family, target_ref, pre_hash, pre_revision) — the identity
-#   of "one logical operation slot": the same actor performing the
-#   same action on the same target from the same observed pre-state.
-#   A caller that legitimately retries the EXACT same request (e.g. a
-#   network retry re-submitting an unchanged form) always recomputes
-#   the SAME idempotency_key.
+#   action_family, target_ref, pre_revision) — the identity of "one
+#   logical operation slot": the same actor performing the same action
+#   on the same target from the same REQUESTED/expected pre-state
+#   (`pre_revision`). A caller that legitimately retries the EXACT same
+#   request (e.g. a network retry re-submitting an unchanged form)
+#   always recomputes the SAME idempotency_key.
 #
 # `request_fingerprint` = sha256(everything idempotency_key covers,
 #   PLUS target_state) — the identity of "this exact requested
@@ -36,6 +36,37 @@
 #   catch (see ui/services/mutation_coordinator.py). A same-key,
 #   same-fingerprint replay is safe (identical intended outcome) and
 #   may return the stored result without re-invoking the writer.
+#
+# ROW 19C-2a IDEMPOTENCY AND CONCURRENCY FINAL CORRECTION - WHY
+# `pre_hash` IS NOT (AND NEVER WAS SAFE TO BE) PART OF EITHER DIGEST
+# -------------------------------------------------------------------
+# `pre_hash` is FILESYSTEM EVIDENCE (what the authoritative, lock-held
+# re-read of the artefact actually looked like right before this
+# attempt), never REQUEST IDENTITY (what the requester itself claims/
+# expects, which is `pre_revision`'s job). Including `pre_hash` in
+# either digest produced a real, exploitable race in the very first
+# real writer integration (Row 19C-2a, approval_registry): two
+# concurrent identical requests A and B, both observing the SAME
+# `pre_revision`, took DIFFERENT `idempotency_key`s solely because B's
+# lock-held `pre_hash` read happened AFTER A had already mutated the
+# canonical file - so B's `_idempotency_lookup()` never found A's
+# `completed` row, and the writer could run a second time for what was
+# semantically the identical request. Removing `pre_hash` from both
+# digests closes this: identity now depends only on what the REQUEST
+# itself asserts (`pre_revision`), never on a value that can only be
+# read authoritatively AFTER the lock (and therefore can legitimately
+# differ between two callers of "the same" request purely due to
+# scheduling). `pre_hash` remains a `MutationIntent` field and a
+# `mutation.mutation_journal` column - it is still recorded, and
+# reconciliation adapters still use it as pre-state evidence (see
+# ui/services/mutation_registry.py's `ReconciliationEvidence`) - it is
+# simply never hashed into `idempotency_key`/`request_fingerprint`.
+# Replay safety does NOT depend on identity coverage of `pre_hash`
+# either: a safe replay is decided by the coordinator's own
+# `observed_post_hash` plus (for approval) the facade's exact
+# audit-idempotency-key binding check against the CURRENT canonical
+# state (see ui/services/mutation_approval_facade.py) - never by
+# `pre_hash` being part of the key.
 #
 # WHAT NEVER GOES INTO EITHER DIGEST (OR ANYWHERE IN THIS MODULE)
 # -----------------------------------------------------------------
@@ -245,21 +276,27 @@ def _canonical_json(fields: dict) -> bytes:
 
 
 def _identity_fields(intent: MutationIntent) -> dict:
+    """ROW 19C-2a CORRECTION: deliberately excludes `pre_hash` - see
+    the module docstring's "WHY `pre_hash` IS NOT PART OF EITHER
+    DIGEST" section. `pre_revision` (the REQUEST's own claimed/
+    expected pre-state) stays part of identity; `pre_hash`
+    (authoritative, lock-held filesystem evidence, necessarily read
+    AFTER identity/idempotency must already be decidable) does not."""
     return {
         "actor_type": intent.actor_type,
         "actor_ref": intent.actor_ref,
         "resource_key": intent.resource_key,
         "action_family": intent.action_family,
         "target_ref": intent.target_ref,
-        "pre_hash": intent.pre_hash,
         "pre_revision": intent.pre_revision,
     }
 
 
 def compute_idempotency_key(intent: MutationIntent) -> str:
     """sha256 hex digest over the operation-SLOT identity (everything
-    except `target_state`) — see the module docstring for the full
-    rationale. Validates `intent` first (fail-closed)."""
+    except `target_state` AND `pre_hash` - see `_identity_fields()`'s
+    own docstring and the module header's ROW 19C-2a correction).
+    Validates `intent` first (fail-closed)."""
     validate_intent(intent)
     return hashlib.sha256(_canonical_json(_identity_fields(intent))).hexdigest()
 

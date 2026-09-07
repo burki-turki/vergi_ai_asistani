@@ -97,6 +97,8 @@ from .services import approval_registry as reg
 from .services import review_registry as reviewreg
 from .services import drafting_request as draftreq
 from .services.authz import CaseAccessDeniedError
+from .services import mutation_coordinator as mutcoord
+from .services import mutation_approval_facade as mutfacade
 from .auth_routes import (
     router as auth_router,
     require_principal,
@@ -434,9 +436,16 @@ app.add_middleware(_DraftingRequestBodySizeASGIMiddleware)
 # ORTAK YARDIMCILAR
 # ============================================================
 
-def render(request, template_name, **context):
+def render(request, template_name, *, status_code=200, **context):
+    # ROW 19C-2a STEP 7: `status_code` is a NEW, keyword-ONLY parameter
+    # (impossible to collide with any Jinja2 template variable named
+    # "status_code" passed positionally through **context, since it is
+    # consumed here BEFORE `context` is built) - defaults to 200,
+    # `TemplateResponse`'s own existing implicit default, so every
+    # call site that predates this step (none of which ever passed
+    # `status_code=`) is BYTE-FOR-BYTE unchanged.
 
-    return templates.TemplateResponse(request, template_name, context)
+    return templates.TemplateResponse(request, template_name, context, status_code=status_code)
 
 
 # Tarayıcıya gösterilen mesajlar KASITLI olarak sabit/genel - hiçbir
@@ -491,14 +500,83 @@ _ERROR_MESSAGES = {
     "DRAFTING_REQUEST_SAVE_FAILED": (
         "Kaydetme işlemi tamamlanamadı - hiçbir değişiklik kalıcı olmadı."
     ),
+    # --- ROW 19C-2a STEP 7 (mutation-journal-backed case-scoped
+    # approve) ---
+    #
+    # `MUTATION_REQUIRES_REVIEW` is the SAME closed contract
+    # `ui.services.mutation_coordinator.JournalCompletionUncertainError`'s
+    # own docstring, `ui.services.mutation_coordinator.ResourceGatedError`'s
+    # own docstring (via that same cross-reference), and
+    # `ui.services.mutation_approval_facade.AuditBindingVerificationFailedError`'s
+    # own docstring all already commit to by name: the underlying
+    # mutation's true outcome (did the writer's file-write actually
+    # apply or not) is GENUINELY UNKNOWN from this request alone - never
+    # reported as a plain success OR a plain failure, resolved ONLY by
+    # a human operator running `ui/reconciliation_operator.py` out of
+    # band, backed by `ui.services.mutation_approval_adapters`'s own
+    # independent evidence. `JournalExecutingTransitionFailedError`
+    # (the writer was never even invoked, but the journal row itself is
+    # left unresolved and needs the SAME later reconciliation sweep as
+    # an unresolved `ResourceGatedError`) is grouped here too, for the
+    # same reason - see `case_scoped_confirm`'s own except clauses.
+    # Deliberately keyed by `mutfacade.MUTATION_REQUIRES_REVIEW` itself
+    # (NOT a separately-typed literal string) - that constant IS the
+    # shared closed-contract label `mutation_coordinator.py`'s and
+    # `mutation_approval_facade.py`'s own docstrings already commit to
+    # by name; keying this dict with the literal `"MUTATION_REQUIRES_
+    # REVIEW"` instead would create a second, independently-typeable
+    # copy of the same string that could silently drift from it.
+    mutfacade.MUTATION_REQUIRES_REVIEW: (
+        "Bu onay isteğinin sonucu şu anda kesin olarak doğrulanamıyor - işlem gerçekten "
+        "tamamlanmış da olabilir, tamamlanmamış da. Bu belirsizlik OTOMATİK OLARAK "
+        "ÇÖZÜLMEZ: bir sistem yöneticisinin durumu elle incelemesi (reconciliation) "
+        "gerekiyor. Lütfen TEKRAR DENEMEDEN ÖNCE sistem yöneticisiyle iletişime geçin."
+    ),
+    # `IdempotencyConflictError`: an existing journal row for this exact
+    # idempotency_key carries a DIFFERENT request_fingerprint - refused
+    # BEFORE the writer was ever invoked (zero domain effect from THIS
+    # attempt), but genuinely anomalous for this call site (a
+    # case-scoped approve's own identity fields should never legitimately
+    # collide this way) - logged loudly, shown as a plain, non-ambiguous
+    # rejection (unlike MUTATION_REQUIRES_REVIEW above, nothing here is
+    # uncertain: this specific attempt definitely did nothing).
+    "MUTATION_IDENTITY_CONFLICT": (
+        "Bu istek için beklenmeyen bir kimlik çakışması tespit edildi; bu deneme "
+        "SIFIR etkiyle reddedildi (hiçbir değişiklik yapılmadı). Lütfen sayfayı "
+        "yenileyip tekrar deneyin; sorun devam ederse sistem yöneticisiyle iletişime geçin."
+    ),
+    # `PriorAttemptFailedError`: THIS EXACT content (same case, same
+    # family, same claimed pre-state) already has a TERMINAL 'failed'
+    # journal row on record, from a human operator's own earlier
+    # reconciliation decision - retrying with the SAME pending content
+    # will deterministically hit this same block again (see that
+    # exception's own docstring: a caller must generate a NEW
+    # idempotency key, which this UI cannot do on the user's behalf).
+    "MUTATION_PERMANENTLY_FAILED": (
+        "Bu TAM içerikle yapılan onay denemesi daha önce, elle inceleme sonucunda, "
+        "kalıcı olarak başarısız olarak işaretlendi - aynı içerikle tekrar denenemez. "
+        "Lütfen ilgili kaydın (pending) yeniden üretilmesi için kaynağını kontrol edin "
+        "veya sistem yöneticisiyle iletişime geçin."
+    ),
 }
 
 
-def _error_page(request, code, back_url, exc=None):
+def _error_page(request, code, back_url, exc=None, status_code=200):
     """
     Tarayıcıya YALNIZ `_ERROR_MESSAGES`'taki sabit, genel metni
     gösterir - `exc` verilmişse gerçek ayrıntı yalnız logger'a
     yazılır (repoya/diske DEĞİL).
+
+    ROW 19C-2a STEP 7: `status_code` is a NEW, additive keyword-only
+    parameter - defaults to 200 (this app's existing behavior for every
+    call site that predates this step: a rendered, browser-friendly
+    error PAGE, not a REST-style non-2xx response). Only the new
+    `MUTATION_REQUIRES_REVIEW`/`MUTATION_IDENTITY_CONFLICT`/
+    `MUTATION_PERMANENTLY_FAILED` call sites in `case_scoped_confirm`
+    (below) pass `status_code=409`, honoring the HTTP 409 this project's
+    own exception docstrings (`mutation_coordinator.py`,
+    `mutation_approval_facade.py`) already committed to by name - no
+    existing call site's behavior changes.
     """
 
     if exc is not None:
@@ -509,6 +587,7 @@ def _error_page(request, code, back_url, exc=None):
         request, "error.html",
         title="Hata", message=_ERROR_MESSAGES.get(code, "Beklenmeyen bir hata oluştu."),
         code=code, back_url=back_url,
+        status_code=status_code,
     )
 
 
@@ -766,10 +845,17 @@ def case_scoped_confirm(
 
     try:
 
-        # Row 19B: `principal=` GEÇİLİR - `case_scoped_approve` kendi
-        # `authz.authorize_case_access(principal, case_id, "mutate")`
-        # çağrısını BAĞIMSIZ olarak TEKRAR yapar (route katmanındaki
-        # yukarıdaki kontrolün YERİNE değil, ONA EK olarak).
+        # ROW 19C-2a STEP 7: `case_scoped_approve` no longer runs its
+        # own authz re-check here - it now delegates the ENTIRE
+        # mutation (authz re-check included) to
+        # `mutation_approval_facade.approve_case_scoped_mutation()`,
+        # under the same case-scoped resource lock every other
+        # file-write mutation on this case uses, journaled via
+        # `mutation_coordinator.run_mutation()`. See that function's
+        # own docstring (`ui/services/approval_registry.py`) for the
+        # exact, unchanged set of pre-Row-19C-2a exceptions it still
+        # raises for the SAME reasons as before, plus the NEW ones
+        # this route now has its own except clauses for, below.
         result = reg.case_scoped_approve(row_key, case_id, expected_hash, principal=principal)
 
     except CaseAccessDeniedError:
@@ -779,12 +865,63 @@ def case_scoped_confirm(
         # koşuluyla iptal edilmiş bir atama) - app-seviyesi
         # `_case_access_denied_handler`'ın AYNI genel 404'ü üretmesi
         # için BİLEREK yeniden fırlatılır, burada YUTULMAZ/başka bir
-        # mesaja ÇEVRİLMEZ.
+        # mesaja ÇEVRİLMEZ. ROW 19C-2a: bu istisna artık
+        # `case_scoped_approve` içinden değil, facade'in kendi
+        # `authz_callback`'inden (lock tutulurken) geliyor - AYNI
+        # istisna türü, AYNI ele alınış biçimi, değişen yalnız NEREDE
+        # fırlatıldığı.
         raise
 
     except StaleViewError as error:
 
         return _error_page(request, "STALE_VIEW", back_url, exc=error)
+
+    # ROW 19C-2a STEP 7: mutation_coordinator/mutation_approval_facade's
+    # own new exception classes - NONE of these existed before this
+    # step (case_scoped_approve never touched the mutation journal
+    # previously), so NONE of this is a behavior change for any outcome
+    # that could occur before this step landed; these are entirely NEW,
+    # ADDITIONAL outcomes that the journal/coordinator infrastructure
+    # itself can now produce.
+    #
+    # `ResourceGatedError` (an unresolved prepared/executing/
+    # reconciliation_required journal entry already exists for this
+    # case) and `JournalExecutingTransitionFailedError` (the writer was
+    # never invoked, but the row itself is left unresolved, needing the
+    # SAME later reconciliation sweep) both leave this case's mutation
+    # state genuinely unclear until a human resolves it - grouped with
+    # `JournalCompletionUncertainError` (writer succeeded, but the
+    # 'completed' transition itself could not be durably recorded) and
+    # `mutfacade.AuditBindingVerificationFailedError` (a safe replay
+    # whose claimed 'completed' outcome could not be independently
+    # corroborated against the real audit trail) under the SAME closed
+    # `MUTATION_REQUIRES_REVIEW`/HTTP 409 contract every one of these
+    # four exception classes' own docstrings already names by name.
+    except (
+        mutcoord.ResourceGatedError,
+        mutcoord.JournalExecutingTransitionFailedError,
+        mutcoord.JournalCompletionUncertainError,
+        mutfacade.AuditBindingVerificationFailedError,
+    ) as error:
+
+        return _error_page(request, mutfacade.MUTATION_REQUIRES_REVIEW, back_url, exc=error, status_code=409)
+
+    # `IdempotencyConflictError`: refused BEFORE the writer was ever
+    # invoked (zero domain effect from THIS attempt) - genuinely
+    # anomalous for this call site, never ambiguous about what THIS
+    # attempt did (nothing), so deliberately NOT the same message as
+    # MUTATION_REQUIRES_REVIEW above.
+    except mutcoord.IdempotencyConflictError as error:
+
+        return _error_page(request, "MUTATION_IDENTITY_CONFLICT", back_url, exc=error, status_code=409)
+
+    # `PriorAttemptFailedError`: this EXACT content already has a
+    # TERMINAL 'failed' journal row on record from an earlier, human
+    # reconciliation decision - a definite, permanent outcome for this
+    # exact idempotency_key, never ambiguous either.
+    except mutcoord.PriorAttemptFailedError as error:
+
+        return _error_page(request, "MUTATION_PERMANENTLY_FAILED", back_url, exc=error, status_code=409)
 
     except ApprovalUiError as error:
 
@@ -792,6 +929,45 @@ def case_scoped_confirm(
 
     except Exception as error:
 
+        # ROW 19C-2a FINAL ERROR-CLASSIFICATION DISCIPLINE: this final,
+        # generic handler REDACTS (the fixed `APPROVAL_FAILED` text,
+        # with the real exception going only to the local logger - see
+        # `_error_page`) but deliberately DOES **NOT** reclassify an
+        # unexpected exception into the mutation-state contract above.
+        #
+        # ONLY the four explicitly-enumerated, DEFINED conditions -
+        # gated (`ResourceGatedError`), uncertain
+        # (`JournalCompletionUncertainError`,
+        # `JournalExecutingTransitionFailedError`) and audit-binding
+        # (`mutfacade.AuditBindingVerificationFailedError`) - may ever
+        # produce HTTP 409 + `MUTATION_REQUIRES_REVIEW`. Each of those
+        # four carries POSITIVE EVIDENCE about the journal row's actual
+        # state, which is exactly what makes "a human must reconcile
+        # this specific row" a true statement for them.
+        #
+        # An arbitrary uncaught exception carries no such evidence. It
+        # could be the writer's own exception (in which case the row
+        # genuinely IS `reconciliation_required` - but this handler
+        # cannot know that), or it could equally be a template/render
+        # bug, an `ImportError` from `importlib.import_module`, an
+        # `AttributeError` in this project's own glue, a `KeyError`
+        # from an unknown `row_key`, or `ResolvedCaseIdMismatchError` -
+        # for every one of which NO journal row exists at all and there
+        # is nothing whatsoever to reconcile. Telling a lawyer "a
+        # system administrator must manually reconcile this" for a
+        # plain `ImportError` would be a fabricated mutation-state
+        # claim: it asserts, without evidence, that a durable mutation
+        # may have half-happened. Fail-closed here means declining to
+        # make that claim, NOT escalating to the strongest-sounding one
+        # (Prensip 9, and §11's "kaynak ile çıkarımı birbirine
+        # karıştıramaz").
+        #
+        # This restores the exact pre-Row-19C-2a behavior of this
+        # clause. A writer exception's own journal row is still left
+        # `reconciliation_required` by `run_mutation()` and is still
+        # discoverable/resolvable out of band via
+        # `ui/reconciliation_operator.py` - that safety net does not
+        # depend on this HTTP message naming it.
         return _error_page(request, "APPROVAL_FAILED", back_url, exc=error)
 
     audit_path = result["audit_path"]

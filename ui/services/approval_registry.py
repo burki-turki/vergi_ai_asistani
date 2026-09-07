@@ -42,16 +42,13 @@
 # fonksiyonu HİÇ ÇAĞRILMAZ (StaleViewError).
 # ============================================================
 
-import contextlib
 import importlib
-import io
 from pathlib import Path
 
 from . import paths
-from . import authz as _authz
+from . import mutation_approval_facade as _mutation_approval_facade
 from .common import (
     ApprovalUiError,
-    StaleViewError,
     PendingNotFoundError,
     UnsupportedApprovalFamilyError,
     find_latest_audit,
@@ -59,25 +56,55 @@ from .common import (
 )
 
 # ============================================================
-# Row 19B - INDEPENDENT SERVICE-LAYER AUTHORIZATION (added this turn)
-#
-# `case_scoped_approve` is a MUTATION. Row 19B's threat model treats a
-# route-only authorization check as insufficient - every mutation
-# entry point calls `authz.authorize_case_access` itself, so a future
-# route bug (or a second unauthenticated call path) cannot bypass
-# authorization by construction. `principal` is now a REQUIRED
-# keyword-only parameter; `authz_repository` defaults to the real
-# Postgres-backed repository (lazy import, so this module still
-# imports cleanly without psycopg) and is only overridden by tests.
+# ROW 19C-2a STEP 7 - no circular import (verified, not merely
+# assumed): `mutation_approval_facade.py` imports `.common` (for
+# `PendingNotFoundError`/`StaleViewError`/`find_latest_audit`/
+# `sha256_file`), `.authz`, `.mutation_coordinator`, `.mutation_lock`,
+# and `mutation_guard` (src/, via its own sys.path bootstrap) - NONE of
+# which import `approval_registry` (this module) or
+# `mutation_approval_facade` itself back. `ui/services/common.py` in
+# particular is a pure leaf module (only `hashlib`/`pathlib` at its own
+# top level - confirmed by reading it in full this step) so the edge
+# this module now adds - approval_registry -> mutation_approval_facade
+# -> common - is a one-way DAG, never a cycle. This satisfies the
+# "PreconditionRaceDetectedError circular-import verification" item
+# carried on this row's own task list from an earlier planning pass:
+# that EARLIER pass's working name for "the precondition check must be
+# re-verified, race-free, under the resource lock" ended up implemented
+# (Row 19C-2a Step 6, already landed and tested - see
+# `ui/tests/test_mutation_approval_facade_isolated.py`) by REUSING this
+# project's own existing `StaleViewError`/`PendingNotFoundError`
+# (`mutation_approval_facade.approve_case_scoped_mutation()`'s own
+# `precondition_callback`, which runs AFTER the lock is already held -
+# see that module's own header comment) rather than by inventing a new,
+# separate exception class - so there was never a second class whose
+# import needed separate wiring. This comment is that verification,
+# performed for real against the actual current source of both files,
+# not merely asserted.
 # ============================================================
 
-
-def _default_authz_repository():
-    from . import db as _db  # lazy import (psycopg)
-    conn = _db.get_connection()
-    return _authz.PostgresAuthzRepository(conn)
-
-
+# ============================================================
+# Row 19B - INDEPENDENT SERVICE-LAYER AUTHORIZATION (added that turn).
+#
+# ROW 19C-2a STEP 7: this module's OWN `_default_authz_repository()` -
+# which used to be `case_scoped_approve()`'s own fallback whenever a
+# caller (main.py's route, in production) passes `authz_repository=
+# None` - is REMOVED. `case_scoped_approve()` no longer calls
+# `authz.authorize_case_access()` itself at all (the facade's own
+# `authz_callback`, running under the resource lock, is now the ONLY
+# place that happens for the case-scoped mutation path - see
+# `case_scoped_approve()`'s own docstring below) - so the fallback that
+# actually applies now, whenever `authz_repository=None` reaches
+# `mutation_approval_facade.approve_case_scoped_mutation()`, is THAT
+# module's OWN `_default_authz_repository()` (a separate function,
+# same lazy-import shape, defined there). A test that used to
+# monkeypatch `approval_registry._default_authz_repository` to affect
+# `case_scoped_approve()`'s production-default authz repository (see
+# `ui/tests/test_routes.py`'s own comment on this) must instead
+# monkeypatch `ui.services.mutation_approval_facade._default_authz_
+# repository` from Row 19C-2a Step 8 onward - tracked as part of that
+# step's own test-file updates, not repeated here as a second, now-dead
+# copy of the same fallback.
 # ============================================================
 # ZATEN ONAYLANMIŞ (TARİHSEL) PENDING TESPİTİ - Row 6/Row 7'nin
 # approval audit kayıtları `source_pending_sha256`/`pending_sha256`
@@ -242,64 +269,90 @@ def case_scoped_review(row_key, case_id):
     }
 
 
-def case_scoped_approve(row_key, case_id, expected_hash, *, principal, authz_repository=None):
+def case_scoped_approve(row_key, case_id, expected_hash, *, principal, authz_repository=None, conn_factory=None):
     """
-    MUTASYON. `expected_hash`, review ekranı render edildiğinde
-    hesaplanan pending hash'idir - şu ANKİ pending hash'iyle
-    eşleşmiyorsa `run_approve` HİÇ ÇAĞRILMAZ (StaleViewError).
-    `run_approve` kendi içinde backup/pre-post-write manifest
-    karşılaştırması/rollback yapar - Row 18 bunların HİÇBİRİNİ
-    YENİDEN UYGULAMAZ, yalnız çağırır ve sonucu okur.
+    MUTASYON. ROW 19C-2a STEP 7: bu fonksiyon artık kendi içinde
+    authz/pending-varlık/hash-tazelik/`run_approve` çağrısı YAPMAZ -
+    TÜMÜNÜ (Row 19C-1'in journal/coordinator altyapısı ÜZERİNDEN, TEK
+    bir koordine edilmiş, journal'lanan, idempotent mutasyon olarak)
+    `mutation_approval_facade.approve_case_scoped_mutation()`'a
+    DEVREDER - bkz. o modülün kendi başlık yorumu. Bu fonksiyon artık
+    yalnız İKİ şey yapar: (1) `row_key`'i `CASE_SCOPED_ROWS_BY_KEY`
+    üzerinden çözüp facade'in DAHA DAR `CaseScopedApprovalResult`'ını bu
+    fonksiyonun ÖNCEKİ (Row 19C-2a öncesi) dönüş sözlüğü şekliyle
+    (`row`/`canonical_path`/`canonical_hash`/`audit_path`/`stdout`)
+    BİREBİR AYNI tutmak için birleştirir - hiçbir mevcut çağıran (bu
+    dosyanın kendisi, main.py, mevcut testler) bu fonksiyonun DÖNÜŞ
+    ŞEKLİNE göre değişiklik yapmak ZORUNDA KALMAZ; (2) facade'in
+    fırlattığı HER ŞEYİ (`PendingNotFoundError`, `StaleViewError`,
+    `CaseAccessDeniedError`'ın yanı sıra artık YENİ olarak
+    `mutation_coordinator`'ın kendi istisnaları ve facade'in kendi
+    `AuditBindingVerificationFailedError`'ı) DEĞİŞTİRMEDEN/
+    YAKALAMADAN yukarı fırlatır - "Row 18 bunların HİÇBİRİNİ YENİDEN
+    UYGULAMAZ, yalnız çağırır ve sonucu okur" ilkesi AYNEN korunur; HTTP
+    eşlemesine (main.py, Row 19C-2a Step 7'nin KENDİ kapsamı) burada
+    KARAR VERİLMEZ.
 
-    Row 19B: `principal` is REQUIRED. This function independently
-    re-runs `authz.authorize_case_access(principal, case_id, "mutate")`
-    BEFORE doing anything else - a route-level check alone is not
-    trusted. Filesystem-safe case_id resolution now comes FROM that
-    authorization call (its own 5th step), not from a separate direct
-    `paths.resolve_case_id()` call here - `paths.resolve_case_id`
-    itself is unchanged.
+    Row 19B: `principal` HÂLÂ ZORUNLUDUR ve authz KENDİSİ artık ayrıca
+    burada TEKRARLANMAZ (facade'in kendi `authz_callback`'i - lock
+    tutulurken, `run_mutation()` sırasının 2. adımı olarak - bunu
+    ZATEN yapar) - eskiden burada, lock'tan TAMAMEN BAĞIMSIZ ayrı bir
+    ön-kontrol olarak duran `authorize_case_access` çağrısı bu yüzden
+    KALDIRILDI (yinelenmiş/potansiyel olarak farklı davranan İKİNCİ bir
+    yetkilendirme çağrısı OLMASIN diye - facade'in DAHA GÜÇLÜ, lock
+    altındaki TEK yetkili çağrısı yeterlidir).
+
+    ROW 19C-2a ÖNCESİ TEST UYUMLULUĞU NOTU: bazı mevcut izole testler
+    (`test_service_isolated.py`, `test_routes.py`) `row_key`'i bu
+    modülün KENDİ `CASE_SCOPED_ROWS_BY_KEY`'ine sahte (gerçek 10 aileden
+    biri OLMAYAN) bir anahtarla enjekte ediyordu - facade'in kendi
+    `ROW_KEY_TO_MODULE_NAME`'i (bilerek, `mutation_approval_adapters`
+    ile driftsiz KALMASI için) SABİT, gerçek 10 aileye özgü bir
+    sözlüktür ve bu şekilde genişletilemez. Bu testlerin facade'in KENDİ
+    enjeksiyon noktasını (bkz.
+    `ui/tests/test_mutation_approval_facade_isolated.py`'nin sahte
+    modül kaydı) kullanacak şekilde güncellenmesi Row 19C-2a Step 8'in
+    kapsamıdır - BU fonksiyonun kendisi değil.
+
+    ROW 19C-2a STEP 8: `conn_factory=None` is a NEW, additive
+    keyword-only parameter, threaded straight through to the facade
+    exactly like `authz_repository` already was - added specifically so
+    an isolated test (no real Postgres, no psycopg) can inject a FAKE
+    journal connection here too, the same way `test_mutation_approval_
+    facade_isolated.py` already does one layer down. Without this,
+    `case_scoped_approve()` would have no way to avoid
+    `mutation_approval_facade._default_conn_factory()`'s own real
+    `ui.services.db.get_session_lock_connection()` call - which is
+    exactly the "no external deps" property `test_service_isolated.py`
+    was written to preserve (see this module's own header comment).
+    `None` (the default) preserves this function's exact PRE-Step-8
+    behavior for every caller that never passed it (main.py included).
     """
-
-    case_id = _authz.authorize_case_access(
-        principal, case_id, "mutate",
-        repository=authz_repository or _default_authz_repository(),
-    )
 
     row = CASE_SCOPED_ROWS_BY_KEY[row_key]
 
-    module = _import_module(row["module"])
-
-    pending_path = module.get_pending_path(case_id)
-
-    if not pending_path.exists():
-
-        raise PendingNotFoundError(f"Pending bulunamadı: {pending_path}")
-
-    current_hash = sha256_file(pending_path)
-
-    if current_hash != expected_hash:
-
-        raise StaleViewError(
-            "Bu review ekranı açıldıktan sonra pending dosya değişti "
-            f"(o zamanki hash: {expected_hash}, şimdiki: {current_hash}). "
-            "Onay iptal edildi - lütfen sayfayı yenileyip tekrar deneyin."
-        )
-
-    stdout_capture = io.StringIO()
-
-    with contextlib.redirect_stdout(stdout_capture):
-
-        module.run_approve(case_id)
-
-    canonical_path = module.get_canonical_path(case_id)
-    reviews_dir = canonical_path.parent / "reviews"
+    result = _mutation_approval_facade.approve_case_scoped_mutation(
+        row_key, case_id, expected_hash,
+        principal=principal, authz_repository=authz_repository, conn_factory=conn_factory,
+    )
 
     return {
         "row": row,
-        "canonical_path": canonical_path,
-        "canonical_hash": sha256_file(canonical_path),
-        "audit_path": find_latest_audit(reviews_dir),
-        "stdout": stdout_capture.getvalue(),
+        "canonical_path": result.canonical_path,
+        "canonical_hash": result.canonical_hash,
+        "audit_path": result.audit_path,
+        "stdout": result.stdout,
+        # ROW 19C-2a Step 7: additive, non-breaking fields - no
+        # existing caller reads these two keys (checked: main.py's own
+        # `case_scoped_confirm` route only ever reads
+        # `result["audit_path"]`/`result["row"]["label"]`/
+        # `result["canonical_path"]`/`result["canonical_hash"]`), kept
+        # for observability/future use (e.g. a later admin screen that
+        # shows the journal_id, or a test that wants to assert
+        # replay-safety without reaching into the facade module
+        # directly).
+        "journal_id": result.journal_id,
+        "replayed": result.replayed,
     }
 
 

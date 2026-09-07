@@ -14,6 +14,7 @@
 #   python ui/tests/test_service_isolated.py
 # ============================================================
 
+import json
 import sys
 import shutil
 import tempfile
@@ -29,7 +30,9 @@ from ui.services import paths as real_paths          # noqa: E402
 from ui.services import security                      # noqa: E402
 from ui.services import live_view                      # noqa: E402
 from ui.services import authz as _authz                # noqa: E402 (Row 19B)
-from ui.services.common import UnknownCaseError, LiveViewInvalidError  # noqa: E402
+from ui.services import mutation_approval_facade as _mutfacade  # noqa: E402 (Row 19C-2a Step 8)
+from ui.services import mutation_lock as _ml                     # noqa: E402 (Row 19C-2a Step 8)
+from ui.services.common import UnknownCaseError, LiveViewInvalidError, StaleViewError  # noqa: E402
 
 # Row 19B: case_scoped_approve now REQUIRES a `principal` and
 # independently re-checks authorization via authz.authorize_case_access.
@@ -273,14 +276,42 @@ if _real_case_ids:
 
 
 # ============================================================
-# 6) İZOLE MUTASYON / ROLLBACK / AUDIT-FAILURE TESTİ
+# 6) İZOLE MUTASYON / STALE-HASH / WRITER-HATASI TESTİ
 #
-# `approval_registry.case_scoped_approve` GERÇEK Row 8-17 modüllerini
-# `importlib.import_module(row["module"])` ile DİNAMİK olarak
-# çağırıyor. Bu testte GERÇEK modül yerine, `sys.modules`'e
-# kaydedilmiş SAHTE bir modül enjekte ediyoruz - tam path grafiği
-# `tempfile.TemporaryDirectory()` içinde çözülüyor, gerçek
-# case_0001/src'ye HİÇBİR ÇAĞRI gitmiyor.
+# ROW 19C-2a STEP 8: `approval_registry.case_scoped_approve` artık
+# KENDİSİ hiçbir mutasyon mantığı YÜRÜTMÜYOR - TÜMÜNÜ (Row 19C-1'in
+# journal/coordinator altyapısı ÜZERİNDEN) `mutation_approval_facade.
+# approve_case_scoped_mutation()`'a devrediyor (bkz. o fonksiyonun
+# KENDİ docstring'i, `ui/services/approval_registry.py`). Bu bölüm bu
+# yüzden artık İKİ KATMANI birlikte, ama HÂLÂ SIFIR harici bağımlılıkla
+# (gerçek Postgres/psycopg YOK) sahteliyor:
+#
+#   - `mutation.mutation_journal`'ın kendisi: `ui/tests/
+#     test_mutation_approval_facade_isolated.py`'nin (ve KENDİSİNİN de
+#     `ui/tests/test_mutation_coordinator_isolated.py`'den kopyaladığı)
+#     KANITLANMIŞ `FakeJournalCursor`/`FakeJournalConn` çiftinin bu
+#     dosyaya ait TAZE bir kopyası (bu projenin "her test dosyası kendi
+#     sahte sınıflarına SAHİPTİR" kuralı gereği);
+#   - case-scoped onay ailesi modülü: `sys.modules`'e kayıtlı sahte bir
+#     modül, ARTIK `reg.CASE_SCOPED_ROWS_BY_KEY` YERİNE (yalnız `row`
+#     metadata'sı için hâlâ ORADA da kayıtlı olması gerekiyor)
+#     `mutation_approval_facade.ROW_KEY_TO_MODULE_NAME`'e enjekte
+#     ediliyor - facade'in kendi modül çözümlemesi ARTIK BUNU kullanıyor
+#     (bkz. o modülün kendi başlık yorumu: bu sözlük SABİTTİR ve
+#     `approval_registry`'ninkinden AYRIDIR, döngüsel import'tan
+#     kaçınmak için);
+#   - `ui.services.mutation_lock.acquire_case_lock_session`/
+#     `release_lock_session`: sahte, her zaman başarılı fonksiyonlarla
+#     monkeypatch (facade bunları DOĞRUDAN çağırıyor - `mutation_
+#     coordinator.run_mutation()`'ın aksine, kendisi lock almıyor).
+#
+# `case_id` doğrulaması hâlâ AYNI teknikle atlanıyor: `paths.
+# resolve_case_id` modül-seviyesinde (`reg.paths` İLE `ui.services.
+# authz`'ın kendi LAZY `from ui.services.paths import resolve_case_id`
+# çağrısı AYNI paylaşılan modül nesnesini görür) `lambda cid: cid`'e
+# monkeypatch edilir - bu, Row 19C-2a'dan ÖNCE de `authorize_case_
+# access`'in KENDİSİ zaten gerçek dosya sistemi çözümlemesini
+# yapıyorken kullanılan AYNI teknik, hiçbir değişiklik gerekmedi.
 # ============================================================
 
 import types
@@ -289,15 +320,155 @@ import sys as _sys
 from ui.services import approval_registry as reg  # noqa: E402
 
 
+class _IzoleFakeIntegrityError(Exception):
+    pass
+
+
+class _IzoleFakeJournalCursor:
+    """Row 19C-2a Step 8: taze, bu dosyaya özgü kopya - bkz.
+    `ui/tests/test_mutation_approval_facade_isolated.py`'nin kendi
+    `FakeJournalCursor`'ı (AYNI SQL şekilleri, gerçek `run_mutation()`'a
+    karşı orada zaten kanıtlanmış)."""
+
+    def __init__(self, table, calls):
+        self._table = table
+        self._calls = calls
+        self._last_result = None
+        self.rowcount = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def _row(self, journal_id):
+        for r in self._table:
+            if r["id"] == journal_id:
+                return r
+        raise AssertionError(f"sahte journal tablosunda id={journal_id} yok")
+
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        self._calls.append(normalized.split()[0])
+
+        if normalized.startswith("SELECT 1 FROM mutation.mutation_journal"):
+            (resource_key,) = params
+            hit = any(
+                r["resource_key"] == resource_key
+                and r["state"] in ("prepared", "executing", "reconciliation_required")
+                for r in self._table
+            )
+            self._last_result = (1,) if hit else None
+            self.rowcount = 1 if hit else 0
+
+        elif normalized.startswith("SELECT id, state, request_fingerprint, observed_post_hash"):
+            (idempotency_key,) = params
+            matches = [r for r in self._table if r["idempotency_key"] == idempotency_key]
+            if not matches:
+                self._last_result = None
+                self.rowcount = 0
+            else:
+                r = matches[0]
+                self._last_result = (
+                    r["id"], r["state"], r["request_fingerprint"], r["observed_post_hash"],
+                    r["failure_code"], r["resolution_code"],
+                )
+                self.rowcount = 1
+
+        elif normalized.startswith("INSERT INTO mutation.mutation_journal"):
+            (
+                resource_key, action_family, actor_user_id, actor_label, target_ref, target_state,
+                pre_hash, pre_revision, idempotency_key, request_fingerprint,
+            ) = params
+            conflict = any(r["idempotency_key"] == idempotency_key for r in self._table)
+            if conflict:
+                raise _IzoleFakeIntegrityError(
+                    f"duplicate key value violates unique constraint "
+                    f"\"mutation_journal_idempotency_key_uniq\": idempotency_key={idempotency_key!r}"
+                )
+            new_id = len(self._table) + 1
+            self._table.append({
+                "id": new_id,
+                "resource_key": resource_key,
+                "action_family": action_family,
+                "actor_user_id": actor_user_id,
+                "actor_label": actor_label,
+                "target_ref": target_ref,
+                "target_state": target_state,
+                "pre_hash": pre_hash,
+                "pre_revision": pre_revision,
+                "idempotency_key": idempotency_key,
+                "request_fingerprint": request_fingerprint,
+                "state": "prepared",
+                "failure_code": None,
+                "resolution_code": None,
+                "executing_at": None,
+                "resolved_at": None,
+                "observed_post_hash": None,
+            })
+            self._last_result = (new_id,)
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'executing'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "executing"
+            self._row(journal_id)["executing_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'completed'"):
+            observed_post_hash, journal_id = params
+            row = self._row(journal_id)
+            row["state"] = "completed"
+            row["observed_post_hash"] = observed_post_hash
+            row["resolved_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'reconciliation_required'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "reconciliation_required"
+            self.rowcount = 1
+
+        else:
+            raise AssertionError(f"beklenmeyen SQL: {sql}")
+
+    def fetchone(self):
+        return self._last_result
+
+
+class _IzoleFakeJournalConn:
+    def __init__(self, table=None):
+        self.table = table if table is not None else []
+        self.calls = []
+        self.closed = False
+
+    def cursor(self):
+        return _IzoleFakeJournalCursor(self.table, self.calls)
+
+    def close(self):
+        self.closed = True
+
+
+_izole_lock_calls = []
+_izole_original_acquire_case = _ml.acquire_case_lock_session
+_izole_original_release = _ml.release_lock_session
+
+
+def _izole_fake_acquire_case_lock_session(conn, case_id):
+    _izole_lock_calls.append(("acquire", case_id))
+    return 111
+
+
+def _izole_fake_release_lock_session(conn, advisory_lock_id):
+    _izole_lock_calls.append(("release", advisory_lock_id))
+    return True
+
+
 def _run_isolated_mutation_scenario():
 
     with tempfile.TemporaryDirectory() as tmp:
 
         tmp_path = Path(tmp)
-
-        fake_case_dir = tmp_path / "cases" / "case_iso_0001"
-        fake_case_dir.mkdir(parents=True)
-        (fake_case_dir / "case.json").write_text('{"case_id": "case_iso_0001"}', encoding="utf-8")
 
         pending_path = tmp_path / "pending.json"
         pending_path.write_text('{"synthetic": true, "value": 1}', encoding="utf-8")
@@ -318,11 +489,26 @@ def _run_isolated_mutation_scenario():
             assert case_id == "case_iso_0001"
             return canonical_path
 
-        def _fake_run_approve_ok(case_id):
+        def _fake_run_approve_ok(case_id, *, mutation_idempotency_key=None, mutation_resource_key=None):
+            # ROW 19C-2a AUDIT BINDING: BOTH audit-binding parameters
+            # are KEYWORD-ONLY, exactly as all 10 real
+            # src/*_approval.py modules' own `run_approve()` now are,
+            # and the audit record this fake writes carries all THREE
+            # fields the facade's FOUR EXACT BINDINGS check reads back
+            # (`mutation_idempotency_key`, `mutation_resource_key`,
+            # `canonical_sha256`).
             calls["run_approve"] += 1
+            calls["mutation_idempotency_key"] = mutation_idempotency_key
+            calls["mutation_resource_key"] = mutation_resource_key
             canonical_path.write_text(pending_path.read_text(encoding="utf-8"), encoding="utf-8")
             (reviews_dir / "case_iso_0001_v1_20260101_000000.approval.json").write_text(
-                '{"source_pending_sha256": "izole-test"}', encoding="utf-8",
+                json.dumps({
+                    "source_pending_sha256": "izole-test",
+                    "mutation_idempotency_key": mutation_idempotency_key,
+                    "mutation_resource_key": mutation_resource_key,
+                    "canonical_sha256": reg.sha256_file(canonical_path),
+                }),
+                encoding="utf-8",
             )
 
         fake_module_ok = types.SimpleNamespace(
@@ -334,23 +520,31 @@ def _run_isolated_mutation_scenario():
         _sys.modules["_izole_sahte_row_ok"] = fake_module_ok
 
         # `resolve_case_id` gerçek data/cases dizinini kontrol ettiği
-        # için, izole testte case_id doğrulamasını atlamak üzere
-        # case_scoped_approve'un case_id çözümlemesini de monkeypatch
-        # ediyoruz - BU YALNIZ izole test kapsamında, gerçek fonksiyon
-        # gövdesi (mutasyon mantığı: hash tazelik kontrolü, run_approve
-        # çağrısı, sonuç toplama) DEĞİŞTİRİLMEDEN test edilir.
-        _original_resolve = paths_module_resolve = reg.paths.resolve_case_id
-        reg.paths.resolve_case_id = lambda cid: cid
+        # için, izole testte case_id doğrulamasını atlamak üzere modül
+        # seviyesindeki `paths.resolve_case_id`'yi monkeypatch ediyoruz
+        # (bkz. bu bölümün kendi başlık yorumu - `ui.services.authz`'ın
+        # KENDİ lazy import'u bunu AYNEN görür).
+        _original_resolve = real_paths.resolve_case_id
+        real_paths.resolve_case_id = lambda cid: cid
         reg.CASE_SCOPED_ROWS_BY_KEY["_izole_test_ok"] = {
             "key": "_izole_test_ok", "row_no": 999, "label": "İzole Test (OK)",
             "module": "_izole_sahte_row_ok",
         }
+        _mutfacade.ROW_KEY_TO_MODULE_NAME["_izole_test_ok"] = "_izole_sahte_row_ok"
+        _ml.acquire_case_lock_session = _izole_fake_acquire_case_lock_session
+        _ml.release_lock_session = _izole_fake_release_lock_session
+
+        journal_conn = _IzoleFakeJournalConn()
 
         try:
 
             expected_hash = reg.sha256_file(pending_path)
 
-            result = reg.case_scoped_approve("_izole_test_ok", "case_iso_0001", expected_hash, principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo)
+            result = reg.case_scoped_approve(
+                "_izole_test_ok", "case_iso_0001", expected_hash,
+                principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+                conn_factory=lambda: journal_conn,
+            )
 
             check(
                 "izole mutasyon: başarılı onay -> canonical dosyası yazıldı",
@@ -358,21 +552,45 @@ def _run_isolated_mutation_scenario():
             )
             check("izole mutasyon: run_approve tam olarak 1 kez çağrıldı", calls["run_approve"] == 1)
             check("izole mutasyon: audit dosyası bulundu", result["audit_path"] is not None)
+            check(
+                "izole mutasyon: journal satırı 'completed' durumunda",
+                journal_conn.table and journal_conn.table[-1]["state"] == "completed",
+            )
+            check(
+                "izole mutasyon: dönüş sözlüğü journal_id/replayed alanlarını taşıyor (Step 7 - additive)",
+                isinstance(result["journal_id"], int) and result["replayed"] is False,
+            )
 
-            # --- Senaryo B: stale hash -> run_approve HİÇ ÇAĞRILMAMALI ---
+            # --- Senaryo B: stale hash -> run_approve HİÇ ÇAĞRILMAMALI,
+            #     hiçbir journal satırı OLUŞTURULMAMALI (precondition_
+            #     callback, run_mutation()'ın 'prepared' satırı EKLEMEDEN
+            #     ÖNCEKİ 5. adımında fırlatır). ---
 
             calls["run_approve"] = 0
+            rows_before_b = len(journal_conn.table)
 
             expect_raises(
-                Exception,
-                lambda: reg.case_scoped_approve("_izole_test_ok", "case_iso_0001", "0" * 64, principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo),
+                StaleViewError,
+                lambda: reg.case_scoped_approve(
+                    "_izole_test_ok", "case_iso_0001", "0" * 64,
+                    principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+                    conn_factory=lambda: journal_conn,
+                ),
                 "izole mutasyon: yanlış (stale) expected_hash -> StaleViewError",
             )
             check("izole mutasyon: stale hash durumunda run_approve HİÇ çağrılmadı", calls["run_approve"] == 0)
+            check(
+                "izole mutasyon: stale hash durumunda hiçbir journal satırı eklenmedi",
+                len(journal_conn.table) == rows_before_b,
+            )
 
-            # --- Senaryo C: audit/approve sırasında hata (rollback/audit-failure) ---
+            # --- Senaryo C: run_approve içinde hata (writer exception) ->
+            #     istisna DEĞİŞTİRİLMEDEN yukarı yayılır, journal satırı
+            #     'reconciliation_required'de kalır (ASLA 'failed' değil -
+            #     bkz. mutation_coordinator.run_mutation()'ın kendi
+            #     except Exception davranışı). ---
 
-            def _fake_run_approve_fails(case_id):
+            def _fake_run_approve_fails(case_id, *, mutation_idempotency_key=None, mutation_resource_key=None):
                 calls["run_approve"] += 1
                 raise RuntimeError("yapay/enjekte edilmiş audit yazma hatası (izole test)")
 
@@ -386,24 +604,41 @@ def _run_isolated_mutation_scenario():
                 "key": "_izole_test_fail", "row_no": 998, "label": "İzole Test (FAIL)",
                 "module": "_izole_sahte_row_fail",
             }
+            _mutfacade.ROW_KEY_TO_MODULE_NAME["_izole_test_fail"] = "_izole_sahte_row_fail"
 
             calls["run_approve"] = 0
             expected_hash_2 = reg.sha256_file(pending_path)
 
             expect_raises(
                 RuntimeError,
-                lambda: reg.case_scoped_approve("_izole_test_fail", "case_iso_0001", expected_hash_2, principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo),
+                lambda: reg.case_scoped_approve(
+                    "_izole_test_fail", "case_iso_0001", expected_hash_2,
+                    principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+                    conn_factory=lambda: journal_conn,
+                ),
                 "izole mutasyon: run_approve içinde hata -> istisna yukarı yayılır (sessizce yutulmaz)",
             )
             check("izole mutasyon: hata senaryosunda run_approve 1 kez denendi", calls["run_approve"] == 1)
+            check(
+                "izole mutasyon: hata senaryosunda journal satırı 'reconciliation_required'de kaldı (ASLA 'failed' değil)",
+                journal_conn.table[-1]["state"] == "reconciliation_required",
+            )
+            check(
+                "izole mutasyon: hata senaryosunda lock yine de alındı VE bırakıldı (finally garantisi)",
+                ("acquire", "case_iso_0001") in _izole_lock_calls and ("release", 111) in _izole_lock_calls,
+            )
 
         finally:
 
-            reg.paths.resolve_case_id = _original_resolve
+            real_paths.resolve_case_id = _original_resolve
             reg.CASE_SCOPED_ROWS_BY_KEY.pop("_izole_test_ok", None)
             reg.CASE_SCOPED_ROWS_BY_KEY.pop("_izole_test_fail", None)
+            _mutfacade.ROW_KEY_TO_MODULE_NAME.pop("_izole_test_ok", None)
+            _mutfacade.ROW_KEY_TO_MODULE_NAME.pop("_izole_test_fail", None)
             _sys.modules.pop("_izole_sahte_row_ok", None)
             _sys.modules.pop("_izole_sahte_row_fail", None)
+            _ml.acquire_case_lock_session = _izole_original_acquire_case
+            _ml.release_lock_session = _izole_original_release
 
 
 _run_isolated_mutation_scenario()

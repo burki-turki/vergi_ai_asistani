@@ -58,6 +58,7 @@
 
 import contextlib
 import hashlib
+import json
 import re
 import sys
 import tempfile
@@ -92,6 +93,8 @@ from ui.services import paths as svc_paths
 from ui.services import live_view
 from ui.services import approval_registry as reg
 from ui.services import authz as _authz
+from ui.services import mutation_approval_facade as mutfacade  # noqa: E402 (Row 19C-2a Step 8)
+from ui.services import mutation_lock as ml                     # noqa: E402 (Row 19C-2a Step 8)
 from ui.services.common import UnknownCaseError
 import ui.main as main_module
 from ui.main import app
@@ -202,7 +205,188 @@ main_module.list_accessible_case_ids = _fake_list_accessible_case_ids
 # tests below therefore override the service module's
 # _default_authz_repository() directly, rather than main.py's call
 # sites (which must stay production-faithful).
-reg._default_authz_repository = lambda: _TEST_REPO
+#
+# ROW 19C-2a STEP 8: this used to be `reg._default_authz_repository`
+# (approval_registry.py's OWN copy of this fallback). Step 7 removed
+# that function entirely - `case_scoped_approve()` no longer calls
+# `authz.authorize_case_access()` itself at all; it delegates the
+# ENTIRE mutation, authz re-check included, to `mutation_approval_
+# facade.approve_case_scoped_mutation()`, whose OWN `_default_authz_
+# repository()` is what actually runs whenever `main.py`'s route calls
+# `case_scoped_approve()` without an explicit `authz_repository=` (see
+# `ui/services/approval_registry.py`'s own comment on this exact
+# rename). Patching the OLD, now-nonexistent-as-load-bearing `reg.
+# _default_authz_repository` name would silently do NOTHING (Python
+# happily sets an unused attribute on a module) - a real, silent test
+# gap this step closes.
+#
+# ROW 19C-2a (DUAL AUTHZ): `_default_authz_repository()` now returns a
+# `(repository, close)` PAIR, not a bare repository. The facade calls
+# `authorize_case_access()` TWICE per approval - once OUTER (before any
+# connection/lock/hash/journal SQL) and once INNER (under the resource
+# lock, authoritative) - against the SAME repository, and closes the
+# IAM connection exactly once afterwards, in a `finally`. This fake
+# therefore returns a no-op closer: `_TEST_REPO` is an in-memory
+# repository this file owns for its whole lifetime and must NOT be
+# torn down after a single request.
+mutfacade._default_authz_repository = lambda: (_TEST_REPO, lambda: None)
+
+# ROW 19C-2a STEP 8 (NEW): `case_scoped_approve()` now runs the ENTIRE
+# approval as one journaled mutation via `mutation_coordinator.
+# run_mutation()`, which needs a `mutation.mutation_journal`-shaped
+# connection - `main.py`'s route never passes `conn_factory=` either
+# (production-faithful, same reasoning as `authz_repository` above), so
+# without faking this, EVERY confirm POST in this file would attempt a
+# REAL psycopg connection via `ui.services.db.get_session_lock_
+# connection()` and fail in this FastAPI-only, no-Postgres-needed test
+# file. A FRESH fake table per call (never one shared table across this
+# file's 19+ scenarios) deliberately avoids any cross-scenario
+# idempotency-replay interaction this file's own tests never intend to
+# exercise (that is `ui/tests/test_mutation_approval_facade_isolated.py`'s
+# own, dedicated job).
+
+
+class _RouteFakeIntegrityError(Exception):
+    pass
+
+
+class _RouteFakeJournalCursor:
+    """Row 19C-2a Step 8: a fresh, file-local copy of the SAME
+    fake-journal-cursor shape `ui/tests/test_mutation_approval_facade_
+    isolated.py` and `ui/tests/test_service_isolated.py` already use
+    (each proven correct there against the real `run_mutation()`)."""
+
+    def __init__(self, table, calls):
+        self._table = table
+        self._calls = calls
+        self._last_result = None
+        self.rowcount = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def _row(self, journal_id):
+        for r in self._table:
+            if r["id"] == journal_id:
+                return r
+        raise AssertionError(f"sahte journal tablosunda id={journal_id} yok")
+
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        self._calls.append(normalized.split()[0])
+
+        if normalized.startswith("SELECT 1 FROM mutation.mutation_journal"):
+            (resource_key,) = params
+            hit = any(
+                r["resource_key"] == resource_key
+                and r["state"] in ("prepared", "executing", "reconciliation_required")
+                for r in self._table
+            )
+            self._last_result = (1,) if hit else None
+            self.rowcount = 1 if hit else 0
+
+        elif normalized.startswith("SELECT id, state, request_fingerprint, observed_post_hash"):
+            (idempotency_key,) = params
+            matches = [r for r in self._table if r["idempotency_key"] == idempotency_key]
+            if not matches:
+                self._last_result = None
+                self.rowcount = 0
+            else:
+                r = matches[0]
+                self._last_result = (
+                    r["id"], r["state"], r["request_fingerprint"], r["observed_post_hash"],
+                    r["failure_code"], r["resolution_code"],
+                )
+                self.rowcount = 1
+
+        elif normalized.startswith("INSERT INTO mutation.mutation_journal"):
+            (
+                resource_key, action_family, actor_user_id, actor_label, target_ref, target_state,
+                pre_hash, pre_revision, idempotency_key, request_fingerprint,
+            ) = params
+            conflict = any(r["idempotency_key"] == idempotency_key for r in self._table)
+            if conflict:
+                raise _RouteFakeIntegrityError(
+                    f"duplicate key value violates unique constraint "
+                    f"\"mutation_journal_idempotency_key_uniq\": idempotency_key={idempotency_key!r}"
+                )
+            new_id = len(self._table) + 1
+            self._table.append({
+                "id": new_id,
+                "resource_key": resource_key,
+                "action_family": action_family,
+                "actor_user_id": actor_user_id,
+                "actor_label": actor_label,
+                "target_ref": target_ref,
+                "target_state": target_state,
+                "pre_hash": pre_hash,
+                "pre_revision": pre_revision,
+                "idempotency_key": idempotency_key,
+                "request_fingerprint": request_fingerprint,
+                "state": "prepared",
+                "failure_code": None,
+                "resolution_code": None,
+                "executing_at": None,
+                "resolved_at": None,
+                "observed_post_hash": None,
+            })
+            self._last_result = (new_id,)
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'executing'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "executing"
+            self._row(journal_id)["executing_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'completed'"):
+            observed_post_hash, journal_id = params
+            row = self._row(journal_id)
+            row["state"] = "completed"
+            row["observed_post_hash"] = observed_post_hash
+            row["resolved_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'reconciliation_required'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "reconciliation_required"
+            self.rowcount = 1
+
+        else:
+            raise AssertionError(f"beklenmeyen SQL: {sql}")
+
+    def fetchone(self):
+        return self._last_result
+
+
+class _RouteFakeJournalConn:
+    def __init__(self):
+        self.table = []
+        self.calls = []
+        self.closed = False
+
+    def cursor(self):
+        return _RouteFakeJournalCursor(self.table, self.calls)
+
+    def close(self):
+        self.closed = True
+
+
+mutfacade._default_conn_factory = lambda: _RouteFakeJournalConn()
+
+# ROW 19C-2a STEP 8 (NEW): `case_scoped_approve()`/the facade also call
+# `ui.services.mutation_lock.acquire_case_lock_session`/
+# `release_lock_session` directly (real Postgres advisory locks) -
+# faked here to always succeed, same pattern already proven in
+# `ui/tests/test_mutation_approval_facade_isolated.py`/`ui/tests/
+# test_service_isolated.py`. This file tests ROUTE mechanics, never
+# lock-acquisition semantics themselves (those have their own dedicated
+# suites), so no call-tracking is needed here beyond "always succeeds".
+ml.acquire_case_lock_session = lambda conn, case_id: 111
+ml.release_lock_session = lambda conn, advisory_lock_id: True
 
 # targeted remediation §7/§9: TestClient'ın istemci adresini AÇIKÇA
 # loopback yapıyoruz - httpx/Starlette TestClient varsayılanı
@@ -293,12 +477,37 @@ def isolated_case_fixture(behavior="ok"):
                 raise ValueError(f"sentetik semantik doğrulama hatası - ham path: {tmp_path}")
             return pending_path, {"ok": True}, {"synthetic_field": "izole route testi"}
 
-        def _run_approve(cid):
+        def _run_approve(cid, *, mutation_idempotency_key=None, mutation_resource_key=None):
+            # ROW 19C-2a: `mutation_idempotency_key` and
+            # `mutation_resource_key` are the two additive,
+            # KEYWORD-ONLY audit-binding parameters all 10 REAL
+            # src/*_approval.py modules' own `run_approve()` now carry
+            # (verified by AST across every one of them), and which
+            # `mutation_approval_facade.writer_callback()` always passes
+            # BY KEYWORD, BOTH TOGETHER - this fake must accept both, in
+            # the same keyword-only shape, or every confirm POST in this
+            # fixture would raise a spurious TypeError from inside
+            # writer_callback (itself indistinguishable, from the
+            # coordinator's own point of view, from any other writer
+            # exception - but not what THIS fixture's "approve_exception"
+            # behavior is meant to simulate).
             calls["run_approve"] += 1
+            calls["mutation_idempotency_key"] = mutation_idempotency_key
+            calls["mutation_resource_key"] = mutation_resource_key
             if behavior == "approve_exception":
                 raise RuntimeError(f"sentetik onay hatası - ham path: {tmp_path / 'gizli'}")
             canonical_path.write_text(pending_path.read_text(encoding="utf-8"), encoding="utf-8")
-            (reviews_dir / "iso_v1.approval.json").write_text('{"source_pending_sha256": "x"}', encoding="utf-8")
+            (reviews_dir / "iso_v1.approval.json").write_text(
+                json.dumps({
+                    "source_pending_sha256": "x",
+                    "mutation_idempotency_key": mutation_idempotency_key,
+                    "mutation_resource_key": mutation_resource_key,
+                    "canonical_sha256": hashlib.sha256(
+                        canonical_path.read_bytes()
+                    ).hexdigest(),
+                }),
+                encoding="utf-8",
+            )
 
         fake_module = types.SimpleNamespace(
             get_pending_path=_get_pending_path,
@@ -318,6 +527,15 @@ def isolated_case_fixture(behavior="ok"):
             "key": row_key, "row_no": 990, "label": f"İzole Route Testi ({behavior})",
             "module": module_name,
         }
+        # ROW 19C-2a Step 8 (NEW): `case_scoped_approve()` now resolves
+        # the module to call via `mutation_approval_facade.
+        # ROW_KEY_TO_MODULE_NAME` (a SEPARATE, fixed dict from
+        # `reg.CASE_SCOPED_ROWS_BY_KEY` - see that module's own header
+        # comment on why) - registering only the line above, as this
+        # fixture did before this step, would make the facade raise
+        # `KeyError` for every one of this fixture's own synthetic
+        # row_keys.
+        mutfacade.ROW_KEY_TO_MODULE_NAME[row_key] = module_name
 
         try:
 
@@ -335,6 +553,7 @@ def isolated_case_fixture(behavior="ok"):
             svc_paths.list_case_ids = original_list_case_ids
             svc_paths.resolve_case_id = original_resolve
             reg.CASE_SCOPED_ROWS_BY_KEY.pop(row_key, None)
+            mutfacade.ROW_KEY_TO_MODULE_NAME.pop(row_key, None)
             sys.modules.pop(module_name, None)
 
 

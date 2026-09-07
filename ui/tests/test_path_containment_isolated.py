@@ -293,6 +293,117 @@ try:
         paths.DATA_DIR = original_data_dir
         paths.CASES_DIR = original_cases_dir
 
+    # ============================================================
+    # ROW 19C-2a - SHARED PATH ROOT PROOF FOR ALL 10 CASE-SCOPED
+    # APPROVAL MODULES.
+    #
+    # WHY THIS BELONGS IN *THIS* FILE: every containment guarantee
+    # proven above is enforced at ONE choke point -
+    # `ui.services.paths`'s own `CASES_DIR`-rooted resolution. That
+    # guarantee only actually protects a production approval if the 10
+    # `src/*_approval.py` modules, which build their own
+    # `CASES_DIR / case_id / "..."` paths DIRECTLY (they do not call
+    # `paths.resolve_case_path()`), are rooted at the SAME REAL
+    # directory. If any one of them were rooted somewhere else, a
+    # case_id that `paths.resolve_case_id()` had verified as contained
+    # would still land outside the verified root once that module
+    # joined it - the containment check would be sound but simply
+    # pointed at the wrong tree.
+    #
+    # This runs AFTER the monkeypatch above has been restored, so it
+    # compares the REAL roots - and it is READ-ONLY: it imports the 10
+    # modules (exactly as `ui.services.mutation_approval_facade` and
+    # `ui.services.mutation_approval_adapters.build_production_registry()`
+    # already do in production) and reads one module attribute from
+    # each. NO production path code is modified, and nothing under
+    # `data/` is read, written or even listed.
+    #
+    # `os.path.realpath()` (not `==` on the raw `Path`s, and not
+    # `Path.resolve()`) is the comparison, matching
+    # `paths.verify_real_path_contained()`'s own choice: two roots that
+    # differ textually (`src/..` vs `ui/../..`, a substituted drive, an
+    # 8.3 short name, a junctioned parent) but resolve to the SAME real
+    # directory are correctly treated as identical, and two that merely
+    # LOOK alike but resolve differently are correctly rejected.
+    #
+    # `qa_approval`/`orchestrator_approval` deliberately do not define
+    # their own `CASES_DIR` - they re-export their discovery module's
+    # (`from qa_discovery import CASES_DIR`), which is exactly the
+    # binding their own `get_*_dir(case_id)` functions use, so reading
+    # the module attribute is the faithful check for them too.
+    # ============================================================
+
+    import importlib
+
+    _APPROVAL_MODULE_NAMES = [
+        "deadline_approval",
+        "issue_spotting_approval",
+        "legal_research_approval",
+        "case_law_approval",
+        "evidence_approval",
+        "argument_approval",
+        "risk_strategy_approval",
+        "drafting_approval",
+        "qa_approval",
+        "orchestrator_approval",
+    ]
+
+    check(
+        "(path root) exactly 10 case-scoped approval modules are covered by this proof",
+        len(_APPROVAL_MODULE_NAMES) == 10 and len(set(_APPROVAL_MODULE_NAMES)) == 10,
+    )
+
+    _ui_cases_root_real = os.path.realpath(str(paths.CASES_DIR))
+    _observed_roots = {}
+
+    for _module_name in _APPROVAL_MODULE_NAMES:
+        try:
+            _approval_module = importlib.import_module(_module_name)
+        except Exception as _import_error:
+            check(
+                f"(path root) {_module_name} is importable",
+                False, f"import failed: {_import_error!r}",
+            )
+            continue
+
+        _module_cases_dir = getattr(_approval_module, "CASES_DIR", None)
+        if _module_cases_dir is None:
+            check(
+                f"(path root) {_module_name} exposes a CASES_DIR attribute",
+                False, "no CASES_DIR attribute at all - this proof cannot cover it",
+            )
+            continue
+
+        _module_root_real = os.path.realpath(str(_module_cases_dir))
+        _observed_roots[_module_name] = _module_root_real
+        check(
+            f"(path root) {_module_name}.CASES_DIR resolves to the SAME real root as "
+            "ui.services.paths.CASES_DIR",
+            _module_root_real == _ui_cases_root_real,
+            f"module={_module_root_real!r} != ui={_ui_cases_root_real!r}",
+        )
+
+    check(
+        "(path root) all 10 modules were actually reached and compared (none silently skipped)",
+        len(_observed_roots) == 10,
+        f"only compared: {sorted(_observed_roots)}",
+    )
+    check(
+        "(path root) the 10 modules agree on ONE single real cases root, not several",
+        len(set(_observed_roots.values())) == 1,
+        f"distinct roots observed: {sorted(set(_observed_roots.values()))}",
+    )
+
+    # Negative control: this comparison genuinely DISCRIMINATES - it is
+    # not a tautology that passes for any two paths. A deliberately
+    # different real directory (the `tmp_outside` root this file already
+    # created) must NOT compare equal to the shared cases root.
+    check(
+        "(path root) the realpath comparison is discriminating (a genuinely different real "
+        "directory does NOT compare equal)",
+        os.path.realpath(str(tmp_outside)) != _ui_cases_root_real,
+    )
+
 finally:
     shutil.rmtree(tmp_root, ignore_errors=True)
     shutil.rmtree(tmp_outside, ignore_errors=True)

@@ -619,7 +619,52 @@ def spawn_killable_lock_holder(case_id):
 from ui.services import mutation_lock as ml            # noqa: E402
 from ui.services import mutation_coordinator as mc      # noqa: E402
 from ui.services import mutation_registry as mr         # noqa: E402
-from mutation_guard import MutationIntent               # noqa: E402
+from mutation_guard import MutationIntent, compute_idempotency_key, compute_request_fingerprint  # noqa: E402
+
+
+class _CountingCursor:
+    """Wraps a REAL cursor (either backend) purely to COUNT
+    `.execute()` calls by their leading SQL keyword - NEVER changes
+    what is actually sent to or read from PostgreSQL. ROW 19C-2a: used
+    to prove, against a REAL connection, that an authz denial issues
+    ZERO journal queries - the same information-non-leakage property
+    ui/tests/test_mutation_coordinator_isolated.py already proves
+    against a fake connection, reproduced here against the real one."""
+
+    def __init__(self, inner, calls):
+        self._inner = inner
+        self._calls = calls
+        self.rowcount = -1
+
+    def __enter__(self):
+        self._inner.__enter__()
+        return self
+
+    def __exit__(self, *exc):
+        return self._inner.__exit__(*exc)
+
+    def execute(self, sql, params=None):
+        self._calls.append(" ".join(sql.split()).split()[0])
+        self._inner.execute(sql, params)
+        self.rowcount = self._inner.rowcount
+
+    def fetchone(self):
+        return self._inner.fetchone()
+
+
+class _CountingConn:
+    """See `_CountingCursor` above - a pure pass-through observer, not
+    a fake. `run_mutation()` itself never calls `.close()` on its
+    `conn` argument, so this class does not need to define one; the
+    real underlying connection is always closed directly by the test
+    section that opened it."""
+
+    def __init__(self, inner):
+        self._inner = inner
+        self.calls = []
+
+    def cursor(self):
+        return _CountingCursor(self._inner.cursor(), self.calls)
 
 try:
     # ------------------------------------------------------------
@@ -846,15 +891,20 @@ try:
         close_conn(conn_e)
 
     # ------------------------------------------------------------
-    # 5) Row 19C-1 TARGETED CONTRACT REMEDIATION: a TERMINAL `failed`
-    #    row already on record (queried back through the REAL,
-    #    unconditional, all-state `_idempotency_lookup` SQL - never
-    #    exercised by sections 3/4 above, which only ever see
+    # 5) Row 19C-1 TARGETED CONTRACT REMEDIATION (ROW 19C-2a: authz
+    #    call expectation corrected): a TERMINAL `failed` row already
+    #    on record (queried back through the REAL, unconditional,
+    #    all-state `_idempotency_lookup` SQL - never exercised by
+    #    sections 3/4 above, which only ever see
     #    `completed`/`reconciliation_required` rows) must produce
     #    `PriorAttemptFailedError` deterministically, insert NO new
-    #    row, and never invoke authz/precondition/writer - proven here
+    #    row, and never invoke precondition/writer - proven here
     #    against the real database, not just the fake-conn harness in
-    #    ui/tests/test_mutation_coordinator_isolated.py.
+    #    ui/tests/test_mutation_coordinator_isolated.py. ROW 19C-2a:
+    #    `authz_callback` now runs FIRST, before the idempotency lookup
+    #    that discovers this terminal row - it MUST be invoked exactly
+    #    once (and must succeed) even in this branch; a replay/conflict/
+    #    prior-failed lookup result is never allowed to bypass authz.
     # ------------------------------------------------------------
     conn_f = open_conn()
     try:
@@ -890,8 +940,13 @@ try:
         def _writer_must_never_run():
             raise AssertionError("writer_callback was invoked despite a prior TERMINAL failed row for this exact idempotency_key")
 
-        def _authz_must_never_run():
-            raise AssertionError("authz_callback was invoked despite a prior TERMINAL failed row for this exact idempotency_key")
+        _authz_calls_f = []
+
+        def _authz_runs_once_and_succeeds():
+            # ROW 19C-2a: authz now runs FIRST, before the idempotency
+            # lookup even exists to find this terminal failed row - it
+            # MUST be invoked (and, here, succeed) regardless.
+            _authz_calls_f.append(True)
 
         def _precondition_must_never_run():
             raise AssertionError("precondition_callback was invoked despite a prior TERMINAL failed row for this exact idempotency_key")
@@ -900,11 +955,15 @@ try:
             mc.PriorAttemptFailedError,
             lambda: mc.run_mutation(
                 conn_f, failed_intent, actor_user_id=None,
-                authz_callback=_authz_must_never_run,
+                authz_callback=_authz_runs_once_and_succeeds,
                 precondition_callback=_precondition_must_never_run,
                 writer_callback=_writer_must_never_run,
             ),
             "a prior TERMINAL failed row (real database) deterministically re-reports as PriorAttemptFailedError",
+        )
+        check(
+            "ROW 19C-2a: against the REAL database, authz WAS called exactly once even for the terminal-failed-row branch",
+            _authz_calls_f == [True],
         )
 
         with conn_f.cursor() as cur:
@@ -1569,6 +1628,288 @@ try:
     finally:
         ml.release_lock_session(conn_k, ml._get_or_create_resource_advisory_lock_id(conn_k, ml.case_resource_key(unresolved_case_id)))
         close_conn(conn_k)
+
+    # ------------------------------------------------------------
+    # 12) ROW 19C-2a SECURITY CORRECTION - authz-first ordering and the
+    #     information-non-leakage property, proven against the REAL
+    #     database via `_CountingConn` (a pure pass-through observer -
+    #     see its own docstring above; it changes nothing about what is
+    #     sent to PostgreSQL). An authz denial must issue ZERO journal
+    #     queries - not even the gate check - whether the resource is
+    #     CLEAN or already has a REAL, pre-existing unresolved row on
+    #     record; the same fake-conn proof in
+    #     ui/tests/test_mutation_coordinator_isolated.py, reproduced
+    #     here end-to-end against real PostgreSQL.
+    # ------------------------------------------------------------
+    conn_authz_probe = open_conn()
+    clean_probe_case_id = f"__row19c2a_pg_authz_clean_{uuid.uuid4().hex[:8]}__"
+    gated_probe_case_id = f"__row19c2a_pg_authz_gated_{uuid.uuid4().hex[:8]}__"
+    try:
+        ml.acquire_case_lock_session(conn_authz_probe, clean_probe_case_id)
+        ml.acquire_case_lock_session(conn_authz_probe, gated_probe_case_id)
+
+        class _AuthzProbeError(Exception):
+            pass
+
+        def _authz_denies():
+            raise _AuthzProbeError("denied - leak probe")
+
+        def _must_never_run():
+            raise AssertionError("this callback must never run when authz denies")
+
+        # Probe A: a CLEAN resource, no history at all.
+        clean_probe_intent = MutationIntent(
+            actor_type="cli_service", actor_ref="row19c2a_pg_test_actor",
+            resource_key=f"case:{clean_probe_case_id}", action_family="fam.row19c2a_pg_authz_probe",
+            target_ref="target_authz_probe_clean",
+        )
+        counting_conn_clean = _CountingConn(conn_authz_probe)
+        expect_raises(
+            _AuthzProbeError,
+            lambda: mc.run_mutation(
+                counting_conn_clean, clean_probe_intent, actor_user_id=None,
+                authz_callback=_authz_denies, precondition_callback=_must_never_run, writer_callback=_must_never_run,
+            ),
+            "against the REAL database: an authz denial on a CLEAN resource propagates unchanged",
+        )
+        check(
+            "against the REAL database: an authz denial issues ZERO journal queries (authz runs before ANY journal SQL)",
+            counting_conn_clean.calls == [],
+            f"got {counting_conn_clean.calls!r}",
+        )
+
+        # Probe B: a resource that ALREADY has a REAL unresolved row on
+        # record - the exact scenario the ROW 19C-1 draft order could
+        # leak through which exception was raised.
+        gated_probe_resource_key = f"case:{gated_probe_case_id}"
+        gated_probe_intent = MutationIntent(
+            actor_type="cli_service", actor_ref="row19c2a_pg_test_actor",
+            resource_key=gated_probe_resource_key, action_family="fam.row19c2a_pg_authz_probe",
+            target_ref="target_authz_probe_gated",
+        )
+        with conn_authz_probe.cursor() as cur:
+            cur.execute(
+                "INSERT INTO mutation.mutation_journal ("
+                "  resource_key, action_family, actor_label, target_ref,"
+                "  idempotency_key, request_fingerprint, state, executing_at"
+                ") VALUES (%s, %s, %s, %s, %s, %s, 'executing', now())",
+                (
+                    gated_probe_resource_key, "fam.row19c2a_pg_authz_probe_other", "row19c2a_pg_test_actor",
+                    "target_authz_probe_other", "row19c2a_gated_probe_key_" + uuid.uuid4().hex[:8], "other_fp",
+                ),
+            )
+
+        counting_conn_gated = _CountingConn(conn_authz_probe)
+        expect_raises(
+            _AuthzProbeError,
+            lambda: mc.run_mutation(
+                counting_conn_gated, gated_probe_intent, actor_user_id=None,
+                authz_callback=_authz_denies, precondition_callback=_must_never_run, writer_callback=_must_never_run,
+            ),
+            "against the REAL database: an authz denial on an ALREADY-GATED resource raises the SAME exception type",
+        )
+        check(
+            "against the REAL database: an authz denial issues ZERO journal queries EVEN when the resource is "
+            "already gated - an unauthorized caller cannot distinguish this from the clean-resource case by any "
+            "observable signal",
+            counting_conn_gated.calls == [],
+            f"got {counting_conn_gated.calls!r}",
+        )
+    finally:
+        ml.release_lock_session(conn_authz_probe, ml._get_or_create_resource_advisory_lock_id(conn_authz_probe, ml.case_resource_key(clean_probe_case_id)))
+        ml.release_lock_session(conn_authz_probe, ml._get_or_create_resource_advisory_lock_id(conn_authz_probe, ml.case_resource_key(gated_probe_case_id)))
+        close_conn(conn_authz_probe)
+
+    # ------------------------------------------------------------
+    # 13) ROW 19C-2a FAILURE CLASSIFICATION - JournalExecutingTransitionFailedError
+    #     and JournalCompletionUncertainError, proven against the REAL
+    #     database via CONTROLLED real-DB failure injection: a row is
+    #     inserted for real, then deleted out-of-band through a
+    #     SEPARATE real connection (a genuine, already-committed
+    #     disappearance) immediately before calling the coordinator's
+    #     own rowcount-checked transition helper DIRECTLY - racing
+    #     `run_mutation()` itself for this exact window is not
+    #     deterministically reproducible, so this is the real-database
+    #     equivalent of the fake-conn proof in
+    #     test_mutation_coordinator_isolated.py.
+    # ------------------------------------------------------------
+    conn_l = open_conn()
+    exec_ghost_case_id = f"__row19c2a_pg_ghost_exec_{uuid.uuid4().hex[:8]}__"
+    completion_ghost_case_id = f"__row19c2a_pg_ghost_completion_{uuid.uuid4().hex[:8]}__"
+    try:
+        ml.acquire_case_lock_session(conn_l, exec_ghost_case_id)
+        ml.acquire_case_lock_session(conn_l, completion_ghost_case_id)
+
+        # 13a) JournalExecutingTransitionFailedError - a 'prepared' row
+        # that no longer exists by the time the 'executing' transition
+        # runs.
+        exec_ghost_intent = MutationIntent(
+            actor_type="cli_service", actor_ref="row19c2a_pg_test_actor",
+            resource_key=f"case:{exec_ghost_case_id}", action_family="fam.row19c2a_pg_ghost_exec_test",
+            target_ref="target_ghost_exec",
+        )
+        exec_ghost_key = compute_idempotency_key(exec_ghost_intent)
+        exec_ghost_fp = compute_request_fingerprint(exec_ghost_intent)
+        with conn_l.cursor() as cur:
+            cur.execute(
+                "INSERT INTO mutation.mutation_journal ("
+                "  resource_key, action_family, actor_label, target_ref,"
+                "  idempotency_key, request_fingerprint, state"
+                ") VALUES (%s, %s, %s, %s, %s, %s, 'prepared') RETURNING id",
+                (
+                    f"case:{exec_ghost_case_id}", "fam.row19c2a_pg_ghost_exec_test", "row19c2a_pg_test_actor",
+                    "target_ghost_exec", exec_ghost_key, exec_ghost_fp,
+                ),
+            )
+            (exec_ghost_journal_id,) = cur.fetchone()
+        exec_ghost_journal_id = int(exec_ghost_journal_id)
+
+        bypass_conn_exec = open_conn()
+        try:
+            with bypass_conn_exec.cursor() as cur:
+                cur.execute("DELETE FROM mutation.mutation_journal WHERE id = %s", (exec_ghost_journal_id,))
+        finally:
+            close_conn(bypass_conn_exec)
+
+        expect_raises(
+            mc.JournalExecutingTransitionFailedError,
+            lambda: mc._mark_executing(conn_l, exec_ghost_journal_id),
+            "against the REAL database: _mark_executing() on a row deleted out-of-band (rowcount=0) "
+            "raises JournalExecutingTransitionFailedError",
+        )
+
+        # 13b) JournalCompletionUncertainError - an 'executing' row that
+        # no longer exists by the time the 'completed' transition runs
+        # (the writer, hypothetically, already succeeded).
+        completion_ghost_intent = MutationIntent(
+            actor_type="cli_service", actor_ref="row19c2a_pg_test_actor",
+            resource_key=f"case:{completion_ghost_case_id}", action_family="fam.row19c2a_pg_ghost_completion_test",
+            target_ref="target_ghost_completion",
+        )
+        completion_ghost_key = compute_idempotency_key(completion_ghost_intent)
+        completion_ghost_fp = compute_request_fingerprint(completion_ghost_intent)
+        with conn_l.cursor() as cur:
+            cur.execute(
+                "INSERT INTO mutation.mutation_journal ("
+                "  resource_key, action_family, actor_label, target_ref,"
+                "  idempotency_key, request_fingerprint, state, executing_at"
+                ") VALUES (%s, %s, %s, %s, %s, %s, 'executing', now()) RETURNING id",
+                (
+                    f"case:{completion_ghost_case_id}", "fam.row19c2a_pg_ghost_completion_test", "row19c2a_pg_test_actor",
+                    "target_ghost_completion", completion_ghost_key, completion_ghost_fp,
+                ),
+            )
+            (completion_ghost_journal_id,) = cur.fetchone()
+        completion_ghost_journal_id = int(completion_ghost_journal_id)
+
+        bypass_conn_completion = open_conn()
+        try:
+            with bypass_conn_completion.cursor() as cur:
+                cur.execute("DELETE FROM mutation.mutation_journal WHERE id = %s", (completion_ghost_journal_id,))
+        finally:
+            close_conn(bypass_conn_completion)
+
+        def _get_real_completion_uncertain_error():
+            try:
+                mc._mark_completed(conn_l, completion_ghost_journal_id, "ghost_real_hash")
+            except mc.JournalCompletionUncertainError as error:
+                return error
+            raise AssertionError("expected JournalCompletionUncertainError")
+
+        real_completion_error = _get_real_completion_uncertain_error()
+        check(
+            "against the REAL database: JournalCompletionUncertainError carries the affected journal_id",
+            real_completion_error.journal_id == completion_ghost_journal_id,
+        )
+        check(
+            "against the REAL database: JournalCompletionUncertainError carries the observed rowcount (0)",
+            real_completion_error.rowcount == 0,
+        )
+        check(
+            "against the REAL database: JournalCompletionUncertainError carries the writer's own observed_post_hash",
+            real_completion_error.observed_post_hash == "ghost_real_hash",
+        )
+    finally:
+        ml.release_lock_session(conn_l, ml._get_or_create_resource_advisory_lock_id(conn_l, ml.case_resource_key(exec_ghost_case_id)))
+        ml.release_lock_session(conn_l, ml._get_or_create_resource_advisory_lock_id(conn_l, ml.case_resource_key(completion_ghost_case_id)))
+        close_conn(conn_l)
+
+    # ------------------------------------------------------------
+    # 14) ROW 19C-2a FAILURE CLASSIFICATION - JournalReconciliationTransitionFailedError
+    #     MASKING-SAFETY PROOF, end-to-end through the REAL, unmodified
+    #     `run_mutation()`: the writer callback itself deletes its own
+    #     journal row out-of-band (a SEPARATE real connection) and THEN
+    #     raises its own real exception - so when `run_mutation()`
+    #     subsequently tries the 'executing'->'reconciliation_required'
+    #     transition, it genuinely affects zero real rows. The ORIGINAL
+    #     writer exception (exact instance) must still be what
+    #     propagates; the secondary transition failure must only be
+    #     CRITICALLY logged (captured here via a monkeypatch of
+    #     `mc._log_critical_safely`, never touching the real logger).
+    # ------------------------------------------------------------
+    conn_m = open_conn()
+    masking_case_id = f"__row19c2a_pg_masking_{uuid.uuid4().hex[:8]}__"
+    _original_log_critical_safely_pg = mc._log_critical_safely
+    _critical_log_calls_pg = []
+    mc._log_critical_safely = lambda message: _critical_log_calls_pg.append(message)
+    try:
+        ml.acquire_case_lock_session(conn_m, masking_case_id)
+        masking_resource_key = f"case:{masking_case_id}"
+        masking_intent = MutationIntent(
+            actor_type="cli_service", actor_ref="row19c2a_pg_test_actor",
+            resource_key=masking_resource_key, action_family="fam.row19c2a_pg_masking_test",
+            target_ref="target_masking",
+        )
+
+        _sentinel_masking_exc = RuntimeError("writer's own real failure - the row vanished from under this attempt")
+
+        def _writer_deletes_its_own_row_then_crashes():
+            bypass_conn = open_conn()
+            try:
+                with bypass_conn.cursor() as cur:
+                    cur.execute("DELETE FROM mutation.mutation_journal WHERE resource_key = %s", (masking_resource_key,))
+            finally:
+                close_conn(bypass_conn)
+            raise _sentinel_masking_exc
+
+        try:
+            mc.run_mutation(
+                conn_m, masking_intent, actor_user_id=None,
+                authz_callback=lambda: None, precondition_callback=lambda: None,
+                writer_callback=_writer_deletes_its_own_row_then_crashes,
+            )
+            check(
+                "against the REAL database: the original writer exception propagates even when the row it "
+                "was about to transition has vanished (unreachable line)",
+                False, "no exception was raised",
+            )
+        except RuntimeError as caught:
+            check(
+                "against the REAL database: the EXACT original writer exception instance propagates unchanged, "
+                "even though the row it was about to mark 'reconciliation_required' no longer exists",
+                caught is _sentinel_masking_exc,
+            )
+        check(
+            "against the REAL database: the vanished-row transition failure was CRITICALLY logged exactly once",
+            len(_critical_log_calls_pg) == 1,
+            f"got {_critical_log_calls_pg!r}",
+        )
+
+        with conn_m.cursor() as cur:
+            cur.execute(
+                "SELECT count(*) FROM mutation.mutation_journal WHERE resource_key = %s",
+                (masking_resource_key,),
+            )
+            (remaining_count,) = cur.fetchone()
+        check(
+            "against the REAL database: no row was resurrected/recreated by the failed transition attempt "
+            "(the resource_key still has zero rows, exactly as the out-of-band DELETE left it)",
+            _pg_int(remaining_count) == 0,
+        )
+    finally:
+        mc._log_critical_safely = _original_log_critical_safely_pg
+        ml.release_lock_session(conn_m, ml._get_or_create_resource_advisory_lock_id(conn_m, ml.case_resource_key(masking_case_id)))
+        close_conn(conn_m)
 
 except Exception as error:
     check(

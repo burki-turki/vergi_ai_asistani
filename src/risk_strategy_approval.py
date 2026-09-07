@@ -317,7 +317,8 @@ def backup_canonical(case_id):
 
 def write_approval_audit(
     case_id, pending_path, canonical_path, pending_sha256, canonical_sha256,
-    previous_canonical_backup, analysis,
+    previous_canonical_backup, analysis, mutation_idempotency_key=None,
+    mutation_resource_key=None,
 ):
 
     reviews_dir = get_reviews_dir(case_id)
@@ -336,6 +337,22 @@ def write_approval_audit(
         "audit_type": "risk_strategy_analysis_approval",
         "approval_version": RISK_STRATEGY_APPROVAL_VERSION,
         "approved_at": now.isoformat(),
+        # ROW 19C-2a: bound to the mutation-coordinator idempotency_key
+        # of the run_mutation() attempt this approval was written under
+        # (None for any approval NOT routed through the coordinator) -
+        # lets a reconciliation adapter match this audit record back to
+        # its own mutation.mutation_journal row via that row's own
+        # idempotency_key column.
+        "mutation_idempotency_key": mutation_idempotency_key,
+
+        # ROW 19C-2a: bound to the mutation-coordinator resource_key
+        # (`case:<case_id>`) of the run_mutation() attempt this approval
+        # was written under (None for any approval NOT routed through the
+        # coordinator). Recorded ALONGSIDE mutation_idempotency_key above
+        # because that key ALONE does not pin WHICH resource this record
+        # belongs to - both are verified EXACTLY by reconciliation and by
+        # the request-time safe-replay check.
+        "mutation_resource_key": mutation_resource_key,
         "case_id": case_id,
         "risk_strategy_analysis_id": analysis.get("risk_strategy_analysis_id"),
         "source_pending_path": str(pending_path),
@@ -417,7 +434,24 @@ def run_review(case_id):
     print("======================================")
 
 
-def run_approve(case_id):
+def run_approve(
+    case_id,
+    *,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+):
+    # ROW 19C-2a AUDIT BINDING: both parameters are KEYWORD-ONLY (the
+    # bare `*` above) so a positional caller can never accidentally
+    # bind a case_id-shaped value to either of them, and so all 10
+    # case-scoped approval families carry the IDENTICAL signature. Both
+    # default to None, which preserves this function's exact
+    # pre-Row-19C-2a behavior and CLI output for every caller that
+    # never passes them (`python src/..._approval.py --approve`
+    # included). When supplied - only ever by ui.services.
+    # mutation_approval_facade.approve_case_scoped_mutation(), which
+    # always passes BOTH together - they are threaded, unchanged, into
+    # write_approval_audit() and become two additive fields on the
+    # approval audit record.
 
     print()
     print("======================================")
@@ -477,6 +511,8 @@ def run_approve(case_id):
         audit_path = write_approval_audit(
             case_id, pending_path, canonical_path, pending_sha256,
             canonical_sha256, previous_canonical_backup, canonical_analysis,
+            mutation_idempotency_key=mutation_idempotency_key,
+            mutation_resource_key=mutation_resource_key,
         )
 
     except Exception:
