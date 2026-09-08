@@ -227,6 +227,7 @@
 from __future__ import annotations
 
 import contextlib
+import fnmatch
 import hashlib
 import io
 import json
@@ -240,15 +241,16 @@ if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
 from mutation_guard import MutationIntent, compute_idempotency_key  # noqa: E402
+import path_containment as _path_containment  # noqa: E402
 
 from . import authz as _authz
 from . import mutation_coordinator as _mutation_coordinator
 from . import mutation_lock as _mutation_lock
 from .common import (
+    ApprovalUiError,
     PendingNotFoundError,
     PreconditionRaceDetectedError,
     StaleViewError,
-    find_latest_audit,
     sha256_file,
 )
 
@@ -367,6 +369,200 @@ class ResolvedCaseIdMismatchError(Exception):
     never invoked."""
 
 
+# ============================================================
+# ROW 19C-3a SLICE 2 - NESTED PATH-CONTAINMENT (pending/canonical/
+# reviews/history-carry-forward), independently implemented in this
+# file - never imported by, and never importing from,
+# `mutation_approval_adapters.py`/`review_mutation_facade.py`/
+# `review_mutation_adapters.py`, each of which carries its OWN copy of
+# the same shape (see the Slice 2 scope report's own "independence"
+# requirement).
+#
+# WHY A NEW HELPER RATHER THAN REUSING `ui.services.paths`: every one
+# of the 10 `src/*_approval.py` writer modules computes its OWN,
+# independently-derived `CASES_DIR` (never importing `ui.services.
+# paths`) - `_resolve_case_root_real()`/`_verify_nested()` below
+# therefore anchor to the SAME writer module's OWN `CASES_DIR` (read
+# dynamically via `module.CASES_DIR`, never cached), so a verified path
+# always corresponds to the EXACT logical location that module's own
+# `get_pending_path()`/`get_canonical_path()`/`get_carry_forward_dir()`
+# getters compute - never a separately-verified path that merely
+# happens to be safe but does not track what the writer will actually
+# read/write. Only the shared, LOCKED `src.path_containment` public API
+# (`resolve_existing`, `resolve_for_create`, `PathContainmentError`) is
+# used - no new containment primitive is introduced here.
+# ============================================================
+
+
+class NestedPathContainmentError(ApprovalUiError):
+    """A pending/canonical/reviews/history-carry-forward path failed
+    nested, case-scoped containment verification: an escaping symlink/
+    junction, a broken/looping link, the case root itself failing to
+    verify, or a name-matching directory entry that resolves to a
+    location other than its own expected parent directory (the in-tree-
+    alias case). Raised ONLY before any writer invocation (from the
+    pre-lock derivation or from `precondition_callback`, i.e. strictly
+    BEFORE `_insert_prepared` - zero journal rows, the writer is NEVER
+    called) - a subclass of `common.ApprovalUiError`, so `ui/main.py`'s
+    existing generic `except ApprovalUiError` catch-all in
+    `case_scoped_confirm` handles it with ZERO route-level changes.
+    Never silently downgraded to a per-entry skip: a name-matching
+    entry that fails this check aborts the WHOLE safe scan it was found
+    in, exactly like this project's existing `ReviewDirectoryScanError`/
+    `DraftingRequestDirectoryScanError` siblings."""
+
+
+def _resolve_case_root_real(module, case_id: str) -> Path:
+    """Strictly verifies `module.CASES_DIR / case_id` (the writer's OWN
+    case root, read from ITS OWN `CASES_DIR` attribute, dynamically) is
+    a real, existing directory genuinely contained within `module.
+    CASES_DIR` itself - the ONE choke point every nested verification
+    below is anchored to."""
+    cases_dir = module.CASES_DIR
+    try:
+        return _path_containment.resolve_existing(cases_dir / case_id, root=cases_dir)
+    except _path_containment.PathContainmentError as error:
+        raise NestedPathContainmentError(
+            f"Case kök dizini containment doğrulamasından geçemedi: {case_id!r}"
+        ) from error
+
+
+def _verify_nested(module, case_root_real: Path, case_id: str, raw_path) -> Path:
+    """Re-derives `raw_path` (a Path the writer module computed via its
+    own raw `/` joins from `module.CASES_DIR`) through the shared
+    `path_containment` primitive, proving it corresponds - segment for
+    segment - to a location safely contained within `case_root_real`.
+    The relative segments are taken from `raw_path` ITSELF (a pure,
+    filesystem-free `Path.relative_to()` computation), never
+    hardcoded - so the verified result always tracks whatever logical
+    path the writer's own getter actually computed, for ANY family,
+    without this file needing to know any family's directory name.
+    Handles both an already-existing target (fully resolved) and a
+    genuinely not-yet-created one (returned unresolved, safely joined
+    onto the deepest verified real ancestor) - see `path_containment.
+    resolve_for_create()`'s own docstring."""
+    cases_dir = module.CASES_DIR
+    case_root_raw = cases_dir / case_id
+    raw_path = Path(raw_path)
+    try:
+        relative_parts = raw_path.relative_to(case_root_raw).parts
+    except ValueError as error:
+        raise NestedPathContainmentError(
+            f"{raw_path}: beklenen case dizini kapsamı ({case_root_raw}) dışında bir yol."
+        ) from error
+    try:
+        return _path_containment.resolve_for_create(case_root_real, *relative_parts)
+    except _path_containment.PathContainmentError as error:
+        raise NestedPathContainmentError(
+            f"{raw_path}: path containment doğrulaması başarısız (case kökü dışına çözümleniyor, "
+            "kırık/döngüsel bir symlink/junction içeriyor, veya mevcut bir dosyanın altına path "
+            "üretilmeye çalışılıyor)."
+        ) from error
+
+
+def _safe_scan_named_entries(case_root_real: Path, directory_verified: Path, *, pattern: str, parse_json: bool):
+    """Returns a list of `(resolved_entry_path, parsed_record_or_None)`
+    for every DIRECT-CHILD entry of `directory_verified` (itself already
+    case-root-verified by the caller) whose NAME matches `pattern` -
+    never for a MISSING `directory_verified` (returns `[]`, matching
+    today's existing "no reviews/carry-forward yet" outcome).
+
+    A non-matching NAME is ignored exactly as today's raw `.glob()`-
+    based lookups already ignore it (never inspected for safety at
+    all - matching content was never going to be read either way, so
+    this is not a new exposure). A name-matching entry is, in order:
+    (1) `resolve_existing(entry, root=case_root_real)` - proves it
+    resolves to SOMEWHERE inside the case root at all; (2) checked for
+    EXACT parent membership (`resolved.parent == directory_verified`) -
+    closes the in-tree-alias case a root-only containment check would
+    miss (an entry that legitimately resolves inside the case root, but
+    under a DIFFERENT logical directory). Either failure - escape,
+    broken/looping link, or wrong-parent alias - ABORTS THE WHOLE SCAN
+    (`NestedPathContainmentError`), never silently skips just that one
+    entry; the escaping/broken target's content is NEVER read (the
+    JSON-parsing step, when `parse_json=True`, only ever runs on an
+    entry that has ALREADY passed both checks).
+
+    A safe, matching entry whose content fails to parse as a JSON
+    object (only when `parse_json=True`) is NOT a scan abort - it is
+    returned as `(resolved_entry_path, None)`, preserving today's
+    existing "corrupt candidate" tolerance exactly."""
+    if not directory_verified.is_dir():
+        return []
+    try:
+        raw_entries = sorted(directory_verified.iterdir(), key=lambda p: p.name)
+    except OSError as error:
+        raise NestedPathContainmentError(f"{directory_verified}: dizin listelenemedi.") from error
+
+    results = []
+    for entry in raw_entries:
+        if not fnmatch.fnmatch(entry.name, pattern):
+            continue
+        try:
+            resolved = _path_containment.resolve_existing(entry, root=case_root_real)
+        except _path_containment.PathContainmentError as error:
+            raise NestedPathContainmentError(
+                f"{directory_verified}: matching girişin containment doğrulaması başarısız: "
+                f"{entry.name!r}"
+            ) from error
+        if resolved.parent != directory_verified:
+            raise NestedPathContainmentError(
+                f"{directory_verified}: matching giriş beklenen dizinin DIŞINA çözümleniyor "
+                f"(in-tree alias): {entry.name!r}"
+            )
+        if not parse_json:
+            results.append((resolved, None))
+            continue
+        try:
+            with open(resolved, "r", encoding="utf-8") as file:
+                record = json.load(file)
+            if not isinstance(record, dict):
+                raise ValueError("audit record is not a JSON object")
+        except Exception:
+            results.append((resolved, None))
+        else:
+            results.append((resolved, record))
+    return results
+
+
+def _safe_latest_audit(case_root_real: Path, reviews_dir_verified: Path):
+    """Independent, in-file replacement for `common.find_latest_audit()`
+    for THIS module's two call sites - preserves the EXACT SAME
+    "highest `st_mtime` wins" selection rule for `*.approval.json`
+    entries, but operates ONLY over entries that have ALREADY passed
+    `_safe_scan_named_entries()`'s containment/parent checks. Calling
+    `common.find_latest_audit()` again after a safe scan would re-open
+    the raw, unverified logical path and defeat the whole point of the
+    scan - so it never is; `common.py` itself is NOT modified by this
+    Slice, it simply gains no NEW callers from this file.
+
+    ROW 19C-3a SLICE 2 FINAL NARROW REMEDIATION (docstring correction,
+    no behavior change): on a genuine `st_mtime` TIE, this function
+    picks the entry with the ALPHABETICALLY LAST name among the tied
+    group - because `_safe_scan_named_entries()` pre-sorts directory
+    entries by name before the `sorted(..., key=mtime)` below runs, and
+    Python's `sorted()` is stable (equal-key entries keep their
+    pre-sort, i.e. name-sorted, relative order). This is empirically
+    pinned down by `test_mutation_approval_facade_isolated.py`'s "15h"
+    scenario. It is NOT "directory-listing order" (this docstring used
+    to claim that; it was wrong) - `common.find_latest_audit()`'s own
+    tie-break, inherited from raw `Path.glob()`, is unspecified/
+    filesystem-order-dependent instead, and its own docstring makes no
+    tie-break claim at all. Neither this module's exact-mtime tie-break
+    nor `common.find_latest_audit()`'s is a documented/LOCKED contract
+    anywhere in Rows 1-18 or 19A-19C-2 - no existing semantic relies on
+    which specific file wins an exact tie, only on the eventually-
+    selected record's own content passing its usual hash/binding
+    checks. This correction is therefore docstring-only."""
+    verified = [
+        resolved for resolved, _record in
+        _safe_scan_named_entries(case_root_real, reviews_dir_verified, pattern="*.approval.json", parse_json=False)
+    ]
+    if not verified:
+        return None
+    return sorted(verified, key=lambda p: p.stat().st_mtime)[-1]
+
+
 # ROW 19C-2a: fixed absence markers for the composite pre-state
 # snapshot (see `_compute_precondition_snapshot()`). Deliberately
 # constants, never `None` folded into the digest input, so "the file is
@@ -478,17 +674,25 @@ def _default_conn_factory():
     return _db.get_session_lock_connection()
 
 
-def _read_latest_audit_record(reviews_dir: Path) -> tuple[Path | None, dict | None, str | None]:
+def _read_latest_audit_record(case_root_real: Path, reviews_dir_verified: Path) -> tuple[Path | None, dict | None, str | None]:
     """Returns (audit_path, record, error_reason). `error_reason` is
     None on a clean read (`audit_path`/`record` both non-None only in
     that case), a human-readable string on ANY failure (no audit file
     found at all, or one exists but could not be read/parsed) - never
-    raises itself, since both callers (the replay-verification check
-    and the writer-side audit_path lookup) need to keep going and
-    decide what to do with a missing/bad audit record themselves."""
-    audit_path = find_latest_audit(reviews_dir)
+    raises itself for a "not found"/"unparseable" outcome (its own
+    caller, `_verify_completed_replay_audit_binding()`, decides what to
+    do with that). ROW 19C-3a SLICE 2: `reviews_dir_verified` MUST
+    already be a case-root-verified directory (never a raw, unverified
+    join) - `audit_path` is located via `_safe_latest_audit()`, this
+    module's own safe-scan-based replacement for `common.
+    find_latest_audit()` (see that function's own docstring); a
+    containment failure on an individual matching entry propagates as
+    `NestedPathContainmentError`, which this function does NOT catch -
+    it is a genuine, fail-closed abort, never softened into a plain
+    "not found" `error_reason` string."""
+    audit_path = _safe_latest_audit(case_root_real, reviews_dir_verified)
     if audit_path is None:
-        return None, None, f"no audit record found under {reviews_dir}"
+        return None, None, f"no audit record found under {reviews_dir_verified}"
     try:
         with open(audit_path, "r", encoding="utf-8") as file:
             record = json.load(file)
@@ -521,6 +725,8 @@ COMPLETED_JOURNAL_STATE = "completed"
 
 def _verify_completed_replay_audit_binding(
     canonical_path: Path,
+    case_root_real: Path,
+    reviews_dir: Path,
     *,
     journal_state: str,
     journal_id: int,
@@ -534,6 +740,14 @@ def _verify_completed_replay_audit_binding(
     computed CURRENT canonical sha256 on success; raises
     `AuditBindingVerificationFailedError` on ANY missing, blank,
     malformed or mismatched value.
+
+    ROW 19C-3a SLICE 2: `canonical_path`/`case_root_real`/`reviews_dir`
+    MUST already be the caller's FRESH, under-lock, case-root-verified
+    values (see the call site's own "fresh re-verification before
+    replay corroboration" comment) - this function itself performs NO
+    containment verification of its own; it only ever reads through
+    paths its caller has already proven safe, so a raw/unverified path
+    can never reach `sha256_file()`/`_read_latest_audit_record()` here.
 
     PRIVATE, and additionally CLOSED at the parameter level: the
     mandatory `journal_state` argument must be exactly
@@ -611,8 +825,7 @@ def _verify_completed_replay_audit_binding(
             ),
         )
 
-    reviews_dir = canonical_path.parent / "reviews"
-    audit_path, record, error_reason = _read_latest_audit_record(reviews_dir)
+    audit_path, record, error_reason = _read_latest_audit_record(case_root_real, reviews_dir)
     if error_reason is not None:
         raise AuditBindingVerificationFailedError(
             journal_id=journal_id, idempotency_key=idempotency_key, reason=error_reason,
@@ -773,12 +986,47 @@ def approve_case_scoped_mutation(
         resource_key = _mutation_lock.case_resource_key(outer_resolved_case_id)
         pending_path = module.get_pending_path(outer_resolved_case_id)
         canonical_path = module.get_canonical_path(outer_resolved_case_id)
+        reviews_dir_raw = canonical_path.parent / "reviews"
+
+        # ============================================================
+        # ROW 19C-3a SLICE 2 - PRE-LOCK NESTED PATH-CONTAINMENT
+        # VERIFICATION. Runs AFTER outer authz (a filesystem probe must
+        # never precede authorization) but still entirely BEFORE any
+        # journal/lock connection is opened (`conn_factory()` is called
+        # further down) - a containment failure here costs not just
+        # zero journal rows but zero DB connections at all. Verifies
+        # pending/canonical/reviews_dir (and, for the families that have
+        # one, history/carry_forward - see the carry-forward gate inside
+        # `precondition_callback()` below) really resolve, segment by
+        # segment, to locations safely contained within the case
+        # directory - never trusts the raw `/`-joined paths above. A
+        # failure here raises `NestedPathContainmentError` (an
+        # `ApprovalUiError` subclass - `ui/main.py`'s existing generic
+        # catch-all handles it with ZERO route changes) straight out of
+        # this function.
+        # ============================================================
+        pre_lock_case_root_real = _resolve_case_root_real(module, outer_resolved_case_id)
+        pre_lock_pending_verified = _verify_nested(module, pre_lock_case_root_real, outer_resolved_case_id, pending_path)
+        pre_lock_canonical_verified = _verify_nested(module, pre_lock_case_root_real, outer_resolved_case_id, canonical_path)
+        pre_lock_reviews_dir_verified = _verify_nested(
+            module, pre_lock_case_root_real, outer_resolved_case_id, reviews_dir_raw,
+        )
+        pre_lock_nested_identity = (
+            str(pre_lock_pending_verified), str(pre_lock_canonical_verified), str(pre_lock_reviews_dir_verified),
+        )
 
         # PRE-LOCK composite snapshot - recorded as this attempt's
         # `pre_hash` and re-verified under the lock (see this module's
         # own header comment, "PRE-STATE SNAPSHOT"). Read AFTER the
-        # outer authz has already succeeded, never before it.
-        pre_lock_snapshot = _compute_precondition_snapshot(pending_path, canonical_path)
+        # outer authz has already succeeded, never before it. Computed
+        # over the VERIFIED paths above (never the raw ones) - for any
+        # legitimate, non-escaping location this produces the BYTE-
+        # IDENTICAL digest the raw paths always did (same physical
+        # file, same bytes), so no existing `pre_hash`/idempotency value
+        # changes for any case that was never under attack; it only
+        # differs where a raw path would have silently read through an
+        # escape.
+        pre_lock_snapshot = _compute_precondition_snapshot(pre_lock_pending_verified, pre_lock_canonical_verified)
 
         intent = MutationIntent(
             actor_type="iam_user",
@@ -837,7 +1085,55 @@ def approve_case_scoped_mutation(
             # failure without ever reaching here), and strictly BEFORE
             # step 6 persists a `prepared` row. So every raise below
             # leaves ZERO journal rows and never invokes the writer.
-            if not pending_path.exists():
+            nonlocal pending_path, canonical_path
+
+            # ROW 19C-3a SLICE 2 - FRESH, INDEPENDENT under-lock nested
+            # path-containment re-verification. Re-derived from scratch
+            # (never reusing the pre-lock verified Path objects) so a
+            # symlink/junction swapped in WHILE this request waited for
+            # the case lock is caught here, exactly like the existing
+            # hash-based race check below catches a legitimate content
+            # change. A resolved-identity change - even one that happens
+            # to preserve identical file bytes at the new location - is
+            # its OWN, independent race signal, never inferred solely
+            # from a hash comparison.
+            under_lock_case_root_real = _resolve_case_root_real(module, outer_resolved_case_id)
+            under_lock_pending_verified = _verify_nested(
+                module, under_lock_case_root_real, outer_resolved_case_id, pending_path,
+            )
+            under_lock_canonical_verified = _verify_nested(
+                module, under_lock_case_root_real, outer_resolved_case_id, canonical_path,
+            )
+            under_lock_reviews_dir_verified = _verify_nested(
+                module, under_lock_case_root_real, outer_resolved_case_id, reviews_dir_raw,
+            )
+            under_lock_nested_identity = (
+                str(under_lock_pending_verified), str(under_lock_canonical_verified),
+                str(under_lock_reviews_dir_verified),
+            )
+            if under_lock_nested_identity != pre_lock_nested_identity:
+                raise PreconditionRaceDetectedError(
+                    "Bu onay isteği case kilidini beklerken pending/canonical/reviews dizinlerinin "
+                    "çözümlenmiş (gerçek) konumu DEĞİŞTİ (symlink/junction swap veya benzeri bir "
+                    "durum). Onay iptal edildi, HİÇBİR değişiklik yapılmadı - lütfen sayfayı "
+                    "yenileyip tekrar deneyin."
+                )
+
+            # From this point on, EVERY read goes through the FRESH,
+            # under-lock-verified real Paths - never the original raw
+            # ones - so this facade's own subsequent reads (the writer's
+            # post-write hash, the cosmetic post-write audit_path
+            # lookup) always resolve through the SAME location this
+            # check just proved safe. `module.run_approve()` itself
+            # still re-derives its own paths independently (it accepts
+            # no path override - see this Slice's own binding decision)
+            # and is therefore NOT reached by this reassignment; that
+            # residual is named, not hidden - see this function's own
+            # closing comment below.
+            pending_path = under_lock_pending_verified
+            canonical_path = under_lock_canonical_verified
+
+            if not (pending_path.is_file()):
                 raise PendingNotFoundError(f"Pending bulunamadı: {pending_path}")
 
             under_lock_snapshot = _compute_precondition_snapshot(pending_path, canonical_path)
@@ -859,6 +1155,46 @@ def approve_case_scoped_mutation(
                     f"(o zamanki hash: {expected_hash}, şimdiki: {under_lock_snapshot.pending_sha256}). "
                     "Onay iptal edildi - lütfen sayfayı yenileyip tekrar deneyin."
                 )
+
+            # ========================================================
+            # ROW 19C-3a SLICE 2 - CARRY-FORWARD DIRECTORY-CHAIN GATE
+            # (the 4 families that have one: `hasattr(module, "get_
+            # carry_forward_dir")` - generic, no row_key hardcoded).
+            # This is a NEW check with no prior analogue: neither this
+            # facade nor its adapter has ever referenced `history/
+            # carry_forward` before this Slice - `collect_known_carry_
+            # forward_ids()` is called EXCLUSIVELY inside `run_approve()`
+            # itself, using ITS OWN raw, unverified scan, which this
+            # facade cannot intercept without changing that function's
+            # signature (out of this Slice's scope - see the binding
+            # decision). What this gate CAN and DOES do: verify the
+            # directory's own chain, and every `carry_forward_*.json`-
+            # matching entry's PATH safety (never its content - this
+            # check does not parse/evaluate meaning, only gates path
+            # safety) BEFORE the writer is ever invoked. An escaping,
+            # broken, or wrong-parent-alias matching entry aborts here -
+            # zero journal rows, writer never called.
+            #
+            # HONEST RESIDUAL: `run_approve()`'s own later raw scan,
+            # moments after this gate passes, is UNVERIFIED - a local
+            # actor able to swap the junction in that narrow window
+            # (inside the SAME held lock, but after THIS check and
+            # before the writer's own internal glob) defeats this gate.
+            # This is the SAME T15-class residual Row 19A already
+            # assigned to Row 19D's OS ACLs/service identity - this gate
+            # narrows the window, it does not close it, and no report
+            # from this Slice claims otherwise.
+            # ========================================================
+            if hasattr(module, "get_carry_forward_dir"):
+                raw_carry_forward_dir = module.get_carry_forward_dir(outer_resolved_case_id)
+                carry_forward_dir_verified = _verify_nested(
+                    module, under_lock_case_root_real, outer_resolved_case_id, raw_carry_forward_dir,
+                )
+                if carry_forward_dir_verified.is_dir():
+                    _safe_scan_named_entries(
+                        under_lock_case_root_real, carry_forward_dir_verified,
+                        pattern="carry_forward_*.json", parse_json=False,
+                    )
 
         def writer_callback() -> _mutation_coordinator.WriterResult:
             stdout_capture = io.StringIO()
@@ -885,33 +1221,75 @@ def approve_case_scoped_mutation(
                 writer_callback=writer_callback,
             )
 
-            reviews_dir = canonical_path.parent / "reviews"
-
             if outcome.replayed:
-                # See this module's own header comment ("FIVE EXACT
-                # BINDINGS") - independent corroboration is required
-                # ONLY on a replay (the writer was NOT re-invoked; a
-                # fresh execution's own successful writer return is
-                # already sufficient proof on its own).
-                #
-                # The returned value is the FRESHLY COMPUTED, JUST-
-                # VERIFIED canonical hash and it is what this function
-                # reports as `canonical_hash` below. It is deliberately
-                # NOT discarded in favour of the journal's own stored
-                # `observed_post_hash`: binding 3b has just proven the
-                # two are equal, so reporting the verified one is both
-                # equivalent AND the only one this request actually
-                # checked - a hash the lawyer's success page names must
-                # never be a value nothing here corroborated.
-                verified_canonical_hash = _verify_completed_replay_audit_binding(
-                    canonical_path,
-                    journal_state=outcome.state,
-                    journal_id=outcome.journal_id,
-                    idempotency_key=idempotency_key_for_audit,
-                    resource_key=resource_key,
-                    observed_post_hash=outcome.observed_post_hash,
-                    pre_revision=intent.pre_revision,
-                )
+                # ROW 19C-3a SLICE 2 - FRESH replay-time nested path-
+                # containment re-verification. `precondition_callback`
+                # is NEVER invoked for a replayed outcome (`run_
+                # mutation()`'s own idempotency lookup short-circuits
+                # before reaching it) - so `canonical_path` here is
+                # STILL the ORIGINAL, unverified raw value; this is this
+                # outcome's own first (and only) chance to verify it,
+                # fresh, strictly BEFORE any replay corroboration read.
+                # A containment failure here does NOT propagate as a
+                # plain `NestedPathContainmentError` ("APPROVAL_FAILED")
+                # - the underlying mutation ALREADY succeeded and is
+                # ALREADY journaled `completed`; reporting a bare
+                # failure would misrepresent it. It is instead folded
+                # into the SAME closed `AuditBindingVerificationFailed
+                # Error`/`MUTATION_REQUIRES_REVIEW` contract every other
+                # "succeeded, but could not be independently
+                # corroborated" outcome already uses.
+                # NestedPathContainmentError from EITHER the chain
+                # verification below OR from inside `_verify_completed_
+                # replay_audit_binding()` itself (a matching-name
+                # escaping/broken/wrong-parent ENTRY discovered during
+                # its own safe audit-entry scan) is caught by this SAME
+                # `try` - a security-relevant path-safety failure at any
+                # point during replay corroboration gets the SAME
+                # treatment, never just the chain-level one.
+                try:
+                    replay_case_root_real = _resolve_case_root_real(module, outer_resolved_case_id)
+                    replay_canonical_verified = _verify_nested(
+                        module, replay_case_root_real, outer_resolved_case_id, canonical_path,
+                    )
+                    replay_reviews_dir_verified = _verify_nested(
+                        module, replay_case_root_real, outer_resolved_case_id, reviews_dir_raw,
+                    )
+                    canonical_path = replay_canonical_verified
+
+                    # See this module's own header comment ("FIVE EXACT
+                    # BINDINGS") - independent corroboration is required
+                    # ONLY on a replay (the writer was NOT re-invoked; a
+                    # fresh execution's own successful writer return is
+                    # already sufficient proof on its own).
+                    #
+                    # The returned value is the FRESHLY COMPUTED, JUST-
+                    # VERIFIED canonical hash and it is what this
+                    # function reports as `canonical_hash` below. It is
+                    # deliberately NOT discarded in favour of the
+                    # journal's own stored `observed_post_hash`: binding
+                    # 3b has just proven the two are equal, so reporting
+                    # the verified one is both equivalent AND the only
+                    # one this request actually checked - a hash the
+                    # lawyer's success page names must never be a value
+                    # nothing here corroborated.
+                    verified_canonical_hash = _verify_completed_replay_audit_binding(
+                        canonical_path, replay_case_root_real, replay_reviews_dir_verified,
+                        journal_state=outcome.state,
+                        journal_id=outcome.journal_id,
+                        idempotency_key=idempotency_key_for_audit,
+                        resource_key=resource_key,
+                        observed_post_hash=outcome.observed_post_hash,
+                        pre_revision=intent.pre_revision,
+                    )
+                except NestedPathContainmentError as error:
+                    raise AuditBindingVerificationFailedError(
+                        journal_id=outcome.journal_id, idempotency_key=idempotency_key_for_audit,
+                        reason=(
+                            "a nested path-containment failure (chain- or entry-level) occurred during "
+                            f"replay corroboration: {error}"
+                        ),
+                    ) from error
                 stdout_text = ""
             else:
                 stdout_text: str = outcome.result  # the stdout writer_callback captured, verbatim
@@ -919,10 +1297,37 @@ def approve_case_scoped_mutation(
                 # by `writer_callback` itself, moments earlier, from the
                 # artefact the real writer had just finished writing -
                 # so it is already a just-verified value from THIS
-                # request, not an inherited journal claim.
+                # request, not an inherited journal claim. `canonical_
+                # path` here is ALREADY the under-lock-verified value
+                # `precondition_callback` reassigned (via `nonlocal`).
                 verified_canonical_hash = outcome.observed_post_hash
 
-            audit_path = find_latest_audit(reviews_dir)
+            # ROW 19C-3a SLICE 2 - the post-mutation `audit_path` lookup
+            # below is DISPLAY-ONLY (it never gates any decision this
+            # function has already made). A containment failure here
+            # must NEVER retroactively turn an ALREADY-SUCCEEDED,
+            # ALREADY-`completed`-journaled mutation into a reported
+            # failure - `CaseScopedApprovalResult.audit_path` is already
+            # typed `Path | None` and already tolerates `None` today (a
+            # pre-existing race could already produce this); a
+            # containment failure here therefore soft-fails to `None`
+            # plus a local log, exactly like any other purely-cosmetic
+            # lookup miss, rather than raising.
+            try:
+                cosmetic_case_root_real = _resolve_case_root_real(module, outer_resolved_case_id)
+                cosmetic_reviews_dir_verified = _verify_nested(
+                    module, cosmetic_case_root_real, outer_resolved_case_id, reviews_dir_raw,
+                )
+                audit_path = _safe_latest_audit(cosmetic_case_root_real, cosmetic_reviews_dir_verified)
+            except NestedPathContainmentError as error:
+                audit_path = None
+                _log_critical_safely(
+                    f"WARNING: post-mutation cosmetic audit_path lookup for resource_key="
+                    f"{resource_key!r} could not be safely verified ({error!r}) - the underlying "
+                    f"mutation itself ALREADY succeeded and is already journaled 'completed' "
+                    f"(journal_id={outcome.journal_id}); only this display-only audit_path lookup "
+                    "is affected. Investigate out of band."
+                )
 
             return CaseScopedApprovalResult(
                 row_key=row_key,

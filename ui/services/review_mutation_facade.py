@@ -222,6 +222,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
 import logging
@@ -234,6 +235,7 @@ if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
 from mutation_guard import MutationIntent, compute_idempotency_key, compute_request_fingerprint  # noqa: E402
+import path_containment as _path_containment  # noqa: E402
 
 from . import authz as _authz
 from . import mutation_coordinator as _mutation_coordinator
@@ -319,6 +321,65 @@ class ReviewAuditBindingVerificationFailedError(ReviewUiError):
         )
 
 
+# ============================================================
+# ROW 19C-3a SLICE 2 - NESTED PATH-CONTAINMENT (case root ->
+# canonical/audit_dir chain), independently implemented in THIS file -
+# never imported by, and never importing from, `mutation_approval_
+# facade.py`/`mutation_approval_adapters.py`/`review_mutation_
+# adapters.py`, each of which carries its OWN copy of the same shape.
+#
+# WHY: `_scan_review_directory()`'s existing per-entry check
+# (`verify_real_path_contained(entry, root=audit_dir)`) is meaningful
+# ONLY once `audit_dir` itself is proven to be genuinely, safely
+# contained within the case directory - before this Slice, `audit_dir`
+# reached that check completely unverified (only `audit_dir.is_dir()`
+# gated it, which follows symlinks/junctions and cannot distinguish a
+# genuine absence from a broken/looping escape). `_resolve_case_root_
+# real()`/`_verify_nested()` below close that gap; `_scan_review_
+# directory()` gains the SECOND, independent "exact expected-parent
+# membership" check the case report's own advisory settled on (closes
+# the in-tree-alias case: an entry that legitimately resolves INSIDE
+# the case root, but under a DIFFERENT logical directory, several
+# levels deep or otherwise).
+#
+# ANCHOR: `binding.cases_dir_anchor_module.CASES_DIR` - the module
+# whose OWN `CASES_DIR` the review backend's own `get_canonical_path`/
+# `get_*_review_audit_dir` getters are actually built from (11 of 12
+# review_kinds: `binding.module` itself; `qa.suggestion`: `qa_approval`
+# - see `review_registry.cases_dir_module_name()`'s own docstring).
+# ============================================================
+
+
+def _resolve_case_root_real(anchor_module, case_id: str) -> Path:
+    cases_dir = anchor_module.CASES_DIR
+    try:
+        return _path_containment.resolve_existing(cases_dir / case_id, root=cases_dir)
+    except _path_containment.PathContainmentError as error:
+        raise ReviewDirectoryScanError(
+            f"Case kök dizini containment doğrulamasından geçemedi: {case_id!r}"
+        ) from error
+
+
+def _verify_nested(anchor_module, case_root_real: Path, case_id: str, raw_path) -> Path:
+    cases_dir = anchor_module.CASES_DIR
+    case_root_raw = cases_dir / case_id
+    raw_path = Path(raw_path)
+    try:
+        relative_parts = raw_path.relative_to(case_root_raw).parts
+    except ValueError as error:
+        raise ReviewDirectoryScanError(
+            f"{raw_path}: beklenen case dizini kapsamı ({case_root_raw}) dışında bir yol."
+        ) from error
+    try:
+        return _path_containment.resolve_for_create(case_root_real, *relative_parts)
+    except _path_containment.PathContainmentError as error:
+        raise ReviewDirectoryScanError(
+            f"{raw_path}: path containment doğrulaması başarısız (case kökü dışına çözümleniyor, "
+            "kırık/döngüsel bir symlink/junction içeriyor, veya mevcut bir dosyanın altına path "
+            "üretilmeye çalışılıyor)."
+        ) from error
+
+
 class ReviewResolvedCaseIdMismatchError(ReviewUiError):
     """Fail-closed backstop: the INNER (under-lock) `authorize_case_
     access()` call returned a DIFFERENT resolved case_id than the OUTER
@@ -351,6 +412,16 @@ class ReviewFamilyBinding:
     domain_error_class: type
     get_audit_dir_fn: object  # callable(case_id) -> Path
     reviewer_ref: str
+    # ROW 19C-3a SLICE 2: the ALREADY-IMPORTED module object whose OWN
+    # `CASES_DIR` attribute anchors this review_kind's path-containment
+    # verification - for 11 of 12 review_kinds this IS `module` itself;
+    # `qa.suggestion` is the one exception (`qa_review.py` has no
+    # `CASES_DIR` of its own - see `review_registry.cases_dir_module_
+    # name()`'s own docstring). Resolved ONCE by `review_registry.
+    # apply_transition()`, passed in whole - this module never re-
+    # derives it from a bare `review_kind` string (same discipline every
+    # other field on this dataclass already follows).
+    cases_dir_anchor_module: object
 
 
 # ============================================================
@@ -402,11 +473,21 @@ def _scan_review_directory(audit_dir: Path) -> _DirectoryScan:
             raise ReviewDirectoryScanError(f"{audit_dir}: yinelenen dizin girişi adı: {name!r}")
         seen_names.add(name)
 
-        if not entry.is_file():
-            raise ReviewDirectoryScanError(
-                f"{audit_dir}: beklenmeyen (dosya olmayan) dizin girişi: {name!r}"
-            )
-
+        # ROW 19C-3a SLICE 2 FINAL NARROW REMEDIATION: only a pure,
+        # filesystem-free NAME classification is allowed to run before
+        # containment is proven. A nonmatching name is rejected right
+        # here (cheap, safe - its content/type was never going to be
+        # read either way). A MATCHING name (`.review_audit.json`/
+        # `.bak`) does NOT yet get any `is_file()`/`stat()`/`open()`
+        # touch - see below, AFTER containment - closing an ordering
+        # bug an independent review found: `entry.is_file()` used to run
+        # on the RAW, unverified entry before containment was checked at
+        # all. On Windows this was doubly silent for a junction-based
+        # escape specifically, since a directory-only NTFS junction
+        # always fails `is_file()` - the OLD code's "not a file" branch
+        # fired first and the containment check below was never even
+        # reached for that entry, even though the FINAL exception class
+        # happened to be the same either way.
         kind = _classify_entry_kind(name)
         if kind == "unexpected":
             raise ReviewDirectoryScanError(f"{audit_dir}: beklenmeyen dizin girişi: {name!r}")
@@ -414,13 +495,40 @@ def _scan_review_directory(audit_dir: Path) -> _DirectoryScan:
         # Containment/symlink-junction check, scoped to `audit_dir`'s
         # OWN resolved form (see this module's own header comment on
         # why - meaningful and enforceable identically in production
-        # and in an isolated test's own tempdir override).
+        # and in an isolated test's own tempdir override). Runs on the
+        # RAW `entry` (this is `verify_real_path_contained()`'s own
+        # sanctioned resolution step, not a separate metadata touch),
+        # strictly BEFORE any `is_file()`/`stat()`/`open()` elsewhere in
+        # this loop.
         try:
             verified_path = _paths.verify_real_path_contained(entry, root=audit_dir)
         except _paths.PathContainmentError as error:
             raise ReviewDirectoryScanError(
                 f"{audit_dir}: girişin containment doğrulaması başarısız: {name!r}"
             ) from error
+
+        # ROW 19C-3a SLICE 2: EXACT expected-parent membership, a
+        # SECOND, independent check beyond plain containment - closes
+        # the in-tree-alias case (an entry that legitimately resolves
+        # INSIDE `audit_dir`'s own real form via `relative_to()`, e.g. a
+        # multi-level descendant through a subdirectory that should
+        # never exist here, but whose own immediate parent is NOT
+        # `audit_dir` itself). This check is meaningful only because
+        # `audit_dir` here is, since this Slice, always the CALLER's
+        # own case-root-verified real form (see `apply_review_
+        # mutation()`'s own path derivation) - never a raw, unverified
+        # join.
+        if verified_path.parent != Path(audit_dir):
+            raise ReviewDirectoryScanError(
+                f"{audit_dir}: giriş beklenen dizinin DIŞINA çözümleniyor (in-tree alias): {name!r}"
+            )
+
+        # ONLY NOW, on the VERIFIED, fully-resolved Path, is a type
+        # check performed - never on the raw, unverified `entry`.
+        if not verified_path.is_file():
+            raise ReviewDirectoryScanError(
+                f"{audit_dir}: beklenmeyen (dosya olmayan) dizin girişi: {name!r}"
+            )
 
         content_hash = sha256_file(verified_path)
         if content_hash is None:
@@ -839,16 +947,44 @@ def apply_review_mutation(
         )
 
         resource_key = _mutation_lock.case_resource_key(outer_resolved_case_id)
-        canonical_path = Path(
-            canonical_path_override
-            if canonical_path_override is not None
-            else binding.module.get_canonical_path(outer_resolved_case_id)
-        )
-        audit_dir = Path(
-            audit_dir_override
-            if audit_dir_override is not None
-            else binding.get_audit_dir_fn(outer_resolved_case_id)
-        )
+
+        # ROW 19C-3a SLICE 2 - PRE-LOCK NESTED PATH-CONTAINMENT
+        # VERIFICATION, non-override branch ONLY: `canonical_path_
+        # override`/`audit_dir_override` are TEST-ONLY (see this
+        # function's own docstring - production, via `review_registry.
+        # apply_transition()`, NEVER passes either) and bypass
+        # verification entirely, exactly as before this Slice. The
+        # non-override derivation now re-derives each RAW path through
+        # the shared `path_containment` primitive, anchored to `binding.
+        # cases_dir_anchor_module.CASES_DIR`, rather than trusting the
+        # raw `/`-joined path the backend's own getter returned. Runs
+        # AFTER outer authz, still entirely before any journal/lock
+        # connection is opened.
+        pre_lock_case_root_real = None
+
+        def _lazy_pre_lock_case_root_real():
+            nonlocal pre_lock_case_root_real
+            if pre_lock_case_root_real is None:
+                pre_lock_case_root_real = _resolve_case_root_real(
+                    binding.cases_dir_anchor_module, outer_resolved_case_id,
+                )
+            return pre_lock_case_root_real
+
+        if canonical_path_override is not None:
+            canonical_path = Path(canonical_path_override)
+        else:
+            canonical_path = _verify_nested(
+                binding.cases_dir_anchor_module, _lazy_pre_lock_case_root_real(), outer_resolved_case_id,
+                binding.module.get_canonical_path(outer_resolved_case_id),
+            )
+
+        if audit_dir_override is not None:
+            audit_dir = Path(audit_dir_override)
+        else:
+            audit_dir = _verify_nested(
+                binding.cases_dir_anchor_module, _lazy_pre_lock_case_root_real(), outer_resolved_case_id,
+                binding.get_audit_dir_fn(outer_resolved_case_id),
+            )
 
         # PRE-LOCK composite snapshot - recorded as this attempt's
         # `pre_hash`, re-verified under the lock. Read AFTER the outer
@@ -891,6 +1027,56 @@ def apply_review_mutation(
                 )
 
         def precondition_callback() -> None:
+            nonlocal canonical_path, audit_dir
+
+            # ROW 19C-3a SLICE 2 - FRESH, INDEPENDENT under-lock nested
+            # path-containment re-verification (non-override branch
+            # only) - re-derived from scratch, never reusing the
+            # pre-lock verified Path objects, so a symlink/junction
+            # swapped WHILE this request waited for the case lock is
+            # caught here (an outright escape raises directly from
+            # `_verify_nested()`; a resolved location that CHANGED but
+            # remains safely contained raises the identity-mismatch
+            # `ReviewPreconditionRaceDetectedError` below - both leave
+            # zero journal rows). From this point on, `canonical_path`/
+            # `audit_dir` are the FRESHEST verified values -
+            # `writer_callback` (below) reads these SAME closure
+            # variables when it builds `writer_kwargs`, so the writer
+            # receives the freshest verified Paths with zero additional
+            # plumbing (unlike Layer A, `apply_review_transition()`
+            # ALREADY accepts and uses whatever `canonical_path=`/
+            # `audit_dir=` it is handed - confirmed by direct reading).
+            if canonical_path_override is None or audit_dir_override is None:
+                under_lock_case_root_real = _resolve_case_root_real(
+                    binding.cases_dir_anchor_module, outer_resolved_case_id,
+                )
+                if canonical_path_override is None:
+                    fresh_canonical_path = _verify_nested(
+                        binding.cases_dir_anchor_module, under_lock_case_root_real, outer_resolved_case_id,
+                        binding.module.get_canonical_path(outer_resolved_case_id),
+                    )
+                    if str(fresh_canonical_path) != str(canonical_path):
+                        raise ReviewPreconditionRaceDetectedError(
+                            "Bu inceleme isteği case kilidini beklerken canonical dosyanın "
+                            "çözümlenmiş (gerçek) konumu DEĞİŞTİ (symlink/junction swap veya "
+                            "benzeri bir durum). İşlem iptal edildi, HİÇBİR değişiklik yapılmadı - "
+                            "lütfen sayfayı yenileyip tekrar deneyin."
+                        )
+                    canonical_path = fresh_canonical_path
+                if audit_dir_override is None:
+                    fresh_audit_dir = _verify_nested(
+                        binding.cases_dir_anchor_module, under_lock_case_root_real, outer_resolved_case_id,
+                        binding.get_audit_dir_fn(outer_resolved_case_id),
+                    )
+                    if str(fresh_audit_dir) != str(audit_dir):
+                        raise ReviewPreconditionRaceDetectedError(
+                            "Bu inceleme isteği case kilidini beklerken audit dizininin "
+                            "çözümlenmiş (gerçek) konumu DEĞİŞTİ (symlink/junction swap veya "
+                            "benzeri bir durum). İşlem iptal edildi, HİÇBİR değişiklik yapılmadı - "
+                            "lütfen sayfayı yenileyip tekrar deneyin."
+                        )
+                    audit_dir = fresh_audit_dir
+
             # Reached ONLY when a genuinely NEW mutation is needed (see
             # `run_mutation()`'s own AUTHORITATIVE ORDER) - so every
             # raise below leaves ZERO journal rows and never invokes
@@ -1004,11 +1190,50 @@ def apply_review_mutation(
             )
 
             if outcome.replayed:
-                # See this module's own header comment ("REPLAY-SAFETY
-                # AUDIT-BINDING CHECK") - independent corroboration is
-                # required ONLY on a replay (the writer was NOT
-                # re-invoked).
-                _post_snapshot, post_scan = _compute_snapshot(canonical_path, audit_dir)
+                # ROW 19C-3a SLICE 2 - FRESH replay-time nested path-
+                # containment re-verification (non-override branch
+                # only). `precondition_callback` is NEVER invoked for a
+                # replayed outcome (`run_mutation()`'s own idempotency
+                # lookup short-circuits before reaching it) - so
+                # `canonical_path`/`audit_dir` here are STILL the
+                # ORIGINAL pre-lock-verified values, never re-verified
+                # since. Any containment failure from here on (chain- OR
+                # entry-level, via `_compute_snapshot()`'s own `_scan_
+                # review_directory()` call) is folded into the SAME
+                # closed `ReviewAuditBindingVerificationFailedError`/
+                # `MUTATION_REQUIRES_REVIEW` contract every other
+                # "succeeded but could not be independently
+                # corroborated" outcome already uses - never a plain,
+                # misleading failure for an already-`completed` mutation.
+                try:
+                    if canonical_path_override is None or audit_dir_override is None:
+                        replay_case_root_real = _resolve_case_root_real(
+                            binding.cases_dir_anchor_module, outer_resolved_case_id,
+                        )
+                        if canonical_path_override is None:
+                            canonical_path = _verify_nested(
+                                binding.cases_dir_anchor_module, replay_case_root_real, outer_resolved_case_id,
+                                binding.module.get_canonical_path(outer_resolved_case_id),
+                            )
+                        if audit_dir_override is None:
+                            audit_dir = _verify_nested(
+                                binding.cases_dir_anchor_module, replay_case_root_real, outer_resolved_case_id,
+                                binding.get_audit_dir_fn(outer_resolved_case_id),
+                            )
+
+                    # See this module's own header comment ("REPLAY-
+                    # SAFETY AUDIT-BINDING CHECK") - independent
+                    # corroboration is required ONLY on a replay (the
+                    # writer was NOT re-invoked).
+                    _post_snapshot, post_scan = _compute_snapshot(canonical_path, audit_dir)
+                except ReviewDirectoryScanError as error:
+                    raise ReviewAuditBindingVerificationFailedError(
+                        journal_id=outcome.journal_id, idempotency_key=idempotency_key_for_audit,
+                        reason=(
+                            "a nested path-containment failure (chain- or entry-level) occurred "
+                            f"during replay corroboration: {error}"
+                        ),
+                    ) from error
                 matches = _record_bound_match_with_name(
                     post_scan, case_id=outer_resolved_case_id,
                     record_type=binding.record_type, record_id=record_id,

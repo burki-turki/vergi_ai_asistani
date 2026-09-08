@@ -1049,6 +1049,13 @@ try:
 
     fake_family = _types.ModuleType("_fake_family_for_adapter_bindings")
     fake_family.get_canonical_path = lambda case_id: canonical_file
+    # ROW 19C-3a SLICE 2: `CASES_DIR` is now load-bearing - the adapter's
+    # `_resolve_case_root_real()` reads it dynamically to anchor case-
+    # root containment verification. Bound to `_adapter_tmp` itself (the
+    # real, existing tempdir `canonical_dir = _adapter_tmp / CASE_ID`
+    # already lives under), so the verified case root genuinely matches
+    # what `get_canonical_path()` above actually computes.
+    fake_family.CASES_DIR = _adapter_tmp
     real_adapter = _adapters.CaseScopedApprovalReconciliationAdapter(fake_family)
 
     def adapter_entry(**overrides):
@@ -1154,6 +1161,150 @@ try:
         and absent_evidence.post_state_verified is False,
         f"got {absent_evidence!r}",
     )
+
+    # ============================================================
+    # ROW 19C-3a SLICE 2 - Layer A adapter nested path-containment,
+    # independently implemented in `mutation_approval_adapters.py`
+    # (never imported from the facade's own copy). Real NTFS junctions
+    # (`mklink /J`, no elevation/Developer Mode needed) on
+    # `sys.platform == "win32"`; explicitly, visibly skipped elsewhere.
+    # ============================================================
+    write_canonical('{"canonical": "restored for path-containment tests"}')
+    write_audit(GOOD_AUDIT)
+
+    if sys.platform != "win32":
+        print(
+            "SKIPPED (NOT counted as pass/fail) - ROW 19C-3a SLICE 2 Layer A adapter junction "
+            f"scenarios need a real NTFS junction (sys.platform={sys.platform!r} here)."
+        )
+    else:
+        import subprocess as _subprocess_a19c3a
+        import os as _os_a19c3a
+
+        def _a19c3a_make_junction(link_path, target_path):
+            result = _subprocess_a19c3a.run(
+                ["cmd", "/c", "mklink", "/J", str(link_path), str(target_path)],
+                capture_output=True, text=True, timeout=15,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"mklink /J failed (rc={result.returncode}): {result.stdout!r} {result.stderr!r}")
+
+        _a19c3a_outside = _Path(_tempfile.mkdtemp(prefix="vergi_recon_adapter_a19c3a_outside_"))
+        try:
+            # (i) The FAMILY DIRECTORY ITSELF (canonical_dir, i.e. the
+            # case root's own direct child) is a live junction pointing
+            # OUTSIDE `CASES_DIR` (`_adapter_tmp`). The genuinely
+            # LEGITIMATE audit/canonical fixture still sits inside the
+            # escape target - proving the escaping content is NEVER
+            # treated as proof of anything, dual-false, never raised.
+            _shutil.rmtree(canonical_dir)
+            _outside_family = _a19c3a_outside / "family_escape"
+            _outside_family.mkdir()
+            (_outside_family / "canonical.json").write_text('{"canonical": "promoted"}', encoding="utf-8")
+            _a19c3a_make_junction(canonical_dir, _outside_family)
+            escape_evidence = real_adapter.gather_evidence(adapter_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer A adapter: family directory itself is a LIVE escaping "
+                "junction -> INCONCLUSIVE evidence (never post_state_verified, never pre_state_"
+                "confirmed_unchanged=True - a bare .exists()==False on the escaped path would have "
+                "wrongly concluded the latter)",
+                escape_evidence.post_state_verified is False
+                and escape_evidence.pre_state_confirmed_unchanged is False,
+                f"got {escape_evidence!r}",
+            )
+            _os_a19c3a.rmdir(canonical_dir)  # removes the junction LINK only
+            _shutil.rmtree(_outside_family, ignore_errors=True)
+
+            # (ii) BROKEN junction at the family-directory level (target
+            # deleted, reparse-point entry itself still on disk).
+            _outside_ghost_family = _a19c3a_outside / "family_ghost"
+            _outside_ghost_family.mkdir()
+            _a19c3a_make_junction(canonical_dir, _outside_ghost_family)
+            _shutil.rmtree(_outside_ghost_family, ignore_errors=True)
+            check(
+                "Row 19C-3a Slice 2 precondition: broken family-dir junction has "
+                "os.path.lexists()==True, Path.exists()==False",
+                _os_a19c3a.path.lexists(canonical_dir) is True and canonical_dir.exists() is False,
+            )
+            broken_family_evidence = real_adapter.gather_evidence(adapter_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer A adapter: BROKEN family-directory junction -> "
+                "INCONCLUSIVE evidence, never silently treated as 'pre-state unchanged'",
+                broken_family_evidence.post_state_verified is False
+                and broken_family_evidence.pre_state_confirmed_unchanged is False,
+                f"got {broken_family_evidence!r}",
+            )
+            _os_a19c3a.rmdir(canonical_dir)
+
+            # Restore the real fixture for the remaining scenarios.
+            canonical_dir.mkdir(parents=True)
+            reviews_dir.mkdir()
+            write_canonical('{"canonical": "promoted"}')
+            write_audit(GOOD_AUDIT)
+
+            # (iii) reviews_dir ITSELF is a live escaping junction - the
+            # canonical file remains genuinely safe, so this proves the
+            # SECOND (reviews-dir) verification point independently of
+            # the first (canonical/family) one.
+            _shutil.rmtree(reviews_dir)
+            _outside_reviews = _a19c3a_outside / "reviews_escape"
+            _outside_reviews.mkdir()
+            (_outside_reviews / "spy.approval.json").write_text(
+                _json.dumps({**GOOD_AUDIT, "planted": "outside - must never be trusted"}), encoding="utf-8",
+            )
+            _a19c3a_make_junction(reviews_dir, _outside_reviews)
+            reviews_escape_evidence = real_adapter.gather_evidence(adapter_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer A adapter: reviews_dir itself is a LIVE escaping "
+                "junction -> INCONCLUSIVE evidence, even though canonical itself is genuinely safe "
+                "and the escape target contains a PERFECTLY-BOUND forged audit record",
+                reviews_escape_evidence.post_state_verified is False
+                and reviews_escape_evidence.pre_state_confirmed_unchanged is False,
+                f"got {reviews_escape_evidence!r}",
+            )
+            _os_a19c3a.rmdir(reviews_dir)
+            _shutil.rmtree(_outside_reviews, ignore_errors=True)
+
+            # Restore reviews_dir + a real, safe audit record.
+            reviews_dir.mkdir()
+            write_audit(GOOD_AUDIT)
+
+            # (iv) A matching-NAME escaping ENTRY inside an otherwise-
+            # safe reviews_dir (directory named `*.approval.json`,
+            # itself a junction escaping the case root) sits ALONGSIDE
+            # the real, legitimate, perfectly-bound audit record -
+            # proving the whole scan is treated as unsafe (dual-false),
+            # never merely ignoring the one bad entry while trusting the
+            # good one.
+            _outside_entry = _a19c3a_outside / "entry_escape"
+            _outside_entry.mkdir()
+            _escaping_entry = reviews_dir / "escaping_entry.approval.json"
+            _a19c3a_make_junction(_escaping_entry, _outside_entry)
+            entry_escape_evidence = real_adapter.gather_evidence(adapter_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer A adapter: a matching-NAME escaping ENTRY inside an "
+                "otherwise-safe reviews_dir -> INCONCLUSIVE evidence, even with a real, perfectly-"
+                "bound legitimate audit record sitting right next to it",
+                entry_escape_evidence.post_state_verified is False
+                and entry_escape_evidence.pre_state_confirmed_unchanged is False,
+                f"got {entry_escape_evidence!r}",
+            )
+            _os_a19c3a.rmdir(_escaping_entry)
+            _shutil.rmtree(_outside_entry, ignore_errors=True)
+
+            # Sanity: with the escaping entry removed, the SAME real
+            # audit record verifies cleanly again - proving the prior
+            # failure was caused SOLELY by the escaping entry.
+            clean_again_evidence = real_adapter.gather_evidence(adapter_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer A adapter: removing the escaping entry restores clean "
+                "post_state_verified=True evidence - isolating the escaping entry as the sole cause",
+                clean_again_evidence.post_state_verified is True
+                and clean_again_evidence.observed_post_hash == CANONICAL_HASH,
+                f"got {clean_again_evidence!r}",
+            )
+        finally:
+            _shutil.rmtree(_a19c3a_outside, ignore_errors=True)
 finally:
     _shutil.rmtree(_adapter_tmp, ignore_errors=True)
 
@@ -1201,6 +1352,16 @@ try:
     # module's own Layer A fixture above uses.
     real_review_adapter._module.get_canonical_path = lambda cid: review_canonical_file
     real_review_adapter._get_audit_dir_fn = lambda cid: review_audit_dir
+    # ROW 19C-3a SLICE 2: `CASES_DIR` is now load-bearing -
+    # `_resolve_case_root_real()` reads `self._cases_dir_anchor_module.
+    # CASES_DIR` dynamically. For `evidence.candidate` (no registry
+    # override), `_cases_dir_anchor_module IS _module` (the SAME real
+    # `evidence_review` module object, `importlib.import_module()`'s own
+    # `sys.modules` caching guarantee) - so mutating `_module.CASES_DIR`
+    # here already redirects both. Saved/restored so the REAL, shared
+    # `evidence_review` module is left exactly as this test found it.
+    _original_evidence_review_cases_dir = real_review_adapter._module.CASES_DIR
+    real_review_adapter._module.CASES_DIR = _review_adapter_tmp
 
     NOTE_TEXT = "Row 19C-2b reconciliation adapter self-test note."
     REVIEW_NOTE_HASH = _hashlib.sha256(NOTE_TEXT.encode("utf-8")).hexdigest()
@@ -1331,6 +1492,348 @@ try:
         f"got {corrupt_evidence!r}",
     )
 
+    # ============================================================
+    # ROW 19C-3a SLICE 2 - Layer B adapter nested path-containment,
+    # independently implemented in `review_mutation_adapters.py` (never
+    # imported from the facade's own copy). Real NTFS junctions
+    # (`mklink /J`, no elevation/Developer Mode needed) on
+    # `sys.platform == "win32"`; explicitly, visibly skipped elsewhere.
+    # ============================================================
+    write_review_canonical("needs_review")
+    clear_review_audit_dir()
+    write_review_audit(good_audit)
+
+    if sys.platform != "win32":
+        print(
+            "SKIPPED (NOT counted as pass/fail) - ROW 19C-3a SLICE 2 Layer B adapter junction "
+            f"scenarios need a real NTFS junction (sys.platform={sys.platform!r} here)."
+        )
+    else:
+        import subprocess as _subprocess_b19c3a
+        import os as _os_b19c3a
+
+        def _b19c3a_make_junction(link_path, target_path):
+            result = _subprocess_b19c3a.run(
+                ["cmd", "/c", "mklink", "/J", str(link_path), str(target_path)],
+                capture_output=True, text=True, timeout=15,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"mklink /J failed (rc={result.returncode}): {result.stdout!r} {result.stderr!r}")
+
+        _outside_b19c3a = _Path(_tempfile.mkdtemp(prefix="vergi_recon_review_adapter_b19c3a_outside_"))
+        try:
+            # (i) family DIRECTORY ITSELF (review_case_dir) is a live
+            # junction pointing OUTSIDE `CASES_DIR` (`_review_adapter_
+            # tmp`) - the genuinely legitimate audit/canonical fixture
+            # still sits inside the escape target.
+            _shutil.rmtree(review_case_dir)
+            _outside_family_b = _outside_b19c3a / "family_escape"
+            _outside_family_b.mkdir()
+            (_outside_family_b / "evidence.json").write_text(
+                _json.dumps({"evidence_candidates": [{"candidate_id": REVIEW_RECORD_ID, "review_state": "needs_review"}]}),
+                encoding="utf-8",
+            )
+            _b19c3a_make_junction(review_case_dir, _outside_family_b)
+            family_escape_evidence = real_review_adapter.gather_evidence(review_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer B adapter: case directory itself is a LIVE escaping "
+                "junction -> INCONCLUSIVE evidence (never post_state_verified, never pre_state_"
+                "confirmed_unchanged=True)",
+                family_escape_evidence.post_state_verified is False
+                and family_escape_evidence.pre_state_confirmed_unchanged is False,
+                f"got {family_escape_evidence!r}",
+            )
+            _os_b19c3a.rmdir(review_case_dir)
+            _shutil.rmtree(_outside_family_b, ignore_errors=True)
+
+            # Restore the real fixture.
+            review_case_dir.mkdir(parents=True)
+            write_review_canonical("needs_review")
+
+            # (ii) audit_dir ITSELF (`reviews/evidence_reviews`) is a
+            # live escaping junction - canonical remains genuinely safe.
+            _outside_audit_b = _outside_b19c3a / "audit_escape"
+            _outside_audit_b.mkdir()
+            (_outside_audit_b / "spy.review_audit.json").write_text(
+                _json.dumps({**good_audit, "planted": "must never be trusted"}), encoding="utf-8",
+            )
+            review_audit_dir.parent.mkdir(parents=True, exist_ok=True)
+            _b19c3a_make_junction(review_audit_dir, _outside_audit_b)
+            audit_escape_evidence = real_review_adapter.gather_evidence(review_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer B adapter: audit_dir itself is a LIVE escaping junction "
+                "-> INCONCLUSIVE evidence, even with a PERFECTLY-BOUND forged audit sitting in the "
+                "escape target",
+                audit_escape_evidence.post_state_verified is False
+                and audit_escape_evidence.pre_state_confirmed_unchanged is False,
+                f"got {audit_escape_evidence!r}",
+            )
+            _os_b19c3a.rmdir(review_audit_dir)
+            _shutil.rmtree(_outside_audit_b, ignore_errors=True)
+
+            # (iii) BROKEN junction at the audit-dir level.
+            _outside_ghost_b = _outside_b19c3a / "audit_ghost"
+            _outside_ghost_b.mkdir()
+            _b19c3a_make_junction(review_audit_dir, _outside_ghost_b)
+            _shutil.rmtree(_outside_ghost_b, ignore_errors=True)
+            check(
+                "Row 19C-3a Slice 2 precondition: broken audit-dir junction has "
+                "os.path.lexists()==True, Path.exists()==False",
+                _os_b19c3a.path.lexists(review_audit_dir) is True and review_audit_dir.exists() is False,
+            )
+            broken_audit_evidence = real_review_adapter.gather_evidence(review_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer B adapter: BROKEN audit-dir junction -> INCONCLUSIVE "
+                "evidence, never silently treated as 'no prior audits'",
+                broken_audit_evidence.post_state_verified is False
+                and broken_audit_evidence.pre_state_confirmed_unchanged is False,
+                f"got {broken_audit_evidence!r}",
+            )
+            _os_b19c3a.rmdir(review_audit_dir)
+
+            # (iv) matching-NAME escaping ENTRY inside an otherwise-safe
+            # audit_dir.
+            review_audit_dir.mkdir(parents=True, exist_ok=True)
+            write_review_audit(good_audit)
+            _outside_entry_b = _outside_b19c3a / "entry_escape"
+            _outside_entry_b.mkdir()
+            escaping_entry_b = review_audit_dir / "escaping.review_audit.json"
+            _b19c3a_make_junction(escaping_entry_b, _outside_entry_b)
+            entry_escape_evidence = real_review_adapter.gather_evidence(review_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer B adapter: a matching-NAME escaping ENTRY inside an "
+                "otherwise-safe audit_dir -> INCONCLUSIVE evidence, even with a real, perfectly-"
+                "bound legitimate audit sitting right next to it",
+                entry_escape_evidence.post_state_verified is False
+                and entry_escape_evidence.pre_state_confirmed_unchanged is False,
+                f"got {entry_escape_evidence!r}",
+            )
+            _os_b19c3a.rmdir(escaping_entry_b)
+            _shutil.rmtree(_outside_entry_b, ignore_errors=True)
+
+            # (v) IN-TREE WRONG-PARENT ALIAS: a matching-name entry
+            # resolving to a multi-level descendant of audit_dir.
+            nested_target_b = review_audit_dir / "subdir" / "nested"
+            nested_target_b.mkdir(parents=True, exist_ok=True)
+            alias_entry_b = review_audit_dir / "alias.review_audit.json"
+            _b19c3a_make_junction(alias_entry_b, nested_target_b)
+            alias_evidence = real_review_adapter.gather_evidence(review_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer B adapter: an in-tree entry resolving to a multi-level "
+                "descendant (wrong immediate parent) of audit_dir -> INCONCLUSIVE evidence - plain "
+                "containment alone would have passed this",
+                alias_evidence.post_state_verified is False and alias_evidence.pre_state_confirmed_unchanged is False,
+                f"got {alias_evidence!r}",
+            )
+            _os_b19c3a.rmdir(alias_entry_b)
+            _shutil.rmtree(review_audit_dir / "subdir", ignore_errors=True)
+
+            # (vi) ROW 19C-3a SLICE 2 FINAL NARROW REMEDIATION -
+            # CONTAINMENT-BEFORE-STAT ORDERING PROOF for the Layer B
+            # ADAPTER's OWN, independently-written `_scan_audit_
+            # directory()` (never the facade's copy, never imported from
+            # it). Proven by instrumentation (recording every `self`
+            # passed to `Path.is_file()`), not by source/AST inspection -
+            # an escaping, matching-name (`*.review_audit.json`) junction
+            # entry must be rejected WITHOUT `Path.is_file()` ever being
+            # invoked on it or any other entry, since containment must
+            # run strictly before any stat-like touch on a matching entry.
+            ordering_dir_b = _outside_b19c3a / "ordering_audit"
+            ordering_dir_b.mkdir()
+            ordering_outside_b = _outside_b19c3a / "ordering_outside"
+            ordering_outside_b.mkdir()
+            ordering_entry_b = ordering_dir_b / "escaping.review_audit.json"
+            _b19c3a_make_junction(ordering_entry_b, ordering_outside_b)
+
+            is_file_calls_b = []
+            _original_is_file_b = _Path.is_file
+
+            def _recording_is_file_b(self):
+                is_file_calls_b.append(str(self))
+                return _original_is_file_b(self)
+
+            try:
+                _Path.is_file = _recording_is_file_b
+                ordering_scan_b = None
+                ordering_error_b = None
+                try:
+                    ordering_scan_b = _review_adapters._scan_audit_directory(ordering_dir_b)
+                except Exception as error:
+                    ordering_error_b = error
+            finally:
+                _Path.is_file = _original_is_file_b
+                _os_b19c3a.rmdir(ordering_entry_b)
+                _shutil.rmtree(ordering_dir_b, ignore_errors=True)
+                _shutil.rmtree(ordering_outside_b, ignore_errors=True)
+
+            check(
+                "Row 19C-3a Slice 2 FINAL NARROW REMEDIATION, Layer B adapter: "
+                "_scan_audit_directory() still raises ReviewReconciliationScanError for the "
+                "escaping matching-name entry",
+                isinstance(ordering_error_b, _review_adapters.ReviewReconciliationScanError),
+                f"got scan={ordering_scan_b!r} error={ordering_error_b!r}",
+            )
+            check(
+                "Row 19C-3a Slice 2 FINAL NARROW REMEDIATION ORDERING PROOF, Layer B adapter: "
+                "Path.is_file() was NEVER called during this scan attempt - containment "
+                "verification ran strictly before any is_file()/stat() touch on the matching "
+                "entry (proven by instrumentation, not source inspection, independent of the "
+                "facade's own equivalent 14h proof)",
+                is_file_calls_b == [],
+                f"is_file was called on: {is_file_calls_b!r}",
+            )
+
+            # ==========================================================
+            # (vii) ROW 19C-3a SLICE 2 BACKUP-KIND CONTAINMENT
+            # REMEDIATION - the SEPARATE "backup" branch of
+            # `_scan_audit_directory()`, which an independent review
+            # found still called raw `entry.is_file()` BEFORE any
+            # containment check (unlike the "audit" branch (vi) above
+            # already fixed). Proven at BOTH the internal scanner level
+            # AND the PUBLIC `gather_evidence()` contract.
+            # ==========================================================
+
+            # --- (vii-a) ESCAPING backup-kind entry: containment-before-
+            #      stat ordering proof + scanner-level outcome, via a
+            #      DIRECT `_scan_audit_directory()` call (mirrors (vi)'s
+            #      own technique exactly, applied to a "*.bak" name). ---
+            backup_escape_scan_dir = _outside_b19c3a / "backup_escape_scan"
+            backup_escape_scan_dir.mkdir()
+            backup_escape_scan_outside = _outside_b19c3a / "backup_escape_scan_outside"
+            backup_escape_scan_outside.mkdir()
+            backup_escape_entry = backup_escape_scan_dir / "evidence.json.before_review_20260101_000001.bak"
+            _b19c3a_make_junction(backup_escape_entry, backup_escape_scan_outside)
+
+            is_file_calls_backup = []
+            _original_is_file_backup = _Path.is_file
+
+            def _recording_is_file_backup(self):
+                is_file_calls_backup.append(str(self))
+                return _original_is_file_backup(self)
+
+            try:
+                _Path.is_file = _recording_is_file_backup
+                backup_scan_result = None
+                backup_scan_error = None
+                try:
+                    backup_scan_result = _review_adapters._scan_audit_directory(backup_escape_scan_dir)
+                except Exception as error:
+                    backup_scan_error = error
+            finally:
+                _Path.is_file = _original_is_file_backup
+                _os_b19c3a.rmdir(backup_escape_entry)
+                _shutil.rmtree(backup_escape_scan_dir, ignore_errors=True)
+                _shutil.rmtree(backup_escape_scan_outside, ignore_errors=True)
+
+            check(
+                "Row 19C-3a Slice 2 BACKUP-KIND CONTAINMENT REMEDIATION, Layer B adapter: "
+                "_scan_audit_directory() raises ReviewReconciliationScanError for an ESCAPING "
+                "backup-kind (*.bak) junction entry",
+                isinstance(backup_scan_error, _review_adapters.ReviewReconciliationScanError),
+                f"got scan={backup_scan_result!r} error={backup_scan_error!r}",
+            )
+            check(
+                "Row 19C-3a Slice 2 BACKUP-KIND ORDERING PROOF, Layer B adapter: Path.is_file() "
+                "was NEVER called on the escaping backup entry before containment rejected it - "
+                "this is the SAME containment-before-stat guarantee (vi) proved for 'audit'-kind "
+                "entries, now independently proven for the SEPARATE 'backup' branch too (on the "
+                "OLD implementation this check fails - the old backup branch calls raw "
+                "entry.is_file() first, which is exactly the blocker this remediation closes)",
+                is_file_calls_backup == [],
+                f"is_file was called on: {is_file_calls_backup!r}",
+            )
+
+            # --- (vii-b) the SAME escaping backup-kind entry, but now
+            #      reached through the PUBLIC `gather_evidence()` entry
+            #      point over the real fixture's own audit_dir - WITH the
+            #      real, perfectly-bound legitimate `good_audit` record
+            #      (already sitting in `review_audit_dir` since (iv)
+            #      above) left completely undisturbed, exactly matching
+            #      (iv)'s own "escaping entry right next to a real audit"
+            #      pattern. This proves the fix holds at the contract
+            #      boundary a reconciliation operator actually calls, not
+            #      only at the internal scanner level - and does NOT wipe
+            #      the fixture state the later "Sanity" check below
+            #      depends on. ---
+            backup_escape_ge_outside = _outside_b19c3a / "backup_escape_ge_outside"
+            backup_escape_ge_outside.mkdir()
+            backup_escape_ge_entry = review_audit_dir / "evidence.json.before_review_20260101_000002.bak"
+            _b19c3a_make_junction(backup_escape_ge_entry, backup_escape_ge_outside)
+            try:
+                backup_ge_evidence = real_review_adapter.gather_evidence(review_entry())
+                check(
+                    "Row 19C-3a Slice 2 BACKUP-KIND CONTAINMENT REMEDIATION, Layer B adapter: "
+                    "PUBLIC gather_evidence() also returns dual-false INCONCLUSIVE evidence when "
+                    "audit_dir contains an escaping backup-kind entry, even with a real, "
+                    "perfectly-bound legitimate audit sitting right next to it (never "
+                    "post_state_verified, never pre_state_confirmed_unchanged=True)",
+                    backup_ge_evidence.post_state_verified is False
+                    and backup_ge_evidence.pre_state_confirmed_unchanged is False,
+                    f"got {backup_ge_evidence!r}",
+                )
+            finally:
+                _os_b19c3a.rmdir(backup_escape_ge_entry)
+                _shutil.rmtree(backup_escape_ge_outside, ignore_errors=True)
+
+            # --- (vii-c) a SAFE, contained, REGULAR-FILE backup entry
+            #      with deliberately INVALID JSON content is silently
+            #      ignored - its content is NEVER read/parsed. ---
+            backup_safe_scan_dir = _outside_b19c3a / "backup_safe_scan"
+            backup_safe_scan_dir.mkdir()
+            backup_safe_file = backup_safe_scan_dir / "evidence.json.before_review_20260101_000003.bak"
+            backup_safe_file.write_text("{not valid json - must NEVER be parsed}", encoding="utf-8")
+            backup_safe_scan_result = _review_adapters._scan_audit_directory(backup_safe_scan_dir)
+            check(
+                "Row 19C-3a Slice 2 BACKUP-KIND CONTAINMENT REMEDIATION, Layer B adapter: a "
+                "safe, contained, REGULAR-FILE backup entry with deliberately invalid JSON "
+                "content is silently ignored - a backup entry NEVER contributes to "
+                "corrupt_audit_count or audit_records, contained or not",
+                backup_safe_scan_result.corrupt_audit_count == 0 and backup_safe_scan_result.audit_records == (),
+                f"got {backup_safe_scan_result!r}",
+            )
+            _shutil.rmtree(backup_safe_scan_dir, ignore_errors=True)
+
+            # --- (vii-d) a SAFE (contained, correctly-parented) but
+            #      NON-regular-file backup entry (a real subdirectory
+            #      literally named "*.bak") still aborts the whole scan -
+            #      preserving the ORIGINAL pre-remediation outcome for
+            #      this specific case, now reached via the VERIFIED path
+            #      instead of the raw entry. ---
+            backup_dir_scan_dir = _outside_b19c3a / "backup_dir_scan"
+            backup_dir_scan_dir.mkdir()
+            backup_as_directory = backup_dir_scan_dir / "evidence.json.before_review_20260101_000004.bak"
+            backup_as_directory.mkdir()
+            backup_dir_error = None
+            try:
+                _review_adapters._scan_audit_directory(backup_dir_scan_dir)
+            except Exception as error:
+                backup_dir_error = error
+            check(
+                "Row 19C-3a Slice 2 BACKUP-KIND CONTAINMENT REMEDIATION, Layer B adapter: a "
+                "safe (contained) but NON-regular-file backup entry (a real subdirectory "
+                "literally named '*.bak') still aborts the whole scan with "
+                "ReviewReconciliationScanError, preserving the ORIGINAL pre-remediation outcome",
+                isinstance(backup_dir_error, _review_adapters.ReviewReconciliationScanError),
+                f"got {backup_dir_error!r}",
+            )
+            _shutil.rmtree(backup_dir_scan_dir, ignore_errors=True)
+
+            # Sanity: with everything restored to a clean, safe state,
+            # evidence gathering works again - isolating the escapes
+            # above as the sole cause of each prior INCONCLUSIVE result.
+            clean_again_b = real_review_adapter.gather_evidence(review_entry())
+            check(
+                "Row 19C-3a Slice 2, Layer B adapter: removing every escape restores clean "
+                "pre_state_confirmed_unchanged evidence (canonical is still needs_review, one clean "
+                "audit remains) - isolating the escapes as the sole cause",
+                clean_again_b.post_state_verified is False and clean_again_b.pre_state_confirmed_unchanged is False,
+                f"got {clean_again_b!r} (note: one clean audit record for THIS record_id already "
+                "exists, so a fresh needs_review evidence read is itself inconclusive by cardinality "
+                "- not a new failure)",
+            )
+        finally:
+            _shutil.rmtree(_outside_b19c3a, ignore_errors=True)
+
     # ---- reconcile_and_apply_journal_entry() end to end, through the
     #      real FakeReconcileConn machinery already proven above, using
     #      the REAL Layer B adapter and a REAL clean post-state fixture. ----
@@ -1370,6 +1873,7 @@ try:
         review_e2e_conn.table[0]["state"] == "completed",
     )
 finally:
+    real_review_adapter._module.CASES_DIR = _original_evidence_review_cases_dir
     _shutil.rmtree(_review_adapter_tmp, ignore_errors=True)
 
 

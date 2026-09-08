@@ -455,10 +455,18 @@ def isolated_case_fixture(behavior="ok"):
         fake_case_dir.mkdir(parents=True)
         (fake_case_dir / "case.json").write_text('{"case_id": "%s"}' % fake_case_id, encoding="utf-8")
 
-        pending_path = tmp_path / "pending.json"
+        # ROW 19C-3a SLICE 2: the facade's pre-lock/under-lock nested
+        # path-containment verification reads `module.CASES_DIR` and
+        # re-derives `CASES_DIR/case_id/...` from each raw path it is
+        # given - pending/canonical/reviews therefore live inside
+        # `fake_case_dir` (which already has the right `CASES_DIR/
+        # case_id` shape for the authz fixture above), never directly
+        # under `tmp_path`; `fake_module` below sets `CASES_DIR =
+        # tmp_path / "cases"` accordingly.
+        pending_path = fake_case_dir / "pending.json"
         pending_path.write_text('{"synthetic": true}', encoding="utf-8")
-        canonical_path = tmp_path / "canonical.json"
-        reviews_dir = tmp_path / "reviews"
+        canonical_path = fake_case_dir / "canonical.json"
+        reviews_dir = fake_case_dir / "reviews"
         reviews_dir.mkdir()
 
         calls = {"run_approve": 0, "inspect_pending": 0}
@@ -514,6 +522,7 @@ def isolated_case_fixture(behavior="ok"):
             get_canonical_path=_get_canonical_path,
             inspect_pending=_inspect_pending,
             run_approve=_run_approve,
+            CASES_DIR=tmp_path / "cases",
         )
         module_name = f"_izole_route_test_module_{behavior}"
         row_key = f"_izole_route_test_{behavior}"

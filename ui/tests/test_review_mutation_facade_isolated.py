@@ -30,6 +30,7 @@
 
 import hashlib
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -56,6 +57,7 @@ import evidence_review                                                  # noqa: 
 import argument_review                                                  # noqa: E402
 import qa_review                                                        # noqa: E402
 import qa_engine                                                        # noqa: E402
+import qa_approval                                                      # noqa: E402
 
 passed = 0
 failed = 0
@@ -264,6 +266,11 @@ def evidence_binding():
         domain_error_class=evidence_review.EvidenceReviewError,
         get_audit_dir_fn=evidence_review.get_evidence_review_audit_dir,
         reviewer_ref="local_lawyer_ui",
+        # ROW 19C-3a SLICE 2: `evidence_review.py` has its own `CASES_DIR`
+        # (verified by direct reading) - matches `module=` exactly, same
+        # as 10 of the 12 real registry entries (see `review_registry.
+        # cases_dir_module_name()`'s own docstring).
+        cases_dir_anchor_module=evidence_review,
     )
 
 
@@ -277,6 +284,7 @@ def argument_counterargument_binding():
         domain_error_class=argument_review.ArgumentReviewError,
         get_audit_dir_fn=argument_review.get_argument_review_audit_dir,
         reviewer_ref="local_lawyer_ui",
+        cases_dir_anchor_module=argument_review,
     )
 
 
@@ -300,6 +308,11 @@ def qa_binding():
         domain_error_class=qa_review.QaReviewError,
         get_audit_dir_fn=qa_review.get_qa_review_audit_dir,
         reviewer_ref="local_lawyer_ui",
+        # ROW 19C-3a SLICE 2: `qa_review.py` has NO `CASES_DIR` of its
+        # own (verified by direct reading) - `qa_approval` is the
+        # correct anchor, matching `review_registry.REVIEW_KIND_
+        # REGISTRY["qa.suggestion"]["cases_dir_module"]` exactly.
+        cases_dir_anchor_module=qa_approval,
     )
 
 
@@ -763,6 +776,399 @@ try:
         "note_hash_for(): sha256 of the exact UTF-8 text given, nothing else",
         facade.note_hash_for("örnek not") == hashlib.sha256("örnek not".encode("utf-8")).hexdigest(),
     )
+
+    # ==================================================================
+    # ROW 19C-3a SLICE 2 - NON-OVERRIDE nested path-containment scenario
+    # matrix. Every test above uses `canonical_path_override`/`audit_
+    # dir_override` (test-only, bypasses ALL new verification), so NONE
+    # of them exercise the new code path at all - this section is the
+    # first to do so, using a SYNTHETIC fake review-family module (its
+    # own `CASES_DIR` monkeypatched to an isolated tempdir - never a
+    # real backend module, never real case_0001 data) exactly as this
+    # Slice's own scope report specified. Real NTFS junctions
+    # (`mklink /J`, no elevation/Developer Mode needed) on
+    # `sys.platform == "win32"`; explicitly, visibly skipped elsewhere.
+    # ==================================================================
+
+    check(
+        "Row 19C-3a Slice 2: qa.suggestion's cases_dir_anchor_module is qa_approval specifically "
+        "(the ONE registry exception), not qa_review itself",
+        qa_binding().cases_dir_anchor_module is qa_approval,
+    )
+
+    if sys.platform != "win32":
+        print(
+            "SKIPPED (NOT counted as pass/fail) - ROW 19C-3a SLICE 2 non-override junction "
+            f"scenarios need a real NTFS junction (sys.platform={sys.platform!r} here)."
+        )
+    else:
+        import subprocess as _subprocess_a19c3a
+        import os as _os_a19c3a
+        import types as _types_a19c3a
+
+        def _a19c3a_make_junction(link_path, target_path):
+            result = _subprocess_a19c3a.run(
+                ["cmd", "/c", "mklink", "/J", str(link_path), str(target_path)],
+                capture_output=True, text=True, timeout=15,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"mklink /J failed (rc={result.returncode}): {result.stdout!r} {result.stderr!r}")
+
+        # ROW 19C-3a SLICE 2 CORRECTION: `authz.authorize_case_access()`
+        # ALWAYS resolves `case_id` against the REAL `ui.services.paths.
+        # CASES_DIR` (`data/cases/`) - completely independent of
+        # whatever `CASES_DIR` the review-family backend module itself
+        # uses (this is exactly why every REAL backend module's own
+        # `CASES_DIR` happens to equal the SAME real `data/cases/` too -
+        # see `ui.services.paths.py`'s own header comment). The fake
+        # module below therefore anchors to the SAME real `_paths.
+        # CASES_DIR` (never a separate synthetic tempdir) so a synthetic
+        # case_id can pass authz for real, exactly mirroring `ui/tests/
+        # test_mutation_approval_facade_isolated.py`'s own `make_fake_
+        # module()` (`mod.CASES_DIR = _paths.CASES_DIR`).
+        _outside_root_14 = Path(tempfile.mkdtemp(prefix="review_facade_a19c3a_outside_"))
+        try:
+            _fake_review_mod = _types_a19c3a.ModuleType("_fake_review_family_a19c3a")
+            _fake_review_mod.CASES_DIR = _paths.CASES_DIR
+
+            def _fake_get_canonical_path(case_id):
+                return _paths.CASES_DIR / case_id / "family" / "canonical.json"
+
+            def _fake_get_audit_dir(case_id):
+                return _paths.CASES_DIR / case_id / "family" / "reviews" / "family_reviews"
+
+            def _fake_find_record(analysis, record_type, record_id):
+                for record in analysis.get("records", []):
+                    if record.get("id") == record_id:
+                        return record
+                return None
+
+            def _fake_apply_review_transition(
+                case_id, record_type, record_id, target_state, reviewer_ref, review_note,
+                canonical_path=None, audit_dir=None, *,
+                mutation_idempotency_key=None, mutation_resource_key=None, mutation_actor_ref=None,
+            ):
+                canonical_path = Path(canonical_path if canonical_path is not None else _fake_get_canonical_path(case_id))
+                audit_dir = Path(audit_dir if audit_dir is not None else _fake_get_audit_dir(case_id))
+                analysis = json.loads(canonical_path.read_text(encoding="utf-8"))
+                record = _fake_find_record(analysis, record_type, record_id)
+                previous_state = record["review_state"]
+                record["review_state"] = target_state
+                canonical_path.write_text(json.dumps(analysis), encoding="utf-8")
+                post_sha256 = sha256_text(canonical_path.read_text(encoding="utf-8"))
+                audit_dir.mkdir(parents=True, exist_ok=True)
+                audit_record = {
+                    "case_id": case_id, "record_type": record_type, "record_id": record_id,
+                    "new_state": target_state, "previous_state": previous_state,
+                    "reviewer_ref": reviewer_ref, "review_note": review_note,
+                    "pre_sha256": "x" * 64, "post_sha256": post_sha256,
+                    "mutation_idempotency_key": mutation_idempotency_key,
+                    "mutation_resource_key": mutation_resource_key,
+                    "mutation_actor_ref": mutation_actor_ref,
+                }
+                audit_path = audit_dir / f"fake_{uuid.uuid4().hex}.review_audit.json"
+                audit_path.write_text(json.dumps(audit_record), encoding="utf-8")
+                return {
+                    "previous_state": previous_state, "new_state": target_state,
+                    "post_sha256": post_sha256, "audit_path": audit_path,
+                }
+
+            _fake_review_mod.get_canonical_path = _fake_get_canonical_path
+            _fake_review_mod.get_audit_dir = _fake_get_audit_dir
+            _fake_review_mod.find_record = _fake_find_record
+            _fake_review_mod.apply_review_transition = _fake_apply_review_transition
+
+            def _fake_binding():
+                return facade.ReviewFamilyBinding(
+                    review_kind="fake.record",
+                    module=_fake_review_mod,
+                    record_type="record",
+                    call_shape="with_record_type",
+                    state_field="review_state",
+                    domain_error_class=RuntimeError,
+                    get_audit_dir_fn=_fake_get_audit_dir,
+                    reviewer_ref="local_lawyer_ui",
+                    cases_dir_anchor_module=_fake_review_mod,
+                )
+
+            def _make_synth_case(record_id="rec_1", state="needs_review"):
+                case_id = f"synthcase{uuid.uuid4().hex[:10]}"
+                case_dir = _paths.CASES_DIR / case_id
+                family_dir = case_dir / "family"
+                family_dir.mkdir(parents=True, exist_ok=True)
+                (case_dir / "case.json").write_text(json.dumps({"case_id": case_id}), encoding="utf-8")
+                _created_case_dirs.append(case_dir)
+                canonical_path = family_dir / "canonical.json"
+                canonical_path.write_text(
+                    json.dumps({"records": [{"id": record_id, "review_state": state}]}), encoding="utf-8",
+                )
+                return case_id, canonical_path
+
+            # ----------------------------------------------------
+            # 14a) Normal, non-adversarial mutation through the
+            #      NON-OVERRIDE branch - the regression baseline this
+            #      new code path did not have until now.
+            # ----------------------------------------------------
+            case_id14a, canonical_path14a = _make_synth_case()
+            principal14a, repo14a = make_principal_and_repo(case_id14a)
+            expected_hash14a = sha256_text(canonical_path14a.read_text(encoding="utf-8"))
+            conn14a = FakeJournalConn()
+            result14a = facade.apply_review_mutation(
+                "fake.record", case_id14a, "rec_1", "confirmed", "note", expected_hash14a,
+                _fake_binding(), principal=principal14a, authz_repository=repo14a, conn_factory=lambda: conn14a,
+            )
+            check(
+                "14a: a normal NON-OVERRIDE mutation succeeds, writer received the verified path, "
+                "canonical really flipped state",
+                result14a.replayed is False
+                and json.loads(canonical_path14a.read_text(encoding="utf-8"))["records"][0]["review_state"] == "confirmed",
+            )
+            check("14a: audit_path really exists on disk", result14a.audit_path is not None and Path(result14a.audit_path).exists())
+
+            # ----------------------------------------------------
+            # 14b) FAMILY-DIRECTORY-LEVEL escape: `family/` itself is a
+            #      live junction pointing OUTSIDE the case root.
+            # ----------------------------------------------------
+            case_id14b, canonical_path14b = _make_synth_case()
+            principal14b, repo14b = make_principal_and_repo(case_id14b)
+            expected_hash14b = sha256_text(canonical_path14b.read_text(encoding="utf-8"))
+            family_dir14b = canonical_path14b.parent
+            shutil.rmtree(family_dir14b)
+            outside_family14b = _outside_root_14 / f"family_{uuid.uuid4().hex}"
+            outside_family14b.mkdir()
+            (outside_family14b / "canonical.json").write_text('{"stolen": true}', encoding="utf-8")
+            _a19c3a_make_junction(family_dir14b, outside_family14b)
+            conn_calls14b = []
+            expect_raises(
+                facade.ReviewDirectoryScanError,
+                lambda: facade.apply_review_mutation(
+                    "fake.record", case_id14b, "rec_1", "confirmed", "note", expected_hash14b,
+                    _fake_binding(), principal=principal14b, authz_repository=repo14b,
+                    conn_factory=lambda: (conn_calls14b.append(1) or FakeJournalConn()),
+                ),
+                "14b: family directory itself is a LIVE escaping junction raises ReviewDirectoryScanError",
+            )
+            check("14b: ZERO journal/lock connections were opened (pre-lock failure)", conn_calls14b == [])
+            _os_a19c3a.rmdir(family_dir14b)
+            shutil.rmtree(outside_family14b, ignore_errors=True)
+
+            # ----------------------------------------------------
+            # 14c) AUDIT-DIRECTORY-LEVEL escape: `reviews/family_reviews`
+            #      itself is a live junction pointing OUTSIDE the case
+            #      root - the canonical file remains genuinely safe.
+            # ----------------------------------------------------
+            case_id14c, canonical_path14c = _make_synth_case()
+            principal14c, repo14c = make_principal_and_repo(case_id14c)
+            expected_hash14c = sha256_text(canonical_path14c.read_text(encoding="utf-8"))
+            audit_dir14c = _fake_get_audit_dir(case_id14c)
+            audit_dir14c.parent.mkdir(parents=True, exist_ok=True)
+            outside_audit14c = _outside_root_14 / f"audit_{uuid.uuid4().hex}"
+            outside_audit14c.mkdir()
+            (outside_audit14c / "spy.review_audit.json").write_text(
+                json.dumps({"planted": "must never be trusted"}), encoding="utf-8",
+            )
+            _a19c3a_make_junction(audit_dir14c, outside_audit14c)
+            expect_raises(
+                facade.ReviewDirectoryScanError,
+                lambda: facade.apply_review_mutation(
+                    "fake.record", case_id14c, "rec_1", "confirmed", "note", expected_hash14c,
+                    _fake_binding(), principal=principal14c, authz_repository=repo14c,
+                    conn_factory=lambda: FakeJournalConn(),
+                ),
+                "14c: audit_dir itself is a LIVE escaping junction raises ReviewDirectoryScanError, "
+                "even though canonical itself is genuinely safe",
+            )
+            _os_a19c3a.rmdir(audit_dir14c)
+            shutil.rmtree(outside_audit14c, ignore_errors=True)
+
+            # ----------------------------------------------------
+            # 14d) BROKEN junction at the audit-directory level (target
+            #      deleted, reparse-point entry itself still on disk).
+            # ----------------------------------------------------
+            case_id14d, canonical_path14d = _make_synth_case()
+            principal14d, repo14d = make_principal_and_repo(case_id14d)
+            expected_hash14d = sha256_text(canonical_path14d.read_text(encoding="utf-8"))
+            audit_dir14d = _fake_get_audit_dir(case_id14d)
+            audit_dir14d.parent.mkdir(parents=True, exist_ok=True)
+            outside_ghost14d = _outside_root_14 / f"ghost_{uuid.uuid4().hex}"
+            outside_ghost14d.mkdir()
+            _a19c3a_make_junction(audit_dir14d, outside_ghost14d)
+            shutil.rmtree(outside_ghost14d, ignore_errors=True)
+            check(
+                "14d precondition: broken audit-dir junction has os.path.lexists()==True, "
+                "Path.exists()==False",
+                _os_a19c3a.path.lexists(audit_dir14d) is True and audit_dir14d.exists() is False,
+            )
+            expect_raises(
+                facade.ReviewDirectoryScanError,
+                lambda: facade.apply_review_mutation(
+                    "fake.record", case_id14d, "rec_1", "confirmed", "note", expected_hash14d,
+                    _fake_binding(), principal=principal14d, authz_repository=repo14d,
+                    conn_factory=lambda: FakeJournalConn(),
+                ),
+                "14d: a BROKEN junction at the audit-dir level also raises ReviewDirectoryScanError, "
+                "never silently treated as 'admission gate sees no prior audits'",
+            )
+            _os_a19c3a.rmdir(audit_dir14d)
+
+            # ----------------------------------------------------
+            # 14e) MATCHING-NAME ESCAPING ENTRY inside an otherwise-safe
+            #      audit_dir (directory named `*.review_audit.json`,
+            #      itself a junction pointing outside the case root).
+            # ----------------------------------------------------
+            case_id14e, canonical_path14e = _make_synth_case()
+            principal14e, repo14e = make_principal_and_repo(case_id14e)
+            expected_hash14e = sha256_text(canonical_path14e.read_text(encoding="utf-8"))
+            audit_dir14e = _fake_get_audit_dir(case_id14e)
+            audit_dir14e.mkdir(parents=True, exist_ok=True)
+            outside_entry14e = _outside_root_14 / f"entry_{uuid.uuid4().hex}"
+            outside_entry14e.mkdir()
+            escaping_entry14e = audit_dir14e / "escaping.review_audit.json"
+            _a19c3a_make_junction(escaping_entry14e, outside_entry14e)
+            expect_raises(
+                facade.ReviewDirectoryScanError,
+                lambda: facade.apply_review_mutation(
+                    "fake.record", case_id14e, "rec_1", "confirmed", "note", expected_hash14e,
+                    _fake_binding(), principal=principal14e, authz_repository=repo14e,
+                    conn_factory=lambda: FakeJournalConn(),
+                ),
+                "14e: a matching-NAME escaping entry inside an otherwise-safe audit_dir raises "
+                "ReviewDirectoryScanError, aborting the whole scan",
+            )
+            _os_a19c3a.rmdir(escaping_entry14e)
+            shutil.rmtree(outside_entry14e, ignore_errors=True)
+
+            # ----------------------------------------------------
+            # 14f) IN-TREE WRONG-PARENT ALIAS: a matching-name entry
+            #      that resolves to a MULTI-LEVEL descendant of audit_dir
+            #      (via a nested subdirectory that should never exist
+            #      here) rather than a DIRECT child - passes plain
+            #      containment (relative_to(audit_dir) succeeds) but
+            #      fails the exact expected-parent-membership check.
+            # ----------------------------------------------------
+            case_id14f, canonical_path14f = _make_synth_case()
+            principal14f, repo14f = make_principal_and_repo(case_id14f)
+            expected_hash14f = sha256_text(canonical_path14f.read_text(encoding="utf-8"))
+            audit_dir14f = _fake_get_audit_dir(case_id14f)
+            nested_target14f = audit_dir14f / "subdir" / "nested"
+            nested_target14f.mkdir(parents=True, exist_ok=True)
+            alias_entry14f = audit_dir14f / "alias.review_audit.json"
+            _a19c3a_make_junction(alias_entry14f, nested_target14f)
+            expect_raises(
+                facade.ReviewDirectoryScanError,
+                lambda: facade.apply_review_mutation(
+                    "fake.record", case_id14f, "rec_1", "confirmed", "note", expected_hash14f,
+                    _fake_binding(), principal=principal14f, authz_repository=repo14f,
+                    conn_factory=lambda: FakeJournalConn(),
+                ),
+                "14f: an in-tree entry resolving to a multi-level descendant (wrong immediate parent) "
+                "of audit_dir raises ReviewDirectoryScanError - plain containment alone would have "
+                "passed this",
+            )
+            _os_a19c3a.rmdir(alias_entry14f)
+
+            # ----------------------------------------------------
+            # 14g) PRE-LOCK -> UNDER-LOCK AUDIT-DIRECTORY SWAP: audit_dir
+            #      is safe at pre-lock verification time, then replaced
+            #      with an escaping junction WHILE this request waits
+            #      for the case lock - caught by the fresh under-lock
+            #      re-verification, zero prepared journal rows.
+            # ----------------------------------------------------
+            case_id14g, canonical_path14g = _make_synth_case()
+            principal14g, repo14g = make_principal_and_repo(case_id14g)
+            expected_hash14g = sha256_text(canonical_path14g.read_text(encoding="utf-8"))
+            audit_dir14g = _fake_get_audit_dir(case_id14g)
+            audit_dir14g.mkdir(parents=True, exist_ok=True)
+            conn14g = FakeJournalConn()
+            outside_swap14g = _outside_root_14 / f"swap_{uuid.uuid4().hex}"
+            outside_swap14g.mkdir()
+
+            def _acquire_then_swap_audit_dir(conn, case_id):
+                _lock_calls.append(("acquire", case_id))
+                shutil.rmtree(audit_dir14g, ignore_errors=True)
+                _a19c3a_make_junction(audit_dir14g, outside_swap14g)
+                return 111
+
+            ml.acquire_case_lock_session = _acquire_then_swap_audit_dir
+            try:
+                expect_raises(
+                    facade.ReviewDirectoryScanError,
+                    lambda: facade.apply_review_mutation(
+                        "fake.record", case_id14g, "rec_1", "confirmed", "note", expected_hash14g,
+                        _fake_binding(), principal=principal14g, authz_repository=repo14g,
+                        conn_factory=lambda: conn14g,
+                    ),
+                    "14g: audit_dir swapped to an escaping junction WHILE waiting for the lock is "
+                    "caught by the fresh under-lock re-verification",
+                )
+            finally:
+                ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+                shutil.rmtree(audit_dir14g, ignore_errors=True)
+            check("14g: ZERO prepared journal rows", conn14g.table == [])
+
+            # ----------------------------------------------------
+            # 14h) ROW 19C-3a SLICE 2 FINAL NARROW REMEDIATION -
+            #      CONTAINMENT-BEFORE-STAT ORDERING PROOF (by
+            #      instrumentation, not source/AST inspection). An
+            #      independent review found `_scan_review_directory()`
+            #      used to call `entry.is_file()` on the RAW, unverified
+            #      entry BEFORE containment was checked at all - a
+            #      directory-only NTFS junction always fails
+            #      `is_file()`, so the OLD "not a file" branch fired
+            #      first and the containment check was never even
+            #      reached for that entry (even though the FINAL
+            #      exception class happened to be identical either
+            #      way). `pathlib.Path.is_file` is monkeypatched here to
+            #      record every `self` it is called on; a directory
+            #      containing ONE escaping-junction entry named
+            #      `*.review_audit.json` is scanned directly - the scan
+            #      must still raise `ReviewDirectoryScanError`, but
+            #      `is_file` must NEVER be invoked at all for this
+            #      attempt, proving containment now runs strictly
+            #      BEFORE any is_file()/stat() touch.
+            # ----------------------------------------------------
+            ordering_dir_14h = _outside_root_14 / f"ordering_audit_{uuid.uuid4().hex}"
+            ordering_dir_14h.mkdir()
+            ordering_outside_14h = _outside_root_14 / f"ordering_outside_{uuid.uuid4().hex}"
+            ordering_outside_14h.mkdir()
+            ordering_entry_14h = ordering_dir_14h / "escaping.review_audit.json"
+            _a19c3a_make_junction(ordering_entry_14h, ordering_outside_14h)
+
+            is_file_calls_14h = []
+            _original_is_file_14h = Path.is_file
+
+            def _recording_is_file_14h(self):
+                is_file_calls_14h.append(str(self))
+                return _original_is_file_14h(self)
+
+            try:
+                Path.is_file = _recording_is_file_14h
+                ordering_error_14h = None
+                try:
+                    facade._scan_review_directory(ordering_dir_14h)
+                except Exception as error:
+                    ordering_error_14h = error
+            finally:
+                Path.is_file = _original_is_file_14h
+                os.rmdir(ordering_entry_14h)
+                shutil.rmtree(ordering_dir_14h, ignore_errors=True)
+                shutil.rmtree(ordering_outside_14h, ignore_errors=True)
+
+            check(
+                "14h: _scan_review_directory() still raises ReviewDirectoryScanError for the "
+                "escaping matching-name entry",
+                isinstance(ordering_error_14h, facade.ReviewDirectoryScanError),
+                f"got {ordering_error_14h!r}",
+            )
+            check(
+                "14h ORDERING PROOF: Path.is_file() was NEVER called during this scan attempt - "
+                "containment verification ran strictly before any is_file()/stat() touch on the "
+                "matching entry (proven by instrumentation, not source inspection)",
+                is_file_calls_14h == [],
+                f"is_file was called on: {is_file_calls_14h!r}",
+            )
+        finally:
+            shutil.rmtree(_outside_root_14, ignore_errors=True)
 
     # ------------------------------------------------------------
     # 13) REAL case_0001/qa/ tree byte-snapshot proof - tests 1-4 used

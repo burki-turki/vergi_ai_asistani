@@ -518,7 +518,21 @@ def isolated_domain_error_fixture(review_kind, injected_error, review_note="test
         tmp_path = Path(tmp)
         fake_case_id = f"case_iso_domain_{review_kind.replace('.', '_')}"
         record_id = "dom_err_record_1"
-        canonical_path = tmp_path / "canonical.json"
+        # ROW 19C-3a SLICE 2: the facade's pre-lock/under-lock nested
+        # path-containment verification reads `binding.cases_dir_anchor_
+        # module.CASES_DIR` and re-derives `CASES_DIR/case_id/...` from
+        # BOTH `get_canonical_path()` (mocked below) AND the audit-dir
+        # getter (left UNMOCKED - the real `get_evidence_review_audit_
+        # dir()` etc., which itself calls the real, unmodified `get_*_
+        # dir(case_id)` using the module's own `CASES_DIR`). `canonical_
+        # path` is therefore nested under `tmp_path/fake_case_id/` (any
+        # subpath works, since `get_canonical_path` is fully mocked
+        # below) and the CORRECT anchor module's `CASES_DIR` (see below)
+        # is redirected to `tmp_path` so the unmocked audit-dir getter
+        # also resolves to somewhere genuinely verifiable under it.
+        fake_case_root = tmp_path / fake_case_id
+        fake_case_root.mkdir(parents=True)
+        canonical_path = fake_case_root / "canonical.json"
 
         # ROW 19C-2b: the canonical fixture must contain a REAL,
         # findable record in 'needs_review' state - `review_mutation_
@@ -554,13 +568,25 @@ def isolated_domain_error_fixture(review_kind, injected_error, review_note="test
             calls["n"] += 1
             raise injected_error
 
+        # ROW 19C-3a SLICE 2: the path-containment anchor module is NOT
+        # always `module` itself - `qa.suggestion` anchors to `qa_
+        # approval` instead (`qa_review.py` has no `CASES_DIR` of its
+        # own - see `review_registry.cases_dir_module_name()`'s own
+        # docstring). Resolved the SAME way production does (`review_
+        # registry.apply_transition()`'s own `cases_dir_module_name()`
+        # call), never a hand-picked/uydurma value - `qa_review` is
+        # NEVER given a `CASES_DIR` it does not really have.
+        anchor_module = importlib.import_module(reviewreg.cases_dir_module_name(review_kind))
+
         original_get_canonical_path = module.get_canonical_path
         original_apply = module.apply_review_transition
         original_list_case_ids = svc_paths.list_case_ids
         original_resolve = svc_paths.resolve_case_id
+        original_cases_dir = anchor_module.CASES_DIR
 
         module.get_canonical_path = lambda cid: canonical_path
         module.apply_review_transition = _raising_apply
+        anchor_module.CASES_DIR = tmp_path
         svc_paths.list_case_ids = lambda: original_list_case_ids() + [fake_case_id]
         svc_paths.resolve_case_id = lambda cid: cid if cid == fake_case_id else original_resolve(cid)
 
@@ -579,6 +605,7 @@ def isolated_domain_error_fixture(review_kind, injected_error, review_note="test
 
             module.get_canonical_path = original_get_canonical_path
             module.apply_review_transition = original_apply
+            anchor_module.CASES_DIR = original_cases_dir
             svc_paths.list_case_ids = original_list_case_ids
             svc_paths.resolve_case_id = original_resolve
 

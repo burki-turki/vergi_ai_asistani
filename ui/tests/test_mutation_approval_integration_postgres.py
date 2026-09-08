@@ -126,6 +126,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import threading
@@ -221,6 +222,14 @@ from ui.services.common import PreconditionRaceDetectedError, StaleViewError, sh
 
 import deadline_approval                                                  # noqa: E402
 import deadline_validator as _deadline_validator                          # noqa: E402
+# ROW 19C-3a SLICE 2 REAL-POSTGRES PATH-PROOF REMEDIATION: `argument_
+# approval` is imported here - BEFORE `discover_cases_dir_holders()`
+# runs below - purely so scenario A2's carry-forward escape (only the 4
+# families with a `get_carry_forward_dir()` - argument/risk_strategy/
+# drafting/qa - have one) gets its OWN `CASES_DIR` genuinely swept into
+# `_TMP_CASES` alongside `deadline_approval`'s, exactly like every other
+# already-loaded module here. No other file/production code changes.
+import argument_approval                                                  # noqa: E402
 from mutation_guard import (                                              # noqa: E402
     RESOLUTION_CODE_COMPLETED_POST_STATE_VERIFIED,
 )
@@ -445,6 +454,36 @@ def wait_for_lock_waiter(advisory_lock_id, *, timeout_seconds=30.0, poll_seconds
             return True
         time.sleep(poll_seconds)
     return False
+
+
+def make_directory_escape_link(link_path: Path, target_path: Path) -> None:
+    """ROW 19C-3a SLICE 2 REAL-POSTGRES PATH-PROOF REMEDIATION: a REAL,
+    platform-native directory-escape link - NTFS junction via
+    `mklink /J` on Windows (needs neither elevation nor Developer Mode),
+    a real POSIX symlink elsewhere - mirroring `ui/tests/
+    test_reconciliation_isolated.py`'s own identically-purposed
+    `_dr_make_directory_escape_link()` helper (an independent copy, this
+    file's own test-only utility, never shared/imported). A failed link
+    creation raises - never silently treated as a skip or a pass."""
+    if sys.platform == "win32":
+        # `capture_output=True, text=True` would decode stdout/stderr
+        # using the console's own (here: Turkish, cp1254) codepage - a
+        # genuine `mklink` failure can emit a localized error message
+        # containing a byte that codepage cannot decode, crashing the
+        # reader thread with a SECOND, unrelated UnicodeDecodeError that
+        # masks the real one. Captured as raw bytes and decoded with
+        # `errors="replace"` instead, so any real failure's message is
+        # always readable.
+        result = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(link_path), str(target_path)],
+            capture_output=True, timeout=15,
+        )
+        if result.returncode != 0:
+            stdout_text = result.stdout.decode("utf-8", errors="replace") if result.stdout else ""
+            stderr_text = result.stderr.decode("utf-8", errors="replace") if result.stderr else ""
+            raise RuntimeError(f"mklink /J failed (rc={result.returncode}): {stdout_text!r} {stderr_text!r}")
+    else:
+        os.symlink(str(target_path), str(link_path))
 
 
 # ----------------------------------------------------------------
@@ -1757,6 +1796,258 @@ try:
         "_resolve_authz_repository(None)" in _isolated_source
         and "default authz (full flow): that IAM connection was closed EXACTLY once" in _isolated_source,
     )
+
+    # ================================================================
+    # ROW 19C-3a SLICE 2 REAL-POSTGRES PATH-PROOF REMEDIATION
+    #
+    # SCENARIO A1 - PRE-LOCK NESTED ESCAPE, against the REAL production
+    # facade/coordinator, a REAL disposable PostgreSQL journal, and a
+    # REAL NTFS junction (never monkeypatched/mocked). `reviews_dir`
+    # (one of the three chains `approve_case_scoped_mutation()`
+    # verifies pre-lock) is made a live junction pointing OUTSIDE the
+    # case root, with a plausible forged audit file planted inside the
+    # escape target - proving (a) the REAL facade raises
+    # `NestedPathContainmentError` BEFORE any journal/lock connection is
+    # even opened, (b) the real journal table genuinely has ZERO rows
+    # for this resource, (c) the real writer never ran, and (d) the
+    # planted spy file was never read (byte-identical before/after).
+    # ================================================================
+
+    fx_a1 = make_case("case_a1_prelock_escape")
+    principal_a1, repo_a1 = make_principal_and_repo(fx_a1["case_id"])
+    writer_state["calls"] = 0
+    writer_state["fault"] = None
+
+    reviews_dir_a1 = deadline_approval.get_reviews_dir(fx_a1["case_id"])
+    reviews_dir_a1.parent.mkdir(parents=True, exist_ok=True)  # `mklink /J` requires the immediate parent to exist
+    outside_root_a1 = Path(tempfile.mkdtemp(prefix="vergi_pgint_a1_outside_"))
+    try:
+        spy_path_a1 = outside_root_a1 / "spy_should_never_be_read.approval.json"
+        spy_path_a1.write_text(
+            json.dumps({"planted": "outside content - must NEVER be read", "case_id": fx_a1["case_id"]}),
+            encoding="utf-8",
+        )
+        spy_before_a1 = sha256_file(spy_path_a1)
+        pending_before_a1 = sha256_file(fx_a1["pending_path"])
+
+        make_directory_escape_link(reviews_dir_a1, outside_root_a1)
+        check(
+            "A1 precondition: reviews_dir is genuinely a live junction/symlink pointing outside "
+            "the case root (os.path.lexists true, real entry present)",
+            os.path.lexists(reviews_dir_a1),
+        )
+
+        conn_calls_a1 = []
+
+        def _counting_conn_factory_a1():
+            conn_calls_a1.append(1)
+            return pg_connect()
+
+        a1_error = None
+        try:
+            facade.approve_case_scoped_mutation(
+                ROW_KEY, fx_a1["case_id"], fx_a1["expected_hash"],
+                principal=principal_a1, authz_repository=repo_a1, conn_factory=_counting_conn_factory_a1,
+            )
+        except BaseException as error:
+            a1_error = error
+
+        check(
+            "A1: the REAL production facade raised NestedPathContainmentError for the live "
+            "escaping reviews_dir junction",
+            isinstance(a1_error, facade.NestedPathContainmentError),
+            f"got {a1_error!r}",
+        )
+        check(
+            "A1: NestedPathContainmentError IS an ApprovalUiError subclass (zero ui/main.py "
+            "route changes needed)",
+            issubclass(facade.NestedPathContainmentError, facade.ApprovalUiError),
+        )
+        check(
+            "A1: ZERO journal/lock connections were opened at all (pre-lock failure, before "
+            "conn_factory() is ever called)",
+            conn_calls_a1 == [],
+        )
+        check(
+            "A1: the REAL database has EXACTLY ZERO journal rows for this resource_key",
+            journal_rows(fx_a1["resource_key"]) == [],
+            f"got {journal_rows(fx_a1['resource_key'])!r}",
+        )
+        check(
+            "A1: PostgreSQL's OWN pg_locks shows no lock was ever requested for this resource "
+            "(mutation_resources has no row -> advisory_lock_id is None -> held-by-anyone is False)",
+            lock_is_held_by_anyone(advisory_lock_id_for(fx_a1["resource_key"])) is False,
+        )
+        check(
+            "A1: the REAL writer (deadline_approval.run_approve) was never invoked",
+            writer_state["calls"] == 0,
+        )
+        check(
+            "A1: the canonical artefact still does not exist",
+            not fx_a1["canonical_path"].exists(),
+        )
+        check(
+            "A1: the REAL pending file is byte-unchanged",
+            sha256_file(fx_a1["pending_path"]) == pending_before_a1,
+        )
+        check(
+            "A1: the planted spy file OUTSIDE the case root was NEVER read/modified (byte-identical) "
+            "- the escape target's content never influenced this rejection",
+            sha256_file(spy_path_a1) == spy_before_a1,
+        )
+    finally:
+        if os.path.lexists(reviews_dir_a1):
+            os.rmdir(reviews_dir_a1)  # removes the junction/symlink LINK only, never the target's content
+        shutil.rmtree(outside_root_a1, ignore_errors=True)
+
+    # ================================================================
+    # SCENARIO A2 - UNDER-LOCK CARRY-FORWARD PATH SWAP, against TWO REAL
+    # PostgreSQL connections and the REAL `argument_approval` writer (one
+    # of the 4 carry-forward families). Connection A holds the REAL
+    # `case:<case_id>` advisory lock; a second, fully independent real
+    # connection driving the REAL facade genuinely BLOCKS on it
+    # (server-observed via `pg_locks`, never a sleep-based guess). WHILE
+    # B waits, `history/carry_forward` (safe at the moment B's own
+    # pre-lock read happened) is turned into a live junction pointing
+    # OUTSIDE the case root, with a forged `carry_forward_*.json` planted
+    # inside. When A releases, B's FRESH under-lock carry-forward gate
+    # (`precondition_callback`) must catch the escape - the writer must
+    # never run, and the real journal must show ZERO rows.
+    # ================================================================
+
+    a2_case_id = f"case_a2_carryforward_swap_{RUN_TOKEN}"
+    a2_case_dir = _TMP_CASES / a2_case_id
+    a2_arguments_dir = a2_case_dir / "arguments"
+    a2_arguments_dir.mkdir(parents=True)
+    (a2_case_dir / "case.json").write_text(json.dumps({"case_id": a2_case_id}), encoding="utf-8")
+    a2_pending_path = argument_approval.get_pending_path(a2_case_id)
+    a2_pending_path.write_text(json.dumps({"case_id": a2_case_id, "synthetic": True}), encoding="utf-8")
+    a2_expected_hash = sha256_file(a2_pending_path)
+    # ROW 19C-3a SLICE 2 FINAL NARROW REMEDIATION: a REAL "before" snapshot,
+    # taken here - before the worker thread starts and before the
+    # carry_forward junction swap - so the later "byte-unchanged" check
+    # below compares against an independently-taken prior value instead of
+    # comparing a value to itself (which would be true unconditionally,
+    # even if the file had been silently rewritten in between).
+    a2_pending_before = sha256_file(a2_pending_path)
+    a2_resource_key = _mutation_lock.case_resource_key(a2_case_id)
+    a2_canonical_path = argument_approval.get_canonical_path(a2_case_id)
+    principal_a2, repo_a2 = make_principal_and_repo(a2_case_id, user_id=11, session_id=1100)
+
+    a2_writer_calls = {"n": 0}
+    _REAL_ARGUMENT_RUN_APPROVE = argument_approval.run_approve
+
+    def _a2_counting_run_approve(case_id, *, mutation_idempotency_key=None, mutation_resource_key=None):
+        a2_writer_calls["n"] += 1
+        return _REAL_ARGUMENT_RUN_APPROVE(
+            case_id, mutation_idempotency_key=mutation_idempotency_key, mutation_resource_key=mutation_resource_key,
+        )
+
+    argument_approval.run_approve = _a2_counting_run_approve
+
+    a2_carry_dir = argument_approval.get_carry_forward_dir(a2_case_id)
+    a2_carry_dir.parent.mkdir(parents=True, exist_ok=True)  # `history/` must exist before `mklink /J` can create carry_forward under it
+    a2_outside_root = Path(tempfile.mkdtemp(prefix="vergi_pgint_a2_outside_"))
+    a2_holder_conn = None
+    try:
+        a2_holder_conn = pg_connect()
+        a2_holder_lock_id = _mutation_lock.acquire_case_lock_session(a2_holder_conn, a2_case_id)
+        check(
+            "A2: connection A really acquired the REAL case lock (a real advisory_lock_id was assigned)",
+            isinstance(a2_holder_lock_id, int),
+        )
+
+        a2_blocked_result = {}
+
+        def _a2_run_blocked():
+            try:
+                a2_blocked_result["result"] = facade.approve_case_scoped_mutation(
+                    "arguments", a2_case_id, a2_expected_hash,
+                    principal=principal_a2, authz_repository=repo_a2, conn_factory=pg_connect,
+                )
+            except BaseException as error:
+                a2_blocked_result["error"] = error
+
+        a2_worker = threading.Thread(target=_a2_run_blocked, daemon=True)
+        a2_worker.start()
+
+        a2_observed_waiter = wait_for_lock_waiter(a2_holder_lock_id)
+        check(
+            "A2: PostgreSQL's OWN pg_locks reports a genuinely WAITING (not granted) advisory lock "
+            "for this case - session B is really blocked, not merely believed to be",
+            a2_observed_waiter,
+            f"no NOT-granted advisory lock appeared for advisory_lock_id={a2_holder_lock_id}",
+        )
+        check(
+            "A2: while B waits, it has written NOTHING to the real journal yet",
+            journal_rows(a2_resource_key) == [],
+        )
+
+        # WHILE B waits (proven blocked above), swap history/carry_forward
+        # to a live escaping junction with a forged matching entry inside.
+        a2_forged_entry_content = json.dumps(
+            {"carried_records": [{"entity_type": "claim", "new_id": "forged_id_never_trusted"}]},
+        )
+        (a2_outside_root / "carry_forward_evil.json").write_text(a2_forged_entry_content, encoding="utf-8")
+        a2_outside_spy_before = sha256_file(a2_outside_root / "carry_forward_evil.json")
+        make_directory_escape_link(a2_carry_dir, a2_outside_root)
+        check(
+            "A2 precondition: history/carry_forward is genuinely a live junction/symlink pointing "
+            "outside the case root, created WHILE session B was still blocked",
+            os.path.lexists(a2_carry_dir),
+        )
+
+        a2_released = _mutation_lock.release_lock_session(a2_holder_conn, a2_holder_lock_id)
+        check("A2: connection A's real lock release reported success", a2_released is True)
+        a2_holder_conn.close()
+        a2_holder_conn = None
+
+        a2_worker.join(timeout=90)
+        check("A2: once A released, the previously-blocked request completed (thread finished)", not a2_worker.is_alive())
+        check(
+            "A2: the FRESH under-lock carry-forward verification rejected B with "
+            "NestedPathContainmentError - the escape introduced while waiting was caught, never "
+            "silently accepted",
+            isinstance(a2_blocked_result.get("error"), facade.NestedPathContainmentError),
+            f"got {a2_blocked_result!r}",
+        )
+        check(
+            "A2: the REAL argument_approval writer was NEVER invoked",
+            a2_writer_calls["n"] == 0,
+        )
+        check(
+            "A2: the REAL database has EXACTLY ZERO journal rows for this resource_key (no "
+            "prepared/executing/reconciliation_required row was ever created)",
+            journal_rows(a2_resource_key) == [],
+            f"got {journal_rows(a2_resource_key)!r}",
+        )
+        check(
+            "A2: the canonical artefact was never created",
+            not a2_canonical_path.exists(),
+        )
+        check(
+            "A2: the pending file is byte-unchanged (compared against a REAL prior snapshot taken "
+            "before the worker thread started and before the carry_forward junction swap - not a "
+            "value compared against itself)",
+            sha256_file(a2_pending_path) == a2_pending_before,
+            f"before={a2_pending_before!r} after={sha256_file(a2_pending_path)!r}",
+        )
+        check(
+            "A2: the forged carry-forward content planted OUTSIDE the case root was never read "
+            "(byte-identical) - the gate verifies path safety only, content is never consulted",
+            sha256_file(a2_outside_root / "carry_forward_evil.json") == a2_outside_spy_before,
+        )
+    finally:
+        argument_approval.run_approve = _REAL_ARGUMENT_RUN_APPROVE
+        if a2_holder_conn is not None:
+            try:
+                _mutation_lock.release_lock_session(a2_holder_conn, a2_holder_lock_id)
+            except Exception:
+                pass
+            a2_holder_conn.close()
+        if os.path.lexists(a2_carry_dir):
+            os.rmdir(a2_carry_dir)
+        shutil.rmtree(a2_outside_root, ignore_errors=True)
 
 finally:
     deadline_approval.run_approve = _REAL_RUN_APPROVE

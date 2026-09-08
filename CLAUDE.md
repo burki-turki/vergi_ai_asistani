@@ -255,22 +255,28 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   verdict'ine ulaştı (bkz. Row 19C-3a Slice 1 checkpoint özeti, §5
   sonrası). Rows 1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a, Row
   19C-2b ve Row 19C-2c contract'ları değişmedi.
-- Sıradaki canonical alt-faz: **ROW 19C-3a Slice 2 — Layer A/B Nested
-  Path-Containment Closure** — **ACTIVE / NEXT** — **henüz
-  implementasyona BAŞLANMADI**; kendi tam dosya allowlist'i
-  implementasyondan ÖNCE ayrıca sunulup onaylatılmalıdır (Row 19A'nın
-  dosya-değişiklik sınırı kararı uyarınca) — genel Row 19C-3a Slice 1
-  onayı bu sıradaki alt-fazın dosya değişikliğini ÖNCEDEN
-  yetkilendirmez. Ayrı, salt-okunur bir reconciliation ve kendi tam
-  dosya allowlist'i + kullanıcı onayı gerektirir. Öncelikli kapsam,
-  daha önce tespit edilen Layer A ve Layer B nested-directory
-  (audit/history/current-input) path-containment açıklarının
-  kapatılmasıdır. Row 19C-2c'nin drafting-request için ayrıca
-  geliştirilmiş, iki bağımsız remediation turundan geçmiş
-  `_resolve_verified_case_dir()`/`_verify_nested_case_path()`
-  helper'ları Slice 2'ye OTOMATİK olarak dahil DEĞİLDİR — bu satır
-  yalnız SIRADAKİ KAPSAMIN ADINI belirtir; bu alt-faz için henüz
-  hiçbir kod, şema veya allowlist belirleme çalışması yapılmamıştır.
+- **ROW 19C-3a Slice 2 — Layer A/B Nested Path-Containment Closure**
+  artık **DONE / LOCKED** — kullanıcı tarafından ayrıca onaylanmış tam
+  dosya allowlist'i (13 değiştirilmiş, 0 yeni dosya) üzerinde implement
+  edildi, gerçek/disposable bir PostgreSQL örneğine karşı yerel
+  testlerle doğrulandı, bir ilk bağımsız incelemenin bulduğu üç dar
+  maddeyle ve ardından hedefli bir re-review'un bulduğu bir backup-kind
+  sıralama boşluğuyla remediation turlarından geçti ve son, bağımsız,
+  salt-okunur bir targeted re-review'da `ROW 19C-3a SLICE 2 LOCK-READY`
+  verdict'ine ulaştı (bkz. Row 19C-3a Slice 2 checkpoint özeti, §5
+  sonrası). Rows 1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a, Row
+  19C-2b, Row 19C-2c ve Row 19C-3a Slice 1 contract'ları değişmedi.
+- Sıradaki canonical alt-faz: **ROW 19C-3b — Remaining CLI-Only Writer
+  Integration** — **ACTIVE / NEXT** — **henüz implementasyona
+  BAŞLANMADI**. Kalan CLI-only writer'ların mutation coordinator/
+  journal altyapısına ve Slice 1'in paylaşılan path-containment
+  primitive'ine bağlanmasından önce AYRI, salt-okunur bir reconciliation
+  yapılacaktır. Kendi TAM dosya allowlist'i hazırlanıp implementasyondan
+  ÖNCE kullanıcı tarafından ayrıca onaylanmadan hiçbir dosyaya
+  dokunulamaz (Row 19A'nın dosya-değişiklik sınırı kararı uyarınca) —
+  Row 19C-3a Slice 1 veya Slice 2 onayı bu alt-fazın dosya değişikliğini
+  ÖNCEDEN yetkilendirmez. Row 19D deployment hardening (OS ACL/service
+  identity dahil) bu checkpoint ile HENÜZ başlatılmamıştır.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -2387,6 +2393,161 @@ hiçbir test bu re-review tarafından bağımsız PASS olarak sunulmamıştır.
 örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
 roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
 dosyasına dokunmaz.
+
+### Row 19C-3a Slice 2 — Layer A/B Nested Path-Containment Closure (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış tam
+dosya allowlist'i üzerinde tamamlandı: **13 DEĞİŞTİRİLMİŞ, 0 YENİ dosya**.
+
+1. `ui/services/mutation_approval_adapters.py`
+2. `ui/services/mutation_approval_facade.py`
+3. `ui/services/review_mutation_adapters.py`
+4. `ui/services/review_mutation_facade.py`
+5. `ui/services/review_registry.py`
+6. `ui/tests/test_mutation_approval_facade_isolated.py`
+7. `ui/tests/test_mutation_approval_integration_postgres.py`
+8. `ui/tests/test_reconciliation_isolated.py`
+9. `ui/tests/test_review_mutation_facade_isolated.py`
+10. `ui/tests/test_review_mutation_integration_postgres.py`
+11. `ui/tests/test_review_routes.py`
+12. `ui/tests/test_routes.py`
+13. `ui/tests/test_service_isolated.py`
+
+Üç fixture dosyası — `test_routes.py`, `test_review_routes.py`,
+`test_service_isolated.py` — bu allowlist'e SONRADAN, yeni containment/
+root kontratına yalnız MEKANİK fixture uyumu (ör. yeni doğrulama
+zincirinin beklediği gerçek/monkeypatch'lenmiş kök yapısı) için,
+kullanıcının AÇIK onayıyla eklendi; hiçbir mevcut beklenti/status/
+message kontrolü GEVŞETİLMEDİ veya KALDIRILMADI.
+
+**Layer A sonucu**:
+
+- Her approval ailesinin kendi dinamik `CASES_DIR` anchor'ı kullanıldı —
+  paylaşılan tek bir sabit kök varsayılmadı.
+- Pending/canonical/`reviews/` zinciri pre-lock, under-lock ve completed
+  replay sırasında AYRI AYRI yeniden doğrulanıyor.
+- Argument, risk_strategy, drafting ve qa ailelerinin `history/
+  carry_forward` zinciri de case kilidi ALTINDA doğrulanıyor.
+- Matching audit/carry-forward girdilerinde containment ve exact-parent
+  membership, HERHANGİ bir metadata/content erişiminden ÖNCE
+  uygulanıyor.
+- Layer A'nın kendi `run_approve()` writer imzaları DEĞİŞTİRİLMEDİ ve
+  hiçbir yeni path-override parametresi EKLENMEDİ.
+- Facade doğrulaması ile writer'ın kendi raw path türetmesi arasında
+  kalan dar local-filesystem-actor TOCTOU penceresinin KAPANDIĞI iddia
+  EDİLMEZ; Row 19A'nın T15 kararı doğrultusunda bu pencere Row 19D'nin
+  OS ACL / service identity hardening borcu olarak KALMAYA devam eder.
+
+**Layer B sonucu**:
+
+- Registry 12 review_kind olarak KALDI.
+- `qa.suggestion` review_kind'ı için CASES_DIR anchor'ı YALNIZ
+  `qa_approval` modülünden okunuyor; diğer review_kind'lar kendi backend
+  modüllerinin CASES_DIR'ini kullanıyor.
+- Canonical/audit zinciri pre-lock, under-lock ve replay sırasında
+  yeniden doğrulanıyor.
+- Case kilidi ALTINDA elde edilen en güncel verified path'ler mevcut
+  writer kwargs'ı ÜZERİNDEN backend'e taşınıyor.
+- Facade (`review_mutation_facade.py`) ve reconciliation adapter
+  (`review_mutation_adapters.py`) BAĞIMSIZ doğrulama/karar mantığını
+  korudu.
+- Adapter, containment hatasında `ReconciliationEvidence(post_state_
+  verified=False, pre_state_confirmed_unchanged=False)` dual-false
+  evidence üretir.
+
+**Güvenli tarama kontratı**:
+
+- Filename classification ÖNCE, saf string işlemiyle yapılır.
+- Karar üzerinde etkili olan (audit VE backup dahil) classified
+  girdilerde containment ve exact-parent membership,
+  `is_file`/`stat`/`open`/JSON-read'den ÖNCE uygulanır.
+- Metadata ve içerik YALNIZ verified/resolved Path üzerinden okunur.
+- Güvenli regular backup dosyasının içeriği okunmadan yok sayılır.
+- Güvenli fakat non-regular VEYA escaping/broken/looping backup girdisi
+  fail-closed scan error üretir.
+- Facade ile adapter'ın karar mantığı ORTAKLAŞTIRILMADI; yalnız Slice
+  1'in karar içermeyen `src/path_containment.py` primitive'i (`ui.
+  services.paths.verify_real_path_contained()` üzerinden) HER İKİSİ
+  tarafından ayrı ayrı çağrılarak ortak kullanılıyor.
+
+**Remediation geçmişi**:
+
+1. Real-PostgreSQL A1/A2/B1/B2 path-rejection kanıtları eklendi.
+2. İlk bağımsız inceleme şunları buldu: A2'nin tautolojik pending
+   assertion'ı, Layer B'nin audit-kind dalındaki `is_file()` sıralaması,
+   audit tie-break davranışını anlatan bir docstring'in koddan sapması.
+3. Bunlar dar bir remediation ile kapatıldı: gerçek before/after pending
+   hash karşılaştırması, containment-before-stat sıralaması, davranış
+   değiştirmeyen bir docstring düzeltmesi ve equal-mtime testi.
+4. Hedefli bir re-review, adapter'ın SEPARATE backup-kind dalında AYNI
+   sıralama boşluğunun hâlâ durduğunu buldu.
+5. Son remediation, audit ve backup akışlarını tek bir ortak sıralamaya
+   birleştirerek raw `entry.is_file()` kullanımını tamamen kaldırdı.
+6. Son, bağımsız, salt-okunur bir targeted re-review; production
+   ordering, backup semantics, test kalitesi ve dual-false
+   reconciliation sonucu için hiçbir bulgu RAPORLAMADI ve `ROW 19C-3a
+   SLICE 2 LOCK-READY` verdict'ine ulaştı.
+
+**Test kanıtı — dürüst zaman ayrımıyla**:
+
+Son dar (backup-kind) remediation'dan ÖNCE, gerçek disposable PostgreSQL'e
+karşı çalıştırılan geniş 36-dosyalık `ui/tests/` sweep'i: **2056 passed,
+0 failed, 8 skipped**. **Bu sweep, final backup-kind kod durumuna karşı
+YENİDEN ÇALIŞTIRILMADI** — final-tree'nin tam sweep sonucu olarak
+SUNULAMAZ, yalnız o ANDAKİ kod durumunun kanıtıdır.
+
+Final kod üzerinde AYRICA doğrulanan targeted sonuçlar:
+
+- `test_mutation_approval_facade_isolated`: **170/170**
+- `test_review_mutation_facade_isolated`: **64/64**
+- `test_reconciliation_isolated`: **168/168** (1 ilgisiz açık skip, PASS
+  SAYILMADI)
+- `test_mutation_approval_integration_postgres`: **162/162, 0 skipped**
+- `test_review_mutation_integration_postgres`: **66/66, 0 skipped**
+- `test_routes`: **60/60**
+- `test_review_routes`: **115/115**
+- `test_service_isolated`: **55/55**
+- `test_mutation_journal_postgres`: **61/61**
+- `test_mutation_reconciliation_provenance_postgres`: **24/24**
+
+Son, bağımsız backup-kind targeted re-review'un BİZZAT yeniden
+çalıştırdığı ve doğruladığı sonuçlar (yukarıdaki listenin bir PARÇASI
+değil, AYRI, dar kapsamlı bir doğrulama):
+
+- `test_reconciliation_isolated`: **168/168**
+- `test_review_mutation_facade_isolated`: **64/64**
+- `test_review_mutation_integration_postgres`: **66/66**, gerçek
+  disposable PostgreSQL 16 üzerinde (migration 0001-0004), **0 skipped**
+- `py_compile` (iki remediation dosyası): temiz
+- `pip check`: temiz
+- `git diff --check` / `git diff --cached --check`: temiz
+- gerçek `data/` ağacı: bayt-düzeyinde DEĞİŞMEDİ
+- kullanılan disposable PostgreSQL kümesi VE her junction/temp dizini
+  test sonunda TAMAMEN kaldırıldı
+
+**Hiçbir skip PASS SAYILMAMIŞTIR** — ne geniş 36-dosyalık sweep'in 8
+skip'i, ne `test_reconciliation_isolated`'ın kendi 1 ilgisiz skip'i.
+
+**Scope dışı/kalan borç**:
+
+- OS düzeyinde ATOMİK path pinning SAĞLANDIĞI iddia EDİLMEZ.
+- Yerel bir actor'ın link-swap/TOCTOU riski Row 19D'nin OS ACL / service
+  identity kapsamındadır.
+- CLI-only writer entegrasyonu Row 19C-3b'ye KALMIŞTIR.
+- Hiçbir migration/şema DEĞİŞMEDİ.
+- Production `data/` DEĞİŞMEDİ.
+- Slice 1'in paylaşılan primitive'i (`src/path_containment.py`) ve Row
+  19C-2c'nin drafting-request'e özgü bağımsız helper'ları
+  (`_resolve_verified_case_dir()`/`_verify_nested_case_path()`) bu
+  turda DEĞİŞTİRİLMEDİ.
+
+**Final verdict: `ROW 19C-3a SLICE 2 LOCK-READY — No blocking
+findings.`**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/19C-3a
+Slice 1 örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren,
+salt-okunur bir roadmap-lock işlemidir; hiçbir kaynak/migration/test/
+production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

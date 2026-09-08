@@ -59,6 +59,7 @@
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import threading
@@ -145,6 +146,7 @@ from ui.services.common import ReviewStaleViewError                      # noqa:
 
 import qa_review                                                          # noqa: E402
 import qa_engine                                                          # noqa: E402
+import qa_approval                                                        # noqa: E402
 from mutation_guard import RESOLUTION_CODE_COMPLETED_POST_STATE_VERIFIED  # noqa: E402
 
 print(f"backend: REAL psycopg {psycopg.__version__} (production driver), dbname={PG_DB!r}")
@@ -288,6 +290,36 @@ def wait_for_lock_waiter(advisory_lock_id, *, timeout_seconds=30.0, poll_seconds
             return True
         time.sleep(poll_seconds)
     return False
+
+
+def make_directory_escape_link(link_path: Path, target_path: Path) -> None:
+    """ROW 19C-3a SLICE 2 REAL-POSTGRES PATH-PROOF REMEDIATION: a REAL,
+    platform-native directory-escape link - NTFS junction via
+    `mklink /J` on Windows (needs neither elevation nor Developer Mode),
+    a real POSIX symlink elsewhere - an independent copy of `ui/tests/
+    test_mutation_approval_integration_postgres.py`'s own identically-
+    purposed helper (this file's own test-only utility, never shared/
+    imported). A failed link creation raises - never silently treated
+    as a skip or a pass."""
+    if sys.platform == "win32":
+        # `capture_output=True, text=True` would decode stdout/stderr
+        # using the console's own (here: Turkish, cp1254) codepage - a
+        # genuine `mklink` failure can emit a localized error message
+        # containing a byte that codepage cannot decode, crashing the
+        # reader thread with a SECOND, unrelated UnicodeDecodeError that
+        # masks the real one. Captured as raw bytes and decoded with
+        # `errors="replace"` instead, so any real failure's message is
+        # always readable.
+        result = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(link_path), str(target_path)],
+            capture_output=True, timeout=15,
+        )
+        if result.returncode != 0:
+            stdout_text = result.stdout.decode("utf-8", errors="replace") if result.stdout else ""
+            stderr_text = result.stderr.decode("utf-8", errors="replace") if result.stderr else ""
+            raise RuntimeError(f"mklink /J failed (rc={result.returncode}): {stdout_text!r} {stderr_text!r}")
+    else:
+        os.symlink(str(target_path), str(link_path))
 
 
 def sha256_file(path):
@@ -453,6 +485,12 @@ def qa_binding():
         review_kind=REVIEW_KIND, module=qa_review, record_type="suggestion", call_shape="qa_special",
         state_field="suggestion_review_state", domain_error_class=qa_review.QaReviewError,
         get_audit_dir_fn=qa_review.get_qa_review_audit_dir, reviewer_ref="local_lawyer_ui",
+        # ROW 19C-3a SLICE 2: `qa_review.py` has no `CASES_DIR` of its
+        # own - `qa_approval` is the correct anchor (matches `review_
+        # registry.REVIEW_KIND_REGISTRY["qa.suggestion"]["cases_dir_
+        # module"]` exactly). `qa_approval` is already one of the 18
+        # modules this file's own CASES_DIR redirect sweep covers.
+        cases_dir_anchor_module=qa_approval,
     )
 
 
@@ -727,6 +765,214 @@ try:
         "scenario 6: the resource is no longer gated - the row reached a terminal state",
         all(r["state"] not in ("prepared", "executing", "reconciliation_required") for r in rows6_after),
     )
+
+    # ================================================================
+    # ROW 19C-3a SLICE 2 REAL-POSTGRES PATH-PROOF REMEDIATION
+    #
+    # SCENARIO B1 - PRE-LOCK AUDIT-DIRECTORY ESCAPE, against the REAL
+    # production `review_registry.apply_transition()` -> facade ->
+    # coordinator path, a REAL disposable PostgreSQL journal, and a REAL
+    # NTFS junction (never monkeypatched/mocked). `qa_review.get_qa_
+    # review_audit_dir()` (the real, unmocked audit-dir getter for
+    # `qa.suggestion` - anchored to `qa_approval.CASES_DIR`, the ONE
+    # registry exception) is made a live junction pointing OUTSIDE the
+    # case root, with a forged, perfectly-shaped audit record planted
+    # inside - proving the REAL facade raises `ReviewDirectoryScanError`
+    # BEFORE any journal/lock connection is opened, the real journal has
+    # ZERO rows, the writer never ran, and the forged content was never
+    # read (byte-identical before/after).
+    # ================================================================
+
+    fx_b1 = make_case("case_b1_prelock_escape")
+    principal_b1, repo_b1 = make_principal_and_repo(fx_b1["case_id"], user_id=21, session_id=2100)
+    writer_state["calls"] = 0
+    writer_state["fault"] = None
+
+    audit_dir_b1 = qa_review.get_qa_review_audit_dir(fx_b1["case_id"])
+    audit_dir_b1.parent.mkdir(parents=True, exist_ok=True)  # `mklink /J` requires the immediate parent to exist
+    outside_root_b1 = Path(tempfile.mkdtemp(prefix="vergi_review_pgint_b1_outside_"))
+    try:
+        canonical_before_b1 = sha256_file(fx_b1["canonical_path"])
+        forged_audit_b1 = {
+            "case_id": fx_b1["case_id"], "record_type": "suggestion", "record_id": _SUGGESTION_ID,
+            "new_state": "accepted_for_follow_up", "previous_state": "needs_review",
+            "reviewer_ref": "local_lawyer_ui", "review_note": "forged - must never be trusted",
+            "pre_sha256": fx_b1["expected_hash"], "post_sha256": fx_b1["expected_hash"],
+            "mutation_idempotency_key": "forged", "mutation_resource_key": fx_b1["resource_key"],
+            "mutation_actor_ref": "999",
+        }
+        spy_path_b1 = outside_root_b1 / "forged.review_audit.json"
+        spy_path_b1.write_text(json.dumps(forged_audit_b1), encoding="utf-8")
+        spy_before_b1 = sha256_file(spy_path_b1)
+
+        make_directory_escape_link(audit_dir_b1, outside_root_b1)
+        check(
+            "B1 precondition: the qa.suggestion audit_dir is genuinely a live junction/symlink "
+            "pointing outside the case root",
+            os.path.lexists(audit_dir_b1),
+        )
+
+        conn_calls_b1 = []
+
+        def _counting_conn_factory_b1():
+            conn_calls_b1.append(1)
+            return pg_connect()
+
+        b1_error = None
+        try:
+            facade.apply_review_mutation(
+                REVIEW_KIND, fx_b1["case_id"], _SUGGESTION_ID, "accepted_for_follow_up", "b1 note",
+                fx_b1["expected_hash"], qa_binding(),
+                principal=principal_b1, authz_repository=repo_b1, conn_factory=_counting_conn_factory_b1,
+            )
+        except BaseException as error:
+            b1_error = error
+
+        check(
+            "B1: the REAL production facade raised ReviewDirectoryScanError for the live escaping "
+            "audit_dir junction",
+            isinstance(b1_error, facade.ReviewDirectoryScanError),
+            f"got {b1_error!r}",
+        )
+        check(
+            "B1: ZERO journal/lock connections were opened at all (pre-lock failure)",
+            conn_calls_b1 == [],
+        )
+        check(
+            "B1: the REAL database has EXACTLY ZERO journal rows for this resource_key",
+            journal_rows(fx_b1["resource_key"]) == [],
+            f"got {journal_rows(fx_b1['resource_key'])!r}",
+        )
+        check(
+            "B1: PostgreSQL's OWN pg_locks shows no lock was ever requested for this resource",
+            lock_is_held_by_anyone(advisory_lock_id_for(fx_b1["resource_key"])) is False,
+        )
+        check("B1: the REAL qa_review writer was never invoked", writer_state["calls"] == 0)
+        check(
+            "B1: the canonical artefact is byte-unchanged",
+            sha256_file(fx_b1["canonical_path"]) == canonical_before_b1,
+        )
+        check(
+            "B1: the forged audit record planted OUTSIDE the case root was never read/modified "
+            "(byte-identical) - it never influenced this rejection",
+            sha256_file(spy_path_b1) == spy_before_b1,
+        )
+    finally:
+        if os.path.lexists(audit_dir_b1):
+            os.rmdir(audit_dir_b1)  # removes the junction/symlink LINK only, never the target's content
+        shutil.rmtree(outside_root_b1, ignore_errors=True)
+
+    # ================================================================
+    # SCENARIO B2 - UNDER-LOCK AUDIT-DIRECTORY SWAP, against TWO REAL
+    # PostgreSQL connections. Connection A holds the REAL
+    # `case:<case_id>` advisory lock; a second, fully independent real
+    # connection driving the REAL facade genuinely BLOCKS on it (server-
+    # observed via `pg_locks`). WHILE B waits, the (not-yet-existing,
+    # therefore safe at B's own pre-lock read) `qa_review_audit_dir` is
+    # turned into a live junction pointing OUTSIDE the case root. When A
+    # releases, B's FRESH under-lock re-verification must catch the
+    # escape - the writer must never run, and the real journal must show
+    # ZERO rows. No HTTP route test needed - the service/domain
+    # exception itself is the proof.
+    # ================================================================
+
+    fx_b2 = make_case("case_b2_underlock_swap")
+    principal_b2, repo_b2 = make_principal_and_repo(fx_b2["case_id"], user_id=22, session_id=2200)
+    writer_state["calls"] = 0
+    writer_state["fault"] = None
+
+    audit_dir_b2 = qa_review.get_qa_review_audit_dir(fx_b2["case_id"])
+    audit_dir_b2.parent.mkdir(parents=True, exist_ok=True)  # `mklink /J` requires the immediate parent to exist
+    outside_root_b2 = Path(tempfile.mkdtemp(prefix="vergi_review_pgint_b2_outside_"))
+    holder_conn_b2 = None
+    try:
+        holder_conn_b2 = pg_connect()
+        holder_lock_id_b2 = _mutation_lock.acquire_case_lock_session(holder_conn_b2, fx_b2["case_id"])
+        check(
+            "B2: connection A really acquired the REAL case lock (a real advisory_lock_id was assigned)",
+            isinstance(holder_lock_id_b2, int),
+        )
+
+        blocked_result_b2 = {}
+
+        def _run_blocked_b2():
+            try:
+                blocked_result_b2["result"] = confirm(fx_b2, principal_b2, repo_b2)
+            except BaseException as error:
+                blocked_result_b2["error"] = error
+
+        worker_b2 = threading.Thread(target=_run_blocked_b2, daemon=True)
+        worker_b2.start()
+
+        observed_waiter_b2 = wait_for_lock_waiter(holder_lock_id_b2)
+        check(
+            "B2: PostgreSQL's OWN pg_locks reports a genuinely WAITING (not granted) advisory lock "
+            "for this case - session B is really blocked",
+            observed_waiter_b2,
+            f"no NOT-granted advisory lock appeared for advisory_lock_id={holder_lock_id_b2}",
+        )
+        check(
+            "B2: while B waits, it has written NOTHING to the real journal yet",
+            journal_rows(fx_b2["resource_key"]) == [],
+        )
+
+        # WHILE B waits (proven blocked above), swap the (not-yet-
+        # existing, hence safe at B's own pre-lock read) audit_dir to a
+        # live escaping junction with a forged matching entry inside.
+        forged_audit_b2 = {
+            "case_id": fx_b2["case_id"], "record_type": "suggestion", "record_id": _SUGGESTION_ID,
+            "new_state": "accepted_for_follow_up", "previous_state": "needs_review",
+            "reviewer_ref": "local_lawyer_ui", "review_note": "forged - must never be trusted",
+            "pre_sha256": fx_b2["expected_hash"], "post_sha256": fx_b2["expected_hash"],
+            "mutation_idempotency_key": "forged", "mutation_resource_key": fx_b2["resource_key"],
+            "mutation_actor_ref": "999",
+        }
+        (outside_root_b2 / "forged.review_audit.json").write_text(json.dumps(forged_audit_b2), encoding="utf-8")
+        outside_spy_before_b2 = sha256_file(outside_root_b2 / "forged.review_audit.json")
+        make_directory_escape_link(audit_dir_b2, outside_root_b2)
+        check(
+            "B2 precondition: qa_review_audit_dir is genuinely a live junction/symlink pointing "
+            "outside the case root, created WHILE session B was still blocked",
+            os.path.lexists(audit_dir_b2),
+        )
+
+        released_b2 = _mutation_lock.release_lock_session(holder_conn_b2, holder_lock_id_b2)
+        check("B2: connection A's real lock release reported success", released_b2 is True)
+        holder_conn_b2.close()
+        holder_conn_b2 = None
+
+        worker_b2.join(timeout=90)
+        check("B2: once A released, the previously-blocked request completed (thread finished)", not worker_b2.is_alive())
+        check(
+            "B2: the FRESH under-lock re-verification rejected B with ReviewDirectoryScanError - "
+            "the escape introduced while waiting was caught, never silently accepted",
+            isinstance(blocked_result_b2.get("error"), facade.ReviewDirectoryScanError),
+            f"got {blocked_result_b2!r}",
+        )
+        check("B2: the REAL qa_review writer was NEVER invoked", writer_state["calls"] == 0)
+        check(
+            "B2: the REAL database has EXACTLY ZERO journal rows for this resource_key",
+            journal_rows(fx_b2["resource_key"]) == [],
+            f"got {journal_rows(fx_b2['resource_key'])!r}",
+        )
+        check(
+            "B2: the canonical artefact is byte-unchanged (still needs_review)",
+            sha256_file(fx_b2["canonical_path"]) == fx_b2["expected_hash"],
+        )
+        check(
+            "B2: the forged audit content planted OUTSIDE the case root was never read (byte-identical)",
+            sha256_file(outside_root_b2 / "forged.review_audit.json") == outside_spy_before_b2,
+        )
+    finally:
+        if holder_conn_b2 is not None:
+            try:
+                _mutation_lock.release_lock_session(holder_conn_b2, holder_lock_id_b2)
+            except Exception:
+                pass
+            holder_conn_b2.close()
+        if os.path.lexists(audit_dir_b2):
+            os.rmdir(audit_dir_b2)
+        shutil.rmtree(outside_root_b2, ignore_errors=True)
 
 finally:
     qa_review.apply_review_transition = _REAL_APPLY_REVIEW_TRANSITION

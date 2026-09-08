@@ -104,13 +104,99 @@
 
 from __future__ import annotations
 
+import fnmatch
 import importlib
 import json
+import sys
 from pathlib import Path
 
+_SRC_DIR = Path(__file__).resolve().parent.parent.parent / "src"
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
+import path_containment as _path_containment  # noqa: E402
+
 from . import mutation_registry as mr
-from .common import find_latest_audit, sha256_file
+from .common import sha256_file
 from .mutation_approval_facade import ROW_KEY_TO_MODULE_NAME, action_family_for
+
+
+# ============================================================
+# ROW 19C-3a SLICE 2 - NESTED PATH-CONTAINMENT, independently
+# implemented in THIS file - never imported from, and never imported
+# by, `mutation_approval_facade.py` (the same non-masking principle
+# this module's own header comment already states for the audit-
+# binding logic applies here too: a bug in one's containment check must
+# never be masked by reusing the other's).
+#
+# UNLIKE THE FACADE: every containment failure here resolves to the
+# EXISTING `mr.ReconciliationEvidence(post_state_verified=False,
+# pre_state_confirmed_unchanged=False)` dual-false shape - genuinely
+# inconclusive evidence, never a raised exception (an adapter's
+# `gather_evidence()` reports what it can independently prove; a path-
+# safety anomaly proves nothing about this journal entry's true
+# outcome, so it is reported exactly like any other inconclusive
+# read - a missing canonical, an unreadable audit record, and so on).
+# ============================================================
+
+
+class NestedPathContainmentError(Exception):
+    """Internal-only signal used solely to unwind out of the containment
+    helpers below into `gather_evidence()`'s own dual-false return -
+    never raised past this module's own boundary."""
+
+
+def _resolve_case_root_real(module, case_id: str) -> Path:
+    cases_dir = module.CASES_DIR
+    try:
+        return _path_containment.resolve_existing(cases_dir / case_id, root=cases_dir)
+    except _path_containment.PathContainmentError as error:
+        raise NestedPathContainmentError(str(error)) from error
+
+
+def _verify_nested(module, case_root_real: Path, case_id: str, raw_path) -> Path:
+    cases_dir = module.CASES_DIR
+    case_root_raw = cases_dir / case_id
+    raw_path = Path(raw_path)
+    try:
+        relative_parts = raw_path.relative_to(case_root_raw).parts
+    except ValueError as error:
+        raise NestedPathContainmentError(str(error)) from error
+    try:
+        return _path_containment.resolve_for_create(case_root_real, *relative_parts)
+    except _path_containment.PathContainmentError as error:
+        raise NestedPathContainmentError(str(error)) from error
+
+
+def _safe_latest_audit(case_root_real: Path, reviews_dir_verified: Path):
+    """Independent copy of `mutation_approval_facade._safe_latest_
+    audit()`'s exact selection semantics (`*.approval.json`, highest
+    `st_mtime`) - operates ONLY over entries that have already passed
+    case-root containment AND exact expected-parent membership.
+    `NestedPathContainmentError` on any matching entry's failure
+    propagates to THIS module's own caller (`gather_evidence()`), which
+    converts it to dual-false - never silently skipped, never read."""
+    if not reviews_dir_verified.is_dir():
+        return None
+    try:
+        raw_entries = sorted(reviews_dir_verified.iterdir(), key=lambda p: p.name)
+    except OSError as error:
+        raise NestedPathContainmentError(str(error)) from error
+
+    verified = []
+    for entry in raw_entries:
+        if not fnmatch.fnmatch(entry.name, "*.approval.json"):
+            continue
+        try:
+            resolved = _path_containment.resolve_existing(entry, root=case_root_real)
+        except _path_containment.PathContainmentError as error:
+            raise NestedPathContainmentError(str(error)) from error
+        if resolved.parent != reviews_dir_verified:
+            raise NestedPathContainmentError(f"in-tree alias: {entry.name!r} resolves outside its expected parent")
+        verified.append(resolved)
+    if not verified:
+        return None
+    return sorted(verified, key=lambda p: p.stat().st_mtime)[-1]
 
 
 class UnexpectedResourceKeyShapeError(Exception):
@@ -209,13 +295,31 @@ class CaseScopedApprovalReconciliationAdapter:
             )
         case_id = entry.resource_key[len("case:"):]
 
-        canonical_path = self._module.get_canonical_path(case_id)
-        if not canonical_path.exists():
-            # The writer boundary may or may not have been crossed
-            # (that distinction is `_decide_outcome()`'s own job, not
-            # this adapter's) - what THIS adapter can independently
-            # prove is simply that no canonical artefact exists, i.e.
-            # the pre-state (no canonical file) is unchanged.
+        # ROW 19C-3a SLICE 2: the case root and canonical's own nested
+        # chain are verified FIRST, before any `.exists()`-style
+        # reasoning - a bare `canonical_path.exists()` on an unverified
+        # path cannot distinguish "genuinely no canonical file" from
+        # "the family directory itself is an escaping/broken symlink or
+        # junction" (both read as `False`), and the two are NOT
+        # equivalent evidence: only the first legitimately proves the
+        # pre-state unchanged. A containment failure here is reported as
+        # genuinely inconclusive (dual-false), NEVER as the affirmative
+        # "pre-state unchanged" a bare `.exists()==False` would
+        # otherwise (wrongly) conclude.
+        try:
+            case_root_real = _resolve_case_root_real(self._module, case_id)
+            canonical_verified = _verify_nested(
+                self._module, case_root_real, case_id, self._module.get_canonical_path(case_id),
+            )
+        except NestedPathContainmentError:
+            return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
+
+        if not canonical_verified.is_file():
+            # The chain above verified CLEANLY; only the final leaf
+            # itself is genuinely absent - the ONE legitimate "pre-state
+            # unchanged" case (the writer boundary may or may not have
+            # been crossed - that distinction is `_decide_outcome()`'s
+            # own job, not this adapter's).
             return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=True)
 
         # Binding 3 (see this module's own header comment): the
@@ -223,14 +327,19 @@ class CaseScopedApprovalReconciliationAdapter:
         # for both the binding check and the reported
         # `observed_post_hash`, so the value proven is exactly the value
         # reported. `None` here would mean the file vanished between
-        # the `.exists()` check above and this read - genuinely
+        # the verification above and this read - genuinely
         # inconclusive, never either proof.
-        current_canonical_sha256 = sha256_file(canonical_path)
+        current_canonical_sha256 = sha256_file(canonical_verified)
         if current_canonical_sha256 is None:
             return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
 
-        reviews_dir = canonical_path.parent / "reviews"
-        audit_path = find_latest_audit(reviews_dir)
+        try:
+            reviews_dir_verified = _verify_nested(
+                self._module, case_root_real, case_id, canonical_verified.parent / "reviews",
+            )
+            audit_path = _safe_latest_audit(case_root_real, reviews_dir_verified)
+        except NestedPathContainmentError:
+            return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
         if audit_path is None:
             return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
 

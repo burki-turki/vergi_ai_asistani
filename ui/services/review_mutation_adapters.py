@@ -77,6 +77,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
 import sys
@@ -87,12 +88,56 @@ if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
 from mutation_guard import MutationIntent, compute_request_fingerprint  # noqa: E402
+import path_containment as _path_containment  # noqa: E402
 
 from . import mutation_registry as mr
 from . import paths as _paths
 from . import review_registry as _review_registry
 from .common import sha256_file
 from .review_mutation_facade import action_family_for
+
+
+# ============================================================
+# ROW 19C-3a SLICE 2 - NESTED PATH-CONTAINMENT, independently
+# implemented in THIS file - never imported from, and never imported
+# by, `review_mutation_facade.py`'s own copy (same non-masking
+# principle this module's own header comment already states for the
+# audit-binding logic).
+#
+# UNLIKE THE FACADE: every containment failure here resolves to the
+# EXISTING `mr.ReconciliationEvidence(post_state_verified=False,
+# pre_state_confirmed_unchanged=False)` dual-false shape via
+# `_NestedPathContainmentSignal` - genuinely inconclusive evidence,
+# never propagated past this module's own boundary.
+# ============================================================
+
+
+class _NestedPathContainmentSignal(Exception):
+    """Internal-only signal used solely to unwind into `gather_
+    evidence()`'s own dual-false return - never raised past this
+    module's own boundary."""
+
+
+def _resolve_case_root_real(anchor_module, case_id: str) -> Path:
+    cases_dir = anchor_module.CASES_DIR
+    try:
+        return _path_containment.resolve_existing(cases_dir / case_id, root=cases_dir)
+    except _path_containment.PathContainmentError as error:
+        raise _NestedPathContainmentSignal(str(error)) from error
+
+
+def _verify_nested(anchor_module, case_root_real: Path, case_id: str, raw_path) -> Path:
+    cases_dir = anchor_module.CASES_DIR
+    case_root_raw = cases_dir / case_id
+    raw_path = Path(raw_path)
+    try:
+        relative_parts = raw_path.relative_to(case_root_raw).parts
+    except ValueError as error:
+        raise _NestedPathContainmentSignal(str(error)) from error
+    try:
+        return _path_containment.resolve_for_create(case_root_real, *relative_parts)
+    except _path_containment.PathContainmentError as error:
+        raise _NestedPathContainmentSignal(str(error)) from error
 
 
 class UnexpectedResourceKeyShapeError(Exception):
@@ -177,17 +222,26 @@ def _scan_audit_directory(audit_dir: Path) -> _AuditDirectoryScan:
             raise ReviewReconciliationScanError(f"{audit_dir}: yinelenen dizin girişi adı: {name!r}")
         seen_names.add(name)
 
-        if not entry.is_file():
-            raise ReviewReconciliationScanError(
-                f"{audit_dir}: beklenmeyen (dosya olmayan) dizin girişi: {name!r}"
-            )
-
+        # ROW 19C-3a SLICE 2 BACKUP-KIND CONTAINMENT REMEDIATION: entry
+        # kind is classified with pure, filesystem-free string operations
+        # only. An "unexpected" name is rejected immediately - no
+        # containment check is meaningful for a name this scanner does
+        # not recognize at all. BOTH "audit" and "backup" kinds then go
+        # through the IDENTICAL containment + exact-parent-membership
+        # proof BEFORE any is_file()/stat()/open() touches the entry -
+        # closing a second ordering bug an independent review found
+        # AFTER the first (see the FINAL NARROW REMEDIATION note this
+        # replaces): the "backup" branch used to call `entry.is_file()`
+        # on the RAW, unverified entry BEFORE containment was ever
+        # checked. On Windows a directory-junction escape happened to
+        # still abort the scan (a junction always fails `is_file()`), but
+        # a live escaping SYMLINK to an external FILE transparently
+        # passes `is_file()` - such an entry was silently ignored
+        # (`continue`) without the escape ever being detected at all, not
+        # merely mis-diagnosed.
         kind = _classify_entry_kind(name)
-        if kind != "audit":
-            if kind == "unexpected":
-                raise ReviewReconciliationScanError(f"{audit_dir}: beklenmeyen dizin girişi: {name!r}")
-            # kind == "backup" - irrelevant to reconciliation, skip.
-            continue
+        if kind == "unexpected":
+            raise ReviewReconciliationScanError(f"{audit_dir}: beklenmeyen dizin girişi: {name!r}")
 
         try:
             verified_path = _paths.verify_real_path_contained(entry, root=audit_dir)
@@ -195,6 +249,51 @@ def _scan_audit_directory(audit_dir: Path) -> _AuditDirectoryScan:
             raise ReviewReconciliationScanError(
                 f"{audit_dir}: girişin containment doğrulaması başarısız: {name!r}"
             ) from error
+
+        # ROW 19C-3a SLICE 2: EXACT expected-parent membership - see
+        # `review_mutation_facade._scan_review_directory()`'s own
+        # identical addition and its docstring for the full rationale
+        # (closes the in-tree-alias case: an entry that legitimately
+        # resolves INSIDE `audit_dir`'s own real form via `relative_to()`
+        # but whose own immediate parent is NOT `audit_dir` itself).
+        # Meaningful only because `audit_dir` here is, since this Slice,
+        # always the CALLER's own case-root-verified real form. Applies
+        # to BOTH kinds - a backup entry aliasing into a nested
+        # descendant is exactly as much an escape as an audit entry
+        # doing the same.
+        if verified_path.parent != Path(audit_dir):
+            raise ReviewReconciliationScanError(
+                f"{audit_dir}: giriş beklenen dizinin DIŞINA çözümleniyor (in-tree alias): {name!r}"
+            )
+
+        if kind == "backup":
+            # Safe (contained, correctly-parented) - but a backup entry's
+            # CONTENT is never relevant to reconciliation (see this
+            # function's own docstring, "the user's point-3 list contains
+            # no backup binding"). A safe, regular-file backup entry is
+            # silently ignored, exactly as before; a safe entry that is
+            # NOT a regular file (e.g. a contained subdirectory literally
+            # named "*.bak") still aborts the whole scan, preserving the
+            # ORIGINAL pre-remediation outcome for that case - only NOW
+            # the type check runs on the VERIFIED path, never the raw,
+            # unverified entry.
+            if not verified_path.is_file():
+                raise ReviewReconciliationScanError(
+                    f"{audit_dir}: beklenmeyen (dosya olmayan) dizin girişi: {name!r}"
+                )
+            continue
+
+        # kind == "audit" - the ONLY entries this scanner actually reads.
+        # ONLY NOW, on the VERIFIED, fully-resolved Path, is a type
+        # check performed - preserves the ORIGINAL pre-remediation
+        # outcome (a non-regular-file audit-named entry aborts the whole
+        # scan) rather than silently falling through to `open()`'s own
+        # `IsADirectoryError`, which the broad `except Exception` below
+        # would otherwise have mis-tracked as merely "corrupt".
+        if not verified_path.is_file():
+            raise ReviewReconciliationScanError(
+                f"{audit_dir}: beklenmeyen (dosya olmayan) dizin girişi: {name!r}"
+            )
 
         try:
             with open(verified_path, "r", encoding="utf-8") as file:
@@ -303,6 +402,15 @@ class ReviewMutationReconciliationAdapter:
         # independently-maintained copy of the same mapping.
         self._get_audit_dir_fn = getattr(module, entry["audit_dir_getter"])
         self._reviewer_ref = _review_registry.REVIEWER_REF
+        # ROW 19C-3a SLICE 2: resolved INDEPENDENTLY from the facade's
+        # own identical resolution in `review_registry.apply_
+        # transition()` - both read the SAME `REVIEW_KIND_REGISTRY`
+        # entry's `cases_dir_module_name()`, but each does its own
+        # `_import_module()` call rather than sharing a resolved value,
+        # preserving the existing independence discipline.
+        self._cases_dir_anchor_module = _review_registry._import_module(
+            _review_registry.cases_dir_module_name(review_kind),
+        )
 
     def gather_evidence(self, entry: mr.JournalEntrySnapshot) -> mr.ReconciliationEvidence:
         if not entry.resource_key.startswith("case:"):
@@ -313,8 +421,23 @@ class ReviewMutationReconciliationAdapter:
         case_id = entry.resource_key[len("case:"):]
         record_id = entry.target_ref
 
-        canonical_path = self._module.get_canonical_path(case_id)
-        if not canonical_path.exists():
+        # ROW 19C-3a SLICE 2: case root, canonical, and audit_dir chains
+        # are ALL verified before any `.exists()`/hash/scan reasoning -
+        # a containment failure at any point resolves to the SAME
+        # dual-false shape a genuinely missing/unreadable canonical or
+        # audit record already produced before this Slice (Layer B
+        # never treated a missing canonical as an affirmative "pre-state
+        # unchanged" proof to begin with, unlike Layer A - so this
+        # Slice closes the analogous gap without needing a NEW branch).
+        try:
+            case_root_real = _resolve_case_root_real(self._cases_dir_anchor_module, case_id)
+            canonical_verified = _verify_nested(
+                self._cases_dir_anchor_module, case_root_real, case_id, self._module.get_canonical_path(case_id),
+            )
+        except _NestedPathContainmentSignal:
+            return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
+
+        if not canonical_verified.is_file():
             # Layer B's canonical is expected to ALWAYS exist by the
             # time a journal row could exist at all (Layer A already
             # promoted it - a Layer B admission attempt against a
@@ -326,12 +449,12 @@ class ReviewMutationReconciliationAdapter:
             # proof.
             return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
 
-        current_canonical_sha256 = sha256_file(canonical_path)
+        current_canonical_sha256 = sha256_file(canonical_verified)
         if current_canonical_sha256 is None:
             return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
 
         try:
-            analysis = json.loads(canonical_path.read_text(encoding="utf-8"))
+            analysis = json.loads(canonical_verified.read_text(encoding="utf-8"))
         except Exception:
             return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
 
@@ -341,8 +464,17 @@ class ReviewMutationReconciliationAdapter:
 
         canonical_record_state = record.get(self._state_field)
 
-        audit_dir = self._get_audit_dir_fn(case_id)
-        scan = _scan_audit_directory(audit_dir)
+        try:
+            audit_dir_verified = _verify_nested(
+                self._cases_dir_anchor_module, case_root_real, case_id, self._get_audit_dir_fn(case_id),
+            )
+        except _NestedPathContainmentSignal:
+            return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
+
+        try:
+            scan = _scan_audit_directory(audit_dir_verified)
+        except ReviewReconciliationScanError:
+            return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
 
         clean_matches = _record_bound_clean_matches_with_names(
             scan, case_id=case_id, record_type=self._record_type, record_id=record_id,

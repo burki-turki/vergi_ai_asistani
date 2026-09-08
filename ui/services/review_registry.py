@@ -288,8 +288,37 @@ REVIEW_KIND_REGISTRY = {
         "state_field": "suggestion_review_state",
         "audit_dir_getter": "get_qa_review_audit_dir",
         "domain_error_class": QaReviewError,
+        # ROW 19C-3a SLICE 2: `qa_review.py` has NO `CASES_DIR` attribute
+        # of its own (verified by direct reading) - it imports
+        # `get_qa_dir`/`get_canonical_path` as FUNCTIONS from
+        # `qa_approval`, never binding `CASES_DIR` itself. The path-
+        # containment anchor for THIS review_kind must therefore be
+        # `qa_approval` (which DOES have one - `from qa_discovery import
+        # CASES_DIR`, a real, patchable module attribute despite being
+        # imported by value, same shape `orchestrator_approval.py` uses)
+        # - NOT `qa_review` (this entry's own `"module"` value). This is
+        # the ONE entry needing this override; the other 11 default to
+        # their own `"module"` (see `cases_dir_module_name()` below) -
+        # this field is consulted ONLY for path-root anchor selection,
+        # never for authz/action-family/audit/idempotency.
+        "cases_dir_module": "qa_approval",
     },
 }
+
+
+def cases_dir_module_name(review_kind):
+    """The module name whose OWN `CASES_DIR` attribute anchors path-
+    containment verification for `review_kind` - `entry["cases_dir_
+    module"]` when explicitly set (today: only `qa.suggestion`),
+    otherwise `entry["module"]` itself (the same module the review
+    backend's own `get_canonical_path`/`get_*_review_audit_dir` getters
+    already live on). A pure, additive metadata lookup - never consulted
+    for authz/action-family/audit/idempotency, only for choosing which
+    module's `CASES_DIR` to read."""
+
+    entry = _get_entry(review_kind)
+
+    return entry.get("cases_dir_module", entry["module"])
 
 
 def _get_entry(review_kind):
@@ -650,6 +679,7 @@ def apply_transition(
         )
 
     module = _import_module(entry["module"])
+    cases_dir_anchor_module = _import_module(cases_dir_module_name(review_kind))
 
     binding = _review_mutation_facade.ReviewFamilyBinding(
         review_kind=review_kind,
@@ -660,6 +690,7 @@ def apply_transition(
         domain_error_class=entry["domain_error_class"],
         get_audit_dir_fn=getattr(module, entry["audit_dir_getter"]),
         reviewer_ref=REVIEWER_REF,
+        cases_dir_anchor_module=cases_dir_anchor_module,
     )
 
     result = _review_mutation_facade.apply_review_mutation(

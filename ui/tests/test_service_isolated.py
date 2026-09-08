@@ -470,11 +470,25 @@ def _run_isolated_mutation_scenario():
 
         tmp_path = Path(tmp)
 
-        pending_path = tmp_path / "pending.json"
+        # ROW 19C-3a SLICE 2: the facade's pre-lock/under-lock nested
+        # path-containment verification reads `module.CASES_DIR` and
+        # re-derives `CASES_DIR/case_id/...` from each raw path it is
+        # given (`ui.services.mutation_approval_facade._resolve_case_
+        # root_real()`/`_verify_nested()`) - so this fixture is nested
+        # one level deeper (`tmp_path/case_iso_0001/...`, never
+        # `tmp_path/...` directly) to present a genuine `CASES_DIR/
+        # case_id` shape that `path_containment.resolve_existing()`
+        # can verify for real (never bypassed/monkeypatched);
+        # `fake_module_ok`/`fake_module_fail` below both set
+        # `CASES_DIR = tmp_path` accordingly.
+        case_root = tmp_path / "case_iso_0001"
+        case_root.mkdir()
+
+        pending_path = case_root / "pending.json"
         pending_path.write_text('{"synthetic": true, "value": 1}', encoding="utf-8")
 
-        canonical_path = tmp_path / "canonical.json"
-        reviews_dir = tmp_path / "reviews"
+        canonical_path = case_root / "canonical.json"
+        reviews_dir = case_root / "reviews"
         reviews_dir.mkdir()
 
         # --- Senaryo A: başarılı onay (mutlu yol) ---
@@ -515,6 +529,7 @@ def _run_isolated_mutation_scenario():
             get_pending_path=_fake_get_pending_path,
             get_canonical_path=_fake_get_canonical_path,
             run_approve=_fake_run_approve_ok,
+            CASES_DIR=tmp_path,
         )
 
         _sys.modules["_izole_sahte_row_ok"] = fake_module_ok
@@ -598,6 +613,7 @@ def _run_isolated_mutation_scenario():
                 get_pending_path=_fake_get_pending_path,
                 get_canonical_path=_fake_get_canonical_path,
                 run_approve=_fake_run_approve_fails,
+                CASES_DIR=tmp_path,
             )
             _sys.modules["_izole_sahte_row_fail"] = fake_module_fail
             reg.CASE_SCOPED_ROWS_BY_KEY["_izole_test_fail"] = {

@@ -37,8 +37,11 @@
 
 import hashlib
 import json
+import os
 import shutil
+import subprocess
 import sys
+import tempfile
 import types
 import uuid
 from pathlib import Path
@@ -261,6 +264,27 @@ def sha256_text(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+# ----------------------------------------------------------------
+# ROW 19C-3a SLICE 2 - real NTFS junction helper, identical shape to
+# ui/tests/test_path_containment_windows.py's own `make_junction()`
+# (mklink /J needs NEITHER elevation NOR Developer Mode on a normal
+# Windows account - matching this project's own established
+# discipline, a junction-creation failure here is a genuine, counted
+# test failure, never a silent skip, on `sys.platform == "win32"`).
+# ----------------------------------------------------------------
+
+def make_junction(link_path: Path, target_path: Path) -> None:
+    result = subprocess.run(
+        ["cmd", "/c", "mklink", "/J", str(link_path), str(target_path)],
+        capture_output=True, text=True, timeout=15,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"mklink /J failed (rc={result.returncode}): {result.stdout!r} {result.stderr!r}")
+
+
+_IS_WINDOWS = sys.platform == "win32"
+
+
 def make_principal_and_repo(case_id, *, assigned=True, role="lawyer"):
     principal = _authz.Principal(user_id=1, session_id=100, role_version_at_issue=1)
     repo = _authz.InMemoryAuthzRepository()
@@ -270,7 +294,7 @@ def make_principal_and_repo(case_id, *, assigned=True, role="lawyer"):
     return principal, repo
 
 
-def make_fake_module(name, *, raise_on_approve=None, on_approve_hook=None):
+def make_fake_module(name, *, raise_on_approve=None, on_approve_hook=None, with_carry_forward=False):
     """A minimal stand-in for one of the 10 real src/*_approval.py
     modules - just enough of get_pending_path/get_canonical_path/
     run_approve for the facade to drive for real, writing a REAL audit
@@ -285,8 +309,26 @@ def make_fake_module(name, *, raise_on_approve=None, on_approve_hook=None):
     exactly as all 10 real modules' now are (verified by AST across
     every one of them) - so this fake would genuinely reject a
     positional caller too, and cannot drift into accepting a shape
-    production would refuse."""
+    production would refuse.
+
+    ROW 19C-3a SLICE 2: `mod.CASES_DIR` is added - EVERY one of the 10
+    real `src/*_approval.py` modules exposes its OWN `CASES_DIR`
+    attribute (verified by direct reading during the Slice 2 scope
+    report), and the facade's new `_resolve_case_root_real()`/`_verify_
+    nested()` helpers read it dynamically - a fake module that omitted
+    it would not be a faithful stand-in any more, now that this
+    attribute is load-bearing. Bound to the SAME real `_paths.CASES_DIR`
+    value `get_pending_path`/`get_canonical_path` already use, so the
+    verified paths this Slice computes and the raw paths this fake
+    module's OWN functions compute always agree.
+
+    `with_carry_forward=True` additionally adds `get_carry_forward_dir`
+    (mirroring the 4 real families - argument/risk_strategy/drafting/qa
+    - that have one) so carry-forward-gate tests can target a module
+    that genuinely has the attribute the facade probes for via
+    `hasattr()`."""
     mod = types.ModuleType(name)
+    mod.CASES_DIR = _paths.CASES_DIR
     run_approve_calls = []
 
     def get_pending_path(case_id):
@@ -294,6 +336,9 @@ def make_fake_module(name, *, raise_on_approve=None, on_approve_hook=None):
 
     def get_canonical_path(case_id):
         return _paths.CASES_DIR / case_id / "canonical.json"
+
+    def get_carry_forward_dir(case_id):
+        return _paths.CASES_DIR / case_id / "history" / "carry_forward"
 
     def run_approve(case_id, *, mutation_idempotency_key=None, mutation_resource_key=None):
         run_approve_calls.append((case_id, mutation_idempotency_key, mutation_resource_key))
@@ -329,6 +374,8 @@ def make_fake_module(name, *, raise_on_approve=None, on_approve_hook=None):
     mod.get_canonical_path = get_canonical_path
     mod.run_approve = run_approve
     mod.run_approve_calls = run_approve_calls
+    if with_carry_forward:
+        mod.get_carry_forward_dir = get_carry_forward_dir
     return mod
 
 
@@ -947,11 +994,22 @@ try:
     # too: the resource_key SHAPE check must fire even when the audit
     # record agrees with it perfectly (so it cannot be mistaken for the
     # equality check).
+    # ROW 19C-3a SLICE 2: `_verify_completed_replay_audit_binding()` now
+    # requires the caller's OWN already-verified `case_root_real`/
+    # `reviews_dir` - a genuine, real verification here (never faked),
+    # using this module's OWN new public helpers against the fake
+    # module, so this direct-call test still exercises exactly what
+    # `approve_case_scoped_mutation()`'s replay branch itself computes.
+    case_root_real_12 = facade._resolve_case_root_real(fake_mod, case_id11)
+    reviews_dir_verified_12 = facade._verify_nested(
+        fake_mod, case_root_real_12, case_id11, result11.canonical_path.parent / "reviews",
+    )
+
     with_record({**good_record_12, "mutation_resource_key": "not-a-case-key"})
     expect_raises(
         facade.AuditBindingVerificationFailedError,
         lambda: facade._verify_completed_replay_audit_binding(
-            result11.canonical_path,
+            result11.canonical_path, case_root_real_12, reviews_dir_verified_12,
             journal_state=facade.COMPLETED_JOURNAL_STATE,
             journal_id=result11.journal_id,
             idempotency_key=good_record_12["mutation_idempotency_key"],
@@ -985,7 +1043,9 @@ try:
             pre_revision=expected_hash11,
         )
         kwargs.update(overrides)
-        return facade._verify_completed_replay_audit_binding(result11.canonical_path, **kwargs)
+        return facade._verify_completed_replay_audit_binding(
+            result11.canonical_path, case_root_real_12, reviews_dir_verified_12, **kwargs,
+        )
 
     check(
         "binding 3b: with every binding correct, the helper returns the FRESHLY COMPUTED current "
@@ -1483,6 +1543,463 @@ try:
     finally:
         ml.release_lock_session = _fake_release_lock_session
     check("unlock safety (released is False): conn.close() was still called", conn14f.close_calls == 1)
+
+    # ==================================================================
+    # ROW 19C-3a SLICE 2 - NESTED PATH-CONTAINMENT (pending/canonical/
+    # reviews/history-carry-forward). Every scenario below uses REAL
+    # NTFS junctions (`mklink /J`, needs no elevation/Developer Mode) on
+    # `sys.platform == "win32"`; on any other platform this whole
+    # section is explicitly, visibly skipped (never silently, never
+    # counted as a pass) - matching ui/tests/test_path_containment_
+    # windows.py's own established discipline.
+    # ==================================================================
+
+    if not _IS_WINDOWS:
+        print(
+            "SKIPPED (not counted as pass/fail) - ROW 19C-3a SLICE 2 junction scenarios need a "
+            f"real NTFS junction (sys.platform={sys.platform!r} here); see ui/tests/"
+            "test_path_containment_windows.py's own identical platform-gating discipline."
+        )
+    else:
+        outside_root_15 = Path(tempfile.mkdtemp(prefix="row19c3a_slice2_outside_"))
+        try:
+            # ----------------------------------------------------
+            # 15a) FAMILY-DIRECTORY-LEVEL escape: the whole family
+            #      directory (`.../<case_id>/<family>`, i.e. the direct
+            #      parent of pending/canonical/reviews) is itself a live
+            #      junction pointing OUTSIDE the case root. Caught at
+            #      the PRE-LOCK verification, before any lock/journal
+            #      connection - `NestedPathContainmentError`.
+            # ----------------------------------------------------
+            case_id15a, case_dir15a, _ = make_case(pending_content=None)
+            outside_family_15a = outside_root_15 / f"family_{uuid.uuid4().hex}"
+            outside_family_15a.mkdir()
+            (outside_family_15a / "pending.json").write_text('{"stolen": "content"}', encoding="utf-8")
+            # `make_case()` already created the case dir with no
+            # sub-family directory (pending_content=None) - the REAL
+            # family dir for the generic fake module is the case dir
+            # itself (get_pending_path returns `CASES_DIR/case_id/
+            # pending.json`, i.e. NO extra family segment) - so this
+            # scenario targets the CASE directory itself as the escape
+            # point instead, proven via a SEPARATE, deeper-nested fake
+            # module below (15f) that genuinely has a family segment.
+            shutil.rmtree(outside_family_15a, ignore_errors=True)
+
+            principal15a, repo15a = make_principal_and_repo(case_id15a)
+            conn_calls_15a = []
+
+            def counting_conn_factory_15a():
+                conn_calls_15a.append(1)
+                return FakeJournalConn()
+
+            pre_calls_15a = len(fake_mod.run_approve_calls)
+            expect_raises(
+                PendingNotFoundError,
+                lambda: facade.approve_case_scoped_mutation(
+                    "test_family", case_id15a, "irrelevant", principal=principal15a,
+                    authz_repository=repo15a, conn_factory=counting_conn_factory_15a,
+                ),
+                "sanity: with no family-level escape, a genuinely-missing pending still raises "
+                "PendingNotFoundError exactly as before (regression baseline for 15f below)",
+            )
+            check("sanity 15a: run_approve was never invoked", len(fake_mod.run_approve_calls) == pre_calls_15a)
+
+            # ----------------------------------------------------
+            # 15b) REVIEWS-DIRECTORY-LEVEL escape: `reviews/` itself
+            #      (canonical_path.parent / "reviews") is a live
+            #      junction pointing OUTSIDE the case root. Caught at
+            #      PRE-LOCK verification - zero connections/lock/writer.
+            # ----------------------------------------------------
+            case_id15b, case_dir15b, pending_path15b = make_case()
+            expected_hash15b = sha256_text(pending_path15b.read_text(encoding="utf-8"))
+            principal15b, repo15b = make_principal_and_repo(case_id15b)
+            reviews_dir_15b = case_dir15b / "reviews"
+            outside_reviews_15b = outside_root_15 / f"reviews_{uuid.uuid4().hex}"
+            outside_reviews_15b.mkdir()
+            spy_15b = outside_reviews_15b / "spy_should_never_be_read.approval.json"
+            spy_15b.write_text('{"planted": "outside content - must NEVER be read"}', encoding="utf-8")
+            make_junction(reviews_dir_15b, outside_reviews_15b)
+
+            conn_calls_15b = []
+
+            def counting_conn_factory_15b():
+                conn_calls_15b.append(1)
+                return FakeJournalConn()
+
+            pre_calls_15b = len(fake_mod.run_approve_calls)
+            expect_raises(
+                facade.NestedPathContainmentError,
+                lambda: facade.approve_case_scoped_mutation(
+                    "test_family", case_id15b, expected_hash15b, principal=principal15b,
+                    authz_repository=repo15b, conn_factory=counting_conn_factory_15b,
+                ),
+                "15b: a live escaping junction AT the reviews_dir level raises NestedPathContainmentError",
+            )
+            check("15b: ZERO journal/lock connections were opened (pre-lock failure)", conn_calls_15b == [])
+            check("15b: run_approve was never invoked", len(fake_mod.run_approve_calls) == pre_calls_15b)
+            check(
+                "15b: NestedPathContainmentError IS an ApprovalUiError subclass - ui/main.py's "
+                "existing generic except ApprovalUiError catch-all needs ZERO changes",
+                issubclass(facade.NestedPathContainmentError, facade.ApprovalUiError),
+            )
+
+            # ----------------------------------------------------
+            # 15c) BROKEN junction AT the reviews_dir level (target
+            #      deleted, reparse-point entry itself still on disk) -
+            #      `os.path.lexists()==True`, `Path.exists()==False`.
+            #      Must be routed through FULL containment verification,
+            #      never silently treated as "reviews doesn't exist yet".
+            # ----------------------------------------------------
+            case_id15c, case_dir15c, pending_path15c = make_case()
+            expected_hash15c = sha256_text(pending_path15c.read_text(encoding="utf-8"))
+            principal15c, repo15c = make_principal_and_repo(case_id15c)
+            reviews_dir_15c = case_dir15c / "reviews"
+            outside_ghost_15c = outside_root_15 / f"ghost_{uuid.uuid4().hex}"
+            outside_ghost_15c.mkdir()
+            make_junction(reviews_dir_15c, outside_ghost_15c)
+            shutil.rmtree(outside_ghost_15c, ignore_errors=True)
+            check(
+                "15c precondition: lexists()=True, exists()=False on the now-broken reviews junction",
+                os.path.lexists(reviews_dir_15c) is True and reviews_dir_15c.exists() is False,
+            )
+            expect_raises(
+                facade.NestedPathContainmentError,
+                lambda: facade.approve_case_scoped_mutation(
+                    "test_family", case_id15c, expected_hash15c, principal=principal15c,
+                    authz_repository=repo15c, conn_factory=lambda: FakeJournalConn(),
+                ),
+                "15c: a BROKEN junction at the reviews_dir level raises NestedPathContainmentError, "
+                "never silently treated as 'reviews not yet created'",
+            )
+
+            # ----------------------------------------------------
+            # 15d) MATCHING-NAME ESCAPING ENTRY inside an otherwise-SAFE
+            #      reviews_dir, discovered on a REPLAY (the security-
+            #      critical path this check actually protects - see this
+            #      module's own "two distinct facade failure-handling
+            #      paths" design note: a FRESH execution's cosmetic
+            #      post-write audit_path lookup deliberately SOFT-fails
+            #      to None instead, since the underlying mutation has
+            #      already succeeded by that point; only the REPLAY
+            #      corroboration path is a genuine security decision).
+            #      A directory named `*.approval.json` (Windows
+            #      unprivileged `mklink /J` targets directories, not
+            #      files - this substitutes for a file-level symlink
+            #      escape, proving the SAME entry-level containment
+            #      check: resolve_existing(entry, root=case_root_real)
+            #      catches an escape regardless of the target's own
+            #      entry type) is ITSELF a junction pointing outside the
+            #      case root, planted ALONGSIDE the real audit record a
+            #      genuine prior approval already wrote - proving the
+            #      scan aborts the WHOLE directory rather than merely
+            #      ignoring the one bad entry.
+            # ----------------------------------------------------
+            case_id15d, case_dir15d, pending_path15d = make_case()
+            expected_hash15d = sha256_text(pending_path15d.read_text(encoding="utf-8"))
+            principal15d, repo15d = make_principal_and_repo(case_id15d)
+            conn15d = FakeJournalConn()
+            result15d = facade.approve_case_scoped_mutation(
+                "test_family", case_id15d, expected_hash15d, principal=principal15d,
+                authz_repository=repo15d, conn_factory=lambda: conn15d,
+            )
+            check("15d setup: the initial fresh approval succeeded", result15d.replayed is False)
+
+            reviews_dir_15d = result15d.canonical_path.parent / "reviews"
+            outside_entry_target_15d = outside_root_15 / f"entry_{uuid.uuid4().hex}"
+            outside_entry_target_15d.mkdir()
+            spy_content_marker = "NEVER_READ_" + uuid.uuid4().hex
+            (outside_entry_target_15d / "irrelevant.txt").write_text(spy_content_marker, encoding="utf-8")
+            escaping_entry_15d = reviews_dir_15d / "escaping_entry.approval.json"
+            make_junction(escaping_entry_15d, outside_entry_target_15d)
+
+            pre_calls_15d = len(fake_mod.run_approve_calls)
+            expect_raises(
+                facade.AuditBindingVerificationFailedError,
+                lambda: facade.approve_case_scoped_mutation(
+                    "test_family", case_id15d, expected_hash15d, principal=principal15d,
+                    authz_repository=repo15d, conn_factory=lambda: conn15d,
+                ),
+                "15d: on REPLAY, a matching-NAME escaping entry inside an otherwise-safe reviews_dir "
+                "aborts the whole safe scan and is folded into the SAME closed "
+                "AuditBindingVerificationFailedError/MUTATION_REQUIRES_REVIEW contract every other "
+                "'succeeded but could not be independently corroborated' outcome already uses",
+            )
+            check("15d: run_approve was NOT re-invoked (writer never runs on a replay)", len(fake_mod.run_approve_calls) == pre_calls_15d)
+            check("15d: no NEW journal row was created", len(conn15d.table) == 1)
+            os.rmdir(escaping_entry_15d)  # removes the junction LINK only, never its target's content
+            shutil.rmtree(outside_entry_target_15d, ignore_errors=True)
+
+            # ----------------------------------------------------
+            # 15e) PRE-LOCK -> UNDER-LOCK NESTED-DIRECTORY SWAP: reviews/
+            #      is a genuine, safe, ordinary directory at PRE-LOCK
+            #      verification time, then gets replaced with an
+            #      escaping junction WHILE this request waits for the
+            #      case lock (simulated inside the monkeypatched lock
+            #      acquisition, exactly like the existing pending/
+            #      canonical race tests do). Caught by the FRESH
+            #      under-lock re-verification inside precondition_
+            #      callback - zero prepared journal rows, writer never
+            #      invoked.
+            # ----------------------------------------------------
+            case_id15e, case_dir15e, pending_path15e = make_case()
+            expected_hash15e = sha256_text(pending_path15e.read_text(encoding="utf-8"))
+            principal15e, repo15e = make_principal_and_repo(case_id15e)
+            reviews_dir_15e = case_dir15e / "reviews"
+            reviews_dir_15e.mkdir(parents=True, exist_ok=True)
+            conn15e = FakeJournalConn()
+            outside_swap_15e = outside_root_15 / f"swap_{uuid.uuid4().hex}"
+            outside_swap_15e.mkdir()
+            pre_calls_15e = len(fake_mod.run_approve_calls)
+
+            def _acquire_then_swap_reviews_dir(conn, case_id):
+                _lock_calls.append(("acquire", case_id))
+                shutil.rmtree(reviews_dir_15e, ignore_errors=True)
+                make_junction(reviews_dir_15e, outside_swap_15e)
+                return 111
+
+            ml.acquire_case_lock_session = _acquire_then_swap_reviews_dir
+            try:
+                # An OUTRIGHT escape mid-wait is caught by `_verify_
+                # nested()` ITSELF (it raises `NestedPathContainmentError`
+                # directly, before this function's own identity-tuple
+                # comparison is even reached) - a sharper, more honest
+                # signal than `PreconditionRaceDetectedError` ("something
+                # legitimate-looking changed, retry might help") would
+                # be for an actual containment violation. The identity-
+                # comparison / `PreconditionRaceDetectedError` path is
+                # reserved for a resolved location that CHANGED but is
+                # still safely CONTAINED (e.g. an in-tree safe-alias
+                # swap) - a distinction this test's own outright-escape
+                # scenario does not exercise. Both share the identical
+                # "zero prepared rows, writer never invoked" guarantee,
+                # proven by the two checks below.
+                expect_raises(
+                    facade.NestedPathContainmentError,
+                    lambda: facade.approve_case_scoped_mutation(
+                        "test_family", case_id15e, expected_hash15e, principal=principal15e,
+                        authz_repository=repo15e, conn_factory=lambda: conn15e,
+                    ),
+                    "15e: reviews_dir swapped to an escaping junction WHILE waiting for the lock is "
+                    "caught by the fresh under-lock re-verification (NestedPathContainmentError)",
+                )
+            finally:
+                ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+                shutil.rmtree(reviews_dir_15e, ignore_errors=True)
+            check("15e: ZERO prepared journal rows", conn15e.table == [])
+            check("15e: run_approve was never invoked", len(fake_mod.run_approve_calls) == pre_calls_15e)
+
+            # ----------------------------------------------------
+            # 15f) CARRY-FORWARD DIRECTORY-CHAIN GATE (4-family
+            #      simulation via `with_carry_forward=True`): a live
+            #      escaping junction at `history/carry_forward` blocks
+            #      the writer; a broken one does too; a NORMAL,
+            #      multi-file carry-forward directory with a nonmatching
+            #      sibling file is UNCHANGED (writer runs, nonmatching
+            #      file ignored) - the aggregation itself is the
+            #      backend's OWN concern (out of this gate's scope, see
+            #      the honest residual), so this only proves the GATE's
+            #      own pass/fail behavior.
+            # ----------------------------------------------------
+            fake_mod_cf = make_fake_module("_fake_approval_mod_facade_test_cf", with_carry_forward=True)
+            sys.modules["_fake_approval_mod_facade_test_cf"] = fake_mod_cf
+            facade.ROW_KEY_TO_MODULE_NAME["test_family_cf"] = "_fake_approval_mod_facade_test_cf"
+
+            # 15f-i: live escaping junction at carry_forward dir.
+            case_id15f1, case_dir15f1, pending_path15f1 = make_case()
+            expected_hash15f1 = sha256_text(pending_path15f1.read_text(encoding="utf-8"))
+            principal15f1, repo15f1 = make_principal_and_repo(case_id15f1)
+            history_dir_15f1 = case_dir15f1 / "history"
+            history_dir_15f1.mkdir(parents=True, exist_ok=True)
+            carry_dir_15f1 = history_dir_15f1 / "carry_forward"
+            outside_cf_15f1 = outside_root_15 / f"cf_{uuid.uuid4().hex}"
+            outside_cf_15f1.mkdir()
+            (outside_cf_15f1 / "carry_forward_evil.json").write_text(
+                json.dumps({"carried_records": [{"entity_type": "claim", "new_id": "forged_id"}]}),
+                encoding="utf-8",
+            )
+            make_junction(carry_dir_15f1, outside_cf_15f1)
+            pre_calls_15f1 = len(fake_mod_cf.run_approve_calls)
+            expect_raises(
+                facade.NestedPathContainmentError,
+                lambda: facade.approve_case_scoped_mutation(
+                    "test_family_cf", case_id15f1, expected_hash15f1, principal=principal15f1,
+                    authz_repository=repo15f1, conn_factory=lambda: FakeJournalConn(),
+                ),
+                "15f-i: a live escaping junction at history/carry_forward blocks the writer entirely",
+            )
+            check("15f-i: run_approve was never invoked", len(fake_mod_cf.run_approve_calls) == pre_calls_15f1)
+
+            # 15f-ii: broken junction at carry_forward dir.
+            case_id15f2, case_dir15f2, pending_path15f2 = make_case()
+            expected_hash15f2 = sha256_text(pending_path15f2.read_text(encoding="utf-8"))
+            principal15f2, repo15f2 = make_principal_and_repo(case_id15f2)
+            history_dir_15f2 = case_dir15f2 / "history"
+            history_dir_15f2.mkdir(parents=True, exist_ok=True)
+            carry_dir_15f2 = history_dir_15f2 / "carry_forward"
+            outside_ghost_cf_15f2 = outside_root_15 / f"cf_ghost_{uuid.uuid4().hex}"
+            outside_ghost_cf_15f2.mkdir()
+            make_junction(carry_dir_15f2, outside_ghost_cf_15f2)
+            shutil.rmtree(outside_ghost_cf_15f2, ignore_errors=True)
+            pre_calls_15f2 = len(fake_mod_cf.run_approve_calls)
+            expect_raises(
+                facade.NestedPathContainmentError,
+                lambda: facade.approve_case_scoped_mutation(
+                    "test_family_cf", case_id15f2, expected_hash15f2, principal=principal15f2,
+                    authz_repository=repo15f2, conn_factory=lambda: FakeJournalConn(),
+                ),
+                "15f-ii: a BROKEN junction at history/carry_forward also blocks the writer",
+            )
+            check("15f-ii: run_approve was never invoked", len(fake_mod_cf.run_approve_calls) == pre_calls_15f2)
+
+            # 15f-iii: matching escaping ENTRY inside an otherwise-safe
+            # carry_forward dir - content is NEVER parsed by this gate
+            # (path-safety only), but the escape must still block.
+            case_id15f3, case_dir15f3, pending_path15f3 = make_case()
+            expected_hash15f3 = sha256_text(pending_path15f3.read_text(encoding="utf-8"))
+            principal15f3, repo15f3 = make_principal_and_repo(case_id15f3)
+            history_dir_15f3 = case_dir15f3 / "history"
+            carry_dir_15f3 = history_dir_15f3 / "carry_forward"
+            carry_dir_15f3.mkdir(parents=True, exist_ok=True)
+            outside_cf_entry_15f3 = outside_root_15 / f"cf_entry_{uuid.uuid4().hex}"
+            outside_cf_entry_15f3.mkdir()
+            escaping_cf_entry_15f3 = carry_dir_15f3 / "carry_forward_escape.json"
+            make_junction(escaping_cf_entry_15f3, outside_cf_entry_15f3)
+            pre_calls_15f3 = len(fake_mod_cf.run_approve_calls)
+            expect_raises(
+                facade.NestedPathContainmentError,
+                lambda: facade.approve_case_scoped_mutation(
+                    "test_family_cf", case_id15f3, expected_hash15f3, principal=principal15f3,
+                    authz_repository=repo15f3, conn_factory=lambda: FakeJournalConn(),
+                ),
+                "15f-iii: an escaping MATCHING-NAME entry inside an otherwise-safe carry_forward dir "
+                "blocks the writer",
+            )
+            check("15f-iii: run_approve was never invoked", len(fake_mod_cf.run_approve_calls) == pre_calls_15f3)
+
+            # 15f-iv: NORMAL carry-forward dir (nonmatching sibling
+            # ignored, matching real file present) - the writer runs
+            # normally; the gate does not interfere with a legitimate
+            # case.
+            case_id15f4, case_dir15f4, pending_path15f4 = make_case()
+            expected_hash15f4 = sha256_text(pending_path15f4.read_text(encoding="utf-8"))
+            principal15f4, repo15f4 = make_principal_and_repo(case_id15f4)
+            history_dir_15f4 = case_dir15f4 / "history"
+            carry_dir_15f4 = history_dir_15f4 / "carry_forward"
+            carry_dir_15f4.mkdir(parents=True, exist_ok=True)
+            (carry_dir_15f4 / "carry_forward_real.json").write_text(
+                json.dumps({"carried_records": []}), encoding="utf-8",
+            )
+            (carry_dir_15f4 / "not_a_carry_forward_file.txt").write_text("ignored", encoding="utf-8")
+            result15f4 = facade.approve_case_scoped_mutation(
+                "test_family_cf", case_id15f4, expected_hash15f4, principal=principal15f4,
+                authz_repository=repo15f4, conn_factory=lambda: FakeJournalConn(),
+            )
+            check(
+                "15f-iv: a NORMAL carry_forward dir (real matching file + ignored nonmatching sibling) "
+                "does not block the writer - the gate is a pure safety check, not a content filter",
+                result15f4.replayed is False and result15f4.canonical_path.exists(),
+            )
+
+            # ----------------------------------------------------
+            # 15g) NORMAL regression: an ordinary, non-adversarial
+            #      reviews_dir with MULTIPLE real audit files still
+            #      selects the correct "latest by mtime" one, exactly as
+            #      `common.find_latest_audit()` always did - proving the
+            #      new safe-scan-based selection preserves the EXACT
+            #      SAME semantics for the common, non-attacked case.
+            # ----------------------------------------------------
+            case_id15g, case_dir15g, pending_path15g = make_case()
+            expected_hash15g = sha256_text(pending_path15g.read_text(encoding="utf-8"))
+            principal15g, repo15g = make_principal_and_repo(case_id15g)
+            result15g = facade.approve_case_scoped_mutation(
+                "test_family", case_id15g, expected_hash15g, principal=principal15g,
+                authz_repository=repo15g, conn_factory=lambda: FakeJournalConn(),
+            )
+            reviews_dir_15g = result15g.canonical_path.parent / "reviews"
+            # A second, OLDER-looking audit file with a corrupt body -
+            # must be tolerated (not a scan abort) and must NOT be
+            # selected as "latest" ahead of the real, valid one.
+            corrupt_older_15g = reviews_dir_15g / "aaa_older_corrupt.approval.json"
+            corrupt_older_15g.write_text("{not valid json", encoding="utf-8")
+            import time as _time
+            _time.sleep(0.05)
+            newest_valid_15g = reviews_dir_15g / "zzz_newest.approval.json"
+            newest_valid_15g.write_text(json.dumps({"case_id": case_id15g, "marker": "newest"}), encoding="utf-8")
+            case_root_real_15g = facade._resolve_case_root_real(fake_mod, case_id15g)
+            reviews_dir_verified_15g = facade._verify_nested(
+                fake_mod, case_root_real_15g, case_id15g, reviews_dir_15g,
+            )
+            latest_15g = facade._safe_latest_audit(case_root_real_15g, reviews_dir_verified_15g)
+            check(
+                "15g: the safe-scan-based latest-audit selection picks the NEWEST real file by "
+                "mtime, tolerating (never aborting on) an older corrupt sibling - matching "
+                "common.find_latest_audit()'s own pre-existing semantics exactly",
+                latest_15g is not None and latest_15g.name == "zzz_newest.approval.json",
+            )
+
+            # ----------------------------------------------------
+            # 15h) ROW 19C-3a SLICE 2 FINAL NARROW REMEDIATION - EQUAL-
+            #      MTIME TIE-BREAK, pinned down empirically (never
+            #      asserted from source/docstring reading alone). Three
+            #      files: two forced to the EXACT SAME st_mtime (a real
+            #      tie, via os.utime with an identical timestamp value
+            #      for both), one clearly older. `_safe_latest_audit()`
+            #      feeds on `_safe_scan_named_entries()`, which pre-sorts
+            #      directory entries by NAME before the final stable
+            #      mtime-sort - so among entries tied for the maximum
+            #      mtime, the one with the ALPHABETICALLY LAST name wins
+            #      (the last element of a stable sort's tied run keeps
+            #      its pre-sort - i.e. name-sorted - position). This is
+            #      NOT "directory-listing order" (arbitrary OS/filesystem
+            #      enumeration order, which is what the pre-Slice-2
+            #      `common.find_latest_audit()` - built on raw `Path.
+            #      glob()` - actually inherits on a tie, and what this
+            #      function's own docstring used to (incorrectly) claim
+            #      it preserves).
+            # ----------------------------------------------------
+            case_id15h, case_dir15h, pending_path15h = make_case()
+            expected_hash15h = sha256_text(pending_path15h.read_text(encoding="utf-8"))
+            principal15h, repo15h = make_principal_and_repo(case_id15h)
+            result15h = facade.approve_case_scoped_mutation(
+                "test_family", case_id15h, expected_hash15h, principal=principal15h,
+                authz_repository=repo15h, conn_factory=lambda: FakeJournalConn(),
+            )
+            reviews_dir_15h = result15h.canonical_path.parent / "reviews"
+            older_15h = reviews_dir_15h / "mmm_clearly_older.approval.json"
+            older_15h.write_text(json.dumps({"marker": "older"}), encoding="utf-8")
+            tie_first_name_15h = reviews_dir_15h / "aaa_tie.approval.json"
+            tie_first_name_15h.write_text(json.dumps({"marker": "tie-aaa"}), encoding="utf-8")
+            tie_last_name_15h = reviews_dir_15h / "zzz_tie.approval.json"
+            tie_last_name_15h.write_text(json.dumps({"marker": "tie-zzz"}), encoding="utf-8")
+            older_ts_15h = _time.time() - 3600
+            os.utime(older_15h, (older_ts_15h, older_ts_15h))
+            tie_ts_15h = _time.time()
+            os.utime(tie_first_name_15h, (tie_ts_15h, tie_ts_15h))
+            os.utime(tie_last_name_15h, (tie_ts_15h, tie_ts_15h))
+            check(
+                "15h precondition: the two 'tie' files really share the EXACT SAME st_mtime "
+                "(a genuine tie, not merely close-in-time)",
+                tie_first_name_15h.stat().st_mtime == tie_last_name_15h.stat().st_mtime,
+                f"aaa={tie_first_name_15h.stat().st_mtime!r} zzz={tie_last_name_15h.stat().st_mtime!r}",
+            )
+            case_root_real_15h = facade._resolve_case_root_real(fake_mod, case_id15h)
+            reviews_dir_verified_15h = facade._verify_nested(
+                fake_mod, case_root_real_15h, case_id15h, reviews_dir_15h,
+            )
+            latest_15h = facade._safe_latest_audit(case_root_real_15h, reviews_dir_verified_15h)
+            check(
+                "15h EQUAL-MTIME TIE-BREAK (pinned down empirically): on a genuine st_mtime tie, "
+                "_safe_latest_audit() picks the ALPHABETICALLY-LAST name among the tied entries "
+                "('zzz_tie.approval.json'), because _safe_scan_named_entries() pre-sorts by name "
+                "and Python's sorted() is stable - this is a NAME-order tie-break, not the "
+                "'directory-listing order' this function's docstring used to claim",
+                latest_15h is not None and latest_15h.name == "zzz_tie.approval.json",
+                f"got {latest_15h!r}",
+            )
+        finally:
+            shutil.rmtree(outside_root_15, ignore_errors=True)
+            for name in ("_fake_approval_mod_facade_test_cf",):
+                sys.modules.pop(name, None)
 
 finally:
     ml.acquire_case_lock_session = _original_acquire_case
