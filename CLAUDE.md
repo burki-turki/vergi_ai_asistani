@@ -233,12 +233,24 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   (Evidence/Argument/Risk-Strategy/Drafting/QA Layer B) tamamı. Rows
   1-18, Row 19A, Row 19B, Row 19C-1 ve Row 19C-2a contract'ları
   değişmedi.
-- Sıradaki canonical alt-faz: **ROW 19C-2c (adı henüz kesinleşmemiş) —
-  kalan CLI-only mutasyon giriş noktaları + Row 18C drafting-request
-  writer'ının coordinator'a bağlanması** — **ACTIVE / NEXT** — **henüz
+- **ROW 19C-2c — Drafting-Request Mutation Integration** artık **DONE /
+  LOCKED** — kullanıcı tarafından ayrıca onaylanmış tam dosya
+  allowlist'i (4 yeni + 9 değiştirilmiş dosya) üzerinde implement
+  edildi, gerçek/disposable bir PostgreSQL örneğine karşı yerel
+  testlerle doğrulandı ve İKİ ayrı bağımsız, salt-okunur final
+  inceleme + iki hedefli path-containment remediation turundan (canlı
+  symlink/NTFS-junction escape, ardından broken-link fail-open) geçerek
+  `ROW 19C-2c LOCK-READY — No blocking findings` verdict'ine ulaştı
+  (bkz. Row 19C-2c checkpoint özeti, §5 sonrası). Bu, mutation
+  coordinator/journal altyapısının ÜÇÜNCÜ gerçek production writer'a
+  bağlandığı alt-fazdır: Row 18C'nin `drafting_request.save` action
+  family'si. Rows 1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a ve Row
+  19C-2b contract'ları değişmedi.
+- Sıradaki canonical alt-faz: **ROW 19C-3a — Shared Path-Containment
+  Foundation for Remaining CLI Writers** — **ACTIVE / NEXT** — **henüz
   implementasyona BAŞLANMADI**; kendi tam dosya allowlist'i
   implementasyondan ÖNCE ayrıca sunulup onaylatılmalıdır (Row 19A'nın
-  dosya-değişiklik sınırı kararı uyarınca) — genel Row 19C-2b onayı bu
+  dosya-değişiklik sınırı kararı uyarınca) — genel Row 19C-2c onayı bu
   sıradaki alt-fazın dosya değişikliğini ÖNCEDEN yetkilendirmez. Bu
   satır yalnız SIRADAKİ KAPSAMIN ADINI belirtir; bu alt-faz için henüz
   hiçbir kod, şema veya allowlist belirleme çalışması yapılmamıştır.
@@ -2006,6 +2018,196 @@ olarak kaydedilir):
 **Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a örneğinde olduğu
 gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
 işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Row 19C-2c — Drafting-Request Mutation Integration (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış
+tam dosya allowlist'i üzerinde implement edildi: **4 YENİ + 9
+DEĞİŞTİRİLMİŞ = 13 dosya** (git status ile doğrulandı; allowlist
+dışında hiçbir dosyaya dokunulmadı).
+
+- Yeni (4): `ui/services/drafting_request_mutation_adapters.py`,
+  `ui/services/drafting_request_mutation_facade.py`,
+  `ui/tests/test_drafting_request_mutation_facade_isolated.py`,
+  `ui/tests/test_drafting_request_mutation_integration_postgres.py`.
+- Değiştirilmiş (9): `ui/main.py`, `ui/reconciliation_operator.py`,
+  `ui/services/common.py`, `ui/services/drafting_request.py`,
+  `ui/tests/test_drafting_request_routes.py`,
+  `ui/tests/test_drafting_request_service_isolated.py`,
+  `ui/tests/test_reconciliation_isolated.py`,
+  `ui/tests/test_reconciliation_operator_isolated.py`,
+  `ui/tests/test_run_drafting_request_isolated.py`.
+
+Yeni bir migration EKLENMEDİ — bu alt-faz `db/migrations/0001-0004`'ü
+(Row 19C-1/19C-2a'nın kendi migration'ları) OLDUĞU GİBİ kullanır.
+`src/mutation_guard.py`, `ui/services/mutation_coordinator.py`, `ui/
+services/mutation_registry.py`, `ui/services/mutation_lock.py`, `ui/
+services/db.py`, `ui/services/authz.py`, `ui/services/paths.py`, Layer
+A'nın `mutation_approval_facade.py`/`mutation_approval_adapters.py` ve
+Layer B'nin `review_mutation_facade.py`/`review_mutation_adapters.py`
+bu alt-fazda DEĞİŞTİRİLMEDİ.
+
+**Mimari** — Row 18C'nin `drafting_request.save_lawyer_input_from_
+form()` yazıcısı artık YENİ bir action family
+(`drafting_request.save`) üzerinden mutation coordinator/journal
+altyapısına bağlıdır: `resource_key=case:<case_id>`,
+`target_ref=drafting_request.lawyer_input`, `target_state=saved`;
+Layer A/B ile AYNI case-scoped session lock (`case:<case_id>`)
+kullanılır. Outer (pre-lock) + inner (under-lock, authoritative) authz
+ve pre-lock + under-lock composite precondition korunur. Composite
+pre-state ÜÇ parçadan oluşur: current input token, audit manifest,
+history manifest. `drafting_policy.compute_lawyer_input_hash()` TEK
+deterministik `secondary_input_hash` kaynağıdır. Aynı identity + aynı
+(normalize edilmiş) içerik safe replay'e; aynı identity + FARKLI
+içerik `IdempotencyConflictError`'a (fingerprint conflict) gider.
+First-save ve overwrite'ın backup/reconciliation davranışları AYRI
+ayrı doğrulanmıştır (overwrite audit'i `history_backup_path` taşımak
+ZORUNDADIR, first-save'in `None` olmak ZORUNDADIR). `ui/
+reconciliation_operator.py`'nin production reconciliation registry'si
+artık **10 Layer A + 12 Layer B + 1 drafting-request = 23 action
+family**'yi TEK bir birleşik registry'de taşır. Gerçek production
+`data/` bu alt-fazın hiçbir turunda DEĞİŞMEDİ (her tur kendi izole
+sentetik case dizinlerinde çalıştı, byte-snapshot kontrolleriyle
+doğrulandı).
+
+**Path güvenliği — üç turlu bulgu/remediation zinciri** — Bu alt-fazın
+implementasyonundan SONRA, bağımsız bir ilk salt-okunur inceleme,
+onaylı sözleşmenin nested audit/history/current-input-parent
+symlink/NTFS-junction escape'ini reddetmeyi ZORUNLU tuttuğunu, ama
+`paths.verify_real_path_contained(entry, root=audit_dir)` gibi
+yalnızca "kendi kökü" ile karşılaştıran per-entry kontrollerin TEK
+BAŞINA yetersiz kaldığını (audit_dir/history_dir/current-input'in
+PARENT zincirinin KENDİSİ escape edebiliyorsa) bir Medium contract
+violation olarak tespit etti. Birinci remediation turu, `ui/services/
+drafting_request_mutation_facade.py` ve `ui/services/drafting_
+request_mutation_adapters.py`'de İKİ bağımsız (birbirinden import
+etmeyen) `_resolve_verified_case_dir()`/`_verify_nested_case_path()`
+çifti ekleyerek CANLI (live) symlink/NTFS-junction escape'lerini
+(audit/history/inputs seviyesinde) kapattı; gerçek `mklink /J`
+junction'larla doğrulandı.
+
+Hedefli bir İKİNCİ bağımsız salt-okunur re-review, bu ilk düzeltmenin
+KENDİSİNDE yeni, gerçek bir HIGH severity blocker buldu: `_verify_
+nested_case_path()`'in `candidate.exists()` pre-gate'i, KIRIK (hedefi
+silinmiş) veya DÖNGÜSEL (ELOOP) bir symlink/junction'ı "henüz hiç
+oluşturulmamış path" ile AYIRT EDEMİYORDU — `Path.exists()` link'i
+TAKİP EDER ve ikisinde de `False` döner; bu, `paths.verify_real_path_
+contained()`'ın (kendisi doğru şekilde fail-closed olan) HİÇ
+ÇAĞRILMAMASINA yol açıyordu. Bu bulgu, disposable/salt-okunur bir
+harness'te GERÇEK bir NTFS junction'ın hedefi kaldırılarak (`os.path.
+lexists()==True` ama `Path.exists()==False`) ampirik olarak
+KANITLANDI.
+
+İkinci (son) remediation turu, HER İKİ bağımsız helper'da da
+`candidate.exists()`'i `os.path.lexists(candidate)` ile DEĞİŞTİRDİ:
+`lexists()==False` YALNIZ gerçekten hiçbir dizin girişi (regular veya
+reparse-point) yokken missing-path davranışına girer; `lexists()==True`
+olan HER durum (canlı, kırık veya döngüsel) KOŞULSUZ `paths.verify_
+real_path_contained()`'a yönlendirilir — bu mevcut primitive KENDİSİ
+DEĞİŞTİRİLMEDİ, yalnız hangi girdilerin ona ULAŞTIĞI düzeltildi.
+Windows'ta hem CANLI escape hem KIRIK link testleri GERÇEK `mklink /J`
+junction'larla (asla monkeypatch ile DEĞİL) doğrulandı; her ikisinde
+de `lexists=True`/`exists=False` önkoşulu testte AÇIKÇA kanıtlandı.
+POSIX'e özgü bir self-loop (ELOOP) alt-testi eklendi ama bu Windows
+hedef ortamında `sys.platform != "win32"` ile platform-gated'dir -
+Windows'ta yalnız açık bir `SKIPPED (NOT counted as pass/fail)`
+mesajı basılır, HİÇBİR `check()` çağrısı yapmaz, ve bu sub-test'in
+final pass/fail toplamına KATKISI SIFIRDIR (bağımsız sayımla ayrıca
+doğrulandı) — Windows'ta döngüsel-link fail-closed kanıtı kırık-
+junction ampirik kanıtı + her iki servis dosyasının kendi "ROW
+19C-2c BROKEN-LINK FAIL-CLOSED REMEDIATION" header yorumundaki
+kaynak-kod analizine dayanır.
+
+Final hedefli re-review verdict'i: **`ROW 19C-2c LOCK-READY — No
+blocking findings`**.
+
+**Test kanıtları (yalnız fiilen çalıştırılmış sonuçlar)** — Aşağıdaki
+sonuçlar bu alt-fazın implementasyonu ve iki path-containment
+remediation turu boyunca FİİLEN çalıştırılan test komutlarından
+alınmıştır; hiçbir skip PASS SAYILMAMIŞTIR:
+
+- `test_drafting_request_mutation_facade_isolated` (final kod
+  durumu): **63/63 PASS**
+- `test_reconciliation_isolated` (final kod durumu): **148/148 PASS**;
+  Windows'ta 1 POSIX-only self-loop alt-testi `SKIPPED`, PASS
+  SAYILMADI
+- `test_drafting_request_mutation_integration_postgres` (final kod
+  durumu, gerçek disposable PostgreSQL): **53/53 PASS, 0 skipped**
+- `test_drafting_request_service_isolated` (final kod durumu):
+  **77/77 PASS**
+- `test_drafting_request_routes` (final kod durumu): **51/51 PASS**
+- `test_run_drafting_request_isolated` (CLI köprüsü, final kod
+  durumu): **26/26 PASS**
+- `test_mutation_approval_integration_postgres` (Layer A regresyon,
+  final kod durumu, gerçek PostgreSQL): **140/140 PASS, 0 skipped**
+- `test_review_mutation_integration_postgres` (Layer B regresyon,
+  final kod durumu, gerçek PostgreSQL): **47/47 PASS, 0 skipped**
+- `test_reconciliation_operator_isolated`: **80/80 PASS** —
+  implementasyonun ERKEN bir turunda (iki path-containment remediation
+  turundan ÖNCE) doğrulandı; bu iki remediation `_verify_nested_
+  case_path()`'e ÖZGÜ olduğundan ve `reconciliation_operator.py`'nin
+  kendi registry-merge yüzeyine DOKUNMADIĞINDAN düşük risk olarak
+  değerlendirilir, ama final kod durumuna karşı YENİDEN
+  ÇALIŞTIRILMADI — bu açıkça belirtilir, sessizce "yeniden doğrulandı"
+  varsayılmaz.
+- `test_mutation_journal_postgres` **61/61 PASS**, `test_mutation_
+  reconciliation_provenance_postgres` **24/24 PASS** — AYNI şekilde
+  implementasyonun erken bir turunda, gerçek PostgreSQL'e karşı
+  doğrulandı; final kod durumuna karşı YENİDEN ÇALIŞTIRILMADI (Layer
+  A/B regresyon paketleri final durumda AYRICA doğrulandığı için bu
+  iki dosyanın kapsadığı journal/reconciliation çekirdek mekaniği
+  zaten dolaylı olarak yeniden kanıtlanmıştır).
+- `py_compile`, `pip check`, `git diff --check`: final kod durumunda
+  TEMİZ.
+- Bu alt-fazın implementasyonu ve iki remediation turu boyunca
+  kullanılan HER disposable PostgreSQL kümesi (toplam üç ayrı kümede)
+  testler bitince TAMAMEN durduruldu ve kaldırıldı; gerçek `data/`
+  ağacı (özellikle `case_0001`) her turda byte-düzeyinde DEĞİŞMEDİ, hem
+  testlerin kendi snapshot kontrolleriyle hem `git status` ile AYRICA
+  doğrulandı.
+
+**Bilinen non-blocking/backlog**:
+
+- Layer B'nin (Row 19C-2b) bağımsız incelemesinin daha önce işaret
+  ettiği, `qa_validator.py`'nin `BASE_DIR`'i `CASES_DIR` yerine
+  hardcode etmesi gibi benzer nested-directory path-containment borcu,
+  bu turda KAPATILMADI — Row 19C-3a'nın kendi "shared
+  path-containment foundation" değerlendirmesine TAŞINIR. Row
+  19C-2c'nin KENDİ açığı (broken-link fail-open) bu turda
+  KAPATILMIŞTIR; bu ayrı, önceden bilinen bir maddedir.
+- Test module-scope monkeypatch cleanup ile ilgili daha önce
+  raporlanmış Low önemdeki not non-blocking kalmaya devam eder;
+  production kod yolunu ETKİLEMEZ.
+- Session-level advisory-lock için bounded acquisition/timeout (§6'da
+  zaten kayıtlı, Row 19C-2a'da tespit edildi) Row 19D backlog'unda
+  KALMAYA devam eder — bu alt-faz bu maddeye DOKUNMADI.
+
+**Sayım — action-family grain (yeni bir sayım birimi, ESKİ file-grain
+sayımın YERİNE GEÇMEZ)** — Row 19A'nın orijinal sayımı ("29 production
+mutation family + 5 maintenance = 34 doğrulanmış toplam") file-grain
+bir analizdi. Bu checkpoint AYRI bir eksende, Row 19C-2a/19C-2b'nin
+kendi "production mutation family = sınırlı bir mutasyon giriş-noktası
+ROLÜ (pending-generation ve promotion/review AYRI aile sayılır)"
+biriminde SAYAR: bu iki grain birbirinin YERİNE GEÇMEZ ve bu
+checkpoint ESKİ 34 rakamını "yanlış" ilan ETMEZ — iki farklı analiz
+eksenidir, aralarındaki tam eşleme ayrı, gelecekteki bir mutabakat
+turunu gerektirir (bu turda YAPILMADI).
+
+Action-family grain'de: bu fazdan SONRA coordinator'a bağlı case-scoped
+family = **23** (10 Layer A approval + 12 Layer B review + 1
+drafting-request.save). Coordinator'a HENÜZ bağlanmamış kalan writer
+family = **18**: 2 CLI-only Layer A approval (fact/timeline — Row
+18a'dan beri `unsupported_pending_resolution`, hiç UI'a bağlanmadı),
+10 pending-generation (on Layer A ailesinin KENDİ deterministik
+engine/agent üretim adımı — promotion'dan AYRI, henüz hiçbiri
+coordinator'a bağlanmadı), 5 maintenance/migration family (Row 19A'nın
+orijinal sayımıyla AYNI), 1 global RAG family (`ingest.py`, Row 19A'nın
+orijinal sayımıyla AYNI).
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b örneğinde
+olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
+roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
+dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

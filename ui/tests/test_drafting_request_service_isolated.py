@@ -35,6 +35,7 @@ if str(REPO_ROOT) not in sys.path:
 from ui.services import paths as real_paths                       # noqa: E402
 from ui.services import drafting_request as dr                    # noqa: E402
 from ui.services import authz as _authz                            # noqa: E402 (Row 19B)
+from ui.services import mutation_lock as _mutation_lock             # noqa: E402 (Row 19C-2c)
 from ui.services.common import (                                   # noqa: E402
     DraftingRequestUiError,
     DraftingRequestFormError,
@@ -43,6 +44,137 @@ from ui.services.common import (                                   # noqa: E402
     DraftingRequestNamingCollisionError,
     DraftingRequestSaveFailedError,
 )
+
+# ============================================================
+# ROW 19C-2c: `dr.save_lawyer_input_from_form()` now delegates to
+# `drafting_request_mutation_facade.apply_drafting_request_mutation()`
+# - a coordinated, journaled mutation that needs a session-lock
+# connection (`conn_factory`) and takes the SAME session-level case
+# lock every other file-write mutation on this case uses. This file's
+# existing `save_lawyer_input_from_form()` call sites are updated to
+# pass a FAKE journal connection so this suite stays what it always
+# was: pure-Python, no real database, no FastAPI. This is the SAME
+# `_FakeJournalCursor`/`_FakeJournalConn` shape `ui/tests/test_review_
+# service_isolated.py` already uses against the real `run_mutation()` -
+# a fresh, self-contained copy here, matching this project's own
+# convention of each test file owning its own fakes. The case-lock
+# functions themselves are monkeypatched to fakes for this entire
+# file's run (restored at the very end) - no test in this file
+# exercises real PostgreSQL advisory locking; that is `ui/tests/
+# test_drafting_request_mutation_integration_postgres.py`'s own job.
+# `dr.save_lawyer_input()` itself (called DIRECTLY, bypassing the
+# facade, in the rollback tests below) needs NO fake connection at all
+# - it never touches the coordinator.
+# ============================================================
+
+
+class _FakeJournalCursor:
+    def __init__(self, table, calls):
+        self._table = table
+        self._calls = calls
+        self._last_result = None
+        self.rowcount = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def _row(self, journal_id):
+        for r in self._table:
+            if r["id"] == journal_id:
+                return r
+        raise AssertionError(f"no fake journal row with id={journal_id}")
+
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        self._calls.append(normalized.split()[0])
+
+        if normalized.startswith("SELECT 1 FROM mutation.mutation_journal"):
+            (resource_key,) = params
+            hit = any(
+                r["resource_key"] == resource_key
+                and r["state"] in ("prepared", "executing", "reconciliation_required")
+                for r in self._table
+            )
+            self._last_result = (1,) if hit else None
+            self.rowcount = 1 if hit else 0
+
+        elif normalized.startswith("SELECT id, state, request_fingerprint, observed_post_hash"):
+            (idempotency_key,) = params
+            matches = [r for r in self._table if r["idempotency_key"] == idempotency_key]
+            if not matches:
+                self._last_result = None
+                self.rowcount = 0
+            else:
+                r = matches[0]
+                self._last_result = (
+                    r["id"], r["state"], r["request_fingerprint"], r["observed_post_hash"],
+                    r["failure_code"], r["resolution_code"],
+                )
+                self.rowcount = 1
+
+        elif normalized.startswith("INSERT INTO mutation.mutation_journal"):
+            (
+                resource_key, action_family, actor_user_id, actor_label, target_ref, target_state,
+                pre_hash, pre_revision, idempotency_key, request_fingerprint,
+            ) = params
+            new_id = len(self._table) + 1
+            self._table.append({
+                "id": new_id, "resource_key": resource_key, "action_family": action_family,
+                "actor_user_id": actor_user_id, "actor_label": actor_label, "target_ref": target_ref,
+                "target_state": target_state, "pre_hash": pre_hash, "pre_revision": pre_revision,
+                "idempotency_key": idempotency_key, "request_fingerprint": request_fingerprint,
+                "state": "prepared", "failure_code": None, "resolution_code": None,
+                "executing_at": None, "resolved_at": None, "observed_post_hash": None,
+            })
+            self._last_result = (new_id,)
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'executing'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "executing"
+            self._row(journal_id)["executing_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'completed'"):
+            observed_post_hash, journal_id = params
+            row = self._row(journal_id)
+            row["state"] = "completed"
+            row["observed_post_hash"] = observed_post_hash
+            row["resolved_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'reconciliation_required'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "reconciliation_required"
+            self.rowcount = 1
+
+        else:
+            raise AssertionError(f"unexpected SQL: {sql}")
+
+    def fetchone(self):
+        return self._last_result
+
+
+class _FakeJournalConn:
+    def __init__(self):
+        self.table = []
+        self.closed = False
+
+    def cursor(self):
+        return _FakeJournalCursor(self.table, [])
+
+    def close(self):
+        self.closed = True
+
+
+_original_acquire_case_lock_session = _mutation_lock.acquire_case_lock_session
+_original_release_lock_session = _mutation_lock.release_lock_session
+_mutation_lock.acquire_case_lock_session = lambda conn, case_id: 999001
+_mutation_lock.release_lock_session = lambda conn, advisory_lock_id: True
+
 
 # Row 19B: save_lawyer_input_from_form() now REQUIRES `principal` and
 # independently re-checks authorization. Same isolation principle as
@@ -202,6 +334,7 @@ with isolated_case() as (case_id, tmp_path):
         request_type_raw="dilekce", request_text_raw="lutfen inceleyin",
         lawyer_provided_text_raw="", expected_current_input_hash=token0,
         principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+        conn_factory=lambda: _FakeJournalConn(),
     )
 
     check("T02 first-save: selected_issue_ids sıralı", wrapper1["lawyer_input"]["selected_issue_ids"] == ["iss_a", "iss_c"])
@@ -230,6 +363,7 @@ with isolated_case() as (case_id, tmp_path):
         request_type_raw="", request_text_raw="", lawyer_provided_text_raw="ilk metin",
         expected_current_input_hash=t0,
         principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+        conn_factory=lambda: _FakeJournalConn(),
     )
     t1 = dr.compute_current_freshness_token(case_id)
     check("T08 overwrite: ikinci freshness token ilkinden farklı", t1 != t0)
@@ -240,6 +374,7 @@ with isolated_case() as (case_id, tmp_path):
         request_type_raw="", request_text_raw="", lawyer_provided_text_raw="ikinci metin",
         expected_current_input_hash=t1,
         principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+        conn_factory=lambda: _FakeJournalConn(),
     )
     check("T09 overwrite: selected_issue_ids == [] (bilinçli hiçbiri)", wrapper2["lawyer_input"]["selected_issue_ids"] == [])
     check(
@@ -269,6 +404,7 @@ with isolated_case() as (case_id, tmp_path):
         request_type_raw="", request_text_raw="", lawyer_provided_text_raw="x",
         expected_current_input_hash=t0,
         principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+        conn_factory=lambda: _FakeJournalConn(),
     )
     before_bytes = dr.get_current_input_path(case_id).read_bytes()
     audit_count_before = len(list(dr.get_input_audit_dir(case_id).glob("*")))
@@ -282,6 +418,7 @@ with isolated_case() as (case_id, tmp_path):
             request_type_raw="", request_text_raw="", lawyer_provided_text_raw="y",
             expected_current_input_hash="0" * 64,
             principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+            conn_factory=lambda: _FakeJournalConn(),
         ),
         "T14 stale-hash reddedildi (DraftingRequestStaleInputError)",
     )
@@ -629,6 +766,7 @@ with isolated_case() as (case_id, tmp_path):
         request_type_raw="", request_text_raw="", lawyer_provided_text_raw="orijinal metin",
         expected_current_input_hash=t0,
         principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
+        conn_factory=lambda: _FakeJournalConn(),
     )
     current_path = dr.get_current_input_path(case_id)
     original_bytes = current_path.read_bytes()
@@ -774,6 +912,9 @@ check(
     f"before={len(_before_snapshot)} dosya, after={len(_after_snapshot)} dosya, "
     f"fark={set(_before_snapshot) ^ set(_after_snapshot)}",
 )
+
+_mutation_lock.acquire_case_lock_session = _original_acquire_case_lock_session
+_mutation_lock.release_lock_session = _original_release_lock_session
 
 
 print()

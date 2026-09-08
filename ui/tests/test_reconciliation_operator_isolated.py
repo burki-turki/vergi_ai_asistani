@@ -493,20 +493,21 @@ finally:
 
 
 # ============================================================
-# ROW 19C-2b - `_default_registry_factory()` merges Layer A's 10
-# case-scoped approval families AND Layer B's 12 review_kind families
-# into ONE registry - never called by any test above (which always
-# injects its OWN fake `registry_factory`, per this module's own
-# header comment), so this is the ONE place that ever exercises the
-# REAL default factory for real, proving a human operator's real CLI
-# invocation can reconcile a journal row from EITHER layer through the
-# SAME registry.
+# ROW 19C-2b/19C-2c - `_default_registry_factory()` merges Layer A's 10
+# case-scoped approval families, Layer B's 12 review_kind families, AND
+# Row 18C's single `drafting_request.save` family into ONE registry -
+# never called by any test above (which always injects its OWN fake
+# `registry_factory`, per this module's own header comment), so this is
+# the ONE place that ever exercises the REAL default factory for real,
+# proving a human operator's real CLI invocation can reconcile a
+# journal row from ANY of the three families through the SAME registry.
 # ============================================================
 
 _real_registry = op._default_registry_factory()
 _real_families = _real_registry.known_action_families()
 _approval_families = {f for f in _real_families if f.startswith("approval.")}
 _review_families = {f for f in _real_families if f.startswith("review.")}
+_drafting_request_families = {f for f in _real_families if f.startswith("drafting_request.")}
 
 check(
     "_default_registry_factory(): the merged registry contains exactly Layer A's 10 "
@@ -519,9 +520,14 @@ check(
     len(_review_families) == 12, f"got {sorted(_review_families)}",
 )
 check(
-    "_default_registry_factory(): the merged registry's total size is exactly 10 + 12 = 22 "
+    "_default_registry_factory(): the merged registry contains exactly Row 18C's 1 "
+    "'drafting_request.*' family",
+    len(_drafting_request_families) == 1, f"got {sorted(_drafting_request_families)}",
+)
+check(
+    "_default_registry_factory(): the merged registry's total size is exactly 10 + 12 + 1 = 23 "
     "(no overlap, no family lost, no family duplicated)",
-    len(_real_families) == 22, f"got {len(_real_families)}",
+    len(_real_families) == 23, f"got {len(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "
@@ -532,6 +538,11 @@ check(
     "_default_registry_factory(): a representative Layer B family (review.evidence.candidate) "
     "resolves to a real adapter",
     _real_registry.get("review.evidence.candidate") is not None,
+)
+check(
+    "_default_registry_factory(): Row 18C's own family (drafting_request.save) resolves to a "
+    "real adapter",
+    _real_registry.get("drafting_request.save") is not None,
 )
 
 

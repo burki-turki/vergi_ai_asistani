@@ -1373,5 +1373,464 @@ finally:
     _shutil.rmtree(_review_adapter_tmp, ignore_errors=True)
 
 
+# ============================================================
+# ROW 19C-2c - REAL Row 18C `DraftingRequestReconciliationAdapter`
+# (`ui.services.drafting_request_mutation_adapters`), exercised through
+# the SAME real `reconcile_and_apply_journal_entry()` this file already
+# proves correct for Layer A/Layer B above - a fresh, isolated tempdir
+# fixture (never touching any real `data/cases/` content). Unlike
+# Layer A/B, this family has no per-row_key/review_kind axis and no
+# record-level `state_field` - it reconciles ONE whole-file mutation
+# per case, so its own "pre-state" proof is a THREE-PART composite (see
+# `drafting_request_mutation_facade.py`'s own header comment, Row
+# 19C-2c binding decision): current input token AND recomputed
+# composite digest AND zero matching/corrupt audit candidates - never
+# current-token equality alone.
+# ============================================================
+
+import os as _os                                                      # noqa: E402
+import subprocess as _subprocess                                      # noqa: E402
+
+import ui.services.drafting_request as _draftreq                     # noqa: E402
+import ui.services.drafting_request_mutation_facade as _dr_facade     # noqa: E402
+import ui.services.drafting_request_mutation_adapters as _dr_adapters  # noqa: E402
+from ui.services import paths as _dr_real_paths                       # noqa: E402
+
+
+# ROW 19C-2c PATH CONTAINMENT REMEDIATION: `DraftingRequestReconciliation
+# Adapter.gather_evidence()` now derives every path via `_resolve_verified_
+# case_dir()`/`_verify_nested_case_path()` (see `drafting_request_
+# mutation_adapters.py`'s own header comment) - these read `_drafting_
+# request.CASES_DIR` DYNAMICALLY, never `get_inputs_dir()`. A test fixture
+# that redirects `get_inputs_dir()` alone (the PRIOR shape of this
+# section) would therefore never be seen by the adapter at all - this
+# section instead uses a REAL, `CASES_DIR`-resident synthetic case
+# directory (mirroring `ui/tests/test_drafting_request_mutation_facade_
+# isolated.py`'s own `_make_case()`/`_cleanup_case()` pattern), cleaned up
+# unconditionally in `finally`, never touching any real case.
+def _dr_make_directory_escape_link(link_path, target_path):
+    """REAL, platform-native directory-escape link (NTFS junction via
+    `mklink /J` on Windows, POSIX symlink elsewhere) - an INDEPENDENT
+    copy of `test_drafting_request_mutation_facade_isolated.py`'s own
+    identically-purposed helper (this file's own test-only utility,
+    never shared/imported), reusing the same established mechanism as
+    `ui/tests/test_path_containment_windows.py`. Never a monkeypatch."""
+    if sys.platform == "win32":
+        result = _subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(link_path), str(target_path)],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"mklink /J failed (rc={result.returncode}): {result.stdout!r} {result.stderr!r}")
+    else:
+        _os.symlink(str(target_path), str(link_path))
+
+
+def _dr_remove_escape_link(link_path):
+    """Removes a link created above WITHOUT ever recursing into (and
+    deleting) its target - `.rmdir()` for a Windows junction, `.unlink()`
+    for a POSIX symlink."""
+    try:
+        link_path.unlink()
+    except OSError:
+        try:
+            link_path.rmdir()
+        except OSError:
+            pass
+
+
+DR_CASE_ID = "case_dr_adapter_bindings"
+
+dr_case_dir = _dr_real_paths.CASES_DIR / DR_CASE_ID
+if dr_case_dir.exists():
+    _shutil.rmtree(dr_case_dir)
+dr_case_dir.mkdir(parents=True)
+
+try:
+    dr_inputs_dir = dr_case_dir / "drafting" / "inputs"
+    dr_current_path = dr_inputs_dir / "lawyer_input.json"
+    dr_audit_dir = dr_inputs_dir / "audit"
+    dr_history_dir = dr_inputs_dir / "history"
+
+    real_dr_adapter = _dr_adapters.DraftingRequestReconciliationAdapter()
+
+    def dr_snapshot_digest(current_token):
+        snapshot, _audit_scan, _history_scan = _dr_facade._compute_snapshot(current_token, dr_audit_dir, dr_history_dir)
+        return snapshot.composite_digest
+
+    def dr_intent(**overrides):
+        base = dict(
+            actor_type="iam_user", actor_ref="7",
+            resource_key=f"case:{DR_CASE_ID}", action_family=_dr_facade.ACTION_FAMILY,
+            target_ref=_dr_facade.TARGET_REF, target_state=_dr_facade.TARGET_STATE,
+            pre_hash="placeholder_not_hashed_into_identity", pre_revision=_draftreq.NO_EXISTING_INPUT_SENTINEL,
+            secondary_input_hash=_hashlib.sha256(b'{"lawyer_provided_text":"x"}').hexdigest(),
+        )
+        base.update(overrides)
+        return _MutationIntent(**base)
+
+    def dr_entry(**overrides):
+        intent = dr_intent()
+        fields = dict(
+            journal_id=1, resource_key=f"case:{DR_CASE_ID}", action_family=_dr_facade.ACTION_FAMILY,
+            target_ref=_dr_facade.TARGET_REF, target_state=_dr_facade.TARGET_STATE,
+            pre_hash=intent.pre_hash, pre_revision=intent.pre_revision, expected_post_hash=None,
+            state="reconciliation_required", idempotency_key=_compute_idk(intent),
+            request_fingerprint=_compute_fp(intent), actor_label="7",
+        )
+        fields.update(overrides)
+        return mr.JournalEntrySnapshot(**fields)
+
+    def write_dr_audit(record, *, filename="lawyer_input_save_20260101T000000000000Z.audit.json"):
+        dr_audit_dir.mkdir(parents=True, exist_ok=True)
+        (dr_audit_dir / filename).write_text(_json.dumps(record), encoding="utf-8")
+
+    def clear_dr_dirs():
+        if dr_audit_dir.exists():
+            _shutil.rmtree(dr_audit_dir)
+        if dr_history_dir.exists():
+            _shutil.rmtree(dr_history_dir)
+        if dr_current_path.exists():
+            dr_current_path.unlink()
+
+    # ---- PRE-STATE: no current file, zero audits, composite digest
+    # matches the FRESH (empty) state exactly. ----
+    clear_dr_dirs()
+    pre_digest = dr_snapshot_digest(_draftreq.NO_EXISTING_INPUT_SENTINEL)
+    pre_dr_evidence = real_dr_adapter.gather_evidence(dr_entry(pre_hash=pre_digest))
+    check(
+        "Row 18C real adapter: no current file + zero audits + matching composite digest -> "
+        "pre_state_confirmed_unchanged=True",
+        pre_dr_evidence.pre_state_confirmed_unchanged is True and pre_dr_evidence.post_state_verified is False,
+        f"got {pre_dr_evidence!r}",
+    )
+    check(
+        "Row 18C real adapter: current-token equality ALONE is NOT sufficient - a WRONG composite "
+        "digest (pre_hash) with an otherwise-clean pre-state still yields INCONCLUSIVE",
+        real_dr_adapter.gather_evidence(dr_entry(pre_hash="0" * 64)).pre_state_confirmed_unchanged is False,
+    )
+
+    # ---- POST-STATE: current file written + exactly one fully-bound
+    # audit (first_save, history_backup_path=None). ----
+    dr_inputs_dir.mkdir(parents=True, exist_ok=True)
+    current_content = '{"lawyer_input":{"lawyer_provided_text":"x"}}'
+    dr_current_path.write_text(current_content, encoding="utf-8")
+    post_hash = _hashlib.sha256(current_content.encode("utf-8")).hexdigest()
+    entry_for_post = dr_entry()
+    good_dr_audit = {
+        "case_id": DR_CASE_ID, "action": "first_save",
+        "previous_input_token": _draftreq.NO_EXISTING_INPUT_SENTINEL,
+        "new_current_raw_sha256": post_hash,
+        # MUST equal `dr_intent()`'s own `secondary_input_hash` - that is
+        # what binding 12's recomputed fingerprint hashes against.
+        "lawyer_input_hash": _hashlib.sha256(b'{"lawyer_provided_text":"x"}').hexdigest(),
+        "saved_at": "2026-01-01T00:00:00+00:00", "history_backup_path": None,
+        "mutation_idempotency_key": entry_for_post.idempotency_key,
+        "mutation_resource_key": f"case:{DR_CASE_ID}", "mutation_actor_ref": "7",
+    }
+    write_dr_audit(good_dr_audit)
+    post_dr_evidence = real_dr_adapter.gather_evidence(entry_for_post)
+    check(
+        "Row 18C real adapter: current file present + 1 fully-bound first-save audit -> "
+        "post_state_verified=True with the REAL current file hash as observed_post_hash",
+        post_dr_evidence.post_state_verified is True
+        and post_dr_evidence.pre_state_confirmed_unchanged is False
+        and post_dr_evidence.observed_post_hash == post_hash,
+        f"got {post_dr_evidence!r}",
+    )
+
+    # ---- Binding tamper cases - each ONE field changed from the baseline ----
+    dr_binding_cases = [
+        ("binding 1 (idempotency key) WRONG", {"mutation_idempotency_key": "other"}),
+        ("binding 2 (resource key) WRONG", {"mutation_resource_key": "case:other_case"}),
+        ("binding 3 (actor ref) WRONG", {"mutation_actor_ref": "999"}),
+        ("binding 5 (case_id) WRONG", {"case_id": "other_case"}),
+        ("binding 6 (pre_revision/previous_input_token) WRONG", {"previous_input_token": "0" * 64}),
+        ("binding 8 (new_current_raw_sha256) WRONG", {"new_current_raw_sha256": "0" * 64}),
+    ]
+    for label, override in dr_binding_cases:
+        write_dr_audit({**good_dr_audit, **override})
+        evidence = real_dr_adapter.gather_evidence(dr_entry())
+        check(
+            f"Row 18C real adapter: {label} yields INCONCLUSIVE evidence (never post_state_verified)",
+            evidence.post_state_verified is False and evidence.pre_state_confirmed_unchanged is False,
+            f"got {evidence!r}",
+        )
+
+    # binding 12 (recomputed request fingerprint) - tamper the stored
+    # lawyer_input_hash itself, so the recomputed fingerprint can never
+    # match the journal's own, while every OTHER field stays correct.
+    write_dr_audit({**good_dr_audit, "lawyer_input_hash": "0" * 64})
+    fp_dr_evidence = real_dr_adapter.gather_evidence(dr_entry())
+    check(
+        "Row 18C real adapter: binding 12 (recomputed request fingerprint via tampered "
+        "lawyer_input_hash) yields INCONCLUSIVE evidence",
+        fp_dr_evidence.post_state_verified is False and fp_dr_evidence.pre_state_confirmed_unchanged is False,
+        f"got {fp_dr_evidence!r}",
+    )
+
+    # ---- overwrite-action audit with WRONG backup binding (missing
+    # history_backup_path) -> INCONCLUSIVE. ----
+    write_dr_audit({**good_dr_audit, "action": "overwrite", "history_backup_path": None})
+    overwrite_evidence = real_dr_adapter.gather_evidence(dr_entry())
+    check(
+        "Row 18C real adapter: action='overwrite' but history_backup_path missing -> INCONCLUSIVE "
+        "(overwrite MUST carry a backup link)",
+        overwrite_evidence.post_state_verified is False and overwrite_evidence.pre_state_confirmed_unchanged is False,
+        f"got {overwrite_evidence!r}",
+    )
+
+    # ---- Duplicate audit -> ambiguous, unconditionally ----
+    write_dr_audit(good_dr_audit, filename="lawyer_input_save_20260101T000000000000Z.audit.json")
+    write_dr_audit(good_dr_audit, filename="lawyer_input_save_20260101T000000000001Z.audit.json")
+    dup_dr_evidence = real_dr_adapter.gather_evidence(dr_entry())
+    check(
+        "Row 18C real adapter: 2 clean, identically-bound audit records for the SAME idempotency "
+        "key -> ambiguous, INCONCLUSIVE (never picks one)",
+        dup_dr_evidence.post_state_verified is False and dup_dr_evidence.pre_state_confirmed_unchanged is False,
+        f"got {dup_dr_evidence!r}",
+    )
+
+    # ---- Family-wide corrupt audit blocks the pre-state proof too,
+    #      even for an otherwise-clean case. ----
+    clear_dr_dirs()
+    dr_audit_dir.mkdir(parents=True, exist_ok=True)
+    (dr_audit_dir / "lawyer_input_save_CORRUPT.audit.json").write_text("not valid json {{{", encoding="utf-8")
+    corrupt_dr_evidence = real_dr_adapter.gather_evidence(dr_entry(pre_hash=dr_snapshot_digest(_draftreq.NO_EXISTING_INPUT_SENTINEL)))
+    check(
+        "Row 18C real adapter: a corrupt audit-shaped file blocks pre_state_confirmed_unchanged too "
+        "(never upgraded to proof by ignoring it)",
+        corrupt_dr_evidence.pre_state_confirmed_unchanged is False and corrupt_dr_evidence.post_state_verified is False,
+        f"got {corrupt_dr_evidence!r}",
+    )
+
+    # ---- ROW 19C-2c PATH CONTAINMENT REMEDIATION - REAL, platform-
+    #      native nested AUDIT directory-escape negative proof for the
+    #      RECONCILIATION ADAPTER (never a monkeypatch). Unlike the
+    #      facade (which RAISES DraftingRequestDirectoryScanError),
+    #      gather_evidence() catches this internally (see its own
+    #      try/except around _resolve_verified_case_dir()/_verify_
+    #      nested_case_path()) and reports genuinely INCONCLUSIVE
+    #      evidence - never either proof, even though the escape target
+    #      contains a correctly-named, well-formed audit record. ----
+    clear_dr_dirs()
+    _dr_escape_audit_outside = _Path(_tempfile.mkdtemp(prefix="vergi_recon_dr_adapter_escape_audit_"))
+    _dr_escape_audit_links = []
+    try:
+        dr_inputs_dir.mkdir(parents=True, exist_ok=True)
+        (_dr_escape_audit_outside / "lawyer_input_save_OUTSIDE.audit.json").write_text(
+            _json.dumps({"mutation_idempotency_key": "outside_key", "case_id": DR_CASE_ID}), encoding="utf-8",
+        )
+        _dr_make_directory_escape_link(dr_audit_dir, _dr_escape_audit_outside)
+        _dr_escape_audit_links.append(dr_audit_dir)
+
+        escape_audit_evidence = real_dr_adapter.gather_evidence(dr_entry())
+        check(
+            "Row 18C real adapter: audit dizininin KENDİSİ case kökü dışına çözümlenen bir GERÇEK "
+            "junction/symlink ise -> INCONCLUSIVE evidence (asla ne pre-state ne post-state kanıtı, "
+            "dışarıdaki doğru adlı/geçerli JSON audit kaydı BİLE hiç kabul edilmez)",
+            escape_audit_evidence.post_state_verified is False
+            and escape_audit_evidence.pre_state_confirmed_unchanged is False,
+            f"got {escape_audit_evidence!r}",
+        )
+    finally:
+        for link_path in _dr_escape_audit_links:
+            _dr_remove_escape_link(link_path)
+        _shutil.rmtree(_dr_escape_audit_outside, ignore_errors=True)
+    clear_dr_dirs()
+
+    # ---- Same proof for the HISTORY directory. ----
+    _dr_escape_history_outside = _Path(_tempfile.mkdtemp(prefix="vergi_recon_dr_adapter_escape_history_"))
+    _dr_escape_history_links = []
+    try:
+        dr_inputs_dir.mkdir(parents=True, exist_ok=True)
+        (_dr_escape_history_outside / "lawyer_input_before_save_OUTSIDE.json").write_text(
+            "should never be read as a real history backup", encoding="utf-8",
+        )
+        _dr_make_directory_escape_link(dr_history_dir, _dr_escape_history_outside)
+        _dr_escape_history_links.append(dr_history_dir)
+
+        escape_history_evidence = real_dr_adapter.gather_evidence(dr_entry())
+        check(
+            "Row 18C real adapter: history dizininin KENDİSİ case kökü dışına çözümlenen bir GERÇEK "
+            "junction/symlink ise -> INCONCLUSIVE evidence",
+            escape_history_evidence.post_state_verified is False
+            and escape_history_evidence.pre_state_confirmed_unchanged is False,
+            f"got {escape_history_evidence!r}",
+        )
+    finally:
+        for link_path in _dr_escape_history_links:
+            _dr_remove_escape_link(link_path)
+        _shutil.rmtree(_dr_escape_history_outside, ignore_errors=True)
+    clear_dr_dirs()
+
+    # ---- ROW 19C-2c BROKEN-LINK FAIL-CLOSED REMEDIATION - a REAL link
+    #      whose TARGET is then removed, leaving a genuine broken
+    #      reparse-point/symlink entry in place (never a monkeypatch).
+    #      Proves the os.path.lexists() vs Path.exists() distinction
+    #      directly (the exact precondition the prior `.exists()`-only
+    #      gate got wrong), then proves the adapter reports genuinely
+    #      INCONCLUSIVE evidence (never a false pre_state_confirmed_
+    #      unchanged) for (1) a broken audit link and (2) a broken
+    #      history link. ----
+    clear_dr_dirs()
+    _dr_broken_audit_outside = _Path(_tempfile.mkdtemp(prefix="vergi_recon_dr_adapter_broken_audit_"))
+    _dr_broken_audit_links = []
+    try:
+        dr_inputs_dir.mkdir(parents=True, exist_ok=True)
+        _dr_make_directory_escape_link(dr_audit_dir, _dr_broken_audit_outside)
+        _dr_broken_audit_links.append(dr_audit_dir)
+        _shutil.rmtree(_dr_broken_audit_outside)  # break it - target gone, link entry remains
+
+        check(
+            "Row 18C real adapter, broken-link precondition: kırık audit linki os.path.lexists()==True",
+            _os.path.lexists(dr_audit_dir) is True,
+        )
+        check(
+            "Row 18C real adapter, broken-link precondition: kırık audit linki Path.exists()==False",
+            dr_audit_dir.exists() is False,
+        )
+
+        broken_audit_evidence = real_dr_adapter.gather_evidence(dr_entry())
+        check(
+            "Row 18C real adapter: KIRIK audit dizini linki (hedefi kaldırılmış) -> INCONCLUSIVE "
+            "evidence (asla ne pre-state ne post-state kanıtı)",
+            broken_audit_evidence.post_state_verified is False
+            and broken_audit_evidence.pre_state_confirmed_unchanged is False,
+            f"got {broken_audit_evidence!r}",
+        )
+    finally:
+        for link_path in _dr_broken_audit_links:
+            _dr_remove_escape_link(link_path)
+        _shutil.rmtree(_dr_broken_audit_outside, ignore_errors=True)
+    clear_dr_dirs()
+
+    _dr_broken_history_outside = _Path(_tempfile.mkdtemp(prefix="vergi_recon_dr_adapter_broken_history_"))
+    _dr_broken_history_links = []
+    try:
+        dr_inputs_dir.mkdir(parents=True, exist_ok=True)
+        _dr_make_directory_escape_link(dr_history_dir, _dr_broken_history_outside)
+        _dr_broken_history_links.append(dr_history_dir)
+        _shutil.rmtree(_dr_broken_history_outside)
+
+        check(
+            "Row 18C real adapter, broken-link precondition: kırık history linki "
+            "os.path.lexists()==True",
+            _os.path.lexists(dr_history_dir) is True,
+        )
+        check(
+            "Row 18C real adapter, broken-link precondition: kırık history linki Path.exists()==False",
+            dr_history_dir.exists() is False,
+        )
+
+        broken_history_evidence = real_dr_adapter.gather_evidence(dr_entry())
+        check(
+            "Row 18C real adapter: KIRIK history dizini linki (hedefi kaldırılmış) -> INCONCLUSIVE "
+            "evidence",
+            broken_history_evidence.post_state_verified is False
+            and broken_history_evidence.pre_state_confirmed_unchanged is False,
+            f"got {broken_history_evidence!r}",
+        )
+    finally:
+        for link_path in _dr_broken_history_links:
+            _dr_remove_escape_link(link_path)
+        _shutil.rmtree(_dr_broken_history_outside, ignore_errors=True)
+    clear_dr_dirs()
+
+    # ---- POSIX self-referential symlink LOOP (ELOOP) - safe, bounded,
+    #      constructed WITHOUT any external target (a symlink whose OWN
+    #      name is its own relative target, inside its own directory,
+    #      creates a genuine resolution cycle with zero risk of leaving
+    #      anything pointing at real data outside this synthetic case).
+    #      Windows: per this turn's own instruction, no risky junction-
+    #      loop construction is attempted here - the broken-junction
+    #      proof above plus the source-code analysis (see both service
+    #      files' own "ROW 19C-2c BROKEN-LINK FAIL-CLOSED REMEDIATION"
+    #      header comments) is the accepted evidence for this platform;
+    #      this sub-test is EXPLICITLY skipped, NEVER counted as a
+    #      pass. ----
+    if sys.platform != "win32":
+        clear_dr_dirs()
+        dr_inputs_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            _os.symlink("audit", str(dr_audit_dir))  # own name, own dir -> genuine ELOOP on resolve
+
+            check(
+                "Row 18C real adapter, self-loop precondition: döngüsel audit linki "
+                "os.path.lexists()==True",
+                _os.path.lexists(dr_audit_dir) is True,
+            )
+            check(
+                "Row 18C real adapter, self-loop precondition: döngüsel audit linki "
+                "Path.exists()==False (ELOOP)",
+                dr_audit_dir.exists() is False,
+            )
+
+            loop_evidence = real_dr_adapter.gather_evidence(dr_entry())
+            check(
+                "Row 18C real adapter: DÖNGÜSEL (self-loop) audit linki -> INCONCLUSIVE evidence "
+                "(POSIX, gerçek ELOOP)",
+                loop_evidence.post_state_verified is False and loop_evidence.pre_state_confirmed_unchanged is False,
+                f"got {loop_evidence!r}",
+            )
+        finally:
+            _dr_remove_escape_link(dr_audit_dir)
+        clear_dr_dirs()
+    else:
+        print(
+            "SKIPPED (NOT counted as pass/fail) - self-loop symlink sub-test: Windows-native junction "
+            "loops are not constructed here per this turn's own instruction (constructing one reliably "
+            "risks leaving an orphaned/inconsistent reparse point on the real filesystem); the "
+            "broken-junction proof above plus source-code analysis (see both service files' own "
+            "header comments) is the accepted evidence for circular-link fail-closed behavior on this "
+            "platform."
+        )
+
+    # ---- reconcile_and_apply_journal_entry() end to end, through the
+    #      real FakeReconcileConn machinery already proven above, using
+    #      the REAL Row 18C adapter and a REAL clean post-state fixture. ----
+    clear_dr_dirs()
+    dr_inputs_dir.mkdir(parents=True, exist_ok=True)
+    current_content_2 = '{"lawyer_input":{"lawyer_provided_text":"y"}}'
+    dr_current_path.write_text(current_content_2, encoding="utf-8")
+    post_hash2 = _hashlib.sha256(current_content_2.encode("utf-8")).hexdigest()
+    dr_intent_2 = dr_intent(pre_revision="pre_revision_placeholder_2")
+    idem2_dr = _compute_idk(dr_intent_2)
+    good_dr_audit2 = {
+        **good_dr_audit, "previous_input_token": dr_intent_2.pre_revision,
+        "new_current_raw_sha256": post_hash2, "mutation_idempotency_key": idem2_dr,
+    }
+    write_dr_audit(good_dr_audit2)
+
+    dr_e2e_registry = mr.MutationAdapterRegistry().with_adapter(_dr_facade.ACTION_FAMILY, real_dr_adapter)
+    dr_e2e_conn = FakeReconcileConn([make_journal_row(
+        id=1, resource_key=f"case:{DR_CASE_ID}", action_family=_dr_facade.ACTION_FAMILY,
+        target_ref=_dr_facade.TARGET_REF, target_state=_dr_facade.TARGET_STATE,
+        pre_hash=dr_intent_2.pre_hash, pre_revision=dr_intent_2.pre_revision,
+        state="reconciliation_required", idempotency_key=idem2_dr,
+        request_fingerprint=_compute_fp(dr_intent_2), actor_label="7",
+    )])
+    _lock_calls.clear()
+    ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+    ml.release_lock_session = _fake_release_lock_session
+    try:
+        dr_e2e_outcome = mr.reconcile_and_apply_journal_entry(dr_e2e_conn, 1, dr_e2e_registry)
+    finally:
+        ml.acquire_case_lock_session = _original_acquire_case
+        ml.release_lock_session = _original_release
+    check(
+        "Row 18C real adapter end-to-end through reconcile_and_apply_journal_entry(): resolves to "
+        "'completed' with the real current-file hash as observed_post_hash",
+        dr_e2e_outcome.new_state == "completed" and dr_e2e_outcome.observed_post_hash == post_hash2,
+        f"got {dr_e2e_outcome!r}",
+    )
+    check(
+        "Row 18C real adapter end-to-end: the journal row itself was durably updated to 'completed'",
+        dr_e2e_conn.table[0]["state"] == "completed",
+    )
+finally:
+    _shutil.rmtree(dr_case_dir, ignore_errors=True)
+
+
 print(f"--- test_reconciliation_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)

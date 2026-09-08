@@ -40,6 +40,7 @@
 # ============================================================
 
 import json
+import logging
 import os
 import shutil
 
@@ -50,7 +51,6 @@ from referencing import Registry, Resource
 from jsonschema import Draft202012Validator, FormatChecker
 
 from .paths import CASES_DIR, DATA_DIR, to_repo_relative
-from . import authz as _authz
 from .common import (
     DraftingRequestUiError,
     DraftingRequestFormError,
@@ -62,22 +62,41 @@ from .common import (
 )
 
 # ============================================================
-# Row 19B: module-level (not a local closure) so tests can monkeypatch
-# it directly - same DI pattern as
-# `approval_registry._default_authz_repository` /
-# `review_registry._default_authz_repository`. Lazy-imports `db` (and
-# through it, psycopg) so this module stays importable without psycopg
-# installed; only actually CALLING this (in production, when
-# `save_lawyer_input_from_form` is not given an explicit
-# `authz_repository=`) requires it.
+# ROW 19C-2c: this module's OWN `_default_authz_repository()` -
+# formerly `save_lawyer_input_from_form()`'s own fallback whenever a
+# caller (in production) passed `authz_repository=None` - is REMOVED.
+# `save_lawyer_input_from_form()` no longer builds/owns an authz
+# repository itself (it now delegates that ENTIRE lifecycle to `ui.
+# services.drafting_request_mutation_facade.resolve_repository()`/
+# `authorize_outer()`/`apply_drafting_request_mutation()` - see that
+# module's own header comment, "WHY THE OUTER AUTHORIZATION STEP LIVES
+# OUTSIDE...", for the full rationale of why the OUTER authz call still
+# lives in THIS function rather than being folded entirely into the
+# facade) - mirrors Row 19C-2a Step 7's/Row 19C-2b's identical removal
+# of `approval_registry.py`'s/`review_registry.py`'s own copies. A test
+# that used to monkeypatch `drafting_request._default_authz_repository`
+# must instead monkeypatch `ui.services.drafting_request_mutation_
+# facade._default_authz_repository` from this same commit onward.
 # ============================================================
 
+from . import drafting_request_mutation_facade as _drafting_request_mutation_facade
 
-def _default_authz_repository():
-    from . import db as _db
-    return _authz.PostgresAuthzRepository(_db.get_connection())
+_logger = logging.getLogger("vergi_ai.drafting_request")
 
-# `.paths` import'u SRC_DIR'i zaten sys.path'e ekledi (bkz. paths.py) -
+
+def _log_critical_safely(message: str) -> None:
+    """Identical in purpose to every facade module's own copy of this
+    helper - a logging call that itself raises must NEVER be allowed to
+    replace an already-propagating exception. Kept as this module's own
+    copy so its cleanup logging has no dependency on the facade module
+    for this purpose."""
+    try:
+        _logger.critical(message)
+    except Exception:
+        pass
+
+
+# `.paths` import'u SRC_DIR'i zaten sys.path'e eklemiş olur (bkz. paths.py) -
 # bu yüzden src/ modülleri burada doğrudan import edilebilir (Prensip
 # 10 - src/'nin bir KOPYASI/YENİDEN YAZIMI değil, olduğu gibi import).
 from drafting_engine import (                                    # noqa: E402
@@ -653,15 +672,30 @@ def compute_current_freshness_token(case_id):
 # rollback AYRIMI TAM olarak burada uygulanır.
 # ============================================================
 
-def _write_audit_record(case_id, *, action, previous_token, new_raw_hash, lawyer_input_hash, saved_at, history_backup_path):
-
-    audit_dir = get_input_audit_dir(case_id)
+def _write_audit_record(
+    case_id, audit_dir, *, action, previous_token, new_raw_hash, lawyer_input_hash, saved_at, history_backup_path,
+    mutation_idempotency_key=None, mutation_resource_key=None, mutation_actor_ref=None,
+):
 
     audit_path = _reserve_collision_safe_path(audit_dir, "lawyer_input_save_", ".audit.json")
 
     record = {
         "case_id": case_id,
         "action": action,
+        # ROW 19C-2c: additive, keyword-only, default None - identical
+        # in spirit and shape to Row 19C-2a/2b's own `mutation_
+        # idempotency_key`/`mutation_resource_key` fields on every other
+        # writer's own audit output. `None` for a direct CLI-style call
+        # and every pre-Row-19C-2c audit record - a missing/blank value
+        # here is NEVER treated as automatic corroboration by any
+        # binding check that reads it.
+        "mutation_idempotency_key": mutation_idempotency_key,
+        "mutation_resource_key": mutation_resource_key,
+        # ROW 19C-2c: the REAL actor identity (`MutationIntent.actor_ref`,
+        # e.g. the IAM user id as a string) - this writer's audit record
+        # never carried an actor-identity field before this integration
+        # (unlike Layer A/B's own pre-existing `reviewer_ref`).
+        "mutation_actor_ref": mutation_actor_ref,
         "previous_input_token": previous_token,
         "new_current_raw_sha256": new_raw_hash,
         "lawyer_input_hash": lawyer_input_hash,
@@ -684,17 +718,36 @@ def _write_audit_record(case_id, *, action, previous_token, new_raw_hash, lawyer
     return audit_path
 
 
-def save_lawyer_input(case_id, wrapper, expected_current_input_hash):
+def save_lawyer_input(
+    case_id, wrapper, expected_current_input_hash,
+    *,
+    current_path_override=None, audit_dir_override=None, history_dir_override=None,
+    mutation_idempotency_key=None, mutation_resource_key=None, mutation_actor_ref=None,
+):
     """`wrapper` ZATEN tam olarak inşa edilmiş VE
     `validate_wrapper_schema_and_consistency` ile ÖN-KONTROLDEN
     geçirilmiş olmalıdır (çağıran - `save_lawyer_input_from_form` -
     bunu garanti eder). Bu fonksiyon YALNIZ tazelik kontrolü + atomik
     yazma + POST-WRITE doğrulama + audit + (herhangi bir adım
-    başarısız olursa) TAM rollback'ten sorumludur."""
+    başarısız olursa) TAM rollback'ten sorumludur.
 
-    current_path = get_current_input_path(case_id)
+    ROW 19C-2c: bu fonksiyonun KENDİ tazelik kontrolü (aşağıda)
+    KASITLI olarak KORUNUR - `ui.services.drafting_request_mutation_
+    facade.apply_drafting_request_mutation()`'ın kendi hoisted
+    precondition kontrolü ile AYNI kontrolü ZATEN case kilidi altında,
+    bu fonksiyon çağrılmadan ÖNCE yapmış olsa bile (guard-hoisting,
+    Layer B'nin `evidence_review.py` vb. için KORUDUĞU AYNI ilke) -
+    kilit tutulurken bir out-of-band tamper'a karşı bir güvenlik ağı.
+    `current_path_override`/`audit_dir_override`/`history_dir_override`
+    ve üç `mutation_*` keyword-only parametresi TEST-ONLY/coordinator-
+    ONLY dependency injection'dır; hepsi varsayılan olarak `None` kalır
+    - bu fonksiyonun doğrudan (facade OLMADAN) çağrılan HER ÖNCEKİ
+    davranışı (CLI-benzeri kullanım dahil) bayt-bayt AYNI kalır."""
 
-    actual_token = compute_current_freshness_token(case_id)
+    current_path = Path(current_path_override) if current_path_override is not None else get_current_input_path(case_id)
+
+    actual_token = sha256_file(current_path)
+    actual_token = actual_token if actual_token is not None else NO_EXISTING_INPUT_SENTINEL
 
     if actual_token != expected_current_input_hash:
 
@@ -704,15 +757,16 @@ def save_lawyer_input(case_id, wrapper, expected_current_input_hash):
 
     is_first_save = actual_token == NO_EXISTING_INPUT_SENTINEL
 
-    inputs_dir = get_inputs_dir(case_id)
+    inputs_dir = current_path.parent
 
     inputs_dir.mkdir(parents=True, exist_ok=True)
+
+    audit_dir = Path(audit_dir_override) if audit_dir_override is not None else get_input_audit_dir(case_id)
+    history_dir = Path(history_dir_override) if history_dir_override is not None else get_input_history_dir(case_id)
 
     provisional_backup_path = None
 
     if not is_first_save:
-
-        history_dir = get_input_history_dir(case_id)
 
         provisional_backup_path = _reserve_collision_safe_path(
             history_dir, "lawyer_input_before_save_", ".json",
@@ -743,7 +797,7 @@ def save_lawyer_input(case_id, wrapper, expected_current_input_hash):
         new_raw_hash = sha256_file(current_path)
 
         audit_path = _write_audit_record(
-            case_id,
+            case_id, audit_dir,
             action="first_save" if is_first_save else "overwrite",
             previous_token=actual_token,
             new_raw_hash=new_raw_hash,
@@ -753,6 +807,9 @@ def save_lawyer_input(case_id, wrapper, expected_current_input_hash):
                 None if is_first_save
                 else to_repo_relative(provisional_backup_path)
             ),
+            mutation_idempotency_key=mutation_idempotency_key,
+            mutation_resource_key=mutation_resource_key,
+            mutation_actor_ref=mutation_actor_ref,
         )
 
     except Exception as error:
@@ -802,71 +859,101 @@ def save_lawyer_input_from_form(
     expected_current_input_hash,
     principal,
     authz_repository=None,
+    conn_factory=None,
 ):
-    """Form -> (sözdizimsel doğrulama) -> (issue üyeliği + sıralama) ->
-    (wrapper inşası) -> (TAM paylaşılan doğrulayıcı, ÖN-KONTROL olarak)
-    -> (kaydetme yaşam döngüsü, TAZELİK kontrolü BURADA da tekrar
-    KENDİ İÇİNDE yapılır) sırasını uygular.
+    """(OUTER authz) -> (sözdizimsel doğrulama) -> (issue üyeliği +
+    sıralama) -> (wrapper inşası) -> (TAM paylaşılan doğrulayıcı,
+    ÖN-KONTROL olarak) -> (ROW 19C-2c: coordinator-arka koşullu, journal
+    kayıtlı, idempotent mutasyon - `ui.services.drafting_request_
+    mutation_facade.apply_drafting_request_mutation()`'a devredilir)
+    sırasını uygular.
 
-    Row 19B: `principal` is REQUIRED (keyword-only, no default) - this
-    function independently re-runs `authz.authorize_case_access(principal,
-    case_id, "mutate")` BEFORE any parsing/validation, exactly like
-    case_scoped_approve and apply_transition. Analysts (read-only) can
+    Row 19B: `principal` is REQUIRED (keyword-only, no default).
+
+    ROW 19C-2c: the OUTER authorization check still runs HERE, FIRST -
+    before `issues.json` is ever read, before the wrapper is built,
+    before any lock/connection/journal SQL of any kind - see `ui.
+    services.drafting_request_mutation_facade`'s own header comment
+    ("WHY THE OUTER AUTHORIZATION STEP LIVES OUTSIDE...") for the full
+    rationale of why this function (unlike `review_registry.
+    apply_transition()`) still owns this step itself rather than
+    delegating it entirely to the facade: this function has its own
+    genuine pre-lock, case-specific filesystem read (`issues.json`, via
+    `validate_and_sort_selected_issue_ids()`) that must happen strictly
+    AFTER authorization but strictly BEFORE the facade's own lock-
+    related work begins. The SAME open repository is then threaded into
+    the facade so its own INNER (under-lock) check reuses it rather
+    than opening a second IAM connection. Analysts (read-only) can
     never reach this function - "mutate" capability is required, and
     `GET .../drafting-request` itself is lawyer-only at the route layer
     (the lawyer's free-text instructions are confidential even to a
     read-only analyst on the same case)."""
 
-    case_id = _authz.authorize_case_access(
-        principal, case_id, "mutate",
-        repository=authz_repository or _default_authz_repository(),
-    )
-
-    lawyer_input = build_lawyer_input_from_form(
-        draft_intent_type_choice=draft_intent_type_choice,
-        appeal_level_choice=appeal_level_choice,
-        issue_selection_mode=issue_selection_mode,
-        selected_issue_ids_raw=selected_issue_ids_raw,
-        request_type_raw=request_type_raw,
-        request_text_raw=request_text_raw,
-        lawyer_provided_text_raw=lawyer_provided_text_raw,
-    )
-
-    lawyer_input["selected_issue_ids"] = validate_and_sort_selected_issue_ids(
-        lawyer_input["selected_issue_ids"], case_id,
-    )
-
+    repository, close_repository = _drafting_request_mutation_facade.resolve_repository(authz_repository)
     try:
+        case_id = _drafting_request_mutation_facade.authorize_outer(principal, case_id, repository)
 
-        normalized = normalize_lawyer_input(lawyer_input)
+        lawyer_input = build_lawyer_input_from_form(
+            draft_intent_type_choice=draft_intent_type_choice,
+            appeal_level_choice=appeal_level_choice,
+            issue_selection_mode=issue_selection_mode,
+            selected_issue_ids_raw=selected_issue_ids_raw,
+            request_type_raw=request_type_raw,
+            request_text_raw=request_text_raw,
+            lawyer_provided_text_raw=lawyer_provided_text_raw,
+        )
 
-    except DraftingEngineError as error:
+        lawyer_input["selected_issue_ids"] = validate_and_sort_selected_issue_ids(
+            lawyer_input["selected_issue_ids"], case_id,
+        )
 
-        raise DraftingRequestValidationError(
-            "lawyer_input, Row 15 normalize_lawyer_input kuralından geçemedi.",
-            errors=[f"lawyer_input: {error}"],
-        ) from error
+        try:
 
-    saved_at = datetime.now().astimezone().isoformat()
+            normalized = normalize_lawyer_input(lawyer_input)
 
-    wrapper = {
-        "schema_version": 1,
-        "case_id": case_id,
-        "saved_at": saved_at,
-        "source": "local_lawyer_ui_submission",
-        "lawyer_input_hash": compute_lawyer_input_hash(normalized),
-        "lawyer_input": normalized,
-    }
+        except DraftingEngineError as error:
 
-    # Yazmadan ÖNCE son bir tam-tutarlılık kontrolü (kontrat madde 6:
-    # "validate and normalize every submitted value" - yazma İŞLEMİNDEN
-    # ÖNCEKİ son savunma katmanı; POST-WRITE doğrulama `save_lawyer_input`
-    # İÇİNDE AYRICA yapılır).
-    validate_wrapper_schema_and_consistency(wrapper, case_id)
+            raise DraftingRequestValidationError(
+                "lawyer_input, Row 15 normalize_lawyer_input kuralından geçemedi.",
+                errors=[f"lawyer_input: {error}"],
+            ) from error
 
-    result = save_lawyer_input(case_id, wrapper, expected_current_input_hash)
+        saved_at = datetime.now().astimezone().isoformat()
 
-    return result["wrapper"]
+        wrapper = {
+            "schema_version": 1,
+            "case_id": case_id,
+            "saved_at": saved_at,
+            "source": "local_lawyer_ui_submission",
+            # ROW 19C-2c: this is the ONE content-normalization/hashing
+            # source `apply_drafting_request_mutation()` reuses directly
+            # as `MutationIntent.secondary_input_hash` - see that
+            # function's own docstring.
+            "lawyer_input_hash": compute_lawyer_input_hash(normalized),
+            "lawyer_input": normalized,
+        }
+
+        # Yazmadan ÖNCE son bir tam-tutarlılık kontrolü (kontrat madde
+        # 6: "validate and normalize every submitted value" - yazma
+        # İŞLEMİNDEN ÖNCEKİ son savunma katmanı; POST-WRITE doğrulama
+        # `save_lawyer_input` İÇİNDE AYRICA yapılır).
+        validate_wrapper_schema_and_consistency(wrapper, case_id)
+
+        result = _drafting_request_mutation_facade.apply_drafting_request_mutation(
+            case_id, wrapper, expected_current_input_hash,
+            principal=principal, repository=repository, conn_factory=conn_factory,
+        )
+
+        return result.wrapper
+    finally:
+        try:
+            close_repository()
+        except Exception:
+            _log_critical_safely(
+                "CRITICAL: save_lawyer_input_from_form() failed to close its own IAM authz "
+                "connection - investigate out of band; the save outcome itself is unaffected "
+                "and is being reported unchanged"
+            )
 
 
 def load_current_wrapper(case_id):

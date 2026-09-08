@@ -67,6 +67,8 @@ if not _FASTAPI_AVAILABLE:
 from ui.services import paths as svc_paths
 from ui.services import security
 from ui.services import drafting_request as draftreq
+from ui.services import drafting_request_mutation_facade as draftreqmutfacade
+from ui.services import mutation_lock as ml
 from ui.services import authz as _authz
 import ui.main as main_module
 from ui.main import (
@@ -138,10 +140,153 @@ main_module.has_capability = lambda request, principal, case_id, capability: Tru
 # with its OWN default repository (a real Postgres-backed one) unless a
 # route passes authz_repository= explicitly - main.py does NOT (by
 # design: production always uses the real repository). Route-mechanic
-# tests below therefore override the service module's
-# _default_authz_repository() directly, rather than main.py's call
-# sites (which must stay production-faithful).
-draftreq._default_authz_repository = lambda: _TEST_REPO
+# tests below therefore override the FACADE module's
+# _default_authz_repository() directly (ROW 19C-2c: `save_lawyer_
+# input_from_form()` now delegates its ENTIRE authz-repository lifecycle
+# to `drafting_request_mutation_facade.resolve_repository()`, which owns
+# the ONLY `_default_authz_repository()` copy for this writer now - the
+# module-level one that used to live on `draftreq` itself was REMOVED,
+# mirroring `test_review_routes.py`'s own identical Row 19C-2b
+# migration), rather than main.py's call sites (which must stay
+# production-faithful). `_default_authz_repository()` now returns a
+# `(repository, close)` PAIR, not a bare repository - the facade calls
+# `authorize_case_access()` TWICE per confirm (outer, before any
+# connection/lock/hash/journal SQL; inner, under the resource lock,
+# authoritative) against the SAME repository, closing the IAM
+# connection exactly once afterwards. `_TEST_REPO` is an in-memory
+# repository this file owns for its whole lifetime, so the closer is a
+# no-op.
+draftreqmutfacade._default_authz_repository = lambda: (_TEST_REPO, lambda: None)
+
+# ROW 19C-2c: `save_lawyer_input_from_form()` now runs the ENTIRE save
+# as one journaled mutation via `mutation_coordinator.run_mutation()`,
+# which needs a `mutation.mutation_journal`-shaped connection -
+# `main.py`'s route never passes `conn_factory=` either (production-
+# faithful, same reasoning as `authz_repository` above), so without
+# faking this, EVERY confirm POST in this file would attempt a REAL
+# psycopg connection and fail in this FastAPI-only, no-Postgres-needed
+# test file. A fresh fake table per call (never one shared table across
+# this file's many scenarios) deliberately avoids any cross-scenario
+# idempotency-replay interaction this file's own tests never intend to
+# exercise - that is `ui/tests/test_drafting_request_mutation_
+# integration_postgres.py`'s own dedicated job. This is a file-local
+# copy of the SAME fake-journal-cursor shape `ui/tests/test_review_
+# routes.py` already uses (proven correct there against the real
+# `run_mutation()`).
+
+
+class _RouteDraftingRequestFakeJournalCursor:
+    def __init__(self, table, calls):
+        self._table = table
+        self._calls = calls
+        self._last_result = None
+        self.rowcount = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def _row(self, journal_id):
+        for r in self._table:
+            if r["id"] == journal_id:
+                return r
+        raise AssertionError(f"sahte journal tablosunda id={journal_id} yok")
+
+    def execute(self, sql, params=None):
+        normalized = " ".join(sql.split())
+        self._calls.append(normalized.split()[0])
+
+        if normalized.startswith("SELECT 1 FROM mutation.mutation_journal"):
+            (resource_key,) = params
+            hit = any(
+                r["resource_key"] == resource_key
+                and r["state"] in ("prepared", "executing", "reconciliation_required")
+                for r in self._table
+            )
+            self._last_result = (1,) if hit else None
+            self.rowcount = 1 if hit else 0
+
+        elif normalized.startswith("SELECT id, state, request_fingerprint, observed_post_hash"):
+            (idempotency_key,) = params
+            matches = [r for r in self._table if r["idempotency_key"] == idempotency_key]
+            if not matches:
+                self._last_result = None
+                self.rowcount = 0
+            else:
+                r = matches[0]
+                self._last_result = (
+                    r["id"], r["state"], r["request_fingerprint"], r["observed_post_hash"],
+                    r["failure_code"], r["resolution_code"],
+                )
+                self.rowcount = 1
+
+        elif normalized.startswith("INSERT INTO mutation.mutation_journal"):
+            (
+                resource_key, action_family, actor_user_id, actor_label, target_ref, target_state,
+                pre_hash, pre_revision, idempotency_key, request_fingerprint,
+            ) = params
+            new_id = len(self._table) + 1
+            self._table.append({
+                "id": new_id, "resource_key": resource_key, "action_family": action_family,
+                "actor_user_id": actor_user_id, "actor_label": actor_label, "target_ref": target_ref,
+                "target_state": target_state, "pre_hash": pre_hash, "pre_revision": pre_revision,
+                "idempotency_key": idempotency_key, "request_fingerprint": request_fingerprint,
+                "state": "prepared", "failure_code": None, "resolution_code": None,
+                "executing_at": None, "resolved_at": None, "observed_post_hash": None,
+            })
+            self._last_result = (new_id,)
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'executing'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "executing"
+            self._row(journal_id)["executing_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'completed'"):
+            observed_post_hash, journal_id = params
+            row = self._row(journal_id)
+            row["state"] = "completed"
+            row["observed_post_hash"] = observed_post_hash
+            row["resolved_at"] = "FAKE_TIMESTAMP"
+            self.rowcount = 1
+
+        elif normalized.startswith("UPDATE mutation.mutation_journal SET state = 'reconciliation_required'"):
+            (journal_id,) = params
+            self._row(journal_id)["state"] = "reconciliation_required"
+            self.rowcount = 1
+
+        else:
+            raise AssertionError(f"beklenmeyen SQL: {sql}")
+
+    def fetchone(self):
+        return self._last_result
+
+
+class _RouteDraftingRequestFakeJournalConn:
+    def __init__(self):
+        self.table = []
+        self.calls = []
+        self.closed = False
+
+    def cursor(self):
+        return _RouteDraftingRequestFakeJournalCursor(self.table, self.calls)
+
+    def close(self):
+        self.closed = True
+
+
+draftreqmutfacade._default_conn_factory = lambda: _RouteDraftingRequestFakeJournalConn()
+
+# `apply_drafting_request_mutation()` also calls `ui.services.
+# mutation_lock.acquire_case_lock_session`/`release_lock_session`
+# directly (real Postgres advisory locks) - faked here to always
+# succeed, same pattern already proven in `ui/tests/test_review_
+# routes.py`.
+ml.acquire_case_lock_session = lambda conn, case_id: 222
+ml.release_lock_session = lambda conn, advisory_lock_id: True
 
 # targeted remediation ile AYNI ilke - TestClient'ın istemci adresini
 # AÇIKÇA loopback yapıyoruz; bu dosya DIŞINDA hiçbir yerde test-host

@@ -100,6 +100,7 @@ from .services.authz import CaseAccessDeniedError
 from .services import mutation_coordinator as mutcoord
 from .services import mutation_approval_facade as mutfacade
 from .services import review_mutation_facade as reviewmutfacade
+from .services import drafting_request_mutation_facade as draftreqmutfacade
 from .auth_routes import (
     router as auth_router,
     require_principal,
@@ -1460,8 +1461,64 @@ async def drafting_request_confirm(request: Request, case_id: str):
 
     except DraftingRequestStaleInputError as error:
 
+        # ROW 19C-2c: this ALSO catches `draftreqmutfacade.
+        # DraftingRequestPreconditionRaceDetectedError` (a `Drafting
+        # RequestStaleInputError` SUBCLASS) automatically - no separate
+        # except clause needed, same `DRAFTING_REQUEST_STALE`/HTTP 200
+        # contract, unchanged.
         return _error_page(request, "DRAFTING_REQUEST_STALE", back_url, exc=error)
 
+    # ROW 19C-2c: mutation_coordinator/drafting_request_mutation_
+    # facade's own new exception classes - the Row 18C analogue of
+    # `case_scoped_confirm`'s/`review_confirm`'s own identically-
+    # grouped except clauses (see those routes' own comments for the
+    # full rationale of each - unchanged here, only the module names
+    # differ).
+    #
+    # `ResourceGatedError`/`JournalExecutingTransitionFailedError`/
+    # `JournalCompletionUncertainError` (mutcoord) and `draftreqmut
+    # facade.DraftingRequestAuditBindingVerificationFailedError` all
+    # leave this case's mutation state genuinely unclear until a human
+    # resolves it - grouped under the SAME closed `MUTATION_REQUIRES_
+    # REVIEW`/HTTP 409 contract Layer A/B's identical groupings already
+    # use (`mutfacade.MUTATION_REQUIRES_REVIEW` - the SAME shared
+    # constant/message, never a third, Row-18C-specific string).
+    except (
+        mutcoord.ResourceGatedError,
+        mutcoord.JournalExecutingTransitionFailedError,
+        mutcoord.JournalCompletionUncertainError,
+        draftreqmutfacade.DraftingRequestAuditBindingVerificationFailedError,
+    ) as error:
+
+        return _error_page(request, mutfacade.MUTATION_REQUIRES_REVIEW, back_url, exc=error, status_code=409)
+
+    # `IdempotencyConflictError`: refused BEFORE the writer was ever
+    # invoked (zero domain effect from THIS attempt) - same reasoning
+    # as `case_scoped_confirm`'s/`review_confirm`'s own identical except
+    # clause. This is exactly where "same identity, different content"
+    # (a different `lawyer_input` submitted against the same claimed
+    # pre-state) surfaces to the lawyer.
+    except mutcoord.IdempotencyConflictError as error:
+
+        return _error_page(request, "MUTATION_IDENTITY_CONFLICT", back_url, exc=error, status_code=409)
+
+    # `PriorAttemptFailedError`: this EXACT content already has a
+    # TERMINAL 'failed' journal row on record - same reasoning as
+    # `case_scoped_confirm`'s/`review_confirm`'s own identical except
+    # clause.
+    except mutcoord.PriorAttemptFailedError as error:
+
+        return _error_page(request, "MUTATION_PERMANENTLY_FAILED", back_url, exc=error, status_code=409)
+
+    # ROW 19C-2c: `DraftingRequestResolvedCaseIdMismatchError` is a
+    # `DraftingRequestUiError` subclass, caught by the generic handler
+    # below - structurally unreachable (see that class's own
+    # docstring), deliberately NEVER escalated to the `MUTATION_
+    # REQUIRES_REVIEW` group above, for the exact same reason
+    # `case_scoped_confirm`'s/`review_confirm`'s own generic handlers
+    # name for their identical backstop classes: it carries no positive
+    # evidence that a journal row exists for this attempt at all
+    # (precondition-level, zero-journal-row).
     except (DraftingRequestFormError, DraftingRequestValidationError) as error:
 
         return _error_page(request, "DRAFTING_REQUEST_FORM_INVALID", back_url, exc=error)

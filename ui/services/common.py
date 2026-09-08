@@ -234,6 +234,42 @@ class DraftingRequestStaleInputError(DraftingRequestUiError):
     `StaleViewError`/`ReviewStaleViewError` ile AYNI ilke, ayrı sınıf)."""
 
 
+class DraftingRequestPreconditionRaceDetectedError(DraftingRequestStaleInputError):
+    """ROW 19C-2c - `DraftingRequestStaleInputError`'ın bir ALT SINIFI
+    (onun yerine geçen ayrı bir hiyerarşi DEĞİL): case kilidi ALINDIKTAN
+    sonra composite pre-state snapshot'ının (güncel girdi token'ı +
+    `drafting/inputs/audit/` dizininin + `drafting/inputs/history/`
+    dizininin sıralı `(relative_name, content_sha256)` manifestleri -
+    bkz. `ui.services.drafting_request_mutation_facade.
+    DraftingRequestPreconditionSnapshot`) YENİDEN hesaplanan hâli, kilit
+    BEKLENMEDEN ÖNCE hesaplanmış olan snapshot ile UYUŞMUYOR - yani bu
+    istek kilidi beklerken BAŞKA bir yazar aynı case üzerinde gerçekten
+    bir şeyi değiştirdi (audit/history dahil, salt güncel girdi değil).
+
+    AYRICA bu sınıf, admission gate'in (bkz. o modülün kendi docstring'i,
+    "UNLIKE LAYER B...") bu TAM mutasyonun önerilen idempotency key'iyle
+    eşleşen bir audit adayı (temiz veya bozuk) bulması durumunda da
+    fırlatılır - tarihsel audit/backup kayıtları NORMALDİR (Layer B'nin
+    "sıfır önceden-mevcut kayıt" kuralı BURAYA KOPYALANMAZ), ama bu TAM
+    kimlik için beklenmedik bir eşleşme TEK BAŞINA yeterli bir red
+    nedenidir.
+
+    Neden `DraftingRequestStaleInputError`'dan türer: dışarıdan
+    (route/HTTP katmanı ve mevcut her çağıran) bakıldığında sonuç AYNI
+    kapalı sözleşmedir - "gördüğünüz durum artık geçerli değil, sıfır
+    mutasyon yapıldı, sayfayı yenileyip tekrar deneyin"
+    (`DRAFTING_REQUEST_STALE`, HTTP 200). Mevcut `except
+    DraftingRequestStaleInputError` blokları bu yüzden HİÇBİR değişiklik
+    GEREKTİRMEZ ve bu yeni durumu otomatik olarak DOĞRU şekilde ele
+    alır (Prensip 9: fail-closed).
+
+    Bu hata fırlatıldığında `mutation.mutation_journal`'a HİÇBİR
+    `prepared` satırı YAZILMAZ ve writer (`drafting_request.
+    save_lawyer_input`) HİÇ ÇAĞRILMAZ - kontrol, `run_mutation()`'ın
+    sırasında `precondition_callback` adımında, `_insert_prepared`'dan
+    KESİN OLARAK ÖNCE yapılır."""
+
+
 class DraftingRequestNamingCollisionError(DraftingRequestUiError):
     """Geçmiş/audit dosyası için UTC mikrosaniye damgası + sayısal
     çakışma soneki (`_01`, `_02`, ...) sınırlı deneme sayısı içinde

@@ -22,6 +22,7 @@ import io
 import sys
 import tempfile
 from contextlib import redirect_stdout
+from datetime import datetime
 from pathlib import Path
 
 UI_DIR = Path(__file__).resolve().parent.parent
@@ -32,31 +33,24 @@ if str(REPO_ROOT) not in sys.path:
 
 from ui.services import paths as real_paths                      # noqa: E402
 from ui.services import drafting_request as dr                    # noqa: E402
-from ui.services import authz as _authz                            # noqa: E402 (Row 19B)
 from ui import run_drafting_request as cli                        # noqa: E402
 from ui.services.common import UnknownCaseError                   # noqa: E402
 
 import drafting_engine                                            # noqa: E402
 import legal_research_validator as lrv                            # noqa: E402
 
-# TARGETED RECONCILIATION (Row 19B): `save_lawyer_input_from_form` now
-# REQUIRES `principal` and independently re-checks authorization - same
-# isolation principle as test_drafting_request_service_isolated.py's
-# _AllowAllAsLawyerRepository. This CLI test only ever uses
-# save_lawyer_input_from_form once, to seed a "already has a saved
-# input" fixture state before invoking the CLI bridge - it does not test
-# authorization itself (that has its own full suite in
-# test_authz_isolated.py).
-class _AllowAllAsLawyerRepository(_authz.InMemoryAuthzRepository):
-    def get_session_authz_state(self, principal):
-        return _authz.SessionRecord(user_id=principal.user_id, current_authz_version=principal.role_version_at_issue, disabled=False)
-
-    def get_active_case_assignment(self, user_id, case_id):
-        return _authz.CaseAssignmentRecord(role="lawyer")
-
-
-_izole_authz_repo = _AllowAllAsLawyerRepository()
-_izole_lawyer_principal = _authz.Principal(user_id=1, session_id=1, role_version_at_issue=1)
+# ROW 19C-2c: this file's own "already has a saved input" fixture is
+# prepared by calling the CORE `drafting_request.save_lawyer_input()`
+# writer directly (see the fixture's own call site below) - never
+# `save_lawyer_input_from_form()`, which now requires Row 19B
+# authorization AND a Row 19C-2c mutation-coordinator/journal
+# connection. This CLI test's own subject is `ui/run_drafting_
+# request.py`'s read-only behavior, not authorization or mutation
+# integration (those have their own full suites - test_authz_
+# isolated.py and test_drafting_request_mutation_facade_isolated.py/
+# test_drafting_request_mutation_integration_postgres.py respectively)
+# - so this file no longer needs an authz principal/repository fixture
+# or a DB/journal connection of any kind at all.
 
 passed = 0
 failed = 0
@@ -194,14 +188,41 @@ with isolated_case() as (case_id, tmp_path):
         check("T14 varsayılan çalıştırma current dosyayı OLUŞTURMADI", not dr.get_current_input_path(case_id).exists())
 
         # 3b) geçerli bir kayıtlı girdi VAR - yine de salt-okunur kalmalı.
+        #
+        # ROW 19C-2c: bu fixture artık `save_lawyer_input_from_form()`
+        # (Row 19B authz + Row 19C-2c coordinator/DB/journal call path)
+        # DEĞİL, doğrudan çekirdek `save_lawyer_input()` writer'ı
+        # ÇAĞRILARAK hazırlanıyor - bu test bir mutasyon-entegrasyon
+        # testi DEĞİLDİR, YALNIZ bu dosyanın kendi CLI köprüsü
+        # testine "önceden kaydedilmiş bir avukat girdisi" fixture'ı
+        # sağlar (bkz. bu dosyanın kendi başlık yorumu). `save_lawyer_
+        # input()` zaten tazelik kontrolü + atomik yazma + post-write
+        # doğrulama + audit'in TEK gerçek kaynağıdır - `save_lawyer_
+        # input_from_form()`'un KENDİSİ de üretimde tam olarak BUNU
+        # (coordinator'ın writer_callback'i üzerinden) çağırır, bu
+        # yüzden üretilen artefaktlar (current dosya + audit kaydı)
+        # AYNI şekildedir. Gerekli normalize edilmiş `lawyer_input` ve
+        # wrapper, `save_lawyer_input_from_form()`'un KENDİSİNİN
+        # kullandığı AYNI public fonksiyonlarla (`build_lawyer_input_
+        # from_form`, `normalize_lawyer_input`, `compute_lawyer_input_
+        # hash`) burada AÇIKÇA inşa edilir - hiçbir mantık YENİDEN
+        # YAZILMAZ/KOPYALANMAZ, yalnız coordinator/DB/authz call path'i
+        # bu ilgisiz CLI testine hiç SOKULMAZ.
         token = dr.compute_current_freshness_token(case_id)
-        dr.save_lawyer_input_from_form(
-            case_id=case_id, draft_intent_type_choice="not_set", appeal_level_choice="",
+        fixture_lawyer_input = dr.build_lawyer_input_from_form(
+            draft_intent_type_choice="not_set", appeal_level_choice="",
             issue_selection_mode="not_provided", selected_issue_ids_raw=[],
             request_type_raw="", request_text_raw="", lawyer_provided_text_raw="cli test metni",
-            expected_current_input_hash=token,
-            principal=_izole_lawyer_principal, authz_repository=_izole_authz_repo,
         )
+        fixture_normalized = dr.normalize_lawyer_input(fixture_lawyer_input)
+        fixture_wrapper = {
+            "schema_version": 1, "case_id": case_id,
+            "saved_at": datetime.now().astimezone().isoformat(),
+            "source": "local_lawyer_ui_submission",
+            "lawyer_input_hash": dr.compute_lawyer_input_hash(fixture_normalized),
+            "lawyer_input": fixture_normalized,
+        }
+        dr.save_lawyer_input(case_id, fixture_wrapper, token)
         audit_count_before = len(list(dr.get_input_audit_dir(case_id).glob("*")))
 
         rc, out = run_cli(["--case", case_id])
