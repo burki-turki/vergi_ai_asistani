@@ -39,9 +39,25 @@
 #
 #     python -m ui.tests.test_path_containment_windows
 #
+# ROW 19C-3a SLICE 1 EXTENSION: `ui/services/paths.py`'s containment
+# logic now delegates to `src/path_containment.py` (see that module's
+# own tests, `ui/tests/test_path_containment_module_isolated.py`,
+# which is platform-independent and gracefully skips its own POSIX-
+# symlink sub-cases where unavailable). THIS file additionally proves,
+# Windows-natively via a REAL `mklink /J` junction, the specific fix
+# Row 19C-2c's independent broken-link finding generalized here too: a
+# BROKEN junction (its target deleted, the reparse-point entry itself
+# still on disk - `os.path.lexists()==True`, `Path.exists()==False`)
+# must fail closed, both for `verify_real_path_contained()` directly
+# and for `resolve_case_path()`'s create-chain (the OLD `candidate.
+# exists()` gate there would have silently treated a broken junction
+# as "not yet created"). Genuinely missing create-chains and normal
+# existing paths are proven UNCHANGED by this fix.
+#
 # Run: python -m ui.tests.test_path_containment_windows
 # ============================================================
 
+import os
 import shutil
 import subprocess
 import sys
@@ -96,6 +112,7 @@ if sys.platform != "win32":
 # --------------------------------------------------------------
 
 from ui.services import paths  # noqa: E402
+import path_containment as pc  # noqa: E402  (src/ is importable once ui.services.paths has run)
 
 
 def make_junction(link_path: Path, target_path: Path) -> None:
@@ -139,6 +156,72 @@ try:
                 lambda: paths.verify_real_path_contained(junction_link / "outside_file.txt", root=tmp_root),
                 "a path THROUGH that escaping junction is also caught and rejected",
             )
+
+            # ROW 19C-3a SLICE 1 - BROKEN NTFS JUNCTION (target deleted,
+            # link/reparse-point entry itself remains) - the exact Row
+            # 19C-2c lesson generalized into src/path_containment.py
+            # and now proven here, Windows-natively, via a REAL mklink
+            # /J junction (never a monkeypatch): os.path.lexists()
+            # reports True for the broken entry, Path.exists() reports
+            # False, and verify_real_path_contained() must still fail
+            # closed rather than silently treating it as "nothing
+            # here".
+            broken_junction_outside = tmp_outside / "broken_junction_ghost"
+            broken_junction_outside.mkdir()
+            broken_junction_link = tmp_root / "broken_junction"
+            make_junction(broken_junction_link, broken_junction_outside)
+            shutil.rmtree(broken_junction_outside)  # break it - target gone, link entry remains
+            try:
+                check(
+                    "broken junction precondition: os.path.lexists()==True (reparse-point entry itself "
+                    "still on disk)",
+                    os.path.lexists(broken_junction_link) is True,
+                )
+                check(
+                    "broken junction precondition: Path.exists()==False (target cannot be resolved)",
+                    broken_junction_link.exists() is False,
+                )
+                expect_raises(
+                    paths.PathContainmentError,
+                    lambda: paths.verify_real_path_contained(broken_junction_link, root=tmp_root),
+                    "a REAL, BROKEN NTFS junction (target deleted) is caught and rejected by "
+                    "verify_real_path_contained(), never silently treated as 'nothing here'",
+                )
+
+                # ROW 19C-3a ROOT-CONTRACT REMEDIATION, Windows-native
+                # proof: the broken junction USED AS THE ROOT ITSELF.
+                # The POSIX broken/ELOOP-root sub-tests in
+                # test_path_containment_module_isolated.py are SKIPPED
+                # on a machine without symlink privileges - THIS is the
+                # authoritative broken-root proof there.
+                expect_raises(
+                    pc.PathContainmentError,
+                    lambda: pc.list_contained_dir(broken_junction_link),
+                    "shared list_contained_dir(): a BROKEN NTFS junction AS THE ROOT raises the "
+                    "generic shared PathContainmentError (fail-closed, never a silent empty list)",
+                )
+                original_cases_dir_for_root = paths.CASES_DIR
+                paths.CASES_DIR = broken_junction_link
+                try:
+                    expect_raises(
+                        paths.PathContainmentError,
+                        lambda: paths.list_case_ids(),
+                        "UI list_case_ids(): CASES_DIR that is a BROKEN NTFS junction raises the "
+                        "translated UI PathContainmentError",
+                    )
+                    expect_raises(
+                        paths.UnknownCaseError,
+                        lambda: paths.list_case_ids(),
+                        "UI list_case_ids(): that broken-root failure is still catchable as "
+                        "UnknownCaseError (existing call sites unchanged)",
+                    )
+                finally:
+                    paths.CASES_DIR = original_cases_dir_for_root
+            finally:
+                try:
+                    broken_junction_link.rmdir()
+                except OSError:
+                    pass
 
             # End-to-end: a CASE directory that is itself a junction -
             # same attack shape as test_path_containment_isolated.py's
@@ -215,6 +298,86 @@ try:
                     and paths.resolve_case_path("case_0001", "existing_file.txt")
                     == (normal_case_dir / "existing_file.txt").resolve(strict=True),
                 )
+
+                # ROW 19C-3a SLICE 1 - the actual fix under test: a
+                # BROKEN NTFS junction as an INTERMEDIATE create-chain
+                # segment. Before this fix, resolve_case_path()'s OLD
+                # `candidate.exists()` gate would have seen `False` for
+                # this broken junction and silently returned it as a
+                # "not yet existing" candidate - exactly the Row
+                # 19C-2c bug class, now closed here too, proven with a
+                # REAL mklink /J junction (never a monkeypatch).
+                broken_chain_ghost = tmp_outside / "broken_chain_ghost"
+                broken_chain_ghost.mkdir()
+                broken_chain_link = normal_case_dir / "broken_chain_child"
+                make_junction(broken_chain_link, broken_chain_ghost)
+                shutil.rmtree(broken_chain_ghost)
+                try:
+                    check(
+                        "(6) broken create-chain precondition: os.path.lexists()==True",
+                        os.path.lexists(broken_chain_link) is True,
+                    )
+                    check(
+                        "(6) broken create-chain precondition: Path.exists()==False",
+                        broken_chain_link.exists() is False,
+                    )
+                    expect_raises(
+                        paths.PathContainmentError,
+                        lambda: paths.resolve_case_path("case_0001", "broken_chain_child", "leaf.txt"),
+                        "(6) resolve_case_path(): a BROKEN NTFS junction as an intermediate create-chain "
+                        "segment now FAILS CLOSED (the Row 19C-3a fix for the OLD .exists()-based "
+                        "fail-open gate) - proven Windows-natively",
+                    )
+                    expect_raises(
+                        paths.PathContainmentError,
+                        lambda: paths.resolve_case_path("case_0001", "broken_chain_child"),
+                        "(6b) a BROKEN NTFS junction as the FINAL create-chain segment is also rejected",
+                    )
+                finally:
+                    try:
+                        broken_chain_link.rmdir()
+                    except OSError:
+                        pass
+
+                check(
+                    "(7) resolve_case_path(): a genuinely MISSING (never-created) create-chain still "
+                    "returns a usable, unresolved candidate path - completely unaffected by the "
+                    "broken-link fix",
+                    paths.resolve_case_path("case_0001", "brand_new_dir", "brand_new_file.txt")
+                    == normal_case_dir.resolve(strict=True) / "brand_new_dir" / "brand_new_file.txt",
+                )
+
+                # ROW 19C-3a SLICE 1 - SAFE internal NTFS-junction alias
+                # (pointing to ANOTHER real, already-listed case
+                # directory, still genuinely contained under
+                # CASES_DIR) must be listed under its OWN logical name
+                # - never silently merged into/replaced by its
+                # target's name. Windows-native proof (the POSIX
+                # equivalent in ui/tests/test_path_containment_isolated.py
+                # is SKIPPED on this machine - no Developer Mode/
+                # elevation - so THIS is the authoritative proof here).
+                alias_case_dir = fake_cases_dir / "case_0001_alias"
+                make_junction(alias_case_dir, normal_case_dir)
+                try:
+                    ids_with_alias = paths.list_case_ids()
+                    check(
+                        "(8) list_case_ids(): a SAFE internal NTFS-junction alias (pointing to ANOTHER "
+                        "real, contained case directory) is listed under its OWN logical name, "
+                        "alongside its target, never silently merged/renamed",
+                        "case_0001_alias" in ids_with_alias and "case_0001" in ids_with_alias,
+                        f"got {ids_with_alias!r}",
+                    )
+                    check(
+                        "(8b) resolve_case_path() through the safe alias resolves to the SAME real "
+                        "target file the original case_id already reaches",
+                        paths.resolve_case_path("case_0001_alias", "existing_file.txt")
+                        == paths.resolve_case_path("case_0001", "existing_file.txt"),
+                    )
+                finally:
+                    try:
+                        alias_case_dir.rmdir()
+                    except OSError:
+                        pass
             finally:
                 paths.DATA_DIR = original_data_dir
                 paths.CASES_DIR = original_cases_dir

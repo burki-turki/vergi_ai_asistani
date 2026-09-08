@@ -246,13 +246,30 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   bağlandığı alt-fazdır: Row 18C'nin `drafting_request.save` action
   family'si. Rows 1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a ve Row
   19C-2b contract'ları değişmedi.
-- Sıradaki canonical alt-faz: **ROW 19C-3a — Shared Path-Containment
-  Foundation for Remaining CLI Writers** — **ACTIVE / NEXT** — **henüz
+- **ROW 19C-3a Slice 1 — Shared Path-Containment Foundation** artık
+  **DONE / LOCKED** — kullanıcı tarafından ayrıca onaylanmış 5 dosyalık
+  allowlist (2 yeni + 3 değiştirilmiş dosya) üzerinde implement edildi,
+  iki ayrı remediation turundan (root fail-closed düzeltmesi ve
+  Windows drive-relative escape Critical bulgusu) geçti ve bağımsız,
+  salt-okunur bir final re-review'da `ROW 19C-3a SLICE 1 LOCK-READY`
+  verdict'ine ulaştı (bkz. Row 19C-3a Slice 1 checkpoint özeti, §5
+  sonrası). Rows 1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a, Row
+  19C-2b ve Row 19C-2c contract'ları değişmedi.
+- Sıradaki canonical alt-faz: **ROW 19C-3a Slice 2 — Layer A/B Nested
+  Path-Containment Closure** — **ACTIVE / NEXT** — **henüz
   implementasyona BAŞLANMADI**; kendi tam dosya allowlist'i
   implementasyondan ÖNCE ayrıca sunulup onaylatılmalıdır (Row 19A'nın
-  dosya-değişiklik sınırı kararı uyarınca) — genel Row 19C-2c onayı bu
-  sıradaki alt-fazın dosya değişikliğini ÖNCEDEN yetkilendirmez. Bu
-  satır yalnız SIRADAKİ KAPSAMIN ADINI belirtir; bu alt-faz için henüz
+  dosya-değişiklik sınırı kararı uyarınca) — genel Row 19C-3a Slice 1
+  onayı bu sıradaki alt-fazın dosya değişikliğini ÖNCEDEN
+  yetkilendirmez. Ayrı, salt-okunur bir reconciliation ve kendi tam
+  dosya allowlist'i + kullanıcı onayı gerektirir. Öncelikli kapsam,
+  daha önce tespit edilen Layer A ve Layer B nested-directory
+  (audit/history/current-input) path-containment açıklarının
+  kapatılmasıdır. Row 19C-2c'nin drafting-request için ayrıca
+  geliştirilmiş, iki bağımsız remediation turundan geçmiş
+  `_resolve_verified_case_dir()`/`_verify_nested_case_path()`
+  helper'ları Slice 2'ye OTOMATİK olarak dahil DEĞİLDİR — bu satır
+  yalnız SIRADAKİ KAPSAMIN ADINI belirtir; bu alt-faz için henüz
   hiçbir kod, şema veya allowlist belirleme çalışması yapılmamıştır.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
@@ -2206,6 +2223,168 @@ orijinal sayımıyla AYNI).
 
 **Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b örneğinde
 olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
+roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
+dosyasına dokunmaz.
+
+### Row 19C-3a Slice 1 — Shared Path-Containment Foundation (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış 5
+dosyalık allowlist üzerinde tamamlandı: **2 YENİ + 3 DEĞİŞTİRİLMİŞ**;
+allowlist dışında hiçbir dosyaya dokunulmadı.
+
+- Yeni (2): `src/path_containment.py`,
+  `ui/tests/test_path_containment_module_isolated.py`.
+- Değiştirilmiş (3): `ui/services/paths.py`,
+  `ui/tests/test_path_containment_isolated.py`,
+  `ui/tests/test_path_containment_windows.py`.
+
+Hiçbir migration, writer, facade/adapter, `ui/main.py`,
+`ui/services/authz.py`, drafting-request helper'ı veya `data/` ağacı bu
+alt-fazda DEĞİŞMEDİ.
+
+**Mimari ve güvenlik sözleşmesi** — `src/path_containment.py`,
+stdlib-only, framework/domain bağımsız ve kendi module-level filesystem
+kökünü (ne `CASES_DIR`, ne `BASE_DIR`) SAKLAMAYAN paylaşılan bir
+primitive'tir; her çağıran kendi kökünü her çağrıda açıkça geçirir.
+Dört public fonksiyon: `validate_segment`, `resolve_existing`,
+`resolve_for_create`, `list_contained_dir`. `root` her zaman `Path(
+root).resolve(strict=True)` ile strict çözülür ve dizin OLMAK
+ZORUNDADIR; missing/broken/döngüsel (ELOOP)/dizin-olmayan/kaçan bir
+root fail-closed generic `PathContainmentError` fırlatır — SESSİZCE
+boş listeye ASLA çevrilmez. Yalnız root başarıyla doğrulandıktan SONRA
+tekil unsafe child'lar (`list_contained_dir()`'da) sessizce atlanır;
+root hatası ile child hatası ASLA birbirine karıştırılmaz.
+`os.path.lexists()` missing-vs-broken/döngüsel ayrımında ZORUNLUDUR;
+`Path.exists()` hiçbir yerde bir pre-gate olarak kullanılmaz (grep ile
+doğrulandı — modülde tek bir `os.path.lexists()` çağrısı ve modülün
+kendi kodunda sıfır `.exists()` çağrısı vardır). `ui/services/paths.py`
+artık bu paylaşılan modül üzerinde İNCE bir delegasyon katmanıdır:
+`CASES_DIR`/`BASE_DIR`/`DATA_DIR`/`SRC_DIR` ve her public fonksiyonun
+imzası/dönüş tipi DEĞİŞMEDEN kalır; her fonksiyon shared modülün
+generic `path_containment.PathContainmentError`'ını açıkça
+yakalayıp (`raise ... from error`) bu modülün KENDİ
+`PathContainmentError`/`UnknownCaseError` ailesine çevirir - mevcut
+HİÇBİR `except UnknownCaseError:` çağrı noktası değişmeden çalışmaya
+devam eder. `CASES_DIR` hiçbir yerde by-value cache'lenmez - mevcut
+monkeypatch test seam'i (`paths.CASES_DIR = fake_cases_dir`) aynen
+korunur. Bir güvenli internal alias/symlink/junction'ın KENDİ
+mantıksal adı ve deterministic sıralama korunur (hedefinin adına ASLA
+sessizce dönüştürülmez). Containment kontrolü HER ZAMAN domain-özgü
+membership kontrolünden (`is_dir()`, `case.json` varlığı) ÖNCE yapılır,
+ASLA ters sırada. `resolve_for_create()` hiçbir dosya/dizin
+OLUŞTURMAZ - yalnız salt-okunur bir aday path hesaplar/doğrular;
+mevcut bir ara dosyanın (dizin değil) altında bir create-chain
+üretilmeye çalışılması reddedilir; missing tail'in HER segmenti,
+doğrulanmış en derin ata ile olan `_join_verified_child()` ilişkisini
+korur (tek, kontrolsüz bir `joinpath(*remaining)` çağrısı YOKTUR).
+
+**İki remediation turu (dürüst kayıt)**:
+
+1. İlk implementasyon raporunda `list_contained_dir()`, missing veya
+   dizin-olmayan bir root'u SESSİZCE boş listeye çeviriyordu. Bu,
+   onaylanan strict-root kontratına (root hatası ile "hiç child yok"
+   durumunun asla karıştırılmaması) aykırı bulundu ve root-first
+   fail-closed davranışla (root ÖNCE doğrulanır ve doğrulanamazsa
+   RAISE eder; yalnız doğrulanmış bir root altındaki tekil child'lar
+   sessizce atlanır) düzeltildi.
+2. Ardından bağımsız bir inceleme, Windows drive-relative bir segment
+   biçiminin (`"D:evil.txt"`, `"D:"` gibi) `Path.joinpath()`'in
+   Windows'ta segment kendi drive'ını taşıdığında TÜM path'i sessizce
+   yeniden-anchor edip önceki her parçayı attığı gerçeğini kullanarak,
+   zaten doğrulanmış bir root'u tamamen atlayabildiğini gösteren bir
+   **Critical** bulgu çıkardı (aynı sınıf, `"file.txt:stream"` NTFS
+   alternate-data-stream biçimini de kapsayacak şekilde).
+3. Bu açık ÜÇ bağımsız katmanla kapatıldı: (a) `":"` karakteri
+   `FORBIDDEN_SEGMENT_SUBSTRINGS` denylist'ine eklenerek (hem
+   drive-designator hem ADS-stream biçimini tek başına kapatır); (b)
+   `validate_segment()`'in her segmenti HEM `PureWindowsPath` HEM
+   `PurePosixPath` ile yapısal olarak ayrıştırıp bir drive/root/anchor
+   taşıyan veya tam olarak tek, değişmemiş bir relative component
+   olarak round-trip etmeyen HERHANGİ bir segmenti reddetmesiyle
+   (platform-bağımsız, gelecekteki henüz enumerate edilmemiş bir
+   re-anchoring riskine karşı ikinci, bağımsız bir katman); (c) her
+   join'den SONRA, HERHANGİ bir filesystem sorgusundan ÖNCE, joined
+   candidate'ın kendi `.parent`/`.name`'inin tam olarak onu üreten
+   ata/segmentle eşleştiğini doğrulayan `_join_verified_child()` ile
+   (yukarıdaki iki katman bir gelecekteki boşluk bıraksa bile bağımsız
+   olarak aynı hata sınıfını yakalardı).
+4. Aynı saldırının hem paylaşılan `path_containment` API'si üzerinden
+   HEM DE public `ui.services.paths.resolve_case_path()` wrapper'ı
+   üzerinden - segmentin create-chain'in İLK, bir mevcut segmentten
+   SONRAKİ, ve genuinely-missing bir tail İÇİNDEKİ konumlarının
+   HEPSİNDE, gerçek şu an çalışan sistem drive harfi dahil - kapandığı
+   bağımsız bir final re-review'da doğrulandı.
+5. Final bağımsız verdict: **`ROW 19C-3a SLICE 1 LOCK-READY`**.
+
+**Test kanıtı — implementasyon turu (full sweep)** — Implementasyon
+turunun kendi raporuna göre: tüm 36 `ui/tests/test_*.py` modülü, gerçek
+disposable PostgreSQL 16 üzerinde (migration 0001-0004 uygulanmış),
+tek seferde çalıştırıldı: **1967 passed, 0 failed, 8 skipped**. Sekiz
+skip'in TAMAMI bu ortamda Developer Mode/elevation ayrıcalığı
+bulunmayan POSIX-symlink alt-testleridir - PASS SAYILMAMIŞTIR.
+Windows-native gerçek `mklink /J` testleri (`test_path_containment_
+windows.py`) skip OLMADAN, tam olarak çalıştı. Disposable PostgreSQL
+kümesi test sonunda kaldırıldı; gerçek `data/` ağacı ve `case_0001`
+byte-düzeyinde DEĞİŞMEDİ.
+
+**Test kanıtı — bağımsız final re-review (AYRI, dar kapsamlı)** — Bu
+sayılar implementasyon turunun 1967 toplamının bir PARÇASI DEĞİL,
+bağımsız bir re-review turunda AYRICA, dar kapsamlı olarak (yalnız
+path-containment + ilgili regresyon dosyaları, PostgreSQL/full-suite
+KOŞULMADAN) çalıştırılmıştır:
+
+- `test_path_containment_module_isolated`: **58 PASS, 0 FAIL, 4 SKIP**
+- `test_path_containment_isolated`: **49 PASS, 0 FAIL, 4 SKIP**
+- `test_path_containment_windows`: **20 PASS, 0 FAIL** (gerçek
+  `mklink /J`, sıfır skip)
+- `test_authz_isolated`: **27 PASS, 0 FAIL**
+- `test_routes`: **60 PASS, 0 FAIL**
+- `py_compile` (5 dosya): temiz
+- `pip check`: temiz
+
+Bağımsız re-review implementasyon turunun **1967 toplam full sweep'ini
+YENİDEN ÇALIŞTIRMAMIŞTIR** - yalnız yukarıdaki hedefli sonuçları
+bizzat çalıştırmış ve `1922 (önceki final) + 27 (yeni module test
+farkı) + 18 (yeni isolated UI test farkı) = 1967` matematiksel
+tutarlılığını doğrulamıştır. Bağımsız olarak bizzat çalıştırılmamış
+hiçbir test bu re-review tarafından bağımsız PASS olarak sunulmamıştır.
+
+**Bilinen backlog — LOCK'u ENGELLEMEZ**:
+
+- Windows reserved device adları (`CON`, `PRN`, `AUX`, `NUL`, `COM*`,
+  `LPT*`) ve trailing-dot/trailing-space segmentleri (`"foo."`,
+  `"foo "`) hâlâ `validate_segment()` tarafından sıradan, tek-
+  component relative segment olarak KABUL EDİLMEKTEDİR. Bunlar
+  doğrulanmış root DIŞINA re-anchor oluşturan bir containment kaçağı
+  DEĞİLDİR (drive/root/anchor taşımazlar, tek relative component olarak
+  round-trip ederler) - bu, ayrı bir Windows namespace/portability
+  hardening borcudur. Herhangi bir gelecek writer, ham veya kullanıcı-
+  kontrollü bir segmenti `resolve_for_create()`'e bağlamadan ÖNCE: ya
+  paylaşılan `validate_segment()` bu adlar için AYRICA güçlendirilmeli,
+  ya da caller'ın yalnız güvenli, deterministic, allowlisted dosya
+  adları ürettiği ayrıca KANITLANMALIDIR. Bu not Slice 1 LOCK'unu
+  ENGELLEMEZ, ama gelecekteki herhangi bir writer-migration açılış
+  kapısında YENİDEN değerlendirilmelidir.
+- Gerçek bir ikinci-drive/UNC fixture'ı bulunmadığı için ayrı, canlı
+  bir cross-drive filesystem testi YOKTUR - drive-relative ve tüm
+  anchored/rooted biçimler yalnız yapısal (`PureWindowsPath`/
+  `PurePosixPath`) testlerle kapatılmıştır (bkz. yukarıdaki test kanıtı
+  - gerçek şu an çalışan sistem drive harfi dahil edilmiştir, ama farklı
+  bir GERÇEK ikinci sürücü değil).
+- Layer A ve Layer B'nin nested-directory (audit/history/current-input)
+  path-containment açıkları **Row 19C-3a Slice 2**'nin ACTIVE/NEXT
+  kapsamındadır - bu turda KAPATILMADI.
+- `src/*_approval.py`/`src/*_discovery.py` gibi modüllerdeki bağımsız
+  `CASES_DIR` tanımları ve (Row 19C-2b'nin bağımsız incelemesinde
+  tespit edilen `qa_validator.py`'nin `BASE_DIR`'i hardcode etmesi gibi)
+  by-value import borcu henüz bu paylaşılan modüle MIGRATE EDİLMEDİ.
+- `resolve_for_create()` bu alt-fazda HİÇBİR gerçek production writer'a
+  BAĞLANMADI - Row 19C-3a Slice 1 tamamen shared-primitive/altyapı
+  katmanıdır (`ui.services.paths` kendi mevcut, zaten-onaylı çağıranları
+  dışında).
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c
+örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
 roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
 dosyasına dokunmaz.
 

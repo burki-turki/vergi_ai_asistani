@@ -94,6 +94,16 @@ def symlink_creation_is_available(tmp_root: Path) -> bool:
         shutil.rmtree(target, ignore_errors=True)
 
 
+def snapshot_tree(root: Path):
+    """A byte-for-byte, entry-for-entry snapshot of every path under
+    `root` (relative names only) - used by the ROW 19C-3a DRIVE-
+    RELATIVE ESCAPE REMEDIATION coverage to prove that rejected attack
+    attempts never write anything to disk."""
+    if not root.is_dir():
+        return frozenset()
+    return frozenset(str(p.relative_to(root)) for p in root.rglob("*"))
+
+
 # ----------------------------------------------------------------
 # 1) verify_real_path_contained() - pure unit tests, NO symlink
 #    needed, fully platform-independent.
@@ -225,6 +235,200 @@ try:
             "resolve_case_path() rejects an empty relative_parts segment",
         )
 
+        # ============================================================
+        # ROW 19C-3a DRIVE-RELATIVE ESCAPE REMEDIATION - the same
+        # independent-review Critical finding proven end-to-end through
+        # the PUBLIC ui.services.paths.resolve_case_path() wrapper, not
+        # just the shared src/path_containment.py module directly (see
+        # ui/tests/test_path_containment_module_isolated.py for the
+        # shared-module-level coverage). Deterministic, platform-
+        # independent - none of it requires a real second drive.
+        # ============================================================
+
+        _drive_relative_attack_segments_via_wrapper = [
+            "D:not_yet_existing_evil.txt",
+            "D:",
+            "C:not_yet_existing_evil.txt",
+            "file.txt:stream",
+            ".",
+            ":",
+            "Q:",
+        ]
+
+        for _attack_segment in _drive_relative_attack_segments_via_wrapper:
+            expect_raises(
+                paths.PathContainmentError,
+                lambda seg=_attack_segment: paths.resolve_case_path("case_0001", seg),
+                f"resolve_case_path(): drive-relative/ADS-colon segment {_attack_segment!r} as the "
+                f"ONLY relative part is rejected (PathContainmentError), never returned as an "
+                f"unverified escaped candidate",
+            )
+            expect_raises(
+                paths.PathContainmentError,
+                lambda seg=_attack_segment: paths.resolve_case_path("case_0001", "new_subdir", seg, "trailing.txt"),
+                f"resolve_case_path(): same segment {_attack_segment!r} as a LATER part of an "
+                f"otherwise-normal missing chain is also rejected",
+            )
+
+        # Using the REAL, currently-existing system drive letter, not
+        # just an arbitrary/nonexistent one.
+        _real_system_drive_via_wrapper = fake_cases_dir.drive
+        if _real_system_drive_via_wrapper:
+            _real_drive_segment_via_wrapper = f"{_real_system_drive_via_wrapper}real_system_drive_evil.txt"
+            expect_raises(
+                paths.PathContainmentError,
+                lambda: paths.resolve_case_path("case_0001", _real_drive_segment_via_wrapper),
+                f"resolve_case_path(): a drive-relative segment on the REAL, currently-existing "
+                f"system drive ({_real_drive_segment_via_wrapper!r}) is rejected too",
+            )
+        else:
+            skip(
+                "resolve_case_path() real-system-drive drive-relative segment check",
+                "this platform's paths carry no drive component (POSIX)",
+            )
+
+        # No rejected attack attempt wrote anything under the fake case
+        # directory (or anywhere else in the fake cases tree).
+        _wrapper_attack_snapshot_before = snapshot_tree(fake_cases_dir)
+        for _attack_segment in _drive_relative_attack_segments_via_wrapper:
+            try:
+                paths.resolve_case_path("case_0001", _attack_segment)
+            except paths.PathContainmentError:
+                pass
+            try:
+                paths.resolve_case_path("case_0001", "new_subdir", _attack_segment, "trailing.txt")
+            except paths.PathContainmentError:
+                pass
+        _wrapper_attack_snapshot_after = snapshot_tree(fake_cases_dir)
+        check(
+            "resolve_case_path(): none of the rejected drive-relative/ADS-colon attack attempts "
+            "wrote anything under the fake cases tree",
+            _wrapper_attack_snapshot_before == _wrapper_attack_snapshot_after,
+            f"diff={_wrapper_attack_snapshot_before ^ _wrapper_attack_snapshot_after}",
+        )
+
+        # Regression: ordinary resolve_case_path() behavior (existing
+        # file lookup, genuinely-missing leaf candidate) is completely
+        # UNAFFECTED by the fix.
+        check(
+            "resolve_case_path(): ordinary existing-file lookup is unaffected by the drive-relative fix",
+            paths.resolve_case_path("case_0001", "existing_file.txt")
+            == (case_0001_dir / "existing_file.txt").resolve(strict=True),
+        )
+        check(
+            "resolve_case_path(): ordinary not-yet-existing leaf candidate is unaffected by the "
+            "drive-relative fix",
+            paths.resolve_case_path("case_0001", "still_a_normal_new_file.txt")
+            == case_0001_dir / "still_a_normal_new_file.txt",
+        )
+
+        # ROW 19C-3a SLICE 1 - BROKEN/LOOPING LINK IN A CREATE-CHAIN NOW
+        # FAILS CLOSED (the exact bug class Row 19C-2c independently
+        # found and fixed for the drafting-request facade/adapter: the
+        # OLD `candidate.exists()` gate could not tell "genuinely not
+        # yet created" from "a broken or looping link is here", so it
+        # silently returned the raw, unverified link path as a
+        # not-yet-existing candidate). Uses a REAL symlink, never a
+        # monkeypatch.
+        if symlink_creation_is_available(tmp_root):
+            ghost_target = tmp_outside / "row19c3a_ghost_target"
+            ghost_target.mkdir()
+            broken_link_path = case_0001_dir / "broken_link_child"
+            os.symlink(str(ghost_target), str(broken_link_path), target_is_directory=True)
+            shutil.rmtree(ghost_target)  # break it - target gone, link entry remains
+            try:
+                check(
+                    "broken create-chain precondition: os.path.lexists()==True",
+                    os.path.lexists(broken_link_path) is True,
+                )
+                check(
+                    "broken create-chain precondition: Path.exists()==False",
+                    broken_link_path.exists() is False,
+                )
+                expect_raises(
+                    paths.PathContainmentError,
+                    lambda: paths.resolve_case_path("case_0001", "broken_link_child", "leaf.txt"),
+                    "resolve_case_path(): a BROKEN link as an intermediate create-chain segment now FAILS "
+                    "CLOSED (PathContainmentError) instead of the old .exists()-based fail-open",
+                )
+                expect_raises(
+                    paths.PathContainmentError,
+                    lambda: paths.resolve_case_path("case_0001", "broken_link_child"),
+                    "resolve_case_path(): a BROKEN link as the FINAL create-chain segment is also rejected",
+                )
+            finally:
+                broken_link_path.unlink()
+
+            loop_link_path = case_0001_dir / "loop_link_child"
+            os.symlink("loop_link_child", str(loop_link_path))
+            try:
+                check(
+                    "circular create-chain precondition: os.path.lexists()==True",
+                    os.path.lexists(loop_link_path) is True,
+                )
+                check(
+                    "circular create-chain precondition: Path.exists()==False (ELOOP)",
+                    loop_link_path.exists() is False,
+                )
+                expect_raises(
+                    paths.PathContainmentError,
+                    lambda: paths.resolve_case_path("case_0001", "loop_link_child", "leaf.txt"),
+                    "resolve_case_path(): a DÖNGÜSEL (self-loop, ELOOP) link as an intermediate create-chain "
+                    "segment now FAILS CLOSED",
+                )
+            finally:
+                loop_link_path.unlink()
+
+            check(
+                "resolve_case_path(): normal (non-broken, non-circular) behavior is completely UNCHANGED "
+                "after the broken-link fix - existing file still resolves, not-yet-existing leaf still "
+                "returns a usable candidate",
+                paths.resolve_case_path("case_0001", "existing_file.txt")
+                == (case_0001_dir / "existing_file.txt").resolve(strict=True)
+                and paths.resolve_case_path("case_0001", "still_brand_new.txt")
+                == case_0001_dir / "still_brand_new.txt",
+            )
+        else:
+            skip(
+                "broken/circular create-chain fail-closed check (resolve_case_path)",
+                "this process/OS could not create a symlink (likely Windows without Developer Mode/elevation) - "
+                "see ui/tests/test_path_containment_windows.py for the junction-based Windows-native equivalent",
+            )
+
+        # ROW 19C-3a SLICE 1 - list_case_ids() PRESERVES LOGICAL CHILD
+        # IDENTITY AND SORT ORDER through the new path_containment.
+        # list_contained_dir() delegation (a safe internal symlink
+        # alias must keep its OWN on-disk name, never silently become
+        # its target's name).
+        if symlink_creation_is_available(tmp_root):
+            case_0003_dir = fake_cases_dir / "case_0003"
+            case_0003_dir.mkdir()
+            (case_0003_dir / "case.json").write_text("{}")
+
+            alias_case_dir = fake_cases_dir / "case_0001_alias"
+            os.symlink(str(case_0001_dir), str(alias_case_dir), target_is_directory=True)
+            try:
+                ids_with_alias = paths.list_case_ids()
+                check(
+                    "list_case_ids(): a SAFE internal alias (symlink to ANOTHER real case dir, still "
+                    "contained under CASES_DIR) is listed under its OWN logical name, sorted with the rest",
+                    ids_with_alias == sorted(["case_0001", "case_0001_alias", "case_0003"]),
+                    f"got {ids_with_alias!r}",
+                )
+            finally:
+                alias_case_dir.unlink()
+                shutil.rmtree(case_0003_dir)
+
+            check(
+                "list_case_ids(): logical names/order are UNCHANGED once the alias is removed again",
+                paths.list_case_ids() == ["case_0001"],
+            )
+        else:
+            skip(
+                "list_case_ids() logical-identity/order preservation check",
+                "this process/OS could not create a symlink (likely Windows without Developer Mode/elevation)",
+            )
+
         # The real, end-to-end attack scenario: a case directory that
         # is ITSELF a symlink pointing outside the cases root.
         #
@@ -292,6 +496,72 @@ try:
     finally:
         paths.DATA_DIR = original_data_dir
         paths.CASES_DIR = original_cases_dir
+
+    # ============================================================
+    # ROW 19C-3a ROOT-CONTRACT REMEDIATION - list_case_ids() with an
+    # UNVERIFIABLE CASES_DIR root now FAILS CLOSED (translated UI
+    # PathContainmentError, still catchable as UnknownCaseError) -
+    # never the old silent `[]` pre-gate. Platform-independent: a
+    # genuinely missing root needs no symlink at all.
+    # ============================================================
+
+    _rc_original_cases_dir = paths.CASES_DIR
+    paths.CASES_DIR = tmp_root / "does_not_exist_cases_root"
+    try:
+        expect_raises(
+            paths.PathContainmentError,
+            lambda: paths.list_case_ids(),
+            "list_case_ids(): a genuinely MISSING CASES_DIR root raises the UI PathContainmentError "
+            "(fail-closed, translated from the shared module's own error - never a silent [])",
+        )
+        try:
+            paths.list_case_ids()
+        except paths.UnknownCaseError:
+            check(
+                "list_case_ids(): that root failure is still catchable as UnknownCaseError (every "
+                "existing except UnknownCaseError: call site keeps working unchanged)",
+                True,
+            )
+        except Exception as unexpected:
+            check(
+                "list_case_ids(): that root failure is still catchable as UnknownCaseError (every "
+                "existing except UnknownCaseError: call site keeps working unchanged)",
+                False, f"unexpected exception: {unexpected!r}",
+            )
+        else:
+            check(
+                "list_case_ids(): that root failure is still catchable as UnknownCaseError (every "
+                "existing except UnknownCaseError: call site keeps working unchanged)",
+                False, "no exception raised at all",
+            )
+        try:
+            paths.list_case_ids()
+        except paths.PathContainmentError as translated:
+            check(
+                "list_case_ids(): the translated UI error explicitly chains ('from') the shared "
+                "path_containment.PathContainmentError (never swallowed, never a bare re-raise)",
+                type(translated.__cause__).__module__ == "path_containment"
+                and type(translated.__cause__).__name__ == "PathContainmentError",
+                f"__cause__={translated.__cause__!r}",
+            )
+    finally:
+        paths.CASES_DIR = _rc_original_cases_dir
+
+    # A FILE (not a directory) as the CASES_DIR root fails closed the
+    # same way - still no symlink needed.
+    _rc_file_root = tmp_root / "cases_root_is_a_file.txt"
+    _rc_file_root.write_text("not a directory")
+    _rc_original_cases_dir = paths.CASES_DIR
+    paths.CASES_DIR = _rc_file_root
+    try:
+        expect_raises(
+            paths.PathContainmentError,
+            lambda: paths.list_case_ids(),
+            "list_case_ids(): a CASES_DIR root that is a FILE (not a directory) raises the UI "
+            "PathContainmentError too",
+        )
+    finally:
+        paths.CASES_DIR = _rc_original_cases_dir
 
     # ============================================================
     # ROW 19C-2a - SHARED PATH ROOT PROOF FOR ALL 10 CASE-SCOPED

@@ -5,11 +5,29 @@
 # olan 12 onay modülünü OLDUĞU GİBİ import edip kullanır (Prensip 10).
 # Bu modülün TEK işi: src/'yi import edilebilir kılmak ve DATA_DIR'i
 # tek bir yerden vermek.
+#
+# ROW 19C-3a SLICE 1 - THIN DELEGATION LAYER: this module's own
+# containment logic (originally a self-contained Row 19C-1 addition,
+# later independently duplicated by Row 19C-2c's drafting-request
+# facade/adapter once the SAME "Path.exists() cannot tell missing from
+# broken/looping" gap was found and fixed there too) has been EXTRACTED
+# into `src/path_containment.py` - the ONE stdlib-only, framework-
+# independent primitive. `CASES_DIR`/`BASE_DIR`/`DATA_DIR`/`SRC_DIR`
+# and every PUBLIC function signature/return type below are UNCHANGED;
+# each function's OWN body now delegates to the shared module and
+# translates its generic `path_containment.PathContainmentError` into
+# this module's own `PathContainmentError` (still a `UnknownCaseError`
+# subclass - every existing `except UnknownCaseError:` call site
+# project-wide keeps working, completely unchanged) at the call
+# boundary. `CASES_DIR` is NEVER cached/imported-by-value anywhere in
+# this file - every function below reads the CURRENT module-level
+# value at call time, preserving the existing monkeypatch test seam
+# (`paths.CASES_DIR = fake_cases_dir`, as several test files already
+# do) exactly as before.
 # ============================================================
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -25,6 +43,8 @@ if str(SRC_DIR) not in sys.path:
 
     sys.path.insert(0, str(SRC_DIR))
 
+import path_containment as _path_containment  # noqa: E402
+
 
 def list_case_ids():
     """
@@ -32,44 +52,55 @@ def list_case_ids():
     içeren her dizin). Yeni bir case registry İCAT EDİLMEZ - dosya
     sistemi zaten tek source of truth.
 
-    ROW 19C-1 PATH CHOKE-POINT REMEDIATION: her aday, gerçek (symlink/
-    NTFS junction çözümlenmiş) haline `Path.resolve(strict=True)` ile
-    çözülür ve bu gerçek halin hâlâ `CASES_DIR`'in gerçek kökü altında
-    kaldığı doğrulanır - `CASES_DIR`'i TERK EDEN bir symlink/junction
-    (POSIX sembolik link veya Windows `mklink /J`) burada ASLA
-    sonuçlarda görünmez. Kırık/döngüsel bir link (`OSError`/
-    `RuntimeError`) veya kapsam dışına çözümlenen bir link SESSİZCE
-    atlanır (skip) - ne bir hata fırlatılır ne de o girdi listelenir;
-    sıradan, gerçek case dizinleri bu davranıştan etkilenmeden aynen
-    döner. Bu, `resolve_case_id()`'in altında yatan asıl keşif
-    mekanizması olduğu için, buradaki filtre aynı zamanda
-    `resolve_case_id()`'in KENDİ allowlist kontrolünü de - o fonksiyon
-    hiç değişmese bile - dolaylı olarak güçlendirir; `resolve_case_id()`
-    ayrıca kendi doğrudan containment kontrolünü de aşağıda uygular
+    ROW 19C-3a SLICE 1: containment-safe doğrudan çocuk listesi artık
+    paylaşılan `path_containment.list_contained_dir(CASES_DIR)`'tan
+    (o fonksiyonun kendi containment garantisiyle - kırık/döngüsel/
+    kaçan HERHANGİ bir çocuk sessizce atlanır) alınır; bu güvenli liste
+    üzerinde `is_dir()`/`case.json` üyelik kontrolleri BU fonksiyonda
+    (domain-özgü, `path_containment.py`'nin bilmediği bir kural olarak)
+    UYGULANIR - önce containment, SONRA üyelik, ASLA ters sırada.
+    `CASES_DIR`'i TERK EDEN bir symlink/junction (POSIX sembolik link
+    veya Windows `mklink /J`) burada ASLA sonuçlarda görünmez; kırık/
+    döngüsel bir link de aynı şekilde sessizce atlanır - ne bir hata
+    fırlatılır ne de o girdi listelenir. Dönen isimler, her doğrudan
+    çocuğun KENDİ mantıksal adıdır (`path_containment.list_contained_
+    dir()`'in kendi garantisi - bir güvenli internal alias'ın adı asla
+    hedefinin adıyla değiştirilmez), sıralama korunur.
+
+    ROW 19C-3a ROOT-CONTRACT REMEDIATION: `CASES_DIR`'in KENDİSİ eksik,
+    kırık/döngüsel bir link veya dizin-olmayan bir şeyse bu artık
+    SESSİZCE boş liste DEĞİLDİR - paylaşılan modül fail-closed generic
+    `path_containment.PathContainmentError` fırlatır ve BU fonksiyon
+    onu açıkça yakalayıp bu modülün KENDİ `PathContainmentError`'ına
+    (`UnknownCaseError` alt sınıfı - mevcut her `except
+    UnknownCaseError:` çağrı noktası değişmeden yakalamaya devam eder)
+    `raise ... from error` ile çevirir. Eski `if not CASES_DIR.
+    is_dir(): return []` pre-gate'i KALDIRILMIŞTIR - kökün kendisinin
+    doğrulanamadığı bir durumda "hiç case yok" ile "kök güvensiz/
+    çözülemez" birbirinden ayırt edilemez hale gelirdi; onaylanan
+    sözleşme fail-closed davranıştır. YALNIZ kök başarıyla
+    doğrulandıktan sonra tekil güvensiz çocuklar sessizce atlanır -
+    kök hatası ile çocuk hatası asla birbirine karıştırılmaz.
+
+    Bu, `resolve_case_id()`'in altında yatan asıl keşif mekanizması
+    olduğu için, buradaki filtre aynı zamanda `resolve_case_id()`'in
+    KENDİ allowlist kontrolünü de - o fonksiyon hiç değişmese bile -
+    dolaylı olarak güçlendirir; `resolve_case_id()` ayrıca kendi
+    doğrudan containment kontrolünü de aşağıda uygular
     (defense-in-depth, tek başına bu filtreye güvenmez).
     """
 
-    if not CASES_DIR.is_dir():
-
-        return []
-
-    cases_dir_real = Path(os.path.realpath(str(CASES_DIR)))
+    try:
+        contained_children = _path_containment.list_contained_dir(CASES_DIR)
+    except _path_containment.PathContainmentError as error:
+        raise PathContainmentError(
+            "Case kök dizini containment doğrulamasından geçemedi (eksik, çözülemiyor veya dizin "
+            "değil)."
+        ) from error
 
     result = []
-    for p in sorted(CASES_DIR.iterdir()):
+    for p in contained_children:
         if not p.is_dir() or not (p / "case.json").exists():
-            continue
-        try:
-            p_real = p.resolve(strict=True)
-        except (OSError, RuntimeError):
-            # Broken/looping symlink or junction - skip silently,
-            # never raise and never list it.
-            continue
-        try:
-            p_real.relative_to(cases_dir_real)
-        except ValueError:
-            # Resolves outside CASES_DIR (an escaping symlink/junction)
-            # - skip silently, never list it.
             continue
         result.append(p.name)
 
@@ -97,7 +128,10 @@ def list_case_ids():
 # olarak yeterlidir.
 # ============================================================
 
-_FORBIDDEN_SUBSTRINGS = ("..", "/", "\\", "\x00")
+# ROW 19C-3a SLICE 1: bound to the shared module's OWN constant - no
+# second, independently-maintained copy of this tuple exists anywhere
+# in this project any more.
+_FORBIDDEN_SUBSTRINGS = _path_containment.FORBIDDEN_SEGMENT_SUBSTRINGS
 
 
 def resolve_case_id(case_id):
@@ -201,6 +235,18 @@ def resolve_case_id(case_id):
 # case they are not authorized for is Row 19B's `ui.services.authz`
 # layer's job - entirely orthogonal to, and unaffected by, this
 # addition.
+#
+# ROW 19C-3a SLICE 1: both functions below are now THIN wrappers over
+# `path_containment.resolve_existing()`/`resolve_for_create()` - see
+# this module's own top-of-file header comment. `resolve_case_path()`'s
+# OLD `candidate.exists()` fail-open gate (the exact bug class Row
+# 19C-2c independently found and fixed in the drafting-request facade/
+# adapter - `Path.exists()` cannot distinguish "genuinely not yet
+# created" from "a broken or looping link is here") is GONE: the
+# shared `resolve_for_create()` gates on `os.path.lexists()` instead,
+# so a broken/looping link anywhere in `relative_parts` is now ALWAYS
+# routed through full containment verification rather than silently
+# treated as a not-yet-existing leaf.
 # ============================================================
 
 
@@ -219,50 +265,53 @@ class PathContainmentError(UnknownCaseError):
     specifically care to tell them apart), and the same closed,
     non-specific user-facing message applies - callers get additional
     hardening for free, with zero required changes to their own
-    exception handling."""
+    exception handling.
+
+    ROW 19C-3a SLICE 1: raised here ONLY as an explicit, caught-and-
+    translated ('raise ... from error') response to the shared
+    `path_containment.PathContainmentError` - never a plain re-export
+    or subclass of it (that module is framework-independent by design
+    and must never be imported by anything expecting THIS project's
+    own `UnknownCaseError` hierarchy)."""
 
 
 def verify_real_path_contained(path, *, root: Path | None = None) -> Path:
     """
     Resolves `path` to its REAL, symlink/junction-free absolute form
     and verifies the result is contained within `root` (defaults to
-    `BASE_DIR` - the whole repository - when `root` is not given;
-    `resolve_case_path()` below passes `CASES_DIR` explicitly for its
-    own, narrower check). Returns the resolved, verified-contained
-    `Path` on success.
+    `BASE_DIR` - the whole repository - when `root` is not given,
+    read at CALL TIME, never cached; `resolve_case_path()` below
+    passes `CASES_DIR` explicitly for its own, narrower check).
+    Returns the resolved, verified-contained `Path` on success.
 
     `path` MUST already exist (`Path.resolve(strict=True)` requires
     this, and deliberately so: refusing to "verify" a path that is not
     even real yet is the fail-closed choice, not a limitation to work
     around here - see `resolve_case_path()`'s own handling of a
-    not-yet-created leaf file, which explicitly resolves its PARENT
-    directory instead of trying to strict-resolve the not-yet-existing
-    leaf itself).
+    not-yet-created leaf, which delegates to the shared `path_
+    containment.resolve_for_create()` instead of trying to strict-
+    resolve a not-yet-existing candidate directly).
 
-    Raises `PathContainmentError` - never a bare `OSError`/
-    `FileNotFoundError`/`RuntimeError`, and NEVER silently returns an
-    uncontained path - if `path` does not exist, cannot be resolved
-    (e.g. a symlink loop), or resolves outside `root`.
+    ROW 19C-3a SLICE 1: a thin wrapper over the shared `path_
+    containment.resolve_existing()` primitive - see this module's own
+    top-of-file header comment. Raises `PathContainmentError` - never a
+    bare `OSError`/`FileNotFoundError`/`RuntimeError`, and NEVER
+    silently returns an uncontained path - if `path` does not exist,
+    cannot be resolved (e.g. a broken or looping symlink/junction), or
+    resolves outside `root`; the SAME generic message covers every one
+    of these causes (see the shared module's own "INDISTINGUISHABLE
+    FAILURE MODES" header comment - the exact underlying reason is
+    never leaked to the caller).
     """
 
     effective_root = root if root is not None else BASE_DIR
-    root_real = Path(os.path.realpath(str(effective_root)))
-
     try:
-        candidate_real = Path(path).resolve(strict=True)
-    except (OSError, RuntimeError) as error:
+        return _path_containment.resolve_existing(path, root=effective_root)
+    except _path_containment.PathContainmentError as error:
         raise PathContainmentError(
-            "Path gerçek (mevcut) bir konuma çözümlenemedi."
+            "Path containment doğrulaması başarısız (mevcut değil, çözümlenemiyor veya izin verilen "
+            "kök dizinin dışına çözümleniyor)."
         ) from error
-
-    try:
-        candidate_real.relative_to(root_real)
-    except ValueError:
-        raise PathContainmentError(
-            "Path izin verilen kök dizinin dışına çözümleniyor."
-        )
-
-    return candidate_real
 
 
 def resolve_case_path(case_id, *relative_parts: str) -> Path:
@@ -270,17 +319,9 @@ def resolve_case_path(case_id, *relative_parts: str) -> Path:
     Combines `resolve_case_id()`'s allowlist check (which, since the
     Row 19C-1 PATH CHOKE-POINT REMEDIATION, ALREADY performs its own
     `verify_real_path_contained()` call internally) with a further,
-    defense-in-depth `verify_real_path_contained()` call below, for the
-    common case of locating a path inside an already-existing,
-    already-discovered case directory
-    (`CASES_DIR / case_id[/ *relative_parts]`).
-
-    Every one of `relative_parts` is validated against the SAME
-    `_FORBIDDEN_SUBSTRINGS` `resolve_case_id()` itself enforces on
-    `case_id` (no `..`, no path separator, no NUL byte in any single
-    segment) BEFORE being joined - a caller-supplied extra segment can
-    never smuggle in its own traversal, independent of, and prior to,
-    the realpath containment check that follows.
+    defense-in-depth containment verification below, for the common
+    case of locating a path inside an already-existing, already-
+    discovered case directory (`CASES_DIR / case_id[/ *relative_parts]`).
 
     The case directory itself (`CASES_DIR / case_id`) MUST exist
     (guaranteed by `resolve_case_id()` having found it via
@@ -288,46 +329,33 @@ def resolve_case_path(case_id, *relative_parts: str) -> Path:
     `CASES_DIR`'s own real form - checked unconditionally, even when
     `relative_parts` is empty.
 
-    When `relative_parts` names a path that ALREADY EXISTS, the FULL
-    joined candidate is itself realpath-verified (catching a symlink/
-    junction planted anywhere along the way, not just at the case
-    directory's own root). When it does not yet exist (the caller is
-    about to CREATE it), this function verifies the immediate PARENT
-    directory instead - which must already exist - and returns the
-    (not-yet-existing) candidate unresolved; this covers creating one
-    new file or directory directly inside an already-verified,
-    already-existing directory. It does NOT attempt to create, or
-    verify containment through, multiple levels of not-yet-existing
-    nested directories at once - a caller needing that creates each
-    intermediate directory itself first, each of which is then its own
-    already-existing, independently verifiable case via a fresh
-    `resolve_case_path()` call. This scope boundary is deliberate: Row
-    19C-1 builds this primitive as infrastructure only - it is not
-    wired into any real writer this turn (see this module's own
-    Row 19C-1 addition banner above).
+    ROW 19C-3a SLICE 1: `relative_parts` is no longer validated by a
+    local loop here - the shared `path_containment.resolve_for_create()`
+    below validates every segment itself (the SAME `_FORBIDDEN_
+    SUBSTRINGS`/`FORBIDDEN_SEGMENT_SUBSTRINGS` rule: no `..`, no path
+    separator, no NUL byte in any single segment) BEFORE ever touching
+    the filesystem, and walks the whole chain: an already-existing
+    segment (checked via `os.path.lexists()`, NEVER `Path.exists()` -
+    see the shared module's own "ROW 19C-2c BROKEN-LINK LESSON,
+    GENERALIZED" header comment) is unconditionally containment-
+    verified, whether it is a live, broken, or looping link; the first
+    genuinely not-yet-existing segment (and everything after it) is
+    returned unresolved, joined onto the deepest already-verified real
+    ancestor. This function itself creates nothing - see the shared
+    module's own "NO WRITES, EVER" header comment.
     """
 
     verified_case_id = resolve_case_id(case_id)
 
-    for part in relative_parts:
-        if not isinstance(part, str) or not part or any(token in part for token in _FORBIDDEN_SUBSTRINGS):
-            raise UnknownCaseError("Geçersiz path bileşeni.")
-
     case_dir_real = verify_real_path_contained(CASES_DIR / verified_case_id, root=CASES_DIR)
 
-    if not relative_parts:
-        return case_dir_real
-
-    candidate = case_dir_real.joinpath(*relative_parts)
-
-    if candidate.exists():
-        return verify_real_path_contained(candidate, root=CASES_DIR)
-
-    # Not-yet-existing leaf (about to be created): verify the
-    # immediate parent instead - see this function's own docstring for
-    # why this is the deliberate scope boundary rather than a gap.
-    verify_real_path_contained(candidate.parent, root=CASES_DIR)
-    return candidate
+    try:
+        return _path_containment.resolve_for_create(case_dir_real, *relative_parts)
+    except _path_containment.PathContainmentError as error:
+        raise PathContainmentError(
+            "Path containment doğrulaması başarısız (geçersiz path bileşeni, kök dizinin dışına "
+            "çözümleniyor, veya mevcut bir dosyanın altına path üretilmeye çalışılıyor)."
+        ) from error
 
 
 def to_repo_relative(path):
