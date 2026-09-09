@@ -43,6 +43,7 @@ import hashlib
 import json
 import os
 import shutil
+import sys
 
 from datetime import datetime
 from pathlib import Path
@@ -50,6 +51,11 @@ from pathlib import Path
 from case_fact_validator import (
     validate_fact_extraction,
 )
+
+# ROW 19C-3b SLICE 2: yalnız karar içermeyen paylaşılan path primitive'i
+# (Row 19C-3a Slice 1) - audit/backup dosya adlarının segment
+# doğrulaması ve exact-parent membership'li create-chain çözümü için.
+import path_containment
 
 
 # ============================================================
@@ -85,6 +91,61 @@ DEFAULT_PENDING_PATH = (
     / "facts_llm_v1_1.json.pending"
 )
 
+# ============================================================
+# ROW 19C-3b SLICE 2 - PROMOTION FACADE SURFACE (additive).
+#
+# `CASES_DIR`, bu modülün writer-containment seam'idir: promotion
+# facade/adapter'ları (`ui/services/promotion_mutation_*.py`) bu
+# attribute'u HER ÇAĞRIDA dinamik okur (asla cache'lemez) - test
+# redirect sweep'leri (`_module.CASES_DIR = tmp`) bu yüzden aynen
+# çalışır. `DATA_DIR` yalnız legacy preview yolunun (resolve_paths)
+# kendi türetimi için kalır; verified_paths modunda hiçbir I/O
+# DATA_DIR'dan türetilmez.
+#
+# `CURRENT_PENDING_FILENAME`, fact_extraction_engine.py'nin (Row 4,
+# LOCKED) run_fact_extraction() çıktısının GÜNCEL sabit adına
+# PİNLİDİR (src/fact_extraction_engine.py:3164 civarındaki inline
+# literal: "facts_llm_v1_3.json.pending"). Bilinçli olarak glob YOK -
+# engine versiyonu değişirse bu resolver fail-closed çözümsüz kalır
+# (Row 18a'nın "hangi pending güncel?" itirazının onaylı mirası) ve
+# bu sabit ayrı bir incelemeyle güncellenmek zorundadır. Diskteki
+# ESKİ versiyon adlı pending'ler (v1, v1_1, v1_2, v1_2_1) bu yoldan
+# ÇÖZÜLMEZ - güncel engine yeniden çalıştırılarak yeni pending
+# üretilmesi gerekir.
+# ============================================================
+
+CASES_DIR = (
+    DATA_DIR
+    / "cases"
+)
+
+CURRENT_PENDING_FILENAME = "facts_llm_v1_3.json.pending"
+
+CANONICAL_FILENAME = "facts.json"
+
+
+def get_extractions_dir(case_id, document_id):
+    """RAW candidate üretimi (güvenlik doğrulaması DEĞİL) - çağıran
+    (promotion facade/adapter) bu ham yolu kendi bağımsız
+    containment doğrulamasından geçirmek ZORUNDADIR."""
+    return CASES_DIR / case_id / "documents" / document_id / "extractions"
+
+
+def get_pending_path(case_id, document_id):
+    return get_extractions_dir(case_id, document_id) / CURRENT_PENDING_FILENAME
+
+
+def get_canonical_path(case_id, document_id):
+    return get_extractions_dir(case_id, document_id) / CANONICAL_FILENAME
+
+
+def get_history_dir(case_id, document_id):
+    return get_extractions_dir(case_id, document_id) / "history"
+
+
+def get_reviews_dir(case_id, document_id):
+    return get_extractions_dir(case_id, document_id) / "reviews"
+
 
 # ============================================================
 # JSON
@@ -99,6 +160,35 @@ def load_json(path):
     ) as file:
 
         return json.load(file)
+
+
+# ============================================================
+# ROW 19C-3b SLICE 2 - TEK SERİALİZATION KAYNAĞI.
+#
+# `_canonical_json_bytes()` hem gerçek canonical writer'ın
+# (`write_json_atomic`) hem `compute_expected_canonical_sha256()`'nın
+# kullandığı TEK bayt üreticisidir - iki ayrı serileştirme formülü
+# drift edemez. Bayt-uyumluluk notu: bu modülün eski `write_json_atomic`
+# gövdesi text-mode (`open(..., "w", encoding="utf-8")`) yazıyordu ve
+# Python text-mode'u her yapısal "\n"ı os.linesep'e çevirir (Windows'ta
+# CRLF). `json.dumps` string DEĞERLERİ içindeki newline'ları zaten
+# "\\n" olarak escape ettiği için literal "\n" YALNIZ indent yapısında
+# geçer - aşağıdaki `.replace("\n", os.linesep)` bu yüzden eski
+# text-mode çıktısıyla BAYT-BAYT aynı sonucu üretir (izole testte
+# golden-bytes karşılaştırmasıyla kanıtlanır). Deterministiktir:
+# timestamp/random/audit-metadata İÇERMEZ, dosya sistemine YAZMAZ.
+# ============================================================
+
+def _canonical_json_text(data):
+    return json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+def _canonical_json_bytes(data):
+    return _canonical_json_text(data).replace("\n", os.linesep).encode("utf-8")
 
 
 def write_json_atomic(
@@ -119,17 +209,16 @@ def write_json_atomic(
         path.name + ".tmp"
     )
 
+    # ROW 19C-3b SLICE 2: aynı serileştirme, artık tek kaynaktan ve
+    # binary modda (bkz. yukarıdaki blok yorumu - çıktı baytları eski
+    # text-mode gövdeyle birebir aynıdır).
     with open(
         temp_path,
-        "w",
-        encoding="utf-8",
+        "wb",
     ) as file:
 
-        json.dump(
-            data,
-            file,
-            ensure_ascii=False,
-            indent=2,
+        file.write(
+            _canonical_json_bytes(data)
         )
 
     os.replace(
@@ -444,6 +533,19 @@ def build_canonical(
     return canonical
 
 
+def compute_expected_canonical_sha256(pending_path):
+    """ROW 19C-3b SLICE 2: pending içeriğinden, gerçek canonical
+    writer'ın üreteceği baytların DETERMİNİSTİK beklenen sha256'sı.
+    Saf okuma - dosya sistemine hiçbir şey yazmaz; `build_canonical()`
+    tek sabit-literal `notes` ataması yapar (timestamp/random yok) ve
+    serileştirme `write_json_atomic()` ile AYNI `_canonical_json_bytes`
+    kaynağından gelir - bkz. o fonksiyonun kendi blok yorumu."""
+    extraction = load_json(pending_path)
+    return hashlib.sha256(
+        _canonical_json_bytes(build_canonical(extraction))
+    ).hexdigest()
+
+
 # ============================================================
 # APPROVAL RECORD
 # ============================================================
@@ -457,13 +559,21 @@ def build_approval_record(
     reviewer_ref,
     review_note,
     backup_path,
+    *,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
 ):
 
     extraction_id = extraction.get(
         "extraction_id"
     )
 
-    return {
+    # ROW 19C-3b SLICE 2: üç additive, keyword-only mutation-binding
+    # alanı (Row 19C-2a Step 5'in 10 aileye yaptığı AYNI desen +
+    # Row 19C-2b'nin actor_ref eklemesi). `None` iken alan HİÇ
+    # yazılmaz - eski kayıt şekli bayt-uyumlu korunur.
+    record = {
         "schema_version":
             1,
 
@@ -546,6 +656,119 @@ def build_approval_record(
             )
     }
 
+    if mutation_idempotency_key is not None:
+        record["mutation_idempotency_key"] = mutation_idempotency_key
+    if mutation_resource_key is not None:
+        record["mutation_resource_key"] = mutation_resource_key
+    if mutation_actor_ref is not None:
+        record["mutation_actor_ref"] = mutation_actor_ref
+
+    return record
+
+
+# ============================================================
+# ROW 19C-3b SLICE 2 - VERIFIED-PATH TOPOLOJİ KONTROLÜ + O_EXCL AUDIT
+# ============================================================
+
+_VERIFIED_PATHS_KEYS = frozenset(
+    {"extractions_dir", "pending_path", "canonical_path", "history_dir", "reviews_dir"}
+)
+
+
+def _check_verified_paths_topology(pending_path, extraction, verified_paths):
+    """`verified_paths` (promotion facade'in kilit ALTINDA doğruladığı
+    Path paketi) verildiğinde: TÜM filesystem I/O bu değerlerden yürür;
+    bu fonksiyon yazımdan ÖNCE, saf Path karşılaştırmalarıyla, paketin
+    kendi içinde VE pending İÇERİĞİYLE tutarlı olduğunu fail-closed
+    doğrular. `resolve_paths()`'in DATA_DIR-türetimi verified modda NE
+    I/O NE de kontrol otoritesi olarak kullanılır (test redirect
+    seam'i `CASES_DIR` üzerindedir - bkz. modül başındaki Slice 2
+    bloğu); konum otoritesi facade'in containment zinciridir, burası
+    onun üstüne bağımsız bir topoloji/içerik çapraz-kontrolüdür."""
+
+    if set(verified_paths.keys()) != _VERIFIED_PATHS_KEYS:
+        raise ValueError(
+            "verified_paths anahtar seti tam olarak "
+            f"{sorted(_VERIFIED_PATHS_KEYS)} olmalıdır."
+        )
+
+    extractions_dir = Path(verified_paths["extractions_dir"])
+    vp_pending = Path(verified_paths["pending_path"])
+    canonical_path = Path(verified_paths["canonical_path"])
+    history_dir = Path(verified_paths["history_dir"])
+    reviews_dir = Path(verified_paths["reviews_dir"])
+
+    # YAPISAL kontrol seti (bilinçli): parent-eşitlikleri + LEAF ad
+    # pinleri. Container/ata dizinlerin LİTERAL adları kontrol edilmez -
+    # güvenli bir case-İÇİ alias/junction'ın çözülmüş gerçek hedefi
+    # farklı bir ada sahip olabilir ve bu meşrudur (facade'in
+    # containment zinciri konum otoritesidir; case_id/source_document_id
+    # içerik bağlaması facade'in kendi çapraz-kontrolünde, pre-lock VE
+    # kilit altında ayrıca yapılır). Leaf pinleri korunur: kendisi bir
+    # link olan pending/canonical, çözümde adı değişeceği için burada
+    # fail-closed reddedilir.
+    failures = []
+    if vp_pending != Path(pending_path):
+        failures.append("pending_path argümanı ile verified_paths['pending_path'] farklı")
+    if vp_pending.parent != extractions_dir:
+        failures.append("pending, extractions_dir'in doğrudan çocuğu değil")
+    if vp_pending.name != CURRENT_PENDING_FILENAME:
+        failures.append("pending leaf adı pinli engine adıyla eşleşmiyor")
+    if canonical_path.parent != extractions_dir or canonical_path.name != CANONICAL_FILENAME:
+        failures.append("canonical_path topolojisi beklenen değil")
+    if history_dir.parent != extractions_dir:
+        failures.append("history_dir, extractions_dir'in doğrudan çocuğu değil")
+    if reviews_dir.parent != extractions_dir:
+        failures.append("reviews_dir, extractions_dir'in doğrudan çocuğu değil")
+    if extraction.get("case_id") in (None, "") or extraction.get("source_document_id") in (None, ""):
+        failures.append("pending içeriği case_id/source_document_id taşımıyor")
+
+    if failures:
+        raise ValueError(
+            "verified_paths topoloji/içerik çapraz-kontrolü başarısız "
+            "(hiçbir yazım yapılmadı): " + "; ".join(failures)
+        )
+
+    return {
+        "extractions_dir": extractions_dir,
+        "canonical_path": canonical_path,
+        "history_dir": history_dir,
+        "reviews_dir": reviews_dir,
+    }
+
+
+def _write_audit_record_excl(reviews_dir, extraction_id, approval_record):
+    """ROW 19C-3b SLICE 2: sabit `<extraction_id>.approval.json` adının
+    ÜZERİNE YAZMA sınıfını kapatır - zaman damgalı taban ad +
+    `O_CREAT|O_EXCL` + sayısal sonek (18c emsali). Ad
+    `path_containment.validate_segment()`'ten geçer ve
+    `resolve_for_create()` exact-parent membership'i korur; eski
+    (legacy) audit dosyaları asla ezilmez, yan yana yaşar - replay/
+    reconciliation eşleşmesi HER ZAMAN içerikten yapılır, addan asla."""
+    reviews_dir = Path(reviews_dir)
+    reviews_dir.mkdir(parents=True, exist_ok=True)
+    base = f"{extraction_id}_{now_stamp()}"
+    suffix = 0
+    while True:
+        if suffix == 0:
+            name = f"{base}.approval.json"
+        else:
+            name = f"{base}_{suffix}.approval.json"
+        path_containment.validate_segment(name)
+        candidate = path_containment.resolve_for_create(reviews_dir, name)
+        try:
+            fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            suffix += 1
+            if suffix > 1000:
+                raise RuntimeError(
+                    "Approval audit dosya adı için 1000 denemede boş ad bulunamadı."
+                )
+            continue
+        with os.fdopen(fd, "wb") as file:
+            file.write(_canonical_json_bytes(approval_record))
+        return candidate
+
 
 # ============================================================
 # REVIEW ONLY
@@ -593,23 +816,45 @@ def promote(
     pending_path,
     reviewer_ref,
     review_note,
+    *,
+    verified_paths=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
 ):
+    # ROW 19C-3b SLICE 2: dört additive, keyword-only parametre.
+    # `verified_paths=None` -> eski davranış (resolve_paths tabanlı)
+    # AYNEN korunur. verified_paths verildiğinde (yalnız promotion
+    # facade'i verir) TÜM filesystem I/O kilit-altı doğrulanmış bu
+    # Path'lerden yürür; DATA_DIR-türetimi hiçbir amaçla kullanılmaz
+    # (bkz. _check_verified_paths_topology docstring'i).
 
-    review = review_pending(
+    pending_path = Path(
         pending_path
     )
 
-    extraction = review[
-        "extraction"
-    ]
+    extraction, validation_pre = validate_pending(
+        pending_path
+    )
 
-    paths = review[
-        "paths"
-    ]
+    pending_hash = sha256_file(
+        pending_path
+    )
 
-    pending_hash = review[
-        "pending_hash"
-    ]
+    if verified_paths is None:
+
+        paths = resolve_paths(
+            pending_path,
+            extraction,
+        )
+
+    else:
+
+        paths = _check_verified_paths_topology(
+            pending_path,
+            extraction,
+            verified_paths,
+        )
 
     canonical_path = paths[
         "canonical_path"
@@ -701,26 +946,19 @@ def promote(
             reviewer_ref=reviewer_ref,
             review_note=review_note,
             backup_path=backup_path,
+            mutation_idempotency_key=mutation_idempotency_key,
+            mutation_resource_key=mutation_resource_key,
+            mutation_actor_ref=mutation_actor_ref,
         )
     )
 
-    reviews_dir.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    approval_path = (
-        reviews_dir
-        / (
-            extraction[
-                "extraction_id"
-            ]
-            + ".approval.json"
-        )
-    )
-
-    write_json_atomic(
-        approval_path,
+    # ROW 19C-3b SLICE 2: sabit-adlı overwrite yerine zaman damgalı,
+    # O_EXCL çakışma-korumalı ad - bkz. _write_audit_record_excl.
+    approval_path = _write_audit_record_excl(
+        reviews_dir,
+        extraction[
+            "extraction_id"
+        ],
         approval_record,
     )
 
@@ -794,6 +1032,22 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.approve:
+
+        # ROW 19C-3b SLICE 2: bu doğrudan CLI mutasyon yolu KAPALIDIR -
+        # coordinator/journal/authz entegrasyonu yalnız ui.cli_mutate
+        # promotion üzerindedir. promote() KENDİSİ dokunulmamıştır ve
+        # facade'in çağırdığı gerçek writer olmaya devam eder - yalnız
+        # BU executable giriş noktası reddedilir. Refusal, herhangi bir
+        # pending okuması/validator çağrısından ÖNCE gelir (stdout boş
+        # kalır); SystemExit(2) gerçek process exit code'u 2 üretir.
+        print(
+            "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+            "Gerçek onay için: python -m ui.cli_mutate promotion --row-key fact ...",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
 
     pending_path = Path(
         args.pending
@@ -898,104 +1152,10 @@ def main():
 
         return
 
-    # ========================================================
-    # APPROVE
-    # ========================================================
-
-    result = promote(
-        pending_path=pending_path,
-        reviewer_ref=args.reviewer,
-        review_note=args.note,
-    )
-
-    print()
-    print(
-        "PROMOTION TAMAMLANDI"
-    )
-
-    print(
-        "Extraction ID:",
-        result[
-            "extraction_id"
-        ],
-    )
-
-    print(
-        "Fact sayısı:",
-        result[
-            "fact_count"
-        ],
-    )
-
-    print(
-        "Canonical validator:",
-        "PASS",
-    )
-
-    print()
-    print(
-        "Canonical:"
-    )
-
-    print(
-        result[
-            "canonical_path"
-        ]
-    )
-
-    if result[
-        "backup_path"
-    ]:
-
-        print()
-        print(
-            "Önceki canonical arşivlendi:"
-        )
-
-        print(
-            result[
-                "backup_path"
-            ]
-        )
-
-    print()
-    print(
-        "Approval audit:"
-    )
-
-    print(
-        result[
-            "approval_path"
-        ]
-    )
-
-    print()
-    print(
-        "NOT:"
-    )
-
-    print(
-        "Fact'lerin verification_state "
-        "değerleri değiştirilmedi."
-    )
-
-    print(
-        "Approval yalnızca extraction'ın "
-        "canonical kullanımını onayladı."
-    )
-
-    print()
-    print(
-        "======================================"
-    )
-
-    print(
-        " FACT APPROVAL V1: PASS"
-    )
-
-    print(
-        "======================================"
-    )
+    # ROW 19C-3b SLICE 2: eski doğrudan-approve çıktısı bölümü
+    # kaldırıldı - yukarıdaki refusal nedeniyle bu noktaya yalnız
+    # preview akışı ulaşır ve preview kendi `return`'üyle biter.
+    # Gerçek mutasyon yolu: python -m ui.cli_mutate promotion.
 
 
 # ============================================================

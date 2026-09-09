@@ -100,6 +100,11 @@ import qa_review                                           # noqa: E402
 import qa_approval                                          # noqa: E402
 import qa_engine                                             # noqa: E402
 import qa_validator                                            # noqa: E402
+# ROW 19C-3b SLICE 2: imported so the CASES_DIR redirect sweep below
+# also covers the two promotion writer modules (their new module-level
+# CASES_DIR is the promotion facade/adapters' dynamic containment seam).
+import fact_approval                                        # noqa: E402
+import timeline_approval                                     # noqa: E402
 
 print(f"backend: REAL psycopg {psycopg.__version__} (production driver), dbname={PG_DB!r}")
 
@@ -300,11 +305,14 @@ LEGACY_MUTATION_MATRIX = [
         "--case", "case_0001", "--suggestion-id", "row19c3b_pg_nonexistent_suggestion_id",
         "--target-state", "accepted_for_follow_up",
     ]),
+    # ROW 19C-3b SLICE 2 - the two fact/timeline canonical PROMOTION bypasses.
+    ("fact_approval", ["--approve"]),
+    ("timeline_approval", ["--pending", "row19c3b_pg_slice2_nonexistent.pending", "--approve"]),
 ]
 check(
-    "LEGACY_MUTATION_MATRIX (real-PostgreSQL journal invariance section) covers all 15 legacy "
-    "mutation entry points (10 Layer A + 5 Layer B)",
-    len(LEGACY_MUTATION_MATRIX) == 15,
+    "LEGACY_MUTATION_MATRIX (real-PostgreSQL journal invariance section) covers all 17 legacy "
+    "mutation entry points (10 Layer A + 5 Layer B + 2 promotion)",
+    len(LEGACY_MUTATION_MATRIX) == 17,
 )
 
 # ROW 19C-3b SLICE 1 - EVIDENCE REVIEW FULL FLAG COVERAGE (real-
@@ -329,10 +337,10 @@ check(
     len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 3,
 )
 check(
-    "LEGACY_MUTATION_MATRIX (15 legacy executables) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3 "
-    "additional evidence_review flag variants) = 18 total refusal subprocess scenarios in this "
-    "section - NOT 18 distinct legacy modules (evidence_review itself contributes 4 of the 18)",
-    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 18,
+    "LEGACY_MUTATION_MATRIX (17 legacy executables) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3 "
+    "additional evidence_review flag variants) = 20 total refusal subprocess scenarios in this "
+    "section - NOT 20 distinct legacy modules (evidence_review itself contributes 4 of the 20)",
+    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 20,
 )
 
 
@@ -437,7 +445,7 @@ _legacy_journal_count_after = _journal_row_count()
 _legacy_data_snapshot_after = snapshot_real_data_tree()
 
 check(
-    "all 18 legacy mutation bypass scenarios (15 legacy executables + 3 additional evidence_"
+    "all 20 legacy mutation bypass scenarios (17 legacy executables + 3 additional evidence_"
     "review flag variants), real-PostgreSQL environment: mutation.mutation_journal row COUNT is "
     "unchanged before vs after (a direct SELECT count(*) against the real database, not a "
     "restatement of the full-row-set check below)",
@@ -445,7 +453,7 @@ check(
     f"before={_legacy_journal_count_before} after={_legacy_journal_count_after}",
 )
 check(
-    "all 18 legacy mutation bypass scenarios (15 legacy executables + 3 additional evidence_"
+    "all 20 legacy mutation bypass scenarios (17 legacy executables + 3 additional evidence_"
     "review flag variants), real-PostgreSQL environment: the FULL mutation.mutation_journal row "
     "set (every column, every row, real SQL SELECT) is IDENTICAL before vs after - no row was "
     "created for ANY resource_key/action_family, not merely 'the count matches'",
@@ -453,7 +461,7 @@ check(
     f"before={_legacy_journal_snapshot_before!r} after={_legacy_journal_snapshot_after!r}",
 )
 check(
-    "all 18 legacy mutation bypass scenarios (15 legacy executables + 3 additional evidence_"
+    "all 20 legacy mutation bypass scenarios (17 legacy executables + 3 additional evidence_"
     "review flag variants), real-PostgreSQL environment: the REAL data/ tree is byte-for-byte "
     "UNCHANGED",
     _legacy_data_snapshot_before == _legacy_data_snapshot_after,

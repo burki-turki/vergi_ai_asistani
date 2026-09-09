@@ -286,21 +286,26 @@ def sha256_file(path):
 
 
 # ----------------------------------------------------------------
-# Merged production registry - Layer A + Layer B + Row 18C, reproducing
-# EXACTLY what `ui.reconciliation_operator._default_registry_factory()`
-# builds (same three functions, same order).
+# Merged production registry - Layer A + Layer B + Row 18C + (ROW
+# 19C-3b SLICE 2) fact/timeline promotion, reproducing EXACTLY what
+# `ui.reconciliation_operator._default_registry_factory()` builds
+# (same four functions, same order).
 # ----------------------------------------------------------------
 
 PRODUCTION_REGISTRY = _approval_adapters.build_production_registry()
 PRODUCTION_REGISTRY = _review_adapters.register_into(PRODUCTION_REGISTRY)
 PRODUCTION_REGISTRY = _adapters.register_into(PRODUCTION_REGISTRY)
+# ROW 19C-3b SLICE 2: the FOURTH merge source, mirroring
+# `_default_registry_factory()`'s own updated order exactly.
+from ui.services import promotion_mutation_adapters as _promotion_adapters  # noqa: E402
+PRODUCTION_REGISTRY = _promotion_adapters.register_into(PRODUCTION_REGISTRY)
 
 check(
-    "ROW 19C-3b SLICE 1: the REAL merged production registry covers 10 (Layer A) + 24 (Layer B - "
-    "12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) = 35 routing keys - the number of "
-    "LOGICAL Layer B review_kinds is still 12, unchanged; 24 is a channel-separated ADAPTER "
-    "ROUTING-KEY count, not a doubling of logical families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 35,
+    "ROW 19C-3b SLICE 2: the REAL merged production registry covers 10 (Layer A) + 24 (Layer B - "
+    "12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 (fact/timeline promotion) = 37 "
+    "routing keys - the number of LOGICAL Layer B review_kinds is still 12, unchanged; 24 is a "
+    "channel-separated ADAPTER ROUTING-KEY count, not a doubling of logical families",
+    len(PRODUCTION_REGISTRY.known_action_families()) == 37,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(

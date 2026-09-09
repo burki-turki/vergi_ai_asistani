@@ -66,12 +66,80 @@ from timeline_validator import (
     validate_timeline,
 )
 
+# ROW 19C-3b SLICE 2: yalnız karar içermeyen paylaşılan path primitive'i
+# (Row 19C-3a Slice 1) - audit dosya adlarının segment doğrulaması ve
+# exact-parent membership'li create-chain çözümü için.
+import path_containment
+
 
 # ============================================================
 # VERSION
 # ============================================================
 
 TIMELINE_APPROVAL_VERSION = "1"
+
+
+# ============================================================
+# ROW 19C-3b SLICE 2 - PROMOTION FACADE SURFACE (additive).
+#
+# Bu modülün bugüne kadar HİÇBİR modül-seviyesi kökü yoktu (her yol
+# `--pending` argümanından türetiliyordu - sıfır containment). Aşağıdaki
+# sabitler timeline_engine.py'nin (Row 7, LOCKED) kendi türetiminin
+# (src/timeline_engine.py:111-126) birebir aynasıdır. `CASES_DIR`
+# promotion facade/adapter'larının writer-containment seam'idir: HER
+# ÇAĞRIDA dinamik okunur, asla cache'lenmez - test redirect sweep'leri
+# (`_module.CASES_DIR = tmp`) aynen çalışır.
+#
+# `CURRENT_PENDING_FILENAME`, timeline_engine.run_timeline_engine()
+# çıktısının GÜNCEL sabit adına PİNLİDİR
+# (src/timeline_engine.py:1370: "timeline_v1_1.json.pending").
+# Bilinçli olarak glob YOK - eski `timeline_v1.json.pending` gibi
+# tarihsel adlar bu yoldan ÇÖZÜLMEZ (Row 18a itirazının onaylı mirası).
+# ============================================================
+
+BASE_DIR = (
+    Path(__file__)
+    .resolve()
+    .parent
+    .parent
+)
+
+DATA_DIR = (
+    BASE_DIR
+    / "data"
+)
+
+CASES_DIR = (
+    DATA_DIR
+    / "cases"
+)
+
+CURRENT_PENDING_FILENAME = "timeline_v1_1.json.pending"
+
+CANONICAL_FILENAME = "timeline.json"
+
+
+def get_timeline_dir(case_id):
+    """RAW candidate üretimi (güvenlik doğrulaması DEĞİL) - çağıran
+    (promotion facade/adapter) bu ham yolu kendi bağımsız
+    containment doğrulamasından geçirmek ZORUNDADIR."""
+    return CASES_DIR / case_id / "timeline"
+
+
+def get_pending_path(case_id):
+    return get_timeline_dir(case_id) / CURRENT_PENDING_FILENAME
+
+
+def get_canonical_path(case_id):
+    return get_timeline_dir(case_id) / CANONICAL_FILENAME
+
+
+def get_history_dir(case_id):
+    return get_timeline_dir(case_id) / "history"
+
+
+def get_reviews_dir(case_id):
+    return get_timeline_dir(case_id) / "reviews"
 
 
 # ============================================================
@@ -131,6 +199,46 @@ def write_json(
         )
 
 
+# ============================================================
+# ROW 19C-3b SLICE 2 - TEK SERİALİZATION KAYNAĞI.
+#
+# `_canonical_json_bytes()` hem gerçek canonical writer'ın
+# (`atomic_write_json`) hem `compute_expected_canonical_sha256()`'nın
+# kullandığı TEK bayt üreticisidir. Bayt-uyumluluk: eski text-mode
+# gövde yapısal "\n"ları os.linesep'e çeviriyordu (Windows'ta CRLF);
+# `json.dumps` string değerlerindeki newline'ları zaten "\\n" olarak
+# escape ettiği için aşağıdaki `.replace` eski çıktıyla BAYT-BAYT aynı
+# sonucu üretir (izole testte golden-bytes karşılaştırmasıyla
+# kanıtlanır). Deterministiktir: timestamp/random/audit-metadata
+# İÇERMEZ, dosya sistemine YAZMAZ.
+# ============================================================
+
+def _canonical_json_text(data):
+    return json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+def _canonical_json_bytes(data):
+    return _canonical_json_text(data).replace("\n", os.linesep).encode("utf-8")
+
+
+def compute_expected_canonical_sha256(pending_path):
+    """ROW 19C-3b SLICE 2: pending içeriğinden, gerçek canonical
+    writer'ın üreteceği baytların DETERMİNİSTİK beklenen sha256'sı.
+    Saf okuma - hiçbir şey yazmaz. Timeline'ın canonical'ı pending
+    timeline nesnesinin KENDİSİDİR (approve_pending, review'daki
+    nesneyi verbatim yazar) - dönüşüm kimliktir, serileştirme
+    `atomic_write_json` ile AYNI `_canonical_json_bytes` kaynağından
+    gelir."""
+    timeline = load_json(pending_path)
+    return hashlib.sha256(
+        _canonical_json_bytes(timeline)
+    ).hexdigest()
+
+
 def atomic_write_json(
     path,
     data,
@@ -153,17 +261,16 @@ def atomic_write_json(
         )
     )
 
+    # ROW 19C-3b SLICE 2: aynı serileştirme, artık tek kaynaktan ve
+    # binary modda (bkz. yukarıdaki blok yorumu - çıktı baytları eski
+    # text-mode gövdeyle birebir aynıdır). flush+fsync korunur.
     with open(
         temp_path,
-        "w",
-        encoding="utf-8",
+        "wb",
     ) as file:
 
-        json.dump(
-            data,
-            file,
-            ensure_ascii=False,
-            indent=2,
+        file.write(
+            _canonical_json_bytes(data)
         )
 
         file.flush()
@@ -525,7 +632,18 @@ def build_audit_record(
     approved,
     backup_path=None,
     rollback=False,
+    *,
+    canonical_sha256=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
 ):
+    # ROW 19C-3b SLICE 2: dört additive, keyword-only alan. `canonical_
+    # sha256` yalnız SUCCESS audit'inde dolu gelir (rollback audit'i
+    # post-state kanıtı TAŞIMAZ ve success evidence olarak asla kabul
+    # edilmez); üç mutation-binding alanı HEM success HEM rollback
+    # audit'ine akar. `None` iken alan HİÇ yazılmaz - eski kayıt şekli
+    # bayt-uyumlu korunur.
 
     timeline = review[
         "timeline"
@@ -570,7 +688,7 @@ def build_audit_record(
             + 1
         )
 
-    return {
+    record = {
         "approval_schema_version":
             1,
 
@@ -654,16 +772,43 @@ def build_audit_record(
             ),
     }
 
+    if canonical_sha256 is not None:
+        record["canonical_sha256"] = canonical_sha256
+    if mutation_idempotency_key is not None:
+        record["mutation_idempotency_key"] = mutation_idempotency_key
+    if mutation_resource_key is not None:
+        record["mutation_resource_key"] = mutation_resource_key
+    if mutation_actor_ref is not None:
+        record["mutation_actor_ref"] = mutation_actor_ref
+
+    return record
+
 
 def write_audit_record(
     pending_path,
     audit_record,
+    *,
+    reviews_dir=None,
 ):
+    # ROW 19C-3b SLICE 2: `reviews_dir` additive keyword-only override -
+    # promotion facade'i kilit-altı DOĞRULANMIŞ dizini geçirir; `None`
+    # (legacy) eski pending-kardeş türetimini korur. Yazım artık her iki
+    # modda da: ad `path_containment.validate_segment()`'ten geçer,
+    # `resolve_for_create()` exact-parent membership'i korur ve
+    # `O_CREAT|O_EXCL` + sayısal sonek aynı-saniye çakışmasında sessiz
+    # üzerine-yazmayı İMKÂNSIZ kılar (eski `write_json` non-atomic yolu
+    # audit için kullanılmaz).
 
-    reviews_dir = (
-        reviews_dir_from_pending(
-            pending_path
+    if reviews_dir is None:
+
+        reviews_dir = (
+            reviews_dir_from_pending(
+                pending_path
+            )
         )
+
+    reviews_dir = Path(
+        reviews_dir
     )
 
     reviews_dir.mkdir(
@@ -678,24 +823,116 @@ def write_audit_record(
         or "timeline"
     )
 
-    filename = (
+    base = (
         timeline_id
         + "_"
         + timestamp_for_filename()
-        + ".approval.json"
     )
 
-    audit_path = (
-        reviews_dir
-        / filename
-    )
+    suffix = 0
 
-    write_json(
-        audit_path,
-        audit_record,
-    )
+    while True:
 
-    return audit_path
+        if suffix == 0:
+            filename = base + ".approval.json"
+        else:
+            filename = base + f"_{suffix}.approval.json"
+
+        path_containment.validate_segment(filename)
+
+        audit_path = path_containment.resolve_for_create(
+            reviews_dir,
+            filename,
+        )
+
+        try:
+            fd = os.open(
+                audit_path,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+            )
+        except FileExistsError:
+            suffix += 1
+            if suffix > 1000:
+                raise RuntimeError(
+                    "Timeline audit dosya adı için 1000 denemede boş ad bulunamadı."
+                )
+            continue
+
+        with os.fdopen(fd, "wb") as file:
+            file.write(
+                _canonical_json_bytes(audit_record)
+            )
+
+        return audit_path
+
+
+# ============================================================
+# ROW 19C-3b SLICE 2 - VERIFIED-PATH TOPOLOJİ KONTROLÜ
+# ============================================================
+
+_VERIFIED_PATHS_KEYS = frozenset(
+    {"timeline_dir", "pending_path", "canonical_path", "history_dir", "reviews_dir"}
+)
+
+
+def _check_verified_paths_topology(pending_path, timeline, verified_paths):
+    """`verified_paths` (promotion facade'in kilit ALTINDA doğruladığı
+    Path paketi) verildiğinde: TÜM filesystem I/O bu değerlerden yürür;
+    doğrulanmış pending'in KARDEŞ türetimleri (canonical/history/
+    reviews) canlı-escape/broken/looping link olabileceği için kardeş
+    türetim TEK BAŞINA asla yeterli sayılmaz. Bu fonksiyon yazımdan
+    ÖNCE, saf Path karşılaştırmalarıyla paketin kendi içinde VE pending
+    İÇERİĞİYLE tutarlı olduğunu fail-closed doğrular; raw
+    `*_from_pending()` türetimleri verified modda yalnız burada,
+    topoloji çapraz-kontrolü olarak kullanılır - I/O için asla."""
+
+    if set(verified_paths.keys()) != _VERIFIED_PATHS_KEYS:
+        raise ValueError(
+            "verified_paths anahtar seti tam olarak "
+            f"{sorted(_VERIFIED_PATHS_KEYS)} olmalıdır."
+        )
+
+    timeline_dir = Path(verified_paths["timeline_dir"])
+    vp_pending = Path(verified_paths["pending_path"])
+    canonical_path = Path(verified_paths["canonical_path"])
+    history_dir = Path(verified_paths["history_dir"])
+    reviews_dir = Path(verified_paths["reviews_dir"])
+
+    # YAPISAL kontrol seti (bilinçli): parent-eşitlikleri + LEAF ad
+    # pinleri. Container/ata dizinlerin LİTERAL adları kontrol edilmez -
+    # güvenli bir case-İÇİ alias/junction'ın çözülmüş gerçek hedefi
+    # farklı ada sahip olabilir ve bu meşrudur (facade'in containment
+    # zinciri konum otoritesidir; case_id içerik bağlaması facade'in
+    # kendi çapraz-kontrolünde ayrıca yapılır). Leaf pinleri korunur:
+    # kendisi bir link olan pending/canonical fail-closed reddedilir.
+    failures = []
+    if vp_pending != Path(pending_path):
+        failures.append("pending_path argümanı ile verified_paths['pending_path'] farklı")
+    if vp_pending.parent != timeline_dir:
+        failures.append("pending, timeline_dir'in doğrudan çocuğu değil")
+    if vp_pending.name != CURRENT_PENDING_FILENAME:
+        failures.append("pending leaf adı pinli engine adıyla eşleşmiyor")
+    if canonical_path.parent != timeline_dir or canonical_path.name != CANONICAL_FILENAME:
+        failures.append("canonical_path topolojisi beklenen değil")
+    if history_dir.parent != timeline_dir:
+        failures.append("history_dir, timeline_dir'in doğrudan çocuğu değil")
+    if reviews_dir.parent != timeline_dir:
+        failures.append("reviews_dir, timeline_dir'in doğrudan çocuğu değil")
+    if timeline.get("case_id") in (None, ""):
+        failures.append("pending timeline case_id taşımıyor")
+
+    if failures:
+        raise ValueError(
+            "verified_paths topoloji/içerik çapraz-kontrolü başarısız "
+            "(hiçbir yazım yapılmadı): " + "; ".join(failures)
+        )
+
+    return {
+        "timeline_dir": timeline_dir,
+        "canonical_path": canonical_path,
+        "history_dir": history_dir,
+        "reviews_dir": reviews_dir,
+    }
 
 
 # ============================================================
@@ -704,7 +941,17 @@ def write_audit_record(
 
 def approve_pending(
     pending_path,
+    *,
+    verified_paths=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
 ):
+    # ROW 19C-3b SLICE 2: dört additive, keyword-only parametre.
+    # `verified_paths=None` -> eski davranış (pending-kardeş türetimi)
+    # AYNEN korunur. verified_paths verildiğinde tüm stat/hash/copy/
+    # write/rollback/audit I/O'su kilit-altı doğrulanmış bu Path'lerden
+    # yürür (bkz. _check_verified_paths_topology docstring'i).
 
     review = (
         review_pending(
@@ -724,19 +971,42 @@ def approve_pending(
         "pending_path"
     ]
 
-    canonical_path = review[
-        "canonical_path"
-    ]
-
-    history_dir = (
-        history_dir_from_pending(
-            pending_path
-        )
-    )
-
     timeline = review[
         "timeline"
     ]
+
+    if verified_paths is None:
+
+        canonical_path = review[
+            "canonical_path"
+        ]
+
+        history_dir = (
+            history_dir_from_pending(
+                pending_path
+            )
+        )
+
+        audit_reviews_dir = None
+
+    else:
+
+        checked = _check_verified_paths_topology(
+            pending_path,
+            timeline,
+            verified_paths,
+        )
+
+        canonical_path = checked["canonical_path"]
+        history_dir = checked["history_dir"]
+        audit_reviews_dir = checked["reviews_dir"]
+
+        # Audit dosya adının değişken parçası (timeline_id) pending
+        # İÇERİĞİNDEN gelir - herhangi bir yazımdan ÖNCE fail-closed
+        # doğrulanır ki audit adımı yazım-sonrası sürprizle patlamasın.
+        path_containment.validate_segment(
+            (timeline.get("timeline_id") or "timeline")
+        )
 
     backup_path = None
 
@@ -850,12 +1120,22 @@ def approve_pending(
 
                 rollback=
                     True,
+
+                # ROW 19C-3b SLICE 2: mutation-binding alanları rollback
+                # audit'ine DE akar (reconciliation adapter'ı rollback
+                # izini bu attempt'e bağlayabilsin diye); canonical_
+                # sha256 rollback'te BİLİNÇLİ olarak yazılmaz - rollback
+                # audit'i asla success evidence değildir.
+                mutation_idempotency_key=mutation_idempotency_key,
+                mutation_resource_key=mutation_resource_key,
+                mutation_actor_ref=mutation_actor_ref,
             )
         )
 
         write_audit_record(
             pending_path,
             rollback_audit,
+            reviews_dir=audit_reviews_dir,
         )
 
         raise
@@ -863,6 +1143,16 @@ def approve_pending(
     # ========================================================
     # AUDIT
     # ========================================================
+
+    # ROW 19C-3b SLICE 2: canonical hash artık audit YAZILMADAN ÖNCE
+    # hesaplanır ve success audit'inin kendisine (`canonical_sha256`)
+    # yazılır - audit kaydı post-state kanıtını bağımsız taşır (Row
+    # 19C-3b Slice 2 reconciliation kontratının timeline çözümü).
+    canonical_hash = (
+        file_sha256(
+            canonical_path
+        )
+    )
 
     audit_record = (
         build_audit_record(
@@ -877,6 +1167,11 @@ def approve_pending(
 
             rollback=
                 False,
+
+            canonical_sha256=canonical_hash,
+            mutation_idempotency_key=mutation_idempotency_key,
+            mutation_resource_key=mutation_resource_key,
+            mutation_actor_ref=mutation_actor_ref,
         )
     )
 
@@ -884,12 +1179,7 @@ def approve_pending(
         write_audit_record(
             pending_path,
             audit_record,
-        )
-    )
-
-    canonical_hash = (
-        file_sha256(
-            canonical_path
+            reviews_dir=audit_reviews_dir,
         )
     )
 
@@ -1045,6 +1335,22 @@ def main():
 
     args = parser.parse_args()
 
+    if args.approve:
+
+        # ROW 19C-3b SLICE 2: bu doğrudan CLI mutasyon yolu KAPALIDIR -
+        # coordinator/journal/authz entegrasyonu yalnız ui.cli_mutate
+        # promotion üzerindedir. approve_pending() KENDİSİ dokunulmamış
+        # writer olarak kalır - yalnız BU executable giriş noktası
+        # reddedilir. Refusal, pending okuması/validator çağrısından
+        # ÖNCE gelir (stdout boş kalır); SystemExit(2) gerçek process
+        # exit code'u 2 üretir.
+        print(
+            "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+            "Gerçek onay için: python -m ui.cli_mutate promotion --row-key timeline ...",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+
     print()
 
     print(
@@ -1172,137 +1478,10 @@ def main():
 
         return
 
-    # ========================================================
-    # APPROVE
-    # ========================================================
-
-    try:
-
-        result = (
-            approve_pending(
-                args.pending
-            )
-        )
-
-    except Exception as error:
-
-        print()
-
-        print(
-            "PROMOTION FAILED"
-        )
-
-        print(
-            error
-        )
-
-        print()
-
-        print(
-            "Rollback uygulandı."
-        )
-
-        print()
-
-        print(
-            "======================================"
-        )
-
-        print(
-            " TIMELINE APPROVAL V1: FAIL"
-        )
-
-        print(
-            "======================================"
-        )
-
-        sys.exit(
-            1
-        )
-
-    print()
-
-    print(
-        "PROMOTION TAMAMLANDI"
-    )
-
-    print()
-
-    print(
-        "Canonical:"
-    )
-
-    print(
-        result[
-            "canonical_path"
-        ]
-    )
-
-    print()
-
-    print(
-        "Canonical SHA256:"
-    )
-
-    print(
-        result[
-            "canonical_sha256"
-        ]
-    )
-
-    if result[
-        "backup_path"
-    ]:
-
-        print()
-
-        print(
-            "Previous canonical backup:"
-        )
-
-        print(
-            result[
-                "backup_path"
-            ]
-        )
-
-    print()
-
-    print(
-        "Audit record:"
-    )
-
-    print(
-        result[
-            "audit_path"
-        ]
-    )
-
-    print()
-
-    print(
-        "NOT:"
-    )
-
-    print(
-        "Timeline canonical hale geldi; "
-        "event verification_state değerleri "
-        "aynen korunmuştur."
-    )
-
-    print()
-
-    print(
-        "======================================"
-    )
-
-    print(
-        " TIMELINE APPROVAL V1: PASS"
-    )
-
-    print(
-        "======================================"
-    )
+    # ROW 19C-3b SLICE 2: eski doğrudan-approve çıktısı bölümü
+    # kaldırıldı - yukarıdaki refusal nedeniyle bu noktaya yalnız
+    # preview akışı ulaşır ve preview kendi `return`'üyle biter.
+    # Gerçek mutasyon yolu: python -m ui.cli_mutate promotion.
 
 
 # ============================================================

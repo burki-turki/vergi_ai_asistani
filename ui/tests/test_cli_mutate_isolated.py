@@ -191,6 +191,62 @@ check(
     code == cli_mutate.EXIT_USAGE_ERROR and "--apply" in err,
 )
 
+# ROW 19C-3b SLICE 2 - `promotion` subcommand usage-shape grammar. Every
+# rule fires BEFORE any connection/authz repository/filesystem probe/
+# journal access (the exploding factories prove zero connections).
+code, _, err = run_cli_usage_only(["promotion", "--case", "x", "--row-key", "bogus", "--actor-user-id", "1"])
+check("promotion: invalid --row-key -> exit 2, zero connections", code == cli_mutate.EXIT_USAGE_ERROR)
+
+code, _, err = run_cli_usage_only([
+    "promotion", "--case", "x", "--row-key", "timeline", "--actor-user-id", "1", "--document", "d",
+])
+check(
+    "promotion: --document with --row-key timeline -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "promotion", "--case", "x", "--row-key", "timeline", "--actor-user-id", "1",
+    "--approve", "--expected-hash", "h", "--note", "n",
+])
+check(
+    "promotion: --note with --row-key timeline -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--note" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "promotion", "--case", "x", "--row-key", "fact", "--actor-user-id", "1", "--approve", "--expected-hash", "h",
+])
+check(
+    "promotion: fact --approve WITHOUT --document -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "promotion", "--case", "x", "--row-key", "fact", "--document", "d", "--actor-user-id", "1", "--approve",
+])
+check(
+    "promotion: --approve WITHOUT --expected-hash -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--expected-hash" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "promotion", "--case", "x", "--row-key", "fact", "--document", "d", "--actor-user-id", "1",
+    "--expected-hash", "h",
+])
+check(
+    "promotion: --expected-hash WITHOUT --approve -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--expected-hash" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "promotion", "--case", "x", "--row-key", "fact", "--document", "d", "--actor-user-id", "1", "--note", "n",
+])
+check(
+    "promotion: --note WITHOUT --approve -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--note" in err,
+)
+
 
 # ============================================================
 # 2) ACTOR IDENTITY - nonexistent/disabled actor, EXISTENCE-BLIND
@@ -502,11 +558,19 @@ LEGACY_MUTATION_MATRIX = [
         "--case", "case_0001", "--suggestion-id", "row19c3b_nonexistent_suggestion_id",
         "--target-state", "accepted_for_follow_up",
     ]),
+    # ROW 19C-3b SLICE 2 - the two fact/timeline canonical PROMOTION
+    # bypasses (each module's OWN real --approve flag; timeline's
+    # --pending is required by its own argparse contract, so a
+    # nonexistent value is supplied - the refusal fires strictly BEFORE
+    # any pending read, proven by returncode/stderr/stdout below).
+    ("fact_approval", ["--approve"]),
+    ("timeline_approval", ["--pending", "row19c3b_slice2_nonexistent.pending", "--approve"]),
 ]
 
 check(
-    "LEGACY_MUTATION_MATRIX covers all 15 legacy mutation entry points (10 Layer A + 5 Layer B)",
-    len(LEGACY_MUTATION_MATRIX) == 15,
+    "LEGACY_MUTATION_MATRIX covers all 17 legacy mutation entry points "
+    "(10 Layer A + 5 Layer B + 2 promotion)",
+    len(LEGACY_MUTATION_MATRIX) == 17,
 )
 
 # ROW 19C-3b SLICE 1 - EVIDENCE REVIEW FULL FLAG COVERAGE: `evidence_
@@ -534,11 +598,11 @@ check(
     len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 3,
 )
 check(
-    "LEGACY_MUTATION_MATRIX (15 legacy executables) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3 "
-    "additional evidence_review flag variants) = 18 total refusal subprocess scenarios in this "
-    "section - NOT 18 distinct legacy modules (evidence_review itself contributes 4 of the 18: "
+    "LEGACY_MUTATION_MATRIX (17 legacy executables) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3 "
+    "additional evidence_review flag variants) = 20 total refusal subprocess scenarios in this "
+    "section - NOT 20 distinct legacy modules (evidence_review itself contributes 4 of the 20: "
     "one entry from each list)",
-    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 18,
+    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 20,
 )
 
 _data_snapshot_before_matrix = _snapshot_data_tree()
@@ -578,7 +642,7 @@ for _module_name, _mutation_args in LEGACY_MUTATION_MATRIX + EVIDENCE_REVIEW_EXT
 
 _data_snapshot_after_matrix = _snapshot_data_tree()
 check(
-    "all 18 legacy mutation bypass scenarios together (15 legacy executables + 3 additional "
+    "all 20 legacy mutation bypass scenarios together (17 legacy executables + 3 additional "
     "evidence_review flag variants): the REAL data/ tree is byte-for-byte UNCHANGED (before/after "
     "sha256 snapshot of every file under data/ - would catch a new, removed, or modified "
     "canonical/pending/audit/backup file anywhere, not only in case_0001's own tree)",
@@ -662,6 +726,41 @@ check(
     and _USAGE_MESSAGE in _result.stdout
     and _LEGACY_CLI_REFUSAL_MESSAGE not in _result.stdout,
     f"got returncode={_result.returncode!r} stdout={_result.stdout!r}",
+)
+
+# ROW 19C-3b SLICE 2 - fact/timeline PREVIEW paths are PRESERVED
+# (read-only, exit 0, NOT the refusal): fact's default no-flag review
+# mode, fact's explicit --pending review against the real v1_3 pending,
+# and timeline's --pending review against the real v1_1 pending. All
+# three read the REAL case_0001 data strictly read-only (the section's
+# own data/ byte-invariance check below covers them).
+_script_path, _result = _run_legacy_script("fact_approval", [], timeout=120)
+check(
+    "fact_approval: no-flag read-only preview path preserved -> exit 0, READY banner, no refusal",
+    _result.returncode == 0 and "FACT APPROVAL V1: READY" in _result.stdout
+    and _LEGACY_CLI_REFUSAL_MESSAGE not in _result.stderr,
+    f"got returncode={_result.returncode!r} stdout(tail)={_result.stdout[-300:]!r} stderr={_result.stderr!r}",
+)
+_script_path, _result = _run_legacy_script(
+    "fact_approval",
+    ["--pending", "data/cases/case_0001/documents/dava_dilekcesi_001/extractions/facts_llm_v1_3.json.pending"],
+    timeout=120,
+)
+check(
+    "fact_approval: explicit --pending (current v1_3) preview preserved -> exit 0, READY",
+    _result.returncode == 0 and "FACT APPROVAL V1: READY" in _result.stdout,
+    f"got returncode={_result.returncode!r} stdout(tail)={_result.stdout[-300:]!r} stderr={_result.stderr!r}",
+)
+_script_path, _result = _run_legacy_script(
+    "timeline_approval",
+    ["--pending", "data/cases/case_0001/timeline/timeline_v1_1.json.pending"],
+    timeout=180,
+)
+check(
+    "timeline_approval: --pending preview preserved -> exit 0, READY, no refusal",
+    _result.returncode == 0 and "TIMELINE APPROVAL V1: READY" in _result.stdout
+    and _LEGACY_CLI_REFUSAL_MESSAGE not in _result.stderr,
+    f"got returncode={_result.returncode!r} stdout(tail)={_result.stdout[-300:]!r} stderr={_result.stderr!r}",
 )
 
 # qa_review's OLD missing-required-argument SystemExit, distinct from the NEW Row 19C-3b refusal.

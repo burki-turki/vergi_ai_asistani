@@ -1,5 +1,17 @@
 # ============================================================
 # VERGİ AI - ROW 19C-3b SLICE 1: UNIVERSAL CLI MUTATION DISPATCHER.
+# ROW 19C-3b SLICE 2 EXTENSION: a THIRD subcommand, `promotion`, closes
+# the last two uncoordinated canonical-promotion CLI bypasses
+# (src/fact_approval.py --approve, src/timeline_approval.py --approve)
+# by routing them through the NEW, separate
+# `ui.services.promotion_mutation_facade` (action families
+# `promotion.fact` / `promotion.timeline` - the `approval` subcommand's
+# own exact-10 row-key universe is NOT extended, and no web route/
+# registry gains promotion support). Grammar rules (all enforced as
+# pure usage-shape checks BEFORE any connection/authz/filesystem
+# access): fact apply requires --document; timeline rejects --document
+# and --note entirely; --note is fact-apply-only; --expected-hash is
+# required with --approve and rejected without it.
 #
 # Closes the direct-`main()` CLI bypass for the 10 Layer A approval
 # families and the 12 Layer B review families by giving them a SINGLE,
@@ -112,9 +124,9 @@ def _build_arg_parser():
     parser = _NonExitingArgumentParser(
         prog="python -m ui.cli_mutate",
         description=(
-            "Row 19C-3b Slice 1 - coordinator-integrated CLI for the 10 Layer A "
-            "approval families and 12 Layer B review families. drafting_request.save "
-            "is NOT covered by this dispatcher."
+            "Row 19C-3b - coordinator-integrated CLI for the 10 Layer A approval "
+            "families, 12 Layer B review families and (Slice 2) the 2 fact/timeline "
+            "promotion families. drafting_request.save is NOT covered by this dispatcher."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -148,6 +160,37 @@ def _build_arg_parser():
         "--expected-hash", dest="expected_hash", default=None,
         help="REQUIRED with --apply (rejected without it): the canonical file's sha256, "
         "as printed by a prior preview (no --apply) run of this same command.",
+    )
+
+    # ROW 19C-3b SLICE 2: fact/timeline canonical promotion - routed to
+    # ui.services.promotion_mutation_facade, NEVER to approval_registry
+    # (the web-shared exact-10 universe stays untouched).
+    from ui.services import promotion_mutation_facade as _promotion_facade
+
+    promotion_parser = subparsers.add_parser(
+        "promotion", help="Fact/Timeline canonical promotion (Row 19C-3b Slice 2)",
+    )
+    promotion_parser.add_argument("--case", dest="case_id", required=True)
+    promotion_parser.add_argument(
+        "--row-key", dest="row_key", required=True,
+        choices=sorted(_promotion_facade.PROMOTION_ROW_KEY_TO_MODULE_NAME.keys()),
+    )
+    promotion_parser.add_argument(
+        "--document", dest="document", default=None,
+        help="fact-only: the document_id whose pending extraction is being promoted "
+        "(REQUIRED with --approve for fact; REJECTED entirely for timeline).",
+    )
+    promotion_parser.add_argument("--actor-user-id", dest="actor_user_id", required=True, type=int)
+    promotion_parser.add_argument("--approve", action="store_true", default=False)
+    promotion_parser.add_argument(
+        "--expected-hash", dest="expected_hash", default=None,
+        help="REQUIRED with --approve (rejected without it): the pending file's sha256, "
+        "as printed by a prior preview (no --approve) run of this same command.",
+    )
+    promotion_parser.add_argument(
+        "--note", dest="note", default=None,
+        help="fact-apply-only optional review note (fingerprint-bound, never identity); "
+        "REJECTED for timeline and REJECTED without --approve.",
     )
 
     return parser
@@ -201,6 +244,34 @@ def _validate_review_args(args, *, stderr) -> int | None:
     return None
 
 
+def _validate_promotion_args(args, *, stderr) -> int | None:
+    """ROW 19C-3b SLICE 2: pure, zero-connection usage-shape checks for
+    the `promotion` subcommand - every rule below fires BEFORE any authz
+    repository, filesystem probe, or journal access (mirrors
+    `_validate_approval_args` exactly; the facade re-enforces the same
+    rules independently as its own pre-I/O `PromotionArgumentError`)."""
+    if args.row_key == "timeline":
+        if args.document is not None:
+            stderr.write("error: --document is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
+        if args.note is not None:
+            stderr.write("error: --note is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
+    if args.approve and args.expected_hash is None:
+        stderr.write("error: --approve requires --expected-hash\n")
+        return EXIT_USAGE_ERROR
+    if args.expected_hash is not None and not args.approve:
+        stderr.write("error: --expected-hash is only meaningful together with --approve\n")
+        return EXIT_USAGE_ERROR
+    if args.note is not None and not args.approve:
+        stderr.write("error: --note is only meaningful together with --approve\n")
+        return EXIT_USAGE_ERROR
+    if args.row_key == "fact" and args.approve and args.document is None:
+        stderr.write("error: --approve with --row-key fact requires --document\n")
+        return EXIT_USAGE_ERROR
+    return None
+
+
 def _default_authz_conn_factory():
     """Real production authz connection factory - lazy-imported so
     `import ui.cli_mutate` never itself requires psycopg (matches
@@ -237,6 +308,8 @@ def main(
 
     if args.command == "approval":
         usage_error = _validate_approval_args(args, stderr=stderr)
+    elif args.command == "promotion":
+        usage_error = _validate_promotion_args(args, stderr=stderr)
     else:
         usage_error = _validate_review_args(args, stderr=stderr)
     if usage_error is not None:
@@ -264,6 +337,11 @@ def main(
         try:
             if args.command == "approval":
                 outcome = _run_approval(
+                    args, principal=principal, repository=repository,
+                    mutation_conn_factory=mutation_conn_factory,
+                )
+            elif args.command == "promotion":
+                outcome = _run_promotion(
                     args, principal=principal, repository=repository,
                     mutation_conn_factory=mutation_conn_factory,
                 )
@@ -326,6 +404,67 @@ def _run_approval(args, *, principal, repository, mutation_conn_factory) -> str:
         f"canonical_path={result['canonical_path']}\n"
         f"canonical_hash={result['canonical_hash']}\n"
         f"audit_path={result['audit_path']}\n"
+    )
+
+
+def _run_promotion(args, *, principal, repository, mutation_conn_factory) -> str:
+    """ROW 19C-3b SLICE 2. PREVIEW (no --approve): the facade's own
+    `preview_promotion()` performs the outer 'read' authorization
+    ITSELF, as its very first step, before any filesystem probe or
+    document enumeration - this dispatcher adds no second authz call
+    (mirrors how the apply path below delegates ALL authz to
+    `approve_promotion_mutation()`'s own outer-then-inner dual chain).
+    APPLY: zero authz/verification logic of our own; `--expected-hash`
+    is always the operator's explicit claim, never recomputed here."""
+    from ui.services import promotion_mutation_facade as _promotion_facade
+
+    if not args.approve:
+        preview = _promotion_facade.preview_promotion(
+            args.row_key, args.case_id, document_id=args.document,
+            principal=principal, authz_repository=repository,
+        )
+        if preview["mode"] == "enumeration":
+            lines = [
+                f"PREVIEW promotion row_key={args.row_key} case_id={preview['case_id']} "
+                f"(pending'i olan dokümanlar: {len(preview['documents'])})\n"
+            ]
+            for item in preview["documents"]:
+                lines.append(
+                    f"document={item['document_id']} pending_hash={item['pending_hash']} "
+                    f"canonical_exists={item['canonical_exists']}\n"
+                )
+            lines.append(
+                "Onaylamak için: python -m ui.cli_mutate promotion --case "
+                f"{preview['case_id']} --row-key fact --document <DOC_ID> --actor-user-id "
+                f"{args.actor_user_id} --approve --expected-hash <PENDING_HASH>\n"
+            )
+            return "".join(lines)
+        document_part = (
+            f" --document {preview['document_id']}" if preview["document_id"] is not None else ""
+        )
+        return (
+            f"PREVIEW promotion row_key={args.row_key} case_id={preview['case_id']}"
+            f"{' document=' + preview['document_id'] if preview['document_id'] is not None else ''}\n"
+            f"pending_hash={preview['pending_hash']}\n"
+            f"canonical_exists={preview['canonical_exists']}\n"
+            f"validation_ready={preview['validation_ready']}\n"
+            "Onaylamak için: python -m ui.cli_mutate promotion --case "
+            f"{preview['case_id']} --row-key {args.row_key}{document_part} --actor-user-id "
+            f"{args.actor_user_id} --approve --expected-hash {preview['pending_hash']}\n"
+        )
+
+    result = _promotion_facade.approve_promotion_mutation(
+        args.row_key, args.case_id, args.expected_hash,
+        document_id=args.document, note=args.note,
+        principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+    )
+    return (
+        f"APPLIED promotion row_key={args.row_key}"
+        f"{' document=' + result.document_id if result.document_id is not None else ''}\n"
+        f"canonical_path={result.canonical_path}\n"
+        f"canonical_hash={result.canonical_hash}\n"
+        f"audit_path={result.audit_path}\n"
+        f"replayed={result.replayed}\n"
     )
 
 

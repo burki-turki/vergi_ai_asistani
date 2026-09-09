@@ -498,8 +498,9 @@ finally:
 # (ROW 19C-3b SLICE 1: each registered under TWO exact routing keys -
 # web `review.<kind>` and CLI `review.<kind>.cli` - pointing at the SAME
 # single adapter instance per review_kind, so 12 logical review_kinds
-# now occupy 24 routing keys, NOT 24 logical families), AND Row 18C's
-# single `drafting_request.save` family into ONE registry - never
+# now occupy 24 routing keys, NOT 24 logical families), Row 18C's
+# single `drafting_request.save` family, AND (ROW 19C-3b SLICE 2) the
+# two fact/timeline `promotion.*` families into ONE registry - never
 # called by any test above (which always injects its OWN fake
 # `registry_factory`, per this module's own header comment), so this is
 # the ONE place that ever exercises the REAL default factory for real,
@@ -515,6 +516,7 @@ _review_families = {f for f in _real_families if f.startswith("review.")}
 _review_families_cli = {f for f in _review_families if f.endswith(".cli")}
 _review_families_web = _review_families - _review_families_cli
 _drafting_request_families = {f for f in _real_families if f.startswith("drafting_request.")}
+_promotion_families = {f for f in _real_families if f.startswith("promotion.")}
 
 check(
     "_default_registry_factory(): the merged registry contains exactly Layer A's 10 "
@@ -546,11 +548,17 @@ check(
     len(_drafting_request_families) == 1, f"got {sorted(_drafting_request_families)}",
 )
 check(
-    "ROW 19C-3b SLICE 1: the merged registry's total size is exactly 10 + 24 + 1 = 35 "
+    "ROW 19C-3b SLICE 2: the merged registry contains exactly the 2 'promotion.*' families "
+    "(promotion.fact + promotion.timeline)",
+    _promotion_families == {"promotion.fact", "promotion.timeline"},
+    f"got {sorted(_promotion_families)}",
+)
+check(
+    "ROW 19C-3b SLICE 2: the merged registry's total size is exactly 10 + 24 + 1 + 2 = 37 "
     "(no overlap, no family lost, no family duplicated) - this is a ROUTING-KEY count, "
-    "distinct from the 22 LOGICAL action families (10 approval + 12 review) this project "
-    "has always had",
-    len(_real_families) == 35, f"got {len(_real_families)}",
+    "distinct from the 25 LOGICAL action families (10 approval + 12 review + 1 "
+    "drafting_request + 2 promotion); the 'approval.*' bucket itself stays exactly 10",
+    len(_real_families) == 37, f"got {len(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "
@@ -576,6 +584,13 @@ check(
     "_default_registry_factory(): Row 18C's own family (drafting_request.save) resolves to a "
     "real adapter",
     _real_registry.get("drafting_request.save") is not None,
+)
+check(
+    "ROW 19C-3b SLICE 2: promotion.fact and promotion.timeline each resolve to a real "
+    "PromotionReconciliationAdapter instance (and to DIFFERENT instances - one per family)",
+    _real_registry.get("promotion.fact") is not None
+    and _real_registry.get("promotion.timeline") is not None
+    and _real_registry.get("promotion.fact") is not _real_registry.get("promotion.timeline"),
 )
 
 

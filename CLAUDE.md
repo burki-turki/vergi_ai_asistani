@@ -278,21 +278,35 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   ulaştı (bkz. Row 19C-3b Slice 1 checkpoint özeti, §5 sonrası). Rows
   1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a, Row 19C-2b, Row 19C-2c
   ve Row 19C-3a Slice 1/Slice 2 contract'ları değişmedi.
-- Sıradaki canonical alt-faz: **ROW 19C-3b Slice 2 — Remaining CLI-Only
-  Writer Reconciliation** — **ACTIVE / NEXT** — **henüz implementasyona
-  BAŞLANMADI**. Önce AYRI, salt-okunur bir reconciliation yapılacaktır;
-  kalan CLI-only writer envanteri (pending-generation, fact/timeline
-  promotion, maintenance/migration, global RAG dahil) kaynak koddan
-  YENİDEN doğrulanacaktır - Slice 1'in tamamladığı kapsamdan
-  VARSAYILMAYACAKTIR. Kendi TAM dosya allowlist'i hazırlanıp
-  implementasyondan ÖNCE kullanıcı tarafından ayrıca onaylanmadan
-  hiçbir dosyaya dokunulamaz (Row 19A'nın dosya-değişiklik sınırı
-  kararı uyarınca) — Slice 1 onayı bu alt-fazın dosya değişikliğini
-  ÖNCEDEN yetkilendirmez. `drafting_request.save`, pending-generation,
-  fact/timeline promotion, maintenance ve global RAG kapsamları Slice
-  1 tarafından tamamlanmış gibi GÖSTERİLEMEZ - bunların HİÇBİRİ bu
-  checkpoint ile kapsanmamıştır. Row 19D deployment hardening (OS ACL/
-  service identity dahil) bu checkpoint ile HENÜZ başlatılmamıştır.
+- **ROW 19C-3b Slice 2 — Fact/Timeline Canonical Promotion Integration**
+  artık **DONE / LOCKED** — kullanıcı tarafından ayrıca onaylanmış tam
+  dosya allowlist'i (4 yeni + 8 değiştirilmiş dosya) üzerinde implement
+  edildi, gerçek/disposable bir PostgreSQL örneğine karşı yerel
+  testlerle doğrulandı ve bağımsız, salt-okunur bir final incelemede
+  `ROW 19C-3b SLICE 2 LOCK-READY — No blocking findings` verdict'ine
+  ulaştı (bkz. Row 19C-3b Slice 2 checkpoint özeti, §5 sonrası). Bu,
+  fact (Row 6) ve timeline (Row 7) canonical promotion writer'larının
+  (`src/fact_approval.py --approve`, `src/timeline_approval.py
+  --approve`) mutation coordinator/journal altyapısına, Layer A'nın
+  exact-10 facade'i GENİŞLETİLMEDEN, ayrı bir promotion facade/adapters
+  çifti üzerinden bağlandığı alt-fazdır. Rows 1-18, Row 19A, Row 19B,
+  Row 19C-1, Row 19C-2a, Row 19C-2b, Row 19C-2c, Row 19C-3a Slice
+  1/Slice 2 ve Row 19C-3b Slice 1 contract'ları değişmedi.
+- Sıradaki canonical alt-faz: **ROW 19C-3c-i — Deterministic Generation
+  Integration** — **ACTIVE / NEXT** — **henüz implementasyona
+  BAŞLANMADI**. Önce timeline/deadline gibi deterministik
+  pending-generation writer'ları için AYRI, salt-okunur bir
+  reconciliation yapılacaktır; gerçek source envanteri kaynak koddan
+  YENİDEN doğrulanacaktır - önceki alt-fazların (Row 19C-3b Slice
+  1/Slice 2 dahil) tamamladığı kapsamdan VARSAYILMAYACAKTIR. Kendi TAM
+  dosya allowlist'i hazırlanıp implementasyondan ÖNCE kullanıcı
+  tarafından ayrıca onaylanmadan hiçbir dosyaya dokunulamaz (Row 19A'nın
+  dosya-değişiklik sınırı kararı uyarınca) — Row 19C-3b Slice 2 onayı bu
+  alt-fazın dosya değişikliğini ÖNCEDEN yetkilendirmez. Agent-gated
+  generation, retrieval/RAG generation, fact-extraction generation ve
+  global maintenance/RAG ingest bu pointer tarafından OTOMATİK olarak
+  yetkilendirilmez. Row 19D deployment/OS hardening (OS ACL/service
+  identity dahil) bu checkpoint ile HENÜZ başlatılmamıştır.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -2805,6 +2819,207 @@ findings.`**
 Slice 1/Slice 2 örneğinde olduğu gibi yalnız `CLAUDE.md`'yi
 değiştiren, salt-okunur bir roadmap-lock işlemidir; hiçbir kaynak/
 migration/test/production dosyasına dokunmaz.
+
+### Row 19C-3b Slice 2 — Fact/Timeline Canonical Promotion Integration (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış tam
+dosya allowlist'i üzerinde tamamlandı: **4 YENİ + 8 DEĞİŞTİRİLMİŞ = 12
+dosya**.
+
+Yeni (4):
+1. `ui/services/promotion_mutation_facade.py`
+2. `ui/services/promotion_mutation_adapters.py`
+3. `ui/tests/test_promotion_mutation_facade_isolated.py`
+4. `ui/tests/test_promotion_mutation_integration_postgres.py`
+
+Değiştirilmiş (8):
+5. `src/fact_approval.py`
+6. `src/timeline_approval.py`
+7. `ui/cli_mutate.py`
+8. `ui/reconciliation_operator.py`
+9. `ui/tests/test_cli_mutate_isolated.py`
+10. `ui/tests/test_cli_mutate_integration_postgres.py`
+11. `ui/tests/test_reconciliation_operator_isolated.py`
+12. `ui/tests/test_drafting_request_mutation_integration_postgres.py`
+
+Aşağıdakiler bu alt-fazda DEĞİŞMEDİ: Layer A'nın exact-10
+facade/adapters'ı (`mutation_approval_facade.py`/
+`mutation_approval_adapters.py`), `approval_registry.py` ve web route
+yüzeyi (`ui/main.py`), mutation coordinator/registry/guard
+(`mutation_coordinator.py`, `mutation_registry.py`,
+`src/mutation_guard.py`), paylaşılan path-containment primitive'i
+(`src/path_containment.py`), authz/cli_authz (`ui/services/authz.py`,
+`ui/services/cli_authz.py`), migration'lar (`db/migrations/`) ve
+production `data/`.
+
+**Slice sonucu** — Fact (Row 6) ve timeline (Row 7) canonical promotion
+işlemleri, mevcut Layer A facade'i koşullu branch'lerle
+GENİŞLETİLMEDEN, ayrı ve bağımsız bir promotion facade/adapters çiftine
+(`promotion_mutation_facade.py`/`promotion_mutation_adapters.py`)
+bağlandı. Yalnız CLI yüzeyi (`python -m ui.cli_mutate promotion ...`)
+eklendi; web promotion yüzeyi AÇILMADI. Action family'ler:
+`promotion.fact` / `promotion.timeline`. Registry eksenleri: `approval.*
+= 10`, logical review kind = 12, review routing key = 24,
+`drafting_request.* = 1`, `promotion.* = 2`, merged routing key = **37**.
+Fact'in `target_ref`'i doküman-scoped (`fact.<document_id>.canonical`),
+timeline'ınki case-scoped (`timeline.canonical`) kaldı. Fact'in
+`--note`'u yalnız fingerprint girdisidir (`secondary_input_hash`); aynı
+kimlik + farklı not mevcut `IdempotencyConflictError` mekanizmasına
+düşer.
+
+**Authz ve CLI kontratı** — Promotion preview, dış (outer) 'read'
+authz'dan SONRA çalışır; apply dış (outer) 'mutate' authz + case kilidi
+ALTINDA iç (inner), otoriter 'mutate' authz ile çalışır. Usage-shape
+doğrulaması (fact apply için `--document` zorunluluğu, timeline için
+`--document`/`--note` reddi, `--expected-hash` eşleşmesi) HERHANGİ bir
+connection/filesystem/journal erişiminden ÖNCE uygulanır. Fact
+document/case_id ↔ pending içerik çapraz-kontrolü pre-lock VE
+kilit-altında ayrıca doğrulanır. Analyst preview yapabilir, apply
+YAPAMAZ (`authorize_case_access` capability kontrolü). Legacy
+`src/fact_approval.py --approve` / `src/timeline_approval.py --approve`
+doğrudan yolları sabit stderr mesajı + `SystemExit(2)` ile KAPATILDI -
+preview/self-test yolları KORUNDU. Promotion reviewer/provenance
+değerleri (`PROMOTION_REVIEWER_REF`) kullanıcı tarafından
+DEĞİŞTİRİLEMEZ - sabit modül sabiti.
+
+**Writer-root ve path güvenliği** — Writer containment kökü ÇAĞRI ANINDA
+writer modülünün KENDİ `CASES_DIR` değerinden okunur (asla
+cache/default-arg); `ui.services.paths.resolve_case_path()` writer
+doğrulaması için KULLANILMAZ. Facade ve adapter, kendi BAĞIMSIZ
+root/nested/audit-scan mantığını taşır (yalnız karar içermeyen
+`src/path_containment.py` primitive'i paylaşılır). Pre-lock, kilit-altı
+VE completed-replay sırasında SIFIRDAN path doğrulaması yapılır. Writer
+callback'e kilit-altı doğrulanmış Path nesneleri ve TAM `verified_paths`
+paketi aktarılır: fact için `extractions_dir`/`pending_path`/
+`canonical_path`/`history_dir`/`reviews_dir`; timeline için
+`timeline_dir`/`pending_path`/`canonical_path`/`history_dir`/
+`reviews_dir`. Verified (production) modda raw `DATA_DIR`/`case_id`/
+`pending.parent` türetimi filesystem authority olarak KULLANILMAZ.
+Writer'ın kendi structural parent/leaf kontrolü (literal ata-dizin adı
+YERİNE) safe internal alias'ı destekler ama containment yetkisini
+facade'den ALMAZ - facade'in containment zinciri tek konum otoritesi
+kalır. Live escape, broken/looping link ve kilit beklerken oluşan
+junction swap fail-closed reddedilir; containment-before-stat/open/write
+disiplini korunur.
+
+İki tasarım kararı ayrıca kaydedilir:
+
+1. Fact promotion'ın verified modunda `CASES_DIR` TEK writer path
+   seam'i yapılmıştır; `DATA_DIR` bu modda hiçbir path authority
+   TAŞIMAZ.
+2. Literal ata-dizin adları yerine structural parent/leaf doğrulaması
+   kullanılmıştır; bağımsız inceleme bunun containment'ı ZAYIFLATMADAN
+   safe internal alias'ı KORUDUĞUNU doğruladı.
+
+**Serialization, audit ve reconciliation** — Her writer'da
+`_canonical_json_bytes()` hem gerçek canonical writer hem
+`compute_expected_canonical_sha256()` için TEK bayt kaynağıdır - fact
+deterministik `build_canonical()` dönüşümü, timeline kimlik dönüşümü;
+her iki expected-hash yardımcısı salt-okunur ve deterministiktir.
+Timeline success audit'i `canonical_sha256` + mutation-binding
+alanlarını taşır; rollback audit'i ASLA success evidence sayılmaz. Fact
+audit'i zaman damgalı ad + `O_CREAT|O_EXCL` + sayısal sonek ile legacy
+sabit-ad overwrite riskini kapattı; eşleşme HER ZAMAN içerik
+binding'inden yapılır, addan ASLA. Reconciliation: post-state yalnız
+deterministik canonical hash + TAM BİR bound success audit
+birlikteyken verified sayılır; canonical doğru ama audit yok/bozuk/
+duplicate ise auto-completed YOKTUR. Pre-state yalnız composite
+pre-hash eşleşmesiyle doğrulanır. Dual-false evidence sıfır UPDATE
+bırakır. İdempotent overwrite köşesi `completed` DEĞİL `failed` olarak
+çözülür. Writer exception'ı `reconciliation_required`'a düşer; completed
+replay writer'ı TEKRAR ÇAĞIRMAZ.
+
+**Remediation ve doğrulama geçmişi**:
+
+1. İlk corrected scope analizinde mevcut Layer A facade'ini genişletme
+   önerisi REDDEDİLDİ; ayrı promotion facade/adapters seçildi.
+2. Timeline reconciliation için `observed_post_hash`'ın TEK BAŞINA
+   yetersiz olduğu belirlendi; audit `canonical_sha256` + deterministik
+   expected-hash çözümü getirildi.
+3. Fact'in sabit audit adının overwrite riski timestamp/`O_EXCL`
+   modeliyle kapatıldı.
+4. Timeline'ın yalnız verified pending üzerinden kardeş yolları yeniden
+   türetmesinin YETERSİZ olduğu bulundu; TAM `verified_paths` handoff
+   eklendi.
+5. Implementasyon sırasında adapter'ın post kanıtı kurulamayınca
+   pre-state kanıtına DÜŞEMEYEN bir sıralama hatası test tarafından
+   yakalanıp düzeltildi.
+6. F3 fixture'ının aslında idempotent-overwrite senaryosu olduğu
+   görüldü; gerçek first-save audit-crash dual-false senaryosu
+   AYRILDI ve idempotent-overwrite köşesi ayrıca dürüstçe sabitlendi.
+7. İlk final raporda eksik kalan gerçek PostgreSQL `_mark_completed`
+   failure kanıtı, P11 ile hem fact hem timeline için TAMAMLANDI.
+8. Son bağımsız (Sonnet) inceleme hiçbir Critical/High/Medium/Low
+   bulgu bulmadı.
+
+**P11 gerçek PostgreSQL kanıtı** — Disposable DB'ye özgü bir trigger
+yalnız EXACT resource_key için `completed` UPDATE'ini reddetti;
+production coordinator/facade/adapter MONKEYPATCH EDİLMEDİ; writer'ın
+canonical/audit/backup etkileri TAMAMLANDI; journal `executing` ve
+`observed_post_hash` NULL kaldı; trigger kaldırıldıktan SONRA gerçek
+merged 37-key registry ile reconciliation çalıştırıldı; hem fact hem
+timeline `completed` + `reconciled_completed_post_state_verified`
+sonucuna ulaştı; `observed_post_hash` ve reconciler provenance
+(`cli_service`) doğrulandı; writer İKİNCİ KEZ ÇAĞRILMADI; trigger/
+function ve PostgreSQL residue TAMAMEN temizlendi.
+
+**Test kanıtı — zaman ayrımı korunarak**:
+
+Implementation final full sweep: **40/40** `ui/tests/test_*.py` modülü
+exit 0, **2570 passed, 0 failed, 8 counted skipped**, 1 informational
+`SKIPPED` satırı sayaç DIŞI - fresh disposable PostgreSQL 16.15,
+migration 0001-0004, hiçbir skip PASS SAYILMADI. **Bu full sweep
+bağımsız review sırasında YENİDEN ÇALIŞTIRILMADI**.
+
+Bağımsız (Sonnet) review'ın BİZZAT çalıştırdığı sonuçlar (full sweep'ten
+AYRI, kendi ölçümü):
+
+- `test_promotion_mutation_facade_isolated`: **101/101**
+- `test_cli_mutate_isolated`: **173/173**
+- `test_reconciliation_operator_isolated`: **87/87**
+- `test_promotion_mutation_integration_postgres`: **50/50, 0 skipped**
+- `test_cli_mutate_integration_postgres`: **140/140, 0 skipped**
+- `test_drafting_request_mutation_integration_postgres`: **53/53, 0
+  skipped**
+- `test_mutation_approval_integration_postgres`: **162/162, 0 skipped**
+- `test_review_mutation_integration_postgres`: **82/82, 0 skipped**
+- `test_mutation_journal_postgres`: **61/61**
+- `test_mutation_reconciliation_provenance_postgres`: **24/24**
+
+Bağımsız review'da ayrıca `py_compile` temiz, `pip check` temiz, `git
+diff` kontrolleri temiz, gerçek `data/` ağacı bayt-düzeyinde DEĞİŞMEDİ,
+kullanılan disposable PostgreSQL/temp residue TAMAMEN temizlendi ve
+HİÇBİR bulgu raporlanmadı.
+
+**Kalan kapsam ve borçlar**:
+
+- OS-level atomik path pinning SAĞLANMADI.
+- Doğrulama ile tekil filesystem işlemleri arasındaki dar local
+  link-swap/TOCTOU riski Row 19D'nin OS ACL/service-identity kapsamında
+  KALIR.
+- Trusted-local-shell sınırı Row 19D'ye KALIR.
+- Eski sürüm-adlı pending dosyaları (`facts_llm_v1.json.pending` vb.,
+  `timeline_v1.json.pending`) bu pinli promotion yollarından ONAYLANAMAZ.
+- Canonical yazılmış fakat başarı audit'i OLUŞMAMIŞ T2b/F3 vakaları
+  OTOMATİK TAMAMLANMAZ; operatör müdahalesi (reconciliation) gerekir.
+- Fact canonical writer'ın (timeline'a kıyasla) `fsync` farkı bu
+  Slice'ta DEĞİŞTİRİLMEDİ.
+- Pending-generation writer'ları (on Layer A ailesinin kendi
+  deterministik engine/agent üretim adımı) HENÜZ coordinator/journal'a
+  BAĞLI DEĞİLDİR.
+- `ui/run_drafting_request.py --generate-pending` ikinci generation
+  kapısı HÂLÂ AÇIKTIR.
+- Maintenance/config ve global RAG ingest (`ingest.py`) bu Slice'ın
+  DIŞINDADIR.
+- Migration/şema ve production data DEĞİŞMEDİ.
+
+**Final verdict: `ROW 19C-3b SLICE 2 LOCK-READY — No blocking
+findings.`**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/19C-3a
+Slice 1/Slice 2/19C-3b Slice 1 örneğinde olduğu gibi yalnız
+`CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
+hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

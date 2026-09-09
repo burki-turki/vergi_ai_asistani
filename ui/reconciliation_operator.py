@@ -227,15 +227,17 @@ def _default_conn_factory():
 
 
 def _default_registry_factory() -> mr.MutationAdapterRegistry:
-    """ROW 19C-2a STEP 6 / ROW 19C-2b / ROW 19C-2c: builds ONE merged
-    registry covering EVERY production mutation family this coordinator
-    serves - Layer A's 10 case-scoped approval families
+    """ROW 19C-2a STEP 6 / ROW 19C-2b / ROW 19C-2c / ROW 19C-3b SLICE 2:
+    builds ONE merged registry covering EVERY production mutation family
+    this coordinator serves - Layer A's 10 case-scoped approval families
     (`mutation_approval_adapters.build_production_registry()`) PLUS
-    Layer B's 12 review_kind record-level review families
+    Layer B's 12 review_kinds under 24 channel-separated routing keys
     (`review_mutation_adapters.register_into()`) PLUS Row 18C's single
     `drafting_request.save` family (`drafting_request_mutation_adapters.
-    register_into()`) - all folded onto the SAME registry rather than
-    building separate ones - so a human operator can reconcile ANY
+    register_into()`) PLUS Slice 2's two fact/timeline promotion
+    families (`promotion_mutation_adapters.register_into()`) - 10 + 24
+    + 1 + 2 = 37 routing keys, all folded onto the SAME registry rather
+    than building separate ones - so a human operator can reconcile ANY
     journal row this project produces, regardless of family, through
     this ONE CLI. NEVER called by `ui/tests/test_reconciliation_
     operator_isolated.py` (which always injects its own fake
@@ -243,10 +245,12 @@ def _default_registry_factory() -> mr.MutationAdapterRegistry:
     from ui.services import mutation_approval_adapters  # lazy import - see module docstring
     from ui.services import review_mutation_adapters  # lazy import - see module docstring
     from ui.services import drafting_request_mutation_adapters  # lazy import - see module docstring
+    from ui.services import promotion_mutation_adapters  # lazy import - see module docstring
 
     registry = mutation_approval_adapters.build_production_registry()
     registry = review_mutation_adapters.register_into(registry)
-    return drafting_request_mutation_adapters.register_into(registry)
+    registry = drafting_request_mutation_adapters.register_into(registry)
+    return promotion_mutation_adapters.register_into(registry)
 
 
 def _format_outcome_line(outcome: mr.ReconciliationOutcome) -> str:
