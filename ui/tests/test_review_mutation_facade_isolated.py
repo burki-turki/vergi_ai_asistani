@@ -493,6 +493,82 @@ try:
     shutil.rmtree(tmp1, ignore_errors=True)
 
     # ------------------------------------------------------------
+    # 4b) ROW 19C-3b SLICE 1 - CLI-CHANNEL fresh mutation + safe replay.
+    #     Identical shape to section 1/2 above, EXCEPT the binding's
+    #     reviewer_ref is the CLI sentinel - the journal row's
+    #     action_family MUST carry the ".cli" suffix, and the written
+    #     audit record's reviewer_ref MUST be "local_lawyer_cli" (never
+    #     silently falling back to the web value).
+    # ------------------------------------------------------------
+
+    def qa_binding_cli():
+        return facade.ReviewFamilyBinding(
+            review_kind="qa.suggestion",
+            module=qa_review,
+            record_type="suggestion",
+            call_shape="qa_special",
+            state_field="suggestion_review_state",
+            domain_error_class=qa_review.QaReviewError,
+            get_audit_dir_fn=qa_review.get_qa_review_audit_dir,
+            reviewer_ref="local_lawyer_cli",
+            cases_dir_anchor_module=qa_approval,
+        )
+
+    tmp4b = Path(tempfile.mkdtemp(prefix="review_facade_iso4b_cli_"))
+    canonical4b, audit_dir4b = make_qa_fixture(tmp4b, real_case_id)
+    expected_hash4b = sha256_text(canonical4b.read_text(encoding="utf-8"))
+    conn4b = FakeJournalConn()
+
+    result_cli = facade.apply_review_mutation(
+        "qa.suggestion", real_case_id, _QA_SUGGESTION_ID, "accepted_for_follow_up", "cli channel note", expected_hash4b,
+        qa_binding_cli(),
+        principal=principal, authz_repository=repo, conn_factory=lambda: conn4b,
+        canonical_path_override=canonical4b, audit_dir_override=audit_dir4b,
+    )
+
+    check("CLI-channel fresh mutation: replayed=False", result_cli.replayed is False)
+    check(
+        "CLI-channel fresh mutation: journal row's action_family carries the '.cli' suffix",
+        conn4b.table[0]["action_family"] == "review.qa.suggestion.cli",
+    )
+    audit_record_cli = json.loads(Path(result_cli.audit_path).read_text(encoding="utf-8"))
+    check(
+        "CLI-channel fresh mutation: the REAL audit record's reviewer_ref is 'local_lawyer_cli' - "
+        "never silently falls back to the web value",
+        audit_record_cli["reviewer_ref"] == "local_lawyer_cli",
+    )
+
+    _cli_replay_calls = {"n": 0}
+
+    def _counting_qa_apply_cli(*args, **kwargs):
+        _cli_replay_calls["n"] += 1
+        return _original_qa_apply_review_transition(*args, **kwargs)
+
+    qa_review.apply_review_transition = _counting_qa_apply_cli
+    try:
+        result_cli_replay = facade.apply_review_mutation(
+            "qa.suggestion", real_case_id, _QA_SUGGESTION_ID, "accepted_for_follow_up", "cli channel note", expected_hash4b,
+            qa_binding_cli(),
+            principal=principal, authz_repository=repo, conn_factory=lambda: conn4b,
+            canonical_path_override=canonical4b, audit_dir_override=audit_dir4b,
+        )
+    finally:
+        qa_review.apply_review_transition = _original_qa_apply_review_transition
+
+    check(
+        "CLI-channel safe replay: replayed=True (binding 14's action_family-aware fingerprint "
+        "recomputation matches the CLI-channel fresh mutation's stored fingerprint)",
+        result_cli_replay.replayed is True,
+    )
+    check("CLI-channel safe replay: the writer was NEVER re-invoked", _cli_replay_calls["n"] == 0)
+    check(
+        "CLI-channel safe replay: still exactly ONE journal row (no new row created)",
+        len(conn4b.table) == 1,
+    )
+
+    shutil.rmtree(tmp4b, ignore_errors=True)
+
+    # ------------------------------------------------------------
     # 5) PLAIN STALE HASH - the record itself changed, screen is stale.
     # ------------------------------------------------------------
 

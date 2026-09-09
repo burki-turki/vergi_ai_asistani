@@ -1900,115 +1900,20 @@ def main():
         0
     ]
 
-    print()
-
+    # ROW 19C-3b SLICE 1: this direct CLI mutation path is CLOSED -
+    # coordinator/journal/authz integration lives only in ui.cli_mutate
+    # now. apply_review_transition() ITSELF is untouched and remains the
+    # real writer every facade calls - only THIS executable entry point
+    # is refused. SystemExit (a BaseException, never caught by this
+    # file's own `except Exception:` __main__ wrapper) propagates
+    # straight to the interpreter, so the real OS process exit code is
+    # exactly 2 - never 0, never a bare `return`.
     print(
-        "======================================"
+        "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+        "Gerçek onay/inceleme için: python -m ui.cli_mutate <approval|review> ...",
+        file=sys.stderr,
     )
-
-    print(
-        " VERGİ AI - EVIDENCE REVIEW V1 (LAYER B)"
-    )
-
-    print(
-        " MODE: MUTATE"
-    )
-
-    print(
-        "======================================"
-    )
-
-    result = apply_review_transition(
-        case_id=
-            args.case_id,
-
-        record_type=
-            record_type,
-
-        record_id=
-            record_id,
-
-        target_state=
-            target_state,
-
-        reviewer_ref=
-            args.reviewer,
-
-        review_note=
-            args.note,
-    )
-
-    print()
-
-    print(
-        "REVIEW TRANSITION APPLIED"
-    )
-
-    print(
-        "Record:",
-        record_id,
-    )
-
-    print(
-        "Previous state:",
-        result[
-            "previous_state"
-        ],
-    )
-
-    print(
-        "New state:",
-        result[
-            "new_state"
-        ],
-    )
-
-    print(
-        "Pre SHA256:",
-        result[
-            "pre_sha256"
-        ],
-    )
-
-    print(
-        "Post SHA256:",
-        result[
-            "post_sha256"
-        ],
-    )
-
-    print(
-        "Audit:",
-        result[
-            "audit_path"
-        ],
-    )
-
-    print()
-
-    print(
-        "SEMANTIC NOTE:"
-    )
-
-    print(
-        "- 'confirmed' yalnız ilişkinin avukat tarafından "
-        "doğrulandığını gösterir; admissibility/strength/"
-        "sufficiency DEĞİLDİR."
-    )
-
-    print()
-
-    print(
-        "======================================"
-    )
-
-    print(
-        " EVIDENCE REVIEW V1: PASS"
-    )
-
-    print(
-        "======================================"
-    )
+    raise SystemExit(2)
 
 
 # ============================================================

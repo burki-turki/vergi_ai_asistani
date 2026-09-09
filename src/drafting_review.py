@@ -865,12 +865,20 @@ def main():
 
         return
 
-    result = apply_review_transition(
-        args.case_id, args.record_type, args.record_id, action_to_state[args.action], args.reviewer, args.note,
+    # ROW 19C-3b SLICE 1: this direct CLI mutation path is CLOSED -
+    # coordinator/journal/authz integration lives only in ui.cli_mutate
+    # now. apply_review_transition() ITSELF is untouched and remains the
+    # real writer every facade calls - only THIS executable entry point
+    # is refused. SystemExit (a BaseException) propagates straight to
+    # the interpreter (this file's own `if __name__` wrapper has no
+    # try/except at all), so the real OS process exit code is exactly 2
+    # - never 0, never a bare `return`.
+    print(
+        "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+        "Gerçek onay/inceleme için: python -m ui.cli_mutate <approval|review> ...",
+        file=sys.stderr,
     )
-
-    print("OK:", args.record_type, args.record_id, "->", result["new_state"])
-    print("Audit:", result["audit_path"])
+    raise SystemExit(2)
 
 
 if __name__ == "__main__":

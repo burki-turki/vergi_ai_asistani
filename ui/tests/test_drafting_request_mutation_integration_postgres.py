@@ -296,8 +296,11 @@ PRODUCTION_REGISTRY = _review_adapters.register_into(PRODUCTION_REGISTRY)
 PRODUCTION_REGISTRY = _adapters.register_into(PRODUCTION_REGISTRY)
 
 check(
-    "the REAL merged production registry covers 10 (Layer A) + 12 (Layer B) + 1 (Row 18C) = 23 families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 23,
+    "ROW 19C-3b SLICE 1: the REAL merged production registry covers 10 (Layer A) + 24 (Layer B - "
+    "12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) = 35 routing keys - the number of "
+    "LOGICAL Layer B review_kinds is still 12, unchanged; 24 is a channel-separated ADAPTER "
+    "ROUTING-KEY count, not a doubling of logical families",
+    len(PRODUCTION_REGISTRY.known_action_families()) == 35,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(

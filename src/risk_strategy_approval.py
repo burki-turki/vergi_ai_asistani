@@ -789,7 +789,21 @@ def main():
 
     if args.approve:
 
-        run_approve(args.case_id)
+        # ROW 19C-3b SLICE 1: this direct CLI mutation path is CLOSED -
+        # coordinator/journal/authz integration lives only in
+        # ui.cli_mutate now. run_approve() ITSELF is untouched and
+        # remains the real writer every facade calls - only THIS
+        # executable entry point is refused. SystemExit (a BaseException)
+        # propagates straight to the interpreter (this file's own
+        # `if __name__` wrapper has no try/except at all), so the real
+        # OS process exit code is exactly 2 - never 0, never a bare
+        # `return`.
+        print(
+            "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+            "Gerçek onay/inceleme için: python -m ui.cli_mutate <approval|review> ...",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
 
     else:
 

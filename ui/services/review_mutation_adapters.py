@@ -94,7 +94,20 @@ from . import mutation_registry as mr
 from . import paths as _paths
 from . import review_registry as _review_registry
 from .common import sha256_file
-from .review_mutation_facade import action_family_for
+from .review_mutation_facade import (
+    action_family_for,
+    # ROW 19C-3b SLICE 1: two more pure, deterministic NAMING constants -
+    # same "only naming helpers, zero decision logic borrowed" discipline
+    # this module's own header comment already documents for
+    # `action_family_for` itself. `_CHANNEL_CLI` names the exact suffix
+    # `action_family_for()` appends for the CLI channel;
+    # `_REVIEWER_REF_WEB`/`_REVIEWER_REF_CLI` are that module's OWN
+    # mirrored copies of `review_registry.REVIEWER_REF`/
+    # `LOCAL_CLI_REVIEWER_REF` (never re-mirrored a THIRD time here).
+    _CHANNEL_CLI,
+    _REVIEWER_REF_WEB,
+    _REVIEWER_REF_CLI,
+)
 
 
 # ============================================================
@@ -329,6 +342,47 @@ def _record_bound_clean_matches_with_names(scan: _AuditDirectoryScan, *, case_id
     ]
 
 
+class _UnroutableActionFamilyForReviewKindError(Exception):
+    """Internal, never-expected-to-fire signal: `entry.action_family`
+    does not EXACTLY equal either of THIS adapter's own two registered
+    keys for its OWN `review_kind`. Structurally unreachable in
+    practice - `MutationAdapterRegistry.get(action_family)` already did
+    an EXACT dict-key lookup to find this very adapter instance, so
+    `entry.action_family` can only ever be one of the two keys this
+    adapter itself was registered under - but `gather_evidence()` below
+    still checks explicitly and treats this as inconclusive (dual-false)
+    rather than ever guessing, matching every other genuinely-impossible
+    branch in this file."""
+
+
+def _expected_reviewer_ref_for_action_family(action_family: str, *, review_kind: str) -> str:
+    """ROW 19C-3b SLICE 1 - the immutable journal-to-channel binding.
+    `action_family` is read from the JOURNAL (`entry.action_family`,
+    populated once at `prepared`-row insert time and never mutated
+    afterward) - never from the on-disk, forgeable domain audit record.
+
+    EXACT EQUALITY against THIS adapter's own two computed keys for its
+    own `review_kind` - deliberately NOT a generic `.endswith(".cli")`/
+    prefix/2-element-membership heuristic (a membership check against a
+    fixed 2-element set is exactly what would let a forged on-disk
+    `reviewer_ref` swap between the two valid values and still pass; see
+    this module's own `_bindings_match()` docstring). Each row has
+    exactly ONE valid expected value, determined solely by which of the
+    TWO EXACT keys `action_family_for(review_kind)` /
+    `action_family_for(review_kind, channel="cli")` produces for THIS
+    specific review_kind actually matches `entry.action_family`."""
+    expected_web_key = action_family_for(review_kind)
+    expected_cli_key = action_family_for(review_kind, channel=_CHANNEL_CLI)
+    if action_family == expected_cli_key:
+        return _REVIEWER_REF_CLI
+    if action_family == expected_web_key:
+        return _REVIEWER_REF_WEB
+    raise _UnroutableActionFamilyForReviewKindError(
+        f"action_family={action_family!r} matches NEITHER expected exact key for "
+        f"review_kind={review_kind!r} ({expected_web_key!r} / {expected_cli_key!r})"
+    )
+
+
 def _bindings_match(record: dict, entry: mr.JournalEntrySnapshot, *, current_canonical_sha256: str, reviewer_ref: str) -> bool:
     """THE EXACT BINDINGS (reconciliation phase) - see this module's own
     header comment for binding 8's own transitive-via-14 note. Returns
@@ -375,15 +429,19 @@ def _bindings_match(record: dict, entry: mr.JournalEntrySnapshot, *, current_can
 
 class ReviewMutationReconciliationAdapter:
     """One instance per `review_kind` - all identifying metadata
-    (`module`, `record_type`, `state_field`, `get_audit_dir_fn`,
-    `reviewer_ref`) is resolved ONCE at construction time from `ui.
-    services.review_registry.REVIEW_KIND_REGISTRY`/`get_field_names()`/
-    `REVIEWER_REF` - `entry.action_family` is used only by
-    `MutationAdapterRegistry.get()` to ROUTE to the correct already-
-    constructed instance, never re-inspected here to decide which
-    review_kind's metadata to use. Stateless and side-effect-free
-    beyond the read-only filesystem access `gather_evidence()`'s own
-    contract requires."""
+    (`module`, `record_type`, `state_field`, `get_audit_dir_fn`) is
+    resolved ONCE at construction time from `ui.services.review_registry.
+    REVIEW_KIND_REGISTRY`/`get_field_names()` - `entry.action_family` is
+    used by `MutationAdapterRegistry.get()` to ROUTE to the correct
+    already-constructed instance (this SAME instance is now registered
+    under BOTH the review_kind's web and CLI action_family keys - see
+    `register_into()` below), and is ALSO re-inspected inside
+    `gather_evidence()` itself (ROW 19C-3b SLICE 1) to derive the ONE
+    expected `reviewer_ref` value for THIS specific row - see
+    `_expected_reviewer_ref_for_action_family()`'s own docstring for why
+    this is exact-equality-per-row, never fixed instance state. Stateless
+    and side-effect-free beyond the read-only filesystem access
+    `gather_evidence()`'s own contract requires."""
 
     def __init__(self, review_kind: str):
         entry = _review_registry.REVIEW_KIND_REGISTRY[review_kind]
@@ -401,7 +459,12 @@ class ReviewMutationReconciliationAdapter:
         # transition()`'s identical need), never a second,
         # independently-maintained copy of the same mapping.
         self._get_audit_dir_fn = getattr(module, entry["audit_dir_getter"])
-        self._reviewer_ref = _review_registry.REVIEWER_REF
+        # ROW 19C-3b SLICE 1: `self._reviewer_ref` (a single, fixed,
+        # construction-time value) is REMOVED - it cannot correctly
+        # serve BOTH the web and CLI action_family keys this SAME
+        # instance is now registered under (see `register_into()`). The
+        # expected value is now derived PER ROW, inside
+        # `gather_evidence()`, from that row's own `entry.action_family`.
         # ROW 19C-3a SLICE 2: resolved INDEPENDENTLY from the facade's
         # own identical resolution in `review_registry.apply_
         # transition()` - both read the SAME `REVIEW_KIND_REGISTRY`
@@ -492,9 +555,23 @@ class ReviewMutationReconciliationAdapter:
             and len(clean_matches) == 1
         ):
             _name, matched_record = clean_matches[0]
+            # ROW 19C-3b SLICE 1: the expected reviewer_ref is derived
+            # PER ROW from the journal's own (immutable) action_family -
+            # never a fixed per-instance value. If `entry.action_family`
+            # somehow matches neither of THIS review_kind's two exact
+            # registered keys (structurally unreachable via
+            # `MutationAdapterRegistry.get()`'s own exact-key routing -
+            # see `_UnroutableActionFamilyForReviewKindError`'s
+            # docstring), this is treated as inconclusive, never a match.
+            try:
+                expected_reviewer_ref = _expected_reviewer_ref_for_action_family(
+                    entry.action_family, review_kind=self._review_kind,
+                )
+            except _UnroutableActionFamilyForReviewKindError:
+                return mr.ReconciliationEvidence(post_state_verified=False, pre_state_confirmed_unchanged=False)
             if _bindings_match(
                 matched_record, entry,
-                current_canonical_sha256=current_canonical_sha256, reviewer_ref=self._reviewer_ref,
+                current_canonical_sha256=current_canonical_sha256, reviewer_ref=expected_reviewer_ref,
             ):
                 return mr.ReconciliationEvidence(
                     post_state_verified=True, pre_state_confirmed_unchanged=False,
@@ -507,16 +584,32 @@ class ReviewMutationReconciliationAdapter:
 
 
 def register_into(registry: mr.MutationAdapterRegistry) -> mr.MutationAdapterRegistry:
-    """Adds all 12 Layer B adapters to an EXISTING registry (immutable
-    builder - returns a NEW registry, never mutates `registry` itself)
-    - this is what lets `ui/reconciliation_operator.py`'s own
-    `_default_registry_factory()` merge Layer A's and Layer B's
+    """Adds all 12 Layer B REVIEW KINDS to an EXISTING registry
+    (immutable builder - returns a NEW registry, never mutates
+    `registry` itself) - this is what lets `ui/reconciliation_operator.py`'s
+    own `_default_registry_factory()` merge Layer A's and Layer B's
     adapters into ONE registry a human operator can reconcile ANY
     journal row through, regardless of family, without
-    `MutationAdapterRegistry` itself needing a dedicated merge method."""
+    `MutationAdapterRegistry` itself needing a dedicated merge method.
+
+    ROW 19C-3b SLICE 1: each of the 12 review_kinds is registered under
+    TWO exact `action_family` ROUTING KEYS (web: `action_family_for(review_kind)`,
+    CLI: `action_family_for(review_kind, channel="cli")`) - 24 routing
+    keys total, pointing at the SAME single adapter INSTANCE per
+    review_kind (one instance genuinely serves both channels, since
+    `gather_evidence()` derives the expected `reviewer_ref` per row from
+    `entry.action_family` - see `_expected_reviewer_ref_for_action_family()`).
+    This does NOT change the number of LOGICAL review kinds (still 12) -
+    it only doubles the number of RECONCILIATION ROUTING KEYS a human
+    operator's journal row can resolve through. `MutationAdapterRegistry.
+    with_adapter()` has no restriction on registering the same adapter
+    object under two different keys (confirmed by reading its own
+    implementation - it only rejects a literal duplicate KEY)."""
     for review_kind in _review_registry.REVIEW_KIND_REGISTRY:
+        adapter = ReviewMutationReconciliationAdapter(review_kind)
+        registry = registry.with_adapter(action_family_for(review_kind), adapter)
         registry = registry.with_adapter(
-            action_family_for(review_kind), ReviewMutationReconciliationAdapter(review_kind),
+            action_family_for(review_kind, channel=_CHANNEL_CLI), adapter,
         )
     return registry
 

@@ -266,17 +266,33 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   verdict'ine ulaştı (bkz. Row 19C-3a Slice 2 checkpoint özeti, §5
   sonrası). Rows 1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a, Row
   19C-2b, Row 19C-2c ve Row 19C-3a Slice 1 contract'ları değişmedi.
-- Sıradaki canonical alt-faz: **ROW 19C-3b — Remaining CLI-Only Writer
-  Integration** — **ACTIVE / NEXT** — **henüz implementasyona
-  BAŞLANMADI**. Kalan CLI-only writer'ların mutation coordinator/
-  journal altyapısına ve Slice 1'in paylaşılan path-containment
-  primitive'ine bağlanmasından önce AYRI, salt-okunur bir reconciliation
-  yapılacaktır. Kendi TAM dosya allowlist'i hazırlanıp implementasyondan
-  ÖNCE kullanıcı tarafından ayrıca onaylanmadan hiçbir dosyaya
-  dokunulamaz (Row 19A'nın dosya-değişiklik sınırı kararı uyarınca) —
-  Row 19C-3a Slice 1 veya Slice 2 onayı bu alt-fazın dosya değişikliğini
-  ÖNCEDEN yetkilendirmez. Row 19D deployment hardening (OS ACL/service
-  identity dahil) bu checkpoint ile HENÜZ başlatılmamıştır.
+- **ROW 19C-3b Slice 1 — Facade-Backed Legacy CLI Mutation Integration**
+  artık **DONE / LOCKED** — kullanıcı tarafından ayrıca onaylanmış tam
+  dosya allowlist'i (4 yeni + 24 değiştirilmiş dosya) üzerinde implement
+  edildi, gerçek/disposable bir PostgreSQL örneğine karşı yerel
+  testlerle doğrulandı, bir ilk bağımsız incelemenin bulduğu bir
+  test-evidence gap'iyle ve ardından hedefli bir re-review'un bulduğu
+  bir High test-correctness (legacy subprocess encoding) blocker'ıyla
+  remediation turlarından geçti ve son, bağımsız, salt-okunur bir
+  targeted re-review'da `ROW 19C-3b SLICE 1 LOCK-READY` verdict'ine
+  ulaştı (bkz. Row 19C-3b Slice 1 checkpoint özeti, §5 sonrası). Rows
+  1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a, Row 19C-2b, Row 19C-2c
+  ve Row 19C-3a Slice 1/Slice 2 contract'ları değişmedi.
+- Sıradaki canonical alt-faz: **ROW 19C-3b Slice 2 — Remaining CLI-Only
+  Writer Reconciliation** — **ACTIVE / NEXT** — **henüz implementasyona
+  BAŞLANMADI**. Önce AYRI, salt-okunur bir reconciliation yapılacaktır;
+  kalan CLI-only writer envanteri (pending-generation, fact/timeline
+  promotion, maintenance/migration, global RAG dahil) kaynak koddan
+  YENİDEN doğrulanacaktır - Slice 1'in tamamladığı kapsamdan
+  VARSAYILMAYACAKTIR. Kendi TAM dosya allowlist'i hazırlanıp
+  implementasyondan ÖNCE kullanıcı tarafından ayrıca onaylanmadan
+  hiçbir dosyaya dokunulamaz (Row 19A'nın dosya-değişiklik sınırı
+  kararı uyarınca) — Slice 1 onayı bu alt-fazın dosya değişikliğini
+  ÖNCEDEN yetkilendirmez. `drafting_request.save`, pending-generation,
+  fact/timeline promotion, maintenance ve global RAG kapsamları Slice
+  1 tarafından tamamlanmış gibi GÖSTERİLEMEZ - bunların HİÇBİRİ bu
+  checkpoint ile kapsanmamıştır. Row 19D deployment hardening (OS ACL/
+  service identity dahil) bu checkpoint ile HENÜZ başlatılmamıştır.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -2548,6 +2564,247 @@ findings.`**
 Slice 1 örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren,
 salt-okunur bir roadmap-lock işlemidir; hiçbir kaynak/migration/test/
 production dosyasına dokunmaz.
+
+### Row 19C-3b Slice 1 — Facade-Backed Legacy CLI Mutation Integration (DONE / LOCKED — checkpoint özeti)
+
+**Kapsam (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış tam
+dosya allowlist'i üzerinde tamamlandı: **4 YENİ + 24 DEĞİŞTİRİLMİŞ = 28
+dosya**, **0 migration**, **0 production-data değişikliği**.
+
+Yeni (4):
+1. `ui/cli_mutate.py`
+2. `ui/services/cli_authz.py`
+3. `ui/tests/test_cli_mutate_isolated.py`
+4. `ui/tests/test_cli_mutate_integration_postgres.py`
+
+Değiştirilmiş (24):
+5. `src/deadline_approval.py`
+6. `src/issue_spotting_approval.py`
+7. `src/legal_research_approval.py`
+8. `src/case_law_approval.py`
+9. `src/evidence_approval.py`
+10. `src/argument_approval.py`
+11. `src/risk_strategy_approval.py`
+12. `src/drafting_approval.py`
+13. `src/qa_approval.py`
+14. `src/orchestrator_approval.py`
+15. `src/evidence_review.py`
+16. `src/argument_review.py`
+17. `src/risk_strategy_review.py`
+18. `src/drafting_review.py`
+19. `src/qa_review.py`
+20. `ui/services/review_registry.py`
+21. `ui/services/review_mutation_facade.py`
+22. `ui/services/review_mutation_adapters.py`
+23. `ui/tests/test_review_service_isolated.py`
+24. `ui/tests/test_review_mutation_facade_isolated.py`
+25. `ui/tests/test_reconciliation_isolated.py`
+26. `ui/tests/test_review_mutation_integration_postgres.py`
+27. `ui/tests/test_reconciliation_operator_isolated.py`
+28. `ui/tests/test_drafting_request_mutation_integration_postgres.py`
+
+`test_drafting_request_mutation_integration_postgres.py` bu allowlist'e
+SONRADAN, merged reconciliation registry'nin kanal-ayrımlı **35**
+routing-key sayısına yalnız MEKANİK test uyumu için, kullanıcının AÇIK
+onayıyla eklendi (bkz. Remediation geçmişi, madde 2-3).
+
+**Tamamlanan kapsam**:
+
+- **10** Layer A approval family
+- **12** logical Layer B review kind
+- toplam **22** facade-backed mutation family
+- bunları temsil eden **15** legacy executable module
+
+Bu Slice'ın bütün CLI writer envanterini tamamladığı İDDİA EDİLMEZ —
+kalan kapsam Row 19C-3b Slice 2'ye bırakılmıştır (bkz. §5, Scope dışı/
+kalan borç).
+
+**Universal CLI**:
+
+- Yeni giriş noktası: `python -m ui.cli_mutate`
+- `approval` ve `review` subcommand'ları
+- zorunlu `--actor-user-id`
+- preview/apply ayrımı
+- apply için explicit expected hash
+- expected hash'in apply sırasında sessizce yeniden hesaplanmaması
+- force/bypass bulunmaması
+- domain writer'ın doğrudan çağrılmaması
+- mevcut registry/facade/coordinator/journal yolunun kullanılması
+- `reviewer_ref`/`channel`/`action_family`'nin kullanıcı girdisi
+  OLMAMASI
+
+**CLI authorization**:
+
+- `CliActorAuthzRepository`
+- trusted-local-shell actor-user-id modeli
+- bunun kriptografik OS identity kanıtı OLMADIĞI
+- outer authz'nin mutation connection/lock/journal/case-file
+  erişiminden ÖNCE olması
+- inner authz'nin lock altında fresh şekilde yeniden çalışması
+- authz ve mutation bağlantılarının AYRI olması
+- nonexistent/disabled/unassigned/wrong-capability aktörlerin
+  fail-closed ve existence-blind reddedilmesi
+- authz connection cleanup
+
+Trusted-local-shell sınırı Row 19D OS/service-identity hardening borcu
+olarak KALIR.
+
+**Reviewer provenance ve channel binding**:
+
+- web reviewer_ref: `local_lawyer_ui`
+- CLI reviewer_ref: `local_lawyer_cli`
+- write-side kapalı iki-değerli vocabulary
+- bilinmeyen değerin I/O öncesi programming error olarak reddedilmesi
+- web journal action_family: `review.<kind>`
+- CLI journal action_family: `review.<kind>.cli`
+- kanalın PostgreSQL journal'daki immutable action_family üzerinden
+  reconciliation'a bağlanması
+- exact equality kullanılması
+- suffix/prefix/two-value membership fallback bulunmaması
+- UI↔CLI cross-channel audit tamper'ın dual-false olması
+- fresh mutation ve completed replay binding-14'ün AYNI
+  channel-specific action_family'yi kullanması
+- eski web journal satırlarının geriye uyumlu KALMASI
+
+Sayılar AYRI eksenlerdir, birbirinin YERİNE GEÇMEZ:
+
+- **12** logical Layer B review kind — DEĞİŞMEDİ
+- **24** channel-separated Layer B adapter routing key
+- merged registry: **10** approval + **24** review routing key + **1**
+  drafting_request = **35** routing key
+
+24 routing key "24 yeni logical family" gibi SUNULAMAZ — aynı 12
+logical kind'ın web/CLI kanal ayrımından doğan routing-key
+çoğalmasıdır.
+
+**Legacy bypass closure** (15 legacy executable dosyada):
+
+- gerçek mutation branch'inin doğrudan writer ÇAĞIRMADIĞI
+- fixed stderr mesajı verdiği
+- `raise SystemExit(2)` ile gerçek process exit code 2 ürettiği
+- traceback VERMEDİĞİ
+- refusal öncesinde DB/case filesystem erişimi OLMADIĞI
+- writer fonksiyon gövdelerinin DEĞİŞMEDİĞİ
+- 11 self-test yolunun KORUNDUĞU
+- self-test bulunmayan dört approval modülünün preview yolunun
+  KORUNDUĞU
+- review preview/usage davranışlarının KORUNDUĞU
+
+Açıkça belirtilir: yerel Python kodu tarafından writer fonksiyonunun
+doğrudan import edilmesini OS seviyesinde İMKÂNSIZ kılan bir sandbox
+SAĞLANMAMIŞTIR; bu Slice yalnız EXECUTABLE legacy CLI bypass'larını
+kapatır. Yerel kod çalıştırma ve service identity sınırı Row 19D
+kapsamındadır.
+
+**Remediation geçmişi**:
+
+1. İlk implementasyon 27 dosyada tamamlandı.
+2. Full sweep, drafting-request integration testindeki bayat 23
+   routing-key beklentisini buldu.
+3. Açık kullanıcı onayıyla 28. dosya eklendi ve exact beklenti 35
+   olarak düzeltildi.
+4. İlk bağımsız final review production davranışını doğru buldu fakat
+   15 legacy executable için kalıcı subprocess regresyon testi
+   bulunmadığını Medium test-evidence gap olarak raporladı.
+5. İki yeni CLI test dosyasında gerçek subprocess regresyon matrisi
+   eklendi.
+6. Targeted re-review, Turkish Windows cp1254 ortamında child
+   stderr'in unconditional UTF-8 replacement decode edilmesini High
+   test-correctness blocker'ı olarak buldu.
+7. Test child environment'ına explicit `PYTHONIOENCODING=utf-8`
+   eklendi; raw bytes strict UTF-8 decode edildi.
+8. `evidence_review`'ın `--confirm`, `--reject`, `--accept-follow-up`,
+   `--dismiss` yollarının tamamı kalıcı test kapsamına alındı.
+9. Son bağımsız targeted re-review encoding kusurunun gerçek
+   cp1254/captured-output koşullarında kapandığını doğruladı ve
+   LOCK-READY verdict'i verdi.
+
+**Kalıcı legacy CLI test kontratı**:
+
+- 15 benzersiz executable
+- evidence_review'ın üç ek flag varyantıyla toplam **18** mutation
+  subprocess senaryosu
+- gerçek `subprocess.run`
+- `sys.executable`
+- explicit `cwd`
+- bounded timeout
+- `shell=True` YOK
+- returncode tam 2
+- fixed stderr
+- traceback YOK
+- stdout boş
+- data byte-invariance
+- real PostgreSQL journal full-row-set invariance
+- 11 self-test ve dört preview yolu
+- ambient cp1254 ortamından BAĞIMSIZ child UTF-8 stdio
+
+**Test kanıtı — dürüst zaman ayrımı**:
+
+Final-tree implementation sweep: **38/38 test modules exit 0**, **2387
+passed, 0 failed, 8 counted skipped**, gerçek disposable PostgreSQL 16,
+migration 0001-0004.
+
+`test_reconciliation_isolated.py` içindeki bir Windows self-loop
+alt-testi yalnız informational bir `SKIPPED (NOT counted as pass/fail)`
+satırı basar; bu dosyanın kendi summary skip sayacına DAHİL DEĞİLDİR
+(bu dosyanın özet satırı hiçbir "skipped" alanı taşımaz). Bu yüzden:
+**counted skips: 8** (yalnız `test_path_containment_isolated` (4) +
+`test_path_containment_module_isolated` (4)); **raw informational
+SKIPPED satırı dahil gözlenen satır: 9**. Hiçbir skip PASS
+SAYILMAMIŞTIR.
+
+Final kod üzerinde implementasyon turunda doğrulanan targeted
+sonuçlar:
+
+- `test_cli_mutate_isolated`: **153/153**
+- `test_cli_mutate_integration_postgres`: **130/130, 0 skipped**
+- `test_review_mutation_integration_postgres`: **82/82, 0 skipped**
+- `test_reconciliation_isolated`: **173/173**
+
+Son bağımsız targeted re-review'ün BİZZAT yeniden çalıştırdığı
+sonuçlar (yukarıdaki listeden AYRI, bağımsız bir doğrulama):
+
+- **153/153**
+- **130/130** real PostgreSQL, **0 skipped**
+- **82/82** real PostgreSQL
+- **173/173**
+- ambient `PYTHONIOENCODING`/`PYTHONUTF8` unset, cp1254 koşulu
+- redirected/captured output
+- zero `UnicodeDecodeError`
+- zero `UnicodeEncodeError`
+- zero U+FFFD
+- **18/18** refusal checks
+- `py_compile` temiz
+- `pip check` temiz
+- `git diff` kontrolleri temiz
+- `data/` bayt-düzeyinde DEĞİŞMEDİ
+- disposable PostgreSQL/temp/process residue TAMAMEN temizlendi
+
+Bağımsız re-review, **2387'lik full sweep'i YENİDEN ÇALIŞTIRMADI** —
+yalnız `2353 + 17 + 17 = 2387` aritmetiğini VE yukarıdaki targeted
+sayıların kendisini bağımsız olarak doğruladı.
+
+**Scope dışı/kalan borç**:
+
+- `drafting_request.save` bu Slice'a DAHİL DEĞİL.
+- Pending-generation writer'ları DAHİL DEĞİL.
+- Fact/timeline promotion writer'ları DAHİL DEĞİL.
+- Maintenance/global RAG writer'ları DAHİL DEĞİL.
+- Migration/şema DEĞİŞMEDİ.
+- Production data DEĞİŞMEDİ.
+- OS-level caller identity ve local-code execution sınırı Row 19D'ye
+  KALDI.
+- Advisory-lock timeout backlog'u DEĞİŞMEDİ.
+- Row 19C-3a'da kabul edilen local-filesystem TOCTOU sınırı
+  DEĞİŞMEDİ.
+
+**Final verdict: `ROW 19C-3b SLICE 1 LOCK-READY — No blocking
+findings.`**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/19C-3a
+Slice 1/Slice 2 örneğinde olduğu gibi yalnız `CLAUDE.md`'yi
+değiştiren, salt-okunur bir roadmap-lock işlemidir; hiçbir kaynak/
+migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

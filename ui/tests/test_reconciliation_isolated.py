@@ -1465,6 +1465,114 @@ try:
         f"got {fp_evidence!r}",
     )
 
+    # ============================================================
+    # ROW 19C-3b SLICE 1 - IMMUTABLE JOURNAL-TO-CHANNEL BINDING.
+    #
+    # The SAME `real_review_adapter` instance is registered under BOTH
+    # the web AND the CLI action_family key for this review_kind
+    # (`register_into()`'s own Row 19C-3b design - ONE instance serves
+    # both channels). `gather_evidence()` derives the EXPECTED
+    # reviewer_ref from the JOURNAL's own (immutable) `action_family` -
+    # never from the on-disk audit record itself. This is what a plain
+    # 2-element membership check ({"local_lawyer_ui","local_lawyer_cli"})
+    # could NOT prove: that a web-channel row can NEVER be corroborated
+    # by a CLI-labeled audit record, and vice versa.
+    # ============================================================
+
+    real_review_adapter_cli_lookup = review_registry_full.get(
+        _review_facade.action_family_for(REVIEW_KIND, channel="cli"),
+    )
+    check(
+        "the CLI action_family key resolves to the EXACT SAME adapter instance as the web key "
+        "(one instance genuinely serves both channels)",
+        real_review_adapter_cli_lookup is real_review_adapter,
+    )
+
+    def review_intent_cli(**overrides):
+        base = dict(
+            actor_type="iam_user", actor_ref="7",
+            resource_key=f"case:{REVIEW_CASE_ID}",
+            action_family=_review_facade.action_family_for(REVIEW_KIND, channel="cli"),
+            target_ref=REVIEW_RECORD_ID, target_state="confirmed",
+            pre_hash="composite_placeholder", pre_revision="pending_screen_hash_placeholder",
+            secondary_input_hash=REVIEW_NOTE_HASH,
+        )
+        base.update(overrides)
+        return _MutationIntent(**base)
+
+    def review_entry_cli(**overrides):
+        intent = review_intent_cli()
+        fields = dict(
+            journal_id=1, resource_key=f"case:{REVIEW_CASE_ID}",
+            action_family=_review_facade.action_family_for(REVIEW_KIND, channel="cli"),
+            target_ref=REVIEW_RECORD_ID, target_state="confirmed",
+            pre_hash=intent.pre_hash, pre_revision=intent.pre_revision, expected_post_hash=None,
+            state="reconciliation_required", idempotency_key=_compute_idk(intent),
+            request_fingerprint=_compute_fp(intent), actor_label="7",
+        )
+        fields.update(overrides)
+        return mr.JournalEntrySnapshot(**fields)
+
+    good_audit_cli = {
+        "case_id": REVIEW_CASE_ID, "record_type": "candidate", "record_id": REVIEW_RECORD_ID,
+        "review_note": NOTE_TEXT, "pre_sha256": review_intent_cli().pre_revision, "post_sha256": post_hash,
+        "previous_state": "needs_review", "new_state": "confirmed", "reviewer_ref": "local_lawyer_cli",
+    }
+    entry_for_post_cli = review_entry_cli()
+    good_audit_cli["mutation_idempotency_key"] = entry_for_post_cli.idempotency_key
+    good_audit_cli["mutation_resource_key"] = f"case:{REVIEW_CASE_ID}"
+    good_audit_cli["mutation_actor_ref"] = "7"
+    write_review_audit(good_audit_cli)
+    post_evidence_cli = real_review_adapter.gather_evidence(entry_for_post_cli)
+    check(
+        "CLI-channel journal entry + correctly CLI-labeled audit -> post_state_verified=True",
+        post_evidence_cli.post_state_verified is True
+        and post_evidence_cli.pre_state_confirmed_unchanged is False
+        and post_evidence_cli.observed_post_hash == post_hash,
+        f"got {post_evidence_cli!r}",
+    )
+
+    # ---- CROSS-CHANNEL TAMPER 1: web journal entry, but the on-disk
+    #      audit record's reviewer_ref is the CLI value ----
+    write_review_audit({**good_audit, "reviewer_ref": "local_lawyer_cli"})
+    web_journal_cli_audit_evidence = real_review_adapter.gather_evidence(review_entry())
+    check(
+        "CROSS-CHANNEL TAMPER: web journal entry (action_family has NO .cli suffix) + "
+        "audit record labeled 'local_lawyer_cli' -> INCONCLUSIVE, never post_state_verified "
+        "(a fixed 2-element membership check would have WRONGLY accepted this)",
+        web_journal_cli_audit_evidence.post_state_verified is False
+        and web_journal_cli_audit_evidence.pre_state_confirmed_unchanged is False,
+        f"got {web_journal_cli_audit_evidence!r}",
+    )
+
+    # ---- CROSS-CHANNEL TAMPER 2: CLI journal entry, but the on-disk
+    #      audit record's reviewer_ref is the web value ----
+    write_review_audit({**good_audit_cli, "reviewer_ref": "local_lawyer_ui"})
+    cli_journal_web_audit_evidence = real_review_adapter.gather_evidence(review_entry_cli())
+    check(
+        "CROSS-CHANNEL TAMPER: CLI journal entry (action_family HAS the .cli suffix) + "
+        "audit record labeled 'local_lawyer_ui' -> INCONCLUSIVE, never post_state_verified "
+        "(a fixed 2-element membership check would have WRONGLY accepted this)",
+        cli_journal_web_audit_evidence.post_state_verified is False
+        and cli_journal_web_audit_evidence.pre_state_confirmed_unchanged is False,
+        f"got {cli_journal_web_audit_evidence!r}",
+    )
+
+    # ---- UNKNOWN THIRD reviewer_ref value, against a CLI-channel entry
+    #      too (the web-channel case is already binding 6b above) ----
+    write_review_audit({**good_audit_cli, "reviewer_ref": "some_third_unknown_value"})
+    unknown_third_cli_evidence = real_review_adapter.gather_evidence(review_entry_cli())
+    check(
+        "unknown third reviewer_ref value, against a CLI-channel journal entry -> INCONCLUSIVE",
+        unknown_third_cli_evidence.post_state_verified is False
+        and unknown_third_cli_evidence.pre_state_confirmed_unchanged is False,
+        f"got {unknown_third_cli_evidence!r}",
+    )
+
+    # restore the baseline web-channel audit record so anything below
+    # this point (unrelated to Row 19C-3b) finds exactly what it expects.
+    write_review_audit(good_audit)
+
     # ---- Duplicate audit -> ambiguous, unconditionally ----
     write_review_audit(good_audit, filename="evidence_review_" + REVIEW_RECORD_ID + "_20260101_000000.review_audit.json")
     write_review_audit(good_audit, filename="evidence_review_" + REVIEW_RECORD_ID + "_20260101_000001.review_audit.json")

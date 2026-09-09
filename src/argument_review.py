@@ -1017,32 +1017,22 @@ def main():
         "dismiss": "dismissed",
     }
 
-    target_state = action_to_state[args.action]
+    target_state = action_to_state[args.action]  # noqa: F841 - kept for parity with the pre-Slice-1 usage-parsing shape
 
-    print()
-    print("======================================")
-    print(" VERGİ AI - ARGUMENT REVIEW V1 (LAYER B)")
-    print(" MODE: MUTATE")
-    print("======================================")
-
-    result = apply_review_transition(
-        args.case_id, args.record_type, args.record_id, target_state,
-        args.reviewer, args.note,
+    # ROW 19C-3b SLICE 1: this direct CLI mutation path is CLOSED -
+    # coordinator/journal/authz integration lives only in ui.cli_mutate
+    # now. apply_review_transition() ITSELF is untouched and remains the
+    # real writer every facade calls - only THIS executable entry point
+    # is refused. SystemExit (a BaseException, never caught by this
+    # file's own `except Exception:` __main__ wrapper) propagates
+    # straight to the interpreter, so the real OS process exit code is
+    # exactly 2 - never 0, never a bare `return`.
+    print(
+        "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+        "Gerçek onay/inceleme için: python -m ui.cli_mutate <approval|review> ...",
+        file=sys.stderr,
     )
-
-    print()
-    print("REVIEW TRANSITION APPLIED")
-    print("Record:", args.record_id)
-    print("Previous state:", result["previous_state"])
-    print("New state:", result["new_state"])
-    print("Parent state at review time:", result["parent_state"])
-    print("Pre SHA256:", result["pre_sha256"])
-    print("Post SHA256:", result["post_sha256"])
-    print("Audit:", result["audit_path"])
-    print()
-    print("======================================")
-    print(" ARGUMENT REVIEW V1: PASS")
-    print("======================================")
+    raise SystemExit(2)
 
 
 if __name__ == "__main__":

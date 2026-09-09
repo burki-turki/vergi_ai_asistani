@@ -271,17 +271,84 @@ def _log_critical_safely(message: str) -> None:
 
 _ACTION_FAMILY_PREFIX = "review."
 
+# ROW 19C-3b SLICE 1 - closed, exact channel vocabulary. `action_family`
+# is the ONLY existing `mutation.mutation_journal` column with no
+# closed-vocabulary CHECK constraint of its own (confirmed against
+# db/migrations/0003_mutation_journal.sql's full constraint list) - this
+# is what lets it carry an IMMUTABLE, journal-stored channel signal
+# without any migration. "web" is the ONLY channel that ever existed
+# before this Slice - `action_family_for(review_kind)` (no `channel`
+# argument) still produces the EXACT SAME string as before Slice 1,
+# byte-for-byte, so every pre-existing journal row and every existing
+# test's hardcoded string stays valid unchanged.
+_CHANNEL_WEB = "web"
+_CHANNEL_CLI = "cli"
+_ALLOWED_CHANNELS = frozenset({_CHANNEL_WEB, _CHANNEL_CLI})
 
-def action_family_for(review_kind: str) -> str:
+
+class InvalidActionFamilyChannelError(ValueError):
+    """Raised by `action_family_for()` when `channel` is not exactly
+    `"web"` or `"cli"`. Reachable ONLY by a caller bug inside this same
+    module (see the two call sites below) or a future maintainer adding
+    a third channel without updating this closed set - NEVER silently
+    defaulted to `"web"`."""
+
+
+def action_family_for(review_kind: str, *, channel: str = _CHANNEL_WEB) -> str:
     """The ONE place this project's Layer B `action_family` string is
     derived from a `review_kind` - both this module's own
     `MutationIntent` construction AND
-    `ui.services.review_mutation_adapters.build_production_registry()`
+    `ui.services.review_mutation_adapters.register_into()`
     call this, so the two can never drift apart. Deliberately
     NAMESPACED under `"review."`, distinct from Layer A's `"approval."`
     prefix (`mutation_approval_facade.action_family_for()`) - the two
-    families can never collide in `mutation.mutation_journal`."""
-    return f"{_ACTION_FAMILY_PREFIX}{review_kind}"
+    families can never collide in `mutation.mutation_journal`.
+
+    ROW 19C-3b SLICE 1: `channel` selects between the web value
+    (`f"review.{review_kind}"`, IDENTICAL to every value this function
+    ever produced before this Slice) and the CLI value
+    (`f"review.{review_kind}.cli"`, new and additive). This is the
+    IMMUTABLE journal-bound signal reconciliation uses to derive the
+    single EXPECTED `reviewer_ref` for a given row (see
+    `ui.services.review_mutation_adapters.gather_evidence()`) - an
+    unrecognized `channel` is a fail-closed `InvalidActionFamilyChannelError`,
+    NEVER silently treated as `"web"`."""
+    if channel not in _ALLOWED_CHANNELS:
+        raise InvalidActionFamilyChannelError(
+            f"channel={channel!r} is not one of {sorted(_ALLOWED_CHANNELS)!r} - "
+            "this is a caller bug inside review_mutation_facade.py/review_mutation_adapters.py"
+        )
+    suffix = f".{_CHANNEL_CLI}" if channel == _CHANNEL_CLI else ""
+    return f"{_ACTION_FAMILY_PREFIX}{review_kind}{suffix}"
+
+
+# Mirrors `ui.services.review_registry.REVIEWER_REF`/
+# `LOCAL_CLI_REVIEWER_REF` EXACTLY - duplicated as named constants
+# (never bare inline literals) rather than imported, because this
+# module must never import `review_registry` (one-way DAG, see this
+# module's own header comment). Any future change to either value in
+# `review_registry.py` MUST be mirrored here by the same edit - this is
+# the one place in this file that pairing is load-bearing.
+_REVIEWER_REF_WEB = "local_lawyer_ui"
+_REVIEWER_REF_CLI = "local_lawyer_cli"
+
+
+def _channel_for_reviewer_ref(reviewer_ref: str) -> str:
+    """Exact, closed mapping from a validated `reviewer_ref` to the
+    channel `action_family_for()` must use. NEVER an `else: "web"`
+    fallback - an unrecognized `reviewer_ref` reaching this point is
+    itself a caller bug (`review_registry.apply_transition()` already
+    rejects it before this module is ever reached) and must fail
+    exactly as loudly here as there, never silently default."""
+    if reviewer_ref == _REVIEWER_REF_WEB:
+        return _CHANNEL_WEB
+    if reviewer_ref == _REVIEWER_REF_CLI:
+        return _CHANNEL_CLI
+    raise InvalidActionFamilyChannelError(
+        f"reviewer_ref={reviewer_ref!r} does not map to any known channel - "
+        "this is a caller bug (review_registry.apply_transition() should have "
+        "already rejected this value before it ever reached this module)"
+    )
 
 
 class ReviewDirectoryScanError(ReviewUiError):
@@ -809,7 +876,16 @@ def _verify_completed_replay_audit_binding(
     # is correct AND harmless to the digest either way.
     reconstructed = MutationIntent(
         actor_type="iam_user", actor_ref=actor_ref,
-        resource_key=resource_key, action_family=action_family_for(binding.review_kind),
+        resource_key=resource_key,
+        # ROW 19C-3b SLICE 1: MUST use the SAME channel-derived
+        # action_family the fresh mutation was written with (binding.
+        # reviewer_ref is the SAME closed-vocabulary value the writer
+        # used) - action_family is part of `_identity_fields()`'s hash,
+        # so a channel-blind recomputation here would make binding 14
+        # (request_fingerprint) fail for EVERY CLI-originated replay.
+        action_family=action_family_for(
+            binding.review_kind, channel=_channel_for_reviewer_ref(binding.reviewer_ref),
+        ),
         target_ref=record_id, target_state=target_state,
         pre_hash=journal_pre_hash, pre_revision=pre_revision,
         secondary_input_hash=note_hash,
@@ -997,7 +1073,14 @@ def apply_review_mutation(
             actor_type="iam_user",
             actor_ref=str(principal.user_id),
             resource_key=resource_key,
-            action_family=action_family_for(review_kind),
+            # ROW 19C-3b SLICE 1: channel is derived EXCLUSIVELY from
+            # binding.reviewer_ref (itself already validated by
+            # review_registry.apply_transition() before this facade was
+            # ever reached) - never an independent parameter, so the two
+            # can never be supplied inconsistently.
+            action_family=action_family_for(
+                review_kind, channel=_channel_for_reviewer_ref(binding.reviewer_ref),
+            ),
             target_ref=record_id,
             target_state=target_state,
             # FILESYSTEM EVIDENCE (composite) - recorded and

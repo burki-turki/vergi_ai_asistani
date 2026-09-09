@@ -12,6 +12,7 @@
 import hashlib
 import json
 import shutil
+import sys
 
 from datetime import datetime
 from pathlib import Path
@@ -460,12 +461,25 @@ def main():
 
         raise SystemExit("--suggestion-id ve --target-state zorunludur.")
 
-    result = apply_review_transition(
-        args.case_id, args.suggestion_id, args.target_state, args.reviewer_ref, args.review_note,
+    # ROW 19C-3b SLICE 1: this direct CLI mutation path is CLOSED -
+    # coordinator/journal/authz integration lives only in ui.cli_mutate
+    # now. apply_review_transition() ITSELF is untouched and remains the
+    # real writer every facade calls - only THIS executable entry point
+    # is refused. SystemExit (a BaseException) propagates straight to
+    # the interpreter (this file's own `if __name__` wrapper has no
+    # try/except at all), so the real OS process exit code is exactly 2
+    # - never 0, never a bare `return`. Distinct from, and never
+    # confused with, the pre-existing `raise SystemExit("--suggestion-id
+    # ve --target-state zorunludur.")` usage guard above (unchanged) -
+    # that one fires for missing required args and prints its OWN,
+    # different message; this one fires only once both required args
+    # ARE present and a real mutation attempt would otherwise happen.
+    print(
+        "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+        "Gerçek onay/inceleme için: python -m ui.cli_mutate <approval|review> ...",
+        file=sys.stderr,
     )
-
-    print("QA REVIEW: PASS")
-    print(result)
+    raise SystemExit(2)
 
 
 if __name__ == "__main__":

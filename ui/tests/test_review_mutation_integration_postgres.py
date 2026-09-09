@@ -153,6 +153,8 @@ print(f"backend: REAL psycopg {psycopg.__version__} (production driver), dbname=
 
 REVIEW_KIND = "qa.suggestion"
 ACTION_FAMILY = facade.action_family_for(REVIEW_KIND)
+# ROW 19C-3b SLICE 1 - the CLI-channel exact key for this SAME review_kind.
+ACTION_FAMILY_CLI = facade.action_family_for(REVIEW_KIND, channel="cli")
 
 
 def pg_connect():
@@ -347,13 +349,19 @@ _REAL_CASES_ROOT = Path(os.path.realpath(str(_paths.CASES_DIR)))
 
 PRODUCTION_REGISTRY = _adapters.build_production_registry()
 check(
-    "the REAL production Layer B adapter registry covers all 12 review_kind families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 12,
+    "ROW 19C-3b SLICE 1: the REAL production Layer B adapter registry covers all 12 review_kinds "
+    "x 2 channels (web + CLI) = 24 routing keys - the number of LOGICAL review_kinds is still 12",
+    len(PRODUCTION_REGISTRY.known_action_families()) == 24,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(
-    "the REAL production registry has an adapter registered for this file's own action_family",
+    "the REAL production registry has an adapter registered for this file's own WEB action_family",
     ACTION_FAMILY in PRODUCTION_REGISTRY.known_action_families(),
+)
+check(
+    "ROW 19C-3b SLICE 1: the REAL production registry ALSO has an adapter for this file's own "
+    "CLI-channel action_family",
+    ACTION_FAMILY_CLI in PRODUCTION_REGISTRY.known_action_families(),
 )
 
 
@@ -499,6 +507,28 @@ def confirm(fixture, principal, repo, *, target_state="accepted_for_follow_up", 
         REVIEW_KIND, fixture["case_id"], _SUGGESTION_ID, target_state, note,
         expected_hash if expected_hash is not None else fixture["expected_hash"],
         qa_binding(), principal=principal, authz_repository=repo, conn_factory=pg_connect,
+    )
+
+
+def qa_binding_cli():
+    """ROW 19C-3b SLICE 1 - identical to `qa_binding()` EXCEPT
+    `reviewer_ref` is the CLI sentinel - this is the ONLY field that
+    differs; `action_family_for()`'s own channel derivation (inside
+    `apply_review_mutation()`) reads THIS field, never a separate
+    parameter."""
+    return facade.ReviewFamilyBinding(
+        review_kind=REVIEW_KIND, module=qa_review, record_type="suggestion", call_shape="qa_special",
+        state_field="suggestion_review_state", domain_error_class=qa_review.QaReviewError,
+        get_audit_dir_fn=qa_review.get_qa_review_audit_dir, reviewer_ref="local_lawyer_cli",
+        cases_dir_anchor_module=qa_approval,
+    )
+
+
+def confirm_cli(fixture, principal, repo, *, target_state="accepted_for_follow_up", note="pgint cli note", expected_hash=None):
+    return facade.apply_review_mutation(
+        REVIEW_KIND, fixture["case_id"], _SUGGESTION_ID, target_state, note,
+        expected_hash if expected_hash is not None else fixture["expected_hash"],
+        qa_binding_cli(), principal=principal, authz_repository=repo, conn_factory=pg_connect,
     )
 
 
@@ -973,6 +1003,100 @@ try:
         if os.path.lexists(audit_dir_b2):
             os.rmdir(audit_dir_b2)
         shutil.rmtree(outside_root_b2, ignore_errors=True)
+
+    # ============================================================
+    # SCENARIO CLI-1 - ROW 19C-3b SLICE 1: REAL PostgreSQL, ONE web-
+    # channel mutation and ONE CLI-channel mutation on TWO DIFFERENT
+    # real cases, proving the journal's action_family carries the
+    # exact channel suffix and that BOTH channels are independently
+    # reconciliation-routable through the SAME production registry.
+    # ============================================================
+
+    fx_web = make_case("case_pgint_web_channel")
+    principal_web, repo_web = make_principal_and_repo(fx_web["case_id"])
+    writer_state["calls"] = 0
+    writer_state["fault"] = None
+    result_web = confirm(fx_web, principal_web, repo_web)
+    check("CLI-1: web-channel mutation succeeded (replayed=False)", result_web.replayed is False)
+    rows_web = journal_rows(fx_web["resource_key"])
+    check(
+        "CLI-1: the web-channel journal row's action_family has NO '.cli' suffix",
+        len(rows_web) == 1 and rows_web[0]["action_family"] == ACTION_FAMILY,
+        f"rows={rows_web}",
+    )
+    audit_files_web = list(qa_review.get_qa_review_audit_dir(fx_web["case_id"]).glob("*.review_audit.json"))
+    check("CLI-1: exactly one web-channel audit file was written", len(audit_files_web) == 1)
+    check(
+        "CLI-1: the web-channel audit record's reviewer_ref is 'local_lawyer_ui'",
+        json.loads(audit_files_web[0].read_text(encoding="utf-8"))["reviewer_ref"] == "local_lawyer_ui",
+    )
+
+    fx_cli = make_case("case_pgint_cli_channel")
+    principal_cli, repo_cli = make_principal_and_repo(fx_cli["case_id"])
+    writer_state["calls"] = 0
+    writer_state["fault"] = None
+    result_cli = confirm_cli(fx_cli, principal_cli, repo_cli)
+    check("CLI-1: CLI-channel mutation succeeded (replayed=False)", result_cli.replayed is False)
+    rows_cli = journal_rows(fx_cli["resource_key"])
+    check(
+        "CLI-1: the CLI-channel journal row's action_family HAS the '.cli' suffix",
+        len(rows_cli) == 1 and rows_cli[0]["action_family"] == ACTION_FAMILY_CLI,
+        f"rows={rows_cli}",
+    )
+    audit_files_cli = list(qa_review.get_qa_review_audit_dir(fx_cli["case_id"]).glob("*.review_audit.json"))
+    check("CLI-1: exactly one CLI-channel audit file was written", len(audit_files_cli) == 1)
+    check(
+        "CLI-1: the CLI-channel audit record's reviewer_ref is 'local_lawyer_cli' "
+        "(mutation_actor_ref/actor_label bind the REAL actor identity regardless of channel)",
+        json.loads(audit_files_cli[0].read_text(encoding="utf-8"))["reviewer_ref"] == "local_lawyer_cli",
+    )
+    check(
+        "CLI-1: both channels' journal rows carry the SAME real actor_label "
+        "(channel affects action_family/reviewer_ref only, never actor identity)",
+        rows_web[0]["actor_label"] == rows_cli[0]["actor_label"] == "1",
+    )
+
+    # ---- Crash + reconciliation for BOTH channels, via the SAME
+    #      merged production registry, resolved through their own
+    #      EXACT distinct action_family keys. ----
+    for label, base_name, confirm_fn, action_family in (
+        ("web", "case_pgint_web_channel_crash", confirm, ACTION_FAMILY),
+        ("cli", "case_pgint_cli_channel_crash", confirm_cli, ACTION_FAMILY_CLI),
+    ):
+        fx_crash = make_case(base_name)
+        principal_crash, repo_crash = make_principal_and_repo(fx_crash["case_id"])
+        writer_state["calls"] = 0
+        writer_state["fault"] = "after"
+        try:
+            expect_raises(
+                RuntimeError,
+                lambda: confirm_fn(fx_crash, principal_crash, repo_crash),
+                f"CLI-1 ({label}): a post-writer crash still leaves 'reconciliation_required'",
+            )
+        finally:
+            writer_state["fault"] = None
+        rows_crash = journal_rows(fx_crash["resource_key"])
+        check(
+            f"CLI-1 ({label}): the crashed row's action_family is the EXACT expected channel key",
+            len(rows_crash) == 1
+            and rows_crash[0]["state"] == "reconciliation_required"
+            and rows_crash[0]["action_family"] == action_family,
+            f"rows={rows_crash}",
+        )
+        recon_conn_ch = pg_connect()
+        try:
+            applied_ch = mr.reconcile_and_apply_journal_entry(
+                recon_conn_ch, rows_crash[0]["id"], PRODUCTION_REGISTRY,
+                resolved_by_actor_type="cli_service", resolved_by_actor_ref=f"row19c3b-{label}-channel-test",
+            )
+            check(
+                f"CLI-1 ({label}): the REAL merged production registry resolved this row to "
+                "'completed' via its OWN exact channel key - the SAME adapter instance serving "
+                "both channels, routed correctly by action_family alone",
+                applied_ch.new_state == "completed",
+            )
+        finally:
+            recon_conn_ch.close()
 
 finally:
     qa_review.apply_review_transition = _REAL_APPLY_REVIEW_TRANSITION

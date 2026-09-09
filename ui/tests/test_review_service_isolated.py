@@ -1082,7 +1082,90 @@ with tempfile.TemporaryDirectory() as tmp:
 
 
 # ============================================================
-# 12) GERÇEK data/ ve src/ AĞAÇLARININ HİÇBİR TESTLE DEĞİŞMEDİĞİNİN
+# 12) ROW 19C-3b SLICE 1 - reviewer_ref KAPALI VOCABULARY, DB/
+#     FILESYSTEM/LOCK/JOURNAL ERİŞİMİNDEN ÖNCE REDDEDİLİR.
+#
+# `apply_transition()`'ın `reviewer_ref` kontrolü, `principal is None`
+# kontrolünden HEMEN SONRA, `_get_entry(review_kind)`'DAN BİLE ÖNCE
+# çalışır - fake authz_repository/conn_factory'nin SIFIR kez
+# çağrıldığını doğrulayarak bunu KANITLIYORUZ (yalnız "istisna
+# fırlatıldı" demek yetmez - gerçekten hiçbir I/O denenmediğini
+# göstermek gerekir).
+# ============================================================
+
+class _CountingAuthzRepository:
+    """Her metodun çağrı sayısını tutar - `reviewer_ref` reddinin
+    GERÇEKTEN sıfır authz erişimi ürettiğini kanıtlamak için."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def get_session_authz_state(self, principal):
+        self.calls += 1
+        raise AssertionError("reviewer_ref reddi authz'ye HİÇ ulaşmamalıydı")
+
+    def get_active_case_assignment(self, user_id, case_id):
+        self.calls += 1
+        raise AssertionError("reviewer_ref reddi authz'ye HİÇ ulaşmamalıydı")
+
+    def list_active_case_ids_for_user(self, user_id):
+        self.calls += 1
+        raise AssertionError("reviewer_ref reddi authz'ye HİÇ ulaşmamalıydı")
+
+    def is_global_admin(self, user_id):
+        self.calls += 1
+        raise AssertionError("reviewer_ref reddi authz'ye HİÇ ulaşmamalıydı")
+
+
+def _exploding_conn_factory():
+    raise AssertionError("reviewer_ref reddi bir mutasyon/journal connection'ı HİÇ AÇMAMALIYDI")
+
+
+_counting_repo = _CountingAuthzRepository()
+
+expect_raises(
+    reviewreg.InvalidReviewerRefError,
+    lambda: reviewreg.apply_transition(
+        "evidence.candidate", "case_iso_evidence", "ec_1", "confirmed", "not", "deadbeef" * 8,
+        principal=_izole_lawyer_principal, authz_repository=_counting_repo,
+        conn_factory=_exploding_conn_factory,
+        reviewer_ref="not_a_real_reviewer_ref",
+    ),
+    "bilinmeyen reviewer_ref -> InvalidReviewerRefError (programming error, fail-closed)",
+)
+check(
+    "bilinmeyen reviewer_ref reddi SIFIR authz_repository çağrısı üretti",
+    _counting_repo.calls == 0,
+    f"got {_counting_repo.calls} calls",
+)
+
+check(
+    "InvalidReviewerRefError, ValueError'dan türetilmiş (programmer-error sınıfı, ReviewUiError ailesinden DEĞİL)",
+    issubclass(reviewreg.InvalidReviewerRefError, ValueError)
+    and not issubclass(reviewreg.InvalidReviewerRefError, ReviewUiError),
+)
+
+check(
+    "ALLOWED_REVIEWER_REFS tam olarak iki değerden oluşuyor: REVIEWER_REF ve LOCAL_CLI_REVIEWER_REF",
+    reviewreg.ALLOWED_REVIEWER_REFS == frozenset({reviewreg.REVIEWER_REF, reviewreg.LOCAL_CLI_REVIEWER_REF})
+    and reviewreg.REVIEWER_REF == "local_lawyer_ui"
+    and reviewreg.LOCAL_CLI_REVIEWER_REF == "local_lawyer_cli",
+)
+
+expect_raises(
+    reviewreg.InvalidReviewerRefError,
+    lambda: reviewreg.apply_transition(
+        "evidence.candidate", "case_iso_evidence", "ec_1", "confirmed", "not", "deadbeef" * 8,
+        principal=_izole_lawyer_principal, authz_repository=_counting_repo,
+        conn_factory=_exploding_conn_factory,
+        reviewer_ref="",
+    ),
+    "boş string reviewer_ref de reddedilir (kapalı vocabulary'e üye olmayan HERHANGİ bir değer)",
+)
+
+
+# ============================================================
+# 13) GERÇEK data/ ve src/ AĞAÇLARININ HİÇBİR TESTLE DEĞİŞMEDİĞİNİN
 #     BYTE-DÜZEYİNDE KANITI
 # ============================================================
 

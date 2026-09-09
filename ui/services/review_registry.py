@@ -605,24 +605,59 @@ def get_review_record(review_kind, case_id, record_id):
 # ============================================================
 # MUTASYON - gerçek `apply_review_transition`'ı ÇAĞIRIR, İÇ MANTIĞINI
 # (parent-dependency/R1-R6/stale-source/previous_state) YENİDEN
-# UYGULAMAZ. `reviewer_ref` SUNUCU TARAFINDA SABİTTİR
-# ("local_lawyer_ui") - DOĞRULANMIŞ bir kişi kimliği DEĞİLDİR, yalnız
-# bu isteğin Lawyer UI'dan geldiğini gösteren bir PROVENANCE
-# etiketidir; formdan/URL'den/başka bir client girdisinden ASLA
-# alınmaz (kullanıcı kararı, 2026-09-04). `canonical_path_override`/
-# `audit_dir_override` YALNIZ izole testler içindir - main.py bu iki
-# parametreyi ASLA GEÇMEZ (production'da her zaman None, gerçek
-# per-case path'ler kullanılır) - HTTP isteğinden gelen hiçbir path
-# burada ASLA kabul edilmez.
+# UYGULAMAZ. `reviewer_ref` SUNUCU TARAFINDA, KAPALI bir vocabulary'den
+# seçilir - DOĞRULANMIŞ bir kişi kimliği DEĞİLDİR, yalnız bu isteğin
+# HANGİ KANALDAN (web Lawyer UI mi, `ui.cli_mutate` mi) geldiğini
+# gösteren bir PROVENANCE etiketidir; formdan/URL'den/başka bir client
+# girdisinden ASLA alınmaz (kullanıcı kararı, 2026-09-04; Row 19C-3b
+# Slice 1'de KAPALI 2-değerli vocabulary'e genişletildi - bkz. aşağıdaki
+# ROW 19C-3b bölümü). `canonical_path_override`/`audit_dir_override`
+# YALNIZ izole testler içindir - main.py bu iki parametreyi ASLA GEÇMEZ
+# (production'da her zaman None, gerçek per-case path'ler kullanılır) -
+# HTTP isteğinden gelen hiçbir path burada ASLA kabul edilmez.
 # ============================================================
 
 REVIEWER_REF = "local_lawyer_ui"
+
+# ============================================================
+# ROW 19C-3b SLICE 1 - reviewer_ref KAPALI VOCABULARY.
+#
+# `ui.cli_mutate`'in Layer B review CLI dispatcher'ı, aynı
+# `apply_transition()`'ı web route'unun (`ui/main.py`) kullandığı
+# ŞEKİLDE çağırır - tek fark, `reviewer_ref=LOCAL_CLI_REVIEWER_REF`
+# geçmesidir (web hiçbir zaman bu keyword'ü geçmez, varsayılan
+# `REVIEWER_REF`'i kullanmaya devam eder - bu yüzden bu ekleme web
+# yolu için BYTE-FOR-BYTE davranış değişikliği YARATMAZ).
+#
+# Bu iki sabit DIŞINDA HİÇBİR string kabul edilmez - `apply_transition()`
+# aşağıda, principal kontrolünden HEMEN SONRA, HERHANGİ bir DB/
+# filesystem/lock/journal erişiminden ÖNCE bunu doğrular. Bu asla bir
+# kullanıcı/domain reddi DEĞİLDİR - `ui/main.py` ve `ui/cli_mutate.py`
+# HER İKİSİ de yalnız bu iki sabitten BİRİNİ geçer; başka bir değerin
+# buraya ulaşması yalnız bir ÇAĞIRAN HATASI (programming error) olabilir,
+# bu yüzden `InvalidReviewerRefError` `ValueError`'dan türetilir (bu
+# dosyanın `ReviewUiError` ailesinden DEĞİL - o aile yalnız normal
+# kullanımla ulaşılabilir, GERÇEK domain reddi için ayrılmıştır).
+# ============================================================
+
+LOCAL_CLI_REVIEWER_REF = "local_lawyer_cli"
+
+ALLOWED_REVIEWER_REFS = frozenset({REVIEWER_REF, LOCAL_CLI_REVIEWER_REF})
+
+
+class InvalidReviewerRefError(ValueError):
+    """Raised by `apply_transition()` when `reviewer_ref` is not exactly
+    one of `ALLOWED_REVIEWER_REFS`. Reachable ONLY by a caller bug -
+    `ui/main.py` and `ui/cli_mutate.py` each ever pass exactly one fixed
+    constant, never a derived or user-supplied string - never a
+    legitimate domain rejection an end-user action could trigger."""
 
 
 def apply_transition(
     review_kind, case_id, record_id, target_state, review_note, expected_hash,
     canonical_path_override=None, audit_dir_override=None,
     *, principal=None, authz_repository=None, conn_factory=None,
+    reviewer_ref=REVIEWER_REF,
 ):
     """Row 19B: `principal` is REQUIRED for real callers (kept as a
     keyword with no default sentinel error message deliberately, so
@@ -643,27 +678,44 @@ def apply_transition(
     resolve `review_kind` into a `ReviewFamilyBinding` bundle (the
     module object, `record_type`, `call_shape`, `state_field`, the
     real domain exception class, the audit-directory getter, and the
-    fixed `REVIEWER_REF` - all already-resolved `REVIEW_KIND_REGISTRY`
-    metadata this module already owns, per this module's own header
-    comment on why the facade itself never imports this registry); (2)
-    normalize `review_note` EXACTLY ONCE (`normalize_review_note()`
-    below) and pass the SAME normalized text both to the facade (for
-    hashing into `secondary_input_hash`) and, unchanged, all the way to
-    the writer - no second, independent normalization ever happens.
-    `target_state` is still validated against `get_allowed_targets()`
-    HERE, before the facade is ever reached, for a fast, zero-lock
-    rejection of a structurally invalid target - the facade's own
-    `precondition_callback` does not re-derive the allowed-targets set.
+    caller-selected, closed-vocabulary `reviewer_ref` - all already-
+    resolved `REVIEW_KIND_REGISTRY` metadata this module already owns,
+    per this module's own header comment on why the facade itself never
+    imports this registry); (2) normalize `review_note` EXACTLY ONCE
+    (`normalize_review_note()` below) and pass the SAME normalized text
+    both to the facade (for hashing into `secondary_input_hash`) and,
+    unchanged, all the way to the writer - no second, independent
+    normalization ever happens. `target_state` is still validated
+    against `get_allowed_targets()` HERE, before the facade is ever
+    reached, for a fast, zero-lock rejection of a structurally invalid
+    target - the facade's own `precondition_callback` does not
+    re-derive the allowed-targets set.
+
+    ROW 19C-3b SLICE 1: `reviewer_ref` is an additive, keyword-only
+    parameter defaulting to `REVIEWER_REF` - every existing caller
+    (`ui/main.py`, every pre-Slice-1 test) never passes it and gets the
+    IDENTICAL default, so the web path's behavior is byte-for-byte
+    unchanged. It is validated against the closed `ALLOWED_REVIEWER_REFS`
+    vocabulary as the FIRST check this function performs (before even
+    `_get_entry(review_kind)`) - see `InvalidReviewerRefError`'s own
+    docstring for why this is a programmer-error class, not a domain
+    rejection.
 
     `canonical_path_override`/`audit_dir_override`/`conn_factory` are
     TEST-ONLY dependency injection, threaded straight through to the
-    facade unchanged - production callers (`ui/main.py`) NEVER pass any
-    of the three; the facade's own production-default path always
-    derives canonical/audit paths from the case-lock-resolved case_id
-    and opens a real session-lock connection."""
+    facade unchanged - production callers (`ui/main.py`, `ui/cli_mutate.py`)
+    NEVER pass any of the three; the facade's own production-default
+    path always derives canonical/audit paths from the case-lock-resolved
+    case_id and opens a real session-lock connection."""
 
     if principal is None:
         raise TypeError("apply_transition() requires principal= (Row 19B authorization)")
+
+    if reviewer_ref not in ALLOWED_REVIEWER_REFS:
+        raise InvalidReviewerRefError(
+            f"reviewer_ref={reviewer_ref!r} is not one of the allowed values "
+            f"{sorted(ALLOWED_REVIEWER_REFS)!r} - this is a caller bug, never a valid request"
+        )
 
     entry = _get_entry(review_kind)
 
@@ -689,7 +741,7 @@ def apply_transition(
         state_field=get_field_names(review_kind)[2],
         domain_error_class=entry["domain_error_class"],
         get_audit_dir_fn=getattr(module, entry["audit_dir_getter"]),
-        reviewer_ref=REVIEWER_REF,
+        reviewer_ref=reviewer_ref,
         cases_dir_anchor_module=cases_dir_anchor_module,
     )
 

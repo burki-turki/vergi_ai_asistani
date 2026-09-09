@@ -493,20 +493,27 @@ finally:
 
 
 # ============================================================
-# ROW 19C-2b/19C-2c - `_default_registry_factory()` merges Layer A's 10
-# case-scoped approval families, Layer B's 12 review_kind families, AND
-# Row 18C's single `drafting_request.save` family into ONE registry -
-# never called by any test above (which always injects its OWN fake
+# ROW 19C-2b/19C-2c/19C-3b - `_default_registry_factory()` merges Layer
+# A's 10 case-scoped approval families, Layer B's 12 review_kinds
+# (ROW 19C-3b SLICE 1: each registered under TWO exact routing keys -
+# web `review.<kind>` and CLI `review.<kind>.cli` - pointing at the SAME
+# single adapter instance per review_kind, so 12 logical review_kinds
+# now occupy 24 routing keys, NOT 24 logical families), AND Row 18C's
+# single `drafting_request.save` family into ONE registry - never
+# called by any test above (which always injects its OWN fake
 # `registry_factory`, per this module's own header comment), so this is
 # the ONE place that ever exercises the REAL default factory for real,
 # proving a human operator's real CLI invocation can reconcile a
-# journal row from ANY of the three families through the SAME registry.
+# journal row from ANY of the three families (any of BOTH channels, for
+# Layer B) through the SAME registry.
 # ============================================================
 
 _real_registry = op._default_registry_factory()
 _real_families = _real_registry.known_action_families()
 _approval_families = {f for f in _real_families if f.startswith("approval.")}
 _review_families = {f for f in _real_families if f.startswith("review.")}
+_review_families_cli = {f for f in _review_families if f.endswith(".cli")}
+_review_families_web = _review_families - _review_families_cli
 _drafting_request_families = {f for f in _real_families if f.startswith("drafting_request.")}
 
 check(
@@ -515,9 +522,23 @@ check(
     len(_approval_families) == 10, f"got {sorted(_approval_families)}",
 )
 check(
-    "_default_registry_factory(): the merged registry contains exactly Layer B's 12 "
-    "'review.*' families",
-    len(_review_families) == 12, f"got {sorted(_review_families)}",
+    "ROW 19C-3b SLICE 1: the merged registry contains exactly Layer B's 24 'review.*' "
+    "ROUTING KEYS (12 review_kinds x 2 channels - web + CLI)",
+    len(_review_families) == 24, f"got {sorted(_review_families)}",
+)
+check(
+    "ROW 19C-3b SLICE 1: exactly 12 of those are web-channel keys (no '.cli' suffix)",
+    len(_review_families_web) == 12, f"got {sorted(_review_families_web)}",
+)
+check(
+    "ROW 19C-3b SLICE 1: exactly 12 of those are CLI-channel keys (the '.cli' suffix)",
+    len(_review_families_cli) == 12, f"got {sorted(_review_families_cli)}",
+)
+check(
+    "ROW 19C-3b SLICE 1: the number of LOGICAL review_kinds is still 12, unchanged - stripping "
+    "the '.cli' suffix from the CLI keys reproduces EXACTLY the web-key set (same review_kinds, "
+    "not a different set of 12)",
+    {f[: -len(".cli")] for f in _review_families_cli} == _review_families_web,
 )
 check(
     "_default_registry_factory(): the merged registry contains exactly Row 18C's 1 "
@@ -525,9 +546,11 @@ check(
     len(_drafting_request_families) == 1, f"got {sorted(_drafting_request_families)}",
 )
 check(
-    "_default_registry_factory(): the merged registry's total size is exactly 10 + 12 + 1 = 23 "
-    "(no overlap, no family lost, no family duplicated)",
-    len(_real_families) == 23, f"got {len(_real_families)}",
+    "ROW 19C-3b SLICE 1: the merged registry's total size is exactly 10 + 24 + 1 = 35 "
+    "(no overlap, no family lost, no family duplicated) - this is a ROUTING-KEY count, "
+    "distinct from the 22 LOGICAL action families (10 approval + 12 review) this project "
+    "has always had",
+    len(_real_families) == 35, f"got {len(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "
@@ -535,9 +558,19 @@ check(
     _real_registry.get("approval.deadline") is not None,
 )
 check(
-    "_default_registry_factory(): a representative Layer B family (review.evidence.candidate) "
+    "_default_registry_factory(): a representative Layer B WEB family (review.evidence.candidate) "
     "resolves to a real adapter",
     _real_registry.get("review.evidence.candidate") is not None,
+)
+check(
+    "ROW 19C-3b SLICE 1: the SAME review_kind's CLI routing key (review.evidence.candidate.cli) "
+    "also resolves to a real adapter",
+    _real_registry.get("review.evidence.candidate.cli") is not None,
+)
+check(
+    "ROW 19C-3b SLICE 1: the web and CLI routing keys for the SAME review_kind resolve to the "
+    "EXACT SAME adapter instance (one instance genuinely serves both channels)",
+    _real_registry.get("review.evidence.candidate") is _real_registry.get("review.evidence.candidate.cli"),
 )
 check(
     "_default_registry_factory(): Row 18C's own family (drafting_request.save) resolves to a "
