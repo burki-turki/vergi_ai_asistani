@@ -33,6 +33,19 @@ from risk_strategy_policy import (
 )
 
 
+# ============================================================
+# VERSION / MODEL (ROW 19C-3c-ii: named constants, additive -
+# önceden bu iki değer yalnız AnthropicRiskStrategyLLMClient.generate()
+# içinde inline bir string literal olarak vardı; agent_generation_
+# mutation_facade.py bu iki sabiti çağrı anında importlib ile okur.
+# Prompt/candidate/text-safety mantığı DEĞİŞMEMİŞTİR.
+# ============================================================
+
+RISK_STRATEGY_AGENT_VERSION = "1"
+
+DEFAULT_AGENT_MODEL = "claude-sonnet-5"
+
+
 MAX_ITEMS_PER_STAGE = 50
 
 
@@ -97,7 +110,7 @@ class AnthropicRiskStrategyLLMClient:
             self._client = anthropic.Anthropic(api_key=api_key)
 
         response = self._client.messages.create(
-            model="claude-sonnet-5",
+            model=DEFAULT_AGENT_MODEL,
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
         )

@@ -556,18 +556,23 @@ check(
     f"got {sorted(_promotion_families)}",
 )
 check(
-    "ROW 19C-3c-i: the merged registry contains exactly the 2 'generation.*' families "
-    "(generation.deadline + generation.timeline)",
-    _generation_families == {"generation.deadline", "generation.timeline"},
+    "ROW 19C-3c-i/3c-ii: the merged registry contains exactly the 7 'generation.*' families "
+    "(generation.deadline + generation.timeline, deterministic, PLUS generation.issue_spotting + "
+    "generation.evidence + generation.argument + generation.risk_strategy + generation.drafting, "
+    "agent-gated - two SEPARATE facade/adapter pairs, one merged namespace)",
+    _generation_families == {
+        "generation.deadline", "generation.timeline", "generation.issue_spotting", "generation.evidence",
+        "generation.argument", "generation.risk_strategy", "generation.drafting",
+    },
     f"got {sorted(_generation_families)}",
 )
 check(
-    "ROW 19C-3c-i: the merged registry's total size is exactly 10 + 24 + 1 + 2 + 2 = 39 "
+    "ROW 19C-3c-ii: the merged registry's total size is exactly 10 + 24 + 1 + 2 + 2 + 5 = 44 "
     "(no overlap, no family lost, no family duplicated) - this is a ROUTING-KEY count, "
-    "distinct from the 27 LOGICAL action families (10 approval + 12 review + 1 "
-    "drafting_request + 2 promotion + 2 generation); the 'approval.*' bucket itself stays "
-    "exactly 10",
-    len(_real_families) == 39, f"got {len(_real_families)}",
+    "distinct from the 32 LOGICAL action families (10 approval + 12 review + 1 "
+    "drafting_request + 2 promotion + 2 deterministic-generation + 5 agent-generation); the "
+    "'approval.*' bucket itself stays exactly 10",
+    len(_real_families) == 44, f"got {len(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "
@@ -607,6 +612,25 @@ check(
     _real_registry.get("generation.deadline") is not None
     and _real_registry.get("generation.timeline") is not None
     and _real_registry.get("generation.deadline") is not _real_registry.get("generation.timeline"),
+)
+check(
+    "ROW 19C-3c-ii: each of the five agent-generation families resolves to a real "
+    "AgentGenerationReconciliationAdapter instance, all mutually distinct",
+    len({
+        id(_real_registry.get(f"generation.{row_key}"))
+        for row_key in ("issue_spotting", "evidence", "argument", "risk_strategy", "drafting")
+    }) == 5
+    and all(
+        _real_registry.get(f"generation.{row_key}") is not None
+        for row_key in ("issue_spotting", "evidence", "argument", "risk_strategy", "drafting")
+    ),
+)
+check(
+    "ROW 19C-3c-ii: the deterministic generation.deadline adapter and the agent-gated "
+    "generation.argument adapter are DIFFERENT classes (two separate facade/adapter pairs, "
+    "confirming generation_mutation_adapters.py was never extended)",
+    type(_real_registry.get("generation.deadline")).__name__ == "GenerationReconciliationAdapter"
+    and type(_real_registry.get("generation.argument")).__name__ == "AgentGenerationReconciliationAdapter",
 )
 
 

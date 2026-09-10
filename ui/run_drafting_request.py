@@ -198,6 +198,25 @@ def main(argv=None):
 
         return 2
 
+    # ROW 19C-3c-ii: bu --generate-pending mutasyon dalı artık DEVRE
+    # DIŞIDIR - drafting ailesinin coordinator/journal/authz
+    # entegrasyonu yalnız `ui.cli_mutate generation --row-key drafting
+    # ...` üzerinden yaşar (aynı `agent_generation_mutation_facade`,
+    # lawyer_input'u KENDİSİ `ui.services.drafting_request`'ten okur).
+    # `build_drafting_engine_output`/`write_pending` KENDİLERİ
+    # DEĞİŞTİRİLMEDİ - yalnız BU executable'ın mutasyon dalı
+    # reddediliyor. Bayraksız (salt-okunur) varsayılan yol YUKARIDA
+    # (satır 184-191) tamamen korunur ve HİÇ ETKİLENMEZ.
+
+    print()
+    print(
+        "HATA: --generate-pending mutasyon dalı artık DEVRE DIŞIDIR (Row 19C-3c-ii).\n"
+        "Gerçek üretim için: python -m ui.cli_mutate generation --case <CASE_ID> "
+        "--row-key drafting ..."
+    )
+
+    return 2
+
     # Row 15'in GERÇEK, PUBLIC iki fonksiyonu - main()'in kendisinin
     # çağırdığı AYNI sırayla, HİÇBİR DEĞİŞİKLİK OLMADAN (kontrat madde
     # 9 - bu köprü Row 15'in tek bir satırını bile YENİDEN YAZMAZ).
@@ -212,9 +231,13 @@ def main(argv=None):
         use_agent=args.with_agent, network_allowed=args.allow_network,
     )
 
-    pending_path, validation, _history = write_pending(
+    write_result = write_pending(
         case_id, result["analysis"], result["issue_count"],
     )
+
+    pending_path = write_result["pending_path"]
+
+    validation = write_result["validation"]
 
     print()
     print("Pending:", pending_path)

@@ -274,6 +274,72 @@ with isolated_case() as (case_id, tmp_path):
 
 
 # ============================================================
+# 4b) ROW 19C-3c-ii CLOSURE - --generate-pending REDDİ, GEÇERLİ bir
+#     kaydedilmiş wrapper VARKEN BİLE (bu senaryo, bu slice'tan ÖNCE
+#     başarıyla üretim yapardı - şimdi mutasyon dalı KOŞULSUZ
+#     reddediliyor, build/write ÇAĞRILMADAN).
+# ============================================================
+
+with isolated_case() as (case_id, tmp_path):
+    call_counts_4b = {"build": 0, "write": 0}
+    original_build_4b = drafting_engine.build_drafting_engine_output
+    original_write_4b = drafting_engine.write_pending
+    drafting_engine.build_drafting_engine_output = (
+        lambda *a, **kw: call_counts_4b.__setitem__("build", call_counts_4b["build"] + 1)
+        or original_build_4b(*a, **kw)
+    )
+    drafting_engine.write_pending = (
+        lambda *a, **kw: call_counts_4b.__setitem__("write", call_counts_4b["write"] + 1)
+        or original_write_4b(*a, **kw)
+    )
+
+    try:
+        token_4b = dr.compute_current_freshness_token(case_id)
+        fixture_lawyer_input_4b = dr.build_lawyer_input_from_form(
+            draft_intent_type_choice="not_set", appeal_level_choice="",
+            issue_selection_mode="not_provided", selected_issue_ids_raw=[],
+            request_type_raw="", request_text_raw="", lawyer_provided_text_raw="closure test metni",
+        )
+        fixture_normalized_4b = dr.normalize_lawyer_input(fixture_lawyer_input_4b)
+        fixture_wrapper_4b = {
+            "schema_version": 1, "case_id": case_id,
+            "saved_at": datetime.now().astimezone().isoformat(),
+            "source": "local_lawyer_ui_submission",
+            "lawyer_input_hash": dr.compute_lawyer_input_hash(fixture_normalized_4b),
+            "lawyer_input": fixture_normalized_4b,
+        }
+        dr.save_lawyer_input(case_id, fixture_wrapper_4b, token_4b)
+
+        rc, out = run_cli(["--case", case_id, "--generate-pending"])
+        check(
+            "T27 ROW 19C-3c-ii: GEÇERLİ wrapper VARKEN bile --generate-pending KOŞULSUZ reddediliyor "
+            "(rc=2)",
+            rc == 2, f"rc={rc} out={out!r}",
+        )
+        check(
+            "T28 T27: build_drafting_engine_output HİÇ ÇAĞRILMADI (mutasyon dalına hiç girilmedi)",
+            call_counts_4b["build"] == 0,
+        )
+        check("T29 T27: write_pending HİÇ ÇAĞRILMADI", call_counts_4b["write"] == 0)
+        check(
+            "T30 T27: hiçbir pending dosyası üretilmedi",
+            not drafting_engine.get_pending_path(case_id).exists(),
+        )
+        rc_with_agent, out_with_agent = run_cli([
+            "--case", case_id, "--generate-pending", "--with-agent", "--allow-network",
+        ])
+        check(
+            "T31 ROW 19C-3c-ii: GEÇERLİ wrapper + --with-agent + --allow-network ile bile "
+            "--generate-pending reddediliyor (rc=2)",
+            rc_with_agent == 2, f"rc={rc_with_agent} out={out_with_agent!r}",
+        )
+        check("T32 T31: build_drafting_engine_output HİÇ ÇAĞRILMADI", call_counts_4b["build"] == 0)
+    finally:
+        drafting_engine.build_drafting_engine_output = original_build_4b
+        drafting_engine.write_pending = original_write_4b
+
+
+# ============================================================
 # 5) GERÇEK data/ ve src/ AĞAÇLARININ HİÇBİR TESTLE DEĞİŞMEDİĞİNİN
 #    BYTE-DÜZEYİNDE KANITI (bu köprü GERÇEK hiçbir case'e DOKUNMADI).
 # ============================================================

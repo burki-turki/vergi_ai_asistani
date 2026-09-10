@@ -35,6 +35,19 @@ from drafting_policy import (
 )
 
 
+# ============================================================
+# VERSION / MODEL (ROW 19C-3c-ii: named constants, additive -
+# önceden bu iki değer yalnız AnthropicDraftingLLMClient.generate()
+# içinde inline bir string literal olarak vardı; agent_generation_
+# mutation_facade.py bu iki sabiti çağrı anında importlib ile okur.
+# Prompt/candidate/text-safety mantığı DEĞİŞMEMİŞTİR.
+# ============================================================
+
+DRAFTING_AGENT_VERSION = "1"
+
+DEFAULT_AGENT_MODEL = "claude-sonnet-5"
+
+
 MAX_ITEMS_PER_STAGE = 50
 
 MAX_SECTION_TEXT_LENGTH = 4000
@@ -103,7 +116,7 @@ class AnthropicDraftingLLMClient:
             self._client = anthropic.Anthropic(api_key=api_key)
 
         response = self._client.messages.create(
-            model="claude-sonnet-5",
+            model=DEFAULT_AGENT_MODEL,
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
         )

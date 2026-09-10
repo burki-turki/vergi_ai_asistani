@@ -38,6 +38,7 @@
 
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -45,6 +46,8 @@ import sys
 
 from datetime import datetime
 from pathlib import Path
+
+import path_containment
 
 
 from legal_research_validator import (
@@ -97,6 +100,16 @@ EVIDENCE_ENGINE_VERSION = "1"
 ALL_FORBIDDEN_PHRASES = tuple(
     FORBIDDEN_PHRASES
 )
+
+
+# ============================================================
+# ROW 19C-3c-ii - GENERATION MUTATION BINDING (bkz.
+# issue_spotting_engine.py'nin AYNI, bağımsız kopyası'ndaki gerekçe)
+# ============================================================
+
+GENERATION_ACTION_FAMILY = "generation.evidence"
+
+GENERATION_AUDIT_SCHEMA_VERSION = "1"
 
 
 # ============================================================
@@ -267,6 +280,23 @@ def get_history_dir(
     )
 
 
+def get_reviews_dir(
+    case_id,
+):
+
+    return (
+        get_evidence_dir(
+            case_id
+        )
+        / "generation_reviews"
+    )
+
+
+def get_target_ref():
+
+    return "evidence.pending"
+
+
 # ============================================================
 # PREVIOUS PENDING PRESERVATION
 # ============================================================
@@ -274,6 +304,8 @@ def get_history_dir(
 def preserve_previous_pending(
     case_id,
     pending_path,
+    *,
+    history_dir=None,
 ):
 
     pending_path = Path(
@@ -284,11 +316,13 @@ def preserve_previous_pending(
 
         return None
 
-    history_dir = (
-        get_history_dir(
-            case_id
+    if history_dir is None:
+
+        history_dir = (
+            get_history_dir(
+                case_id
+            )
         )
-    )
 
     history_dir.mkdir(
         parents=True,
@@ -322,6 +356,85 @@ def preserve_previous_pending(
     )
 
     return history_path
+
+
+# ============================================================
+# ROW 19C-3c-ii - GENERATION AUDIT RECORD SERIALIZATION
+# ============================================================
+
+def _canonical_json_bytes(
+    data,
+):
+
+    text = json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    return text.replace(
+        "\n",
+        os.linesep,
+    ).encode("utf-8")
+
+
+def _write_generation_audit_record_excl(
+    reviews_dir,
+    audit_record,
+):
+
+    reviews_dir = Path(
+        reviews_dir
+    )
+
+    reviews_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    stamp = (
+        datetime.now()
+        .strftime(
+            "%Y%m%d_%H%M%S"
+        )
+    )
+
+    base = f"evidence_{stamp}"
+
+    suffix = 0
+
+    while True:
+
+        if suffix == 0:
+            name = f"{base}.generation_audit.json"
+        else:
+            name = f"{base}_{suffix}.generation_audit.json"
+
+        path_containment.validate_segment(name)
+
+        candidate = path_containment.resolve_for_create(
+            reviews_dir,
+            name,
+        )
+
+        try:
+            fd = os.open(
+                candidate,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+            )
+        except FileExistsError:
+            suffix += 1
+            if suffix > 1000:
+                raise RuntimeError(
+                    "Generation audit dosya adı için 1000 denemede "
+                    "boş ad bulunamadı."
+                )
+            continue
+
+        with os.fdopen(fd, "wb") as file:
+            file.write(_canonical_json_bytes(audit_record))
+
+        return candidate
 
 
 # ============================================================
@@ -1065,23 +1178,55 @@ def write_pending(
     case_id,
     analysis,
     expected_issue_count,
+    *,
+    verified_paths=None,
+    input_digest=None,
+    identity_payload=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
 ):
+    """ROW 19C-3c-ii: bkz. `issue_spotting_engine.write_pending()`'in
+    AYNI gerekçesi - additive, keyword-only, legacy behavior byte-for-
+    byte korunur; yalnız dönüş şekli tuple'dan dict'e döner."""
 
-    evidence_dir = (
-        get_evidence_dir(
-            case_id
-        )
+    mutation_binding_provided = (
+        mutation_idempotency_key is not None
     )
+
+    if mutation_binding_provided:
+
+        if (
+            input_digest is None
+            or identity_payload is None
+            or mutation_resource_key is None
+            or mutation_actor_ref is None
+        ):
+
+            raise EvidenceEngineError(
+                "mutation_idempotency_key verildiğinde input_digest/"
+                "identity_payload/mutation_resource_key/"
+                "mutation_actor_ref de verilmelidir (kısmi "
+                "mutation-binding kabul edilmez)."
+            )
+
+    if verified_paths is not None:
+
+        evidence_dir = verified_paths.family_root
+        pending_path = verified_paths.pending_path
+        history_dir_override = verified_paths.history_dir
+        reviews_dir = verified_paths.reviews_dir
+
+    else:
+
+        evidence_dir = get_evidence_dir(case_id)
+        pending_path = get_pending_path(case_id)
+        history_dir_override = None
+        reviews_dir = get_reviews_dir(case_id)
 
     evidence_dir.mkdir(
         parents=True,
         exist_ok=True,
-    )
-
-    pending_path = (
-        get_pending_path(
-            case_id
-        )
     )
 
     canonical_path = (
@@ -1101,6 +1246,9 @@ def write_pending(
 
             pending_path=
                 pending_path,
+
+            history_dir=
+                history_dir_override,
         )
     )
 
@@ -1135,8 +1283,12 @@ def write_pending(
                 "Post-write Evidence Validator valid=False."
             )
 
-        written = load_json(
-            pending_path
+        pending_raw_bytes = pending_path.read_bytes()
+
+        pending_sha256 = hashlib.sha256(pending_raw_bytes).hexdigest()
+
+        written = json.loads(
+            pending_raw_bytes.decode("utf-8")
         )
 
         validate_engine_output_semantics(
@@ -1154,11 +1306,71 @@ def write_pending(
                 "durumunu değiştirdi."
             )
 
-        return (
-            pending_path,
-            validation,
-            previous_pending_history,
+        audit_path = None
+
+        first_write = (
+            previous_pending_history
+            is None
         )
+
+        if mutation_binding_provided:
+
+            history_backup_path = None
+
+            history_backup_sha256 = None
+
+            if not first_write:
+
+                history_backup_path = str(
+                    previous_pending_history
+                )
+
+                history_backup_sha256 = hashlib.sha256(
+                    previous_pending_history.read_bytes()
+                ).hexdigest()
+
+            audit_record = {
+                "schema_version": GENERATION_AUDIT_SCHEMA_VERSION,
+                "case_id": case_id,
+                "target_ref": get_target_ref(),
+                "target_state": "generated",
+                "action_family": GENERATION_ACTION_FAMILY,
+                "channel": "local_lawyer_generation_cli",
+                "mutation_actor_ref": mutation_actor_ref,
+                "mutation_idempotency_key": mutation_idempotency_key,
+                "mutation_resource_key": mutation_resource_key,
+                "input_digest": input_digest,
+                "generation_parameters_digest": None,
+                "generation_mode": identity_payload.get("generation_mode"),
+                "model_id": identity_payload.get("model_id"),
+                "prompt_agent_version": identity_payload.get("prompt_agent_version"),
+                "identity_payload": identity_payload,
+                "first_write": first_write,
+                "history_backup_path": history_backup_path,
+                "history_backup_sha256": history_backup_sha256,
+                "pending_sha256": pending_sha256,
+                "generated_at": written.get("generated_at"),
+                "outcome": "generated",
+                "written_at": (
+                    datetime.now()
+                    .astimezone()
+                    .isoformat()
+                ),
+            }
+
+            audit_path = _write_generation_audit_record_excl(
+                reviews_dir=reviews_dir,
+                audit_record=audit_record,
+            )
+
+        return {
+            "pending_path": pending_path,
+            "validation": validation,
+            "previous_pending_history": previous_pending_history,
+            "pending_sha256": pending_sha256,
+            "audit_path": audit_path,
+            "first_write": first_write,
+        }
 
     except Exception:
 
@@ -1224,17 +1436,19 @@ def run_engine(
         "analysis"
     ]
 
-    (
-        pending_path,
-        validation,
-        previous_pending_history,
-    ) = write_pending(
+    write_result = write_pending(
         case_id,
         analysis,
         build_result[
             "issue_count"
         ],
     )
+
+    pending_path = write_result["pending_path"]
+
+    validation = write_result["validation"]
+
+    previous_pending_history = write_result["previous_pending_history"]
 
     result = dict(
         build_result
@@ -1657,6 +1871,21 @@ def main():
         )
 
         return
+
+    # ROW 19C-3c-ii: bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR -
+    # coordinator/journal/authz entegrasyonu yalnız `ui.cli_mutate
+    # generation --row-key evidence ...` üzerinden yaşar. run_engine()/
+    # write_pending() KENDİLERİ DEĞİŞTİRİLMEDİ - yalnız BU executable
+    # giriş noktası reddediliyor. `--self-test` yolu YUKARIDA korunur.
+
+    print(
+        "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3c-ii).\n"
+        "Gerçek üretim için: python -m ui.cli_mutate generation --case <CASE_ID> "
+        "--row-key evidence ...",
+        file=sys.stderr,
+    )
+
+    raise SystemExit(2)
 
     print()
 
