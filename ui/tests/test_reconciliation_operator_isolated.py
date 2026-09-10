@@ -499,13 +499,14 @@ finally:
 # web `review.<kind>` and CLI `review.<kind>.cli` - pointing at the SAME
 # single adapter instance per review_kind, so 12 logical review_kinds
 # now occupy 24 routing keys, NOT 24 logical families), Row 18C's
-# single `drafting_request.save` family, AND (ROW 19C-3b SLICE 2) the
-# two fact/timeline `promotion.*` families into ONE registry - never
+# single `drafting_request.save` family, (ROW 19C-3b SLICE 2) the two
+# fact/timeline `promotion.*` families, AND (ROW 19C-3c-i) the two
+# deadline/timeline `generation.*` families into ONE registry - never
 # called by any test above (which always injects its OWN fake
 # `registry_factory`, per this module's own header comment), so this is
 # the ONE place that ever exercises the REAL default factory for real,
 # proving a human operator's real CLI invocation can reconcile a
-# journal row from ANY of the three families (any of BOTH channels, for
+# journal row from ANY of the five families (any of BOTH channels, for
 # Layer B) through the SAME registry.
 # ============================================================
 
@@ -517,6 +518,7 @@ _review_families_cli = {f for f in _review_families if f.endswith(".cli")}
 _review_families_web = _review_families - _review_families_cli
 _drafting_request_families = {f for f in _real_families if f.startswith("drafting_request.")}
 _promotion_families = {f for f in _real_families if f.startswith("promotion.")}
+_generation_families = {f for f in _real_families if f.startswith("generation.")}
 
 check(
     "_default_registry_factory(): the merged registry contains exactly Layer A's 10 "
@@ -554,11 +556,18 @@ check(
     f"got {sorted(_promotion_families)}",
 )
 check(
-    "ROW 19C-3b SLICE 2: the merged registry's total size is exactly 10 + 24 + 1 + 2 = 37 "
+    "ROW 19C-3c-i: the merged registry contains exactly the 2 'generation.*' families "
+    "(generation.deadline + generation.timeline)",
+    _generation_families == {"generation.deadline", "generation.timeline"},
+    f"got {sorted(_generation_families)}",
+)
+check(
+    "ROW 19C-3c-i: the merged registry's total size is exactly 10 + 24 + 1 + 2 + 2 = 39 "
     "(no overlap, no family lost, no family duplicated) - this is a ROUTING-KEY count, "
-    "distinct from the 25 LOGICAL action families (10 approval + 12 review + 1 "
-    "drafting_request + 2 promotion); the 'approval.*' bucket itself stays exactly 10",
-    len(_real_families) == 37, f"got {len(_real_families)}",
+    "distinct from the 27 LOGICAL action families (10 approval + 12 review + 1 "
+    "drafting_request + 2 promotion + 2 generation); the 'approval.*' bucket itself stays "
+    "exactly 10",
+    len(_real_families) == 39, f"got {len(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "
@@ -591,6 +600,13 @@ check(
     _real_registry.get("promotion.fact") is not None
     and _real_registry.get("promotion.timeline") is not None
     and _real_registry.get("promotion.fact") is not _real_registry.get("promotion.timeline"),
+)
+check(
+    "ROW 19C-3c-i: generation.deadline and generation.timeline each resolve to a real "
+    "GenerationReconciliationAdapter instance (and to DIFFERENT instances - one per family)",
+    _real_registry.get("generation.deadline") is not None
+    and _real_registry.get("generation.timeline") is not None
+    and _real_registry.get("generation.deadline") is not _real_registry.get("generation.timeline"),
 )
 
 

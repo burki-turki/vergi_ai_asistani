@@ -247,6 +247,71 @@ check(
     code == cli_mutate.EXIT_USAGE_ERROR and "--note" in err,
 )
 
+# ROW 19C-3c-i - `generation` subcommand usage-shape grammar. Every rule
+# fires BEFORE any connection/authz repository/filesystem probe/journal
+# access (the exploding factories prove zero connections). Mirrors the
+# `promotion` block above exactly in style/coverage discipline.
+code, _, err = run_cli_usage_only(["generation", "--case", "x", "--row-key", "bogus", "--actor-user-id", "1"])
+check("generation: invalid --row-key -> exit 2, zero connections", code == cli_mutate.EXIT_USAGE_ERROR)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "timeline", "--actor-user-id", "1", "--anchor", "timeline_event_001",
+])
+check(
+    "generation: --anchor with --row-key timeline -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--anchor" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "timeline", "--actor-user-id", "1", "--holiday", "2026-01-01",
+])
+check(
+    "generation: --holiday with --row-key timeline -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--holiday" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "timeline", "--actor-user-id", "1", "--calendar-complete",
+])
+check(
+    "generation: --calendar-complete with --row-key timeline -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--calendar-complete" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "timeline", "--actor-user-id", "1",
+    "--judicial-recess-applicable", "yes",
+])
+check(
+    "generation: non-default --judicial-recess-applicable with --row-key timeline -> exit 2, "
+    "zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--judicial-recess-applicable" in err,
+)
+
+code, _, err = run_cli_usage_only(["generation", "--case", "x", "--row-key", "deadline", "--actor-user-id", "1"])
+check(
+    "generation: --row-key deadline WITHOUT --anchor -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--anchor" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline", "--anchor", "timeline_event_001",
+    "--actor-user-id", "1", "--apply",
+])
+check(
+    "generation: --apply WITHOUT --expected-input-digest -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--expected-input-digest" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline", "--anchor", "timeline_event_001",
+    "--actor-user-id", "1", "--expected-input-digest", "h",
+])
+check(
+    "generation: --expected-input-digest WITHOUT --apply -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--expected-input-digest" in err,
+)
+
 
 # ============================================================
 # 2) ACTOR IDENTITY - nonexistent/disabled actor, EXISTENCE-BLIND
@@ -565,12 +630,19 @@ LEGACY_MUTATION_MATRIX = [
     # any pending read, proven by returncode/stderr/stdout below).
     ("fact_approval", ["--approve"]),
     ("timeline_approval", ["--pending", "row19c3b_slice2_nonexistent.pending", "--approve"]),
+    # ROW 19C-3c-i - the two deadline/timeline deterministic PENDING-
+    # GENERATION bypasses. Neither module builds an argparse parser
+    # anymore (`main()` refuses unconditionally, before parsing anything)
+    # - an empty args list is therefore genuinely representative, not a
+    # shortcut.
+    ("deadline_engine", []),
+    ("timeline_engine", []),
 ]
 
 check(
-    "LEGACY_MUTATION_MATRIX covers all 17 legacy mutation entry points "
-    "(10 Layer A + 5 Layer B + 2 promotion)",
-    len(LEGACY_MUTATION_MATRIX) == 17,
+    "LEGACY_MUTATION_MATRIX covers all 19 legacy mutation entry points "
+    "(10 Layer A + 5 Layer B + 2 promotion + 2 generation)",
+    len(LEGACY_MUTATION_MATRIX) == 19,
 )
 
 # ROW 19C-3b SLICE 1 - EVIDENCE REVIEW FULL FLAG COVERAGE: `evidence_
@@ -598,11 +670,11 @@ check(
     len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 3,
 )
 check(
-    "LEGACY_MUTATION_MATRIX (17 legacy executables) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3 "
-    "additional evidence_review flag variants) = 20 total refusal subprocess scenarios in this "
-    "section - NOT 20 distinct legacy modules (evidence_review itself contributes 4 of the 20: "
+    "LEGACY_MUTATION_MATRIX (19 legacy executables) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3 "
+    "additional evidence_review flag variants) = 22 total refusal subprocess scenarios in this "
+    "section - NOT 22 distinct legacy modules (evidence_review itself contributes 4 of the 22: "
     "one entry from each list)",
-    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 20,
+    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 22,
 )
 
 _data_snapshot_before_matrix = _snapshot_data_tree()
@@ -642,7 +714,7 @@ for _module_name, _mutation_args in LEGACY_MUTATION_MATRIX + EVIDENCE_REVIEW_EXT
 
 _data_snapshot_after_matrix = _snapshot_data_tree()
 check(
-    "all 20 legacy mutation bypass scenarios together (17 legacy executables + 3 additional "
+    "all 22 legacy mutation bypass scenarios together (19 legacy executables + 3 additional "
     "evidence_review flag variants): the REAL data/ tree is byte-for-byte UNCHANGED (before/after "
     "sha256 snapshot of every file under data/ - would catch a new, removed, or modified "
     "canonical/pending/audit/backup file anywhere, not only in case_0001's own tree)",

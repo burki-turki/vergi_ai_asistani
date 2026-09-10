@@ -45,7 +45,7 @@
 # ============================================================
 
 
-import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -63,6 +63,8 @@ from deadline_calculator import (
 from deadline_validator import (
     validate_deadline_analysis,
 )
+
+import path_containment
 
 
 # ============================================================
@@ -258,6 +260,118 @@ def get_history_dir(
 
 
 # ============================================================
+# ROW 19C-3c-i - GENERATION MUTATION BINDING
+# ============================================================
+
+GENERATION_ACTION_FAMILY = "generation.deadline"
+
+GENERATION_AUDIT_SCHEMA_VERSION = "1"
+
+
+def get_reviews_dir(
+    case_id,
+):
+
+    return (
+        get_case_deadline_dir(
+            case_id
+        )
+        / "generation_reviews"
+    )
+
+
+def get_target_ref(
+    anchor_event_id,
+):
+
+    return f"deadline.{anchor_event_id}.pending"
+
+
+def now_stamp():
+
+    return (
+        datetime.now()
+        .strftime(
+            "%Y%m%d_%H%M%S"
+        )
+    )
+
+
+def sha256_bytes(data):
+
+    return hashlib.sha256(data).hexdigest()
+
+
+def _canonical_json_bytes(data):
+
+    text = json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    return text.replace(
+        "\n",
+        os.linesep,
+    ).encode("utf-8")
+
+
+def _write_generation_audit_record_excl(
+    reviews_dir,
+    anchor_event_id,
+    audit_record,
+):
+    """`fact_approval._write_audit_record_excl()` ile AYNI desen -
+    zaman damgalı taban ad + `O_CREAT|O_EXCL` + sayısal sonek; sabit
+    adın ÜZERİNE YAZMA sınıfı kapatılır, replay/reconciliation
+    eşleşmesi HER ZAMAN içerikten yapılır, addan asla."""
+
+    reviews_dir = Path(reviews_dir)
+
+    reviews_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    base = f"deadline_{anchor_event_id}_{now_stamp()}"
+
+    suffix = 0
+
+    while True:
+
+        if suffix == 0:
+            name = f"{base}.generation_audit.json"
+        else:
+            name = f"{base}_{suffix}.generation_audit.json"
+
+        path_containment.validate_segment(name)
+
+        candidate = path_containment.resolve_for_create(
+            reviews_dir,
+            name,
+        )
+
+        try:
+            fd = os.open(
+                candidate,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+            )
+        except FileExistsError:
+            suffix += 1
+            if suffix > 1000:
+                raise RuntimeError(
+                    "Generation audit dosya adı için 1000 denemede "
+                    "boş ad bulunamadı."
+                )
+            continue
+
+        with os.fdopen(fd, "wb") as file:
+            file.write(_canonical_json_bytes(audit_record))
+
+        return candidate
+
+
+# ============================================================
 # PREVIOUS PENDING PRESERVATION
 # ============================================================
 
@@ -445,6 +559,8 @@ def build_deadline_engine_output(
     holiday_dates=None,
     calendar_complete=False,
     judicial_recess_applicable=None,
+    *,
+    provisions_path=None,
 ):
 
     analysis = (
@@ -466,6 +582,9 @@ def build_deadline_engine_output(
 
             judicial_recess_applicable=
                 judicial_recess_applicable,
+
+            provisions_path=
+                provisions_path,
         )
     )
 
@@ -501,7 +620,37 @@ def build_deadline_engine_output(
 def write_pending(
     case_id,
     analysis,
+    *,
+    anchor_event_id=None,
+    input_digest=None,
+    generation_parameters_digest=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
+    pre_commit_callback=None,
 ):
+
+    mutation_binding_provided = (
+        mutation_idempotency_key is not None
+    )
+
+    if mutation_binding_provided:
+
+        if (
+            anchor_event_id is None
+            or input_digest is None
+            or generation_parameters_digest is None
+            or mutation_resource_key is None
+            or mutation_actor_ref is None
+        ):
+
+            raise DeadlineEngineError(
+                "mutation_idempotency_key verildiğinde "
+                "anchor_event_id/input_digest/"
+                "generation_parameters_digest/mutation_resource_key/"
+                "mutation_actor_ref de verilmelidir (kısmi "
+                "mutation-binding kabul edilmez)."
+            )
 
     deadline_dir = (
         get_case_deadline_dir(
@@ -546,6 +695,10 @@ def write_pending(
 
     try:
 
+        if pre_commit_callback is not None:
+
+            pre_commit_callback()
+
         atomic_write_json(
             pending_path,
             analysis,
@@ -580,11 +733,15 @@ def write_pending(
             )
 
         # ====================================================
-        # RELOAD + SEMANTIC GUARD
+        # RELOAD + SEMANTIC GUARD (GERÇEK DİSK BAYTLARINDAN)
         # ====================================================
 
-        written = load_json(
-            pending_path
+        pending_raw_bytes = pending_path.read_bytes()
+
+        pending_sha256 = sha256_bytes(pending_raw_bytes)
+
+        written = json.loads(
+            pending_raw_bytes.decode("utf-8")
         )
 
         validate_engine_output_semantics(
@@ -605,11 +762,71 @@ def write_pending(
                 "durumunu değiştirdi."
             )
 
-        return (
-            pending_path,
-            validation,
-            previous_pending_history,
+        # ====================================================
+        # GENERATION AUDIT RECORD (yalnız coordinator-mode'da)
+        # ====================================================
+
+        audit_path = None
+
+        first_write = (
+            previous_pending_history
+            is None
         )
+
+        if mutation_binding_provided:
+
+            history_backup_path = None
+
+            history_backup_sha256 = None
+
+            if not first_write:
+
+                history_backup_path = str(
+                    previous_pending_history
+                )
+
+                history_backup_sha256 = sha256_bytes(
+                    previous_pending_history.read_bytes()
+                )
+
+            audit_record = {
+                "schema_version": GENERATION_AUDIT_SCHEMA_VERSION,
+                "case_id": case_id,
+                "target_ref": get_target_ref(anchor_event_id),
+                "target_state": "generated",
+                "action_family": GENERATION_ACTION_FAMILY,
+                "mutation_idempotency_key": mutation_idempotency_key,
+                "mutation_resource_key": mutation_resource_key,
+                "mutation_actor_ref": mutation_actor_ref,
+                "input_digest": input_digest,
+                "generation_parameters_digest": generation_parameters_digest,
+                "first_write": first_write,
+                "history_backup_path": history_backup_path,
+                "history_backup_sha256": history_backup_sha256,
+                "pending_sha256": pending_sha256,
+                "generated_at": written.get("generated_at"),
+                "outcome": "generated",
+                "written_at": (
+                    datetime.now()
+                    .astimezone()
+                    .isoformat()
+                ),
+            }
+
+            audit_path = _write_generation_audit_record_excl(
+                reviews_dir=get_reviews_dir(case_id),
+                anchor_event_id=anchor_event_id,
+                audit_record=audit_record,
+            )
+
+        return {
+            "pending_path": pending_path,
+            "validation": validation,
+            "previous_pending_history": previous_pending_history,
+            "pending_sha256": pending_sha256,
+            "audit_path": audit_path,
+            "first_write": first_write,
+        }
 
     except Exception:
 
@@ -650,6 +867,14 @@ def run_engine(
     holiday_dates=None,
     calendar_complete=False,
     judicial_recess_applicable=None,
+    *,
+    provisions_path=None,
+    input_digest=None,
+    generation_parameters_digest=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
+    pre_commit_callback=None,
 ):
 
     print()
@@ -689,6 +914,9 @@ def run_engine(
 
             judicial_recess_applicable=
                 judicial_recess_applicable,
+
+            provisions_path=
+                provisions_path,
         )
     )
 
@@ -726,17 +954,40 @@ def run_engine(
     # WRITE
     # ========================================================
 
-    (
-        pending_path,
-        post_validation,
-        previous_pending_history,
-    ) = write_pending(
+    write_result = write_pending(
         case_id=
             case_id,
 
         analysis=
             analysis,
+
+        anchor_event_id=
+            anchor_event_id,
+
+        input_digest=
+            input_digest,
+
+        generation_parameters_digest=
+            generation_parameters_digest,
+
+        mutation_idempotency_key=
+            mutation_idempotency_key,
+
+        mutation_resource_key=
+            mutation_resource_key,
+
+        mutation_actor_ref=
+            mutation_actor_ref,
+
+        pre_commit_callback=
+            pre_commit_callback,
     )
+
+    pending_path = write_result["pending_path"]
+
+    post_validation = write_result["validation"]
+
+    previous_pending_history = write_result["previous_pending_history"]
 
     print(
         "Post-write validator:",
@@ -913,112 +1164,47 @@ def run_engine(
         "======================================"
     )
 
-    return analysis
-
-
-# ============================================================
-# CLI HELPERS
-# ============================================================
-
-def parse_judicial_recess(
-    value,
-):
-
-    if value == "yes":
-
-        return True
-
-    if value == "no":
-
-        return False
-
-    return None
+    return {
+        "analysis": analysis,
+        "pending_path": pending_path,
+        "validation": post_validation,
+        "previous_pending_history": previous_pending_history,
+        "pending_sha256": write_result["pending_sha256"],
+        "audit_path": write_result["audit_path"],
+        "first_write": write_result["first_write"],
+    }
 
 
 # ============================================================
 # CLI
+#
+# ROW 19C-3c-i: bu doğrudan mutasyon CLI yolu DEVRE DIŞI bırakıldı.
+# `run_engine()`'in kendisi DEĞİŞMEDİ ve tam olarak fonksiyoneldir -
+# yalnız `ui.services.generation_mutation_facade` üzerinden (mutation
+# coordinator/journal altyapısına bağlı olarak) çağrılabilir. Bu
+# dosyada önceden var olan koşulsuz mutasyon dışında korunması gereken
+# bir preview/self-test dalı YOKTU (bkz. Row 19C-3c-i final scope
+# raporu) - bu yüzden kapama argparse'ı hiç kurmadan doğrudan
+# reddeder. Eski `parse_judicial_recess()` yardımcı fonksiyonu, tek
+# çağıranı (bu `main()`) kapatıldığı için gerçekten ölü koda
+# dönüştüğünden kaldırılmıştır.
 # ============================================================
+
+_LEGACY_CLI_REFUSAL_MESSAGE = (
+    "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+    "Gerçek üretim için: python -m ui.cli_mutate generation "
+    "<preview|apply> --row-key deadline ..."
+)
+
 
 def main():
 
-    parser = argparse.ArgumentParser(
-        description=(
-            "Vergi AI Deadline Engine V1"
-        )
+    print(
+        _LEGACY_CLI_REFUSAL_MESSAGE,
+        file=sys.stderr,
     )
 
-    parser.add_argument(
-        "--case",
-        dest="case_id",
-        default=
-            DEFAULT_CASE_ID,
-    )
-
-    parser.add_argument(
-        "--anchor",
-        dest="anchor_event_id",
-        default=
-            DEFAULT_ANCHOR_EVENT_ID,
-    )
-
-    parser.add_argument(
-        "--ruleset",
-        dest="ruleset_path",
-        default=str(
-            DEFAULT_RULESET_PATH
-        ),
-    )
-
-    parser.add_argument(
-        "--holiday",
-        action="append",
-        default=[],
-    )
-
-    parser.add_argument(
-        "--calendar-complete",
-        action="store_true",
-    )
-
-    parser.add_argument(
-        "--judicial-recess-applicable",
-        choices=[
-            "yes",
-            "no",
-            "unknown",
-        ],
-        default="unknown",
-    )
-
-    args = parser.parse_args()
-
-    judicial_recess_applicable = (
-        parse_judicial_recess(
-            args.judicial_recess_applicable
-        )
-    )
-
-    run_engine(
-        case_id=
-            args.case_id,
-
-        anchor_event_id=
-            args.anchor_event_id,
-
-        ruleset_path=
-            Path(
-                args.ruleset_path
-            ),
-
-        holiday_dates=
-            args.holiday,
-
-        calendar_complete=
-            args.calendar_complete,
-
-        judicial_recess_applicable=
-            judicial_recess_applicable,
-    )
+    raise SystemExit(2)
 
 
 # ============================================================

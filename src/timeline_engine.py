@@ -74,9 +74,12 @@
 # ============================================================
 
 
-import argparse
+import hashlib
 import json
+import os
 import re
+import shutil
+import sys
 
 from datetime import datetime
 from pathlib import Path
@@ -93,6 +96,8 @@ from timeline_consolidation_policy import (
     consolidate_candidates,
     normalize_text_tr,
 )
+
+import path_containment
 
 
 # ============================================================
@@ -126,6 +131,48 @@ CASES_DIR = (
 )
 
 DEFAULT_CASE_ID = "case_0001"
+
+CANONICAL_PENDING_FILENAME = "timeline_v1_1.json.pending"
+
+
+# ============================================================
+# ROW 19C-3c-i - GENERATION MUTATION BINDING
+# ============================================================
+
+GENERATION_ACTION_FAMILY = "generation.timeline"
+
+GENERATION_AUDIT_SCHEMA_VERSION = "1"
+
+
+class TimelineEngineError(Exception):
+    pass
+
+
+def get_case_timeline_dir(case_id):
+
+    return CASES_DIR / case_id / "timeline"
+
+
+def get_pending_path(case_id):
+
+    return get_case_timeline_dir(case_id) / CANONICAL_PENDING_FILENAME
+
+
+def get_history_dir(case_id):
+
+    return get_case_timeline_dir(case_id) / "history"
+
+
+def get_reviews_dir(case_id):
+
+    return get_case_timeline_dir(case_id) / "generation_reviews"
+
+
+def get_target_ref():
+    """Timeline generation case-scopludur (deadline'ın aksine anchor-bazlı
+    DEĞİLDİR) - tek bir case için tek bir operasyon slotu."""
+
+    return "timeline.pending"
 
 
 # ============================================================
@@ -751,11 +798,15 @@ def build_event_notes(
 
 def build_raw_event_candidates(
     case_id,
+    *,
+    document_paths=None,
+    facts_paths=None,
 ):
 
     canonical = (
         load_canonical_fact_index(
-            case_id
+            case_id,
+            facts_paths=facts_paths,
         )
     )
 
@@ -765,7 +816,8 @@ def build_raw_event_candidates(
 
     document_index = (
         load_document_index(
-            case_id
+            case_id,
+            document_paths=document_paths,
         )
     )
 
@@ -1098,6 +1150,9 @@ def build_engine_warnings(
 
 def build_timeline(
     case_id,
+    *,
+    document_paths=None,
+    facts_paths=None,
 ):
 
     (
@@ -1106,7 +1161,9 @@ def build_timeline(
         document_index,
     ) = (
         build_raw_event_candidates(
-            case_id
+            case_id,
+            document_paths=document_paths,
+            facts_paths=facts_paths,
         )
     )
 
@@ -1205,10 +1262,18 @@ def build_timeline(
 
 
 # ============================================================
-# WRITE JSON
+# WRITE JSON (ATOMIC)
+#
+# ROW 19C-3c-i: eski `write_json()` (plain `open()` + `json.dump`,
+# ne atomic write ne history ne rollback) kaldırıldı - bu, coordinator
+# entegrasyonundan BAĞIMSIZ, önceden var olan bir güvenlik açığıydı
+# (bkz. CLAUDE.md Prensip 9/13, Row 19C-3c-i final scope raporu).
+# `deadline_engine.atomic_write_json()` ile AYNI desen - iki modül
+# arasında kasıtlı, bilinçli duplikasyon (repo konvansiyonu, bkz.
+# CASES_DIR'in her modülde ayrı tanımlanması).
 # ============================================================
 
-def write_json(
+def atomic_write_json(
     path,
     data,
 ):
@@ -1222,10 +1287,19 @@ def write_json(
         exist_ok=True,
     )
 
+    temp_path = (
+        path.parent
+        / (
+            path.name
+            + ".tmp"
+        )
+    )
+
     with open(
-        path,
+        temp_path,
         "w",
         encoding="utf-8",
+        newline="\n",
     ) as file:
 
         json.dump(
@@ -1234,6 +1308,347 @@ def write_json(
             ensure_ascii=False,
             indent=2,
         )
+
+        file.write(
+            "\n"
+        )
+
+        file.flush()
+
+        os.fsync(
+            file.fileno()
+        )
+
+    os.replace(
+        temp_path,
+        path,
+    )
+
+
+def load_json(
+    path,
+):
+
+    path = Path(
+        path
+    )
+
+    if not path.exists():
+
+        raise FileNotFoundError(
+            f"JSON dosyası bulunamadı:\n{path}"
+        )
+
+    with open(
+        path,
+        "r",
+        encoding="utf-8",
+    ) as file:
+
+        return json.load(
+            file
+        )
+
+
+def sha256_bytes(data):
+
+    return hashlib.sha256(data).hexdigest()
+
+
+def _canonical_json_bytes(data):
+
+    text = json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    return text.replace(
+        "\n",
+        os.linesep,
+    ).encode("utf-8")
+
+
+def now_stamp():
+
+    return (
+        datetime.now()
+        .strftime(
+            "%Y%m%d_%H%M%S"
+        )
+    )
+
+
+# ============================================================
+# PREVIOUS PENDING PRESERVATION
+# ============================================================
+
+def preserve_previous_pending(
+    case_id,
+    pending_path,
+):
+
+    pending_path = Path(
+        pending_path
+    )
+
+    if not pending_path.exists():
+
+        return None
+
+    history_dir = (
+        get_history_dir(
+            case_id
+        )
+    )
+
+    history_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    timestamp = now_stamp()
+
+    history_path = (
+        history_dir
+        / (
+            "timeline_pending_before_engine_"
+            + timestamp
+            + ".json.pending"
+        )
+    )
+
+    shutil.move(
+        str(
+            pending_path
+        ),
+        str(
+            history_path
+        ),
+    )
+
+    return history_path
+
+
+# ============================================================
+# GENERATION AUDIT RECORD (ROW 19C-3c-i)
+#
+# `fact_approval._write_audit_record_excl()` ile AYNI desen: zaman
+# damgalı taban ad + `O_CREAT|O_EXCL` + sayısal sonek - sabit adın
+# ÜZERİNE YAZMA sınıfı kapatılır; replay/reconciliation eşleşmesi HER
+# ZAMAN içerikten yapılır, addan asla.
+# ============================================================
+
+def _write_generation_audit_record_excl(
+    reviews_dir,
+    audit_record,
+):
+
+    reviews_dir = Path(reviews_dir)
+    reviews_dir.mkdir(parents=True, exist_ok=True)
+
+    base = f"timeline_{now_stamp()}"
+
+    suffix = 0
+
+    while True:
+
+        if suffix == 0:
+            name = f"{base}.generation_audit.json"
+        else:
+            name = f"{base}_{suffix}.generation_audit.json"
+
+        path_containment.validate_segment(name)
+
+        candidate = path_containment.resolve_for_create(
+            reviews_dir,
+            name,
+        )
+
+        try:
+            fd = os.open(
+                candidate,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+            )
+        except FileExistsError:
+            suffix += 1
+            if suffix > 1000:
+                raise RuntimeError(
+                    "Generation audit dosya adı için 1000 denemede "
+                    "boş ad bulunamadı."
+                )
+            continue
+
+        with os.fdopen(fd, "wb") as file:
+            file.write(_canonical_json_bytes(audit_record))
+
+        return candidate
+
+
+# ============================================================
+# WRITE PENDING (ATOMIC + HISTORY + ROLLBACK + AUDIT)
+# ============================================================
+
+def write_pending(
+    case_id,
+    timeline,
+    *,
+    input_digest=None,
+    generation_parameters_digest=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
+    pre_commit_callback=None,
+):
+
+    mutation_binding_provided = (
+        mutation_idempotency_key is not None
+    )
+
+    if mutation_binding_provided:
+
+        if (
+            input_digest is None
+            or mutation_resource_key is None
+            or mutation_actor_ref is None
+        ):
+
+            raise TimelineEngineError(
+                "mutation_idempotency_key verildiğinde input_digest/"
+                "mutation_resource_key/mutation_actor_ref de "
+                "verilmelidir (kısmi mutation-binding kabul edilmez)."
+            )
+
+    timeline_dir = get_case_timeline_dir(case_id)
+
+    timeline_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    pending_path = get_pending_path(case_id)
+
+    previous_pending_history = preserve_previous_pending(
+        case_id=case_id,
+        pending_path=pending_path,
+    )
+
+    try:
+
+        if pre_commit_callback is not None:
+
+            pre_commit_callback()
+
+        atomic_write_json(
+            pending_path,
+            timeline,
+        )
+
+        # ====================================================
+        # POST-WRITE TIMELINE VALIDATOR
+        # ====================================================
+
+        validation = validate_timeline(
+            timeline_path=pending_path,
+            expected_case_id=case_id,
+            raise_on_error=True,
+        )
+
+        if validation.get("valid") is not True:
+
+            raise TimelineEngineError(
+                "Post-write Timeline Validator valid=False."
+            )
+
+        # ====================================================
+        # RELOAD (GERÇEK DİSK BAYTLARINDAN HASH)
+        # ====================================================
+
+        pending_raw_bytes = pending_path.read_bytes()
+
+        pending_sha256 = sha256_bytes(pending_raw_bytes)
+
+        written = json.loads(pending_raw_bytes.decode("utf-8"))
+
+        generated_at = written.get("generated_at")
+
+        # ====================================================
+        # GENERATION AUDIT RECORD (yalnız coordinator-mode'da)
+        # ====================================================
+
+        audit_path = None
+
+        first_write = previous_pending_history is None
+
+        if mutation_binding_provided:
+
+            history_backup_path = None
+
+            history_backup_sha256 = None
+
+            if not first_write:
+
+                history_backup_path = str(previous_pending_history)
+
+                history_backup_sha256 = sha256_bytes(
+                    previous_pending_history.read_bytes()
+                )
+
+            audit_record = {
+                "schema_version": GENERATION_AUDIT_SCHEMA_VERSION,
+                "case_id": case_id,
+                "target_ref": get_target_ref(),
+                "target_state": "generated",
+                "action_family": GENERATION_ACTION_FAMILY,
+                "mutation_idempotency_key": mutation_idempotency_key,
+                "mutation_resource_key": mutation_resource_key,
+                "mutation_actor_ref": mutation_actor_ref,
+                "input_digest": input_digest,
+                "generation_parameters_digest": generation_parameters_digest,
+                "first_write": first_write,
+                "history_backup_path": history_backup_path,
+                "history_backup_sha256": history_backup_sha256,
+                "pending_sha256": pending_sha256,
+                "generated_at": generated_at,
+                "outcome": "generated",
+                "written_at": (
+                    datetime.now()
+                    .astimezone()
+                    .isoformat()
+                ),
+            }
+
+            audit_path = _write_generation_audit_record_excl(
+                reviews_dir=get_reviews_dir(case_id),
+                audit_record=audit_record,
+            )
+
+        return {
+            "pending_path": pending_path,
+            "validation": validation,
+            "previous_pending_history": previous_pending_history,
+            "pending_sha256": pending_sha256,
+            "audit_path": audit_path,
+            "first_write": first_write,
+        }
+
+    except Exception:
+
+        if pending_path.exists():
+
+            pending_path.unlink()
+
+        if (
+            previous_pending_history is not None
+            and previous_pending_history.exists()
+        ):
+
+            shutil.move(
+                str(previous_pending_history),
+                str(pending_path),
+            )
+
+        raise
 
 
 # ============================================================
@@ -1339,6 +1754,15 @@ def summarize_timeline(
 
 def run_timeline_engine(
     case_id,
+    *,
+    document_paths=None,
+    facts_paths=None,
+    input_digest=None,
+    generation_parameters_digest=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
+    pre_commit_callback=None,
 ):
 
     case_dir = (
@@ -1354,7 +1778,9 @@ def run_timeline_engine(
 
     build_result = (
         build_timeline(
-            case_id
+            case_id,
+            document_paths=document_paths,
+            facts_paths=facts_paths,
         )
     )
 
@@ -1364,29 +1790,20 @@ def run_timeline_engine(
         ]
     )
 
-    output_path = (
-        case_dir
-        / "timeline"
-        / "timeline_v1_1.json.pending"
+    write_result = write_pending(
+        case_id=case_id,
+        timeline=timeline,
+        input_digest=input_digest,
+        generation_parameters_digest=generation_parameters_digest,
+        mutation_idempotency_key=mutation_idempotency_key,
+        mutation_resource_key=mutation_resource_key,
+        mutation_actor_ref=mutation_actor_ref,
+        pre_commit_callback=pre_commit_callback,
     )
 
-    write_json(
-        output_path,
-        timeline,
-    )
+    output_path = write_result["pending_path"]
 
-    validation = (
-        validate_timeline(
-            timeline_path=
-                output_path,
-
-            expected_case_id=
-                case_id,
-
-            raise_on_error=
-                True,
-        )
-    )
+    validation = write_result["validation"]
 
     summary = (
         summarize_timeline(
@@ -1426,312 +1843,49 @@ def run_timeline_engine(
             build_result[
                 "document_count"
             ],
+
+        "previous_pending_history":
+            write_result["previous_pending_history"],
+
+        "audit_path":
+            write_result["audit_path"],
+
+        "first_write":
+            write_result["first_write"],
+
+        "pending_sha256":
+            write_result["pending_sha256"],
     }
 
 
 # ============================================================
 # CLI
+#
+# ROW 19C-3c-i: bu doğrudan mutasyon CLI yolu DEVRE DIŞI bırakıldı.
+# `run_timeline_engine()`'in kendisi DEĞİŞMEDİ ve tam olarak
+# fonksiyoneldir - yalnız `ui.services.generation_mutation_facade`
+# üzerinden (mutation coordinator/journal altyapısına bağlı olarak)
+# çağrılabilir. Bu dosyada önceden var olan koşulsuz mutasyon dışında
+# korunması gereken bir preview/self-test dalı YOKTU (bkz. Row 19C-3c-i
+# final scope raporu) - bu yüzden kapama argparse'ı hiç kurmadan
+# doğrudan reddeder.
 # ============================================================
+
+_LEGACY_CLI_REFUSAL_MESSAGE = (
+    "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3b).\n"
+    "Gerçek üretim için: python -m ui.cli_mutate generation "
+    "<preview|apply> --row-key timeline ..."
+)
+
 
 def main():
 
-    parser = argparse.ArgumentParser(
-        description=(
-            "Vergi AI Timeline Engine V1.1"
-        )
-    )
-
-    parser.add_argument(
-        "--case",
-        dest="case_id",
-        default=DEFAULT_CASE_ID,
-    )
-
-    args = parser.parse_args()
-
-    print()
-
     print(
-        "======================================"
+        _LEGACY_CLI_REFUSAL_MESSAGE,
+        file=sys.stderr,
     )
 
-    print(
-        " VERGİ AI - TIMELINE ENGINE V1.1"
-    )
-
-    print(
-        "======================================"
-    )
-
-    print()
-
-    print(
-        "Timeline oluşturuluyor..."
-    )
-
-    print(
-        "Engine:",
-        TIMELINE_ENGINE_VERSION,
-    )
-
-    print(
-        "Timeline policy:",
-        TIMELINE_POLICY_VERSION,
-    )
-
-    print(
-        "Consolidation policy:",
-        TIMELINE_CONSOLIDATION_POLICY_VERSION,
-    )
-
-    print(
-        "Case:",
-        args.case_id,
-    )
-
-    result = (
-        run_timeline_engine(
-            args.case_id
-        )
-    )
-
-    timeline = (
-        result[
-            "timeline"
-        ]
-    )
-
-    summary = (
-        result[
-            "summary"
-        ]
-    )
-
-    validation = (
-        result[
-            "validation"
-        ]
-    )
-
-    print()
-
-    print(
-        "TIMELINE OLUŞTURULDU"
-    )
-
-    print(
-        "Timeline ID:",
-        timeline[
-            "timeline_id"
-        ],
-    )
-
-    print(
-        "Raw candidate:",
-        result[
-            "raw_candidate_count"
-        ],
-    )
-
-    print(
-        "Consolidated event:",
-        result[
-            "consolidated_candidate_count"
-        ],
-    )
-
-    print(
-        "Final event:",
-        summary[
-            "event_count"
-        ],
-    )
-
-    print(
-        "Status:",
-        timeline[
-            "status"
-        ],
-    )
-
-    print(
-        "Validator:",
-        (
-            "PASS"
-            if validation[
-                "valid"
-            ]
-            else "FAIL"
-        ),
-    )
-
-    print()
-
-    print(
-        "Event types:",
-        summary[
-            "event_types"
-        ],
-    )
-
-    print(
-        "Verification:",
-        summary[
-            "verification"
-        ],
-    )
-
-    print(
-        "Deadline relevant:",
-        summary[
-            "deadline_relevant"
-        ],
-    )
-
-    print(
-        "Canonical fact support:",
-        summary[
-            "source_fact_support"
-        ],
-    )
-
-    print()
-
-    print(
-        "Chronology:"
-    )
-
-    for event in timeline[
-        "events"
-    ]:
-
-        print()
-
-        print(
-            "-",
-            event[
-                "date"
-            ],
-            "|",
-            event[
-                "event_type"
-            ],
-            "|",
-            event[
-                "verification_state"
-            ],
-        )
-
-        print(
-            "  Statement:",
-            event[
-                "statement"
-            ],
-        )
-
-        print(
-            "  Facts:",
-            event[
-                "source_fact_ids"
-            ],
-        )
-
-        print(
-            "  Documents:",
-            event[
-                "source_document_ids"
-            ],
-        )
-
-    print()
-
-    print(
-        "Pending output:"
-    )
-
-    print(
-        result[
-            "output_path"
-        ]
-    )
-
-    if timeline.get(
-        "warnings"
-    ):
-
-        print()
-
-        print(
-            "Engine warnings:"
-        )
-
-        for warning in timeline[
-            "warnings"
-        ]:
-
-            print(
-                "-",
-                warning,
-            )
-
-    if validation.get(
-        "warnings"
-    ):
-
-        print()
-
-        print(
-            "Validator warnings:"
-        )
-
-        for warning in validation[
-            "warnings"
-        ]:
-
-            print(
-                "-",
-                warning,
-            )
-
-    print()
-
-    print(
-        "SAFETY CHECKS:"
-    )
-
-    print(
-        "- Timeline yalnız canonical facts kullanır."
-    )
-
-    print(
-        "- Multi-source fact desteği consolidation sırasında korunur."
-    )
-
-    print(
-        "- Verification seviyesi yükseltilmez."
-    )
-
-    print(
-        "- Dava Tarihi tek başına filing_date değildir."
-    )
-
-    print(
-        "- Hukuki süre hesabı yapılmaz."
-    )
-
-    print()
-
-    print(
-        "======================================"
-    )
-
-    print(
-        " TIMELINE ENGINE V1.1: PASS"
-    )
-
-    print(
-        "======================================"
-    )
+    raise SystemExit(2)
 
 
 # ============================================================

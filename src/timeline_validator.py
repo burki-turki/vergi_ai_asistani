@@ -295,6 +295,8 @@ def get_case_dispute_item_ids(
 
 def load_document_index(
     case_id,
+    *,
+    document_paths=None,
 ):
 
     documents_dir = (
@@ -312,11 +314,21 @@ def load_document_index(
 
     documents = {}
 
-    for document_path in sorted(
-        documents_dir.glob(
-            "*/document.json"
+    if document_paths is None:
+
+        candidate_document_paths = sorted(
+            documents_dir.glob(
+                "*/document.json"
+            )
         )
-    ):
+
+    else:
+
+        candidate_document_paths = sorted(
+            document_paths
+        )
+
+    for document_path in candidate_document_paths:
 
         document = load_json(
             document_path
@@ -373,6 +385,8 @@ def load_document_index(
 
 def load_canonical_fact_index(
     case_id,
+    *,
+    facts_paths=None,
 ):
 
     documents_dir = (
@@ -394,11 +408,21 @@ def load_canonical_fact_index(
 
     canonical_files = []
 
-    for facts_path in sorted(
-        documents_dir.glob(
-            "*/extractions/facts.json"
+    if facts_paths is None:
+
+        candidate_facts_paths = sorted(
+            documents_dir.glob(
+                "*/extractions/facts.json"
+            )
         )
-    ):
+
+    else:
+
+        candidate_facts_paths = sorted(
+            facts_paths
+        )
+
+    for facts_path in candidate_facts_paths:
 
         extraction = load_json(
             facts_path

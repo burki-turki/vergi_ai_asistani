@@ -2444,5 +2444,320 @@ finally:
     _shutil.rmtree(dr_case_dir, ignore_errors=True)
 
 
+# ============================================================
+# ROW 19C-3c-i - GENERATION RECONCILIATION ADAPTER (REAL, independent
+# pre-state/post-state proof). Uses the REAL `GenerationReconciliation
+# Adapter` (row_key="deadline", module=deadline_engine) against a REAL
+# synthetic case directory under CASES_DIR (deadline_engine.CASES_DIR
+# and ui.services.paths.CASES_DIR resolve to the SAME real directory -
+# both are `<repo>/data/cases`), cleaned up unconditionally in
+# `finally`, never touching any real case. Exercises the final
+# erratum's required (a)-(e) scenarios: pre-state and post-state proofs
+# are computed by two functions that never see each other's result.
+# ============================================================
+
+import deadline_engine as _gen_deadline_engine                        # noqa: E402
+import ui.services.generation_mutation_facade as _gen_facade          # noqa: E402
+import ui.services.generation_mutation_adapters as _gen_adapters      # noqa: E402
+
+GEN_CASE_ID = "case_gen_adapter_bindings"
+GEN_ANCHOR = "timeline_event_gen_adapter"
+
+gen_case_dir = _dr_real_paths.CASES_DIR / GEN_CASE_ID
+if gen_case_dir.exists():
+    _shutil.rmtree(gen_case_dir)
+gen_case_dir.mkdir(parents=True)
+
+try:
+    gen_deadline_dir = gen_case_dir / "deadlines"
+    gen_pending_path = gen_deadline_dir / f"deadline_{GEN_CASE_ID}_v1.json.pending"
+    gen_reviews_dir = gen_deadline_dir / "generation_reviews"
+
+    real_gen_adapter = _gen_adapters.GenerationReconciliationAdapter(_gen_deadline_engine, "deadline")
+    GEN_ACTION_FAMILY = _gen_facade.generation_action_family_for("deadline")
+    GEN_TARGET_REF = _gen_deadline_engine.get_target_ref(GEN_ANCHOR)
+    _GEN_SNAPSHOT_ABSENT = _gen_adapters._SNAPSHOT_ABSENT
+    _GEN_SNAPSHOT_PRESENT = _gen_adapters._SNAPSHOT_PRESENT
+
+    def gen_candidate_pre_hash(input_digest, pending_presence, pending_sha256):
+        return _gen_adapters._compute_candidate_pre_hash(input_digest, pending_presence, pending_sha256)
+
+    def gen_intent(**overrides):
+        base = dict(
+            actor_type="iam_user", actor_ref="7",
+            resource_key=f"case:{GEN_CASE_ID}", action_family=GEN_ACTION_FAMILY,
+            target_ref=GEN_TARGET_REF, target_state="generated",
+            pre_hash="placeholder_not_a_real_digest", pre_revision="input_digest_placeholder",
+        )
+        base.update(overrides)
+        return _MutationIntent(**base)
+
+    def gen_entry(**overrides):
+        intent = gen_intent(**{k: v for k, v in overrides.items() if k in ("pre_hash", "pre_revision", "target_ref")})
+        fields = dict(
+            journal_id=1, resource_key=f"case:{GEN_CASE_ID}", action_family=GEN_ACTION_FAMILY,
+            target_ref=intent.target_ref, target_state="generated",
+            pre_hash=intent.pre_hash, pre_revision=intent.pre_revision, expected_post_hash=None,
+            state="reconciliation_required", idempotency_key=_compute_idk(intent),
+            request_fingerprint=_compute_fp(intent), actor_label="7",
+        )
+        return mr.JournalEntrySnapshot(**fields)
+
+    def write_gen_audit(record, *, filename="deadline_20260101_000000.generation_audit.json"):
+        gen_reviews_dir.mkdir(parents=True, exist_ok=True)
+        if isinstance(record, str):
+            (gen_reviews_dir / filename).write_text(record, encoding="utf-8")
+        else:
+            (gen_reviews_dir / filename).write_text(_json.dumps(record), encoding="utf-8")
+
+    def clear_gen_reviews():
+        if gen_reviews_dir.exists():
+            _shutil.rmtree(gen_reviews_dir)
+
+    def clear_gen_pending():
+        if gen_pending_path.exists():
+            gen_pending_path.unlink()
+
+    # ---- (a) FIRST-WRITE CRASH: pending absent both before and after -
+    # pre=True (nothing changed, still absent), post=False (nothing was
+    # ever generated). ----
+    clear_gen_reviews()
+    clear_gen_pending()
+    input_digest_a = "input_digest_scenario_a"
+    pre_hash_a = gen_candidate_pre_hash(input_digest_a, _GEN_SNAPSHOT_ABSENT, _GEN_SNAPSHOT_ABSENT)
+    evidence_a = real_gen_adapter.gather_evidence(gen_entry(pre_hash=pre_hash_a, pre_revision=input_digest_a))
+    check(
+        "ROW 19C-3c-i erratum (a): first-write crash, pending absent before AND after -> "
+        "pre_state_confirmed_unchanged=True, post_state_verified=False (independent proofs, "
+        "never a shared dual-false short-circuit)",
+        evidence_a.pre_state_confirmed_unchanged is True and evidence_a.post_state_verified is False,
+        f"got {evidence_a!r}",
+    )
+
+    # ---- a WRONG candidate pre_hash (content genuinely differs) -> pre=False. ----
+    evidence_wrong = real_gen_adapter.gather_evidence(gen_entry(pre_hash="0" * 64, pre_revision=input_digest_a))
+    check(
+        "ROW 19C-3c-i: a WRONG candidate pre_hash (content genuinely differs) yields "
+        "pre_state_confirmed_unchanged=False",
+        evidence_wrong.pre_state_confirmed_unchanged is False,
+    )
+
+    # ---- (d) valid current pending + exactly one fully-bound audit -
+    # post=True, observed_post_hash = real pending hash. ----
+    gen_deadline_dir.mkdir(parents=True, exist_ok=True)
+    pending_content_d = '{"deadline_analysis_id":"x","deadlines":[]}'
+    gen_pending_path.write_text(pending_content_d, encoding="utf-8")
+    pending_hash_d = _hashlib.sha256(pending_content_d.encode("utf-8")).hexdigest()
+    entry_d = gen_entry()
+    good_gen_audit = {
+        "schema_version": "1", "case_id": GEN_CASE_ID, "target_ref": GEN_TARGET_REF,
+        "target_state": "generated", "action_family": GEN_ACTION_FAMILY,
+        "mutation_idempotency_key": entry_d.idempotency_key,
+        "mutation_resource_key": f"case:{GEN_CASE_ID}", "mutation_actor_ref": "7",
+        "input_digest": entry_d.pre_revision, "generation_parameters_digest": "gp_digest_placeholder",
+        "first_write": True, "history_backup_path": None, "history_backup_sha256": None,
+        "pending_sha256": pending_hash_d, "generated_at": "2026-01-01T00:00:00+00:00",
+        "outcome": "generated", "written_at": "2026-01-01T00:00:01+00:00",
+    }
+    write_gen_audit(good_gen_audit)
+    evidence_d = real_gen_adapter.gather_evidence(entry_d)
+    check(
+        "ROW 19C-3c-i erratum (d): valid current pending + 1 fully-bound success audit -> "
+        "post_state_verified=True with the REAL pending file hash as observed_post_hash",
+        evidence_d.post_state_verified is True and evidence_d.observed_post_hash == pending_hash_d,
+        f"got {evidence_d!r}",
+    )
+
+    # ---- binding tamper cases - each ONE field changed from the baseline ----
+    gen_binding_cases = [
+        ("mutation_idempotency_key WRONG", {"mutation_idempotency_key": "other"}),
+        ("mutation_resource_key WRONG", {"mutation_resource_key": "case:other_case"}),
+        ("action_family WRONG", {"action_family": "generation.timeline"}),
+        ("pending_sha256 WRONG", {"pending_sha256": "0" * 64}),
+        ("outcome WRONG", {"outcome": "not_generated"}),
+    ]
+    for label, override in gen_binding_cases:
+        write_gen_audit({**good_gen_audit, **override})
+        evidence = real_gen_adapter.gather_evidence(entry_d)
+        check(
+            f"ROW 19C-3c-i real adapter: {label} yields post_state_verified=False (never "
+            "auto-completed)",
+            evidence.post_state_verified is False,
+            f"got {evidence!r}",
+        )
+    write_gen_audit(good_gen_audit)
+
+    # ---- (c) audit missing/corrupt -> post=False; a JSONDecodeError in
+    # the audit scan is caught INSIDE _compute_post_state_proof's own
+    # boundary and never escapes as an exception, and the INDEPENDENTLY
+    # computed pre-state proof is completely unaffected by it. ----
+    pre_proof_before_corruption = real_gen_adapter._compute_pre_state_proof(entry_d, gen_pending_path)
+    write_gen_audit("not a json object at all {")
+    evidence_c = real_gen_adapter.gather_evidence(entry_d)
+    check(
+        "ROW 19C-3c-i erratum (c): pending present but the only audit is corrupt/unparseable -> "
+        "post_state_verified=False, no exception escapes gather_evidence()",
+        evidence_c.post_state_verified is False,
+        f"got {evidence_c!r}",
+    )
+    pre_proof_after_corruption = real_gen_adapter._compute_pre_state_proof(entry_d, gen_pending_path)
+    check(
+        "ROW 19C-3c-i erratum (c): the pre-state proof for the SAME entry is BYTE-IDENTICAL "
+        "before and after the audit directory is corrupted - _compute_pre_state_proof() never "
+        "reads the audit directory at all, so a corrupt audit has zero effect on it",
+        pre_proof_before_corruption == pre_proof_after_corruption,
+        f"before={pre_proof_before_corruption!r} after={pre_proof_after_corruption!r}",
+    )
+    write_gen_audit(good_gen_audit)
+
+    # ---- (e) COMBINED SCENARIO (explicit ROW 19C-3c-i remediation
+    # requirement): the PENDING file's OWN raw bytes represent BROKEN/
+    # invalid JSON (proving the adapter's byte-level pre/post proofs are
+    # COMPLETELY INDIFFERENT to whether pending content happens to be
+    # parseable JSON - neither `_compute_pre_state_proof()` nor
+    # `_compute_post_state_proof()` ever parses the pending file itself,
+    # only hashes its raw bytes) AND a genuinely UNPARSEABLE audit
+    # record is present (a real "post JSON parse error" case). Both
+    # halves together must resolve to post_state_verified=False /
+    # pre_state_confirmed_unchanged=True, and this must carry all the
+    # way through the FULL `reconcile_and_apply_journal_entry()`
+    # pipeline (not merely `gather_evidence()` in isolation) to a
+    # durable 'failed'/'reconciled_failed_pre_state_confirmed_unchanged'
+    # resolution - the post-side JSON parse failure must NEVER suppress
+    # or contaminate the independently-computed, TRUE pre-proof. ----
+    clear_gen_reviews()
+    broken_json_pending_bytes = b'{"deadline_analysis_id": "broken", "deadlines": [ THIS IS NOT VALID JSON'
+    gen_pending_path.write_bytes(broken_json_pending_bytes)
+    broken_pending_sha256 = _hashlib.sha256(broken_json_pending_bytes).hexdigest()
+    input_digest_e = "input_digest_scenario_e"
+    pre_hash_e = gen_candidate_pre_hash(input_digest_e, _GEN_SNAPSHOT_PRESENT, broken_pending_sha256)
+    entry_e = gen_entry(pre_hash=pre_hash_e, pre_revision=input_digest_e)
+    write_gen_audit("this is not json at all { [ broken")  # the "post JSON parse error" half
+    evidence_e = real_gen_adapter.gather_evidence(entry_e)
+    check(
+        "ROW 19C-3c-i erratum (e): pending's OWN raw bytes are broken/invalid JSON (unchanged "
+        "from the captured pre-state) + a genuinely unparseable audit record -> "
+        "post_state_verified=False, pre_state_confirmed_unchanged=True (the post-side JSON parse "
+        "failure never suppresses the independently-computed, TRUE pre-proof)",
+        evidence_e.post_state_verified is False and evidence_e.pre_state_confirmed_unchanged is True,
+        f"got {evidence_e!r}",
+    )
+    check(
+        "ROW 19C-3c-i erratum (e): the current pending's raw bytes are STILL byte-for-byte the "
+        "same broken-JSON content the pre_hash was captured against (genuinely unchanged, not "
+        "merely re-derived)",
+        gen_pending_path.read_bytes() == broken_json_pending_bytes,
+    )
+    gen_e_registry = mr.MutationAdapterRegistry().with_adapter(GEN_ACTION_FAMILY, real_gen_adapter)
+    gen_e_conn = FakeReconcileConn([make_journal_row(
+        id=1, resource_key=f"case:{GEN_CASE_ID}", action_family=GEN_ACTION_FAMILY,
+        target_ref=GEN_TARGET_REF, target_state="generated",
+        pre_hash=entry_e.pre_hash, pre_revision=entry_e.pre_revision,
+        state="reconciliation_required", idempotency_key=entry_e.idempotency_key,
+        request_fingerprint=_compute_fp(gen_intent(pre_hash=pre_hash_e, pre_revision=input_digest_e)),
+        actor_label="7",
+    )])
+    _lock_calls.clear()
+    ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+    ml.release_lock_session = _fake_release_lock_session
+    try:
+        gen_e_outcome = mr.reconcile_and_apply_journal_entry(gen_e_conn, 1, gen_e_registry)
+    finally:
+        ml.acquire_case_lock_session = _original_acquire_case
+        ml.release_lock_session = _original_release
+    check(
+        "ROW 19C-3c-i erratum (e) end-to-end: the FULL reconciliation pipeline (not merely "
+        "gather_evidence() in isolation) resolves this row to 'failed' with resolution_code="
+        "'reconciled_failed_pre_state_confirmed_unchanged' - never a fabricated 'completed', "
+        "never left 'reconciliation_required'",
+        gen_e_outcome.new_state == "failed"
+        and gen_e_outcome.resolution_code == "reconciled_failed_pre_state_confirmed_unchanged",
+        f"got {gen_e_outcome!r}",
+    )
+    check(
+        "ROW 19C-3c-i erratum (e) end-to-end: the journal row itself was durably updated to "
+        "'failed' with the matching resolution_code",
+        gen_e_conn.table[0]["state"] == "failed"
+        and gen_e_conn.table[0]["resolution_code"] == "reconciled_failed_pre_state_confirmed_unchanged",
+        f"got {gen_e_conn.table!r}",
+    )
+    clear_gen_reviews()
+    write_gen_audit(good_gen_audit)
+    gen_pending_path.write_text(pending_content_d, encoding="utf-8")
+
+    # ---- duplicate matching audits -> ambiguous, unconditionally. ----
+    write_gen_audit(good_gen_audit, filename="deadline_20260101_000000.generation_audit.json")
+    write_gen_audit(good_gen_audit, filename="deadline_20260101_000001.generation_audit.json")
+    dup_evidence = real_gen_adapter.gather_evidence(entry_d)
+    check(
+        "ROW 19C-3c-i real adapter: 2 clean, identically-bound audit records for the SAME "
+        "idempotency_key -> post_state_verified=False (ambiguous, never auto-completed)",
+        dup_evidence.post_state_verified is False,
+        f"got {dup_evidence!r}",
+    )
+    clear_gen_reviews()
+    write_gen_audit(good_gen_audit)
+
+    # ---- (b) OVERWRITE CRASH, pending bytes UNCHANGED from the state the
+    # composite pre_hash was computed against, but the on-disk audit
+    # belongs to a DIFFERENT idempotency_key entirely - pre=True (content
+    # genuinely unchanged), post=False (no audit binds THIS attempt) ->
+    # dual result resolves to 'failed'/pre_state_confirmed_unchanged,
+    # never a false 'completed'. ----
+    unrelated_input_digest = "input_digest_scenario_b_unrelated"
+    pre_hash_b = gen_candidate_pre_hash(unrelated_input_digest, _GEN_SNAPSHOT_PRESENT, pending_hash_d)
+    entry_b = gen_entry(pre_hash=pre_hash_b, pre_revision=unrelated_input_digest)
+    evidence_b = real_gen_adapter.gather_evidence(entry_b)
+    check(
+        "ROW 19C-3c-i erratum (b): overwrite crash, pending bytes UNCHANGED (composite pre_hash "
+        "matches), but the existing audit belongs to a DIFFERENT idempotency_key -> "
+        "pre_state_confirmed_unchanged=True, post_state_verified=False",
+        evidence_b.pre_state_confirmed_unchanged is True and evidence_b.post_state_verified is False,
+        f"got {evidence_b!r}",
+    )
+
+    # ---- target_ref family-mismatch -> dual-false (data anomaly, never
+    # an adapter exception). ----
+    malformed_evidence = real_gen_adapter.gather_evidence(gen_entry(target_ref="not.a.valid.target_ref"))
+    check(
+        "ROW 19C-3c-i real adapter: malformed/mismatched target_ref -> dual-false (data anomaly, "
+        "never raised as an exception)",
+        malformed_evidence.post_state_verified is False and malformed_evidence.pre_state_confirmed_unchanged is False,
+    )
+
+    # ---- end-to-end reconcile_and_apply_journal_entry() proof, through
+    # the REAL FakeReconcileConn machinery, using the REAL adapter and a
+    # REAL clean post-state fixture (mirrors the Row 18C section above). ----
+    gen_e2e_registry = mr.MutationAdapterRegistry().with_adapter(GEN_ACTION_FAMILY, real_gen_adapter)
+    gen_e2e_conn = FakeReconcileConn([make_journal_row(
+        id=1, resource_key=f"case:{GEN_CASE_ID}", action_family=GEN_ACTION_FAMILY,
+        target_ref=GEN_TARGET_REF, target_state="generated",
+        pre_hash=entry_d.pre_hash, pre_revision=entry_d.pre_revision,
+        state="reconciliation_required", idempotency_key=entry_d.idempotency_key,
+        request_fingerprint=_compute_fp(gen_intent()), actor_label="7",
+    )])
+    _lock_calls.clear()
+    ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+    ml.release_lock_session = _fake_release_lock_session
+    try:
+        gen_e2e_outcome = mr.reconcile_and_apply_journal_entry(gen_e2e_conn, 1, gen_e2e_registry)
+    finally:
+        ml.acquire_case_lock_session = _original_acquire_case
+        ml.release_lock_session = _original_release
+    check(
+        "ROW 19C-3c-i real adapter end-to-end through reconcile_and_apply_journal_entry(): "
+        "resolves to 'completed' with the real pending file hash as observed_post_hash",
+        gen_e2e_outcome.new_state == "completed" and gen_e2e_outcome.observed_post_hash == pending_hash_d,
+        f"got {gen_e2e_outcome!r}",
+    )
+    check(
+        "ROW 19C-3c-i real adapter end-to-end: the journal row itself was durably updated to "
+        "'completed'",
+        gen_e2e_conn.table[0]["state"] == "completed",
+    )
+finally:
+    _shutil.rmtree(gen_case_dir, ignore_errors=True)
+
+
 print(f"--- test_reconciliation_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)

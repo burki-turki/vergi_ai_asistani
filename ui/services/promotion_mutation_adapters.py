@@ -5,7 +5,8 @@
 # `ui.services.mutation_registry.ReconciliationAdapter` implementasyonu
 # + `register_into()` (reconciliation operator'ün merged registry'sine
 # DÖRDÜNCÜ kaynak olarak eklenir: 10 approval + 24 review + 1
-# drafting_request + 2 promotion = 37 routing key).
+# drafting_request + 2 promotion + 2 generation (Row 19C-3c-i, BEŞİNCİ
+# kaynak, bu dosyada DEĞİL) = 39 routing key).
 #
 # BAĞIMSIZ KANIT İLKESİ (Layer A/B/2c adapters ile aynı): bu modül
 # `promotion_mutation_facade`'in doğrulama/karar fonksiyonlarını

@@ -308,11 +308,17 @@ LEGACY_MUTATION_MATRIX = [
     # ROW 19C-3b SLICE 2 - the two fact/timeline canonical PROMOTION bypasses.
     ("fact_approval", ["--approve"]),
     ("timeline_approval", ["--pending", "row19c3b_pg_slice2_nonexistent.pending", "--approve"]),
+    # ROW 19C-3c-i - the two deadline/timeline deterministic PENDING-
+    # GENERATION bypasses. Neither module builds an argparse parser
+    # anymore (`main()` refuses unconditionally, before parsing anything)
+    # - an empty args list is genuinely representative.
+    ("deadline_engine", []),
+    ("timeline_engine", []),
 ]
 check(
-    "LEGACY_MUTATION_MATRIX (real-PostgreSQL journal invariance section) covers all 17 legacy "
-    "mutation entry points (10 Layer A + 5 Layer B + 2 promotion)",
-    len(LEGACY_MUTATION_MATRIX) == 17,
+    "LEGACY_MUTATION_MATRIX (real-PostgreSQL journal invariance section) covers all 19 legacy "
+    "mutation entry points (10 Layer A + 5 Layer B + 2 promotion + 2 generation)",
+    len(LEGACY_MUTATION_MATRIX) == 19,
 )
 
 # ROW 19C-3b SLICE 1 - EVIDENCE REVIEW FULL FLAG COVERAGE (real-
@@ -337,10 +343,10 @@ check(
     len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 3,
 )
 check(
-    "LEGACY_MUTATION_MATRIX (17 legacy executables) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3 "
-    "additional evidence_review flag variants) = 20 total refusal subprocess scenarios in this "
-    "section - NOT 20 distinct legacy modules (evidence_review itself contributes 4 of the 20)",
-    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 20,
+    "LEGACY_MUTATION_MATRIX (19 legacy executables) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3 "
+    "additional evidence_review flag variants) = 22 total refusal subprocess scenarios in this "
+    "section - NOT 22 distinct legacy modules (evidence_review itself contributes 4 of the 22)",
+    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) == 22,
 )
 
 
@@ -445,7 +451,7 @@ _legacy_journal_count_after = _journal_row_count()
 _legacy_data_snapshot_after = snapshot_real_data_tree()
 
 check(
-    "all 20 legacy mutation bypass scenarios (17 legacy executables + 3 additional evidence_"
+    "all 22 legacy mutation bypass scenarios (19 legacy executables + 3 additional evidence_"
     "review flag variants), real-PostgreSQL environment: mutation.mutation_journal row COUNT is "
     "unchanged before vs after (a direct SELECT count(*) against the real database, not a "
     "restatement of the full-row-set check below)",
@@ -453,7 +459,7 @@ check(
     f"before={_legacy_journal_count_before} after={_legacy_journal_count_after}",
 )
 check(
-    "all 20 legacy mutation bypass scenarios (17 legacy executables + 3 additional evidence_"
+    "all 22 legacy mutation bypass scenarios (19 legacy executables + 3 additional evidence_"
     "review flag variants), real-PostgreSQL environment: the FULL mutation.mutation_journal row "
     "set (every column, every row, real SQL SELECT) is IDENTICAL before vs after - no row was "
     "created for ANY resource_key/action_family, not merely 'the count matches'",
@@ -461,7 +467,7 @@ check(
     f"before={_legacy_journal_snapshot_before!r} after={_legacy_journal_snapshot_after!r}",
 )
 check(
-    "all 20 legacy mutation bypass scenarios (17 legacy executables + 3 additional evidence_"
+    "all 22 legacy mutation bypass scenarios (19 legacy executables + 3 additional evidence_"
     "review flag variants), real-PostgreSQL environment: the REAL data/ tree is byte-for-byte "
     "UNCHANGED",
     _legacy_data_snapshot_before == _legacy_data_snapshot_after,

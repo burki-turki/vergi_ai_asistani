@@ -68,6 +68,24 @@
 # No CLI argument accepts a `reviewer_ref`/action_family/channel value -
 # the review subcommand always requests
 # `review_registry.LOCAL_CLI_REVIEWER_REF` internally, unconditionally.
+#
+# ROW 19C-3c-i EXTENSION: a FOURTH subcommand, `generation`, closes the
+# two deterministic deadline/timeline PENDING-GENERATION CLI bypasses
+# (src/deadline_engine.py, src/timeline_engine.py) by routing them
+# through the NEW, separate `ui.services.generation_mutation_facade`
+# (action families `generation.deadline` / `generation.timeline` - the
+# `approval`/`promotion` subcommands' own row-key universes are NOT
+# extended). Unlike `promotion`, generation has no pre-existing pending
+# to point at with `--expected-hash` - it CREATES one; the analogous
+# operator confirmation is `--expected-input-digest` (a content-only
+# hash of the live canonical case inputs, shown by a prior preview run).
+# `--anchor` is REQUIRED for `--row-key deadline` (both preview and
+# apply) and REJECTED entirely for `--row-key timeline`; `--holiday`/
+# `--calendar-complete`/`--judicial-recess-applicable` are deadline-
+# apply-only. There is deliberately NO `--ruleset`/`--provisions` flag -
+# the coordinated path always uses the facade's own production
+# DEFAULT_RULESET_PATH/DEFAULT_PROVISIONS_PATH constants, never an
+# operator-supplied arbitrary filesystem path.
 # ============================================================
 
 from __future__ import annotations
@@ -124,9 +142,10 @@ def _build_arg_parser():
     parser = _NonExitingArgumentParser(
         prog="python -m ui.cli_mutate",
         description=(
-            "Row 19C-3b - coordinator-integrated CLI for the 10 Layer A approval "
-            "families, 12 Layer B review families and (Slice 2) the 2 fact/timeline "
-            "promotion families. drafting_request.save is NOT covered by this dispatcher."
+            "Row 19C-3b/3c-i - coordinator-integrated CLI for the 10 Layer A approval "
+            "families, 12 Layer B review families, the 2 fact/timeline promotion families, "
+            "and (Row 19C-3c-i) the 2 deadline/timeline pending-generation families. "
+            "drafting_request.save is NOT covered by this dispatcher."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -191,6 +210,49 @@ def _build_arg_parser():
         "--note", dest="note", default=None,
         help="fact-apply-only optional review note (fingerprint-bound, never identity); "
         "REJECTED for timeline and REJECTED without --approve.",
+    )
+
+    # ROW 19C-3c-i: deterministic deadline/timeline PENDING GENERATION -
+    # routed to ui.services.generation_mutation_facade, NEVER to
+    # approval_registry/promotion_mutation_facade. No `--ruleset`/
+    # `--provisions` flag exists here BY DESIGN (see the approved final
+    # scope report): the coordinated path always uses the production
+    # DEFAULT_RULESET_PATH/DEFAULT_PROVISIONS_PATH constants, never an
+    # operator-supplied arbitrary filesystem path.
+    from ui.services import generation_mutation_facade as _generation_facade
+
+    generation_parser = subparsers.add_parser(
+        "generation", help="Deterministic deadline/timeline pending generation (Row 19C-3c-i)",
+    )
+    generation_parser.add_argument("--case", dest="case_id", required=True)
+    generation_parser.add_argument(
+        "--row-key", dest="row_key", required=True,
+        choices=sorted(_generation_facade.GENERATION_ROW_KEY_TO_MODULE_NAME.keys()),
+    )
+    generation_parser.add_argument(
+        "--anchor", dest="anchor_event_id", default=None,
+        help="deadline-only: the canonical timeline anchor event_id (REQUIRED for --row-key "
+        "deadline in BOTH preview and apply; REJECTED entirely for --row-key timeline).",
+    )
+    generation_parser.add_argument(
+        "--holiday", dest="holiday", action="append", default=[],
+        help="deadline-apply-only: an extra holiday date (repeatable); REJECTED for timeline.",
+    )
+    generation_parser.add_argument(
+        "--calendar-complete", dest="calendar_complete", action="store_true", default=False,
+        help="deadline-apply-only; REJECTED for timeline.",
+    )
+    generation_parser.add_argument(
+        "--judicial-recess-applicable", dest="judicial_recess_applicable",
+        choices=["yes", "no", "unknown"], default="unknown",
+        help="deadline-apply-only; REJECTED (non-default) for timeline.",
+    )
+    generation_parser.add_argument("--actor-user-id", dest="actor_user_id", required=True, type=int)
+    generation_parser.add_argument("--apply", action="store_true", default=False)
+    generation_parser.add_argument(
+        "--expected-input-digest", dest="expected_input_digest", default=None,
+        help="REQUIRED with --apply (rejected without it): the case-content input_digest, "
+        "as printed by a prior preview (no --apply) run of this same command.",
     )
 
     return parser
@@ -272,6 +334,46 @@ def _validate_promotion_args(args, *, stderr) -> int | None:
     return None
 
 
+def _validate_generation_args(args, *, stderr) -> int | None:
+    """ROW 19C-3c-i: pure, zero-connection usage-shape checks for the
+    `generation` subcommand - every rule below fires BEFORE any authz
+    repository, filesystem probe, or journal access (mirrors
+    `_validate_promotion_args` exactly; the facade re-enforces the same
+    rules independently as its own pre-I/O `GenerationArgumentError`)."""
+    if args.row_key == "timeline":
+        if args.anchor_event_id is not None:
+            stderr.write("error: --anchor is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
+        if args.holiday:
+            stderr.write("error: --holiday is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
+        if args.calendar_complete:
+            stderr.write("error: --calendar-complete is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
+        if args.judicial_recess_applicable != "unknown":
+            stderr.write("error: --judicial-recess-applicable is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
+    else:
+        if args.anchor_event_id is None:
+            stderr.write("error: --row-key deadline requires --anchor\n")
+            return EXIT_USAGE_ERROR
+    if args.apply and args.expected_input_digest is None:
+        stderr.write("error: --apply requires --expected-input-digest\n")
+        return EXIT_USAGE_ERROR
+    if args.expected_input_digest is not None and not args.apply:
+        stderr.write("error: --expected-input-digest is only meaningful together with --apply\n")
+        return EXIT_USAGE_ERROR
+    return None
+
+
+def _parse_judicial_recess(value):
+    if value == "yes":
+        return True
+    if value == "no":
+        return False
+    return None
+
+
 def _default_authz_conn_factory():
     """Real production authz connection factory - lazy-imported so
     `import ui.cli_mutate` never itself requires psycopg (matches
@@ -310,6 +412,8 @@ def main(
         usage_error = _validate_approval_args(args, stderr=stderr)
     elif args.command == "promotion":
         usage_error = _validate_promotion_args(args, stderr=stderr)
+    elif args.command == "generation":
+        usage_error = _validate_generation_args(args, stderr=stderr)
     else:
         usage_error = _validate_review_args(args, stderr=stderr)
     if usage_error is not None:
@@ -342,6 +446,11 @@ def main(
                 )
             elif args.command == "promotion":
                 outcome = _run_promotion(
+                    args, principal=principal, repository=repository,
+                    mutation_conn_factory=mutation_conn_factory,
+                )
+            elif args.command == "generation":
+                outcome = _run_generation(
                     args, principal=principal, repository=repository,
                     mutation_conn_factory=mutation_conn_factory,
                 )
@@ -463,6 +572,57 @@ def _run_promotion(args, *, principal, repository, mutation_conn_factory) -> str
         f"{' document=' + result.document_id if result.document_id is not None else ''}\n"
         f"canonical_path={result.canonical_path}\n"
         f"canonical_hash={result.canonical_hash}\n"
+        f"audit_path={result.audit_path}\n"
+        f"replayed={result.replayed}\n"
+    )
+
+
+def _run_generation(args, *, principal, repository, mutation_conn_factory) -> str:
+    """ROW 19C-3c-i. PREVIEW (no --apply): the facade's own `preview_
+    generation()` performs the outer 'read' authorization ITSELF, as its
+    very first step, before any filesystem probe - this dispatcher adds
+    no second authz call (mirrors `_run_promotion`'s identical shape).
+    APPLY: zero authz/verification logic of our own; `--expected-input-
+    digest` is always the operator's explicit claim, never recomputed
+    here. No `--ruleset`/`--provisions` flag exists - the coordinated
+    path always uses the facade's own production defaults."""
+    from ui.services import generation_mutation_facade as _generation_facade
+
+    anchor_event_id = args.anchor_event_id if args.row_key == "deadline" else None
+
+    if not args.apply:
+        preview = _generation_facade.preview_generation(
+            args.row_key, args.case_id, anchor_event_id=anchor_event_id,
+            principal=principal, authz_repository=repository,
+        )
+        anchor_part = f" --anchor {preview['anchor_event_id']}" if preview["anchor_event_id"] is not None else ""
+        return (
+            f"PREVIEW generation row_key={args.row_key} case_id={preview['case_id']}"
+            f"{' anchor=' + preview['anchor_event_id'] if preview['anchor_event_id'] is not None else ''}\n"
+            f"target_ref={preview['target_ref']}\n"
+            f"input_digest={preview['input_digest']}\n"
+            f"pending_exists={preview['pending_exists']}\n"
+            f"pending_sha256={preview['pending_sha256']}\n"
+            "Üretmek için: python -m ui.cli_mutate generation --case "
+            f"{preview['case_id']} --row-key {args.row_key}{anchor_part} --actor-user-id "
+            f"{args.actor_user_id} --apply --expected-input-digest {preview['input_digest']}\n"
+        )
+
+    result = _generation_facade.apply_generation(
+        args.row_key, args.case_id, args.expected_input_digest,
+        anchor_event_id=anchor_event_id,
+        holiday_dates=args.holiday if args.row_key == "deadline" else None,
+        calendar_complete=args.calendar_complete if args.row_key == "deadline" else False,
+        judicial_recess_applicable=(
+            _parse_judicial_recess(args.judicial_recess_applicable) if args.row_key == "deadline" else None
+        ),
+        principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+    )
+    return (
+        f"APPLIED generation row_key={args.row_key}"
+        f"{' anchor=' + result.anchor_event_id if result.anchor_event_id is not None else ''}\n"
+        f"pending_path={result.pending_path}\n"
+        f"pending_sha256={result.pending_sha256}\n"
         f"audit_path={result.audit_path}\n"
         f"replayed={result.replayed}\n"
     )

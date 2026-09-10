@@ -299,13 +299,18 @@ PRODUCTION_REGISTRY = _adapters.register_into(PRODUCTION_REGISTRY)
 # `_default_registry_factory()`'s own updated order exactly.
 from ui.services import promotion_mutation_adapters as _promotion_adapters  # noqa: E402
 PRODUCTION_REGISTRY = _promotion_adapters.register_into(PRODUCTION_REGISTRY)
+# ROW 19C-3c-i: the FIFTH merge source, mirroring
+# `_default_registry_factory()`'s own updated order exactly.
+from ui.services import generation_mutation_adapters as _generation_adapters  # noqa: E402
+PRODUCTION_REGISTRY = _generation_adapters.register_into(PRODUCTION_REGISTRY)
 
 check(
-    "ROW 19C-3b SLICE 2: the REAL merged production registry covers 10 (Layer A) + 24 (Layer B - "
-    "12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 (fact/timeline promotion) = 37 "
-    "routing keys - the number of LOGICAL Layer B review_kinds is still 12, unchanged; 24 is a "
-    "channel-separated ADAPTER ROUTING-KEY count, not a doubling of logical families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 37,
+    "ROW 19C-3c-i: the REAL merged production registry covers 10 (Layer A) + 24 (Layer B - "
+    "12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 (fact/timeline promotion) + 2 "
+    "(deadline/timeline generation) = 39 routing keys - the number of LOGICAL Layer B "
+    "review_kinds is still 12, unchanged; 24 is a channel-separated ADAPTER ROUTING-KEY count, "
+    "not a doubling of logical families",
+    len(PRODUCTION_REGISTRY.known_action_families()) == 39,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(

@@ -10,7 +10,7 @@
 # (observed via PostgreSQL's OWN pg_locks view), the REAL
 # `src/fact_approval.py`/`src/timeline_approval.py` writers, and the
 # REAL merged reconciliation registry (`ui.reconciliation_operator.
-# _default_registry_factory()` - 37 routing keys).
+# _default_registry_factory()` - 39 routing keys as of Row 19C-3c-i).
 #
 # WHAT IS NOT REAL: the case tree (re-identified copies of
 # data/cases/case_0001 under a fresh tempdir - the repository's own

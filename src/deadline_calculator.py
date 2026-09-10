@@ -1028,6 +1028,8 @@ def verify_rule_legal_basis_for_date(
     rule_id,
     anchor_date,
     ruleset_path,
+    *,
+    provisions_path=None,
 ):
 
     result = (
@@ -1036,7 +1038,9 @@ def verify_rule_legal_basis_for_date(
                 ruleset_path,
 
             manifest_path=
-                DEFAULT_PROVISIONS_PATH,
+                DEFAULT_PROVISIONS_PATH
+                if provisions_path is None
+                else provisions_path,
 
             temporal_mode=
                 "historical_date",
@@ -1150,6 +1154,8 @@ def build_deadline_record(
     holiday_dates=None,
     calendar_complete=False,
     judicial_recess_applicable=None,
+    *,
+    provisions_path=None,
 ):
 
     selection_state = (
@@ -1494,6 +1500,9 @@ def build_deadline_record(
 
             ruleset_path=
                 ruleset_path,
+
+            provisions_path=
+                provisions_path,
         )
     )
 
@@ -1637,6 +1646,8 @@ def build_case_deadline_analysis(
     holiday_dates=None,
     calendar_complete=False,
     judicial_recess_applicable=None,
+    *,
+    provisions_path=None,
 ):
 
     anchor_event = (
@@ -1685,6 +1696,9 @@ def build_case_deadline_analysis(
 
             judicial_recess_applicable=
                 judicial_recess_applicable,
+
+            provisions_path=
+                provisions_path,
         )
     )
 

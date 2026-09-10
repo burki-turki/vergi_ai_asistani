@@ -292,21 +292,36 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   çifti üzerinden bağlandığı alt-fazdır. Rows 1-18, Row 19A, Row 19B,
   Row 19C-1, Row 19C-2a, Row 19C-2b, Row 19C-2c, Row 19C-3a Slice
   1/Slice 2 ve Row 19C-3b Slice 1 contract'ları değişmedi.
-- Sıradaki canonical alt-faz: **ROW 19C-3c-i — Deterministic Generation
-  Integration** — **ACTIVE / NEXT** — **henüz implementasyona
-  BAŞLANMADI**. Önce timeline/deadline gibi deterministik
-  pending-generation writer'ları için AYRI, salt-okunur bir
-  reconciliation yapılacaktır; gerçek source envanteri kaynak koddan
-  YENİDEN doğrulanacaktır - önceki alt-fazların (Row 19C-3b Slice
-  1/Slice 2 dahil) tamamladığı kapsamdan VARSAYILMAYACAKTIR. Kendi TAM
-  dosya allowlist'i hazırlanıp implementasyondan ÖNCE kullanıcı
-  tarafından ayrıca onaylanmadan hiçbir dosyaya dokunulamaz (Row 19A'nın
-  dosya-değişiklik sınırı kararı uyarınca) — Row 19C-3b Slice 2 onayı bu
-  alt-fazın dosya değişikliğini ÖNCEDEN yetkilendirmez. Agent-gated
-  generation, retrieval/RAG generation, fact-extraction generation ve
-  global maintenance/RAG ingest bu pointer tarafından OTOMATİK olarak
-  yetkilendirilmez. Row 19D deployment/OS hardening (OS ACL/service
-  identity dahil) bu checkpoint ile HENÜZ başlatılmamıştır.
+- **ROW 19C-3c-i — Deterministic Generation Integration** artık **DONE /
+  LOCKED** — kullanıcı tarafından ayrıca onaylanmış tam dosya
+  allowlist'i (6 yeni + 13 değiştirilmiş dosya) üzerinde implement
+  edildi, bir bağımsız salt-okunur incelemenin bulduğu HIGH önemde bir
+  deadline revision-identity kusuruyla hedefli bir remediation turundan
+  geçti ve son, bağımsız, salt-okunur bir targeted re-review'da
+  `ROW 19C-3c-i LOCK-READY — No blocking findings` verdict'ine ulaştı
+  (bkz. Row 19C-3c-i checkpoint özeti, §5 sonrası). Bu, timeline (Row 7,
+  `src/timeline_engine.run_timeline_engine()`) ve deadline (Row 8,
+  `src/deadline_engine.run_engine()`) deterministik pending-generation
+  writer'larının mutation coordinator/journal altyapısına, iki YENİ,
+  CLI-only action family (`generation.deadline`/`generation.timeline`)
+  üzerinden, ayrı bir generation facade/adapters çifti ile bağlandığı
+  alt-fazdır. Rows 1-18, Row 19A, Row 19B, Row 19C-1, Row 19C-2a, Row
+  19C-2b, Row 19C-2c, Row 19C-3a Slice 1/Slice 2 ve Row 19C-3b Slice
+  1/Slice 2 contract'ları değişmedi.
+- **Sıradaki canonical alt-faz HENÜZ TANIMLANMAMIŞTIR** — bu roadmap-lock
+  işlemi, CLAUDE.md içinde kullanıcı tarafından daha önce kabul edilmiş
+  exact bir "sonraki alt-faz" adı/kapsamı BULAMADI; bu yüzden yeni bir
+  roadmap veya kapsam İCAT ETMEZ. Row 19D (deployment/OS hardening, OS
+  ACL/service identity dahil) bu checkpoint ile HENÜZ BAŞLATILMAMIŞTIR -
+  yalnız Row 19A'nın orijinal tanımından miras alınan, gelecekteki bir
+  kapsam pointer'ı olarak kalmaya devam eder. Agent-gated generation,
+  retrieval/RAG generation, fact-extraction generation ve global
+  maintenance/RAG ingest bu checkpoint tarafından OTOMATİK olarak
+  yetkilendirilmez. Kendi TAM dosya allowlist'i hazırlanıp
+  implementasyondan ÖNCE kullanıcı tarafından ayrıca onaylanmadan
+  hiçbir gelecekteki alt-faza hiçbir dosyada dokunulamaz (Row 19A'nın
+  dosya-değişiklik sınırı kararı uyarınca) - bu checkpoint hiçbir
+  gelecekteki alt-fazın dosya değişikliğini ÖNCEDEN yetkilendirmez.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -3018,6 +3033,217 @@ findings.`**
 
 **Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/19C-3a
 Slice 1/Slice 2/19C-3b Slice 1 örneğinde olduğu gibi yalnız
+`CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
+hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Row 19C-3c-i — Deterministic Generation Integration (DONE / LOCKED — checkpoint özeti)
+
+**Exact scope (final, kilitli)** — Kullanıcı tarafından ayrıca onaylanmış
+tam dosya allowlist'i üzerinde implement edildi: **6 YENİ + 13
+DEĞİŞTİRİLMİŞ = 19 dosya**.
+
+Yeni (6):
+1. `ui/services/generation_mutation_facade.py`
+2. `ui/services/generation_mutation_adapters.py`
+3. `ui/tests/test_generation_mutation_facade_isolated.py`
+4. `ui/tests/test_generation_mutation_integration_postgres.py`
+5. `ui/tests/test_deadline_engine_isolated.py`
+6. `ui/tests/test_timeline_engine_isolated.py`
+
+Değiştirilmiş (13):
+7. `src/deadline_engine.py`
+8. `src/deadline_calculator.py`
+9. `src/timeline_engine.py`
+10. `src/timeline_validator.py`
+11. `ui/cli_mutate.py`
+12. `ui/reconciliation_operator.py`
+13. `ui/services/promotion_mutation_adapters.py`
+14. `ui/tests/test_cli_mutate_isolated.py`
+15. `ui/tests/test_cli_mutate_integration_postgres.py`
+16. `ui/tests/test_reconciliation_operator_isolated.py`
+17. `ui/tests/test_reconciliation_isolated.py`
+18. `ui/tests/test_drafting_request_mutation_integration_postgres.py`
+19. `ui/tests/test_promotion_mutation_integration_postgres.py`
+
+**Tamamlanan kapsam** — İki CLI-only action family: `generation.deadline`
+/ `generation.timeline`. Merged reconciliation registry **37**'den
+**39** routing key'e çıktı. Yeni bir web route/registry surface
+AÇILMADI (generation ailesi yalnız `python -m ui.cli_mutate generation
+...` üzerinden erişilebilir). Dedicated generation facade
+(`generation_mutation_facade.py`) ve BAĞIMSIZ reconciliation adapter
+(`generation_mutation_adapters.py`) eklendi - Layer A/Layer B/
+drafting-request/promotion facade'lerinin HİÇBİRİ GENİŞLETİLMEDİ.
+Existing coordinator, advisory lock, journal, idempotency ve
+dual-authz altyapısı (Row 19C-1/19C-2a) AYNEN kullanıldı, DEĞİŞTİRİLMEDİ.
+Direct `deadline_engine.py`/`timeline_engine.py` mutation CLI yolları
+sabit stderr mesajı + `raise SystemExit(2)` ile, hiçbir DB/case
+filesystem erişimi olmadan kapatıldı. Legacy executable matrisi
+**19**; toplam refusal scenario sayısı **22**.
+
+**Deadline revision/snapshot kontratı (final, remediation SONRASI)** —
+Deadline `input_digest`/`pre_revision` şu DÖRT content revision'ını
+bağlar: case.json, canonical timeline.json, kilit altında yakalanmış
+(captured) ruleset, kilit altında yakalanmış provisions. `anchor_event_id`
+YALNIZ `target_ref=deadline.<anchor_event_id>.pending` içindedir - hiçbir
+digest'e girmez. `secondary_input_hash` YALNIZ
+`holiday_dates`/`calendar_complete`/`judicial_recess_applicable`
+parametre digest'idir - ruleset/provisions bu digest'te DEĞİLDİR (bkz.
+Remediation geçmişi, madde 7-8). Aynı content + aynı anchor + farklı
+parametre → aynı idempotency identity + farklı fingerprint → conflict.
+Ruleset veya provisions revision değişikliği → yeni `pre_revision`/
+idempotency identity → yeni, bağımsız bir generation denemesi (kalıcı
+conflict ÜRETMEZ). Pre-lock best-effort read'den SONRA, under-lock
+taze (fresh) baytlar YALNIZ belleğe (memory) capture edilir - hiçbir
+dosya bu aşamada yazılmaz. Temp snapshot dosyaları ANCAK
+`_mark_executing` sonrasında, `writer_callback` içinde oluşturulur ve
+strict biçimde yeniden hash'lenir (re-hash). Writer, hesaplama için
+YALNIZ bu snapshot rules/provisions'ı kullanır. `pre_commit_callback`,
+atomic write'tan HEMEN önce canlı (live) global revision'ı tekrar
+kontrol eder. Bu protokol global kaynaklar açısından TAM bir
+linearizability SAĞLADIĞINI İDDİA ETMEZ - `pre_commit_callback`'in
+kendi kontrolü ile gerçek `os.replace()` arasında kalan dar pencere
+AÇIKÇA Row 19D borcu olarak KALIR.
+
+**Timeline verified path-set kontratı** — `documents/` kökü,
+document-id dizini, `document.json` ve `extractions/facts.json`
+segmentleri AYRI AYRI, sırasıyla: `lexists` → `resolve_existing` →
+exact-parent membership → doğrulanmış `is_dir`/`is_file` disiplinine
+tabidir. Kaçan/kırık/döngüsel (broken/looping/escaping) bir intermediate
+segment SESSİZCE "absent" sayılAMAZ - tüm taramayı fail-closed durdurur.
+Duplicate resolved alias fail-closed reddedilir. Under-lock üretilen
+sabit, containment-doğrulanmış Path seti (`document_paths`/`facts_paths`)
+writer'a DOĞRUDAN taşınır; override verildiğinde `timeline_validator`
+kendi raw glob'una ASLA geri DÜŞMEZ. Bu bir immutable byte-bundle
+garantisi DEĞİLDİR - yerel bir filesystem aktörünün doğrulama ile
+`open()` arasındaki link/content swap TOCTOU riski Row 19D borcu olarak
+AÇIKÇA KALIR.
+
+**Writer/audit/reconciliation** — Deadline ve timeline pending
+yazımları atomic write + history backup + rollback düzenindedir.
+Validator veya audit failure'ında: yeni pending kaldırılır, önceki
+pending byte-for-byte restore edilir, partial audit temizlenir. Success
+audit tam şema + tam journal binding (idempotency_key, resource_key,
+actor_ref, action_family, target_ref/state, input_digest,
+generation_parameters_digest, pending_sha256, first_write, history
+backup bilgisi) taşır. `entry.pre_hash`/`pre_revision`, first_write/
+history backup bilgisiyle birlikte YENİDEN üretilebilir composite bir
+formülle journal'a bağlanır. Exactly-one fully-bound audit ZORUNLUDUR;
+corrupt/duplicate audit fail-closed (`post_state_verified=False`)
+davranır. `_mark_completed` failure durumunda satır `executing`/
+`observed_post_hash=NULL` kalabilir ve YALNIZ tam disk+audit evidence
+ile SONRADAN `completed` olarak reconciled edilebilir. Pre-state ve
+post-state kanıtları TAMAMEN BAĞIMSIZ iki fonksiyonla hesaplanır:
+pre-state YALNIZ containment-doğrulanmış pending presence/ham-bayt
+hash'ine dayanır, JSON/audit ASLA okumaz; post-state pending
+varlığı/hash'i + tam audit binding taraması kullanır. Post-state
+tarafındaki bir JSON parse/audit hatası, bağımsız hesaplanmış geçerli
+bir pre-state proof'unu ASLA BASTIRMAZ (bkz. erratum (e), Remediation
+geçmişi madde 8).
+
+**Remediation geçmişi (kısa, olgusal)**:
+
+1. İlk scope çalışması timeline raw-glob divergence riski, deadline
+   global-kaynak snapshot threading ihtiyacı, timeline'ın eski
+   non-atomic writer'ı ve eksik audit zorunluluğunu ortaya çıkardı.
+2. `timeline_validator`'a additive `document_paths=`/`facts_paths=`
+   override parametreleri eklenerek writer'ın facade'den FARKLI bir
+   girdi setini tekrar glob etmesi kapatıldı.
+3. Deadline global-kaynak snapshot materialization `precondition_
+   callback`'ten ÇIKARILDI; under-lock memory capture + yalnız
+   `_mark_executing` SONRASI temp materialization düzenine getirildi.
+4. `documents/*/extractions/` altındaki kırık ara-zincir, segment-
+   segment fail-closed taramayla kapatıldı.
+5. Audit `action_family`/`generated_at`/`pre_hash` bağları tamamlandı.
+6. Adapter'ın post-state ve pre-state kanıtları birbirinden TAMAMEN
+   bağımsız iki fonksiyona ayrıldı.
+7. Bir İLK bağımsız salt-okunur inceleme, ruleset/provisions ham
+   baytlarının yanlışlıkla `secondary_input_hash` içinde kalmasının,
+   ruleset/provisions değiştiğinde `idempotency_key`'in DEĞİŞMEMESİNE
+   (yalnız `request_fingerprint`'in değişmesine) - ve dolayısıyla
+   meşru bir ikinci generation denemesinin KALICI bir
+   `IdempotencyConflictError`'a düşebilmesine - yol açan HIGH önemde
+   bir "deadline revision-identity" kusuru buldu.
+8. Final remediation: ruleset/provisions hash'lerini `input_digest`/
+   `pre_revision`'a TAŞIDI; `secondary_input_hash`'i YALNIZ generation
+   parametrelerine (holiday/calendar/recess) İNDİRDİ; generation
+   ailesi için eksik olan authz-denial testlerini (analyst preview/
+   apply ayrımı, unassigned/unknown actor existence-blind denial)
+   ekledi; erratum (e)'nin birleşik corrupt-JSON + matching raw
+   pre-hash senaryosunu TEK bir `gather_evidence()` çağrısı + tam
+   reconciliation pipeline proof'uyla ekledi; stale "17 legacy
+   executable / 20 scenario" etiketlerini gerçek assertion'larla
+   (19/22) hizaladı.
+9. Son, bağımsız, salt-okunur bir targeted re-review, HIGH fix'i
+   doğrudan kaynaktan yeniden türeterek (`input_digest`'in case+
+   timeline+ruleset+provisions'ı bağladığını, `secondary_input_hash`'in
+   yalnız holiday/calendar/recess taşıdığını, `anchor_event_id`'nin
+   hiçbir digest'e sızmadığını, non-generation fingerprint/identity
+   kodunun DEĞİŞMEDİĞİNİ) ve yukarıdaki testleri okuyarak, hiçbir
+   Critical/High/Medium veya blocking bulgu RAPORLAMADI ve:
+   `ROW 19C-3c-i LOCK-READY` verdict'ine ulaştı.
+
+**Test kanıtı — dürüst zaman ayrımıyla**:
+
+Final identity-remediated working tree üzerinde implementer'ın fiilen
+çalıştırdığı full sweep: **44/44** `ui/tests/test_*.py` modülü exit 0,
+**2770 passed, 0 failed, 8 counted skipped** (+ `test_reconciliation_
+isolated` içinde PASS/FAIL sayacına girmeyen 1 informational `SKIPPED`
+satırı), fresh disposable PostgreSQL 16, migration 0001-0004. Hiçbir
+skip PASS SAYILMAMIŞTIR. **Bu full sweep, son targeted independent
+re-review tarafından YENİDEN ÇALIŞTIRILMADI** - implementer'ın kendi
+final-tree yürütme kanıtı olarak AYRI belirtilir, bağımsız reviewer'ın
+kendi çalıştırması gibi SUNULMAZ.
+
+Son, bağımsız targeted independent re-review'un BİZZAT çalıştırdığı ve
+doğruladığı sonuçlar (yukarıdaki full sweep'ten AYRI, kendi ölçümü):
+
+- `test_generation_mutation_facade_isolated`: **60/60**
+- `test_reconciliation_isolated`: **192/192**
+- `test_cli_mutate_isolated`: **191/191**
+- `test_generation_mutation_integration_postgres`: **40/40, 0 skipped**
+  (fresh disposable PostgreSQL 16, migration 0001-0004)
+- `test_cli_mutate_integration_postgres`: **150/150, 0 skipped**
+- `test_drafting_request_mutation_integration_postgres`: **53/53, 0
+  skipped**
+- `test_promotion_mutation_integration_postgres`: **50/50, 0 skipped**
+- `test_mutation_journal_postgres`: **61/61**
+- `test_mutation_reconciliation_provenance_postgres`: **24/24**
+- `py_compile`: temiz
+- `pip check`: temiz
+- `git diff`/`git diff --cached` kontrolleri: temiz
+- gerçek `data/` ağacı: bayt-düzeyinde DEĞİŞMEDİ
+- kullanılan disposable PostgreSQL kümesi VE temp residue test sonunda
+  TAMAMEN kaldırıldı
+
+**Pre-remediation 2724-pass sweep, final identity-remediated kod
+kanıtı olarak SUNULMAZ** - final, geniş full-sweep kanıtı **2770**'tir
+(implementer'ın 46 yeni kontrolü: K1-K6 + L1-L5 identity/authz testleri,
+erratum (e) birleşik senaryosu, G6/G7 gerçek-SQL identity/authz
+kanıtları eklendikten SONRAKİ sayı).
+
+**Scope dışı/kalan borç**:
+
+- Agent/LLM-gated generation bu Slice'a DAHİL DEĞİLDİR.
+- Retrieval/RAG generation bu Slice'a DAHİL DEĞİLDİR.
+- Fact-extraction generation bu Slice'a DAHİL DEĞİLDİR.
+- Global maintenance/RAG ingest (`ingest.py`) bu Slice'ın DIŞINDADIR.
+- OS-level atomik path pinning SAĞLANDIĞI İDDİA EDİLMEZ.
+- Yerel actor'ın link/content-swap TOCTOU riski Row 19D'nin OS ACL/
+  service identity kapsamında KALIR.
+- Global-kaynak (ruleset/provisions) için GERÇEK bir kilit/
+  linearizability garantisi bu Slice tarafından SAĞLANMAZ - yalnız
+  best-effort pre-lock + under-lock + pre-commit üç aşamalı kontrol.
+- `mutation_lock`'ın session-level advisory-lock timeout/backoff borcu
+  (§6'da zaten kayıtlı) bu Slice ile DEĞİŞMEDİ.
+- Migration/şema DEĞİŞMEDİ.
+- Production data DEĞİŞMEDİ.
+- Existing approval (Layer A)/review (Layer B)/promotion/
+  drafting-request facade ve adapter kontratları DEĞİŞTİRİLMEDİ.
+
+**Final verdict: `ROW 19C-3c-i LOCK-READY — No blocking findings.`**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/19C-3a
+Slice 1/Slice 2/19C-3b Slice 1/Slice 2 örneğinde olduğu gibi yalnız
 `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
 hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
