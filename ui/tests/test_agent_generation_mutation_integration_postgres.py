@@ -501,10 +501,10 @@ try:
     # ============================================================
     merged_registry_a7 = op._default_registry_factory()
     check(
-        "A7 merged reconciliation registry has exactly 44 routing keys "
+        "A7 merged reconciliation registry has exactly 45 routing keys "
         "(10 approval + 24 review + 1 drafting_request + 2 promotion + 2 deterministic-generation "
-        "+ 5 agent-generation)",
-        len(merged_registry_a7.known_action_families()) == 44,
+        "+ 5 agent-generation + 1 fact-extraction-generation)",
+        len(merged_registry_a7.known_action_families()) == 45,
         f"got {len(merged_registry_a7.known_action_families())}",
     )
     check(

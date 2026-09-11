@@ -312,6 +312,122 @@ check(
     code == cli_mutate.EXIT_USAGE_ERROR and "--expected-input-digest" in err,
 )
 
+# ROW 19C-3c-iii - `generation --row-key fact_extraction` usage-shape
+# grammar. Every rule fires BEFORE any connection/authz repository/
+# filesystem probe/journal access (mirrors the deadline/timeline/agent-
+# five blocks above exactly in style/coverage discipline). This family
+# is STRICTER than the other five agent-generation row-keys: --with-
+# agent is REQUIRED on BOTH preview and apply (no deterministic mode),
+# and --allow-network is REJECTED on preview entirely (not merely
+# optional-without-with-agent as for the other five).
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--actor-user-id", "1",
+])
+check(
+    "generation: --row-key fact_extraction WITHOUT --document -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: --row-key fact_extraction WITHOUT --with-agent (preview) -> exit 2, zero "
+    "connections (this family has no deterministic mode)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--with-agent" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+    "--with-agent", "--allow-network", "--actor-user-id", "1",
+])
+check(
+    "generation: --row-key fact_extraction --allow-network on PREVIEW (no --apply) -> exit 2, "
+    "zero connections (STRICTER than the other five agent-generation row-keys)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--allow-network" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+    "--with-agent", "--actor-user-id", "1", "--apply", "--expected-input-digest", "h",
+])
+check(
+    "generation: --row-key fact_extraction --apply WITHOUT --allow-network -> exit 2, zero "
+    "connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--allow-network" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+    "--allow-network", "--actor-user-id", "1", "--apply", "--expected-input-digest", "h",
+])
+check(
+    "generation: --row-key fact_extraction --apply WITHOUT --with-agent -> exit 2, zero "
+    "connections (--with-agent checked before the apply-specific --allow-network rule)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--with-agent" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+    "--with-agent", "--anchor", "timeline_event_001", "--actor-user-id", "1",
+])
+check(
+    "generation: --anchor is not accepted for --row-key fact_extraction -> exit 2, zero "
+    "connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--anchor" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+    "--with-agent", "--holiday", "2026-01-01", "--actor-user-id", "1",
+])
+check(
+    "generation: --holiday is not accepted for --row-key fact_extraction -> exit 2, zero "
+    "connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--holiday" in err,
+)
+
+# --document is REJECTED for every OTHER row-key (agent-five, timeline,
+# deadline) - proven for one representative of each group; the fact_
+# extraction-only requirement above proves the positive case.
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "issue_spotting", "--document", "d",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: --document is not accepted for --row-key issue_spotting (agent-five) -> exit 2, "
+    "zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "timeline", "--document", "d", "--actor-user-id", "1",
+])
+check(
+    "generation: --document is not accepted for --row-key timeline -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline", "--anchor", "timeline_event_001",
+    "--document", "d", "--actor-user-id", "1",
+])
+check(
+    "generation: --document is not accepted for --row-key deadline -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--actor-user-id", "1",
+])
+check(
+    "generation: fact_extraction choice is genuinely present in --row-key's choices (invalid "
+    "combination above still reports --document, never 'invalid choice')",
+    "invalid choice" not in err,
+)
+
 
 # ============================================================
 # 2) ACTOR IDENTITY - nonexistent/disabled actor, EXISTENCE-BLIND

@@ -2759,5 +2759,379 @@ finally:
     _shutil.rmtree(gen_case_dir, ignore_errors=True)
 
 
+# ============================================================
+# ROW 19C-3c-iii - FACT EXTRACTION RECONCILIATION ADAPTER (REAL,
+# independent pre-state/post-state proof, document-scoped target_ref
+# parsing, erratum §E.3 direct pre_revision hardening). Uses the REAL
+# `FactExtractionReconciliationAdapter` (module=fact_extraction_engine)
+# against a REAL synthetic case directory under CASES_DIR
+# (fact_extraction_engine.CASES_DIR and ui.services.paths.CASES_DIR
+# resolve to the SAME real directory), cleaned up unconditionally in
+# `finally`, never touching any real case. Follows Row 19C-3c-i's own
+# precedent (this file's repo-internal crash-matrix coverage
+# convention) rather than Row 19C-3c-ii's known gap (its own adapter's
+# crash-matrix tests were never added here - see that row's own
+# checkpoint, Low finding #1).
+# ============================================================
+
+import fact_extraction_engine as _fact_engine                            # noqa: E402
+import ui.services.fact_extraction_mutation_facade as _fact_facade       # noqa: E402
+import ui.services.fact_extraction_mutation_adapters as _fact_adapters   # noqa: E402
+
+FACT_CASE_ID = "case_fact_extraction_adapter_bindings"
+FACT_DOC_ID = "doc_fact_extraction_adapter_bindings"
+
+fact_case_dir = _dr_real_paths.CASES_DIR / FACT_CASE_ID
+if fact_case_dir.exists():
+    _shutil.rmtree(fact_case_dir)
+fact_case_dir.mkdir(parents=True)
+
+try:
+    fact_extractions_dir = fact_case_dir / "documents" / FACT_DOC_ID / "extractions"
+    fact_pending_path = fact_extractions_dir / _fact_engine.CURRENT_PENDING_FILENAME
+    fact_reviews_dir = fact_extractions_dir / "generation_reviews"
+
+    real_fact_adapter = _fact_adapters.FactExtractionReconciliationAdapter(_fact_engine)
+    FACT_ACTION_FAMILY = _fact_facade.fact_extraction_action_family_for("fact_extraction")
+    FACT_TARGET_REF = _fact_engine.get_target_ref(FACT_DOC_ID)
+    check(
+        "ROW 19C-3c-iii: the engine's own get_target_ref() matches the facade's own "
+        "fact_extraction_target_ref_for() byte-for-byte (single source of the document-scoped "
+        "target_ref shape)",
+        FACT_TARGET_REF == _fact_facade.fact_extraction_target_ref_for(FACT_DOC_ID)
+        == f"fact.{FACT_DOC_ID}.pending",
+    )
+    _FACT_SNAPSHOT_ABSENT = _fact_adapters._SNAPSHOT_ABSENT
+    _FACT_SNAPSHOT_PRESENT = _fact_adapters._SNAPSHOT_PRESENT
+
+    def fact_candidate_pre_hash(input_digest, pending_presence, pending_sha256):
+        return _fact_adapters._compute_candidate_pre_hash(input_digest, pending_presence, pending_sha256)
+
+    def fact_identity_payload(**overrides):
+        base = dict(
+            manifest_version=_fact_adapters._MANIFEST_VERSION,
+            document_id=FACT_DOC_ID,
+            manifest=[
+                {"logical_name": "case", "state": "present",
+                 "files": [{"logical_relative_path": "case.json", "sha256": "0" * 64}]},
+                {"logical_name": "case_documents", "state": "empty", "files": []},
+                {"logical_name": "target_document", "state": "present",
+                 "files": [{"logical_relative_path": f"documents/{FACT_DOC_ID}/document.json", "sha256": "1" * 64}]},
+                {"logical_name": "target_document_text", "state": "present",
+                 "files": [{
+                     "logical_relative_path": f"documents/{FACT_DOC_ID}/extracted/{FACT_DOC_ID}.txt",
+                     "sha256": "2" * 64,
+                 }]},
+            ],
+            generation_mode="agent",
+            model_id="external_injected_client",
+            engine_version=_fact_engine.FACT_EXTRACTION_ENGINE_VERSION,
+            prompt_agent_version=_fact_engine.PROMPT_VERSION,
+        )
+        base.update(overrides)
+        return base
+
+    def fact_input_digest(identity_payload):
+        return _hashlib.sha256(_fact_adapters._canonical_identity_bytes(identity_payload)).hexdigest()
+
+    def fact_intent(**overrides):
+        base = dict(
+            actor_type="iam_user", actor_ref="7",
+            resource_key=f"case:{FACT_CASE_ID}", action_family=FACT_ACTION_FAMILY,
+            target_ref=FACT_TARGET_REF, target_state="generated",
+            pre_hash="placeholder_not_a_real_digest", pre_revision="input_digest_placeholder",
+            secondary_input_hash=None,
+        )
+        base.update(overrides)
+        return _MutationIntent(**base)
+
+    def fact_entry(**overrides):
+        intent = fact_intent(**{k: v for k, v in overrides.items() if k in ("pre_hash", "pre_revision", "target_ref")})
+        fields = dict(
+            journal_id=1, resource_key=f"case:{FACT_CASE_ID}", action_family=FACT_ACTION_FAMILY,
+            target_ref=intent.target_ref, target_state="generated",
+            pre_hash=intent.pre_hash, pre_revision=intent.pre_revision, expected_post_hash=None,
+            state="reconciliation_required", idempotency_key=_compute_idk(intent),
+            request_fingerprint=_compute_fp(intent), actor_label="7",
+        )
+        return mr.JournalEntrySnapshot(**fields)
+
+    def write_fact_audit(record, *, filename="extract_docfactadapter_20260101_000000.generation_audit.json"):
+        fact_reviews_dir.mkdir(parents=True, exist_ok=True)
+        if isinstance(record, str):
+            (fact_reviews_dir / filename).write_text(record, encoding="utf-8")
+        else:
+            (fact_reviews_dir / filename).write_text(_json.dumps(record), encoding="utf-8")
+
+    def clear_fact_reviews():
+        if fact_reviews_dir.exists():
+            _shutil.rmtree(fact_reviews_dir)
+
+    def clear_fact_pending():
+        if fact_pending_path.exists():
+            fact_pending_path.unlink()
+
+    # ---- (a) FIRST-WRITE CRASH: pending absent both before and after -
+    # pre=True (nothing changed, still absent), post=False (nothing was
+    # ever generated). ----
+    clear_fact_reviews()
+    clear_fact_pending()
+    fact_identity_a = fact_identity_payload()
+    input_digest_a = fact_input_digest(fact_identity_a)
+    pre_hash_a = fact_candidate_pre_hash(input_digest_a, _FACT_SNAPSHOT_ABSENT, _FACT_SNAPSHOT_ABSENT)
+    evidence_a = real_fact_adapter.gather_evidence(fact_entry(pre_hash=pre_hash_a, pre_revision=input_digest_a))
+    check(
+        "ROW 19C-3c-iii (a): first-write crash, pending absent before AND after -> "
+        "pre_state_confirmed_unchanged=True, post_state_verified=False (independent proofs, "
+        "never a shared dual-false short-circuit)",
+        evidence_a.pre_state_confirmed_unchanged is True and evidence_a.post_state_verified is False,
+        f"got {evidence_a!r}",
+    )
+
+    # ---- a WRONG candidate pre_hash (content genuinely differs) -> pre=False. ----
+    evidence_wrong = real_fact_adapter.gather_evidence(fact_entry(pre_hash="0" * 64, pre_revision=input_digest_a))
+    check(
+        "ROW 19C-3c-iii: a WRONG candidate pre_hash (content genuinely differs) yields "
+        "pre_state_confirmed_unchanged=False",
+        evidence_wrong.pre_state_confirmed_unchanged is False,
+    )
+
+    # ---- (c) valid current pending + exactly one fully-bound audit -
+    # post=True, observed_post_hash = real pending hash. ----
+    fact_extractions_dir.mkdir(parents=True, exist_ok=True)
+    pending_content_d = '{"schema_version":1,"extraction_id":"x","facts":[]}'
+    fact_pending_path.write_text(pending_content_d, encoding="utf-8")
+    pending_hash_d = _hashlib.sha256(pending_content_d.encode("utf-8")).hexdigest()
+    fact_identity_d = fact_identity_payload()
+    input_digest_d = fact_input_digest(fact_identity_d)
+    entry_d = fact_entry(pre_revision=input_digest_d)
+    good_fact_audit = {
+        "schema_version": "1", "case_id": FACT_CASE_ID, "document_id": FACT_DOC_ID,
+        "target_ref": FACT_TARGET_REF, "target_state": "generated", "action_family": FACT_ACTION_FAMILY,
+        "channel": "local_lawyer_fact_extraction_cli",
+        "mutation_idempotency_key": entry_d.idempotency_key,
+        "mutation_resource_key": f"case:{FACT_CASE_ID}", "mutation_actor_ref": "7",
+        "input_digest": input_digest_d, "generation_parameters_digest": None,
+        "generation_mode": "agent", "model_id": "external_injected_client",
+        "engine_version": _fact_engine.FACT_EXTRACTION_ENGINE_VERSION,
+        "prompt_agent_version": _fact_engine.PROMPT_VERSION,
+        "identity_payload": fact_identity_d,
+        "first_write": True, "history_backup_path": None, "history_backup_sha256": None,
+        "pending_sha256": pending_hash_d, "generated_at": "2026-01-01T00:00:00+00:00",
+        "outcome": "generated", "written_at": "2026-01-01T00:00:01+00:00",
+    }
+    write_fact_audit(good_fact_audit)
+    evidence_d = real_fact_adapter.gather_evidence(entry_d)
+    check(
+        "ROW 19C-3c-iii (c): valid current pending + 1 fully-bound success audit -> "
+        "post_state_verified=True with the REAL pending file hash as observed_post_hash",
+        evidence_d.post_state_verified is True and evidence_d.observed_post_hash == pending_hash_d,
+        f"got {evidence_d!r}",
+    )
+
+    # ---- binding tamper cases - each ONE field changed from the baseline ----
+    fact_binding_cases = [
+        ("mutation_idempotency_key WRONG", {"mutation_idempotency_key": "other"}),
+        ("mutation_resource_key WRONG", {"mutation_resource_key": "case:other_case"}),
+        ("action_family WRONG", {"action_family": "generation.issue_spotting"}),
+        ("pending_sha256 WRONG", {"pending_sha256": "0" * 64}),
+        ("outcome WRONG", {"outcome": "not_generated"}),
+        ("document_id WRONG (top-level audit field)", {"document_id": "some_other_document"}),
+        ("channel WRONG (cross-family channel-tamper)", {"channel": "local_lawyer_generation_cli"}),
+        ("generation_mode WRONG", {"generation_mode": "deterministic"}),
+        ("engine_version WRONG", {"engine_version": "999.0"}),
+    ]
+    for label, override in fact_binding_cases:
+        write_fact_audit({**good_fact_audit, **override})
+        evidence = real_fact_adapter.gather_evidence(entry_d)
+        check(
+            f"ROW 19C-3c-iii real adapter: {label} yields post_state_verified=False (never "
+            "auto-completed)",
+            evidence.post_state_verified is False,
+            f"got {evidence!r}",
+        )
+    write_fact_audit(good_fact_audit)
+
+    # ---- ERRATUM §E.3 DIRECT PRE_REVISION HARDENING: the audit's OWN
+    # `input_digest` field is forged to match a recomputed digest from a
+    # TAMPERED identity_payload, but `entry.pre_revision` (the journal's
+    # immutable column) still carries the ORIGINAL, untampered digest -
+    # this proves the adapter's direct `recomputed_input_digest ==
+    # entry.pre_revision` check (erratum §E.3) is NOT redundant with the
+    # `recomputed_input_digest == record["input_digest"]` check: a
+    # forgery that keeps the two audit-internal fields mutually
+    # consistent with EACH OTHER still fails because it can never make
+    # the recomputed digest match the DB-authoritative pre_revision it
+    # was never derived from. ----
+    tampered_identity = fact_identity_payload(model_id="some_other_injected_client_sentinel")
+    tampered_digest = fact_input_digest(tampered_identity)
+    check(
+        "ROW 19C-3c-iii setup: the tampered identity payload genuinely produces a DIFFERENT "
+        "digest from the original (a meaningful tamper, not a no-op)",
+        tampered_digest != input_digest_d,
+    )
+    forged_fact_audit = {
+        **good_fact_audit,
+        "identity_payload": tampered_identity,
+        "input_digest": tampered_digest,  # internally self-consistent with identity_payload
+        "model_id": tampered_identity["model_id"],
+    }
+    write_fact_audit(forged_fact_audit)
+    evidence_forged = real_fact_adapter.gather_evidence(entry_d)  # entry_d.pre_revision is STILL input_digest_d
+    check(
+        "ROW 19C-3c-iii erratum §E.3: an audit record that is internally self-consistent "
+        "(recomputed digest == its OWN input_digest field) but does NOT match the journal's "
+        "immutable entry.pre_revision -> post_state_verified=False (the direct pre_revision "
+        "check catches what the indirect idempotency_key-mediated binding alone would miss)",
+        evidence_forged.post_state_verified is False,
+        f"got {evidence_forged!r}",
+    )
+    write_fact_audit(good_fact_audit)
+
+    # ---- (e) audit missing/corrupt -> post=False; a JSONDecodeError in
+    # the audit scan is caught INSIDE _compute_post_state_proof's own
+    # boundary and never escapes as an exception, and the INDEPENDENTLY
+    # computed pre-state proof is completely unaffected by it. ----
+    pre_proof_before_corruption = real_fact_adapter._compute_pre_state_proof(entry_d, fact_pending_path)
+    write_fact_audit("not a json object at all {")
+    evidence_c = real_fact_adapter.gather_evidence(entry_d)
+    check(
+        "ROW 19C-3c-iii (e): pending present but the only audit is corrupt/unparseable -> "
+        "post_state_verified=False, no exception escapes gather_evidence()",
+        evidence_c.post_state_verified is False,
+        f"got {evidence_c!r}",
+    )
+    pre_proof_after_corruption = real_fact_adapter._compute_pre_state_proof(entry_d, fact_pending_path)
+    check(
+        "ROW 19C-3c-iii (e): the pre-state proof for the SAME entry is BYTE-IDENTICAL before "
+        "and after the audit directory is corrupted - _compute_pre_state_proof() never reads "
+        "the audit directory at all, so a corrupt audit has zero effect on it",
+        pre_proof_before_corruption == pre_proof_after_corruption,
+        f"before={pre_proof_before_corruption!r} after={pre_proof_after_corruption!r}",
+    )
+    write_fact_audit(good_fact_audit)
+
+    # ---- duplicate matching audits -> ambiguous, unconditionally. ----
+    write_fact_audit(good_fact_audit, filename="extract_docfactadapter_20260101_000000.generation_audit.json")
+    write_fact_audit(good_fact_audit, filename="extract_docfactadapter_20260101_000001.generation_audit.json")
+    dup_evidence = real_fact_adapter.gather_evidence(entry_d)
+    check(
+        "ROW 19C-3c-iii real adapter: 2 clean, identically-bound audit records for the SAME "
+        "idempotency_key -> post_state_verified=False (ambiguous, never auto-completed)",
+        dup_evidence.post_state_verified is False,
+        f"got {dup_evidence!r}",
+    )
+    clear_fact_reviews()
+    write_fact_audit(good_fact_audit)
+
+    # ---- (b) OVERWRITE CRASH, pending bytes UNCHANGED from the state the
+    # composite pre_hash was computed against, but the on-disk audit
+    # belongs to a DIFFERENT idempotency_key entirely - pre=True (content
+    # genuinely unchanged), post=False (no audit binds THIS attempt). ----
+    entry_b = fact_entry(
+        pre_hash=fact_candidate_pre_hash(input_digest_d, _FACT_SNAPSHOT_PRESENT, pending_hash_d),
+        pre_revision=input_digest_d,
+        target_ref=FACT_TARGET_REF,
+    )
+    # Force a genuinely DIFFERENT idempotency_key by using a different actor_ref for entry_b's
+    # own intent, while keeping the SAME pre_hash/pre_revision/target content (so pre-state
+    # still matches the on-disk pending, but the on-disk audit's mutation_idempotency_key -
+    # bound to entry_d's key above - will not match entry_b's own KEY).
+    entry_b_intent = _MutationIntent(
+        actor_type="iam_user", actor_ref="99-different-actor",
+        resource_key=f"case:{FACT_CASE_ID}", action_family=FACT_ACTION_FAMILY,
+        target_ref=FACT_TARGET_REF, target_state="generated",
+        pre_hash=entry_b.pre_hash, pre_revision=entry_b.pre_revision, secondary_input_hash=None,
+    )
+    entry_b = mr.JournalEntrySnapshot(
+        journal_id=1, resource_key=f"case:{FACT_CASE_ID}", action_family=FACT_ACTION_FAMILY,
+        target_ref=FACT_TARGET_REF, target_state="generated",
+        pre_hash=entry_b.pre_hash, pre_revision=entry_b.pre_revision, expected_post_hash=None,
+        state="reconciliation_required", idempotency_key=_compute_idk(entry_b_intent),
+        request_fingerprint=_compute_fp(entry_b_intent), actor_label="99-different-actor",
+    )
+    evidence_b = real_fact_adapter.gather_evidence(entry_b)
+    check(
+        "ROW 19C-3c-iii (b): overwrite crash, pending bytes UNCHANGED (composite pre_hash "
+        "matches), but the existing audit belongs to a DIFFERENT idempotency_key -> "
+        "pre_state_confirmed_unchanged=True, post_state_verified=False",
+        evidence_b.pre_state_confirmed_unchanged is True and evidence_b.post_state_verified is False,
+        f"got {evidence_b!r}",
+    )
+
+    # ---- (h) MALFORMED TARGET_REF - fail-closed dual-false, never an
+    # adapter exception, for shapes that do not match `fact.<doc>.
+    # pending` at all (missing prefix, missing suffix, empty document_id,
+    # a traversal-shaped document_id that validate_segment() itself
+    # rejects). ----
+    for bad_ref in ("not.a.valid.target_ref", "fact..pending", "fact.pending", "issue_spotting.pending",
+                    f"fact.{'..'}.pending", "fact.a/b.pending"):
+        malformed_evidence = real_fact_adapter.gather_evidence(fact_entry(target_ref=bad_ref))
+        check(
+            f"ROW 19C-3c-iii (h): malformed/mismatched target_ref {bad_ref!r} -> dual-false "
+            "(data anomaly, never raised as an exception)",
+            malformed_evidence.post_state_verified is False and malformed_evidence.pre_state_confirmed_unchanged is False,
+            f"got {malformed_evidence!r}",
+        )
+
+    # ---- (i) THREE-WAY document_id MISMATCH - the parsed document_id
+    # (from entry.target_ref) resolves correctly, but the audit's own
+    # identity_payload["document_id"] disagrees -> post=False (this
+    # binding is UNIQUE to this family - none of the five/two precedent
+    # families have a document_id dimension at all). ----
+    mismatched_identity = fact_identity_payload(document_id="a_completely_different_document_id")
+    mismatched_digest = fact_input_digest(mismatched_identity)
+    mismatched_entry = fact_entry(pre_revision=mismatched_digest)
+    mismatched_audit = {
+        **good_fact_audit,
+        "identity_payload": mismatched_identity,
+        "input_digest": mismatched_digest,
+        # audit["document_id"] STILL says the correct FACT_DOC_ID - only
+        # identity_payload's OWN nested document_id disagrees.
+    }
+    write_fact_audit(mismatched_audit)
+    evidence_i = real_fact_adapter.gather_evidence(mismatched_entry)
+    check(
+        "ROW 19C-3c-iii (i): identity_payload[document_id] disagrees with the parsed/audit-"
+        "top-level document_id -> post_state_verified=False (three-way document_id binding)",
+        evidence_i.post_state_verified is False,
+        f"got {evidence_i!r}",
+    )
+    write_fact_audit(good_fact_audit)
+
+    # ---- end-to-end reconcile_and_apply_journal_entry() proof, through
+    # the REAL FakeReconcileConn machinery, using the REAL adapter and a
+    # REAL clean post-state fixture. ----
+    fact_e2e_registry = mr.MutationAdapterRegistry().with_adapter(FACT_ACTION_FAMILY, real_fact_adapter)
+    fact_e2e_conn = FakeReconcileConn([make_journal_row(
+        id=1, resource_key=f"case:{FACT_CASE_ID}", action_family=FACT_ACTION_FAMILY,
+        target_ref=FACT_TARGET_REF, target_state="generated",
+        pre_hash=entry_d.pre_hash, pre_revision=entry_d.pre_revision,
+        state="reconciliation_required", idempotency_key=entry_d.idempotency_key,
+        request_fingerprint=_compute_fp(fact_intent(pre_revision=input_digest_d)), actor_label="7",
+    )])
+    _lock_calls.clear()
+    ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+    ml.release_lock_session = _fake_release_lock_session
+    try:
+        fact_e2e_outcome = mr.reconcile_and_apply_journal_entry(fact_e2e_conn, 1, fact_e2e_registry)
+    finally:
+        ml.acquire_case_lock_session = _original_acquire_case
+        ml.release_lock_session = _original_release
+    check(
+        "ROW 19C-3c-iii real adapter end-to-end through reconcile_and_apply_journal_entry(): "
+        "resolves to 'completed' with the real pending file hash as observed_post_hash",
+        fact_e2e_outcome.new_state == "completed" and fact_e2e_outcome.observed_post_hash == pending_hash_d,
+        f"got {fact_e2e_outcome!r}",
+    )
+    check(
+        "ROW 19C-3c-iii real adapter end-to-end: the journal row itself was durably updated to "
+        "'completed'",
+        fact_e2e_conn.table[0]["state"] == "completed",
+    )
+finally:
+    _shutil.rmtree(fact_case_dir, ignore_errors=True)
+
+
 print(f"--- test_reconciliation_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)

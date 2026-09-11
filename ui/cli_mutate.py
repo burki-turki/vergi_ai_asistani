@@ -86,6 +86,24 @@
 # the coordinated path always uses the facade's own production
 # DEFAULT_RULESET_PATH/DEFAULT_PROVISIONS_PATH constants, never an
 # operator-supplied arbitrary filesystem path.
+#
+# ROW 19C-3c-iii ADDITIVE EXTENSION: the SAME `generation` namespace is
+# extended with a SIXTH `--row-key` value (`fact_extraction`), routed to
+# the NEW, SEPARATE `ui.services.fact_extraction_mutation_facade`
+# (action family `generation.fact_extraction` - neither
+# `generation_mutation_facade.py` nor `agent_generation_mutation_
+# facade.py`'s own row-key universes are extended). This family is
+# DOCUMENT-scoped (`target_ref = fact.<document_id>.pending`, unlike
+# every other `generation` row-key, which is case-scoped) - a NEW
+# `--document` argument is REQUIRED for `--row-key fact_extraction`
+# (both preview and apply) and REJECTED for every other row-key
+# (mirroring `--anchor`'s deadline-only pattern exactly, in the opposite
+# direction). This family has NO deterministic mode at all - `--with-
+# agent` is REQUIRED for BOTH preview and apply (not merely optional as
+# for the five ROW 19C-3c-ii families), `--allow-network` is REJECTED on
+# preview (STRICTER than every other row-key: this family's preview
+# never touches the network either, but the CLI refuses to even accept
+# the flag there) and REQUIRED together with `--with-agent` on apply.
 # ============================================================
 
 from __future__ import annotations
@@ -232,24 +250,31 @@ def _build_arg_parser():
     # flag'lerin timeline için reddedilmesiyle AYNI desen, ters yönde).
     from ui.services import generation_mutation_facade as _generation_facade
     from ui.services import agent_generation_mutation_facade as _agent_generation_facade
+    from ui.services import fact_extraction_mutation_facade as _fact_extraction_facade
 
     _AGENT_GENERATION_ROW_KEYS = frozenset(
         _agent_generation_facade.AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME.keys()
+    )
+    _FACT_EXTRACTION_ROW_KEYS = frozenset(
+        _fact_extraction_facade.FACT_EXTRACTION_ROW_KEY_TO_MODULE_NAME.keys()
     )
 
     generation_parser = subparsers.add_parser(
         "generation",
         help=(
             "Deterministic deadline/timeline (Row 19C-3c-i) AND case-scoped agent-gated "
-            "issue_spotting/evidence/argument/risk_strategy/drafting (Row 19C-3c-ii) pending "
-            "generation - one shared namespace, two backing facades."
+            "issue_spotting/evidence/argument/risk_strategy/drafting (Row 19C-3c-ii) AND "
+            "document-scoped fact_extraction (Row 19C-3c-iii) pending generation - one shared "
+            "namespace, three backing facades."
         ),
     )
     generation_parser.add_argument("--case", dest="case_id", required=True)
     generation_parser.add_argument(
         "--row-key", dest="row_key", required=True,
         choices=sorted(
-            set(_generation_facade.GENERATION_ROW_KEY_TO_MODULE_NAME) | _AGENT_GENERATION_ROW_KEYS
+            set(_generation_facade.GENERATION_ROW_KEY_TO_MODULE_NAME)
+            | _AGENT_GENERATION_ROW_KEYS
+            | _FACT_EXTRACTION_ROW_KEYS
         ),
     )
     generation_parser.add_argument(
@@ -272,16 +297,25 @@ def _build_arg_parser():
         help="deadline-apply-only; REJECTED (non-default) for every other row-key.",
     )
     generation_parser.add_argument(
+        "--document", dest="document", default=None,
+        help="ROW 19C-3c-iii, fact_extraction-only: the document_id whose pending extraction is "
+        "being generated (REQUIRED for --row-key fact_extraction in BOTH preview and apply; "
+        "REJECTED for every other row-key).",
+    )
+    generation_parser.add_argument(
         "--with-agent", action="store_true", dest="with_agent", default=False,
         help="ROW 19C-3c-ii: issue_spotting/evidence/argument/risk_strategy/drafting only - "
-        "REJECTED for deadline/timeline. Enables the family's own optional LLM agent layer "
-        "(no real model call without --allow-network too).",
+        "optional (enables the family's own optional LLM agent layer, no real model call without "
+        "--allow-network too). ROW 19C-3c-iii: fact_extraction only - REQUIRED for BOTH preview "
+        "and apply (this family has no deterministic mode). REJECTED for deadline/timeline.",
     )
     generation_parser.add_argument(
         "--allow-network", action="store_true", dest="allow_network", default=False,
         help="ROW 19C-3c-ii: SECOND, EXPLICIT gate - a real model call is only ever attempted "
-        "when BOTH --with-agent AND --allow-network are given together; REJECTED alone; "
-        "REJECTED for deadline/timeline.",
+        "when BOTH --with-agent AND --allow-network are given together; REJECTED alone. ROW "
+        "19C-3c-iii: fact_extraction only - REJECTED on preview (STRICTER than the other "
+        "agent-gated families); REQUIRED together with --with-agent on apply. REJECTED for "
+        "deadline/timeline.",
     )
     generation_parser.add_argument("--actor-user-id", dest="actor_user_id", required=True, type=int)
     generation_parser.add_argument("--apply", action="store_true", default=False)
@@ -376,18 +410,35 @@ def _agent_generation_row_keys():
     return frozenset(_agent_generation_facade.AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME.keys())
 
 
+def _fact_extraction_row_keys():
+    from ui.services import fact_extraction_mutation_facade as _fact_extraction_facade
+
+    return frozenset(_fact_extraction_facade.FACT_EXTRACTION_ROW_KEY_TO_MODULE_NAME.keys())
+
+
 def _validate_generation_args(args, *, stderr) -> int | None:
-    """ROW 19C-3c-i/3c-ii: pure, zero-connection usage-shape checks for
-    the `generation` subcommand - every rule below fires BEFORE any
-    authz repository, filesystem probe, or journal access (mirrors
-    `_validate_promotion_args` exactly; the facade re-enforces the same
-    rules independently as its own pre-I/O argument-error class). Three-
-    way branch (ROW 19C-3c-ii additive extension of the original
-    timeline/deadline-only two-way branch): the five agent-generation
-    row-keys reject every deadline-only flag exactly as timeline already
-    did, PLUS enforce the dual network gate; timeline/deadline's own
-    existing rules are byte-for-byte UNCHANGED below."""
+    """ROW 19C-3c-i/3c-ii/3c-iii: pure, zero-connection usage-shape
+    checks for the `generation` subcommand - every rule below fires
+    BEFORE any authz repository, filesystem probe, or journal access
+    (mirrors `_validate_promotion_args` exactly; the facade re-enforces
+    the same rules independently as its own pre-I/O argument-error
+    class). Four-way branch (ROW 19C-3c-iii additive extension of the
+    agent-five/timeline/deadline three-way branch): the fact_extraction
+    row-key rejects every deadline-only flag exactly as timeline/the
+    agent-five families already did, PLUS enforces its OWN, STRICTER
+    dual network gate (--with-agent required on BOTH preview and apply;
+    --allow-network rejected on preview, required together with
+    --with-agent on apply); --document is REJECTED for every OTHER
+    row-key (agent-five, timeline, deadline) and REQUIRED only for
+    fact_extraction. The agent-five/timeline/deadline branches' own
+    existing rules are byte-for-byte UNCHANGED below (this branch is
+    placed BEFORE the deadline `else:` fallback, not after, so
+    fact_extraction never falls through into "--row-key deadline
+    requires --anchor")."""
     if args.row_key in _agent_generation_row_keys():
+        if args.document is not None:
+            stderr.write(f"error: --document is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
         if args.anchor_event_id is not None:
             stderr.write(f"error: --anchor is not accepted for --row-key {args.row_key}\n")
             return EXIT_USAGE_ERROR
@@ -406,6 +457,9 @@ def _validate_generation_args(args, *, stderr) -> int | None:
             stderr.write("error: --allow-network requires --with-agent\n")
             return EXIT_USAGE_ERROR
     elif args.row_key == "timeline":
+        if args.document is not None:
+            stderr.write("error: --document is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
         if args.anchor_event_id is not None:
             stderr.write("error: --anchor is not accepted for --row-key timeline\n")
             return EXIT_USAGE_ERROR
@@ -421,7 +475,40 @@ def _validate_generation_args(args, *, stderr) -> int | None:
         if args.with_agent or args.allow_network:
             stderr.write("error: --with-agent/--allow-network are not accepted for --row-key timeline\n")
             return EXIT_USAGE_ERROR
+    elif args.row_key in _fact_extraction_row_keys():
+        if args.anchor_event_id is not None:
+            stderr.write(f"error: --anchor is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.holiday:
+            stderr.write(f"error: --holiday is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.calendar_complete:
+            stderr.write(f"error: --calendar-complete is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.judicial_recess_applicable != "unknown":
+            stderr.write(
+                f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.document is None:
+            stderr.write(f"error: --row-key {args.row_key} requires --document\n")
+            return EXIT_USAGE_ERROR
+        if not args.with_agent:
+            stderr.write(f"error: --row-key {args.row_key} requires --with-agent (no deterministic mode)\n")
+            return EXIT_USAGE_ERROR
+        if args.allow_network and not args.apply:
+            stderr.write(
+                f"error: --allow-network is not accepted with --row-key {args.row_key} on preview "
+                "(no --apply)\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.apply and not args.allow_network:
+            stderr.write(f"error: --row-key {args.row_key} --apply requires --allow-network\n")
+            return EXIT_USAGE_ERROR
     else:
+        if args.document is not None:
+            stderr.write("error: --document is not accepted for --row-key deadline\n")
+            return EXIT_USAGE_ERROR
         if args.anchor_event_id is None:
             stderr.write("error: --row-key deadline requires --anchor\n")
             return EXIT_USAGE_ERROR
@@ -649,15 +736,55 @@ def _run_promotion(args, *, principal, repository, mutation_conn_factory) -> str
 
 
 def _run_generation(args, *, principal, repository, mutation_conn_factory) -> str:
-    """ROW 19C-3c-i/3c-ii. Dispatches by `--row-key` to ONE of two
-    backing facades, sharing the single `generation` CLI namespace:
-    `deadline`/`timeline` -> `ui.services.generation_mutation_facade`
-    (LOCKED, byte/behavior-UNCHANGED below); the five agent-generation
-    row-keys -> `ui.services.agent_generation_mutation_facade` (ROW
-    19C-3c-ii, NEW). `llm_client` is NEVER passed by this dispatcher in
-    either branch, in either preview or apply - it is a test-only DI
-    seam on the facade's own function signatures, not a CLI-reachable
-    parameter (see that module's own header comment)."""
+    """ROW 19C-3c-i/3c-ii/3c-iii. Dispatches by `--row-key` to ONE of
+    THREE backing facades, sharing the single `generation` CLI
+    namespace: `deadline`/`timeline` -> `ui.services.generation_
+    mutation_facade` (LOCKED, byte/behavior-UNCHANGED below); the five
+    agent-generation row-keys -> `ui.services.agent_generation_mutation_
+    facade` (ROW 19C-3c-ii, LOCKED, byte/behavior-UNCHANGED below);
+    `fact_extraction` -> `ui.services.fact_extraction_mutation_facade`
+    (ROW 19C-3c-iii, NEW). `llm_client` is NEVER passed by this
+    dispatcher in ANY branch, in either preview or apply - it is a
+    test-only DI seam on each facade's own function signatures, not a
+    CLI-reachable parameter (see each module's own header comment)."""
+    if args.row_key in _fact_extraction_row_keys():
+        from ui.services import fact_extraction_mutation_facade as _fact_extraction_facade
+
+        if not args.apply:
+            preview = _fact_extraction_facade.preview_generation(
+                args.case_id, args.document, with_agent=args.with_agent,
+                principal=principal, authz_repository=repository,
+            )
+            return (
+                f"PREVIEW generation row_key={args.row_key} case_id={preview['case_id']} "
+                f"document={preview['document_id']}\n"
+                f"target_ref={preview['target_ref']}\n"
+                f"input_digest={preview['input_digest']}\n"
+                f"generation_mode={preview['generation_mode']}\n"
+                f"model_id={preview['model_id']}\n"
+                f"engine_version={preview['engine_version']}\n"
+                f"prompt_agent_version={preview['prompt_agent_version']}\n"
+                f"pending_exists={preview['pending_exists']}\n"
+                f"pending_sha256={preview['pending_sha256']}\n"
+                "Üretmek için: python -m ui.cli_mutate generation --case "
+                f"{preview['case_id']} --row-key {args.row_key} --document {preview['document_id']} "
+                "--with-agent --allow-network --actor-user-id "
+                f"{args.actor_user_id} --apply --expected-input-digest {preview['input_digest']}\n"
+            )
+
+        result = _fact_extraction_facade.apply_generation(
+            args.case_id, args.document, args.expected_input_digest,
+            with_agent=args.with_agent, allow_network=args.allow_network,
+            principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+        )
+        return (
+            f"APPLIED generation row_key={args.row_key} document={result.document_id}\n"
+            f"pending_path={result.pending_path}\n"
+            f"pending_sha256={result.pending_sha256}\n"
+            f"audit_path={result.audit_path}\n"
+            f"replayed={result.replayed}\n"
+        )
+
     if args.row_key in _agent_generation_row_keys():
         from ui.services import agent_generation_mutation_facade as _agent_generation_facade
 

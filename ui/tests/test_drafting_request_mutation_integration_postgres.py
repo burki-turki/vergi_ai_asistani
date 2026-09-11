@@ -309,15 +309,23 @@ PRODUCTION_REGISTRY = _generation_adapters.register_into(PRODUCTION_REGISTRY)
 # exactly.
 from ui.services import agent_generation_mutation_adapters as _agent_generation_adapters  # noqa: E402
 PRODUCTION_REGISTRY = _agent_generation_adapters.register_into(PRODUCTION_REGISTRY)
+# ROW 19C-3c-iii: the SEVENTH merge source (document-scoped agent-gated
+# fact-extraction generation - a THIRD, SEPARATE facade/adapter pair
+# from BOTH Row 19C-3c-i's deterministic-only and Row 19C-3c-ii's
+# case-scoped agent-gated pairs), mirroring `_default_registry_
+# factory()`'s own updated order exactly.
+from ui.services import fact_extraction_mutation_adapters as _fact_extraction_adapters  # noqa: E402
+PRODUCTION_REGISTRY = _fact_extraction_adapters.register_into(PRODUCTION_REGISTRY)
 
 check(
-    "ROW 19C-3c-ii: the REAL merged production registry covers 10 (Layer A) + 24 (Layer B - "
+    "ROW 19C-3c-iii: the REAL merged production registry covers 10 (Layer A) + 24 (Layer B - "
     "12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 (fact/timeline promotion) + 2 "
     "(deterministic deadline/timeline generation) + 5 (agent-gated issue_spotting/evidence/"
-    "argument/risk_strategy/drafting generation) = 44 routing keys - the number of LOGICAL "
-    "Layer B review_kinds is still 12, unchanged; 24 is a channel-separated ADAPTER "
-    "ROUTING-KEY count, not a doubling of logical families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 44,
+    "argument/risk_strategy/drafting generation) + 1 (document-scoped agent-gated fact_extraction "
+    "generation) = 45 routing keys - the number of LOGICAL Layer B review_kinds is still 12, "
+    "unchanged; 24 is a channel-separated ADAPTER ROUTING-KEY count, not a doubling of logical "
+    "families",
+    len(PRODUCTION_REGISTRY.known_action_families()) == 45,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(

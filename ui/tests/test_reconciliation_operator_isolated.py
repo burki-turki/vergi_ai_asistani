@@ -556,23 +556,25 @@ check(
     f"got {sorted(_promotion_families)}",
 )
 check(
-    "ROW 19C-3c-i/3c-ii: the merged registry contains exactly the 7 'generation.*' families "
-    "(generation.deadline + generation.timeline, deterministic, PLUS generation.issue_spotting + "
-    "generation.evidence + generation.argument + generation.risk_strategy + generation.drafting, "
-    "agent-gated - two SEPARATE facade/adapter pairs, one merged namespace)",
+    "ROW 19C-3c-i/3c-ii/3c-iii: the merged registry contains exactly the 8 'generation.*' "
+    "families (generation.deadline + generation.timeline, deterministic, PLUS "
+    "generation.issue_spotting + generation.evidence + generation.argument + "
+    "generation.risk_strategy + generation.drafting, agent-gated, PLUS generation.fact_extraction, "
+    "document-scoped agent-gated - THREE SEPARATE facade/adapter pairs, one merged namespace)",
     _generation_families == {
         "generation.deadline", "generation.timeline", "generation.issue_spotting", "generation.evidence",
         "generation.argument", "generation.risk_strategy", "generation.drafting",
+        "generation.fact_extraction",
     },
     f"got {sorted(_generation_families)}",
 )
 check(
-    "ROW 19C-3c-ii: the merged registry's total size is exactly 10 + 24 + 1 + 2 + 2 + 5 = 44 "
+    "ROW 19C-3c-iii: the merged registry's total size is exactly 10 + 24 + 1 + 2 + 2 + 5 + 1 = 45 "
     "(no overlap, no family lost, no family duplicated) - this is a ROUTING-KEY count, "
-    "distinct from the 32 LOGICAL action families (10 approval + 12 review + 1 "
-    "drafting_request + 2 promotion + 2 deterministic-generation + 5 agent-generation); the "
-    "'approval.*' bucket itself stays exactly 10",
-    len(_real_families) == 44, f"got {len(_real_families)}",
+    "distinct from the 33 LOGICAL action families (10 approval + 12 review + 1 "
+    "drafting_request + 2 promotion + 2 deterministic-generation + 5 agent-generation + 1 "
+    "fact-extraction-generation); the 'approval.*' bucket itself stays exactly 10",
+    len(_real_families) == 45, f"got {len(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "
@@ -631,6 +633,19 @@ check(
     "confirming generation_mutation_adapters.py was never extended)",
     type(_real_registry.get("generation.deadline")).__name__ == "GenerationReconciliationAdapter"
     and type(_real_registry.get("generation.argument")).__name__ == "AgentGenerationReconciliationAdapter",
+)
+check(
+    "ROW 19C-3c-iii: generation.fact_extraction resolves to a real "
+    "FactExtractionReconciliationAdapter instance - a THIRD, SEPARATE class from BOTH "
+    "GenerationReconciliationAdapter and AgentGenerationReconciliationAdapter (confirming "
+    "neither of the two LOCKED facade/adapter pairs was extended for this family)",
+    _real_registry.get("generation.fact_extraction") is not None
+    and type(_real_registry.get("generation.fact_extraction")).__name__ == "FactExtractionReconciliationAdapter"
+    and type(_real_registry.get("generation.fact_extraction")).__name__
+    not in (
+        type(_real_registry.get("generation.deadline")).__name__,
+        type(_real_registry.get("generation.argument")).__name__,
+    ),
 )
 
 

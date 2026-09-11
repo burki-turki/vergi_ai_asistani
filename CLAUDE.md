@@ -334,31 +334,54 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   19B, Row 19C-1, Row 19C-2a, Row 19C-2b, Row 19C-2c, Row 19C-3a Slice
   1/Slice 2, Row 19C-3b Slice 1/Slice 2 ve Row 19C-3c-i contract'ları
   değişmedi.
-- **Sıradaki canonical alt-faz: ROW 19C-3c-iii — Fact Extraction
-  Generation Integration — ACTIVE / NEXT.** İmplementasyona HENÜZ
-  BAŞLANMADI. Önce `fact_extraction_engine.py` ve onun bütün gerçek
-  giriş/çıktı/network/mutation call-site'ları için AYRI, salt-okunur
-  bir reconciliation yapılacaktır.
-  `fact_extraction_engine.py`'nin mevcut always-on network davranışıyla
-  OLDUĞU GİBİ coordinator'a bağlanamaz. Coordinator entegrasyonundan
-  ÖNCE, Row 19C-3c-ii'nin `--with-agent`/`--allow-network` çift açık
-  network gate deseniyle AYNI ilkede, açık bir çift network gate
-  uygulanması ZORUNLUDUR. Kendi TAM dosya allowlist'i hazırlanıp
-  implementasyondan ÖNCE kullanıcı tarafından AYRICA onaylanmadan
-  hiçbir dosyaya dokunulamaz — Row 19C-3c-i veya Row 19C-3c-ii
-  onayları Row 19C-3c-iii dosyalarını ÖNCEDEN YETKİLENDİRMEZ. Row
-  19C-3c-iv (Legal Research/Case Law RAG-Dependent Generation
-  Integration) bu checkpoint ile HENÜZ BAŞLATILMAMIŞTIR. Maintenance/
-  global-resource mutation fazı (`ingest.py`/deadline_rule maintenance
-  dahil) HENÜZ BAŞLATILMAMIŞTIR. Row 19D (deployment/OS hardening, OS
-  ACL/service identity dahil) bu checkpoint ile HENÜZ
-  BAŞLATILMAMIŞTIR - yalnız Row 19A'nın orijinal tanımından miras
-  alınan, gelecekteki bir kapsam pointer'ı olarak kalmaya devam eder.
-  Kendi TAM dosya allowlist'i hazırlanıp implementasyondan ÖNCE
-  kullanıcı tarafından ayrıca onaylanmadan hiçbir gelecekteki alt-faza
-  hiçbir dosyada dokunulamaz (Row 19A'nın dosya-değişiklik sınırı
-  kararı uyarınca) - bu checkpoint hiçbir gelecekteki alt-fazın dosya
-  değişikliğini ÖNCEDEN yetkilendirmez.
+- **ROW 19C-3c-iii — Fact Extraction Generation Integration** artık
+  **DONE / LOCKED** — kullanıcı tarafından ayrıca onaylanmış tam dosya
+  allowlist'i (5 yeni + 9 değiştirilmiş dosya olarak onaylandı; 14.
+  dosya olan `ui/tests/test_cli_mutate_integration_postgres.py`
+  kaynak-kanıtlı gerekçeyle GENUINELY untouched kaldı — fiilen 5 yeni +
+  8 değiştirilmiş = 13 dosya) üzerinde implement edildi ve session
+  kesintisiyle bölünüp disk kanıtından devam ettirilen bağımsız,
+  salt-okunur bir final incelemede — 8 modified dosyanın diff
+  yakalaması, fresh disposable bir PostgreSQL 16'ya karşı BAĞIMSIZ bir
+  54-modül final-tree sweep'i (54/54 exit 0, 3099 passed, 0 failed, 8
+  counted skipped, implementer'ın kendi sayısıyla birebir), hedefli
+  kaynak spot-check'leri ve static/residue/git bütünlük kontrolleri
+  dahil — `ROW 19C-3c-iii LOCK-READY — No blocking findings`
+  verdict'ine ulaştı (bkz. Row 19C-3c-iii checkpoint özeti, §5
+  sonrası, "## 6. Cross-Cutting Backlog"dan hemen önce). Bu,
+  `fact_extraction_engine.py`'nin (Row 4) pending-generation
+  writer'ının mutation coordinator/journal altyapısına, BİR YENİ,
+  CLI-only, document-scoped action family
+  (`generation.fact_extraction`) üzerinden, Row 19C-3c-i/ii'nin kendi
+  facade/adapters çiftlerinden AYRI, bağımsız bir fact-extraction
+  facade/adapters çifti ile bağlandığı alt-fazdır — coordinator
+  entegrasyonundan önce zorunlu kılınan `--with-agent`/
+  `--allow-network` çift açık network gate hem CLI hem facade
+  katmanında bağımsız olarak uygulanmış, motorun import-zamanı
+  `load_dotenv()` yan etkisi `call_llm()`'in production dalının içine
+  taşınmış ve doğrudan CLI mutasyon yolu kapatılmıştır. Rows 1-18, Row
+  19A, Row 19B, Row 19C-1, Row 19C-2a, Row 19C-2b, Row 19C-2c, Row
+  19C-3a Slice 1/Slice 2, Row 19C-3b Slice 1/Slice 2, Row 19C-3c-i ve
+  Row 19C-3c-ii contract'ları değişmedi.
+- **Sıradaki canonical alt-faz: ROW 19C-3c-iv — Legal Research/Case
+  Law RAG-Dependent Generation Integration — ACTIVE / NEXT.**
+  İmplementasyona HENÜZ BAŞLANMADI. Kendi TAM dosya allowlist'i
+  hazırlanıp implementasyondan ÖNCE kullanıcı tarafından AYRICA
+  onaylanmadan hiçbir dosyaya dokunulamaz — Row 19C-3c-i, Row
+  19C-3c-ii veya Row 19C-3c-iii onayları Row 19C-3c-iv dosyalarını
+  ÖNCEDEN YETKİLENDİRMEZ. Row 19A'nın onaylı RAG global-resource
+  (immutable versioned bundle) tasarımı ve stale-sonuç kuralı bu
+  alt-fazın bağlayıcı girdileridir. Maintenance/global-resource
+  mutation fazı (`ingest.py`/deadline_rule maintenance dahil) HENÜZ
+  BAŞLATILMAMIŞTIR. Row 19D (deployment/OS hardening, OS ACL/service
+  identity dahil) bu checkpoint ile HENÜZ BAŞLATILMAMIŞTIR - yalnız
+  Row 19A'nın orijinal tanımından miras alınan, gelecekteki bir kapsam
+  pointer'ı olarak kalmaya devam eder. Kendi TAM dosya allowlist'i
+  hazırlanıp implementasyondan ÖNCE kullanıcı tarafından ayrıca
+  onaylanmadan hiçbir gelecekteki alt-faza hiçbir dosyada dokunulamaz
+  (Row 19A'nın dosya-değişiklik sınırı kararı uyarınca) - bu
+  checkpoint hiçbir gelecekteki alt-fazın dosya değişikliğini ÖNCEDEN
+  yetkilendirmez.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -3585,6 +3608,249 @@ yalnızca önceki turun sonuçlarını kayda geçirir).
 Slice 1/Slice 2/19C-3b Slice 1/Slice 2/19C-3c-i örneğinde olduğu gibi
 yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
 işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Row 19C-3c-iii — Fact Extraction Generation Integration (DONE / LOCKED — checkpoint özeti)
+
+**Exact scope (final, kilitli)** — Kullanıcı tarafından ayrıca
+onaylanmış tam dosya allowlist'i **5 YENİ + 9 DEĞİŞTİRİLMİŞ = 14
+dosya** idi; implementasyonda 14. dosya
+(`ui/tests/test_cli_mutate_integration_postgres.py`) kaynak-kanıtlı
+gerekçeyle (bkz. aşağıda "Untouched allowlist dosyası") GENUINELY
+untouched kaldı — fiilen değişen: **5 YENİ + 8 DEĞİŞTİRİLMİŞ = 13
+dosya, 0 allowlist dışı dosya**.
+
+Yeni (5):
+1. `ui/services/fact_extraction_mutation_facade.py`
+2. `ui/services/fact_extraction_mutation_adapters.py`
+3. `ui/tests/test_fact_extraction_mutation_facade_isolated.py`
+4. `ui/tests/test_fact_extraction_mutation_integration_postgres.py`
+5. `ui/tests/test_fact_extraction_engine_isolated.py`
+
+Değiştirilmiş (8):
+6. `src/fact_extraction_engine.py`
+7. `ui/cli_mutate.py`
+8. `ui/reconciliation_operator.py`
+9. `ui/tests/test_cli_mutate_isolated.py`
+10. `ui/tests/test_reconciliation_operator_isolated.py`
+11. `ui/tests/test_reconciliation_isolated.py`
+12. `ui/tests/test_agent_generation_mutation_integration_postgres.py`
+13. `ui/tests/test_drafting_request_mutation_integration_postgres.py`
+
+**Untouched allowlist dosyası** —
+`ui/tests/test_cli_mutate_integration_postgres.py` allowlist'teydi ama
+DEĞİŞTİRİLMEDİ: o dosyanın subprocess `LEGACY_MUTATION_MATRIX`'i sabit
+`"...DEVRE DIŞIDIR (Row 19C-3b)."` literal'ini arayan 19 tarihsel-etiketli
+legacy executable'ı kapsar; Row 19C-3c-ii'nin beş agent-generation
+motoru gibi, `fact_extraction_engine.py` de KENDİ satır etiketini
+(`"(Row 19C-3c-iii)"`) taşıdığı için bu matrise EKLENMEDİ — kapanışı
+kendi izole engine test dosyasında hem in-process hem GERÇEK OS
+subprocess kanıtıyla test edildi (beş agent-generation motorunun kendi
+izole testlerinin HİÇBİRİNDE bulunmayan bir kanıt seviyesi). Dosyanın
+untouched kaldığı final sweep'te 150/150 PASS ile ayrıca regresyonsuz
+kanıtlandı.
+
+**Tamamlanan kapsam** — BİR yeni, CLI-only, DOCUMENT-scoped action
+family: `generation.fact_extraction` (`target_ref =
+fact.<document_id>.pending` — promotion'ın `fact.<document_id>.canonical`
+namespace'inin doğal uzantısı; `resource_key = case:<case_id>`
+case-scoped kalır). Merged reconciliation registry **44 → 45 routing
+key** oldu (10 approval + 24 review + 1 drafting_request + 2 promotion
++ 2 deterministic-generation + 5 agent-generation + 1
+fact-extraction-generation) — dört bağımsız test konumu 45'i ayrı ayrı
+doğrular. Yeni bir web route/surface AÇILMADI. Dedicated
+fact-extraction facade/adapters çifti eklendi — Row 19C-3c-i'nin
+deterministik ve Row 19C-3c-ii'nin agent-generation çiftlerinin HİÇBİRİ
+DEĞİŞTİRİLMEDİ (adapters, facade'den yalnız karar-içermeyen sabit/format
+yardımcılarını import eder; karar/containment/audit-eşleşme mantığı
+bağımsız ikinci implementasyondur). Existing coordinator, advisory
+lock, journal, idempotency ve dual-authz altyapısı AYNEN kullanıldı,
+DEĞİŞTİRİLMEDİ. Kapalı mutasyon giriş noktası **25 → 26** (yeni:
+`fact_extraction_engine.py` `main()`); toplam refusal senaryosu **40 →
+41**; test modülü **51 → 54**.
+
+**Zorunlu çift network gate ve credential hijyeni** — Row 19C-3c-ii
+checkpoint'inin bu faz için açıkça zorunlu kıldığı
+`--with-agent`/`--allow-network` çift açık network gate, İKİ BAĞIMSIZ
+katmanda uygulandı: CLI usage-shape katmanı (her authz/DB/filesystem/
+model erişiminden ÖNCE; bu ailede `--with-agent` preview DAHİL her
+zaman ZORUNLU — deterministik mod YOKTUR; `--allow-network` preview'da
+RED, apply'da `--with-agent` ile BİRLİKTE ZORUNLU) ve facade'in kendi
+`_check_argument_shapes()`'i (CLI'dan bağımsız ikinci enforcement).
+Motorun repo-genelinde EMSALSİZ import-zamanı `load_dotenv()` yan
+etkisi `call_llm()`'in production (`llm_client is None`) dalının İÇİNE
+taşındı — import/preview/refusal sırasında `.env` ASLA okunmaz;
+`anthropic`/`python-dotenv` importları da aynı dala lazy taşındı
+(hedef `vergi_ui_runtime`'da bu paketler kurulu değildir — module-level
+import, facade'in `importlib.import_module()`'ını kırardı; diğer beş
+LLM-çağıran agent modülünün var olan lazy-import deseniyle aynı,
+allowlist-içi, gerekçeli sapma). `call_llm(prompt, model, *,
+llm_client=None)` test-seam'i eklendi: injected-client dalı
+`.env`/credential/gerçek `Anthropic()` constructor'ına SIFIR temas
+eder; production CLI bu parametreyi HİÇBİR ZAMAN geçmez. Production
+model kimliği her zaman call-time okunan `DEFAULT_MODEL` sabitidir —
+coordinated CLI'ya `--model` flag'i BİLİNÇLİ olarak EKLENMEDİ;
+injected client provenance'ı `model_id="external_injected_client"`.
+
+**Identity/manifest kontratı** — `identity_payload` 7 alan taşır:
+`manifest_version` (`row19c3ciii.fact_extraction.manifest.v1`),
+`document_id`, `manifest` (4 sıralı logical container), `generation_mode`
+(sabit `"agent"`), `model_id`, `engine_version`
+(`FACT_EXTRACTION_ENGINE_VERSION`), `prompt_agent_version`
+(`PROMPT_VERSION`). Manifest 4 container'dır: `case` (tekil),
+`target_document` (document_id-parametreli tekil), `target_document_text`
+(deterministik `documents/<id>/extracted/<id>.txt` konvansiyonu —
+şema-zorlanmış DEĞİL, açıkça disclosure edilmiş sınır) ve
+`case_documents` (değişken kardinaliteli; target_document kasıtlı hafif
+redundancy ile yine görünür; geçerli bir başarılı apply'da minimum
+kardinalite 1'dir, asla 0 değil). Containment-before-traversal tarama
+precedent'in birebir bağımsız kopyasıdır; `Path.glob()` zero-call
+mekanik kanıtla, escaping/broken GERÇEK NTFS junction'lar (`mklink /J`)
+fail-closed testlerle doğrulandı. Model/engine/prompt revision
+değişikliği `identity_payload` → `input_digest`/`pre_revision` →
+`idempotency_key` zinciri üzerinden YENİ, bağımsız bir deneme üretir
+(kalıcı conflict DEĞİL). `secondary_input_hash = None` (bu ailede
+gerçek per-run parametre yoktur; yapay hash İCAT EDİLMEDİ).
+`_MANIFEST_VERSION` ile `_SNAPSHOT_VERSION`
+(`row19c3ciii.fact_extraction.snapshot.v1`) BİLİNÇLİ olarak FARKLI
+literal'lerdir — precedent'in aynı-literal seçimi tekrarlanmadı.
+
+**Build-skip fast path (Row 19A uyumlu)** — Pre-build, kilitsiz,
+salt-okunur `_precheck_build_skip()` YALNIZ bir build-atlama bayrağı
+üretir, HİÇBİR ZAMAN otoriter bir sonuç döndürmez; otoriter karar HER
+ZAMAN, İSTİSNASIZ, `mutation_coordinator.run_mutation()`'ın
+DEĞİŞTİRİLMEMİŞ kilit-altı idempotency-lookup'una aittir (Row 19A'nın
+"otoriter kontroller kilit ALINDIKTAN SONRA TEKRAR" kararı). Build
+atlanırsa `writer_callback` fail-closed bir sentinel'e
+(`FactExtractionBuildSkippedInvariantError`) bağlanır — sessiz rebuild
+veya sessiz eksik-yazım imkânsızdır. Gerçek PostgreSQL'e karşı
+kanıtlandı: satır yokken build gerçekten çalışır (fake client tam 1
+çağrı); `completed`/`failed` satır varken build GERÇEKTEN atlanır
+(exploding client hiç çağrılmaz; `failed` için
+`PriorAttemptFailedError`). LLM'in pending çıktısı deterministik
+DEĞİLDİR (`extraction_id`/`fact_id`/`run_at` run_stamp taşır) — frozen
+candidate disiplini bu yüzden kritiktir: frozen bytes
+`json.dumps(extraction, ensure_ascii=False, indent=2).encode("utf-8") +
+b"\n"` tarifiyle LLM cevabından hemen sonra dondurulur, writer'a
+`json.loads(frozen_bytes)` ile üretilen taze kopya geçirilir, replay/
+reconciliation'da model ASLA yeniden çağrılmaz.
+
+**Writer/audit/rollback** — `run_fact_extraction()` davranış korunarak
+`build_fact_extraction()` (saf build, dosyaya yazmaz) +
+`write_pending()` (atomik yazım + audit + rollback) olarak refaktör
+edildi; eski non-atomic `write_json()` coordinated path'te KULLANILMAZ
+— LF-only + fsync + `os.replace` `atomic_write_json()` eklendi.
+Pending dosya adı `facts_llm_v1_3.json.pending` — `fact_approval.py`'nin
+(READ-ONLY) kendi pinli `CURRENT_PENDING_FILENAME`'iyle birebir; üretilen
+pending, mevcut `promotion.fact` yolundan onaylanabilir (uçtan uca test
+edildi). Post-write `validate_fact_extraction()` + canonical-mutation
+guard + `document_id`/`engine_version` dahil tam-bağlama audit kaydı
+(`O_CREAT|O_EXCL` + zaman damgası + sayısal sonek, kendi
+`generation_reviews/` dizini, kendi `"local_lawyer_fact_extraction_cli"`
+channel literal'i) writer sınırının içindedir; herhangi bir hata yeni
+pending'i siler, önceki pending'i byte-for-byte geri taşır.
+
+**Reconciliation** — Pre-state proof yalnız `entry.pre_hash`/
+`pre_revision` + containment-doğrulanmış ham-bayt hash kullanır
+(JSON/audit ASLA okumaz); post-state proof pending hash + exactly-one
+tam-bağlama audit eşleşmesi kullanır (şekil doğrulama + ÜÇ YÖNLÜ
+`document_id` bağlanması: target_ref'ten parse edilen ==
+`audit["document_id"]` == `identity_payload["document_id"]`). Erratum
+sertleştirmesi: `recomputed_input_digest` HEM `audit["input_digest"]`
+HEM journal `entry.pre_revision` ile DOĞRUDAN eşit olmak zorundadır —
+precedent'in dolaylı (idempotency_key-üzerinden) bağlamasının ÖTESİNDE,
+bu aileye özgü açık bir ek savunma katmanı. Crash-matrix senaryoları +
+6 malformed target_ref + tamper senaryoları KALICI olarak
+`test_reconciliation_isolated.py`'ye eklendi (Row 19C-3c-ii'nin
+bağımsız incelemesinin kaydettiği "supplementary diagnostic repoya
+eklenmedi" backlog'unun bu ailede TEKRARLANMAMASI için — 3c-i'nin
+yaptığı gibi).
+
+**Scope/tasarım süreci** — İmplementasyondan önce ayrı, salt-okunur bir
+scope-reconciliation + final-scope raporu + hedefli bir erratum turu
+tamamlandı (dört paralel araştırma fork'u + Fable danışman geri
+bildirimi: scope turunda 13 accepted / 3 corrected / 0 rejected;
+erratum turunda 4 ek düzeltme — en önemlisi B1: lock-free replay-success
+dönüşünün Row 19A ihlali olarak yakalanıp build-skip'in yalnız
+optimizasyon olarak yeniden tasarlanması). `document_reference_resolver.py`
+ve `case_fact_validator.py` kaynak-kanıtlı kararla READ-ONLY bırakıldı
+(beş agent-generation ailesinin builder'larının aynı risk sınıfındaki
+kendi raw-okumalarıyla tutarlı — builder'a manifest/verified-path
+enjeksiyonu precedent'te YOKTUR).
+
+**Test kanıtı — dürüst zaman ayrımıyla**:
+
+İmplementer'ın final-tree full sweep'i (kendi disposable PostgreSQL 16
+kümesi, migration 0001-0004): **54/54 modül exit 0, 3099 passed, 0
+failed, 8 counted skipped** (+ `test_reconciliation_isolated` içinde
+sayaca girmeyen 1 informational `SKIPPED` satırı). Hiçbir skip PASS
+sayılmadı.
+
+Bağımsız final inceleme (session kesintisiyle bölündü, disk kanıtından
+devam ettirildi; tamamlanmış aşamalar yeniden üretilmedi): 8 modified
+dosyanın diff yakalaması; KENDİ fresh disposable PostgreSQL 16 kümesi
+(port 55433, migration 0001-0004) üzerinde BAĞIMSIZ 54-modül final-tree
+sweep'i — **54/54 exit 0, 3099 passed, 0 failed, 8 counted skipped**,
+implementer'ın sayısıyla birebir; sweep'in final tree'ye aidiyeti dosya
+mtime'ları + sweep-sonrası sıfır repo değişikliği kanıtıyla ayrıca
+doğrulandı. Bu faza özgü modüllerin bağımsız sweep sonuçları:
+`test_fact_extraction_engine_isolated` **40/40**,
+`test_fact_extraction_mutation_facade_isolated` **47/47**,
+`test_fact_extraction_mutation_integration_postgres` **36/36, 0
+skipped**, `test_cli_mutate_isolated` **202/202**,
+`test_reconciliation_isolated` **220/220**,
+`test_reconciliation_operator_isolated` **92/92**,
+`test_agent_generation_mutation_integration_postgres` **33/33**,
+`test_drafting_request_mutation_integration_postgres` **53/53**,
+`test_cli_mutate_integration_postgres` (untouched) **150/150**.
+Hedefli kaynak spot-check'leri (registry 45, çift network gate iki
+katmanda, legacy closure, `llm_client` seam, facade/adapters
+bağımsızlığı), `py_compile` 13/13, `pip check`, diff-check'ler ve
+`data/` bayt-değişmezliği temiz. Disposable PostgreSQL kümeleri ve
+inceleme temp kalıntıları tamamen temizlendi. Bağımsız incelemenin iki
+Low/non-blocking notu: (1) kesilen oturumun satır-satır kaynak
+incelemesinin yazılı ara-sonuçları yoktu — devam turu yük taşıyan
+kontrat noktalarını güncel ağaçtan yeniden doğruladı; (2)
+kendi-satır-etiketli motorların `LEGACY_MUTATION_MATRIX` dışında
+kalması — Row 19C-3c-ii'de kabul edilmiş desenin devamı, yeni sapma
+değil.
+
+**Scope dışı/kalan borç**:
+
+- Legal Research/Case Law RAG-dependent generation Row 19C-3c-iv'e
+  KALDI.
+- Global maintenance/RAG ingest (`ingest.py`/deadline_rule maintenance)
+  AYRI bir operasyonel authorization fazına KALDI.
+- OS-level atomik path pinning SAĞLANDIĞI İDDİA EDİLMEZ; yerel actor'ın
+  link/content-swap TOCTOU riski Row 19D'nin OS ACL/service identity
+  kapsamında KALIR.
+- Trusted-local-shell CLI actor kimlik modeli Row 19D'ye KALIR.
+- Advisory-lock timeout/backoff backlog'u (§6) DEĞİŞMEDİ.
+- `document_reference_resolver.py`/`case_fact_validator.py`'nin raw-glob
+  containment borcu (qa_validator BASE_DIR hardcode'u ile aynı sınıf)
+  bilinen backlog olarak KALIR.
+- Model/engine revision değişikliğinin yeni idempotency_key ürettiği
+  formülün matematiksel garantisine dayanır — doğrudan izole testi
+  gelecekteki test-hardening backlog'udur; fingerprint-mismatch bu
+  ailede yapısal olarak ulaşılamaz (`target_state` sabit,
+  `secondary_input_hash` her zaman `None`).
+- Eşzamanlı iki İLK istek için model iki kez çağrılabilir (build-skip
+  yalnız sequential replay'leri optimize eder) — bilinçli, disclosure
+  edilmiş trade-off.
+- `fact_repository.py` entegre EDİLMEDİ (sıfır harici çağıran, ayrı
+  tasarım sorusu olarak backlog).
+- `extracted_text_path` şema alanının hiçbir kod tarafından
+  tüketilmemesi (deterministik konvansiyonun şema-zorlanmamış kalması)
+  ayrı bir şema/pipeline borcudur.
+- Migration/şema DEĞİŞMEDİ. Production data DEĞİŞMEDİ. Yeni web
+  surface EKLENMEDİ.
+
+**Final verdict: `ROW 19C-3c-iii LOCK-READY — No blocking findings.`**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/19C-3a
+Slice 1/Slice 2/19C-3b Slice 1/Slice 2/19C-3c-i/19C-3c-ii örneğinde
+olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
+roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
+dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

@@ -93,16 +93,16 @@
 
 
 import argparse
+import hashlib
 import json
 import os
 import re
+import shutil
+import sys
 
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-
-from anthropic import Anthropic
-from dotenv import load_dotenv
 
 from case_fact_validator import (
     validate_fact_extraction,
@@ -111,6 +111,12 @@ from case_fact_validator import (
 from document_reference_resolver import (
     DocumentReferenceResolver,
 )
+
+# ROW 19C-3c-iii: yalnız karar içermeyen paylaşılan path primitive'i
+# (Row 19C-3a Slice 1) - generation audit dosya adlarının segment
+# doğrulaması ve exact-parent membership'li create-chain çözümü için
+# (`fact_approval.py`'nin zaten kullandığı AYNI plain import deseni).
+import path_containment
 
 
 # ============================================================
@@ -124,6 +130,25 @@ PROMPT_VERSION = "fact_extraction_v1_3"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 
 MAX_INPUT_CHARS = 60000
+
+
+# ============================================================
+# ROW 19C-3c-iii - GENERATION MUTATION BINDING
+#
+# `issue_spotting_engine.py`/`deadline_engine.py` (Row 19C-3c-i/ii,
+# LOCKED) ile AYNI additive desen: write_pending() legacy davranışını
+# (mutation_idempotency_key verilmezse) byte-for-byte korur; yalnız
+# coordinated path (ui.services.fact_extraction_mutation_facade)
+# mutation-binding kwargs'ı geçirdiğinde bir `*.generation_audit.json`
+# kaydı üretir. GENERATION_AUDIT_SCHEMA_VERSION = "1" - diğer beş
+# ailenin KENDİ sabitiyle AYNI literal (paylaşılan bir modül import
+# edilmez, her aile kendi sabitini taşır - ayrı, bağımsız şema/versiyon
+# alanı).
+# ============================================================
+
+GENERATION_ACTION_FAMILY = "generation.fact_extraction"
+
+GENERATION_AUDIT_SCHEMA_VERSION = "1"
 
 
 # ============================================================
@@ -142,6 +167,34 @@ DATA_DIR = (
     / "data"
 )
 
+# ROW 19C-3c-iii - WRITER-CONTAINMENT SEAM (additive).
+#
+# `CASES_DIR`, bu modülün writer-containment seam'idir:
+# `ui/services/fact_extraction_mutation_facade.py`/`fact_extraction_
+# mutation_adapters.py` bu attribute'u HER ÇAĞRIDA dinamik okur (asla
+# cache'lemez) - test redirect sweep'leri (`fact_extraction_engine.
+# CASES_DIR = tmp`) bu yüzden aynen çalışır (Row 19C-3c-i/ii'nin AYNI
+# ilkesi). `load_case_context()` ARTIK bu sabit üzerinden case dizinini
+# türetir (Row 19C-3c-i öncesi `DATA_DIR / "cases"` inline literalini
+# KULLANIYORDU - davranış birebir aynı, yalnız tek bir seam'e
+# birleştirildi, CASES_DIR redirect testlerinin builder'ı da
+# kapsaması için).
+CASES_DIR = (
+    DATA_DIR
+    / "cases"
+)
+
+# `CURRENT_PENDING_FILENAME`, `fact_approval.py`'nin (Row 6, LOCKED)
+# KENDİ bağımsız kopyasıyla BİREBİR aynı literal olmak ZORUNDADIR -
+# `fact_approval.CURRENT_PENDING_FILENAME` bu motorun run_fact_
+# extraction()/write_pending() çıktısının GÜNCEL sabit adına PİNLİDİR.
+# İki bağımsız kopya kasıtlıdır (paylaşılan bir modül İMPORT EDİLMEZ -
+# repo emsali); bir canary testi (`test_fact_extraction_engine_
+# isolated.py`) bu iki sabitin eşitliğini bağımsızca doğrular.
+CURRENT_PENDING_FILENAME = "facts_llm_v1_3.json.pending"
+
+CANONICAL_FILENAME = "facts.json"
+
 DEFAULT_CASE_ID = "case_0001"
 
 DEFAULT_DOCUMENT_ID = "vir_001"
@@ -154,15 +207,6 @@ DEFAULT_TEXT_PATH = (
     / DEFAULT_DOCUMENT_ID
     / "extracted"
     / "vir_001.txt"
-)
-
-
-# ============================================================
-# ENV
-# ============================================================
-
-load_dotenv(
-    BASE_DIR / ".env"
 )
 
 
@@ -369,8 +413,7 @@ def load_case_context(
 ):
 
     case_dir = (
-        DATA_DIR
-        / "cases"
+        CASES_DIR
         / case_id
     )
 
@@ -446,6 +489,358 @@ def load_case_context(
         document_data,
         case_dir,
     )
+
+
+# ============================================================
+# ROW 19C-3c-iii - EXCEPTION
+# ============================================================
+
+class FactExtractionEngineError(Exception):
+    pass
+
+
+# ============================================================
+# ROW 19C-3c-iii - DOCUMENT-SCOPED CASE PATHS
+#
+# Raw candidate üretimi (güvenlik doğrulaması DEĞİL) - `ui/services/
+# fact_extraction_mutation_facade.py`/`fact_extraction_mutation_
+# adapters.py` bu ham yolları KENDİ bağımsız containment
+# doğrulamalarından geçirmek ZORUNDADIR (`fact_approval.py`'nin
+# `get_extractions_dir()`/`get_pending_path()`/`get_canonical_path()`
+# ile AYNI ilke - bilinçli olarak bağımsız kopyalar, paylaşılan bir
+# modül İMPORT EDİLMEZ).
+# ============================================================
+
+def get_extractions_dir(
+    case_id,
+    document_id,
+):
+
+    return (
+        CASES_DIR
+        / case_id
+        / "documents"
+        / document_id
+        / "extractions"
+    )
+
+
+def get_pending_path(
+    case_id,
+    document_id,
+):
+
+    return (
+        get_extractions_dir(
+            case_id,
+            document_id,
+        )
+        / CURRENT_PENDING_FILENAME
+    )
+
+
+def get_canonical_path(
+    case_id,
+    document_id,
+):
+
+    return (
+        get_extractions_dir(
+            case_id,
+            document_id,
+        )
+        / CANONICAL_FILENAME
+    )
+
+
+def get_history_dir(
+    case_id,
+    document_id,
+):
+
+    return (
+        get_extractions_dir(
+            case_id,
+            document_id,
+        )
+        / "history"
+    )
+
+
+def get_reviews_dir(
+    case_id,
+    document_id,
+):
+
+    return (
+        get_extractions_dir(
+            case_id,
+            document_id,
+        )
+        / "generation_reviews"
+    )
+
+
+def get_target_ref(
+    document_id,
+):
+    """Fact extraction generation document-scopludur (case-scoplu
+    diğer beş agent-generation ailesinin AKSİNE) - `promotion_
+    mutation_facade.py`'nin ZATEN kullandığı `fact.{document_id}.*`
+    namespace'inin doğal, generation-tarafı uzantısı (bkz.
+    `promotion_mutation_facade.py:778`, `target_ref = f"fact.
+    {document_id}.canonical"` - burada `.canonical` yerine `.pending`).
+    """
+
+    return (
+        f"fact.{document_id}.pending"
+    )
+
+
+def get_extracted_text_path(
+    case_id,
+    document_id,
+):
+    """Deterministik, document_id-türetilmiş metin-yolu konvansiyonu
+    (`documents/<document_id>/extracted/<document_id>.txt`) - motorun
+    KENDİ `DEFAULT_TEXT_PATH`'inin (yalnız `vir_001`'e hardcode
+    edilmiş) zaten kodladığı ŞABLONUN genel biçimi. Şema-ZORLANMIŞ bir
+    garanti DEĞİLDİR (`document.json`'ın `processing.extracted_text_
+    path` alanı hiçbir yerde tüketilmez) - yalnız GÖZLEMLENEN, tutarlı
+    bir konvansiyondur (bkz. modül-üstü tasarım raporu §E.3)."""
+
+    return (
+        get_extractions_dir(
+            case_id,
+            document_id,
+        )
+        .parent
+        / "extracted"
+        / f"{document_id}.txt"
+    )
+
+
+# ============================================================
+# ROW 19C-3c-iii - ATOMIC WRITE (LF-only + fsync + os.replace)
+#
+# `issue_spotting_engine.atomic_write_json()`/`deadline_engine.
+# atomic_write_json()` ile BİREBİR aynı tarif - mevcut, non-atomik
+# `write_json()` (yukarıda) `write_pending()` tarafından ARTIK
+# KULLANILMAZ; eskisi self-test/legacy amaçlı kalabilir.
+# ============================================================
+
+def atomic_write_json(
+    path,
+    data,
+):
+
+    path = Path(
+        path
+    )
+
+    path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    temp_path = (
+        path.parent
+        / (
+            path.name
+            + ".tmp"
+        )
+    )
+
+    with open(
+        temp_path,
+        "w",
+        encoding="utf-8",
+        newline="\n",
+    ) as file:
+
+        json.dump(
+            data,
+            file,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+        file.write(
+            "\n"
+        )
+
+        file.flush()
+
+        os.fsync(
+            file.fileno()
+        )
+
+    os.replace(
+        temp_path,
+        path,
+    )
+
+
+# ============================================================
+# ROW 19C-3c-iii - PREVIOUS PENDING PRESERVATION
+# ============================================================
+
+def preserve_previous_pending(
+    case_id,
+    document_id,
+    pending_path,
+    *,
+    history_dir=None,
+):
+    """`history_dir` additive/keyword-only: `None` iken (legacy/default)
+    davranış `get_history_dir(case_id, document_id)`'den türetilir;
+    coordinated path (ROW 19C-3c-iii) altında facade'in lock-altında
+    doğrulamış olduğu `VerifiedFactExtractionOutputPaths.history_dir`'i
+    açıkça geçirir - engine bu durumda kendi ham getter'ını I/O için
+    ÇAĞIRMAZ. `case_id`/`document_id` yalnız tutarlı bir imza için
+    taşınır (dosya adı sabit bir taban şablonu kullanır, diğer beş
+    ailenin `preserve_previous_pending()`'iyle AYNI ilke)."""
+
+    pending_path = Path(
+        pending_path
+    )
+
+    if not pending_path.exists():
+
+        return None
+
+    if history_dir is None:
+
+        history_dir = (
+            get_history_dir(
+                case_id,
+                document_id,
+            )
+        )
+
+    history_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    timestamp = (
+        datetime.now()
+        .astimezone()
+        .strftime(
+            "%Y%m%d_%H%M%S"
+        )
+    )
+
+    history_path = (
+        history_dir
+        / (
+            "facts_llm_v1_3_pending_before_engine_"
+            + timestamp
+            + ".json.pending"
+        )
+    )
+
+    shutil.move(
+        str(
+            pending_path
+        ),
+        str(
+            history_path
+        ),
+    )
+
+    return history_path
+
+
+# ============================================================
+# ROW 19C-3c-iii - GENERATION AUDIT RECORD SERIALIZATION
+#
+# `_canonical_json_bytes()`: diğer beş ailenin KENDİ, ALREADY-LOCKED
+# yardımcısının bağımsız kopyası - bilinçli olarak pending dosyasının
+# `atomic_write_json()` tarifinden FARKLIDIR (`os.linesep` çevrimi
+# UYGULANIR; pending ise HER ZAMAN LF-only'dir, `newline="\n"` ile).
+# Bu SADECE `*.generation_audit.json` dosyası için kullanılır.
+# ============================================================
+
+def _canonical_json_bytes(
+    data,
+):
+
+    text = json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    return text.replace(
+        "\n",
+        os.linesep,
+    ).encode("utf-8")
+
+
+def _write_generation_audit_record_excl(
+    reviews_dir,
+    audit_record,
+    *,
+    document_id,
+):
+    """Diğer beş ailenin `_write_generation_audit_record_excl()`'i ile
+    AYNI desen - zaman damgalı taban ad + `O_CREAT|O_EXCL` + sayısal
+    sonek; sabit adın ÜZERİNE YAZMA sınıfı kapatılır, replay/
+    reconciliation eşleşmesi HER ZAMAN içerikten yapılır, addan asla."""
+
+    reviews_dir = Path(
+        reviews_dir
+    )
+
+    reviews_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    stamp = (
+        datetime.now()
+        .strftime(
+            "%Y%m%d_%H%M%S"
+        )
+    )
+
+    base = f"extract_{document_id}_{stamp}"
+
+    suffix = 0
+
+    while True:
+
+        if suffix == 0:
+            name = f"{base}.generation_audit.json"
+        else:
+            name = f"{base}_{suffix}.generation_audit.json"
+
+        path_containment.validate_segment(name)
+
+        candidate = path_containment.resolve_for_create(
+            reviews_dir,
+            name,
+        )
+
+        try:
+            fd = os.open(
+                candidate,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+            )
+        except FileExistsError:
+            suffix += 1
+            if suffix > 1000:
+                raise RuntimeError(
+                    "Generation audit dosya adı için 1000 denemede "
+                    "boş ad bulunamadı."
+                )
+            continue
+
+        with os.fdopen(fd, "wb") as file:
+            file.write(_canonical_json_bytes(audit_record))
+
+        return candidate
 
 
 # ============================================================
@@ -1235,39 +1630,92 @@ Sadece JSON döndür.
 def call_llm(
     prompt,
     model,
+    *,
+    llm_client=None,
 ):
+    """ROW 19C-3c-iii: `llm_client` additive, keyword-only, varsayılan
+    `None` - diğer beş ailenin `preview_generation()`/`apply_
+    generation()`'ının KENDİ `llm_client` test-seam'iyle AYNI ilke. Bu
+    bir CLI flag DEĞİLDİR - `ui/cli_mutate.py`'nin `_run_generation()`
+    dispatch'i bu parametreyi HİÇBİR ZAMAN GEÇMEZ.
 
-    api_key = os.getenv(
-        "ANTHROPIC_API_KEY"
-    )
+    `llm_client is not None` (TEST-ONLY SEAM) dalı `.env`/credential/
+    gerçek `Anthropic(...)` constructor'ına HİÇBİR ŞEKİLDE dokunmaz -
+    yalnız enjekte edilmiş client'ın `messages.create(...)`'i çağrılır.
 
-    if not api_key:
+    Production dal (`llm_client is None`) - `load_dotenv()` BURAYA,
+    modül import-zamanından TAŞINDI (Row 19C-3c-iii): yalnız gerçek
+    build sırasında, gerçek network çağrısından HEMEN ÖNCE tetiklenir -
+    preview/refusal/import sırasında `.env` ASLA okunmaz."""
 
-        raise RuntimeError(
-            "ANTHROPIC_API_KEY bulunamadı. "
-            ".env dosyasını kontrol et."
+    if llm_client is not None:
+
+        response = (
+            llm_client.messages.create(
+                model=model,
+                max_tokens=6000,
+                system=SYSTEM_PROMPT,
+                messages=[
+                    {
+                        "role":
+                            "user",
+
+                        "content":
+                            prompt,
+                    }
+                ],
+            )
         )
 
-    client = Anthropic(
-        api_key=api_key
-    )
+    else:
 
-    response = (
-        client.messages.create(
-            model=model,
-            max_tokens=6000,
-            system=SYSTEM_PROMPT,
-            messages=[
-                {
-                    "role":
-                        "user",
+        # ROW 19C-3c-iii: lazy import - diğer beş agent modülünün
+        # (`risk_strategy_agent.py` vb.) KENDİ "Lazy import - yalnız
+        # gerçek bir çağrı denendiğinde" deseniyle AYNI ilke. Modül
+        # SEVİYESİNDE `anthropic`/`dotenv` importu (önceki hal) bu
+        # projenin diğer HİÇBİR LLM-çağıran modülünde YOKTUR - `import
+        # fact_extraction_engine` artık bu iki paketin kurulu olmasını
+        # GEREKTİRMEZ (yalnız gerçek bir credential/network çağrısı
+        # denendiğinde gerektirir).
 
-                    "content":
-                        prompt,
-                }
-            ],
+        from anthropic import Anthropic
+        from dotenv import load_dotenv
+
+        load_dotenv(
+            BASE_DIR / ".env"
         )
-    )
+
+        api_key = os.getenv(
+            "ANTHROPIC_API_KEY"
+        )
+
+        if not api_key:
+
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY bulunamadı. "
+                ".env dosyasını kontrol et."
+            )
+
+        client = Anthropic(
+            api_key=api_key
+        )
+
+        response = (
+            client.messages.create(
+                model=model,
+                max_tokens=6000,
+                system=SYSTEM_PROMPT,
+                messages=[
+                    {
+                        "role":
+                            "user",
+
+                        "content":
+                            prompt,
+                    }
+                ],
+            )
+        )
 
     text_parts = []
 
@@ -3029,14 +3477,23 @@ def prepare_for_schema(
 
 
 # ============================================================
-# ENGINE
+# ROW 19C-3c-iii - BUILD (pure - no file write, no journal)
+#
+# `run_fact_extraction()`'ın eski, birleşik gövdesinin build yarısı -
+# context yükleme + LLM çağrısı + normalize/safety/resolve adımlarının
+# TAMAMINI yürütür, dosyaya YAZMAZ. `ui/services/fact_extraction_
+# mutation_facade.py`'nin `apply_generation()`'ı bu fonksiyonu case
+# lock DIŞINDA, journal satırı OLMADAN çağırır (diğer beş ailenin
+# `build_<row>_engine_output()` deseniyle AYNI ilke).
 # ============================================================
 
-def run_fact_extraction(
+def build_fact_extraction(
     case_id,
     document_id,
     text_path,
+    *,
     model=DEFAULT_MODEL,
+    llm_client=None,
 ):
 
     (
@@ -3130,6 +3587,7 @@ def run_fact_extraction(
     raw_text = call_llm(
         prompt,
         model,
+        llm_client=llm_client,
     )
 
     raw_result = parse_llm_json(
@@ -3152,43 +3610,12 @@ def run_fact_extraction(
         extraction
     )
 
-    # ========================================================
-    # OUTPUT
-    # ========================================================
-
-    output_path = (
-        case_dir
-        / "documents"
-        / document_id
-        / "extractions"
-        / "facts_llm_v1_3.json.pending"
-    )
-
-    write_json(
-        output_path,
-        extraction,
-    )
-
-    # ========================================================
-    # FINAL VALIDATION
-    # ========================================================
-
-    validation = (
-        validate_fact_extraction(
-            facts_path=output_path,
-            raise_on_error=True,
-        )
-    )
-
     return {
-        "output_path":
-            output_path,
-
         "extraction":
             extraction,
 
-        "validation":
-            validation,
+        "context":
+            context,
 
         "document_resolutions":
             runtime[
@@ -3202,6 +3629,330 @@ def run_fact_extraction(
 
         "semantic_guard_records":
             runtime[
+                "semantic_guard_records"
+            ],
+    }
+
+
+# ============================================================
+# ROW 19C-3c-iii - WRITE PENDING
+# ============================================================
+
+def write_pending(
+    case_id,
+    document_id,
+    extraction,
+    *,
+    verified_paths=None,
+    input_digest=None,
+    identity_payload=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
+):
+    """ROW 19C-3c-iii: `verified_paths`/`input_digest`/`identity_
+    payload`/`mutation_idempotency_key`/`mutation_resource_key`/
+    `mutation_actor_ref` hepsi additive, keyword-only, varsayılan
+    `None`. Hiçbiri verilmezse (legacy/self-test/artık kapalı
+    direct-CLI çağrısı) davranış - atomik yazım DIŞINDA (bkz. modül-üstü
+    tasarım raporu §N.1) - byte-for-byte KORUNUR; dönüş şekli dict'tir
+    (diğer beş ailenin AYNI, önceden LOCKED dönüşümüyle tutarlı).
+    `mutation_idempotency_key is not None` -> mutation_binding_
+    provided; bu durumda diğer dördü de ZORUNLUDUR (kısmi binding kabul
+    edilmez)."""
+
+    mutation_binding_provided = (
+        mutation_idempotency_key is not None
+    )
+
+    if mutation_binding_provided:
+
+        if (
+            input_digest is None
+            or identity_payload is None
+            or mutation_resource_key is None
+            or mutation_actor_ref is None
+        ):
+
+            raise FactExtractionEngineError(
+                "mutation_idempotency_key verildiğinde input_digest/"
+                "identity_payload/mutation_resource_key/"
+                "mutation_actor_ref de verilmelidir (kısmi "
+                "mutation-binding kabul edilmez)."
+            )
+
+    if verified_paths is not None:
+
+        extractions_dir = verified_paths.document_extractions_dir
+        pending_path = verified_paths.pending_path
+        history_dir_override = verified_paths.history_dir
+        reviews_dir = verified_paths.reviews_dir
+
+    else:
+
+        extractions_dir = get_extractions_dir(
+            case_id,
+            document_id,
+        )
+        pending_path = get_pending_path(
+            case_id,
+            document_id,
+        )
+        history_dir_override = None
+        reviews_dir = get_reviews_dir(
+            case_id,
+            document_id,
+        )
+
+    extractions_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    canonical_path = (
+        get_canonical_path(
+            case_id,
+            document_id,
+        )
+    )
+
+    # ========================================================
+    # CANONICAL FILE IS NEVER MODIFIED HERE
+    # ========================================================
+
+    canonical_exists_before = (
+        canonical_path.exists()
+    )
+
+    previous_pending_history = (
+        preserve_previous_pending(
+            case_id=
+                case_id,
+
+            document_id=
+                document_id,
+
+            pending_path=
+                pending_path,
+
+            history_dir=
+                history_dir_override,
+        )
+    )
+
+    try:
+
+        atomic_write_json(
+            pending_path,
+            extraction,
+        )
+
+        # ====================================================
+        # POST-WRITE VALIDATOR
+        # ====================================================
+
+        validation = (
+            validate_fact_extraction(
+                facts_path=
+                    pending_path,
+
+                raise_on_error=
+                    True,
+            )
+        )
+
+        if (
+            validation.get(
+                "valid"
+            )
+            is not True
+        ):
+
+            raise FactExtractionEngineError(
+                "Post-write Case Fact Validator "
+                "valid=False."
+            )
+
+        # ====================================================
+        # RELOAD (GERÇEK DİSK BAYTLARINDAN)
+        # ====================================================
+
+        pending_raw_bytes = pending_path.read_bytes()
+
+        pending_sha256 = hashlib.sha256(
+            pending_raw_bytes
+        ).hexdigest()
+
+        written = json.loads(
+            pending_raw_bytes.decode("utf-8")
+        )
+
+        # ====================================================
+        # CANONICAL MUTATION GUARD
+        # ====================================================
+
+        if (
+            canonical_exists_before
+            != canonical_path.exists()
+        ):
+
+            raise FactExtractionEngineError(
+                "Fact Extraction Engine canonical "
+                "facts.json durumunu değiştirdi."
+            )
+
+        # ====================================================
+        # GENERATION AUDIT RECORD (yalnız coordinator-mode'da)
+        # ====================================================
+
+        audit_path = None
+
+        first_write = (
+            previous_pending_history
+            is None
+        )
+
+        if mutation_binding_provided:
+
+            history_backup_path = None
+
+            history_backup_sha256 = None
+
+            if not first_write:
+
+                history_backup_path = str(
+                    previous_pending_history
+                )
+
+                history_backup_sha256 = hashlib.sha256(
+                    previous_pending_history.read_bytes()
+                ).hexdigest()
+
+            audit_record = {
+                "schema_version": GENERATION_AUDIT_SCHEMA_VERSION,
+                "case_id": case_id,
+                "document_id": document_id,
+                "target_ref": get_target_ref(document_id),
+                "target_state": "generated",
+                "action_family": GENERATION_ACTION_FAMILY,
+                "channel": "local_lawyer_fact_extraction_cli",
+                "mutation_actor_ref": mutation_actor_ref,
+                "mutation_idempotency_key": mutation_idempotency_key,
+                "mutation_resource_key": mutation_resource_key,
+                "input_digest": input_digest,
+                "generation_parameters_digest": None,
+                "generation_mode": identity_payload.get("generation_mode"),
+                "model_id": identity_payload.get("model_id"),
+                "engine_version": identity_payload.get("engine_version"),
+                "prompt_agent_version": identity_payload.get("prompt_agent_version"),
+                "identity_payload": identity_payload,
+                "first_write": first_write,
+                "history_backup_path": history_backup_path,
+                "history_backup_sha256": history_backup_sha256,
+                "pending_sha256": pending_sha256,
+                "generated_at": written.get("extractor", {}).get("run_at"),
+                "outcome": "generated",
+                "written_at": (
+                    datetime.now()
+                    .astimezone()
+                    .isoformat()
+                ),
+            }
+
+            audit_path = _write_generation_audit_record_excl(
+                reviews_dir=reviews_dir,
+                audit_record=audit_record,
+                document_id=document_id,
+            )
+
+        return {
+            "pending_path": pending_path,
+            "validation": validation,
+            "previous_pending_history": previous_pending_history,
+            "pending_sha256": pending_sha256,
+            "audit_path": audit_path,
+            "first_write": first_write,
+        }
+
+    except Exception:
+
+        if pending_path.exists():
+
+            pending_path.unlink()
+
+        if (
+            previous_pending_history
+            is not None
+            and previous_pending_history.exists()
+        ):
+
+            shutil.move(
+                str(
+                    previous_pending_history
+                ),
+                str(
+                    pending_path
+                ),
+            )
+
+        raise
+
+
+# ============================================================
+# ROW 19C-3c-iii - LEGACY ORCHESTRATION (build + write, byte-for-byte
+# davranış korunur; yalnız iç yapı iki fonksiyona bölündü)
+# ============================================================
+
+def run_fact_extraction(
+    case_id,
+    document_id,
+    text_path,
+    model=DEFAULT_MODEL,
+):
+
+    build_result = build_fact_extraction(
+        case_id,
+        document_id,
+        text_path,
+        model=model,
+    )
+
+    extraction = build_result[
+        "extraction"
+    ]
+
+    write_result = write_pending(
+        case_id,
+        document_id,
+        extraction,
+    )
+
+    return {
+        "output_path":
+            write_result[
+                "pending_path"
+            ],
+
+        "extraction":
+            extraction,
+
+        "validation":
+            write_result[
+                "validation"
+            ],
+
+        "document_resolutions":
+            build_result[
+                "document_resolutions"
+            ],
+
+        "filtered_meta_count":
+            build_result[
+                "filtered_meta_count"
+            ],
+
+        "semantic_guard_records":
+            build_result[
                 "semantic_guard_records"
             ],
     }
@@ -3245,6 +3996,29 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # ROW 19C-3c-iii: bu doğrudan CLI mutasyon yolu artık DEVRE
+    # DIŞIDIR - coordinator/journal/authz entegrasyonu yalnız
+    # `ui.cli_mutate generation --row-key fact_extraction ...`
+    # üzerinden yaşar. build_fact_extraction()/write_pending()/
+    # run_fact_extraction() KENDİLERİ DEĞİŞTİRİLMEDİ - yalnız BU
+    # executable giriş noktası reddediliyor. SystemExit bir
+    # BaseException'dır ve bu dosyanın `if __name__` sarmalayıcısının
+    # hiçbir try/except'i yoktur, bu yüzden gerçek OS process exit
+    # code'u tam olarak 2'dir - hiçbir zaman 0, hiçbir zaman düz bir
+    # `return`. Bu nokta case/file/network/model erişiminden ÖNCEDİR -
+    # `.env` bu noktada zaten OKUNMAMIŞ durumdadır (`load_dotenv()`
+    # artık yalnız `call_llm()`'in production dalı İÇİNDE tetiklenir).
+
+    print(
+        "HATA: Bu doğrudan CLI mutasyon yolu artık DEVRE DIŞIDIR (Row 19C-3c-iii).\n"
+        "Gerçek üretim için: python -m ui.cli_mutate generation --case <CASE_ID> "
+        "--row-key fact_extraction --document <DOCUMENT_ID> "
+        "--with-agent --allow-network ...",
+        file=sys.stderr,
+    )
+
+    raise SystemExit(2)
 
     print()
 
