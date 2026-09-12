@@ -323,17 +323,23 @@ PRODUCTION_REGISTRY = _fact_extraction_adapters.register_into(PRODUCTION_REGISTR
 # own updated order exactly.
 from ui.services import legal_research_case_law_mutation_adapters as _legal_research_case_law_adapters  # noqa: E402
 PRODUCTION_REGISTRY = _legal_research_case_law_adapters.register_into(PRODUCTION_REGISTRY)
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: the NINTH merge source
+# (global, not case-scoped, rag_bundle.build/rag_bundle.activate - a
+# FIFTH, SEPARATE facade/adapter pair from every prior one), mirroring
+# `_default_registry_factory()`'s own updated order exactly.
+from ui.services import rag_bundle_mutation_adapters as _rag_bundle_adapters  # noqa: E402
+PRODUCTION_REGISTRY = _rag_bundle_adapters.register_into(PRODUCTION_REGISTRY)
 
 check(
-    "ROW 19C-3c-iv SLICE 1: the REAL merged production registry covers 10 (Layer A) + 24 "
-    "(Layer B - 12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 (fact/timeline "
-    "promotion) + 2 (deterministic deadline/timeline generation) + 5 (agent-gated issue_spotting/"
-    "evidence/argument/risk_strategy/drafting generation) + 1 (document-scoped agent-gated "
-    "fact_extraction generation) + 2 (case-scoped deterministic+agent legal_research/case_law "
-    "generation) = 47 routing keys - the number of LOGICAL Layer B review_kinds is still 12, "
-    "unchanged; 24 is a channel-separated ADAPTER ROUTING-KEY count, not a doubling of logical "
-    "families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 47,
+    "RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: the REAL merged production registry covers 10 "
+    "(Layer A) + 24 (Layer B - 12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 "
+    "(fact/timeline promotion) + 2 (deterministic deadline/timeline generation) + 5 (agent-gated "
+    "issue_spotting/evidence/argument/risk_strategy/drafting generation) + 1 (document-scoped "
+    "agent-gated fact_extraction generation) + 2 (case-scoped deterministic+agent legal_research/"
+    "case_law generation) + 2 (global rag_bundle.build/rag_bundle.activate) = 49 routing keys - "
+    "the number of LOGICAL Layer B review_kinds is still 12, unchanged; 24 is a channel-separated "
+    "ADAPTER ROUTING-KEY count, not a doubling of logical families",
+    len(PRODUCTION_REGISTRY.known_action_families()) == 49,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(

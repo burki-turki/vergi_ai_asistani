@@ -35,12 +35,19 @@ import hashlib
 
 from pathlib import Path
 
-import faiss
-import numpy as np
-
-from dotenv import load_dotenv
-from openai import OpenAI
-from pypdf import PdfReader
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: faiss/numpy/dotenv/openai/pypdf
+# are heavy/optional dependencies NOT installed in this project's
+# `vergi_ui_runtime` target environment (confirmed by direct import
+# probe) and are NOT imported at module level anywhere in this file -
+# every one of them is imported lazily, function-local, only inside the
+# specific function that actually needs it, and only at the moment it
+# is actually called. This is a deliberate, binding contract (see this
+# module's own IngestNetworkConsentRequiredError and
+# `_build_real_embedding_client()` below): importing `src.ingest` must
+# never require any of these five packages to be installed, never read
+# `.env`, never construct a network client, never touch the filesystem
+# beyond the pure `Path(...)` joins below, and never crash for a
+# missing OPENAI_API_KEY.
 
 from manifest_validator import (
     validate_manifest_file
@@ -124,37 +131,6 @@ STATE_PATH = (
 
 
 # ============================================================
-# ENV
-# ============================================================
-
-load_dotenv(
-    BASE_DIR
-    / ".env"
-)
-
-
-# ============================================================
-# OPENAI
-# ============================================================
-
-OPENAI_API_KEY = os.getenv(
-    "OPENAI_API_KEY"
-)
-
-if not OPENAI_API_KEY:
-
-    raise RuntimeError(
-        "OPENAI_API_KEY bulunamadı. "
-        ".env dosyasını kontrol et."
-    )
-
-
-client = OpenAI(
-    api_key=OPENAI_API_KEY
-)
-
-
-# ============================================================
 # PIPELINE AYARLARI
 # ============================================================
 
@@ -177,19 +153,33 @@ CHUNK_STRATEGY_VERSION = (
 METADATA_SCHEMA_VERSION = 2
 
 
-# ============================================================
-# DIRECTORY INIT
-# ============================================================
+class IngestNetworkConsentRequiredError(Exception):
+    """Raised by `run_ingest()` (legacy incremental flat-index path) and
+    by `create_embeddings()` when no explicit network/client
+    authorization was supplied - neither ever silently falls back to
+    constructing a real OpenAI client. `embedding_client=` (an already-
+    constructed client, e.g. a test fake) or `allow_network=True`
+    (production: build a real client from `.env` at the moment it is
+    actually needed) are the only two ways past this gate."""
 
-INDEX_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
 
-CACHE_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+def _build_real_embedding_client():
+    """The ONLY place in this module that reads `.env` or constructs a
+    real network client - never at import time, never anywhere else.
+    `dotenv`/`openai` are imported here, lazily, for the same reason
+    `faiss`/`numpy`/`pypdf` are imported lazily throughout this module
+    (see this module's own header comment)."""
+    from dotenv import load_dotenv
+    from openai import OpenAI
+
+    load_dotenv(BASE_DIR / ".env")
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "OPENAI_API_KEY bulunamadı. "
+            ".env dosyasını kontrol et."
+        )
+    return OpenAI(api_key=api_key)
 
 
 # ============================================================
@@ -851,6 +841,8 @@ def normalize_pdf_text(
 def extract_pdf_pages(
     pdf_path
 ):
+
+    from pypdf import PdfReader
 
     reader = PdfReader(
         str(
@@ -1635,7 +1627,9 @@ def build_base_metadata(
 
 def build_document_chunks(
     manifest_document,
-    file_hash
+    file_hash,
+    *,
+    pdf_page_extractor=None
 ):
 
     file_name = manifest_document[
@@ -1685,7 +1679,10 @@ def build_document_chunks(
             "destekliyor."
         )
 
-    pages = extract_pdf_pages(
+    if pdf_page_extractor is None:
+        pdf_page_extractor = extract_pdf_pages
+
+    pages = pdf_page_extractor(
         pdf_path
     )
 
@@ -1894,8 +1891,16 @@ def refresh_cached_documents_metadata(
 # ============================================================
 
 def create_embeddings(
-    texts
+    texts,
+    *,
+    embedding_client=None
 ):
+
+    import faiss
+    import numpy as np
+
+    if embedding_client is None:
+        embedding_client = _build_real_embedding_client()
 
     all_embeddings = []
 
@@ -1925,7 +1930,7 @@ def create_embeddings(
         )
 
         response = (
-            client.embeddings.create(
+            embedding_client.embeddings.create(
                 model=EMBEDDING_MODEL,
                 input=batch
             )
@@ -1977,6 +1982,8 @@ def save_document_cache(
     documents
 ):
 
+    import numpy as np
+
     embeddings_path, documents_path = (
         get_cache_paths(
             document_id
@@ -2006,6 +2013,8 @@ def save_document_cache(
 def load_document_cache(
     document_id
 ):
+
+    import numpy as np
 
     embeddings_path, documents_path = (
         get_cache_paths(
@@ -2250,6 +2259,9 @@ def build_global_index(
     all_embeddings
 ):
 
+    import faiss
+    import numpy as np
+
     if not all_embeddings:
 
         return faiss.IndexFlatIP(
@@ -2299,6 +2311,19 @@ def save_global_index(
     pipeline_config,
     pipeline_signature
 ):
+    # ROW / RAG BUNDLE FOUNDATION: this is the LEGACY flat-index write
+    # path (writes directly to FAISS_PATH/DOCUMENTS_PATH/CONFIG_PATH
+    # under index/, outside any versioned bundle directory). It is only
+    # ever reachable from run_ingest()'s own legacy body, which is in
+    # turn only reachable by calling run_ingest() directly with explicit
+    # allow_network=True/embedding_client= consent - the closed main()
+    # entry point below never calls it, and the new coordinated
+    # `rag-bundle build` CLI path never calls run_ingest()/
+    # save_global_index() at all (it calls build_bundle_snapshot()
+    # instead, which writes nothing to disk itself). No production path
+    # writes to this legacy location any more.
+
+    import faiss
 
     faiss.write_index(
         index,
@@ -2345,7 +2370,25 @@ def save_global_index(
 # MAIN INGEST
 # ============================================================
 
-def run_ingest():
+def run_ingest(*, allow_network: bool = False, embedding_client=None):
+    # RAG GLOBAL-RESOURCE BUNDLE FOUNDATION (decision #4, binding): this
+    # is the LEGACY incremental flat-index ingest path. It fails closed,
+    # as its very first statement, before ANY I/O/env/network access,
+    # unless the caller explicitly supplies either an already-built
+    # `embedding_client` (tests) or `allow_network=True` (production -
+    # a real client is then built, lazily, only once actually needed,
+    # by create_embeddings()'s own _build_real_embedding_client() call).
+    # This function is UNREACHABLE from this module's own closed main()/
+    # __main__ entry point (see the bottom of this file) - the only way
+    # to reach it at all is a direct, deliberate Python call.
+    if not allow_network and embedding_client is None:
+        raise IngestNetworkConsentRequiredError(
+            "run_ingest() gercek dosya/ag erisimi icin acik izin gerektirir: "
+            "allow_network=True veya embedding_client=<client> saglayin."
+        )
+
+    INDEX_DIR.mkdir(parents=True, exist_ok=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     print(
         "\n======================================"
@@ -2777,7 +2820,8 @@ def run_ingest():
 
             embeddings = (
                 create_embeddings(
-                    texts
+                    texts,
+                    embedding_client=embedding_client
                 )
             )
 
@@ -3009,9 +3053,185 @@ def run_ingest():
 
 
 # ============================================================
-# MAIN
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION - SOURCE MANIFEST + FULL-REBUILD
+# SNAPSHOT.
+#
+# These two functions are the ONLY read side `ui.services.
+# rag_bundle_mutation_facade` calls into this module for. Neither
+# writes anything under index/** - both are pure/read-only with respect
+# to the filesystem (the only writes either function's callers may ever
+# issue happen entirely in RAM here, and only later, under the
+# coordinated writer, on disk - never inside this module).
 # ============================================================
+
+def compute_source_manifest():
+    """Sorted list of {"path", "sha256", "size_bytes"} covering
+    data/documents.json plus every currently-included (should_include_
+    document()) data/mevzuat/*.pdf - the exact same inclusion decision
+    run_ingest()'s own step 4 already makes, reused unchanged. Pure
+    read-only hashing - no faiss/numpy/openai/dotenv/pypdf import, no
+    network, no write. Two calls against an unchanged source tree
+    always return byte-identical Python structures (list/dict
+    ordering, key ordering, and content are all fully deterministic)."""
+    manifest = load_json(MANIFEST_PATH)
+    manifest_documents = manifest.get("documents", []) or []
+
+    entries = [
+        {
+            "path": "data/documents.json",
+            "sha256": calculate_file_hash(MANIFEST_PATH),
+            "size_bytes": MANIFEST_PATH.stat().st_size,
+        }
+    ]
+
+    for document in manifest_documents:
+        if not should_include_document(document):
+            continue
+        file_name = document["file_name"]
+        file_path = MEVZUAT_DIR / file_name
+        if not file_path.exists():
+            raise FileNotFoundError(f"Dosya bulunamadı: {file_path}")
+        entries.append(
+            {
+                "path": f"data/mevzuat/{file_name}",
+                "sha256": calculate_file_hash(file_path),
+                "size_bytes": file_path.stat().st_size,
+            }
+        )
+
+    entries.sort(key=lambda entry: entry["path"])
+    return entries
+
+
+def build_bundle_snapshot(*, embedding_client=None, pdf_page_extractor=None, build_attempt=0):
+    """Full, from-scratch rebuild (deliberately NOT incremental - the
+    coordinated bundle-build path always re-embeds every included
+    document; it never reads or writes CACHE_DIR/index_state.json,
+    which remain exclusively run_ingest()'s own legacy concern). Writes
+    NOTHING to disk - returns a plain dict of frozen, in-memory bytes
+    plus the identity-core fields `ui.services.rag_bundle_mutation_
+    facade` needs to compute the bundle's deterministic identity and
+    (later, under the coordinated writer, outside this function) to
+    materialize the three artifact files. `embedding_client=None` means
+    "build a real one, lazily, right when the first batch is actually
+    embedded" (via create_embeddings()'s own _build_real_embedding_
+    client() fallback) - callers that want zero real network/credential
+    access (every test in this project) MUST pass a fake client
+    explicitly; this function performs no network-consent gating of its
+    own (that gating is `ui.cli_mutate rag-bundle build`'s /
+    `rag_bundle_mutation_facade.apply_build()`'s responsibility, applied
+    strictly before this function is ever called).
+
+    Return shape (exact):
+      {
+        "source_manifest": [...],            # compute_source_manifest()
+        "pipeline_config": {...},             # build_pipeline_config()
+        "build_attempt": <int>,
+        "chunk_count": <int>,
+        "embedding_dimension": <int>,
+        "artifacts": {
+          "mevzuat.faiss": <bytes>,
+          "documents.pkl": <bytes>,
+          "config.json": <bytes>,
+        },
+      }
+    """
+    import faiss
+    import numpy as np
+
+    validate_manifest_file(raise_on_error=True)
+
+    manifest = load_json(MANIFEST_PATH)
+    manifest_documents = manifest.get("documents", []) or []
+    included_documents = [
+        document for document in manifest_documents if should_include_document(document)
+    ]
+
+    pipeline_config = build_pipeline_config()
+    pipeline_signature = calculate_pipeline_signature(pipeline_config)
+
+    all_chunk_documents = []
+    for document in sorted(included_documents, key=lambda item: item["document_id"]):
+        file_name = document["file_name"]
+        file_path = MEVZUAT_DIR / file_name
+        if not file_path.exists():
+            raise FileNotFoundError(f"Dosya bulunamadı: {file_path}")
+        file_hash = calculate_file_hash(file_path)
+        chunk_documents = build_document_chunks(
+            manifest_document=document,
+            file_hash=file_hash,
+            pdf_page_extractor=pdf_page_extractor,
+        )
+        if not chunk_documents:
+            raise RuntimeError(f"{document['document_id']}: hiç chunk üretilemedi.")
+        all_chunk_documents.extend(chunk_documents)
+
+    if all_chunk_documents:
+        texts = [item["text"] for item in all_chunk_documents]
+        embeddings = create_embeddings(texts, embedding_client=embedding_client)
+        embedding_dimension = int(embeddings.shape[1])
+        index = faiss.IndexFlatIP(embedding_dimension)
+        index.add(embeddings)
+    else:
+        embedding_dimension = EMBEDDING_DIMENSION
+        index = faiss.IndexFlatIP(embedding_dimension)
+
+    faiss_bytes = np.asarray(faiss.serialize_index(index)).tobytes()
+    documents_bytes = pickle.dumps(all_chunk_documents)
+
+    config_payload = dict(pipeline_config)
+    config_payload["runtime_ingest_version"] = DISPLAY_VERSION
+    config_payload["pipeline_signature"] = pipeline_signature
+    config_payload["total_chunks"] = len(all_chunk_documents)
+    config_bytes = (
+        json.dumps(config_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+
+    return {
+        "source_manifest": compute_source_manifest(),
+        "pipeline_config": pipeline_config,
+        "build_attempt": build_attempt,
+        "chunk_count": len(all_chunk_documents),
+        "embedding_dimension": embedding_dimension,
+        "artifacts": {
+            "mevzuat.faiss": faiss_bytes,
+            "documents.pkl": documents_bytes,
+            "config.json": config_bytes,
+        },
+    }
+
+
+# ============================================================
+# MAIN
+#
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: this direct CLI mutation path
+# is CLOSED. Real production bundle builds go exclusively through:
+#   python -m ui.cli_mutate rag-bundle build --apply --allow-network ...
+# which is coordinator/journal-integrated (advisory lock, idempotency,
+# audit, reconciliation) - this module's own run_ingest()/
+# save_global_index() legacy pair is NEVER reachable from here. Refusal
+# happens after arg-parsing (there are no arguments here) but strictly
+# before any DB/authz/filesystem/.env/dependency/network access -
+# main() below performs zero I/O of any kind before raising.
+# ============================================================
+
+_LEGACY_CLI_REFUSAL_MESSAGE = (
+    "HATA: Bu dogrudan CLI mutasyon yolu artik DEVRE DISIDIR (RAG Bundle Foundation).\n"
+    "Gercek uretim icin: python -m ui.cli_mutate rag-bundle build --apply --allow-network ..."
+)
+
+
+def main():
+    import sys
+
+    print(
+        _LEGACY_CLI_REFUSAL_MESSAGE,
+        file=sys.stderr,
+    )
+
+    raise SystemExit(2)
+
 
 if __name__ == "__main__":
 
-    run_ingest()
+    main()

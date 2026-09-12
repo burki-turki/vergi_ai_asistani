@@ -1081,5 +1081,179 @@ check(
 )
 
 
+# ============================================================
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION - `rag-bundle` subcommand
+# usage-shape validation, mirroring every other subcommand's own
+# dedicated block above (`run_cli_usage_only` - a usage error opens
+# ZERO connections at all, authz or mutation).
+# ============================================================
+
+_v64 = "v_" + "a" * 64
+
+code, _, err = run_cli_usage_only(["rag-bundle", "--actor-user-id", "1"])
+check("rag-bundle: missing --action -> exit 2 (argparse-level)", code == cli_mutate.EXIT_USAGE_ERROR)
+
+code, _, err = run_cli_usage_only(["rag-bundle", "--action", "list", "--actor-user-id", "1", "--apply"])
+check(
+    "rag-bundle: --action list rejects --apply and every other extra flag",
+    code == cli_mutate.EXIT_USAGE_ERROR and "list accepts no other flag" in err, err,
+)
+
+code, _, err = run_cli_usage_only(["rag-bundle", "--action", "build", "--actor-user-id", "1", "--allow-network"])
+check(
+    "rag-bundle: build PREVIEW rejects --allow-network",
+    code == cli_mutate.EXIT_USAGE_ERROR and "not accepted on build preview" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "build", "--actor-user-id", "1", "--apply", "--expected-input-digest", "x",
+])
+check(
+    "rag-bundle: build --apply without --allow-network is refused (no relaxed mode)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "requires --allow-network" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "build", "--actor-user-id", "1", "--apply", "--allow-network",
+])
+check(
+    "rag-bundle: build --apply without --expected-input-digest is refused",
+    code == cli_mutate.EXIT_USAGE_ERROR and "requires --expected-input-digest" in err, err,
+)
+
+code, _, err = run_cli_usage_only(["rag-bundle", "--action", "activate", "--actor-user-id", "1"])
+check(
+    "rag-bundle: activate requires --bundle-version (preview and apply alike)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "requires --bundle-version" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1", "--apply",
+])
+check(
+    "rag-bundle: activate --apply without --expected-current-version is refused",
+    code == cli_mutate.EXIT_USAGE_ERROR and "requires --expected-current-version" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1", "--allow-network",
+])
+check(
+    "rag-bundle: activate rejects --allow-network entirely",
+    code == cli_mutate.EXIT_USAGE_ERROR and "not accepted for --action activate" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "build", "--actor-user-id", "1", "--bundle-version", _v64,
+])
+check(
+    "rag-bundle: --bundle-version rejected for --action build",
+    code == cli_mutate.EXIT_USAGE_ERROR and "not accepted for --action build" in err, err,
+)
+
+# ============================================================
+# TARGETED F1 REMEDIATION (T22) - `--activation-attempt` usage-shape
+# matrix. Every rule fires strictly BEFORE any connection is opened
+# (proven via run_cli_usage_only()'s own exploding conn factories,
+# exactly like every other block above).
+# ============================================================
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1",
+    "--activation-attempt", "-1",
+])
+check(
+    "rag-bundle: activate rejects a negative --activation-attempt (preview)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "activation-attempt must be a non-negative integer" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1",
+    "--apply", "--expected-current-version", "none", "--activation-attempt", "-1",
+])
+check(
+    "rag-bundle: activate rejects a negative --activation-attempt (apply)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "activation-attempt must be a non-negative integer" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1",
+    "--activation-attempt", "not-an-int",
+])
+check(
+    "rag-bundle: activate rejects a non-integer --activation-attempt at the argparse layer",
+    code == cli_mutate.EXIT_USAGE_ERROR, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "build", "--actor-user-id", "1", "--activation-attempt", "1",
+])
+check(
+    "rag-bundle: --activation-attempt rejected (non-default) for --action build",
+    code == cli_mutate.EXIT_USAGE_ERROR and "activation-attempt is not accepted for --action build" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "build", "--actor-user-id", "1", "--apply", "--allow-network",
+    "--expected-input-digest", "x", "--activation-attempt", "1",
+])
+check(
+    "rag-bundle: --activation-attempt rejected (non-default) for --action build --apply",
+    code == cli_mutate.EXIT_USAGE_ERROR and "activation-attempt is not accepted for --action build" in err, err,
+)
+
+code, _, err = run_cli_usage_only([
+    "rag-bundle", "--action", "list", "--actor-user-id", "1", "--activation-attempt", "1",
+])
+check(
+    "rag-bundle: --activation-attempt rejected (non-default) for --action list",
+    code == cli_mutate.EXIT_USAGE_ERROR and "list accepts no other flag" in err, err,
+)
+
+def _usage_shape_passed_to_connection(argv):
+    """True iff usage validation PASSED and the code went on to try to
+    open a real connection - proven by catching the exploding authz
+    factory's OWN AssertionError (never guessed from a return code,
+    since a valid usage shape never returns normally from `main()`
+    here - it raises, exactly like every other exploding-factory proof
+    in this file's error-path checks above, just triggered from the
+    OTHER side of the usage-shape boundary)."""
+    stdout, stderr = io.StringIO(), io.StringIO()
+    try:
+        cli_mutate.main(
+            argv, authz_conn_factory=_exploding_authz_conn_factory,
+            mutation_conn_factory=_exploding_mutation_conn_factory,
+            stdout=stdout, stderr=stderr,
+        )
+        return False
+    except AssertionError as error:
+        return "authz connection factory was called" in str(error)
+
+
+check(
+    "rag-bundle: activate preview accepts --activation-attempt 0 (usage-shape passes, reaches authz next)",
+    _usage_shape_passed_to_connection([
+        "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1",
+        "--activation-attempt", "0",
+    ]),
+)
+
+check(
+    "rag-bundle: activate preview accepts a large non-negative --activation-attempt (usage-shape passes)",
+    _usage_shape_passed_to_connection([
+        "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1",
+        "--activation-attempt", "7",
+    ]),
+)
+
+check(
+    "rag-bundle: activate apply accepts a non-negative --activation-attempt (usage-shape passes)",
+    _usage_shape_passed_to_connection([
+        "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1",
+        "--apply", "--expected-current-version", "none", "--activation-attempt", "1",
+    ]),
+)
+
+
 print(f"--- test_cli_mutate_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)

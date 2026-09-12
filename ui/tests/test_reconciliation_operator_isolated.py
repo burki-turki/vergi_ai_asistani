@@ -519,6 +519,7 @@ _review_families_web = _review_families - _review_families_cli
 _drafting_request_families = {f for f in _real_families if f.startswith("drafting_request.")}
 _promotion_families = {f for f in _real_families if f.startswith("promotion.")}
 _generation_families = {f for f in _real_families if f.startswith("generation.")}
+_rag_bundle_families = {f for f in _real_families if f.startswith("rag_bundle.")}
 
 check(
     "_default_registry_factory(): the merged registry contains exactly Layer A's 10 "
@@ -571,13 +572,19 @@ check(
     f"got {sorted(_generation_families)}",
 )
 check(
-    "ROW 19C-3c-iv SLICE 1: the merged registry's total size is exactly "
-    "10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 = 47 (no overlap, no family lost, no family duplicated) - "
-    "this is a ROUTING-KEY count, distinct from the 35 LOGICAL action families (10 approval + "
+    "RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: the merged registry contains exactly the 2 "
+    "'rag_bundle.*' families (rag_bundle.build + rag_bundle.activate)",
+    _rag_bundle_families == {"rag_bundle.build", "rag_bundle.activate"},
+    f"got {sorted(_rag_bundle_families)}",
+)
+check(
+    "RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: the merged registry's total size is exactly "
+    "10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 + 2 = 49 (no overlap, no family lost, no family duplicated) - "
+    "this is a ROUTING-KEY count, distinct from the 37 LOGICAL action families (10 approval + "
     "12 review + 1 drafting_request + 2 promotion + 2 deterministic-generation + 5 "
-    "agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation); "
-    "the 'approval.*' bucket itself stays exactly 10",
-    len(_real_families) == 47, f"got {len(_real_families)}",
+    "agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation + 2 "
+    "rag-bundle-build/activate); the 'approval.*' bucket itself stays exactly 10",
+    len(_real_families) == 49, f"got {len(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "
@@ -649,6 +656,16 @@ check(
         type(_real_registry.get("generation.deadline")).__name__,
         type(_real_registry.get("generation.argument")).__name__,
     ),
+)
+check(
+    "RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: rag_bundle.build and rag_bundle.activate each "
+    "resolve to a real, DISTINCT adapter instance (BuildReconciliationAdapter / "
+    "ActivateReconciliationAdapter - a FIFTH, SEPARATE facade/adapter pair)",
+    _real_registry.get("rag_bundle.build") is not None
+    and _real_registry.get("rag_bundle.activate") is not None
+    and _real_registry.get("rag_bundle.build") is not _real_registry.get("rag_bundle.activate")
+    and type(_real_registry.get("rag_bundle.build")).__name__ == "BuildReconciliationAdapter"
+    and type(_real_registry.get("rag_bundle.activate")).__name__ == "ActivateReconciliationAdapter",
 )
 
 

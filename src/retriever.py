@@ -48,15 +48,28 @@
 #
 # ============================================================
 
+import contextlib
+import hashlib
+import json
 import os
 import pickle
+import re
 
-import faiss
-import numpy as np
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
-from dotenv import load_dotenv
-from openai import OpenAI
-
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: faiss/numpy/dotenv/openai are
+# heavy/optional dependencies NOT installed in this project's
+# `vergi_ui_runtime` target environment and are NOT imported at module
+# level anywhere in this file - every one of them is imported lazily,
+# function-local, only inside the specific function that actually needs
+# it. Importing `src.retriever` must never require any of these four
+# packages to be installed, never read `.env`, never construct a
+# network client, and never touch the filesystem (see this module's own
+# `load_pinned_bundle()`/`_resolve_embedding_client()` below - the only
+# two places any of that is now permitted to happen, and only when
+# actually invoked with explicit consent).
 
 # ============================================================
 # IMPORT UYUMLULUĞU
@@ -79,6 +92,8 @@ try:
         select_versions
     )
 
+    from . import path_containment as _path_containment
+
 except ImportError:
 
     from source_policy import (
@@ -95,6 +110,8 @@ except ImportError:
     from version_policy import (
         select_versions
     )
+
+    import path_containment as _path_containment
 
 
 # ============================================================
@@ -140,26 +157,23 @@ EMBEDDING_MODEL = (
 
 
 # ============================================================
-# ENV
-# ============================================================
-
-load_dotenv(
-    ENV_PATH
-)
-
-
-# ============================================================
-# OPENAI
-# ============================================================
-
-client = OpenAI()
-
-
-# ============================================================
-# INDEX YÜKLE
+# INDEX YÜKLE (LEGACY - see RAG GLOBAL-RESOURCE BUNDLE FOUNDATION
+# section below for the current, coordinated read path)
+#
+# This function is kept, byte-for-byte unchanged in its own body,
+# purely for historical/reference continuity - it is orphaned: nothing
+# in this module calls it any more. It still reads directly from the
+# LEGACY flat FAISS_PATH/DOCUMENTS_PATH location under index/ (outside
+# any versioned bundle directory), which `src.ingest` no longer writes
+# to from any reachable production path. Calling this function directly
+# remains possible (an existing FAISS_PATH/DOCUMENTS_PATH from a prior
+# legacy ingest run would still load) but is unsupported and untested
+# by this Foundation.
 # ============================================================
 
 def load_index():
+
+    import faiss
 
     if not os.path.exists(
         FAISS_PATH
@@ -210,10 +224,331 @@ def load_index():
 
 
 # ============================================================
-# GLOBAL INDEX
+# GLOBAL INDEX (module-global "pin" targets)
+#
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: no import-time load happens
+# here any more (removed: `index, documents = load_index()`). The
+# entire deterministic/temporal/metadata/version scoring engine below
+# reads `index`/`documents` as ordinary module globals throughout - it
+# is NOT rewritten to take them as parameters (a deliberate scope-
+# minimization decision - see this module's own PinnedRagBundle/
+# _pin_bundle_globals() section far below for why). Both start `None`
+# and stay `None` until `_pin_bundle_globals()` temporarily overwrites
+# them for the duration of exactly one `retrieve()`/`retrieve_detailed()`
+# call - there is no other place in this module that assigns to them.
 # ============================================================
 
-index, documents = load_index()
+index = None
+documents = None
+
+
+# ============================================================
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION - PINNED BUNDLE READER.
+#
+# `load_pinned_bundle()` is the ONLY way any caller obtains a real,
+# verified, ready-to-query `PinnedRagBundle` - callers MUST call it
+# themselves and pass the result to `retrieve()`/`retrieve_detailed()`
+# as `bundle=` (see those two functions' own wrappers below); NEITHER
+# of them ever calls `load_pinned_bundle()` on the caller's behalf -
+# `bundle=None` (the default) fails closed with RagBundleNotPinnedError
+# rather than silently loading "whatever is currently active".
+#
+# VERIFIED POINTER -> MANIFEST -> ARTIFACT HASH CHAIN, FAIL-CLOSED AT
+# EVERY STEP, NO DESERIALIZATION BEFORE HASH VERIFICATION:
+#   1) index/current_version.json must exist, contain a JSON object,
+#      and carry a `current_version` matching ^v_[0-9a-f]{64}$ -
+#      otherwise RagPointerMissingError (file absent/uncontained) or
+#      RagPointerInvalidError (present but malformed).
+#   2) index/<bundle_version>/ must exist, contained within index/, and
+#      its own directory name must equal `bundle_version` -  otherwise
+#      RagManifestInvalidError.
+#   3) index/<bundle_version>/manifest.json must exist, parse as a JSON
+#      object, carry a matching `bundle_version` field, carry an
+#      `artifacts` table with EXACTLY the three fixed artifact names,
+#      and independently self-verify: stripping the `bundle_version`
+#      key back out and re-hashing the remainder via the SAME canonical
+#      JSON recipe the writer used must reproduce `bundle_version`
+#      exactly - otherwise RagManifestInvalidError. This is a SEPARATE,
+#      independent re-implementation of the writer's own hash formula
+#      (see `ui.services.rag_bundle_mutation_facade`'s own copy) - a
+#      bug in one must never silently validate the other's mistake.
+#   4) EVERY one of the three artifact files is containment-verified,
+#      read as raw bytes, and its SHA-256 + byte length compared
+#      against the manifest's own recorded values - ANY mismatch or
+#      missing/unreadable file raises RagArtifactHashMismatchError.
+#      This step completes, for ALL three artifacts, strictly BEFORE
+#      step 5 below ever imports faiss or calls pickle.loads() - no
+#      deserialization of any kind happens on unverified bytes.
+#   5) Only now: `mevzuat.faiss` bytes are deserialized into a real
+#      FAISS index (faiss.deserialize_index), `documents.pkl` bytes are
+#      unpickled, and their shapes are cross-checked against each other
+#      and against the manifest's own declared embedding_dimension -
+#      any mismatch raises RagDimensionMismatchError.
+#
+# NO LEGACY FLAT-INDEX FALLBACK OR ADOPTION PATH EXISTS ANYWHERE IN
+# THIS FUNCTION - it never looks at FAISS_PATH/DOCUMENTS_PATH (the
+# orphaned load_index()'s own legacy location) under any circumstance.
+# ============================================================
+
+RAG_BUNDLE_ARTIFACT_NAMES = ("mevzuat.faiss", "documents.pkl", "config.json")
+
+_BUNDLE_VERSION_PATTERN = re.compile(r"^v_[0-9a-f]{64}$")
+
+
+class RagBundleError(Exception):
+    """Base class for every `load_pinned_bundle()` failure mode (the six
+    named subclasses below). Never raised directly."""
+
+
+class RagPointerMissingError(RagBundleError):
+    """`index/current_version.json` does not exist (or `index/` itself
+    does not exist/is not a real directory) - "no bundle has ever been
+    activated" is indistinguishable, from outside this function, from
+    "the index directory itself is missing"."""
+
+
+class RagPointerInvalidError(RagBundleError):
+    """`index/current_version.json` exists but is not valid JSON, is
+    not a JSON object, or its `current_version` field is missing or
+    does not match `^v_[0-9a-f]{64}$` (a truncated, malformed, or
+    tampered pointer value)."""
+
+
+class RagManifestInvalidError(RagBundleError):
+    """The pointed-to bundle directory or its `manifest.json` is
+    missing/uncontained/unparseable/malformed, OR the manifest fails
+    its own independent self-consistency re-verification (recomputed
+    hash of the manifest's own content, minus `bundle_version`, does
+    not reproduce that same `bundle_version`), OR the `artifacts` table
+    does not carry exactly the three fixed artifact names."""
+
+
+class RagArtifactHashMismatchError(RagBundleError):
+    """One of the three artifact files is missing, unreadable, or its
+    raw-byte SHA-256/size does not match the manifest's own recorded
+    value for it - raised strictly before any faiss/pickle
+    deserialization is attempted on that file's bytes."""
+
+
+class RagDimensionMismatchError(RagBundleError):
+    """The deserialized FAISS index's `ntotal` does not match
+    `len(documents)`, or its dimensionality `d` does not match the
+    manifest's own declared `embedding_dimension`."""
+
+
+class RagBundleNotPinnedError(RagBundleError):
+    """`retrieve()`/`retrieve_detailed()` was called with `bundle=None`
+    (the default) - no caller-supplied `PinnedRagBundle` was ever
+    provided for this call. There is no silent fallback to "whatever
+    index/current_version.json currently points at"."""
+
+
+@dataclass(frozen=True)
+class PinnedRagBundle:
+    bundle_version: str
+    index: Any
+    documents: list
+
+
+def _canonical_json_bytes(value) -> bytes:
+    """The exact, fixed canonical-JSON byte recipe this Foundation uses
+    for every identity/manifest hash: `ensure_ascii=False,
+    sort_keys=True, separators=(",", ":")`, UTF-8 encoded, with a single
+    trailing newline. An INDEPENDENT copy of the same formula
+    `ui.services.rag_bundle_mutation_facade` uses on the write side -
+    see this section's own header comment on why that duplication is
+    deliberate."""
+    return (
+        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+
+
+def load_pinned_bundle(*, root=None) -> PinnedRagBundle:
+    index_root_raw = Path(root) if root is not None else Path(INDEX_DIR)
+
+    pointer_path = index_root_raw / "current_version.json"
+    # `_path_containment.resolve_existing()`'s own `_resolve_root()` step
+    # already fails closed (PathContainmentError) if `index_root_raw`
+    # itself is missing/not-a-directory - no separate root pre-check is
+    # needed here; a missing index/ directory and a missing pointer
+    # file inside an existing index/ directory are both, correctly,
+    # RagPointerMissingError.
+    try:
+        pointer_real = _path_containment.resolve_existing(pointer_path, root=index_root_raw)
+    except _path_containment.PathContainmentError as error:
+        raise RagPointerMissingError("RAG bundle pointer bulunamadı veya erişilemez.") from error
+
+    try:
+        with open(pointer_real, "r", encoding="utf-8") as file:
+            pointer_data = json.load(file)
+    except (OSError, ValueError) as error:
+        raise RagPointerInvalidError("RAG bundle pointer okunamadı/parse edilemedi.") from error
+
+    if not isinstance(pointer_data, dict):
+        raise RagPointerInvalidError("RAG bundle pointer beklenen JSON nesnesi değil.")
+
+    bundle_version = pointer_data.get("current_version")
+    if not isinstance(bundle_version, str) or not _BUNDLE_VERSION_PATTERN.match(bundle_version):
+        raise RagPointerInvalidError("RAG bundle pointer geçersiz bundle_version taşıyor.")
+
+    try:
+        bundle_dir_real = _path_containment.resolve_existing(
+            index_root_raw / bundle_version, root=index_root_raw,
+        )
+    except _path_containment.PathContainmentError as error:
+        raise RagManifestInvalidError("İşaret edilen RAG bundle dizini bulunamadı/erişilemez.") from error
+    if bundle_dir_real.name != bundle_version or not bundle_dir_real.is_dir():
+        raise RagManifestInvalidError("RAG bundle dizini adı/tipi pointer ile uyuşmuyor.")
+
+    try:
+        manifest_real = _path_containment.resolve_existing(
+            bundle_dir_real / "manifest.json", root=index_root_raw,
+        )
+    except _path_containment.PathContainmentError as error:
+        raise RagManifestInvalidError("RAG bundle manifest.json bulunamadı/erişilemez.") from error
+
+    try:
+        with open(manifest_real, "r", encoding="utf-8") as file:
+            manifest = json.load(file)
+    except (OSError, ValueError) as error:
+        raise RagManifestInvalidError("RAG bundle manifest.json okunamadı/parse edilemedi.") from error
+    if not isinstance(manifest, dict):
+        raise RagManifestInvalidError("RAG bundle manifest.json beklenen JSON nesnesi değil.")
+
+    if manifest.get("bundle_version") != bundle_version:
+        raise RagManifestInvalidError("manifest.json içindeki bundle_version pointer ile uyuşmuyor.")
+
+    artifacts_table = manifest.get("artifacts")
+    if not isinstance(artifacts_table, dict) or set(artifacts_table.keys()) != set(RAG_BUNDLE_ARTIFACT_NAMES):
+        raise RagManifestInvalidError("manifest.json 'artifacts' tablosu beklenen 3 sabit artefaktı taşımıyor.")
+
+    identity_core = {key: value for key, value in manifest.items() if key != "bundle_version"}
+    try:
+        recomputed_bundle_version = "v_" + hashlib.sha256(_canonical_json_bytes(identity_core)).hexdigest()
+    except (TypeError, ValueError) as error:
+        raise RagManifestInvalidError("manifest.json kanonik JSON'a dönüştürülemedi.") from error
+    if recomputed_bundle_version != bundle_version:
+        raise RagManifestInvalidError("manifest.json içeriği bundle_version ile kendi kendine tutarlı değil.")
+
+    embedding_dimension = manifest.get("embedding_dimension")
+    if not isinstance(embedding_dimension, int) or isinstance(embedding_dimension, bool) or embedding_dimension <= 0:
+        raise RagManifestInvalidError("manifest.json geçersiz embedding_dimension taşıyor.")
+
+    artifact_bytes = {}
+    for artifact_name in RAG_BUNDLE_ARTIFACT_NAMES:
+        entry = artifacts_table.get(artifact_name)
+        if (
+            not isinstance(entry, dict)
+            or not isinstance(entry.get("sha256"), str)
+            or not isinstance(entry.get("size_bytes"), int)
+            or isinstance(entry.get("size_bytes"), bool)
+        ):
+            raise RagManifestInvalidError(f"manifest.json '{artifact_name}' için geçersiz kayıt taşıyor.")
+
+        try:
+            artifact_real = _path_containment.resolve_existing(
+                bundle_dir_real / artifact_name, root=index_root_raw,
+            )
+        except _path_containment.PathContainmentError as error:
+            raise RagArtifactHashMismatchError(f"'{artifact_name}' artefaktı bulunamadı/erişilemez.") from error
+
+        try:
+            with open(artifact_real, "rb") as file:
+                raw_bytes = file.read()
+        except OSError as error:
+            raise RagArtifactHashMismatchError(f"'{artifact_name}' artefaktı okunamadı.") from error
+
+        if len(raw_bytes) != entry["size_bytes"] or hashlib.sha256(raw_bytes).hexdigest() != entry["sha256"]:
+            raise RagArtifactHashMismatchError(
+                f"'{artifact_name}' artefaktının hash/boyutu manifest ile uyuşmuyor."
+            )
+        artifact_bytes[artifact_name] = raw_bytes
+
+    # ---- Only now, after ALL three artifacts hash-verify: deserialize. ----
+    import faiss
+    import numpy as np
+
+    try:
+        loaded_index = faiss.deserialize_index(
+            np.frombuffer(artifact_bytes["mevzuat.faiss"], dtype=np.uint8)
+        )
+    except Exception as error:
+        raise RagArtifactHashMismatchError("mevzuat.faiss deserialize edilemedi.") from error
+
+    try:
+        loaded_documents = pickle.loads(artifact_bytes["documents.pkl"])
+    except Exception as error:
+        raise RagArtifactHashMismatchError("documents.pkl deserialize edilemedi.") from error
+
+    if not isinstance(loaded_documents, list):
+        raise RagDimensionMismatchError("documents.pkl beklenen liste tipini taşımıyor.")
+    if loaded_index.ntotal != len(loaded_documents):
+        raise RagDimensionMismatchError("FAISS kayıt sayısı ile documents sayısı eşleşmiyor.")
+    if loaded_index.d != embedding_dimension:
+        raise RagDimensionMismatchError("FAISS embedding dimension manifest ile uyuşmuyor.")
+
+    return PinnedRagBundle(bundle_version=bundle_version, index=loaded_index, documents=loaded_documents)
+
+
+@contextlib.contextmanager
+def _pin_bundle_globals(bundle: PinnedRagBundle):
+    """Temporarily overwrites this module's `index`/`documents`
+    globals for the duration of exactly one `retrieve()`/
+    `retrieve_detailed()` call - the ENTIRE deterministic scoring
+    engine below reads these two names as ordinary module globals, so
+    this is the one and only place either name is ever reassigned.
+    Restores the PREVIOUS values (not necessarily None - a nested call
+    is not a supported/expected shape, but this still fails safely
+    rather than leaking `None` back into an outer, already-pinned
+    call) in `finally`, so a raised exception never leaves stale
+    bundle state pinned for a subsequent, unrelated call."""
+    global index, documents
+    previous_index, previous_documents = index, documents
+    index, documents = bundle.index, bundle.documents
+    try:
+        yield
+    finally:
+        index, documents = previous_index, previous_documents
+
+
+# ============================================================
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION - EMBEDDING NETWORK CONSENT.
+#
+# `_embedding_client_override`/`_network_allowed_for_current_call` are
+# set, for the duration of exactly one `retrieve()`/`retrieve_detailed()`
+# call, by those two functions' own wrappers below - never anywhere
+# else. `create_query_embedding()` calls `_resolve_embedding_client()`
+# instead of touching a module-level `client` (removed - see this
+# module's own header comment).
+# ============================================================
+
+_embedding_client_override = None
+_network_allowed_for_current_call = False
+
+
+class RagNetworkConsentRequiredError(Exception):
+    """`create_query_embedding()` was reached without an injected test
+    client (`embedding_client=`) and without `allow_network=True`
+    having been passed to the current `retrieve()`/`retrieve_detailed()`
+    call - deliberately NOT a `RagBundleError` subclass (a network-
+    consent failure is a different failure axis from a bundle-
+    verification failure; see this module's own PinnedRagBundle section
+    above for the six that ARE `RagBundleError` subclasses)."""
+
+
+def _resolve_embedding_client():
+    if _embedding_client_override is not None:
+        return _embedding_client_override
+    if not _network_allowed_for_current_call:
+        raise RagNetworkConsentRequiredError(
+            "Gerçek OpenAI embedding çağrısı için açık izin gerekiyor: "
+            "retrieve()/retrieve_detailed()'e allow_network=True veya embedding_client=<client> verin."
+        )
+    from dotenv import load_dotenv
+    from openai import OpenAI
+
+    load_dotenv(ENV_PATH)
+    return OpenAI()
 
 
 # ============================================================
@@ -309,7 +644,12 @@ def create_query_embedding(
     query
 ):
 
-    response = client.embeddings.create(
+    import faiss
+    import numpy as np
+
+    embedding_client = _resolve_embedding_client()
+
+    response = embedding_client.embeddings.create(
         model=EMBEDDING_MODEL,
         input=query
     )
@@ -1178,6 +1518,8 @@ def score_candidate_ids(
     belge_turu=None
 ):
 
+    import numpy as np
+
     if not candidate_ids:
 
         return []
@@ -2044,8 +2386,15 @@ def retrieve_semantic_detailed(
 #
 # RAG'ın sonraki sürümünde bunu kullanacağız.
 # ============================================================
+#
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: the function below (renamed
+# `_retrieve_detailed_impl`, body otherwise BYTE-FOR-BYTE unchanged) is
+# now wrapped by a new public `retrieve_detailed()` (immediately
+# following it) that requires an explicit, caller-supplied
+# `PinnedRagBundle` and fails closed - see that wrapper's own docstring.
+# ============================================================
 
-def retrieve_detailed(
+def _retrieve_detailed_impl(
     query,
     top_k=5,
     kanun_no=None,
@@ -2171,6 +2520,71 @@ def retrieve_detailed(
 
 
 # ============================================================
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION - PUBLIC retrieve_detailed()
+#
+# Requires an explicit `bundle=` (a `PinnedRagBundle` from a caller-
+# owned `load_pinned_bundle()` call) - fails closed with
+# RagBundleNotPinnedError otherwise. Pins BOTH the bundle (`index`/
+# `documents` module globals) and the embedding-network-consent state
+# for the exact duration of the single `_retrieve_detailed_impl()` call
+# this wraps, restoring both in `finally` regardless of outcome - a
+# raised exception can never leak pinned state into an unrelated, later
+# call. `src.rag`/`src.evaluation`/`src.evaluation_v6` are NOT updated
+# to pass `bundle=` in this Foundation slice (explicit, accepted user
+# decision) - their existing `retrieve()`/`retrieve_detailed()` calls
+# therefore now fail closed with RagBundleNotPinnedError until a future,
+# separate adaptation/corpus-population phase updates them.
+# ============================================================
+
+def retrieve_detailed(
+    query,
+    top_k=5,
+    kanun_no=None,
+    madde=None,
+    fikra=None,
+    bent=None,
+    belge_turu=None,
+    temporal_mode=None,
+    query_date=None,
+    today=None,
+    strict_temporal=False,
+    *,
+    bundle=None,
+    allow_network=False,
+    embedding_client=None,
+):
+    if bundle is None:
+        raise RagBundleNotPinnedError(
+            "retrieve_detailed() bir PinnedRagBundle gerektirir - önce load_pinned_bundle() "
+            "ile bir sürüm sabitleyin, sonra bundle=<PinnedRagBundle> olarak geçirin."
+        )
+
+    global _embedding_client_override, _network_allowed_for_current_call
+    previous_override = _embedding_client_override
+    previous_allowed = _network_allowed_for_current_call
+    _embedding_client_override = embedding_client
+    _network_allowed_for_current_call = allow_network
+    try:
+        with _pin_bundle_globals(bundle):
+            return _retrieve_detailed_impl(
+                query,
+                top_k=top_k,
+                kanun_no=kanun_no,
+                madde=madde,
+                fikra=fikra,
+                bent=bent,
+                belge_turu=belge_turu,
+                temporal_mode=temporal_mode,
+                query_date=query_date,
+                today=today,
+                strict_temporal=strict_temporal,
+            )
+    finally:
+        _embedding_client_override = previous_override
+        _network_allowed_for_current_call = previous_allowed
+
+
+# ============================================================
 # ESKİ ANA RETRIEVE API
 #
 # Geriye dönük uyumluluk:
@@ -2189,6 +2603,11 @@ def retrieve_detailed(
 # retrieve_detailed(...)
 #
 # kullanılacak.
+#
+# RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: now forwards the same
+# keyword-only `bundle=`/`allow_network=`/`embedding_client=` triple to
+# `retrieve_detailed()` unchanged - same RagBundleNotPinnedError
+# fail-closed default.
 # ============================================================
 
 def retrieve(
@@ -2202,7 +2621,11 @@ def retrieve(
     temporal_mode=None,
     query_date=None,
     today=None,
-    strict_temporal=False
+    strict_temporal=False,
+    *,
+    bundle=None,
+    allow_network=False,
+    embedding_client=None,
 ):
 
     detailed = retrieve_detailed(
@@ -2216,7 +2639,10 @@ def retrieve(
         temporal_mode=temporal_mode,
         query_date=query_date,
         today=today,
-        strict_temporal=strict_temporal
+        strict_temporal=strict_temporal,
+        bundle=bundle,
+        allow_network=allow_network,
+        embedding_client=embedding_client,
     )
 
     return detailed.get(

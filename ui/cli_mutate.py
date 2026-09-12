@@ -331,6 +331,63 @@ def _build_arg_parser():
         "as printed by a prior preview (no --apply) run of this same command.",
     )
 
+    # RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: a FIFTH subcommand,
+    # `rag-bundle`, routed to the NEW, separate `ui.services.
+    # rag_bundle_mutation_facade` (action families `rag_bundle.build` /
+    # `rag_bundle.activate`, resource_key `global:rag_index` - the FIRST
+    # subcommand in this dispatcher keyed on a GLOBAL, not `case:*`,
+    # resource; no `--case` argument exists here). Three `--action`
+    # values share one namespace: `list` (read-only, no --apply/other
+    # flag accepted at all), `build` (preview shows only source hashing
+    # - zero faiss/numpy/network; apply UNCONDITIONALLY requires
+    # --allow-network, no relaxed mode), `activate` (--bundle-version
+    # REQUIRED for both preview and apply; --allow-network REJECTED
+    # entirely - activation never touches the network).
+    rag_bundle_parser = subparsers.add_parser(
+        "rag-bundle", help="Global RAG index bundle build/activate/list (RAG Bundle Foundation)",
+    )
+    rag_bundle_parser.add_argument(
+        "--action", dest="action", required=True, choices=["build", "activate", "list"],
+    )
+    rag_bundle_parser.add_argument("--actor-user-id", dest="actor_user_id", required=True, type=int)
+    rag_bundle_parser.add_argument("--apply", action="store_true", default=False)
+    rag_bundle_parser.add_argument(
+        "--allow-network", action="store_true", dest="allow_network", default=False,
+        help="build-apply only: UNCONDITIONALLY required (no relaxed mode). REJECTED on build "
+        "preview and for --action activate/list entirely.",
+    )
+    rag_bundle_parser.add_argument(
+        "--build-attempt", dest="build_attempt", type=int, default=0,
+        help="build only: identity-affecting retry counter (default 0). REJECTED (non-default) "
+        "for --action activate/list.",
+    )
+    rag_bundle_parser.add_argument(
+        "--expected-input-digest", dest="expected_input_digest", default=None,
+        help="build-apply only: REQUIRED with --apply, as printed by a prior preview run.",
+    )
+    rag_bundle_parser.add_argument(
+        "--bundle-version", dest="bundle_version", default=None,
+        help="activate only: the v_<64hex> bundle to activate (REQUIRED for both preview and apply).",
+    )
+    rag_bundle_parser.add_argument(
+        "--expected-current-version", dest="expected_current_version", default=None,
+        help="activate-apply only: REQUIRED with --apply - the live pointer's observed state "
+        "(a v_<64hex> value, or the literal 'none'/'corrupt'), as printed by a prior preview run.",
+    )
+    # TARGETED F1 REMEDIATION: activation identity now includes an
+    # operator-declared, non-negative retry counter - REJECTED (non-
+    # default) for --action build/list; accepted (>=0) for --action
+    # activate on both preview and apply. Never auto-derived from live
+    # pointer/journal state (see rag_bundle_mutation_facade.py's own
+    # module-level comment on why).
+    rag_bundle_parser.add_argument(
+        "--activation-attempt", dest="activation_attempt", type=int, default=0,
+        help="activate only: identity-affecting retry counter (default 0), reachable when a "
+        "same-attempt replay of an EARLIER activation of this exact bundle_version cannot be "
+        "corroborated (see ActivationReplayVerificationError). REJECTED (non-default) for "
+        "--action build/list.",
+    )
+
     return parser
 
 
@@ -565,6 +622,78 @@ def _validate_generation_args(args, *, stderr) -> int | None:
     return None
 
 
+def _validate_rag_bundle_args(args, *, stderr) -> int | None:
+    """RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: pure, zero-connection
+    usage-shape checks for the `rag-bundle` subcommand - every rule
+    below fires BEFORE any authz repository, filesystem probe, or
+    journal access (mirrors `_validate_generation_args` exactly; the
+    facade re-enforces the allow_network/expected_input_digest/
+    expected_current_version rules independently as its own pre-I/O
+    argument-error class)."""
+    if args.action == "list":
+        if (
+            args.apply or args.allow_network or args.expected_input_digest is not None
+            or args.build_attempt != 0 or args.bundle_version is not None
+            or args.expected_current_version is not None or args.activation_attempt != 0
+        ):
+            stderr.write("error: --action list accepts no other flag besides --actor-user-id\n")
+            return EXIT_USAGE_ERROR
+        return None
+
+    if args.action == "build":
+        if args.bundle_version is not None:
+            stderr.write("error: --bundle-version is not accepted for --action build\n")
+            return EXIT_USAGE_ERROR
+        if args.expected_current_version is not None:
+            stderr.write("error: --expected-current-version is not accepted for --action build\n")
+            return EXIT_USAGE_ERROR
+        if args.build_attempt < 0:
+            stderr.write("error: --build-attempt must be a non-negative integer\n")
+            return EXIT_USAGE_ERROR
+        if args.activation_attempt != 0:
+            stderr.write("error: --activation-attempt is not accepted for --action build\n")
+            return EXIT_USAGE_ERROR
+        if not args.apply:
+            if args.allow_network:
+                stderr.write("error: --allow-network is not accepted on build preview (no --apply)\n")
+                return EXIT_USAGE_ERROR
+            if args.expected_input_digest is not None:
+                stderr.write("error: --expected-input-digest is only meaningful together with --apply\n")
+                return EXIT_USAGE_ERROR
+        else:
+            if not args.allow_network:
+                stderr.write("error: --action build --apply requires --allow-network (no relaxed mode)\n")
+                return EXIT_USAGE_ERROR
+            if args.expected_input_digest is None:
+                stderr.write("error: --apply requires --expected-input-digest\n")
+                return EXIT_USAGE_ERROR
+        return None
+
+    # args.action == "activate"
+    if args.allow_network:
+        stderr.write("error: --allow-network is not accepted for --action activate\n")
+        return EXIT_USAGE_ERROR
+    if args.expected_input_digest is not None:
+        stderr.write("error: --expected-input-digest is not accepted for --action activate\n")
+        return EXIT_USAGE_ERROR
+    if args.build_attempt != 0:
+        stderr.write("error: --build-attempt is not accepted for --action activate\n")
+        return EXIT_USAGE_ERROR
+    if args.activation_attempt < 0:
+        stderr.write("error: --activation-attempt must be a non-negative integer\n")
+        return EXIT_USAGE_ERROR
+    if args.bundle_version is None:
+        stderr.write("error: --action activate requires --bundle-version\n")
+        return EXIT_USAGE_ERROR
+    if args.apply and args.expected_current_version is None:
+        stderr.write("error: --apply requires --expected-current-version\n")
+        return EXIT_USAGE_ERROR
+    if args.expected_current_version is not None and not args.apply:
+        stderr.write("error: --expected-current-version is only meaningful together with --apply\n")
+        return EXIT_USAGE_ERROR
+    return None
+
+
 def _parse_judicial_recess(value):
     if value == "yes":
         return True
@@ -613,6 +742,8 @@ def main(
         usage_error = _validate_promotion_args(args, stderr=stderr)
     elif args.command == "generation":
         usage_error = _validate_generation_args(args, stderr=stderr)
+    elif args.command == "rag-bundle":
+        usage_error = _validate_rag_bundle_args(args, stderr=stderr)
     else:
         usage_error = _validate_review_args(args, stderr=stderr)
     if usage_error is not None:
@@ -626,6 +757,7 @@ def main(
     # ============================================================
     from ui.services import authz as _authz
     from ui.services import cli_authz as _cli_authz
+    from ui.services import global_authz as _global_authz
 
     authz_conn = authz_conn_factory()
     try:
@@ -635,7 +767,15 @@ def main(
             stderr.write(_AUTHZ_DENIAL_MESSAGE + "\n")
             return EXIT_DOMAIN_ERROR
 
-        repository = _cli_authz.CliActorAuthzRepository(authz_conn)
+        # RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: `rag-bundle` has no
+        # case_id concept at all - it needs a GLOBAL-resource authz
+        # repository (`PostgresGlobalResourceAuthzRepository`), never the
+        # case-scoped `CliActorAuthzRepository` every other subcommand
+        # uses. Both are built from the SAME `authz_conn`/`principal`.
+        if args.command == "rag-bundle":
+            repository = _global_authz.PostgresGlobalResourceAuthzRepository(authz_conn)
+        else:
+            repository = _cli_authz.CliActorAuthzRepository(authz_conn)
 
         try:
             if args.command == "approval":
@@ -653,12 +793,17 @@ def main(
                     args, principal=principal, repository=repository,
                     mutation_conn_factory=mutation_conn_factory,
                 )
+            elif args.command == "rag-bundle":
+                outcome = _run_rag_bundle(
+                    args, principal=principal, repository=repository,
+                    mutation_conn_factory=mutation_conn_factory,
+                )
             else:
                 outcome = _run_review(
                     args, principal=principal, repository=repository,
                     mutation_conn_factory=mutation_conn_factory,
                 )
-        except _authz.CaseAccessDeniedError:
+        except (_authz.CaseAccessDeniedError, _global_authz.GlobalResourceAccessDeniedError):
             stderr.write(_AUTHZ_DENIAL_MESSAGE + "\n")
             return EXIT_DOMAIN_ERROR
         except Exception as error:
@@ -942,6 +1087,91 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
     )
 
 
+def _run_rag_bundle(args, *, principal, repository, mutation_conn_factory) -> str:
+    """RAG GLOBAL-RESOURCE BUNDLE FOUNDATION. `--action list`: read-only,
+    `inspect` capability, no lock/journal. `--action build`: preview
+    shows only source hashing (zero faiss/numpy/network); apply performs
+    the real, expensive rebuild OUTSIDE the lock before ever opening a
+    journal row. `--action activate`: preview/apply both require
+    `--bundle-version`; apply additionally requires `--expected-current-
+    version` (the live pointer's observed state, exactly as printed by a
+    prior preview run)."""
+    from ui.services import rag_bundle_mutation_facade as _facade
+
+    if args.action == "list":
+        result = _facade.list_bundles(principal=principal, authz_repository=repository)
+        lines = [
+            f"RAG-BUNDLE LIST resource_key={result['resource_key']}\n"
+            f"current_pointer_state={result['current_pointer_state']} "
+            f"current_version={result['current_version']}\n"
+        ]
+        for item in result["bundles"]:
+            lines.append(
+                f"bundle_version={item['bundle_version']} has_build_audit={item['has_build_audit']}\n"
+            )
+        return "".join(lines)
+
+    if args.action == "build":
+        if not args.apply:
+            preview = _facade.preview_build(
+                build_attempt=args.build_attempt, principal=principal, authz_repository=repository,
+            )
+            return (
+                f"PREVIEW rag-bundle build build_attempt={preview['build_attempt']}\n"
+                f"source_document_count={preview['source_document_count']}\n"
+                f"input_digest={preview['input_digest']}\n"
+                "Uygulamak için: python -m ui.cli_mutate rag-bundle --action build --apply "
+                f"--allow-network --build-attempt {preview['build_attempt']} --actor-user-id "
+                f"{args.actor_user_id} --expected-input-digest {preview['input_digest']}\n"
+            )
+
+        result = _facade.apply_build(
+            args.expected_input_digest, allow_network=args.allow_network, build_attempt=args.build_attempt,
+            principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+        )
+        return (
+            f"APPLIED rag-bundle build bundle_version={result.bundle_version}\n"
+            f"bundle_dir={result.bundle_dir}\n"
+            f"manifest_path={result.manifest_path}\n"
+            f"audit_path={result.audit_path}\n"
+            f"replayed={result.replayed}\n"
+        )
+
+    # args.action == "activate"
+    if not args.apply:
+        preview = _facade.preview_activate(
+            args.bundle_version, activation_attempt=args.activation_attempt,
+            principal=principal, authz_repository=repository,
+        )
+        observed = preview["expected_current_bundle_version_assumption"]
+        return (
+            f"PREVIEW rag-bundle activate bundle_version={preview['bundle_version']}\n"
+            f"bundle_manifest_sha256={preview['bundle_manifest_sha256']}\n"
+            f"activation_attempt={preview['activation_attempt']}\n"
+            f"has_build_audit={preview['has_build_audit']}\n"
+            f"current_pointer_state={preview['current_pointer_state']} "
+            f"current_version={preview['current_version']}\n"
+            f"activation_input_digest={preview['activation_input_digest']} "
+            "(computed assuming --expected-current-version equals the CURRENTLY observed pointer "
+            f"state, {observed!r})\n"
+            "Uygulamak için: python -m ui.cli_mutate rag-bundle --action activate --apply "
+            f"--bundle-version {preview['bundle_version']} --actor-user-id {args.actor_user_id} "
+            f"--expected-current-version {observed} --activation-attempt {preview['activation_attempt']}\n"
+        )
+
+    result = _facade.apply_activate(
+        args.bundle_version, args.expected_current_version, activation_attempt=args.activation_attempt,
+        principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+    )
+    return (
+        f"APPLIED rag-bundle activate bundle_version={result.bundle_version}\n"
+        f"previous_version={result.previous_version}\n"
+        f"pointer_path={result.pointer_path}\n"
+        f"audit_path={result.audit_path}\n"
+        f"replayed={result.replayed}\n"
+    )
+
+
 def _run_review(args, *, principal, repository, mutation_conn_factory) -> str:
     from ui.services import review_registry as _review_registry
     from ui.services import authz as _authz
@@ -1013,6 +1243,15 @@ def _is_known_domain_error(error: BaseException) -> bool:
     `JournalCompletionUncertainError`,
     `JournalReconciliationTransitionFailedError`).
 
+    `RagBundleMutationError` (RAG GLOBAL-RESOURCE BUNDLE FOUNDATION) is
+    the base for every `ui.services.rag_bundle_mutation_facade`
+    exception (`RagBundleArgumentError`, `RagBundleStaleInputError`,
+    `SourceDriftDetectedError`, `BundleVersionCollisionError`,
+    `BundleNotFoundError`, `BundleNotBuildAuditedError`,
+    `AlreadyActiveError`, `StaleCurrentVersionError`) - its own
+    `GlobalResourceAccessDeniedError` is handled separately, exactly
+    like `CaseAccessDeniedError`, in `main()`'s own except clause.
+
     Anything NOT covered here (and not `CaseAccessDeniedError`, handled
     separately for existence-blindness in `main()`) is deliberately left
     to propagate uncaught with its own real traceback - a genuinely
@@ -1024,6 +1263,7 @@ def _is_known_domain_error(error: BaseException) -> bool:
         ResolvedCaseIdMismatchError,
     )
     from ui.services.mutation_coordinator import MutationCoordinatorError
+    from ui.services.rag_bundle_mutation_facade import RagBundleMutationError
 
     known = (
         ApprovalUiError,
@@ -1031,6 +1271,7 @@ def _is_known_domain_error(error: BaseException) -> bool:
         AuditBindingVerificationFailedError,
         ResolvedCaseIdMismatchError,
         MutationCoordinatorError,
+        RagBundleMutationError,
     )
     return isinstance(error, known)
 

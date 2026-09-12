@@ -386,26 +386,56 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   (bkz. Row
   19C-3c-iv Slice 1 checkpoint özeti, §5 sonrası, "## 6.
   Cross-Cutting Backlog"dan hemen önce).
-- **Sıradaki adım: RAG Global-Resource Bundle Foundation — ACTIVE /
-  NEXT.** İmplementasyona HENÜZ BAŞLANMADI. İlk adım, ayrı ve TAMAMEN
-  salt-okunur bir exact-scope/architecture/allowlist
-  reconciliation'dır. Row 19A'nın onaylı immutable versioned bundle
-  sözleşmesi (`index/v<...>/` bundle'ları + tek atomik
-  `current_version` manifest pointer'ı + stale-sonuç kuralı) bu fazın
-  BAĞLAYICI girdisidir. **Bu pointer hiçbir dosyaya yazma yetkisi
-  VERMEZ** — ayrı kullanıcı onayı ve exact, koşulsuz bir dosya
-  allowlist'i olmadan hiçbir dosyaya dokunulamaz (Row 19A'nın
-  dosya-değişiklik sınırı kararı uyarınca). Build, validation,
-  publish ve activation birbirinden AYRILACAKTIR; `global:rag_index`
-  lock/authz/capability modeli ayrıca kesinleştirilecektir; ilk
-  corpus population bu faz tarafından OTOMATİK yetkilendirilmez.
-  **ROW 19C-3c-iv Slice 2 — Retrieval/Discovery-Dependent Generation**
-  ANCAK Bundle Foundation tamamlandıktan SONRA başlayabilir. Row
-  10/11 `rag_index_version_used` şema yaması, production
-  mevzuat/içtihat corpus population, diğer maintenance/global-resource
-  işleri (`ingest.py`/deadline_rule maintenance dahil) ve Row 19D
-  (deployment/OS hardening, OS ACL/service identity dahil) bu
-  checkpoint ile BAŞLAMAMIŞTIR ve YETKİLENDİRİLMEMİŞTİR.
+- **RAG Global-Resource Bundle Foundation** artık **DONE / LOCKED** —
+  kullanıcı tarafından ayrıca onaylanmış 21 dosyalık allowlist (10
+  yeni + 11 değiştirilmiş dosya) üzerinde implement edildi (bkz. RAG
+  Global-Resource Bundle Foundation checkpoint özeti, §5 sonrası,
+  "## 6. Cross-Cutting Backlog"dan hemen önce). Immutable,
+  content-addressed RAG bundle yapısı (`index/v_<64hex>/` + tek
+  atomik `current_version` pointer); `rag_bundle.build` ve
+  `rag_bundle.activate` iki action family'si mutation coordinator/
+  journal altyapısına `global:rag_index` lock/journal üzerinden
+  bağlandı; migration 0005 (`iam.global_resource_grants` +
+  `iam.global_resource_grant_events`) ile global-resource grant/authz
+  modeli eklendi; pinned/verified reader (`load_pinned_bundle`) +
+  import/credential hijyeni (`ingest.py`/`retriever.py`'nin import-anı
+  faiss/numpy/dotenv/openai yükleri kaldırıldı) uygulandı;
+  `src/ingest.py`'nin doğrudan CLI mutasyon yolu kapatıldı. İlk
+  bağımsız incelemede (metodolojik bağımsızlık — implementer ile aynı
+  session, ayrı analiz disiplini) 1 HIGH (F1: activation identity
+  hedef bundle'ı içermiyor → sessiz cross-replay riski) + 3 MEDIUM
+  (F2: rollback sınırı audit-dizin oluşturmayı kapsamıyor; F3:
+  completed-replay corroboration yok; F4: build audit ince/recompute
+  bağı yok) bulundu, verdict NOT LOCK-READY idi. Yalnız 6 dosyada
+  (mevcut 20-dosyalık değişen set İÇİNDE, yeni dosya/migration
+  EKLENMEDEN) dar bir remediasyon uygulandı; TAMAMEN AYRI, bağımsız
+  bir Fable yeniden-incelemesi (repo-dışı fault-injection tanısı +
+  gerçek/disposable PostgreSQL 16 ile) F1-F4'ün dördünün de
+  KAPANDIĞINI doğruladı; 0 Critical/High/Medium, 5 Low/Observation
+  (bloklamayan) bulguyla final verdict:
+  `RAG BUNDLE FOUNDATION LOCK-READY — F1-F4 CLOSED, NO BLOCKING FINDINGS`.
+  Rows 1-18, Row 19A, Row 19B, Row 19C-1…19C-3c-iv Slice 1
+  contract'ları değişmedi.
+- **Sıradaki adım: RAG Real-Dependency Validation and Corpus
+  Population Scope Reconciliation — ACTIVE / NEXT.**
+  İmplementasyona HENÜZ BAŞLANMADI; corpus population da
+  BAŞLAMAMIŞTIR. İlk adım, ayrı ve TAMAMEN salt-okunur bir
+  exact-scope/allowlist reconciliation'dır. `faiss`/`numpy`/`openai`/
+  `pypdf`/`python-dotenv` bu ortamda KURULU DEĞİLDİR — gerçek kurulum
+  ve API uyumluluğu (özellikle FAISS serialize/deserialize şekli ve
+  embedding dimension/count doğrulaması) bu fazda AYRICA
+  doğrulanmalıdır. Gerçek bir build→publish→activate→
+  load_pinned_bundle round-trip'i (küçük bir synthetic corpus ile) bu
+  fazın ZORUNLU açılış kapısıdır. Mevzuat ve içtihat corpus'unun
+  kaynak/provenance/lisans/güncelleme politikası ayrıca
+  kararlaştırılmalıdır. **Bu pointer mevcut `data/**` ve `index/**`
+  için hiçbir dosyaya yazma yetkisi VERMEZ.** Row 10/11
+  `rag_index_version_used` şema yaması, **ROW 19C-3c-iv Slice 2 —
+  Retrieval/Discovery-Dependent Generation**, GC/retention/
+  maintenance işleri ve Row 19D (deployment/OS hardening, OS ACL/
+  service identity dahil) bu checkpoint ile BAŞLAMAMIŞTIR ve
+  YETKİLENDİRİLMEMİŞTİR. Bu pointer için yeni bir Row numarası İCAT
+  EDİLMEMİŞTİR ve hiçbir dosyaya implementasyon yetkisi VERMEZ.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -4137,6 +4167,330 @@ yetkisi VERMEZ)**:
 19C-3c-iii örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren,
 salt-okunur bir roadmap-lock işlemidir; hiçbir kaynak/migration/test/
 production dosyasına dokunmaz.
+
+### RAG Global-Resource Bundle Foundation (DONE / LOCKED — checkpoint özeti)
+
+**Preflight ve scope** — Başlangıç HEAD
+`c757dad6a419e635037c7ef0535ce7576e562eab`; branch `claude-dev`;
+staged set boş; `data/`, `index/`, `CLAUDE.md`, `db/migrations/`
+(0001-0004) temiz; `stash@{0}` mevcut ve dokunulmamış. Onaylı exact
+allowlist **21 dosya** (10 yeni + 11 değiştirilmiş). Fiilen değişen
+**20 dosya**: 10 yeni + 10 değiştirilmiş —
+`ui/tests/test_reconciliation_isolated.py` (allowlist'in 11.
+"değiştirilmiş" dosyası) kaynak-kanıtlı olarak (registry-count
+coupling'i SIFIR — grep'le doğrulandı) GENUINELY untouched kaldı ve
+kendi regresyonuyla (270/270, hem implementasyon hem bağımsız
+re-review turunda) değişmeden PASS etti — bu, Row 19C-3c-iii'nin
+`test_cli_mutate_integration_postgres.py` precedent'iyle AYNI
+desendir. Sonradan gelen targeted remediation turu bu 20-dosyalık
+setin İÇİNDEKİ yalnız **6 dosyada** kaldı (§7) — SIFIR yeni dosya,
+SIFIR yeni migration. `data/**` ve `index/**` (mevcut flat index
+dahil) implementasyon, ilk bağımsız inceleme, remediasyon ve nihai
+Fable yeniden-incelemesi boyunca bayt-düzeyinde DEĞİŞMEDİ (her turda
+ayrıca sha256 manifestiyle kanıtlandı). `CLAUDE.md` implementasyon
+sırasında HİÇ değiştirilmedi — bu checkpoint'in kendisi ilk yazım
+anıdır.
+
+**IAM/migration** — `db/migrations/0005_global_resource_grants.sql`
+(yalnız additive, 0001-0004 bayt-düzeyinde untouched):
+`iam.global_resource_grants` (surrogate `BIGSERIAL PRIMARY KEY` —
+doğal-key PK DEĞİL; `resource` kapalı `'rag_index'`; `capability`
+kapalı `inspect`/`build`/`activate`; `granted_by_user_id`/
+`granted_at`/`revoked_at`/`revoked_by_user_id`; `(revoked_at IS
+NULL) = (revoked_by_user_id IS NULL)` CHECK) + aktif-grant partial
+unique index (`(user_id,resource,capability) WHERE revoked_at IS
+NULL` — `iam.case_assignments`'ın 0001'deki aynı desenidir) +
+bağımsız, append-only `iam.global_resource_grant_events`
+(`event_type` kapalı `grant_created`/`grant_revoked`; `grant_id`
+FK'si `iam.global_resource_grants(id)`'e bağlı — bağımsız incelemenin
+doğrudan kaynaktan doğruladığı madde). Revoke sonrası re-grant YENİ
+bir surrogate-id satırı + kendi `grant_created` event'ini açar;
+eski satırın tarihçesi kalıcı korunur (hem fake hem gerçek
+PostgreSQL'de kanıtlı). `iam.security_events` (0001) tablosuna
+DOKUNULMADI — 19B'nin "IAM mutasyonu + typed event AYNI transaction"
+invariant'ı adanmış `global_resource_grant_events` tablosuyla AYNEN
+sağlanır, çift-otorite yaratılmaz. `mutation.mutation_resources`'a
+YENİ satır eklenmedi — `global:rag_index` migration 0003 tarafından
+ZATEN seed'liydi. Grant/revoke/list YENİ, dar
+`scripts/global_resource_grants.py` CLI'ı üzerinden —
+`scripts/iam_admin.py`'nin `_run_locked_as_admin`/
+`_verify_actor_is_active_admin` desenini BAĞIMSIZ bir kopya olarak
+(import değil) uygular: `global:iam` transaction-lock → aktif-admin
+actor doğrulaması → grant/revoke satırı + AYNI transaction'da typed
+event → commit/rollback birlikte. Aktif global admin olan bir
+kullanıcıya capability grant'ı CLI karar-mantığında KOŞULSUZ
+REDDEDİLİR (hem fake hem gerçek PostgreSQL'de kanıtlı; bypass yok).
+`ui/services/global_authz.py`'nin `authorize_global_resource_access()`'i
+iki-adımlı, existence-blind bir kontroldür — admin rolüne HİÇBİR
+otomatik yetki vermez (kod içinde admin sorgusu hiç yok); revoked bir
+grant ile hiç verilmemiş bir capability BİRBİRİNDEN AYIRT
+EDİLEMEZ. **Bilinen kozmetik sapmalar** (Low, F5.8 — LOCK'u
+engellemedi): (a) zaten aktif bir capability için tekrar grant isteği
+implementasyonda idempotent BAŞARI döner (`created=False`, görünür
+"already actively granted" mesajı) — Fable FINAL'in tercih ettiği
+"açık hata" davranışından SAPAR, ama sessiz DEĞİLDİR; (b) event tipi
+literal'leri Fable FINAL'in önerdiği `global_resource_grant_created/
+…_revoked` yerine daha kısa `grant_created`/`grant_revoked`'tir
+(adanmış tabloda önek gereksiz).
+
+**Bundle mimarisi** — `bundle_version = "v_" +
+sha256(canonical_json(identity_core)).hexdigest()` — TAM 64
+lowercase hex, HİÇ kısaltılmaz (her tüketim noktasında regex'le
+doğrulanır). İki-parçalı model: `manifest.json` = SALT deterministik
+identity-core (`source_manifest`, `pipeline_config`, üç sabit
+artifact adı — `mevzuat.faiss`/`documents.pkl`/`config.json` —
+için `{sha256,size_bytes}` tablosu, `record_count`/`chunk_count`) +
+`bundle_version` alanı hash'lendikten SONRA eklenir (self-reference-
+sız). Volatile provenance (`created_at`, actor kimliği, `channel`,
+mutation idempotency, `input_digest`) HİÇBİR ZAMAN manifest'te
+BULUNMAZ — tamamı build AUDIT kaydına taşınır (tek otorite: journal +
+audit; çift-otorite reddi). **İki kasıtlı ayrı digest**
+(implementasyon sırasında yapılan bir tasarım düzeltmesi):
+`input_digest` (journal identity/`pre_revision`; `build_attempt`
+dahil; build ÖNCESİ hesaplanabilir) ile `source_digest`
+(`MutationIntent.pre_hash`, reconciliation pre-state kanıtı için;
+`build_attempt` HARİÇ — böylece crash'lenmiş bir attempt'in numarası
+audit'siz köşede geri kazanılmak ZORUNDA değildir). Staging kökü
+`index/staging/b_<idempotency_key[:24]>`; artifact'ler fsync'lenip
+manifest yazımından ÖNCE re-read ile yeniden doğrulanır (manifest
+EN SON yazılır); `Path.rename`/`os.replace` ile `index/v_<64hex>/`e
+atomik publish. Aynı bayt içeriği = deterministik güvenli replay;
+farklı bayt = `BundleVersionCollisionError`, mevcut dizin TAMAMEN
+DOKUNULMAMIŞ. Orphan staging dizinleri için HİÇBİR silme/cleanup/GC
+yüzeyi YOKTUR (grep-kanıtlı) — kasıtlı olarak inert, GC yalnız
+gelecekteki bir başlıktır.
+
+**Build/activate coordinator sözleşmesi** — `rag_bundle.build` ve
+`rag_bundle.activate`, `resource_key="global:rag_index"` (0003
+tarafından zaten seed'li — kilit için yeni migration GEREKMEDİ),
+`channel="local_maintenance_rag_bundle_cli"`. Build apply'da
+`--allow-network` KOŞULSUZ zorunludur (CLI usage-shape katmanı +
+facade katmanı, ikisi de bağımsız); ağır build (PDF→chunk→embed→
+FAISS) TAMAMEN RAM'de, kilit DIŞINDA, journal satırı OLUŞMADAN ÖNCE
+çalışır; kilit altında kaynak re-hash edilip frozen pre-lock
+snapshot'ıyla karşılaştırılır — drift → `SourceDriftDetectedError`,
+SIFIR journal/bundle/staging/audit yazımı. `build_attempt` retry
+kuralı: attempt artışı `input_digest`'i (ve idempotency identity'yi)
+değiştirir, `source_digest` değişmeyen kaynaklar için AYNI kalır.
+Build-skip fast path: pre-lock, best-effort, HİÇBİR ZAMAN otoriter
+olmayan bir peek, bilinen-güvenli bir replay'den ÖNCE pahalı
+builder çağrısını atlar; otoriter karar HER ZAMAN coordinator'ın
+kendi kilit-altı idempotency lookup'ındadır; peek'in yanıldığı
+(ulaşılmaması gereken) durum için `writer_callback` içinde
+fail-closed bir sentinel vardır. Activation: hedef bundle için
+geçerli, tam-bağlama bir `rag_bundle.build` audit'i OLMADAN reddeder
+(`BundleNotBuildAuditedError`); zaten aktifse reddeder
+(`AlreadyActiveError`); bayat `--expected-current-version`'da
+reddeder (`StaleCurrentVersionError` — gerçek versiyon/`"none"`/
+`"corrupt"` üç gözlemlenebilir durumu kapsar); pointer temp-dosya +
+fsync + tek atomik `os.replace()` ile değiştirilir; activation ASLA
+network'e dokunmaz (`--allow-network` activate'te topyekûn
+reddedilir). Bu sözleşmenin F1-F4 remediasyonuyla kazandığı nihai
+hâli (`activation_attempt` identity alanı, parametreli `target_ref`,
+composite `pre_hash`, W0-W6 crash-safe writer/rollback sırası, her
+iki aile için replay corroboration, per-idempotency-key `O_EXCL`
+build audit'leri) §7'de ayrıntılıdır.
+
+**Reader ve closure** — `PinnedRagBundle`: pointer→manifest→artifact
+hash zinciri tam doğrulanır; altı adlandırılmış fail-closed hata
+sınıfı (`RagPointerMissingError`, `RagPointerInvalidError`,
+`RagManifestInvalidError`, `RagArtifactHashMismatchError`,
+`RagDimensionMismatchError`, `RagBundleNotPinnedError`); hash-önce-
+deserialize disiplini — 11 fail-closed senaryonun TAMAMI faiss'in
+süreçte HİÇ BULUNMADIĞI bir ortamda geçti (deserialize'a
+ulaşılamayacağının yapısal kanıtı). `retrieve()`/`retrieve_detailed()`
+açık bir `bundle=<PinnedRagBundle>` GEREKTİRİR; varsayılan
+`bundle=None` fail-closed `RagBundleNotPinnedError` verir — sessiz
+flat-index fallback yolu reader içinde SIFIR referansla (kasıtlı RED
+kararı, gözden kaçma DEĞİL). `src.rag`/`src.evaluation`/
+`src.evaluation_v6` bu Foundation slice'ında `bundle=` geçecek şekilde
+GÜNCELLENMEDİ — mevcut çağrıları (ve `retriever.py`'nin kendi
+`__main__` smoke-test bloğu) artık `RagBundleNotPinnedError` ile
+fail-closed olur; bu, gelecekteki AYRI bir adaptasyon fazına
+kadar kabul edilen sonuçtur. `rag.py:53`'ün module-level `from
+anthropic import Anthropic` importu DOKUNULMADAN kalır — bu
+Foundation'ın öncesinde de var olan, Foundation'ın DEĞİŞTİRMEDİĞİ bir
+kırılganlıktır (anthropic'siz ortamda `import rag` bugün de, sonra da
+kırıktır). `src/ingest.py`'nin `main()`'i sabit stderr + gerçek
+`SystemExit(2)` ile, hiçbir I/O'dan önce kapatıldı — gerçek OS
+subprocess ile kanıtlandı; import-anı yan etkilerin (dotenv/openai/
+faiss/numpy/pypdf/mkdir/RuntimeError) TAMAMI kaldırıldı —
+`import ingest`/`import retriever` artık bu beş bağımlılığın HİÇBİRİ
+kurulu olmayan gerçek hedef ortamda (`vergi_ui_runtime`) sıfır I/O/
+credential/network ile temiz import olur (subprocess probe ile
+kanıtlı).
+
+**Reconciliation/crash** — Ayrı `BuildReconciliationAdapter` /
+`ActivateReconciliationAdapter`; post-state kanıtı için exactly-one
+bound audit ZORUNLU; corrupt/duplicate audit hiçbir yerde kesin
+post-state kanıtı SAYILMAZ (`corrupt==0 && len(matches)==1` şartı).
+Reconciliation writer/network/build'i ASLA yeniden çağırmaz — yapısal
+olarak (adapter kodu `build_bundle_snapshot`/`embedding_client`'a
+hiç referans vermez) ve ampirik olarak (zehirlenmiş builder birçok
+`gather_evidence()` çağrısı boyunca hiç tetiklenmedi) kanıtlı. F1-F4
+remediasyonunun getirdiği **W0-W6 yazıcı/rollback sırası**: W0
+fail-closed önceki-pointer okuması (okunamayan-mevcut'u absent ile
+ASLA karıştırmaz); W1 audit-dizin `mkdir`'i pointer replace'ten
+ÖNCEYE taşındı (F2'nin çekirdek düzeltmesi); W2 pointer temp+fsync+
+atomik `os.replace`; W3 `O_CREAT|O_EXCL` audit açılışı — eski
+`FileExistsError→pass` yutması TAMAMEN KALDIRILDI (F5.7 kapanışı),
+artık rollback + re-raise tetikler; W4 fd alındıktan SONRAKİ yazım/
+fsync hatası → best-effort partial-dosya unlink (unlink hatası
+CRITICAL loglanır, asla sessiz) → pointer rollback → ORİJİNAL
+exception değişmeden yeniden fırlatılır; W5 rollback'in KENDİSİ
+başarısız olursa CRITICAL loglanır (asla sessiz `pass`), orijinal
+exception yine fırlar; W6 audit başarıyla yazılmış ama
+`_mark_completed` DB hatası almışsa satır `executing` kalır,
+reconciliation writer'ı YENİDEN ÇAĞIRMADAN durable kanıtla çözer
+(gerçek PostgreSQL'de bir P11-tarzı, yalnız DB-seviyesinde
+`completed` UPDATE'ini kıran trigger'la — production kodda SIFIR
+monkeypatch — kanıtlandı). İki aktör aynı içerikte bundle
+yayımlarsa HER BİRİ kendi, bağımsız, per-idempotency-key `O_EXCL`
+audit dosyasını alır (`first_publish=True/False` ayrımı) — F4'ün
+orijinal "paylaşımlı tek audit dosyası" kusurunu kapatır; her
+aktörün kendi journal satırı KENDİ audit'iyle replay-doğrulanır,
+diğerininkiyle ASLA.
+
+**Bulgular ve remediasyon kronolojisi (dürüst zaman ayrımıyla)** —
+İlk implementasyon sweep'i (implementer'ın kendi koşusu): **63/63
+modül exit 0, 3530 passed, 0 failed, 8 counted skipped**. İlk
+inceleme — **metodolojik bağımsızlık, implementer ile AYNI Sonnet
+session'ı, ayrı model/ayrı session DEĞİL** (rapor bunu açıkça
+disclose eder) — aynı 3530/0/8 sonucunu bağımsız yeniden üretti,
+AMA kaynak/diff/gerçek fault-injection ile implementer raporuna
+güvenmeden 1 HIGH (F1) + 3 MEDIUM (F2/F3/F4) + bir Low paketi
+(F5, 12 madde) buldu; verdict **NOT LOCK-READY**. Dar bir targeted
+remediation (F1/F2/F3/F4 + iki adlandırılmış Low madde — F5.4'ün
+pre_hash-composite yarısı ve F5.7'nin audit `FileExistsError→pass`
+kaldırılması) TAM OLARAK **6 dosyada**, mevcut 20-dosyalık set
+İÇİNDE (sıfır yeni dosya, sıfır yeni migration) uygulandı.
+Remediasyon implementer'ının kendi final full sweep'i: **63/63 modül
+exit 0, 3650 passed, 0 failed, 8 counted skipped**. Bunun ardından
+**tamamen AYRI, gerçekten bağımsız bir Fable session'ı** (implementer
+oturumundan ayrı olduğu açıkça disclose edilir) — kendi repo-dışı
+FakeConn/fault-injection tanısıyla (repo test fixture'larından
+KOPYALANMADAN), fresh disposable PostgreSQL 16 ile, ve implementer
+raporunun hiçbir iddiasına güvenmeden — **63/63 modül, 3650 passed,
+0 failed, 8 counted skipped**'i BAĞIMSIZ olarak bire bir yeniden
+üretti; F1-F4'ün dördünün de KAPANDIĞINI kaynak-kanıtlı olarak
+doğruladı; kendi repo-dışı 66/66 DIAG-PASS fault-injection matrisini
+çalıştırdı; **0 Critical, 0 High, 0 Medium, 5 Low/Observation**
+(O1-O5, hiçbiri bloklamaz) buldu. Final verdict (tam metin):
+`RAG BUNDLE FOUNDATION LOCK-READY — F1-F4 CLOSED, NO BLOCKING FINDINGS`.
+
+**Sabit sayımlar** — test modülü **58→63**; merged reconciliation
+registry routing key **47→49**; logical action family **35→37** (10
+approval + 12 review + 1 drafting_request + 2 promotion + 2
+deterministic-generation + 5 agent-generation + 1
+fact-extraction-generation + 2 legal-research/case-law-generation +
+2 rag-bundle [build/activate]); migration **4→5**; kapalı mutasyon
+giriş noktası **28→29** (+`src/ingest.py`'nin `main()`'i); refusal
+senaryosu **43→44**.
+
+**Kalan Low/Observation** — Nihai Fable yeniden-incelemesinin kendi
+beş maddesi (hiçbiri bloklamaz): **O1** (Low) — başarılı bir
+aktivasyondan SONRA AYNI CLI girdilerinin SIRALI (sequential) tekrar
+verilişi, pre-lock `StaleCurrentVersionError`'a düşer (yüksek sesli,
+fail-closed red); genuine "replay-accept" yalnız ULAŞILABİLİR olduğu
+tek senaryoda — eşzamanlı (concurrent) çift-gönderim — gerçek public
+API üzerinden uçtan uca kanıtlanmıştır; hiçbir yol sessiz veya
+fail-open değildir. **O2** (Low) — activation audit'inin üst-seviye
+`activation_attempt`/`expected_current_bundle_version` kopyaları
+recompute kontrolünde `identity_payload`'ın kendi kopyalarına
+BAĞLANMAZ (yalnız `bundle_version`/`bundle_manifest_sha256` üst-
+seviye kopyaları bağlanır) — yalnız GÖRÜNTÜLEME etkisi (bir replay
+sonucunun `previous_version` gösterim alanı yanlış raporlanabilir;
+pointer/journal/state/karar üzerinde SIFIR etki). **O3**
+(Observation) — writer-içi W0 pointer okuması etkisiz-ulaşılamaz bir
+üçüncü savunma katmanıdır (pre-lock + kilit-altı precondition recheck
+aynı anomaliyi zaten daha önce yakalar) — fail-closed fazlalık, kusur
+DEĞİL. **O4** (Observation) — `cli_mutate.py`'nin
+`_is_known_domain_error` docstring'i üç yeni exception sınıfını
+(`BundleManifestDriftError`/`BuildReplayVerificationError`/
+`ActivationReplayVerificationError`) saymıyor; gerçek davranış
+`RagBundleMutationError` tabanı üzerinden DOĞRUdur — kozmetik. **O5**
+(Observation) — W5 (rollback-failure) yolu re-review'da tek-seferlik
+fault injection ile kanıtlandı ama kalıcı bir repo testi yok —
+gelecekteki test-hardening adayı. İlk bağımsız incelemenin diğer Low
+maddeleri (F5.1, F5.2, F5.3, F5.4'ün diğer yarısı, F5.5, F5.6,
+F5.8'in kalan literal sapmaları, F5.9, F5.10, F5.11, F5.12) bu
+remediasyona dahil EDİLMEDİ ve AÇIK backlog olarak kalır — hiçbiri
+"kapandı" olarak SUNULMAZ.
+
+**Gerçek dependency kapısı** — `faiss`/`numpy`/`openai`/`pypdf`/
+`python-dotenv` bu ortamda (`vergi_ui_runtime`) KURULU DEĞİLDİR. Dört
+informational skip (`test_rag_bundle_builder_isolated`: 3,
+`test_rag_bundle_reader_isolated`: 1) PASS SAYILMADI ve 8 counted
+skip'in İÇİNDE DEĞİLLER. Bu skip'ler, Foundation'ın kendi LOCK'u
+için TEK BAŞINA bloklayıcı SAYILMADI (çekirdek altyapı — grant/authz/
+kilit/journal/identity/staging/publish/pointer/reconciliation/CLI/
+closure — gerçek PostgreSQL + gerçek filesystem ile tam kanıtlı;
+faiss'e dokunan alt yollar bu slice'ın kapsamında hiçbir zaman koşmaz,
+çünkü corpus population zaten bilinçli olarak ertelenmiştir). **BU
+YÜK TAŞIYAN, ertelenemez bir kapı olarak kayda geçirilir**: production
+corpus population VEYA retrieval-dependent Slice 2'den ÖNCE ZORUNLU
+açılış maddesi — (a) faiss/numpy kurulu bir makinede bu 4 skip'li
+testin gerçekten koşulması, (b) gerçek, küçük bir synthetic corpus,
+(c) gerçek bir build→publish→activate→load_pinned_bundle→retrieve
+round-trip'i, (d) FAISS serialize/deserialize API uyumluluğunun
+doğrulanması (`np.frombuffer`'ın read-only array döndürmesi bazı
+faiss sürümlerinde `deserialize_index` için sorun olabilir — bu
+ortamda ne kanıtlanabildi ne çürütülebildi, dürüst açık risk), (e)
+embedding dimension/count doğrulaması.
+
+**Scope dışı işler** — Production mevzuat corpus population;
+production içtihat corpus population; corpus provenance/lisans/
+güncelleme politikası; Row 10/11 `rag_index_version_used` şema
+yaması; retrieval/discovery-dependent Slice 2 (ROW 19C-3c-iv Slice
+2); GC/retention/delete yüzeyleri; `rag.py`/`evaluation*`'ın pinleme
+API'sine adaptasyonu; streaming/incremental büyük-corpus build
+varyantı; `global:deadline_rules`/`global:legal_provisions` gibi
+diğer global-resource aileleri; Row 19D — Operations & Recovery
+(OS-level hardening, OS ACL, service identity, TOCTOU, advisory-lock
+timeout backlog'u dahil).
+
+**LOCKED-file §9 gerekçeleri** — `src/ingest.py`: import-hijyeni +
+pure-build/frozen-bytes seam + `__main__` kapanışı için açıldı.
+Gerekçe: kullanıcı talebi (Bundle Foundation ACTIVE/NEXT) + security
+(bu dosya, koordinatörsüz, import-anı-credential'lı, non-atomik TEK
+global writer'dı — Row 19A'nın 17-maddelik gap'inin ana kaynağı) +
+downstream entegrasyon (coordinator'a bağlama). Risk: repo'nun en
+büyük tek-dosya müdahalesi (3017 satır, import-yan-etkili) —
+azaltım: chunk/embedding domain fonksiyon gövdelerine dokunmadan
+seam ekleme, deterministic frozen-bytes testleri, gerçek-OS-
+subprocess refusal kanıtı. `src/retriever.py`: reader-pinleme API'si
++ module-level yük kaldırma için açıldı. Gerekçe: Row 19A'nın
+"okuyucu tek versiyon pinler" kuralının TEK uygulanma yeri; security
+(import-anı credential/index yükünün kaldırılması). Risk:
+`bundle=None` fail-closed davranışı `rag.py`/`evaluation*`'ın legacy
+doğrudan çağrılarını kırar — tam etki envanteri disclose edildi ve
+kullanıcı kararı #5 ile AÇIKÇA kabul edildi; `rag.py`/`evaluation*`
+bilinçli olarak DOKUNULMADAN (EXCLUDED) bırakıldı, fail-closed sonuç
+kabul edilen bedeldir. `ui/cli_mutate.py` / `ui/reconciliation_
+operator.py`: yalnız additive (5. `rag-bundle` subcommand'ı; 9.
+merge kaynağı) — her önceki slice'ın (19C-3b'den beri) kabul edilmiş
+AYNI açılış sınıfı; risk düşük (mevcut registry'de exact-set
+assertion'ı yoktu — kaynak-grep'le doğrulandı). Migration/test
+dosyaları: `db/migrations/0005` yalnız additive (0001-0004 bayt-
+düzeyinde untouched); dört integration-postgres dosyası +
+`test_reconciliation_operator_isolated.py` yalnız kendi `==47→==49`
+registry-sayım assertion'ları için mekanik güncellendi (hiçbir
+assertion gevşetilmedi); `test_cli_mutate_isolated.py`/
+`test_rag_bundle_mutation_facade_isolated.py`/`test_rag_bundle_
+mutation_integration_postgres.py` remediasyonun T1-T22 test matrisini
+additive olarak aldı — hem implementer hem AYRI Fable
+yeniden-incelemesi hiçbir mevcut assertion'ın kaldırılmadığını/
+gevşetilmediğini bağımsız doğruladı.
+
+**Final verdict**: `RAG BUNDLE FOUNDATION LOCK-READY — F1-F4 CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/
+19C-3a Slice 1/Slice 2/19C-3b Slice 1/Slice 2/19C-3c-i/19C-3c-ii/
+19C-3c-iii/19C-3c-iv Slice 1 örneğinde olduğu gibi yalnız
+`CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
+hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 
