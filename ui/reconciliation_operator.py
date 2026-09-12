@@ -228,28 +228,33 @@ def _default_conn_factory():
 
 def _default_registry_factory() -> mr.MutationAdapterRegistry:
     """ROW 19C-2a STEP 6 / ROW 19C-2b / ROW 19C-2c / ROW 19C-3b SLICE 2 /
-    ROW 19C-3c-i / ROW 19C-3c-ii / ROW 19C-3c-iii: builds ONE merged
-    registry covering EVERY production mutation family this coordinator
-    serves - Layer A's 10 case-scoped approval families (`mutation_
-    approval_adapters.build_production_registry()`) PLUS Layer B's 12
-    review_kinds under 24 channel-separated routing keys (`review_
-    mutation_adapters.register_into()`) PLUS Row 18C's single `drafting_
-    request.save` family (`drafting_request_mutation_adapters.register_
-    into()`) PLUS Slice 2's two fact/timeline promotion families
-    (`promotion_mutation_adapters.register_into()`) PLUS Row 19C-3c-i's
-    two deadline/timeline deterministic pending-generation families
-    (`generation_mutation_adapters.register_into()`) PLUS Row 19C-3c-ii's
-    five case-scoped agent-gated pending-generation families -
-    issue_spotting/evidence/argument/risk_strategy/drafting
+    ROW 19C-3c-i / ROW 19C-3c-ii / ROW 19C-3c-iii / ROW 19C-3c-iv SLICE 1:
+    builds ONE merged registry covering EVERY production mutation family
+    this coordinator serves - Layer A's 10 case-scoped approval families
+    (`mutation_approval_adapters.build_production_registry()`) PLUS
+    Layer B's 12 review_kinds under 24 channel-separated routing keys
+    (`review_mutation_adapters.register_into()`) PLUS Row 18C's single
+    `drafting_request.save` family (`drafting_request_mutation_adapters.
+    register_into()`) PLUS Slice 2's two fact/timeline promotion
+    families (`promotion_mutation_adapters.register_into()`) PLUS Row
+    19C-3c-i's two deadline/timeline deterministic pending-generation
+    families (`generation_mutation_adapters.register_into()`) PLUS Row
+    19C-3c-ii's five case-scoped agent-gated pending-generation families
+    - issue_spotting/evidence/argument/risk_strategy/drafting
     (`agent_generation_mutation_adapters.register_into()`, a SEPARATE
     facade/adapter pair from the deterministic-only `generation_
     mutation_adapters` above, NOT an extension of it) PLUS Row
     19C-3c-iii's single, document-scoped `generation.fact_extraction`
     family (`fact_extraction_mutation_adapters.register_into()`, a
-    THIRD, SEPARATE facade/adapter pair - neither `generation_mutation_
-    adapters` nor `agent_generation_mutation_adapters` is extended) -
-    10 + 24 + 1 + 2 + 2 + 5 + 1 = 45 routing keys, all folded onto the
-    SAME registry rather than building separate ones - so a human
+    THIRD, SEPARATE facade/adapter pair) PLUS Row 19C-3c-iv Slice 1's
+    two case-scoped, deterministic+agent (retrieval/discovery deferred)
+    `generation.legal_research`/`generation.case_law` families
+    (`legal_research_case_law_mutation_adapters.register_into()`, a
+    FOURTH, SEPARATE facade/adapter pair - neither `generation_mutation_
+    adapters`, `agent_generation_mutation_adapters`, nor `fact_
+    extraction_mutation_adapters` is extended) -
+    10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 = 47 routing keys, all folded onto
+    the SAME registry rather than building separate ones - so a human
     operator can reconcile ANY journal row this project produces,
     regardless of family, through this ONE CLI. NEVER called by
     `ui/tests/test_reconciliation_operator_isolated.py` (which always
@@ -262,6 +267,7 @@ def _default_registry_factory() -> mr.MutationAdapterRegistry:
     from ui.services import generation_mutation_adapters  # lazy import - see module docstring
     from ui.services import agent_generation_mutation_adapters  # lazy import - see module docstring
     from ui.services import fact_extraction_mutation_adapters  # lazy import - see module docstring
+    from ui.services import legal_research_case_law_mutation_adapters  # lazy import - see module docstring
 
     registry = mutation_approval_adapters.build_production_registry()
     registry = review_mutation_adapters.register_into(registry)
@@ -269,7 +275,8 @@ def _default_registry_factory() -> mr.MutationAdapterRegistry:
     registry = promotion_mutation_adapters.register_into(registry)
     registry = generation_mutation_adapters.register_into(registry)
     registry = agent_generation_mutation_adapters.register_into(registry)
-    return fact_extraction_mutation_adapters.register_into(registry)
+    registry = fact_extraction_mutation_adapters.register_into(registry)
+    return legal_research_case_law_mutation_adapters.register_into(registry)
 
 
 def _format_outcome_line(outcome: mr.ReconciliationOutcome) -> str:

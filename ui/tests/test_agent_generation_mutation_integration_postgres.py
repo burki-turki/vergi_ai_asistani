@@ -496,15 +496,15 @@ try:
         authz_conn_a6.close()
 
     # ============================================================
-    # A7 - RECONCILIATION merged registry - 44 routing keys, real
+    # A7 - RECONCILIATION merged registry - 47 routing keys, real
     #      operator-factory construction (no fake injection).
     # ============================================================
     merged_registry_a7 = op._default_registry_factory()
     check(
-        "A7 merged reconciliation registry has exactly 45 routing keys "
+        "A7 merged reconciliation registry has exactly 47 routing keys "
         "(10 approval + 24 review + 1 drafting_request + 2 promotion + 2 deterministic-generation "
-        "+ 5 agent-generation + 1 fact-extraction-generation)",
-        len(merged_registry_a7.known_action_families()) == 45,
+        "+ 5 agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation)",
+        len(merged_registry_a7.known_action_families()) == 47,
         f"got {len(merged_registry_a7.known_action_families())}",
     )
     check(

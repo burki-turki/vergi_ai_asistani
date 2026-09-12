@@ -316,16 +316,24 @@ PRODUCTION_REGISTRY = _agent_generation_adapters.register_into(PRODUCTION_REGIST
 # factory()`'s own updated order exactly.
 from ui.services import fact_extraction_mutation_adapters as _fact_extraction_adapters  # noqa: E402
 PRODUCTION_REGISTRY = _fact_extraction_adapters.register_into(PRODUCTION_REGISTRY)
+# ROW 19C-3c-iv SLICE 1: the EIGHTH merge source (case-scoped
+# deterministic+agent legal_research/case_law generation, retrieval/
+# discovery deferred - a FOURTH, SEPARATE facade/adapter pair from Row
+# 19C-3c-i/ii/iii's own pairs), mirroring `_default_registry_factory()`'s
+# own updated order exactly.
+from ui.services import legal_research_case_law_mutation_adapters as _legal_research_case_law_adapters  # noqa: E402
+PRODUCTION_REGISTRY = _legal_research_case_law_adapters.register_into(PRODUCTION_REGISTRY)
 
 check(
-    "ROW 19C-3c-iii: the REAL merged production registry covers 10 (Layer A) + 24 (Layer B - "
-    "12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 (fact/timeline promotion) + 2 "
-    "(deterministic deadline/timeline generation) + 5 (agent-gated issue_spotting/evidence/"
-    "argument/risk_strategy/drafting generation) + 1 (document-scoped agent-gated fact_extraction "
-    "generation) = 45 routing keys - the number of LOGICAL Layer B review_kinds is still 12, "
+    "ROW 19C-3c-iv SLICE 1: the REAL merged production registry covers 10 (Layer A) + 24 "
+    "(Layer B - 12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 (fact/timeline "
+    "promotion) + 2 (deterministic deadline/timeline generation) + 5 (agent-gated issue_spotting/"
+    "evidence/argument/risk_strategy/drafting generation) + 1 (document-scoped agent-gated "
+    "fact_extraction generation) + 2 (case-scoped deterministic+agent legal_research/case_law "
+    "generation) = 47 routing keys - the number of LOGICAL Layer B review_kinds is still 12, "
     "unchanged; 24 is a channel-separated ADAPTER ROUTING-KEY count, not a doubling of logical "
     "families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 45,
+    len(PRODUCTION_REGISTRY.known_action_families()) == 47,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(

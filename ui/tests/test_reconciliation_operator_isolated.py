@@ -556,25 +556,28 @@ check(
     f"got {sorted(_promotion_families)}",
 )
 check(
-    "ROW 19C-3c-i/3c-ii/3c-iii: the merged registry contains exactly the 8 'generation.*' "
-    "families (generation.deadline + generation.timeline, deterministic, PLUS "
+    "ROW 19C-3c-i/3c-ii/3c-iii/3c-iv SLICE 1: the merged registry contains exactly the 10 "
+    "'generation.*' families (generation.deadline + generation.timeline, deterministic, PLUS "
     "generation.issue_spotting + generation.evidence + generation.argument + "
     "generation.risk_strategy + generation.drafting, agent-gated, PLUS generation.fact_extraction, "
-    "document-scoped agent-gated - THREE SEPARATE facade/adapter pairs, one merged namespace)",
+    "document-scoped agent-gated, PLUS generation.legal_research + generation.case_law, "
+    "case-scoped deterministic+agent (retrieval/discovery deferred) - FOUR SEPARATE facade/"
+    "adapter pairs, one merged namespace)",
     _generation_families == {
         "generation.deadline", "generation.timeline", "generation.issue_spotting", "generation.evidence",
         "generation.argument", "generation.risk_strategy", "generation.drafting",
-        "generation.fact_extraction",
+        "generation.fact_extraction", "generation.legal_research", "generation.case_law",
     },
     f"got {sorted(_generation_families)}",
 )
 check(
-    "ROW 19C-3c-iii: the merged registry's total size is exactly 10 + 24 + 1 + 2 + 2 + 5 + 1 = 45 "
-    "(no overlap, no family lost, no family duplicated) - this is a ROUTING-KEY count, "
-    "distinct from the 33 LOGICAL action families (10 approval + 12 review + 1 "
-    "drafting_request + 2 promotion + 2 deterministic-generation + 5 agent-generation + 1 "
-    "fact-extraction-generation); the 'approval.*' bucket itself stays exactly 10",
-    len(_real_families) == 45, f"got {len(_real_families)}",
+    "ROW 19C-3c-iv SLICE 1: the merged registry's total size is exactly "
+    "10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 = 47 (no overlap, no family lost, no family duplicated) - "
+    "this is a ROUTING-KEY count, distinct from the 35 LOGICAL action families (10 approval + "
+    "12 review + 1 drafting_request + 2 promotion + 2 deterministic-generation + 5 "
+    "agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation); "
+    "the 'approval.*' bucket itself stays exactly 10",
+    len(_real_families) == 47, f"got {len(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "

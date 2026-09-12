@@ -428,6 +428,114 @@ check(
     "invalid choice" not in err,
 )
 
+# ROW 19C-3c-iv SLICE 1 - `generation --row-key legal_research`/
+# `--row-key case_law` usage-shape grammar. This family's network gate
+# mirrors the agent-five group's rules exactly (--allow-network requires
+# --with-agent; both optional on preview and apply - NOT fact_
+# extraction's stricter unconditional --with-agent requirement, since
+# this family HAS a deterministic mode). --document/--anchor/--holiday/
+# --calendar-complete/non-default --judicial-recess-applicable are all
+# REJECTED for both row-keys (mirrors the agent-five/timeline pattern).
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "legal_research", "--document", "d",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: --document is not accepted for --row-key legal_research -> exit 2, zero "
+    "connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "case_law", "--document", "d",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: --document is not accepted for --row-key case_law -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "legal_research", "--anchor", "timeline_event_001",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: --anchor is not accepted for --row-key legal_research -> exit 2, zero "
+    "connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--anchor" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "case_law", "--holiday", "2026-01-01",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: --holiday is not accepted for --row-key case_law -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--holiday" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "legal_research", "--calendar-complete",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: --calendar-complete is not accepted for --row-key legal_research -> exit 2, "
+    "zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--calendar-complete" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "case_law", "--judicial-recess-applicable", "yes",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: non-default --judicial-recess-applicable is not accepted for --row-key "
+    "case_law -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--judicial-recess-applicable" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "legal_research", "--allow-network",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: --allow-network alone (no --with-agent) is rejected for --row-key "
+    "legal_research -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--allow-network" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "case_law", "--allow-network",
+    "--actor-user-id", "1", "--apply", "--expected-input-digest", "h",
+])
+check(
+    "generation: --allow-network alone rejected even with --apply/--expected-input-digest "
+    "present, for --row-key case_law",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--allow-network" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "legal_research", "--document", "d",
+    "--actor-user-id", "1",
+])
+check(
+    "generation: legal_research choice is genuinely present in --row-key's choices (the "
+    "already-invalid --document combination above still reports --document, never "
+    "'invalid choice' - a bare, fully-valid preview call is deliberately NOT exercised here, "
+    "since it would proceed past usage validation into this harness's own EXPLODING connection "
+    "factories)",
+    "invalid choice" not in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "case_law", "--document", "d", "--actor-user-id", "1",
+])
+check(
+    "generation: case_law choice is genuinely present in --row-key's choices",
+    "invalid choice" not in err,
+)
+
 
 # ============================================================
 # 2) ACTOR IDENTITY - nonexistent/disabled actor, EXISTENCE-BLIND

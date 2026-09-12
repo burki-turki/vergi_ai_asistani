@@ -363,25 +363,49 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   19A, Row 19B, Row 19C-1, Row 19C-2a, Row 19C-2b, Row 19C-2c, Row
   19C-3a Slice 1/Slice 2, Row 19C-3b Slice 1/Slice 2, Row 19C-3c-i ve
   Row 19C-3c-ii contract'ları değişmedi.
-- **Sıradaki canonical alt-faz: ROW 19C-3c-iv — Legal Research/Case
-  Law RAG-Dependent Generation Integration — ACTIVE / NEXT.**
-  İmplementasyona HENÜZ BAŞLANMADI. Kendi TAM dosya allowlist'i
-  hazırlanıp implementasyondan ÖNCE kullanıcı tarafından AYRICA
-  onaylanmadan hiçbir dosyaya dokunulamaz — Row 19C-3c-i, Row
-  19C-3c-ii veya Row 19C-3c-iii onayları Row 19C-3c-iv dosyalarını
-  ÖNCEDEN YETKİLENDİRMEZ. Row 19A'nın onaylı RAG global-resource
-  (immutable versioned bundle) tasarımı ve stale-sonuç kuralı bu
-  alt-fazın bağlayıcı girdileridir. Maintenance/global-resource
-  mutation fazı (`ingest.py`/deadline_rule maintenance dahil) HENÜZ
-  BAŞLATILMAMIŞTIR. Row 19D (deployment/OS hardening, OS ACL/service
-  identity dahil) bu checkpoint ile HENÜZ BAŞLATILMAMIŞTIR - yalnız
-  Row 19A'nın orijinal tanımından miras alınan, gelecekteki bir kapsam
-  pointer'ı olarak kalmaya devam eder. Kendi TAM dosya allowlist'i
-  hazırlanıp implementasyondan ÖNCE kullanıcı tarafından ayrıca
-  onaylanmadan hiçbir gelecekteki alt-faza hiçbir dosyada dokunulamaz
-  (Row 19A'nın dosya-değişiklik sınırı kararı uyarınca) - bu
-  checkpoint hiçbir gelecekteki alt-fazın dosya değişikliğini ÖNCEDEN
-  yetkilendirmez.
+- **ROW 19C-3c-iv Slice 1 — Deterministic + Agent Legal Research /
+  Case Law Pending-Generation Integration (retrieval/discovery
+  deferred)** artık **DONE / LOCKED** — kullanıcı tarafından ayrıca
+  onaylanmış tam dosya allowlist'i (6 yeni + 10 değiştirilmiş = 16
+  dosya) üzerinde implement edildi. İki YENİ, CLI-only action family
+  (`generation.legal_research` / `generation.case_law`) mutation
+  coordinator/journal altyapısına bağlandı; deterministik ve agent
+  modları AYNI coordinated yol üzerindedir; retrieval/discovery
+  BİLİNÇLİ olarak ertelenmiştir; iki doğrudan engine CLI mutasyon yolu
+  (`legal_research_engine.py`/`case_law_engine.py` `main()`)
+  kapatılmıştır. İlk bağımsız salt-okunur inceleme bir F1 HIGH
+  (case_law coordinated agent apply'ın discovery katmanına
+  `network_allowed=True` taşıması) ve bir F2 MEDIUM (agent-mode test
+  kanıt zincirindeki yanlış nedensel iddia + hiç konuşulmayan
+  `client.generate()` injection protokolü) bulgusuyla NOT LOCK-READY
+  verdi; dar, 5 dosyalık bir remediasyon uygulandı ve bağımsız bir
+  Fable yeniden incelemesi — kaynak/call-chain doğrulaması, bağımsız
+  fail-closed import tanısı ve bağımsız 58-modül full sweep dahil —
+  F1/F2'nin kapandığını doğruladı. Final verdict:
+  `ROW 19C-3c-iv SLICE 1 LOCK-READY — F1/F2 closed, no blocking findings`
+  (bkz. Row
+  19C-3c-iv Slice 1 checkpoint özeti, §5 sonrası, "## 6.
+  Cross-Cutting Backlog"dan hemen önce).
+- **Sıradaki adım: RAG Global-Resource Bundle Foundation — ACTIVE /
+  NEXT.** İmplementasyona HENÜZ BAŞLANMADI. İlk adım, ayrı ve TAMAMEN
+  salt-okunur bir exact-scope/architecture/allowlist
+  reconciliation'dır. Row 19A'nın onaylı immutable versioned bundle
+  sözleşmesi (`index/v<...>/` bundle'ları + tek atomik
+  `current_version` manifest pointer'ı + stale-sonuç kuralı) bu fazın
+  BAĞLAYICI girdisidir. **Bu pointer hiçbir dosyaya yazma yetkisi
+  VERMEZ** — ayrı kullanıcı onayı ve exact, koşulsuz bir dosya
+  allowlist'i olmadan hiçbir dosyaya dokunulamaz (Row 19A'nın
+  dosya-değişiklik sınırı kararı uyarınca). Build, validation,
+  publish ve activation birbirinden AYRILACAKTIR; `global:rag_index`
+  lock/authz/capability modeli ayrıca kesinleştirilecektir; ilk
+  corpus population bu faz tarafından OTOMATİK yetkilendirilmez.
+  **ROW 19C-3c-iv Slice 2 — Retrieval/Discovery-Dependent Generation**
+  ANCAK Bundle Foundation tamamlandıktan SONRA başlayabilir. Row
+  10/11 `rag_index_version_used` şema yaması, production
+  mevzuat/içtihat corpus population, diğer maintenance/global-resource
+  işleri (`ingest.py`/deadline_rule maintenance dahil) ve Row 19D
+  (deployment/OS hardening, OS ACL/service identity dahil) bu
+  checkpoint ile BAŞLAMAMIŞTIR ve YETKİLENDİRİLMEMİŞTİR.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -3851,6 +3875,268 @@ Slice 1/Slice 2/19C-3b Slice 1/Slice 2/19C-3c-i/19C-3c-ii örneğinde
 olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
 roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
 dosyasına dokunmaz.
+
+### Row 19C-3c-iv Slice 1 — Deterministic + Agent Legal Research / Case Law Pending-Generation Integration (retrieval/discovery deferred) (DONE / LOCKED — checkpoint özeti)
+
+**Exact scope (final, kilitli)** — Kullanıcı tarafından ayrıca
+onaylanmış tam dosya allowlist'i üzerinde implement edildi: **6 YENİ +
+10 DEĞİŞTİRİLMİŞ = 16 dosya**, **0 migration**, **0 production-data
+değişikliği**, **0 şema değişikliği**, **0 web surface**.
+
+Yeni (6):
+1. `ui/services/legal_research_case_law_mutation_facade.py`
+2. `ui/services/legal_research_case_law_mutation_adapters.py`
+3. `ui/tests/test_legal_research_case_law_mutation_facade_isolated.py`
+4. `ui/tests/test_legal_research_case_law_mutation_integration_postgres.py`
+5. `ui/tests/test_legal_research_engine_isolated.py`
+6. `ui/tests/test_case_law_engine_isolated.py`
+
+Değiştirilmiş (10):
+7. `src/legal_research_engine.py`
+8. `src/case_law_engine.py`
+9. `ui/cli_mutate.py`
+10. `ui/reconciliation_operator.py`
+11. `ui/tests/test_cli_mutate_isolated.py`
+12. `ui/tests/test_reconciliation_operator_isolated.py`
+13. `ui/tests/test_reconciliation_isolated.py`
+14. `ui/tests/test_agent_generation_mutation_integration_postgres.py`
+15. `ui/tests/test_fact_extraction_mutation_integration_postgres.py`
+16. `ui/tests/test_drafting_request_mutation_integration_postgres.py`
+
+**F1/F2 remediasyonu YALNIZ şu 5 dosyada gerçekleşti** (marker-grep +
+diff-aritmetiği ile bağımsız doğrulandı; remediasyon nedeniyle altıncı
+bir dosya DEĞİŞMEDİ): `src/case_law_engine.py`,
+`ui/services/legal_research_case_law_mutation_facade.py`,
+`ui/tests/test_case_law_engine_isolated.py`,
+`ui/tests/test_legal_research_engine_isolated.py`,
+`ui/tests/test_legal_research_case_law_mutation_facade_isolated.py`.
+
+**Mimari sonuçlar** — TEK birleşik facade/adapters çifti
+(`legal_research_case_law_mutation_facade.py` /
+`legal_research_case_law_mutation_adapters.py`). İki action family:
+`generation.legal_research` / `generation.case_law`. `target_ref =
+legal_research.pending` / `case_law.pending` (case_id-free);
+`target_state = "generated"`; `resource_key = case:<case_id>`;
+`secondary_input_hash = None`; `channel =
+"local_lawyer_legal_research_case_law_cli"`. Önceki YEDİ
+facade/adapter çifti (Layer A, Layer B, drafting_request, promotion,
+deterministic-generation, agent-generation, fact-extraction)
+DEĞİŞTİRİLMEDİ. Coordinator/registry/lock/guard/authz/DB altyapısı
+DEĞİŞTİRİLMEDİ. Yalnız CLI yüzeyi (`python -m ui.cli_mutate
+generation ...`); web surface AÇILMADI.
+
+**Mod/network/RAG kontratı** — Deterministik ve agent modları AYNI
+coordinated yolda desteklenir. Preview HİÇBİR model çağrısı yapmaz.
+Gerçek agent/model çağrısı `--with-agent` + `--allow-network` çift
+açık rızasına bağlıdır. Retrieval/discovery bu slice'ta
+coordinator'dan YAPISAL olarak erişilemez: `retriever.py`/`rag.py`/
+`ingest.py` ve `index/**` DOKUNULMAMIŞTIR; legal_research coordinated
+build'i `use_discovery=False` sabitiyle çalışır (discovery'nin TÜM kod
+yolu koşulsuz atlanır); case_law için agent ve discovery network
+izinleri F1 remediasyonuyla AYRILMIŞTIR — `network_allowed` YALNIZ
+agent (Anthropic) katmanına ulaşır, coordinated yolda facade
+`discovery_network_allowed=False` sabitini geçirir (çağıran facade
+üzerinden override EDEMEZ — `_invoke_builder` imzasında bu parametre
+yoktur), `discovery_network_allowed=None` (legacy/default) davranışı
+ise bugünkü `network_allowed` passthrough'unu AYNEN korur (mevcut
+doğrudan Python call-site'ları değişmez). Doğrudan
+`legal_research_engine.py` / `case_law_engine.py` mutasyon CLI'ları
+sabit stderr mesajı + `raise SystemExit(2)` ile, `parse_args()`'tan
+HEMEN sonra, hiçbir DB/case-filesystem/model erişimi olmadan
+KAPATILDI — bu iki motorda korunacak `--self-test`/preview yolu
+YOKTUR (kaynak-kanıtlı; `main()` SAF refusal'dır). Kapanış her iki
+motorun kendi izole test dosyasında hem in-process hem GERÇEK OS
+subprocess kanıtıyla (data/ byte-invariance dahil) test edilmiştir.
+
+**Identity/manifest kontratı** — legal_research exact **6** logical
+container: `facts, timeline, deadline, issues, global_documents,
+global_provisions`. case_law exact **4** logical container: `issues,
+timeline, research, global_documents` — **case_law identity'sinde
+`provisions.json` BULUNMAZ** (builder zinciri okumaz; D13 düzeltmesi).
+Manifest raw-byte SHA-256 + containment-before-traversal disipliniyle,
+builder metadata'sından bağımsız kurulur; identity bytes deterministik
+canonical serialization ile dondurulur; `generation_mode`/`model_id`/
+`prompt_agent_version`/`engine_version` identity üyeleridir;
+`pre_revision = input_digest = sha256(frozen identity bytes)`;
+`secondary_input_hash = None`. Model/girdi/versiyon değişikliği
+`identity_payload → input_digest/pre_revision → idempotency_key`
+zinciri üzerinden YENİ, bağımsız bir deneme üretir — kalıcı conflict
+DEĞİLDİR. Pre-lock best-effort capture + kilit ALTINDA exact recheck;
+herhangi bir drift → candidate atılır, SIFIR `prepared` journal satırı
+ve SIFIR filesystem mutasyonu.
+
+**Build/writer/audit/reconciliation** — Uzun build (deterministik veya
+agent) case kilidi DIŞINDA ve journal satırından ÖNCE çalışır; pending
+exact serialization bytes olarak dondurulur, writer'a fresh
+`json.loads(frozen_bytes)` verilir; model kilit altında ASLA
+çağrılmaz. Kilit altında türetilen
+`VerifiedLegalResearchCaseLawOutputPaths` writer'a aktarılır ve writer
+verified modda tüm gerçek çıktı I/O'sunda yalnız verified path'leri
+kullanır. Mevcut atomik yazım + history backup + post-write LOCKED
+validator + rollback düzeni korunur. Success audit tam
+mutation-binding taşır (`O_CREAT|O_EXCL`, aile-yerel
+`generation_reviews/`). Adapter `identity_payload`'ı bağımsız
+canonical serialization ile YENİDEN hash'ler;
+`recomputed_input_digest == audit.input_digest == entry.pre_revision`
+DOĞRUDAN zorunludur. Duplicate/corrupt/missing/unsafe audit
+fail-closed'dır ve auto-completed ÜRETEMEZ. Reconciliation
+model/builder/writer ÇAĞIRMAZ; `_mark_completed` DB failure'ında
+`executing`/NULL satır, durable pending+audit kanıtıyla writer/model
+yeniden çağrılmadan `completed` olarak reconcile edilebilir.
+
+**Sayımlar (başlangıç → sonuç)** — test modülü **54 → 58**; merged
+reconciliation registry routing key **45 → 47**; logical action family
+**33 → 35**; kapalı mutasyon giriş noktası **26 → 28**; refusal
+senaryosu **41 → 43**; registry'deki generation-family exact set
+**8 → 10** üye.
+
+**Dürüst test ve inceleme kronolojisi (zaman ayrımı korunarak — hiçbir
+tur tek bir birleşik sonuç gibi SUNULMAZ)**:
+
+1. **İlk implementasyon** (implementer'ın kendi final-tree sweep'i,
+   fresh disposable PostgreSQL 16, migration 0001-0004, tek
+   süreçli/sıralı): **58/58 modül exit 0, 3348 passed, 0 failed, 8
+   counted skipped, 1 informational uncounted `SKIPPED`**. Buna
+   RAĞMEN bağımsız inceleme iki blocking finding buldu — testlerin
+   geçmesi LOCK için YETERLİ SAYILMADI.
+2. **İlk bağımsız Fable incelemesi** (salt-okunur; kendi 58-modül
+   sweep'inde AYNI 3348/0/8 sonucunu bağımsız üretti): **F1 HIGH** —
+   case_law coordinated agent apply (`--with-agent --allow-network`)
+   engine'in koşulsuz discovery katmanına `network_allowed=True`
+   taşıyarak issue başına canlı `import retriever` denemesine
+   ulaşıyordu (ampirik: 6 girişim; RAG bağımlılıkları kurulu bir
+   ortamda `.env`/OpenAI/canlı flat-index yoluna, hedef runtime'da
+   6× `retrieval_failed`'lı yanıltıcı pending'e dönüşürdü — Row 19A
+   stale-sonuç kuralının ihlali). **F2 MEDIUM** — iki engine testinin
+   fake'leri gerçek `client.generate(prompt)` protokolünü
+   kullanmıyordu; `AttributeError` motorun kendi warning'ine
+   yutuluyor ve "issues tam kapsandığı için agent çağrılmıyor"
+   biçiminde YANLIŞ bir nedensel kanıt üretiyordu. Verdict: **NOT
+   LOCK-READY**.
+3. **Dar remediasyon** (yalnız 5 dosya): case_law
+   build/run_engine'ine additive, keyword-only
+   `discovery_network_allowed=None` seam'i; facade coordinated yolda
+   `discovery_network_allowed=False` geçiriyor; agent katmanı ham
+   `network_allowed`'ı koruyor; legacy `None` passthrough'u Section
+   5a ile ampirik korundu; fake client'lar gerçek
+   generate→parse→accept→output zincirini konuşuyor; yanlış
+   "coverage nedeniyle agent çağrılmıyor" etiketi kaldırıldı,
+   assertion'lar `==0`'dan `==1`'e SIKILAŞTIRILDI; remediasyonun
+   kendi öz-incelemesinde yakalanan bir test-güvenliği kusuru
+   (Section 5'in yanlışlıkla legacy default'u coordinated yol gibi
+   test etmesi) 5a/5b ayrımı + fail-closed import guard'larla ayrıca
+   düzeltildi. Remediasyon final sweep'i (implementer): **58/58,
+   3367 passed, 0 failed, 8 counted skipped, 1 informational
+   uncounted**.
+4. **Bağımsız Fable yeniden incelemesi** (salt-okunur; bu turun ana
+   ve bağımsız incelemecisi olarak Fable, ayrı advisor çağrısı
+   olmadan): kaynak/call-chain doğrulaması (15/15 F1 maddesi, 15/15
+   F2 maddesi); repo testlerinden BAĞIMSIZ, farklı mekanizmalı
+   (`sys.meta_path`) fail-closed import tanısı **16/16 PASS** —
+   coordinated case_law agent yolunda **SIFIR** RAG-stack import
+   girişimi, legacy default kolunda beklenen **6** engellenmiş
+   retriever girişimi (runtime-okunan coverage sayısıyla birebir),
+   fake `.generate()` gerçek ve başarılı; 13/13 bağımsız hedefli
+   test implementer sonuçlarıyla BİREBİR (50/43/55/60/212/270/92/
+   33/36/40/61/24/53); bağımsız 58-modül full sweep (İKİNCİ fresh
+   disposable PostgreSQL 16): **58/58 exit 0, 3367 passed, 0
+   failed, 8 counted skipped, 1 informational uncounted** —
+   sweep-genelinde recording-only import ledger'ı SIFIR RAG-stack
+   girişimi kaydetti (enstrümantasyonun çalıştığı ayrı bir probe ile
+   kanıtlandı). Final verdict: **LOCK-READY**.
+
+**F1 kapanışı (açık kayıt)** — Eski durum: case_law'da `use_discovery`
+parametresi yoktur (discovery baseline'dır), bu yüzden agent network
+rızası (`--allow-network`) discovery katmanına DA ulaşıyordu. Risk:
+flat, versiyonsuz RAG index'inden, identity/input_digest'e HİÇBİR RAG
+versiyonu bağlanmadan retrieval-türevi içeriğin coordinated pending'e
+girmesi. Çözüm: additive `discovery_network_allowed` ayrımı + facade'de
+sabit `False`; legacy `None` passthrough'u korunur. Coordinated
+agent VE deterministic yollarında SIFIR RAG importu, iki bağımsız
+fail-closed kanıt zinciriyle (repo testleri + bağımsız meta_path
+tanısı) kanıtlanmıştır.
+
+**F2 kapanışı (açık kayıt)** — Eski fake'ler yalnız
+`.messages.create()` taşıyordu; gerçek agent injection protokolü
+`client.generate(prompt)`'tır; `AttributeError` motorun kendi
+catch-all'ında "LLM çağrısı başarısız oldu" warning'ine yutuluyordu.
+Yeni testler gerçek, runtime'da okunan fixture id'leriyle
+generate→parse→validate/accept→output zincirini uçtan uca kanıtlar;
+yanlış açıklamalar kaldırıldı; hiçbir catch-all monkeypatch ile
+gizlenmedi; hiçbir assertion gevşetilmedi.
+
+**Kalan Low/Observation disclosure'ları (GİZLENMEDİ)**:
+
+- **F3 (Low, bu slice'ta DÜZELTİLMEDİ)** — `--with-agent --apply`,
+  `--allow-network` olmadan usage-shape seviyesinde KABUL
+  edilmektedir. `--allow-network` olmadan gerçek model/network
+  çağrısı yapılmaz; ancak agent-mode apply'ın usage-shape reddi
+  henüz uygulanmamıştır — "çift gate tam uygulanmıştır" DENEMEZ. Bu
+  durumda pending, `generation_mode=agent` + production model
+  identity'siyle yazılabilir ve o identity'nin idempotency slotunu
+  TÜKETEBİLİR; sonradan `--allow-network` ile aynı identity retry
+  edildiğinde safe replay nedeniyle model yine ÇAĞRILMAYABİLİR —
+  girdiler değişene kadar gerçek agent çıktısı alınamayabilir. Bu
+  davranış Row 19C-3c-ii'nin FİİLEN implement edilmiş mevcut
+  semantiğiyle AYNIDIR; mimari raporun §G RED hücresi ile fiili
+  precedent arasındaki fark burada disclosure olarak kaydedilir.
+  Gelecekteki ortak agent-gate hardening backlog'una yazılır.
+- **F4 (Low, bu slice'ta DÜZELTİLMEDİ)** — adapter'ın
+  `history_backup_path` reconciliation okuması containment'sız ham
+  `Path` kullanır (3c-ii'den miras, üç adapter'ı birlikte ilgilendiren
+  ortak hardening borcu; yorum metni koddan daha iddialıdır).
+- **F5 (Observation)** — audit yazımı ORTASINDA kalan partial audit
+  dosyası rollback'te ayrıca temizlenmeyebilir; reconciliation
+  corrupt/partial audit'i fail-closed reddeder (post=False). Bu
+  slice'ta düzeltilmedi (3c-ii precedent şekli).
+- **F6 (Observation)** — facade yorumundaki "bağımsız kopya / import
+  edilmez" ifadesi, adapter'ın `FAMILY_INPUT_SPECS`'i facade'den
+  fiilen import etmesiyle KOZMETİK olarak çelişir; güvenlik etkisi
+  yok.
+- **Yeni non-blocking observation'lar** — (a) untouched PostgreSQL
+  integration testinin B10 fake'i hâlâ `.messages.create()`-only'dir;
+  genuine `.generate()` round-trip kanıtı üç remediasyon test dosyası
+  + bağımsız tanıda mevcuttur (gelecekteki test-hardening adayı). (b)
+  Bazı implementer ara sayım etiketleri granüler değildir; otoriter
+  sonuç, iki bağımsız sweep'in mekanik sayımlarıdır (3367/0/8/1).
+
+**LOCKED-file §9 kaydı** — İki LOCKED engine bu slice'ta açıldı:
+`src/legal_research_engine.py` (additive, keyword-only
+mutation-binding/audit/`verified_paths` desteği + doğrudan CLI
+kapanışı) ve `src/case_law_engine.py` (aynısı + F1 remediasyonundaki
+additive `discovery_network_allowed` ayrımı). Gerekçeler: coordinator
+uyumluluğu, doğrudan mutasyon bypass'ının kapatılması (security),
+audit/rollback/reconciliation bağlama zorunluluğu ve Row 19A gereği
+retrieval'ın yapısal olarak ertelenmesi. Build/policy/candidate domain
+mantığı DEĞİŞMEDİ; her iki ailenin policy/discovery/agent/validator/
+approval dosyaları UNTOUCHED kaldı.
+
+**Scope dışı ve başlamamış işler (bu checkpoint HİÇBİRİNE dosya
+yetkisi VERMEZ)**:
+
+- RAG Global-Resource Bundle Foundation (sıradaki faz — yalnız
+  salt-okunur reconciliation ile açılır).
+- ROW 19C-3c-iv Slice 2 — Retrieval/Discovery-Dependent Generation
+  (ancak Bundle Foundation SONRASI).
+- Row 10/11 `rag_index_version_used` şema yaması (Row 19A'nın ayrı
+  onay maddesi).
+- Production mevzuat/içtihat corpus population.
+- Global maintenance authz/capability/lock modeli.
+- QA/Orchestrator pending-generation publisher'ları.
+- Row 19D — Operations & Recovery (OS ACL/service identity/TOCTOU,
+  advisory-lock timeout backlog'u dahil).
+- Ortak agent-gate hardening (F3) ve ortak `history_backup_path`
+  containment hardening (F4).
+
+**Final verdict: `ROW 19C-3c-iv SLICE 1 LOCK-READY — F1/F2 closed, no blocking findings`**
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/
+19C-3a Slice 1/Slice 2/19C-3b Slice 1/Slice 2/19C-3c-i/19C-3c-ii/
+19C-3c-iii örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren,
+salt-okunur bir roadmap-lock işlemidir; hiçbir kaynak/migration/test/
+production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

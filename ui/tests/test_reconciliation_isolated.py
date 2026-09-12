@@ -3133,5 +3133,374 @@ finally:
     _shutil.rmtree(fact_case_dir, ignore_errors=True)
 
 
+# ============================================================
+# ROW 19C-3c-iv SLICE 1 - LEGAL RESEARCH / CASE LAW RECONCILIATION
+# ADAPTER (REAL, independent pre-state/post-state proof, case-scoped
+# target_ref parsing, direct pre_revision hardening). Uses the REAL
+# `LegalResearchCaseLawReconciliationAdapter` (module=legal_research_
+# engine or case_law_engine) against a REAL synthetic case directory
+# under CASES_DIR (both engines' CASES_DIR and ui.services.paths.
+# CASES_DIR resolve to the SAME real directory), cleaned up
+# unconditionally in `finally`, never touching any real case. Follows
+# Row 19C-3c-i/3c-iii's own precedent (this file's repo-internal
+# crash-matrix coverage convention) rather than Row 19C-3c-ii's known
+# gap (its own adapter's crash-matrix tests were never added here -
+# see that row's own checkpoint, Low finding #1) - NOT repeated for
+# this family. `gather_evidence()` never re-derives a manifest from
+# disk (that is a FACADE-only concept, used only before the identity
+# is frozen) - a fixture's manifest content is therefore an arbitrary
+# but STRUCTURALLY VALID placeholder, exactly like the fact_extraction
+# section's own fixtures above.
+# ============================================================
+
+import legal_research_engine as _lrcl_lre                                # noqa: E402
+import case_law_engine as _lrcl_cle                                       # noqa: E402
+import ui.services.legal_research_case_law_mutation_facade as _lrcl_facade  # noqa: E402
+import ui.services.legal_research_case_law_mutation_adapters as _lrcl_adapters  # noqa: E402
+
+_LRCL_ROW_CONFIGS = {
+    "legal_research": {
+        "module": _lrcl_lre,
+        "manifest": [
+            {"logical_name": "issues", "state": "present",
+             "files": [{"logical_relative_path": "issues/issues.json", "sha256": "0" * 64}]},
+            {"logical_name": "facts", "state": "empty", "files": []},
+            {"logical_name": "timeline", "state": "present",
+             "files": [{"logical_relative_path": "timeline/timeline.json", "sha256": "1" * 64}]},
+            {"logical_name": "deadline", "state": "missing", "files": []},
+            {"logical_name": "global_documents", "state": "present",
+             "files": [{"logical_relative_path": "documents.json", "sha256": "2" * 64}]},
+            {"logical_name": "global_provisions", "state": "present",
+             "files": [{"logical_relative_path": "provisions.json", "sha256": "3" * 64}]},
+        ],
+        "engine_version": _lrcl_lre.LEGAL_RESEARCH_ENGINE_VERSION,
+    },
+    "case_law": {
+        "module": _lrcl_cle,
+        "manifest": [
+            {"logical_name": "issues", "state": "present",
+             "files": [{"logical_relative_path": "issues/issues.json", "sha256": "0" * 64}]},
+            {"logical_name": "timeline", "state": "present",
+             "files": [{"logical_relative_path": "timeline/timeline.json", "sha256": "1" * 64}]},
+            {"logical_name": "research", "state": "missing", "files": []},
+            {"logical_name": "global_documents", "state": "present",
+             "files": [{"logical_relative_path": "documents.json", "sha256": "2" * 64}]},
+        ],
+        "engine_version": _lrcl_cle.CASE_LAW_ENGINE_VERSION,
+    },
+}
+
+for _lrcl_row_key, _lrcl_config in _LRCL_ROW_CONFIGS.items():
+    LRCL_CASE_ID = f"case_lrcl_adapter_bindings_{_lrcl_row_key}"
+    lrcl_module = _lrcl_config["module"]
+
+    lrcl_case_dir = _dr_real_paths.CASES_DIR / LRCL_CASE_ID
+    if lrcl_case_dir.exists():
+        _shutil.rmtree(lrcl_case_dir)
+    lrcl_case_dir.mkdir(parents=True)
+
+    try:
+        lrcl_family_dir = lrcl_module.get_pending_path(LRCL_CASE_ID).parent
+        lrcl_pending_path = lrcl_module.get_pending_path(LRCL_CASE_ID)
+        lrcl_reviews_dir = lrcl_module.get_reviews_dir(LRCL_CASE_ID)
+
+        real_lrcl_adapter = _lrcl_adapters.LegalResearchCaseLawReconciliationAdapter(lrcl_module, _lrcl_row_key)
+        LRCL_ACTION_FAMILY = _lrcl_facade.legal_research_case_law_action_family_for(_lrcl_row_key)
+        LRCL_TARGET_REF = lrcl_module.get_target_ref()
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}): the engine's own get_target_ref() matches the "
+            "facade's own legal_research_case_law_target_ref_for() byte-for-byte",
+            LRCL_TARGET_REF == _lrcl_facade.legal_research_case_law_target_ref_for(_lrcl_row_key)
+            == f"{_lrcl_row_key}.pending",
+        )
+        _LRCL_SNAPSHOT_ABSENT = _lrcl_adapters._SNAPSHOT_ABSENT
+        _LRCL_SNAPSHOT_PRESENT = _lrcl_adapters._SNAPSHOT_PRESENT
+
+        def lrcl_candidate_pre_hash(input_digest, pending_presence, pending_sha256):
+            return _lrcl_adapters._compute_candidate_pre_hash(input_digest, pending_presence, pending_sha256)
+
+        def lrcl_identity_payload(**overrides):
+            base = dict(
+                manifest_version=_lrcl_adapters._MANIFEST_VERSION_BY_ROW_KEY[_lrcl_row_key],
+                case_id=LRCL_CASE_ID,
+                manifest=_lrcl_config["manifest"],
+                generation_mode="agent",
+                model_id="external_injected_client",
+                engine_version=_lrcl_config["engine_version"],
+                prompt_agent_version="1",
+            )
+            base.update(overrides)
+            return base
+
+        def lrcl_input_digest(identity_payload):
+            return _hashlib.sha256(_lrcl_adapters._canonical_identity_bytes(identity_payload)).hexdigest()
+
+        def lrcl_intent(**overrides):
+            base = dict(
+                actor_type="iam_user", actor_ref="7",
+                resource_key=f"case:{LRCL_CASE_ID}", action_family=LRCL_ACTION_FAMILY,
+                target_ref=LRCL_TARGET_REF, target_state="generated",
+                pre_hash="placeholder_not_a_real_digest", pre_revision="input_digest_placeholder",
+                secondary_input_hash=None,
+            )
+            base.update(overrides)
+            return _MutationIntent(**base)
+
+        def lrcl_entry(**overrides):
+            intent = lrcl_intent(**{k: v for k, v in overrides.items() if k in ("pre_hash", "pre_revision", "target_ref")})
+            fields = dict(
+                journal_id=1, resource_key=f"case:{LRCL_CASE_ID}", action_family=LRCL_ACTION_FAMILY,
+                target_ref=intent.target_ref, target_state="generated",
+                pre_hash=intent.pre_hash, pre_revision=intent.pre_revision, expected_post_hash=None,
+                state="reconciliation_required", idempotency_key=_compute_idk(intent),
+                request_fingerprint=_compute_fp(intent), actor_label="7",
+            )
+            return mr.JournalEntrySnapshot(**fields)
+
+        def write_lrcl_audit(record, *, filename=f"{_lrcl_row_key}_20260101_000000.generation_audit.json"):
+            lrcl_reviews_dir.mkdir(parents=True, exist_ok=True)
+            if isinstance(record, str):
+                (lrcl_reviews_dir / filename).write_text(record, encoding="utf-8")
+            else:
+                (lrcl_reviews_dir / filename).write_text(_json.dumps(record), encoding="utf-8")
+
+        def clear_lrcl_reviews():
+            if lrcl_reviews_dir.exists():
+                _shutil.rmtree(lrcl_reviews_dir)
+
+        def clear_lrcl_pending():
+            if lrcl_pending_path.exists():
+                lrcl_pending_path.unlink()
+
+        # ---- (a) FIRST-WRITE CRASH: pending absent both before and
+        # after - pre=True, post=False. ----
+        clear_lrcl_reviews()
+        clear_lrcl_pending()
+        lrcl_identity_a = lrcl_identity_payload()
+        input_digest_a = lrcl_input_digest(lrcl_identity_a)
+        pre_hash_a = lrcl_candidate_pre_hash(input_digest_a, _LRCL_SNAPSHOT_ABSENT, _LRCL_SNAPSHOT_ABSENT)
+        evidence_a = real_lrcl_adapter.gather_evidence(lrcl_entry(pre_hash=pre_hash_a, pre_revision=input_digest_a))
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) (a): first-write crash, pending absent before AND "
+            "after -> pre_state_confirmed_unchanged=True, post_state_verified=False",
+            evidence_a.pre_state_confirmed_unchanged is True and evidence_a.post_state_verified is False,
+            f"got {evidence_a!r}",
+        )
+
+        evidence_wrong = real_lrcl_adapter.gather_evidence(lrcl_entry(pre_hash="0" * 64, pre_revision=input_digest_a))
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}): a WRONG candidate pre_hash yields "
+            "pre_state_confirmed_unchanged=False",
+            evidence_wrong.pre_state_confirmed_unchanged is False,
+        )
+
+        # ---- (c) valid current pending + exactly one fully-bound audit
+        # -> post=True. ----
+        lrcl_family_dir.mkdir(parents=True, exist_ok=True)
+        pending_content_d = '{"schema_version":1,"research_analysis_id":"x"}'
+        lrcl_pending_path.write_text(pending_content_d, encoding="utf-8")
+        pending_hash_d = _hashlib.sha256(pending_content_d.encode("utf-8")).hexdigest()
+        lrcl_identity_d = lrcl_identity_payload()
+        input_digest_d = lrcl_input_digest(lrcl_identity_d)
+        entry_d = lrcl_entry(pre_revision=input_digest_d)
+        good_lrcl_audit = {
+            "schema_version": "1", "case_id": LRCL_CASE_ID,
+            "target_ref": LRCL_TARGET_REF, "target_state": "generated", "action_family": LRCL_ACTION_FAMILY,
+            "channel": "local_lawyer_legal_research_case_law_cli",
+            "mutation_idempotency_key": entry_d.idempotency_key,
+            "mutation_resource_key": f"case:{LRCL_CASE_ID}", "mutation_actor_ref": "7",
+            "input_digest": input_digest_d, "generation_parameters_digest": None,
+            "generation_mode": "agent", "model_id": "external_injected_client",
+            "engine_version": _lrcl_config["engine_version"], "prompt_agent_version": "1",
+            "identity_payload": lrcl_identity_d,
+            "first_write": True, "history_backup_path": None, "history_backup_sha256": None,
+            "pending_sha256": pending_hash_d, "generated_at": "2026-01-01T00:00:00+00:00",
+            "outcome": "generated", "written_at": "2026-01-01T00:00:01+00:00",
+        }
+        write_lrcl_audit(good_lrcl_audit)
+        evidence_d = real_lrcl_adapter.gather_evidence(entry_d)
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) (c): valid current pending + 1 fully-bound success "
+            "audit -> post_state_verified=True with the REAL pending file hash as "
+            "observed_post_hash",
+            evidence_d.post_state_verified is True and evidence_d.observed_post_hash == pending_hash_d,
+            f"got {evidence_d!r}",
+        )
+
+        lrcl_binding_cases = [
+            ("mutation_idempotency_key WRONG", {"mutation_idempotency_key": "other"}),
+            ("mutation_resource_key WRONG", {"mutation_resource_key": "case:other_case"}),
+            ("action_family WRONG", {"action_family": "generation.issue_spotting"}),
+            ("pending_sha256 WRONG", {"pending_sha256": "0" * 64}),
+            ("outcome WRONG", {"outcome": "not_generated"}),
+            ("case_id WRONG (top-level audit field)", {"case_id": "some_other_case"}),
+            ("channel WRONG (cross-family channel-tamper)", {"channel": "local_lawyer_generation_cli"}),
+            ("generation_mode WRONG", {"generation_mode": "deterministic"}),
+            ("engine_version WRONG", {"engine_version": "999.0"}),
+        ]
+        for label, override in lrcl_binding_cases:
+            write_lrcl_audit({**good_lrcl_audit, **override})
+            evidence = real_lrcl_adapter.gather_evidence(entry_d)
+            check(
+                f"ROW 19C-3c-iv ({_lrcl_row_key}) real adapter: {label} yields "
+                "post_state_verified=False (never auto-completed)",
+                evidence.post_state_verified is False,
+                f"got {evidence!r}",
+            )
+        write_lrcl_audit(good_lrcl_audit)
+
+        # ---- DIRECT PRE_REVISION HARDENING (fact_extraction erratum
+        # §E.3 pattern): an audit internally self-consistent with a
+        # TAMPERED identity_payload still fails because entry.
+        # pre_revision (the journal's immutable column) still carries
+        # the ORIGINAL digest. ----
+        tampered_identity = lrcl_identity_payload(model_id="some_other_injected_client_sentinel")
+        tampered_digest = lrcl_input_digest(tampered_identity)
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) setup: the tampered identity payload genuinely "
+            "produces a DIFFERENT digest from the original",
+            tampered_digest != input_digest_d,
+        )
+        forged_lrcl_audit = {
+            **good_lrcl_audit,
+            "identity_payload": tampered_identity,
+            "input_digest": tampered_digest,
+            "model_id": tampered_identity["model_id"],
+        }
+        write_lrcl_audit(forged_lrcl_audit)
+        evidence_forged = real_lrcl_adapter.gather_evidence(entry_d)
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) direct pre_revision hardening: an audit record "
+            "internally self-consistent with its OWN input_digest but NOT matching the journal's "
+            "immutable entry.pre_revision -> post_state_verified=False",
+            evidence_forged.post_state_verified is False,
+            f"got {evidence_forged!r}",
+        )
+        write_lrcl_audit(good_lrcl_audit)
+
+        # ---- (e) audit missing/corrupt -> post=False; pre-state proof
+        # is unaffected. ----
+        pre_proof_before_corruption = real_lrcl_adapter._compute_pre_state_proof(entry_d, lrcl_pending_path)
+        write_lrcl_audit("not a json object at all {")
+        evidence_c = real_lrcl_adapter.gather_evidence(entry_d)
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) (e): pending present but the only audit is "
+            "corrupt/unparseable -> post_state_verified=False, no exception escapes "
+            "gather_evidence()",
+            evidence_c.post_state_verified is False,
+            f"got {evidence_c!r}",
+        )
+        pre_proof_after_corruption = real_lrcl_adapter._compute_pre_state_proof(entry_d, lrcl_pending_path)
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) (e): the pre-state proof is BYTE-IDENTICAL before "
+            "and after the audit directory is corrupted",
+            pre_proof_before_corruption == pre_proof_after_corruption,
+            f"before={pre_proof_before_corruption!r} after={pre_proof_after_corruption!r}",
+        )
+        write_lrcl_audit(good_lrcl_audit)
+
+        # ---- duplicate matching audits -> ambiguous, unconditionally. ----
+        write_lrcl_audit(good_lrcl_audit, filename=f"{_lrcl_row_key}_20260101_000000.generation_audit.json")
+        write_lrcl_audit(good_lrcl_audit, filename=f"{_lrcl_row_key}_20260101_000001.generation_audit.json")
+        dup_evidence = real_lrcl_adapter.gather_evidence(entry_d)
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) real adapter: 2 clean, identically-bound audit "
+            "records for the SAME idempotency_key -> post_state_verified=False",
+            dup_evidence.post_state_verified is False,
+            f"got {dup_evidence!r}",
+        )
+        clear_lrcl_reviews()
+        write_lrcl_audit(good_lrcl_audit)
+
+        # ---- (b) OVERWRITE CRASH: pending bytes UNCHANGED, but the
+        # on-disk audit belongs to a DIFFERENT idempotency_key. ----
+        entry_b_base = lrcl_entry(
+            pre_hash=lrcl_candidate_pre_hash(input_digest_d, _LRCL_SNAPSHOT_PRESENT, pending_hash_d),
+            pre_revision=input_digest_d, target_ref=LRCL_TARGET_REF,
+        )
+        entry_b_intent = _MutationIntent(
+            actor_type="iam_user", actor_ref="99-different-actor",
+            resource_key=f"case:{LRCL_CASE_ID}", action_family=LRCL_ACTION_FAMILY,
+            target_ref=LRCL_TARGET_REF, target_state="generated",
+            pre_hash=entry_b_base.pre_hash, pre_revision=entry_b_base.pre_revision, secondary_input_hash=None,
+        )
+        entry_b = mr.JournalEntrySnapshot(
+            journal_id=1, resource_key=f"case:{LRCL_CASE_ID}", action_family=LRCL_ACTION_FAMILY,
+            target_ref=LRCL_TARGET_REF, target_state="generated",
+            pre_hash=entry_b_base.pre_hash, pre_revision=entry_b_base.pre_revision, expected_post_hash=None,
+            state="reconciliation_required", idempotency_key=_compute_idk(entry_b_intent),
+            request_fingerprint=_compute_fp(entry_b_intent), actor_label="99-different-actor",
+        )
+        evidence_b = real_lrcl_adapter.gather_evidence(entry_b)
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) (b): overwrite crash, pending bytes UNCHANGED, but "
+            "the existing audit belongs to a DIFFERENT idempotency_key -> "
+            "pre_state_confirmed_unchanged=True, post_state_verified=False",
+            evidence_b.pre_state_confirmed_unchanged is True and evidence_b.post_state_verified is False,
+            f"got {evidence_b!r}",
+        )
+
+        # ---- malformed/mismatched target_ref -> fail-closed dual-false. ----
+        _other_row_key = "case_law" if _lrcl_row_key == "legal_research" else "legal_research"
+        for bad_ref in ("not.a.valid.target_ref", f"{_other_row_key}.pending", f"{_lrcl_row_key}.pending.extra"):
+            if bad_ref == LRCL_TARGET_REF:
+                continue
+            malformed_evidence = real_lrcl_adapter.gather_evidence(lrcl_entry(target_ref=bad_ref))
+            check(
+                f"ROW 19C-3c-iv ({_lrcl_row_key}): malformed/mismatched target_ref {bad_ref!r} -> "
+                "dual-false (data anomaly, never raised as an exception)",
+                malformed_evidence.post_state_verified is False and malformed_evidence.pre_state_confirmed_unchanged is False,
+                f"got {malformed_evidence!r}",
+            )
+
+        # ---- case_id MISMATCH: identity_payload["case_id"] disagrees
+        # with the parsed (from resource_key) case_id -> post=False. ----
+        mismatched_identity = lrcl_identity_payload(case_id="a_completely_different_case_id")
+        mismatched_digest = lrcl_input_digest(mismatched_identity)
+        mismatched_entry = lrcl_entry(pre_revision=mismatched_digest)
+        mismatched_audit = {**good_lrcl_audit, "identity_payload": mismatched_identity, "input_digest": mismatched_digest}
+        write_lrcl_audit(mismatched_audit)
+        evidence_i = real_lrcl_adapter.gather_evidence(mismatched_entry)
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}): identity_payload['case_id'] disagrees with the "
+            "resource_key-derived case_id -> post_state_verified=False",
+            evidence_i.post_state_verified is False,
+            f"got {evidence_i!r}",
+        )
+        write_lrcl_audit(good_lrcl_audit)
+
+        # ---- end-to-end reconcile_and_apply_journal_entry() proof. ----
+        lrcl_e2e_registry = mr.MutationAdapterRegistry().with_adapter(LRCL_ACTION_FAMILY, real_lrcl_adapter)
+        lrcl_e2e_conn = FakeReconcileConn([make_journal_row(
+            id=1, resource_key=f"case:{LRCL_CASE_ID}", action_family=LRCL_ACTION_FAMILY,
+            target_ref=LRCL_TARGET_REF, target_state="generated",
+            pre_hash=entry_d.pre_hash, pre_revision=entry_d.pre_revision,
+            state="reconciliation_required", idempotency_key=entry_d.idempotency_key,
+            request_fingerprint=_compute_fp(lrcl_intent(pre_revision=input_digest_d)), actor_label="7",
+        )])
+        _lock_calls.clear()
+        ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+        ml.release_lock_session = _fake_release_lock_session
+        try:
+            lrcl_e2e_outcome = mr.reconcile_and_apply_journal_entry(lrcl_e2e_conn, 1, lrcl_e2e_registry)
+        finally:
+            ml.acquire_case_lock_session = _original_acquire_case
+            ml.release_lock_session = _original_release
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) real adapter end-to-end through reconcile_and_"
+            "apply_journal_entry(): resolves to 'completed' with the real pending file hash as "
+            "observed_post_hash",
+            lrcl_e2e_outcome.new_state == "completed" and lrcl_e2e_outcome.observed_post_hash == pending_hash_d,
+            f"got {lrcl_e2e_outcome!r}",
+        )
+        check(
+            f"ROW 19C-3c-iv ({_lrcl_row_key}) real adapter end-to-end: the journal row itself "
+            "was durably updated to 'completed'",
+            lrcl_e2e_conn.table[0]["state"] == "completed",
+        )
+    finally:
+        _shutil.rmtree(lrcl_case_dir, ignore_errors=True)
+
+
 print(f"--- test_reconciliation_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)

@@ -251,6 +251,7 @@ def _build_arg_parser():
     from ui.services import generation_mutation_facade as _generation_facade
     from ui.services import agent_generation_mutation_facade as _agent_generation_facade
     from ui.services import fact_extraction_mutation_facade as _fact_extraction_facade
+    from ui.services import legal_research_case_law_mutation_facade as _legal_research_case_law_facade
 
     _AGENT_GENERATION_ROW_KEYS = frozenset(
         _agent_generation_facade.AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME.keys()
@@ -258,14 +259,18 @@ def _build_arg_parser():
     _FACT_EXTRACTION_ROW_KEYS = frozenset(
         _fact_extraction_facade.FACT_EXTRACTION_ROW_KEY_TO_MODULE_NAME.keys()
     )
+    _LEGAL_RESEARCH_CASE_LAW_ROW_KEYS = frozenset(
+        _legal_research_case_law_facade.LEGAL_RESEARCH_CASE_LAW_ROW_KEY_TO_MODULE_NAME.keys()
+    )
 
     generation_parser = subparsers.add_parser(
         "generation",
         help=(
             "Deterministic deadline/timeline (Row 19C-3c-i) AND case-scoped agent-gated "
             "issue_spotting/evidence/argument/risk_strategy/drafting (Row 19C-3c-ii) AND "
-            "document-scoped fact_extraction (Row 19C-3c-iii) pending generation - one shared "
-            "namespace, three backing facades."
+            "document-scoped fact_extraction (Row 19C-3c-iii) AND case-scoped deterministic+agent "
+            "legal_research/case_law, retrieval/discovery deferred (Row 19C-3c-iv Slice 1) pending "
+            "generation - one shared namespace, four backing facades."
         ),
     )
     generation_parser.add_argument("--case", dest="case_id", required=True)
@@ -275,6 +280,7 @@ def _build_arg_parser():
             set(_generation_facade.GENERATION_ROW_KEY_TO_MODULE_NAME)
             | _AGENT_GENERATION_ROW_KEYS
             | _FACT_EXTRACTION_ROW_KEYS
+            | _LEGAL_RESEARCH_CASE_LAW_ROW_KEYS
         ),
     )
     generation_parser.add_argument(
@@ -416,6 +422,14 @@ def _fact_extraction_row_keys():
     return frozenset(_fact_extraction_facade.FACT_EXTRACTION_ROW_KEY_TO_MODULE_NAME.keys())
 
 
+def _legal_research_case_law_row_keys():
+    from ui.services import legal_research_case_law_mutation_facade as _legal_research_case_law_facade
+
+    return frozenset(
+        _legal_research_case_law_facade.LEGAL_RESEARCH_CASE_LAW_ROW_KEY_TO_MODULE_NAME.keys()
+    )
+
+
 def _validate_generation_args(args, *, stderr) -> int | None:
     """ROW 19C-3c-i/3c-ii/3c-iii: pure, zero-connection usage-shape
     checks for the `generation` subcommand - every rule below fires
@@ -504,6 +518,33 @@ def _validate_generation_args(args, *, stderr) -> int | None:
             return EXIT_USAGE_ERROR
         if args.apply and not args.allow_network:
             stderr.write(f"error: --row-key {args.row_key} --apply requires --allow-network\n")
+            return EXIT_USAGE_ERROR
+    elif args.row_key in _legal_research_case_law_row_keys():
+        # ROW 19C-3c-iv SLICE 1: same dual-mode network-gate shape as the
+        # agent-five branch above (--allow-network requires --with-agent;
+        # both optional on preview; retrieval/discovery deferred - no
+        # --with-discovery flag exists anywhere on this parser) - NOT
+        # fact_extraction's stricter unconditional --with-agent
+        # requirement (this family HAS a deterministic mode).
+        if args.document is not None:
+            stderr.write(f"error: --document is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.anchor_event_id is not None:
+            stderr.write(f"error: --anchor is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.holiday:
+            stderr.write(f"error: --holiday is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.calendar_complete:
+            stderr.write(f"error: --calendar-complete is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.judicial_recess_applicable != "unknown":
+            stderr.write(
+                f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.allow_network and not args.with_agent:
+            stderr.write("error: --allow-network requires --with-agent\n")
             return EXIT_USAGE_ERROR
     else:
         if args.document is not None:
@@ -809,6 +850,43 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
             )
 
         result = _agent_generation_facade.apply_generation(
+            args.row_key, args.case_id, args.expected_input_digest,
+            with_agent=args.with_agent, allow_network=args.allow_network,
+            principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+        )
+        return (
+            f"APPLIED generation row_key={args.row_key}\n"
+            f"pending_path={result.pending_path}\n"
+            f"pending_sha256={result.pending_sha256}\n"
+            f"audit_path={result.audit_path}\n"
+            f"replayed={result.replayed}\n"
+        )
+
+    if args.row_key in _legal_research_case_law_row_keys():
+        from ui.services import legal_research_case_law_mutation_facade as _legal_research_case_law_facade
+
+        if not args.apply:
+            preview = _legal_research_case_law_facade.preview_generation(
+                args.row_key, args.case_id, with_agent=args.with_agent,
+                principal=principal, authz_repository=repository,
+            )
+            return (
+                f"PREVIEW generation row_key={args.row_key} case_id={preview['case_id']}\n"
+                f"target_ref={preview['target_ref']}\n"
+                f"input_digest={preview['input_digest']}\n"
+                f"generation_mode={preview['generation_mode']}\n"
+                f"model_id={preview['model_id']}\n"
+                f"engine_version={preview['engine_version']}\n"
+                f"prompt_agent_version={preview['prompt_agent_version']}\n"
+                f"pending_exists={preview['pending_exists']}\n"
+                f"pending_sha256={preview['pending_sha256']}\n"
+                "Üretmek için: python -m ui.cli_mutate generation --case "
+                f"{preview['case_id']} --row-key {args.row_key}"
+                f"{' --with-agent --allow-network' if args.with_agent else ''} --actor-user-id "
+                f"{args.actor_user_id} --apply --expected-input-digest {preview['input_digest']}\n"
+            )
+
+        result = _legal_research_case_law_facade.apply_generation(
             args.row_key, args.case_id, args.expected_input_digest,
             with_agent=args.with_agent, allow_network=args.allow_network,
             principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
