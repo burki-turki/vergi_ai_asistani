@@ -37,6 +37,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import legal_research_engine as lre                          # noqa: E402
+import legal_research_discovery as lrd                        # noqa: E402
+import legal_research_validator as lrv                        # noqa: E402
 from ui.services import legal_research_case_law_mutation_facade as fac  # noqa: E402
 
 passed = 0
@@ -201,6 +203,14 @@ try:
     check(
         "deterministic build produces zero agent candidates",
         build_result_2["agent_candidate_count"] == 0,
+    )
+    check(
+        "ROW 10/11 SCHEMA PATCH: coordinated deterministic LR (use_discovery=False) never emits "
+        "rag_index_version_used - the discovery layer never runs on this path",
+        all(
+            "rag_index_version_used" not in candidate
+            for candidate in build_result_2["analysis"]["research_candidates"]
+        ),
     )
 
     # ============================================================
@@ -425,6 +435,14 @@ try:
             for candidate in build_result_5["analysis"]["research_candidates"]
         ),
     )
+    check(
+        "ROW 10/11 SCHEMA PATCH: agent-mode candidates (including the accepted agent_suggestion) "
+        "never carry rag_index_version_used - ALLOWED_LLM_CANDIDATE_KEYS never grants it",
+        all(
+            "rag_index_version_used" not in candidate
+            for candidate in build_result_5["analysis"]["research_candidates"]
+        ),
+    )
     frozen_5 = fac._freeze_pending_bytes(build_result_5["analysis"])
     candidate_5 = json.loads(frozen_5.decode("utf-8"))
     write_result_5 = lre.write_pending(
@@ -460,9 +478,91 @@ try:
         candidate_6["research_candidates"] != "MUTATED-AFTER-FREEZE",
     )
 
+    # ============================================================
+    # 6b) ROW 10/11 SCHEMA PATCH - rag_index_version_used synthetic
+    #     injection via legal_research_discovery.build_execution_state_
+    #     candidate(). The synthetic value is injected DIRECTLY into the
+    #     builder function's own keyword parameter - retriever/
+    #     load_pinned_bundle is NEVER called anywhere in this check - and
+    #     the resulting candidate passes the REAL (patched) validator.
+    # ============================================================
+
+    check(
+        "ROW 10/11: retriever module not imported anywhere in this process before the "
+        "synthetic bundle-version injection check",
+        "retriever" not in sys.modules,
+    )
+
+    _synthetic_bundle_version_6b = "v_" + "a" * 64
+    _synthetic_candidate_6b = lrd.build_execution_state_candidate(
+        issue={"issue_id": real_issue_id_5, "source_timeline_event_ids": []},
+        query_text="test sentetik retrieval sorgusu",
+        finding_status="no_research_evidence",
+        rag_index_version_used=_synthetic_bundle_version_6b,
+    )
+    check(
+        "ROW 10/11: build_execution_state_candidate() places the synthetic bundle version "
+        "verbatim under rag_index_version_used",
+        _synthetic_candidate_6b["rag_index_version_used"] == _synthetic_bundle_version_6b,
+    )
+    check(
+        "ROW 10/11: synthetic bundle-version injection never imported retriever (no real "
+        "RAG/network call)",
+        "retriever" not in sys.modules,
+    )
+
+    _synthetic_candidate_6b["research_id"] = "research_synthetic_rag_900"
+    _synthetic_candidate_6b["status"] = "candidate"
+    _synthetic_analysis_6b = json.loads(json.dumps(build_result_2["analysis"]))
+    _synthetic_analysis_6b["research_candidates"].append(_synthetic_candidate_6b)
+    _synthetic_path_6b = _tmp_root / "synthetic_rag_research.json"
+    _synthetic_path_6b.write_text(
+        json.dumps(_synthetic_analysis_6b, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    _original_validator_cases_dir_6b = lrv.CASES_DIR
+    try:
+        lrv.CASES_DIR = _tmp_cases
+        _synthetic_validation_6b = lrv.validate_research_analysis(
+            _synthetic_path_6b, expected_case_id=CASE_ID,
+        )
+    finally:
+        lrv.CASES_DIR = _original_validator_cases_dir_6b
+
+    if not _synthetic_validation_6b["valid"]:
+        print()
+        for _error in _synthetic_validation_6b["errors"]:
+            print("-", _error)
+
+    check(
+        "ROW 10/11: a candidate carrying a valid, in-context rag_index_version_used "
+        "(research_type='issue_driven_discovery', finding_status='no_research_evidence') "
+        "passes the REAL (patched) validator",
+        _synthetic_validation_6b["valid"] is True,
+    )
+
 finally:
     lre.CASES_DIR = _original_cases_dir
     shutil.rmtree(_tmp_root, ignore_errors=True)
+
+
+# ============================================================
+# 6c) ROW 10/11 SCHEMA PATCH - REAL, UNTOUCHED case_0001 canonical
+#     research.json is unaffected by the patched (additive) schema - it
+#     still validates unchanged. Uses legal_research_validator's OWN
+#     module-level CASES_DIR (never redirected anywhere in this file),
+#     so this reads the REAL repository tree, read-only.
+# ============================================================
+
+_case0001_research_validation_6c = lrv.validate_research_analysis(
+    lrv.get_research_dir(CASE_ID) / "research.json", expected_case_id=CASE_ID,
+)
+check(
+    "ROW 10/11: REAL case_0001 canonical research.json is unaffected by the patched "
+    "(additive, non-required) schema - still validates unchanged",
+    _case0001_research_validation_6c["valid"] is True,
+    _case0001_research_validation_6c.get("errors"),
+)
 
 
 # ============================================================

@@ -857,6 +857,76 @@ def validate_research_type_consistency(
 
 
 # ============================================================
+# RAG_INDEX_VERSION_USED <-> RESEARCH_TYPE / FINDING_STATUS
+# CONSISTENCY
+#
+# ROW 10/11 SCHEMA PATCH: rag_index_version_used yalnız
+# retrieval-yetenekli issue_driven_discovery yolunda ve
+# gerçekten pinlenmiş bir bundle'a karşı retrieval denenmiş
+# olabilecek bir bağlamda anlamlıdır. Alan absent/null iken bu
+# kontrol devre dışıdır (geriye-uyumluluk).
+# ============================================================
+
+def validate_rag_index_version_consistency(
+    research,
+):
+
+    errors = []
+
+    research_id = research.get(
+        "research_id"
+    )
+
+    rag_index_version_used = research.get(
+        "rag_index_version_used"
+    )
+
+    if rag_index_version_used is None:
+
+        return errors
+
+    research_type = research.get(
+        "research_type"
+    )
+
+    finding_status = research.get(
+        "finding_status"
+    )
+
+    if (
+        research_type
+        != "issue_driven_discovery"
+    ):
+
+        errors.append(
+            f"{research_id}: rag_index_version_used dolu "
+            f"iken (research_type='{research_type}') "
+            "research_type='issue_driven_discovery' "
+            "olmalıdır (bu alan yalnız retrieval-yetenekli "
+            "issue-driven discovery yolunda anlamlıdır)."
+        )
+
+    if (
+        finding_status
+        in (
+            "retrieval_not_run",
+            "retrieval_failed",
+        )
+    ):
+
+        errors.append(
+            f"{research_id}: rag_index_version_used dolu "
+            f"iken finding_status='{finding_status}' "
+            "olamaz (retrieval hiç denenmediyse veya "
+            "teknik olarak başarısız olduysa bir bundle'a "
+            "karşı gerçekten pinlenmiş retrieval "
+            "kanıtlanamaz)."
+        )
+
+    return errors
+
+
+# ============================================================
 # CASE ID
 # ============================================================
 
@@ -1110,6 +1180,12 @@ def validate_research_analysis(
 
         errors.extend(
             validate_research_type_consistency(
+                research
+            )
+        )
+
+        errors.extend(
+            validate_rag_index_version_consistency(
                 research
             )
         )
@@ -2197,6 +2273,391 @@ def run_self_test(
     )
 
     # ========================================================
+    # T13 RAG_INDEX_VERSION_USED - ABSENT/NULL BACKWARD
+    # COMPAT + VALID VALUE ACCEPTED IN A VALID CONTEXT
+    #
+    # ROW 10/11 SCHEMA PATCH: rag_index_version_used is a
+    # NEW, additive, optional (non-required) property.
+    # Absent (pre-patch shape) and explicit null must both
+    # remain valid; a real v_<64hex> value is only valid
+    # when research_type='issue_driven_discovery' AND
+    # finding_status is not retrieval_not_run/
+    # retrieval_failed.
+    # ========================================================
+
+    assert (
+        all(
+            "rag_index_version_used" not in research
+            for research in demo[
+                "research_candidates"
+            ]
+        )
+    ), (
+        "Demo fixture pre-patch şeklini korumalı: hiçbir "
+        "candidate rag_index_version_used taşımamalı."
+    )
+
+    valid_bundle_version = (
+        "v_"
+        + "a" * 64
+    )
+
+    no_evidence_candidate = (
+        build_execution_state_candidate(
+            issue=
+                {
+                    "issue_id":
+                        "issue_001",
+
+                    "source_timeline_event_ids": [
+                        "timeline_event_003"
+                    ],
+                },
+
+            query_text=
+                "tebliğ tarihinin ispatı ve süreye "
+                "etkisi",
+
+            finding_status=
+                "no_research_evidence",
+
+            rag_index_version_used=
+                valid_bundle_version,
+        )
+    )
+
+    assert (
+        no_evidence_candidate[
+            "rag_index_version_used"
+        ]
+        == valid_bundle_version
+    )
+
+    no_evidence_candidate[
+        "research_id"
+    ] = "research_920"
+
+    no_evidence_candidate[
+        "status"
+    ] = "candidate"
+
+    rag_valid_analysis = clone_json(
+        demo
+    )
+
+    rag_valid_analysis[
+        "research_candidates"
+    ][
+        0
+    ][
+        "rag_index_version_used"
+    ] = None
+
+    rag_valid_analysis[
+        "research_candidates"
+    ].append(
+        no_evidence_candidate
+    )
+
+    rag_valid_path = (
+        research_dir
+        / "legal_research_validator_v1_rag_valid.json"
+    )
+
+    write_json(
+        rag_valid_path,
+        rag_valid_analysis,
+    )
+
+    rag_valid_result = (
+        validate_research_analysis(
+            rag_valid_path,
+            case_id,
+        )
+    )
+
+    if not rag_valid_result[
+        "valid"
+    ]:
+
+        print()
+
+        for error in rag_valid_result[
+            "errors"
+        ]:
+
+            print(
+                "-",
+                error,
+            )
+
+    assert (
+        rag_valid_result[
+            "valid"
+        ]
+        is True
+    )
+
+    print(
+        "T13 rag_index_version_used absent/explicit-null "
+        "backward compat + valid v_<64hex> accepted in "
+        "issue_driven_discovery/no_research_evidence "
+        "context:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T14 RAG_INDEX_VERSION_USED FORMAT/SECURITY PATTERN
+    # REJECTIONS (schema pattern ^v_[0-9a-f]{64}$)
+    # ========================================================
+
+    invalid_bundle_versions = (
+        (
+            "empty string",
+            "",
+        ),
+
+        (
+            "short digest",
+            "v_" + "a" * 10,
+        ),
+
+        (
+            "uppercase hex",
+            "v_" + "A" * 64,
+        ),
+
+        (
+            "missing v_ prefix",
+            "a" * 66,
+        ),
+
+        (
+            "non-hex character",
+            "v_" + "g" * 64,
+        ),
+
+        (
+            "path-like value",
+            "../../etc/passwd",
+        ),
+
+        (
+            "current literal",
+            "current",
+        ),
+    )
+
+    for (
+        label,
+        bad_value,
+    ) in invalid_bundle_versions:
+
+        broken = clone_json(
+            rag_valid_analysis
+        )
+
+        for research in broken[
+            "research_candidates"
+        ]:
+
+            if (
+                research[
+                    "research_id"
+                ]
+                == "research_920"
+            ):
+
+                research[
+                    "rag_index_version_used"
+                ] = bad_value
+
+        broken_path = (
+            research_dir
+            / "legal_research_validator_v1_rag_bad.json"
+        )
+
+        write_json(
+            broken_path,
+            broken,
+        )
+
+        broken_result = (
+            validate_research_analysis(
+                broken_path,
+                case_id,
+            )
+        )
+
+        assert (
+            broken_result[
+                "valid"
+            ]
+            is False
+        ), (
+            f"rag_index_version_used={bad_value!r} "
+            f"({label}) kabul edilmemeliydi."
+        )
+
+    print(
+        "T14 rag_index_version_used format/security "
+        "pattern rejections (empty/short/uppercase/"
+        "no-prefix/non-hex/path-like/'current'):",
+        "PASS"
+    )
+
+    # ========================================================
+    # T15 RAG_INDEX_VERSION_USED CONSISTENCY GUARD - non-null
+    # value rejected outside issue_driven_discovery /
+    # retrieval_not_run / retrieval_failed contexts.
+    # ========================================================
+
+    broken = clone_json(
+        demo
+    )
+
+    broken[
+        "research_candidates"
+    ][
+        0
+    ][
+        "rag_index_version_used"
+    ] = valid_bundle_version
+
+    broken_path = (
+        research_dir
+        / "legal_research_validator_v1_rag_wrong_type.json"
+    )
+
+    write_json(
+        broken_path,
+        broken,
+    )
+
+    broken_result = (
+        validate_research_analysis(
+            broken_path,
+            case_id,
+        )
+    )
+
+    assert (
+        broken_result[
+            "valid"
+        ]
+        is False
+    ), (
+        "research_type != issue_driven_discovery iken "
+        "rag_index_version_used dolu olamaz."
+    )
+
+    not_run_candidate = clone_json(
+        no_evidence_candidate
+    )
+
+    not_run_candidate[
+        "finding_status"
+    ] = "retrieval_not_run"
+
+    not_run_candidate[
+        "research_id"
+    ] = "research_921"
+
+    broken = clone_json(
+        demo
+    )
+
+    broken[
+        "research_candidates"
+    ].append(
+        not_run_candidate
+    )
+
+    broken_path = (
+        research_dir
+        / "legal_research_validator_v1_rag_not_run.json"
+    )
+
+    write_json(
+        broken_path,
+        broken,
+    )
+
+    broken_result = (
+        validate_research_analysis(
+            broken_path,
+            case_id,
+        )
+    )
+
+    assert (
+        broken_result[
+            "valid"
+        ]
+        is False
+    ), (
+        "finding_status='retrieval_not_run' iken "
+        "rag_index_version_used dolu olamaz."
+    )
+
+    failed_candidate = clone_json(
+        no_evidence_candidate
+    )
+
+    failed_candidate[
+        "finding_status"
+    ] = "retrieval_failed"
+
+    failed_candidate[
+        "research_id"
+    ] = "research_922"
+
+    broken = clone_json(
+        demo
+    )
+
+    broken[
+        "research_candidates"
+    ].append(
+        failed_candidate
+    )
+
+    broken_path = (
+        research_dir
+        / "legal_research_validator_v1_rag_failed.json"
+    )
+
+    write_json(
+        broken_path,
+        broken,
+    )
+
+    broken_result = (
+        validate_research_analysis(
+            broken_path,
+            case_id,
+        )
+    )
+
+    assert (
+        broken_result[
+            "valid"
+        ]
+        is False
+    ), (
+        "finding_status='retrieval_failed' iken "
+        "rag_index_version_used dolu olamaz."
+    )
+
+    print(
+        "T15 rag_index_version_used consistency guard: "
+        "non-null rejected when research_type != "
+        "issue_driven_discovery, or finding_status in "
+        "{retrieval_not_run, retrieval_failed}:",
+        "PASS"
+    )
+
+    # ========================================================
     # SUMMARY
     # ========================================================
 
@@ -2255,7 +2716,7 @@ def run_self_test(
     )
 
     print(
-        " LEGAL RESEARCH VALIDATOR V1: 13/13 PASS"
+        " LEGAL RESEARCH VALIDATOR V1: 16/16 PASS"
     )
 
     print(

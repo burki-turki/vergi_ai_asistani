@@ -337,6 +337,7 @@ def build_execution_state_candidate(
     query_text,
     finding_status,
     failure_reason=None,
+    rag_index_version_used=None,
 ):
 
     # --------------------------------------------------------
@@ -419,6 +420,9 @@ def build_execution_state_candidate(
         "requires_human_review":
             True,
 
+        "rag_index_version_used":
+            rag_index_version_used,
+
         "notes":
             None,
     }
@@ -430,6 +434,7 @@ def build_discovery_candidate(
     citation_display,
     locator_result,
     documents_index,
+    rag_index_version_used=None,
 ):
 
     finding_status = locator_result[
@@ -577,6 +582,9 @@ def build_discovery_candidate(
 
         "requires_human_review":
             True,
+
+        "rag_index_version_used":
+            rag_index_version_used,
 
         "notes":
             None,

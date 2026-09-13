@@ -639,6 +639,12 @@ def validate_coverage(
             )
         )
 
+        errors.extend(
+            validate_rag_index_version_consistency_for_coverage(
+                record
+            )
+        )
+
     # ========================================================
     # COMPLETENESS: her canonical issue tam olarak 1 coverage
     # ========================================================
@@ -660,6 +666,59 @@ def validate_coverage(
                 f"Issue '{issue_id}' için coverage kaydı "
                 f"sayısı {count} - tam olarak 1 olmalıdır."
             )
+
+    return errors
+
+
+# ============================================================
+# RAG_INDEX_VERSION_USED <-> EXECUTION_STATE CONSISTENCY
+# (COVERAGE)
+#
+# ROW 10/11 SCHEMA PATCH: rag_index_version_used yalnız
+# retrieval'in GERÇEKTEN başarıyla çalıştığı (grounded karar
+# bulunmuş veya "arandı bulunamadı") bağlamlarda anlamlıdır.
+# Alan absent/null iken bu kontrol devre dışıdır
+# (geriye-uyumluluk). Decision candidate için pattern dışında
+# ek koşul yoktur - decision zaten yalnız retrieval yolundan
+# doğar.
+# ============================================================
+
+def validate_rag_index_version_consistency_for_coverage(
+    coverage,
+):
+
+    errors = []
+
+    coverage_id = coverage.get(
+        "coverage_id"
+    )
+
+    rag_index_version_used = coverage.get(
+        "rag_index_version_used"
+    )
+
+    if rag_index_version_used is None:
+
+        return errors
+
+    execution_state = coverage.get(
+        "execution_state"
+    )
+
+    if (
+        execution_state
+        not in (
+            "retrieval_completed",
+            "no_case_law_evidence",
+        )
+    ):
+
+        errors.append(
+            f"{coverage_id}: rag_index_version_used dolu "
+            f"iken execution_state='{execution_state}' "
+            "olamaz (yalnız retrieval_completed veya "
+            "no_case_law_evidence bağlamında anlamlıdır)."
+        )
 
     return errors
 
@@ -2702,6 +2761,523 @@ def run_self_test(
     )
 
     # ========================================================
+    # T15 RAG_INDEX_VERSION_USED - ABSENT/NULL BACKWARD
+    # COMPAT + VALID VALUE ACCEPTED (coverage:
+    # retrieval_completed AND no_case_law_evidence;
+    # decision: valid value accepted)
+    #
+    # Post-patch build_coverage_record() ALWAYS sets the key
+    # (defaulting to null - bkz. §J discovery değişikliği);
+    # true key-absence only characterizes PRE-patch canonical
+    # data, so it is proven separately below by explicitly
+    # stripping the key from a cloned fixture (simulating an
+    # old record), not by asserting freshly-built demo
+    # candidates never carry it.
+    # ========================================================
+
+    assert (
+        all(
+            coverage.get(
+                "rag_index_version_used"
+            )
+            is None
+            for coverage in demo[
+                "case_law_coverage"
+            ]
+        )
+    ), (
+        "Deterministik (network kapalı) demo fixture'daki "
+        "her coverage rag_index_version_used=null "
+        "taşımalı (discovery bugün her yolda None üretir)."
+    )
+
+    absent_key_analysis = clone_json(
+        demo
+    )
+
+    for coverage in absent_key_analysis[
+        "case_law_coverage"
+    ]:
+
+        del coverage[
+            "rag_index_version_used"
+        ]
+
+    absent_key_path = (
+        case_law_dir
+        / "case_law_validator_v2_rag_absent_key.json"
+    )
+
+    write_json(
+        absent_key_path,
+        absent_key_analysis,
+    )
+
+    absent_key_result = (
+        validate_case_law_analysis(
+            absent_key_path,
+            case_id,
+        )
+    )
+
+    if not absent_key_result[
+        "valid"
+    ]:
+
+        print()
+
+        for error in absent_key_result[
+            "errors"
+        ]:
+
+            print(
+                "-",
+                error,
+            )
+
+    assert (
+        absent_key_result[
+            "valid"
+        ]
+        is True
+    ), (
+        "Key tamamen absent olan PRE-patch şekilli "
+        "coverage kaydı da geçerli kalmalı (geriye "
+        "uyumluluk)."
+    )
+
+    valid_bundle_version = (
+        "v_"
+        + "a" * 64
+    )
+
+    globals()[
+        "load_legal_documents_index"
+    ] = (
+        lambda: synthetic_docs
+    )
+
+    try:
+
+        rag_valid_one = clone_json(
+            demo_one_decision
+        )
+
+        for coverage in rag_valid_one[
+            "case_law_coverage"
+        ]:
+
+            if (
+                coverage[
+                    "execution_state"
+                ]
+                == "retrieval_completed"
+            ):
+
+                coverage[
+                    "rag_index_version_used"
+                ] = valid_bundle_version
+
+            else:
+
+                coverage[
+                    "rag_index_version_used"
+                ] = None
+
+        rag_valid_one[
+            "case_law_decisions"
+        ][
+            0
+        ][
+            "rag_index_version_used"
+        ] = valid_bundle_version
+
+        rag_valid_one_path = (
+            case_law_dir
+            / "case_law_validator_v2_rag_valid_completed.json"
+        )
+
+        write_json(
+            rag_valid_one_path,
+            rag_valid_one,
+        )
+
+        rag_valid_one_result = (
+            validate_case_law_analysis(
+                rag_valid_one_path,
+                case_id,
+            )
+        )
+
+        if not rag_valid_one_result[
+            "valid"
+        ]:
+
+            print()
+
+            for error in rag_valid_one_result[
+                "errors"
+            ]:
+
+                print(
+                    "-",
+                    error,
+                )
+
+        assert (
+            rag_valid_one_result[
+                "valid"
+            ]
+            is True
+        )
+
+    finally:
+
+        globals()[
+            "load_legal_documents_index"
+        ] = (
+            original_loader
+        )
+
+    rag_valid_empty = clone_json(
+        demo_empty
+    )
+
+    for coverage in rag_valid_empty[
+        "case_law_coverage"
+    ]:
+
+        coverage[
+            "rag_index_version_used"
+        ] = valid_bundle_version
+
+    rag_valid_empty_path = (
+        case_law_dir
+        / "case_law_validator_v2_rag_valid_no_evidence.json"
+    )
+
+    write_json(
+        rag_valid_empty_path,
+        rag_valid_empty,
+    )
+
+    rag_valid_empty_result = (
+        validate_case_law_analysis(
+            rag_valid_empty_path,
+            case_id,
+        )
+    )
+
+    if not rag_valid_empty_result[
+        "valid"
+    ]:
+
+        print()
+
+        for error in rag_valid_empty_result[
+            "errors"
+        ]:
+
+            print(
+                "-",
+                error,
+            )
+
+    assert (
+        rag_valid_empty_result[
+            "valid"
+        ]
+        is True
+    )
+
+    print(
+        "T15 rag_index_version_used absent/explicit-null "
+        "backward compat + valid v_<64hex> accepted for "
+        "coverage (retrieval_completed / "
+        "no_case_law_evidence) and decision:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T16 RAG_INDEX_VERSION_USED FORMAT/SECURITY PATTERN
+    # REJECTIONS (schema pattern ^v_[0-9a-f]{64}$) -
+    # coverage and decision candidate.
+    # ========================================================
+
+    invalid_bundle_versions = (
+        (
+            "empty string",
+            "",
+        ),
+
+        (
+            "short digest",
+            "v_" + "a" * 10,
+        ),
+
+        (
+            "uppercase hex",
+            "v_" + "A" * 64,
+        ),
+
+        (
+            "missing v_ prefix",
+            "a" * 66,
+        ),
+
+        (
+            "non-hex character",
+            "v_" + "g" * 64,
+        ),
+
+        (
+            "path-like value",
+            "../../etc/passwd",
+        ),
+
+        (
+            "current literal",
+            "current",
+        ),
+    )
+
+    for (
+        label,
+        bad_value,
+    ) in invalid_bundle_versions:
+
+        broken = clone_json(
+            demo_empty
+        )
+
+        broken[
+            "case_law_coverage"
+        ][
+            0
+        ][
+            "rag_index_version_used"
+        ] = bad_value
+
+        broken_path = (
+            case_law_dir
+            / "case_law_validator_v2_rag_bad_coverage.json"
+        )
+
+        write_json(
+            broken_path,
+            broken,
+        )
+
+        broken_result = (
+            validate_case_law_analysis(
+                broken_path,
+                case_id,
+            )
+        )
+
+        assert (
+            broken_result[
+                "valid"
+            ]
+            is False
+        ), (
+            f"coverage.rag_index_version_used={bad_value!r} "
+            f"({label}) kabul edilmemeliydi."
+        )
+
+    globals()[
+        "load_legal_documents_index"
+    ] = (
+        lambda: synthetic_docs
+    )
+
+    try:
+
+        broken = clone_json(
+            demo_one_decision
+        )
+
+        broken[
+            "case_law_decisions"
+        ][
+            0
+        ][
+            "rag_index_version_used"
+        ] = "v_" + "A" * 64
+
+        broken_path = (
+            case_law_dir
+            / "case_law_validator_v2_rag_bad_decision.json"
+        )
+
+        write_json(
+            broken_path,
+            broken,
+        )
+
+        broken_result = (
+            validate_case_law_analysis(
+                broken_path,
+                case_id,
+            )
+        )
+
+        assert (
+            broken_result[
+                "valid"
+            ]
+            is False
+        )
+
+    finally:
+
+        globals()[
+            "load_legal_documents_index"
+        ] = (
+            original_loader
+        )
+
+    print(
+        "T16 rag_index_version_used format/security "
+        "pattern rejections (empty/short/uppercase/"
+        "no-prefix/non-hex/path-like/'current') for "
+        "coverage and decision:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T17 RAG_INDEX_VERSION_USED CONSISTENCY GUARD
+    # (coverage) + agent_suggestion FIELD INJECTION
+    # REJECTED (additionalProperties: false)
+    # ========================================================
+
+    broken = clone_json(
+        demo
+    )
+
+    broken[
+        "case_law_coverage"
+    ][
+        0
+    ][
+        "rag_index_version_used"
+    ] = valid_bundle_version
+
+    broken_path = (
+        case_law_dir
+        / "case_law_validator_v2_rag_wrong_state.json"
+    )
+
+    write_json(
+        broken_path,
+        broken,
+    )
+
+    broken_result = (
+        validate_case_law_analysis(
+            broken_path,
+            case_id,
+        )
+    )
+
+    assert (
+        broken_result[
+            "valid"
+        ]
+        is False
+    ), (
+        "execution_state='retrieval_not_run' iken "
+        "rag_index_version_used dolu olamaz."
+    )
+
+    broken = clone_json(
+        demo
+    )
+
+    broken[
+        "case_law_agent_suggestions"
+    ] = [
+        {
+            "suggestion_id":
+                "case_law_suggestion_900",
+
+            "source_issue_id":
+                broken[
+                    "case_law_coverage"
+                ][
+                    0
+                ][
+                    "source_issue_id"
+                ],
+
+            "source_research_ids": [],
+
+            "reason_code":
+                "general_review_needed",
+
+            "title":
+                "Test suggestion",
+
+            "description":
+                "Test suggestion description.",
+
+            "trigger_rule_id":
+                "test_rule",
+
+            "confidence":
+                0.5,
+
+            "requires_human_review":
+                True,
+
+            "status":
+                "candidate",
+
+            "notes":
+                None,
+
+            "rag_index_version_used":
+                valid_bundle_version,
+        }
+    ]
+
+    broken_path = (
+        case_law_dir
+        / "case_law_validator_v2_rag_agent_suggestion.json"
+    )
+
+    write_json(
+        broken_path,
+        broken,
+    )
+
+    broken_result = (
+        validate_case_law_analysis(
+            broken_path,
+            case_id,
+        )
+    )
+
+    assert (
+        broken_result[
+            "valid"
+        ]
+        is False
+    ), (
+        "agent_suggestion additionalProperties:false alanı "
+        "rag_index_version_used'ı reddetmeli."
+    )
+
+    print(
+        "T17 rag_index_version_used consistency guard "
+        "(coverage: non-null rejected outside "
+        "retrieval_completed/no_case_law_evidence) + "
+        "agent_suggestion field injection rejected "
+        "(additionalProperties:false):",
+        "PASS"
+    )
+
+    # ========================================================
     # SUMMARY
     # ========================================================
 
@@ -2769,7 +3345,7 @@ def run_self_test(
     )
 
     print(
-        " CASE LAW VALIDATOR V2: 14/14 PASS"
+        " CASE LAW VALIDATOR V2: 17/17 PASS"
     )
 
     print(

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "case_legal_research.schema.json",
-  "title": "Vergi AI Case Legal Research Schema V1",
+  "title": "Vergi AI Case Legal Research Schema V1.1",
   "type": "object",
   "additionalProperties": false,
 
@@ -207,6 +207,12 @@
             "null"
           ],
           "description": "research_type='issue_driven_discovery' için, build_research_intent() tarafından deterministik olarak üretilmiş arama sorgusu (LLM tarafından yazılmamıştır). Diğer research_type değerleri için null olmalıdır."
+        },
+
+        "rag_index_version_used": {
+          "type": ["string", "null"],
+          "pattern": "^v_[0-9a-f]{64}$",
+          "description": "RAG Global-Resource Bundle Foundation'ın immutable, content-addressed bundle_version'ı (retriever.PinnedRagBundle.bundle_version; biçim: 'v_' + 64 lowercase hex). YALNIZ bu kayıt üretilirken GERÇEKTEN pinlenmiş bir bundle'a karşı retrieval denendiyse dolu olur. null = retrieval-yeteneği olan yol, ancak bundle pinlenmedi/denenmedi/başarısız. Alan HİÇ YOKSA: kayıt bu alandan önce üretilmiştir VEYA kaydın üretim yolu yapısal olarak retrieval'a hiç dokunmaz. Geriye-uyumlu additive alan (required değildir). Bu alan hiçbir zaman bir dosya yolu, canlı pointer veya 'current' değildir."
         },
 
         "source_fact_ids": {

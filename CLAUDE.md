@@ -437,28 +437,58 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   `RAG REAL-DEPENDENCY VALIDATION + SYNTHETIC E2E GATE LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`.
   Rows 1-18, Row 19A, Row 19B, Row 19C-1…19C-3c-iv Slice 1 ve RAG
   Global-Resource Bundle Foundation contract'ları değişmedi.
-- **Sıradaki adım: Row 10/11 Legal-Research/Case-Law Şema Yaması
-  İçin Salt-Okunur Exact-Scope/Allowlist Reconciliation —
-  ACTIVE / NEXT.** İmplementasyona HENÜZ BAŞLANMADI ve
-  YETKİLENDİRİLMEMİŞTİR — sıradaki adım, `rag_index_version_used`
-  alanının `case_legal_research.schema.json`/`case_case_law.
-  schema.json`'a (ve ilgili LOCKED engine'lere) eklenmesi için ayrı,
+- **Row 10/11 Legal Research + Case Law Schema Patch** artık **DONE /
+  LOCKED** — kullanıcı tarafından ayrıca onaylanmış tam dosya
+  allowlist'i üzerinde implement edildi: **0 YENİ + 8 DEĞİŞTİRİLMİŞ =
+  8 dosya**. Tek, exact-isimli alan `rag_index_version_used`
+  (`case_legal_research.schema.json`'da `research_candidate.
+  properties`'e; `case_case_law.schema.json`'da `coverage_record.
+  properties` ve `decision_candidate.properties`'e) geriye-uyumlu,
+  additive, `required`'a EKLENMEMİŞ (optional) bir property olarak
+  eklendi; iki discovery modülü (`legal_research_discovery.py`,
+  `case_law_discovery.py`) yeni alanı additive keyword-only/
+  default-`None` parametreyle taşıyacak şekilde genişletildi; iki
+  validator (`legal_research_validator.py`, `case_law_validator.py`)
+  yeni bir fail-closed consistency kuralı kazandı; iki engine-isolated
+  test dosyası (`ui/tests/test_legal_research_engine_isolated.py`,
+  `ui/tests/test_case_law_engine_isolated.py`) additive kanıt
+  kazandı. Artifact `schema_version` const'ları **1** (Legal Research)
+  ve **2** (Case Law) olarak KORUNDU — bump edilmedi. Sıfır migration,
+  sıfır production data rewrite/regeneration/reapproval, sıfır UI/web/
+  CLI değişikliği. Fresh disposable PostgreSQL 16 (migration
+  0001-0005) ile 64/64 `ui/tests/test_*.py` modülü exit 0, **3686
+  passed, 0 failed, 8 counted skipped** (yeni counted skip yok); ayrı,
+  bağımsız bir Fable final incelemesi — 47/47 repo-dışı bağımsız
+  diagnostic, aynı hedefli test sonuçları, kendi fresh PostgreSQL'iyle
+  64/64 aynı sonuç, 0 external network, 0 `.env` open, korunan
+  data/index/migration/`CLAUDE.md` manifestlerinin byte-identical
+  kaldığı dahil — hiçbir blocking bulgu raporlamadı. Final verdict:
+  `ROW 10/11 LEGAL RESEARCH + CASE LAW SCHEMA PATCH LOCK-READY — NO BLOCKING FINDINGS`
+  (bkz. Row 10/11 Legal Research + Case Law Schema Patch checkpoint
+  özeti, §5 sonrası, "## 6. Cross-Cutting Backlog"dan hemen önce).
+  Rows 1-18, Row 19A, Row 19B, Row 19C-1…19C-3c-iv Slice 1, RAG
+  Global-Resource Bundle Foundation ve RAG Real-Dependency Validation
+  + Synthetic E2E Gate contract'ları değişmedi.
+- **Sıradaki adım: Corpus Policy İçin Salt-Okunur Exact-Scope/
+  Allowlist Reconciliation — ACTIVE / NEXT.** İmplementasyona HENÜZ
+  BAŞLANMADI ve YETKİLENDİRİLMEMİŞTİR — sıradaki adım, mevzuat/içtihat
+  corpus'unun kaynak/provenance/lisans/güncelleme politikası için ayrı,
   dar kapsamlı ve TAMAMEN salt-okunur bir exact-scope/allowlist
-  reconciliation'dır (bkz. Row 19A'nın ayrı-onay maddesi ve RAG
-  Global-Resource Bundle Foundation checkpoint'inin Row 10/11 notu).
-  Corpus politikası (kaynak/provenance/lisans/güncelleme) HENÜZ
-  BAŞLAMAMIŞTIR; gerçek corpus edinimi/yüklenmesi (mevzuat/içtihat
-  PDF'lerinin population'ı) BAŞLAMAMIŞTIR. **ROW 19C-3c-iv Slice 2 —
+  reconciliation'dır. Corpus politikası çalışması HENÜZ BAŞLAMAMIŞTIR;
+  mevzuat/içtihat acquisition'ı HENÜZ BAŞLAMAMIŞTIR; gerçek corpus
+  yüklenmesi (population, `data/mevzuat/`+`documents.json`'a gerçek
+  içerik) HENÜZ BAŞLAMAMIŞTIR; production RAG bundle'ı HENÜZ
+  OLUŞTURULMAMIŞ/AKTİVE EDİLMEMİŞTİR. **ROW 19C-3c-iv Slice 2 —
   Retrieval/Discovery-Dependent Generation** (Legal Research/Case
   Law RAG-bağımlı üretim) HENÜZ BAŞLAMAMIŞTIR. **Bu pointer hiçbir
   dosyaya yazma veya implementasyon yetkisi VERMEZ.** Bu pointer için
   yeni bir Row numarası veya yeni bir roadmap fazı İCAT EDİLMEMİŞTİR.
   Onaylı sıra (bağlayıcı raporlarda kesinleştirilmiştir) KORUNUR:
-  dependency gate (TAMAMLANDI) → Row 10/11 şema yaması → corpus
-  politikası/population → RAG-bağımlı Slice 2. GC/retention/
-  maintenance işleri ve Row 19D (deployment/OS hardening, OS ACL/
-  service identity dahil) bu checkpoint ile BAŞLAMAMIŞTIR ve
-  YETKİLENDİRİLMEMİŞTİR.
+  dependency gate (TAMAMLANDI) → Row 10/11 şema yaması (TAMAMLANDI) →
+  corpus politikası → corpus population → RAG-bağımlı Slice 2.
+  Maintenance/global-resource devam işleri ve Row 19D (deployment/OS
+  hardening, OS ACL/service identity dahil) bu checkpoint ile
+  BAŞLAMAMIŞTIR ve YETKİLENDİRİLMEMİŞTİR.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -4718,6 +4748,250 @@ dokunmamıştır.
 örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur
 bir roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
 dosyasına dokunmaz.
+
+### Row 10/11 Legal Research + Case Law Schema Patch (DONE / LOCKED — checkpoint özeti)
+
+**A. Exact scope** — Kullanıcı tarafından ayrıca onaylanmış tam dosya
+allowlist'i üzerinde implement edildi: **0 YENİ + 8 DEĞİŞTİRİLMİŞ = 8
+dosya**.
+
+1. `data/case_legal_research.schema.json`
+2. `data/case_case_law.schema.json`
+3. `src/legal_research_discovery.py`
+4. `src/case_law_discovery.py`
+5. `src/legal_research_validator.py`
+6. `src/case_law_validator.py`
+7. `ui/tests/test_legal_research_engine_isolated.py`
+8. `ui/tests/test_case_law_engine_isolated.py`
+
+**0 migration**; **0 production data rewrite** (`case_0001`
+regeneration/reapproval GEREKMEDİ); **0 UI/web/CLI değişikliği**;
+**0 facade/adapter/coordinator değişikliği**
+(`ui/services/legal_research_case_law_mutation_facade.py`/
+`..._adapters.py` DOKUNULMADI); **0 engine-orchestrator değişikliği**
+(`src/legal_research_engine.py`/`src/case_law_engine.py` DOKUNULMADI);
+**0 yeni test modülü** (64 kaldı, yalnız 2 mevcut modül genişletildi).
+
+**B. Schema sözleşmesi** — Legal Research
+(`data/case_legal_research.schema.json`): title `"...Schema V1.1"`
+(kozmetik, `"...Schema V1"`den); `schema_version` `const` **1**
+(DEĞİŞMEDİ); `rag_index_version_used` YALNIZ `$defs.research_candidate.
+properties`'e eklendi; `research_candidate` required **21** (DEĞİŞMEDİ),
+properties **21 → 22**. Case Law (`data/case_case_law.schema.json`):
+title `"...Schema V2.1"`; `schema_version` `const` **2** (DEĞİŞMEDİ);
+alan `$defs.coverage_record.properties` VE `$defs.decision_candidate.
+properties`'e eklendi; `coverage_record` required **13**/properties
+**13 → 14**; `decision_candidate` required **21**/properties
+**21 → 22**; `agent_suggestion` required/properties **11/11 —
+DOKUNULMADI**, alan orada YOK. Exact tip/pattern: `type:
+["string","null"]`, `pattern: "^v_[0-9a-f]{64}$"` (`src/retriever.py`'nin
+`_BUNDLE_VERSION_PATTERN`'iyle birebir); **hiçbir konumda `required`'a
+eklenmedi**; top-level veya `analysis_metadata` alanı DEĞİLDİR (her iki
+şemada da `analysis_metadata` bulunmaz — bu patch onu da eklemedi).
+
+**C. Absent/null/value semantiği** — **absent**: patch-öncesi kayıt
+VEYA kaydın üretim yolu yapısal olarak retrieval'a hiç dokunmaz (Legal
+Research `provision_resolution`/`agent_suggestion` tipli kayıtlar).
+**null**: retrieval-yetenekli yol, ama gerçekten pinlenmiş bir bundle'a
+karşı başarılı retrieval kanıtı YOK (`retrieval_not_run`,
+`retrieval_failed`). **`v_<64 lowercase hex>`**: gerçekten kullanılan,
+immutable, content-addressed bundle kimliği
+(`retriever.PinnedRagBundle.bundle_version`). Path, URL, `current`,
+legacy flat-index adı, boş string ve her türlü sentinel/boş-liste
+kodlaması şema `pattern`'i tarafından YASAKTIR.
+
+**D. Discovery davranışı** — Dört builder additive keyword-only/
+default-`None` sözleşmesiyle genişletildi: `legal_research_discovery.
+build_execution_state_candidate()`, `build_discovery_candidate()`;
+`case_law_discovery.build_coverage_record()`, `build_decision_record()`
+(`retrieved_chunk_id=None` ikizinin hemen yanına, aynı desende).
+Bugünkü sonuç: coordinated Legal Research'te (`use_discovery=False`
+sabit) alan HİÇ görünmez (absent); coordinated Case Law coverage
+kayıtlarında alan `null` olarak açıkça belirir; `retrieval_not_run`/
+`retrieval_failed` yollarında `null`; agent suggestion kayıtlarında
+absent (LR: agent allowlist alanı hiç taşımaz; CL: `$def`'te alan hiç
+tanımlı değil). Gerçek bundle pinleme (`bundle=` kablolaması) bu
+patch'te AÇILMADI — Slice 2'nin işi. `LEGAL_RESEARCH_ENGINE_VERSION`/
+`CASE_LAW_ENGINE_VERSION` ve `*_DISCOVERY_VERSION` sabitleri BUMP
+EDİLMEDİ — bu bilinçli bir karardır: additive-null çıktı-şekli
+değişikliği identity'ye görünmezdir ve hiçbir replay/reconciliation
+yolu builder'ı yeniden çağırmadığından bump'sızlık identity churn'ü
+ÖNLER.
+
+**E. Validator kuralları** — Legal Research: alan mevcut VE non-null
+⇒ `research_type == "issue_driven_discovery"` VE `finding_status ∉
+{retrieval_not_run, retrieval_failed}`
+(`validate_rag_index_version_consistency()`,
+`legal_research_validator.py`). Case Law coverage: alan mevcut VE
+non-null ⇒ `execution_state ∈ {retrieval_completed,
+no_case_law_evidence}`
+(`validate_rag_index_version_consistency_for_coverage()`,
+`case_law_validator.py`). Case Law decision: bu patch'te YALNIZ schema
+`pattern` uygulanır — coverage↔decision bundle-değer eşitliği çapraz
+kontrolü Slice 2'ye ERTELENDİ, bu patch'te İCAT EDİLMEDİ. Agent
+suggestion içinde alan (Case Law) `additionalProperties: false`
+nedeniyle şema katmanında reddedilir — hiçbir runtime kontrolü
+gerekmez.
+
+**F. Geriye uyumluluk** — Eski canonical/pending/history/review
+kayıtları (alan hiç yokken) patched şemada değişmeden geçerli kalır.
+QA'nın canlı schema-validation baseline'ı (`qa_engine.py --self-test`)
+temiz kaldı. QA'nın `analysis_metadata` dependency manifest'i şema
+dosyalarını İZLEMEDİĞİNDEN (yalnız 11 scope artefaktı + `case.json` ham
+baytlarını izler) canonical `qa.json` bu patch'le stale OLMADI.
+Mevcut journal replay/pending SHA davranışı ETKİLENMEDİ (facade
+`_build_identity_payload`'ın 7 anahtarı business-şema alanı okumaz).
+Production case dosyaları (`case_0001` dahil) DEĞİŞMEDİ. JSON Schema
+DOKÜMAN revizyonu (title V1.1/V2.1) ile artifact `schema_version`
+kontratı (const 1/2, DEĞİŞMEDİ) arasındaki ayrım
+(`data/documents.schema.json`'ın "V2.1 title + const 1" precedent'iyle
+tutarlı) KORUNDU.
+
+**G. Test kanıtı** — Implementer turu (yalnız implementer'ın kendi
+koşusu): LR validator **16/16**, CL validator **17/17**, LR
+engine-isolated **50/50**, CL engine-isolated **57/57**, QA **13/13**,
+LR/CL mutation facade **55/55**; fresh disposable PostgreSQL 16
+(migration 0001-0005) ile **64/64 test modülü exit 0, 3686 passed, 0
+failed, 8 counted skipped** (8'i önceden bilinen, bu patch'le ilgisiz
+POSIX-symlink alt-testleri; yeni counted skip EKLENMEDİ).
+
+Bağımsız Fable final incelemesi (AYRI, kendi ölçümü — implementer
+sonuçlarıyla KARIŞTIRILMAZ): repo-dışı, testlerden bağımsız bir
+diagnostic ile **47/47** bağımsız kontrol (saf `jsonschema` +
+GERÇEK production validator/discovery/policy/agent modülleri); aynı
+hedefli test sonuçlarının bağımsız yeniden-koşusu (LR validator 16/16,
+CL validator 17/17, LR engine 50/50, CL engine 57/57, QA 13/13,
+LR/CL facade 55/55 — implementer'ınkiyle birebir); kendi, AYRI, fresh
+disposable PostgreSQL 16 kümesiyle **64/64 modül exit 0, 3686 passed,
+0 failed, 8 counted skipped** (implementer sayısıyla birebir, bağımsız
+üretildi); bağımsız bir `sys.addaudithook` netguard ile **0 external
+network, 0 `.env` open**; korunan `data/cases/**`/`index/**`/
+`db/migrations/**`/`CLAUDE.md`/`documents.json`/`provisions.json` raw
+byte-manifestlerinin inceleme başı/sonu **byte-identical** kaldığı;
+disposable PostgreSQL/temp residue'nun tam temizlendiği.
+
+**H. Scope/Fable kronolojisi** — Sonnet oturumu + dört salt-okunur,
+karşılıklı-kör araştırma alt ajanı (Schema/Version;
+Producer/Consumer/Call-Site; Identity/Compatibility/Security;
+Tests/Counts/Allowlist) salt-okunur bir scope DRAFT hazırladı; her
+yük-taşıyan iddia koordinatör tarafından kaynaktan bağımsızca
+yeniden doğrulandı. Taslağın erken, daha az disiplinli keşif
+turlarının önerdiği farklı bir alan adı (`rag_bundle_version`) ve
+breaking bir `schema_version` bump önerisi, `CLAUDE.md`'nin kendi
+bağlayıcı metniyle (exact alan adı `rag_index_version_used`,
+"geriye-uyumlu" zorunluluğu) çelişerek ana ajan tarafından
+kaynak-kanıtlı olarak reddedildi. Ayrı bir Fable scope review üç
+düzeltme uyguladı: (1) validator consistency check "opsiyonel" →
+"zorunlu"ya yükseltildi (koşullu allowlist yasağı + Legal Research'in
+tek `$def`'i gerekçesiyle); (2) "64 test dosyasının hiçbiri
+değişmeyecek" iddiası, yeni sözleşmenin kalıcı kanıtının bir yerde
+YAŞAMASI gerektiği gerekçesiyle düzeltilerek allowlist'e 2 engine-test
+dosyası eklendi; (3) "şema suite'inde ilk optional property olur"
+iddiası, `case_document.schema.json`/`case_view.schema.json`'da
+ZATEN var olan optional-property örnekleri bulunarak yanlışlandı
+(tasarım sonucunu DEĞİŞTİRMEDİ). Allowlist bu üç düzeltmeyle **8
+koşulsuz MODIFIED dosyaya** kapatıldı. İmplementasyon, tek yazıcı bir
+Sonnet oturumuyla, bu exact 8-dosyalık allowlist üzerinde yapıldı.
+Bağımsız Fable final review (ayrı bir Fable oturumu, session
+kesintisi sonrası kaldığı yerden devam ettirilerek) **hiçbir
+blocking bulgu** raporlamadı.
+
+**I. Sayaçlar** — Test modülü: **64 → 64** (değişmedi). Merged
+reconciliation registry routing key: **49 → 49** (değişmedi). Logical
+action family: **37 → 37** (değişmedi). Kapalı mutasyon giriş
+noktası: **29 → 29** (değişmedi). Refusal senaryosu: **44 → 44**
+(değişmedi). Migration: **5 → 5** (değişmedi). Legal Research
+`schema_version`: **1** (const, değişmedi). Case Law `schema_version`:
+**2** (const, değişmedi).
+
+**J. Remaining observations** (bloklamayan, dürüstçe kaydedildi) —
+**O1**: Case Law `decision_candidate` için semantic consistency çapraz
+kuralı YOK (yalnız şema `pattern`); coverage↔decision bundle-değer
+eşitliği Slice 2'nin tasarım sorusu olarak bilinçli bırakıldı — bugün
+gerçek retrieval yapısal olarak kapalı olduğundan pratik erişilemez.
+**O2**: Alan `optional` (required-dışı) olduğundan, Slice 2'nin
+"retrieval gerçekten koştuysa alan non-null olmalı" application-
+katmanı zorunluluğu gelene kadar retrieval-türevi bir kayıt teorik
+olarak sessizce null yazılabilir — bugün coordinated yolda RAG yapısal
+olarak kapalı ve legacy yol fail-closed `retrieval_failed`'a düştüğü
+için bu durum ULAŞILAMAZ; açık kayıt, Slice 2 kapısına yazılı. **O3/
+O4**: Bağımsız incelemenin netguard ledger'ında önceki bir session'dan
+kalan, tamamen loopback-only (127.0.0.1) bir kalıntı blok bulundu —
+sonuç üzerinde SIFIR etkisi vardı, salt-scratchpad hijyen notu. Önceden
+bilinen, bu patch'le İLGİSİZ backlog maddeleri (`case_law_engine.py`
+8-key vs `case_law_approval.py` 7-key forbidden-key drift'i;
+`documents.schema.json`'ın `daire`/`karar_no` boşluğu) DOKUNULMADAN
+kaldı.
+
+**K. Slice 2'ye kalan dört bağlayıcı yükümlülük** — (1) pinlenmiş
+`bundle_version`'ın coordinator `identity_payload`/`input_digest`'e
+bağlanması; (2) retrieval gerçekten koştuysa `rag_index_version_used`
+alanının non-null olması application-katmanı zorunluluğu; (3)
+canonical `rag_index_version_used` değeri ile coordinator journal/
+audit'in bundle kimliğinin DOĞRUDAN eşitlik kontrolü; (4) discovery
+çağrılarına verified/pinned `bundle=` kablolaması
+(`legal_research_discovery.py`/`case_law_discovery.py`'nin retrieval
+çağrıları bugün `bundle=` GEÇMİYOR). Citation/chunk/page/excerpt
+ayrıntıları (Legal Research `research_candidate`'a henüz eklenmemiş
+provenance zenginleştirmesi dahil) da Slice 2'ye KALIR — bu patch'in
+bağlayıcı taahhüdü tek bir alanla ("hangi bundle kullanıldı?")
+sınırlıdır.
+
+**L. §9 LOCKED-file gerekçesi** — `data/case_legal_research.schema.json`
+(Row 10 + 19A ayrı-onay maddesi): patch'in doğrudan nesnesi; salt
+additive optional property + kozmetik title; geriye uyumluluk mükemmel
+(eski veri değişmeden geçerli). `data/case_case_law.schema.json`
+(Row 11 + 19A): aynı, iki `$defs` konumunda. `src/legal_research_
+discovery.py` (Row 10): retrieval sonucuna erişen TEK Legal Research
+katmanı — checkpoint'in "ilgili LOCKED engine'ler" taahhüdünün
+çözümü; mevcut dönüş dict'lerine 1 yeni anahtar (bugün her yolda
+`None`), imza kırılması yok, tüm çağıranlar `dict()` pass-through
+üzerinden değişmeden çalışmaya devam eder. `src/case_law_discovery.py`
+(Row 11): aynı gerekçe, `retrieved_chunk_id=None` precedent'inin
+birebir eşi. `src/legal_research_validator.py` (Row 10): non-null'un
+yanlış bağlamda TEK reddedicisi (fail-closed, Prensip 9); mevcut hiçbir
+check gevşetilmedi/kaldırılmadı; kalıcı, non-tautological kanıtın
+evi. `src/case_law_validator.py` (Row 11): aynı. `ui/tests/
+test_legal_research_engine_isolated.py` ve `ui/tests/
+test_case_law_engine_isolated.py`: yeni sözleşmenin producer-side
+kalıcı kanıtı (round-trip + sentetik bundle-injection + gerçek
+`case_0001` canonical regresyonu); yalnız additive check'ler, hiçbir
+mevcut assertion gevşetilmedi/kaldırılmadı.
+
+Bunların DIŞINDA hiçbir LOCKED dosya bu patch'te açılmadı. Özellikle
+DEĞİŞMEYENLER: `legal_research_engine.py`, `case_law_engine.py`
+(engine-orkestratörler), iki policy, iki agent, iki approval, `ui/
+services/legal_research_case_law_mutation_facade.py`/`..._adapters.py`
+(facade/adapters), Layer A facade/adapters/`approval_registry.py`,
+`ui/cli_mutate.py`, `ui/reconciliation_operator.py`, `ui/main.py`
+(CLI/UI), tüm `ui/templates/**`, `qa_*`/`orchestrator_*`,
+`retriever.py`, `ingest.py`, `db/migrations/*.sql` (tüm 5 migration),
+tüm `data/` production case verisi.
+
+**M. Kalan işler** — Başlamamış ve bu checkpoint ile
+YETKİLENDİRİLMEMİŞTİR: corpus politikası (kaynak/provenance/lisans/
+güncelleme); corpus edinimi (acquisition); gerçek mevzuat/içtihat
+yüklenmesi; corpus population (`data/mevzuat/`+`documents.json`'a
+gerçek içerik); production RAG bundle'ının build/activation'ı (gerçek
+corpus'a karşı); RAG-bağımlı Slice 2 (ROW 19C-3c-iv Slice 2 —
+Retrieval/Discovery-Dependent Generation); citation/chunk/page/excerpt
+provenance genişletmesi; `rag.py`/Anthropic gerçek agent adaptasyonu
+(pinlenmiş bundle API'sine geçiş); GC/retention/maintenance devam
+işleri; global-resource maintenance authz/capability/lock modeli; Row
+19D (Operations & Recovery — deployment/OS hardening, OS ACL/service
+identity, TOCTOU dahil); production deployment.
+
+**Final verdict**: `ROW 10/11 LEGAL RESEARCH + CASE LAW SCHEMA PATCH LOCK-READY — NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/
+19C-3a Slice 1/Slice 2/19C-3b Slice 1/Slice 2/19C-3c-i/19C-3c-ii/
+19C-3c-iii/19C-3c-iv Slice 1/RAG Global-Resource Bundle Foundation/
+RAG Real-Dependency Validation + Synthetic E2E Gate örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
+işlemidir; hiçbir kaynak/migration/test/production dosyasına
+dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

@@ -216,6 +216,7 @@ def build_coverage_record(
     execution_state,
     decision_count=0,
     failure_reason=None,
+    rag_index_version_used=None,
 ):
 
     query_text = intent[
@@ -283,6 +284,9 @@ def build_coverage_record(
         "requires_human_review":
             True,
 
+        "rag_index_version_used":
+            rag_index_version_used,
+
         "notes":
             None,
     }
@@ -298,6 +302,7 @@ def build_decision_record(
     case_law_info,
     coverage_id,
     retrieved_chunk_id=None,
+    rag_index_version_used=None,
 ):
 
     query_text = intent[
@@ -371,6 +376,9 @@ def build_decision_record(
 
         "retrieved_chunk_id":
             retrieved_chunk_id,
+
+        "rag_index_version_used":
+            rag_index_version_used,
 
         "applicability_result":
             "needs_review",

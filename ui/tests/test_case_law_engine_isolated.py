@@ -48,6 +48,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import case_law_engine as cle                                 # noqa: E402
+import case_law_discovery as cld                               # noqa: E402
+import case_law_validator as clv                               # noqa: E402
 from ui.services import legal_research_case_law_mutation_facade as fac  # noqa: E402
 
 passed = 0
@@ -242,6 +244,16 @@ try:
     check(
         "deterministic build produces zero agent suggestions",
         build_result_2["agent_suggestion_count"] == 0,
+    )
+    check(
+        "ROW 10/11 SCHEMA PATCH: coordinated deterministic case_law build - every coverage "
+        "record explicitly carries rag_index_version_used=null (network structurally closed, "
+        "never absent - build_coverage_record() always sets the key)",
+        all(
+            coverage.get("rag_index_version_used") is None
+            and "rag_index_version_used" in coverage
+            for coverage in build_result_2["analysis"]["case_law_coverage"]
+        ),
     )
 
     # ============================================================
@@ -549,6 +561,15 @@ try:
         and len(build_result_5["analysis"]["case_law_agent_suggestions"]) == 1
         and build_result_5["analysis"]["case_law_agent_suggestions"][0]["source_issue_id"] == real_issue_id_5,
     )
+    check(
+        "ROW 10/11 SCHEMA PATCH: agent-mode case_law_agent_suggestions never carry "
+        "rag_index_version_used - the schema's agent_suggestion $def has no such property at "
+        "all (structurally impossible, not merely an unused allowlist)",
+        all(
+            "rag_index_version_used" not in suggestion
+            for suggestion in build_result_5["analysis"]["case_law_agent_suggestions"]
+        ),
+    )
     frozen_5 = fac._freeze_pending_bytes(build_result_5["analysis"])
     candidate_5 = json.loads(frozen_5.decode("utf-8"))
     write_result_5 = cle.write_pending(
@@ -583,9 +604,98 @@ try:
         candidate_6["case_law_coverage"] != "MUTATED-AFTER-FREEZE",
     )
 
+    # ============================================================
+    # 6b) ROW 10/11 SCHEMA PATCH - rag_index_version_used synthetic
+    #     injection via case_law_discovery.build_coverage_record(). The
+    #     synthetic value is injected DIRECTLY into the builder function's
+    #     own keyword parameter - retriever/load_pinned_bundle is NEVER
+    #     called anywhere in this check - and the resulting coverage
+    #     record passes the REAL (patched) validator.
+    # ============================================================
+
+    check(
+        "ROW 10/11: retriever module not imported anywhere in this process before the "
+        "synthetic bundle-version injection check",
+        "retriever" not in sys.modules,
+    )
+
+    _synthetic_bundle_version_6b = "v_" + "a" * 64
+    _synthetic_analysis_6b = json.loads(json.dumps(build_result_2["analysis"]))
+    _target_issue_id_6b = _synthetic_analysis_6b["case_law_coverage"][0]["source_issue_id"]
+    _synthetic_intent_6b = {
+        "query_text": "test sentetik case-law sorgusu",
+        "reason_code": "test_reason_code",
+        "citation_refs": [],
+    }
+    _synthetic_coverage_6b = cld.build_coverage_record(
+        issue={"issue_id": _target_issue_id_6b},
+        intent=_synthetic_intent_6b,
+        execution_state="no_case_law_evidence",
+        rag_index_version_used=_synthetic_bundle_version_6b,
+    )
+    check(
+        "ROW 10/11: build_coverage_record() places the synthetic bundle version verbatim "
+        "under rag_index_version_used",
+        _synthetic_coverage_6b["rag_index_version_used"] == _synthetic_bundle_version_6b,
+    )
+    check(
+        "ROW 10/11: synthetic bundle-version injection never imported retriever (no real "
+        "RAG/network call)",
+        "retriever" not in sys.modules,
+    )
+
+    # build_coverage_record() itself does not add "status" - that field is added downstream by
+    # case_law_policy.finalize_coverage() (the same "status"/"research_id" addition pattern the
+    # sibling legal_research_policy.finalize_candidates() uses) - added manually here since this
+    # synthetic record bypasses finalize_coverage() entirely.
+    _synthetic_coverage_6b["status"] = "candidate"
+
+    for _index_6b, _coverage_6b in enumerate(_synthetic_analysis_6b["case_law_coverage"]):
+        if _coverage_6b["source_issue_id"] == _target_issue_id_6b:
+            _synthetic_analysis_6b["case_law_coverage"][_index_6b] = _synthetic_coverage_6b
+            break
+
+    _synthetic_path_6b = _tmp_root / "synthetic_rag_case_law.json"
+    _synthetic_path_6b.write_text(
+        json.dumps(_synthetic_analysis_6b, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    _synthetic_validation_6b = clv.validate_case_law_analysis(
+        _synthetic_path_6b, expected_case_id=CASE_ID,
+    )
+
+    if not _synthetic_validation_6b["valid"]:
+        print()
+        for _error in _synthetic_validation_6b["errors"]:
+            print("-", _error)
+
+    check(
+        "ROW 10/11: a coverage record carrying a valid, in-context rag_index_version_used "
+        "(execution_state='no_case_law_evidence') passes the REAL (patched) validator",
+        _synthetic_validation_6b["valid"] is True,
+    )
+
 finally:
     cle.CASES_DIR = _original_cases_dir
     shutil.rmtree(_tmp_root, ignore_errors=True)
+
+
+# ============================================================
+# 6c) ROW 10/11 SCHEMA PATCH - REAL, UNTOUCHED case_0001 canonical
+#     case_law.json is unaffected by the patched (additive) schema - it
+#     still validates unchanged. Uses case_law_validator's OWN
+#     module-level CASES_DIR (never redirected anywhere in this file), so
+#     this reads the REAL repository tree, read-only.
+# ============================================================
+
+_case0001_case_law_validation_6c = clv.validate_case_law_analysis(
+    clv.get_case_law_dir(CASE_ID) / "case_law.json", expected_case_id=CASE_ID,
+)
+check(
+    "ROW 10/11: REAL case_0001 canonical case_law.json is unaffected by the patched "
+    "(additive, non-required) schema - still validates unchanged",
+    _case0001_case_law_validation_6c["valid"] is True,
+    _case0001_case_law_validation_6c.get("errors"),
+)
 
 
 # ============================================================
