@@ -416,26 +416,49 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   `RAG BUNDLE FOUNDATION LOCK-READY — F1-F4 CLOSED, NO BLOCKING FINDINGS`.
   Rows 1-18, Row 19A, Row 19B, Row 19C-1…19C-3c-iv Slice 1
   contract'ları değişmedi.
-- **Sıradaki adım: RAG Real-Dependency Validation and Corpus
-  Population Scope Reconciliation — ACTIVE / NEXT.**
-  İmplementasyona HENÜZ BAŞLANMADI; corpus population da
-  BAŞLAMAMIŞTIR. İlk adım, ayrı ve TAMAMEN salt-okunur bir
-  exact-scope/allowlist reconciliation'dır. `faiss`/`numpy`/`openai`/
-  `pypdf`/`python-dotenv` bu ortamda KURULU DEĞİLDİR — gerçek kurulum
-  ve API uyumluluğu (özellikle FAISS serialize/deserialize şekli ve
-  embedding dimension/count doğrulaması) bu fazda AYRICA
-  doğrulanmalıdır. Gerçek bir build→publish→activate→
-  load_pinned_bundle round-trip'i (küçük bir synthetic corpus ile) bu
-  fazın ZORUNLU açılış kapısıdır. Mevzuat ve içtihat corpus'unun
-  kaynak/provenance/lisans/güncelleme politikası ayrıca
-  kararlaştırılmalıdır. **Bu pointer mevcut `data/**` ve `index/**`
-  için hiçbir dosyaya yazma yetkisi VERMEZ.** Row 10/11
-  `rag_index_version_used` şema yaması, **ROW 19C-3c-iv Slice 2 —
-  Retrieval/Discovery-Dependent Generation**, GC/retention/
+- **RAG Real-Dependency Validation + Synthetic E2E Gate** artık
+  **DONE / LOCKED** — kullanıcı tarafından ayrıca onaylanmış tam
+  dosya allowlist'i (1 YENİ + 0 DEĞİŞTİRİLMİŞ = 1 dosya) üzerinde
+  implement edildi (bkz. RAG Real-Dependency Validation + Synthetic
+  E2E Gate checkpoint özeti, §5 sonrası, "## 6. Cross-Cutting
+  Backlog"dan hemen önce). Yeni dosya: `ui/tests/test_rag_bundle_
+  dependency_smoke.py`; production/migration/şema/web değişikliği
+  SIFIR. Root `.venv` üzerinde gerçek dependency gate (faiss-cpu/
+  numpy/pypdf/openai/python-dotenv/httpx2) ve gerçek sentetik
+  build→publish→activate→load→retrieve E2E zinciri başarıyla
+  doğrulandı. İlk bağımsız incelemede iki MEDIUM bulgu (F1: "bundle
+  #2 retrieval" kanıt zincirinin fiilen bundle #1 üzerinde koşması;
+  F2: `DEPENDENCY GATE: PASS` marker'ının son zorunlu data/index
+  bayt-değişmezlik kontrolünden ÖNCE basılması) tespit edilerek
+  verdict NOT LOCK-READY idi. Yalnız AYNI tek test dosyasında dar bir
+  remediasyon uygulanarak F1/F2 kapatıldı; TAMAMEN AYRI, bağımsız bir
+  Fable yeniden incelemesi F1/F2'nin kaynak + bağımsız tanılarla
+  KAPANDIĞINI doğruladı ve final verdict verdi:
+  `RAG REAL-DEPENDENCY VALIDATION + SYNTHETIC E2E GATE LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`.
+  Rows 1-18, Row 19A, Row 19B, Row 19C-1…19C-3c-iv Slice 1 ve RAG
+  Global-Resource Bundle Foundation contract'ları değişmedi.
+- **Sıradaki adım: Row 10/11 Legal-Research/Case-Law Şema Yaması
+  İçin Salt-Okunur Exact-Scope/Allowlist Reconciliation —
+  ACTIVE / NEXT.** İmplementasyona HENÜZ BAŞLANMADI ve
+  YETKİLENDİRİLMEMİŞTİR — sıradaki adım, `rag_index_version_used`
+  alanının `case_legal_research.schema.json`/`case_case_law.
+  schema.json`'a (ve ilgili LOCKED engine'lere) eklenmesi için ayrı,
+  dar kapsamlı ve TAMAMEN salt-okunur bir exact-scope/allowlist
+  reconciliation'dır (bkz. Row 19A'nın ayrı-onay maddesi ve RAG
+  Global-Resource Bundle Foundation checkpoint'inin Row 10/11 notu).
+  Corpus politikası (kaynak/provenance/lisans/güncelleme) HENÜZ
+  BAŞLAMAMIŞTIR; gerçek corpus edinimi/yüklenmesi (mevzuat/içtihat
+  PDF'lerinin population'ı) BAŞLAMAMIŞTIR. **ROW 19C-3c-iv Slice 2 —
+  Retrieval/Discovery-Dependent Generation** (Legal Research/Case
+  Law RAG-bağımlı üretim) HENÜZ BAŞLAMAMIŞTIR. **Bu pointer hiçbir
+  dosyaya yazma veya implementasyon yetkisi VERMEZ.** Bu pointer için
+  yeni bir Row numarası veya yeni bir roadmap fazı İCAT EDİLMEMİŞTİR.
+  Onaylı sıra (bağlayıcı raporlarda kesinleştirilmiştir) KORUNUR:
+  dependency gate (TAMAMLANDI) → Row 10/11 şema yaması → corpus
+  politikası/population → RAG-bağımlı Slice 2. GC/retention/
   maintenance işleri ve Row 19D (deployment/OS hardening, OS ACL/
   service identity dahil) bu checkpoint ile BAŞLAMAMIŞTIR ve
-  YETKİLENDİRİLMEMİŞTİR. Bu pointer için yeni bir Row numarası İCAT
-  EDİLMEMİŞTİR ve hiçbir dosyaya implementasyon yetkisi VERMEZ.
+  YETKİLENDİRİLMEMİŞTİR.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -4491,6 +4514,210 @@ gevşetilmediğini bağımsız doğruladı.
 19C-3c-iii/19C-3c-iv Slice 1 örneğinde olduğu gibi yalnız
 `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
 hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### RAG Real-Dependency Validation + Synthetic E2E Gate (DONE / LOCKED — checkpoint özeti)
+
+**Preflight ve exact scope** — Başlangıç HEAD:
+`84117d6ff0b2ab2e6c3d63eb619a07ac1ad08a1a`. Exact değişiklik: **1
+YENİ** dosya (`ui/tests/test_rag_bundle_dependency_smoke.py`), **0
+DEĞİŞTİRİLMİŞ**, **0 migration**, **0 production dosyası**;
+`CLAUDE.md` bu implementasyon/inceleme/remediasyon/re-review
+turlarının HİÇBİRİNDE değişmedi — bu checkpoint'in kendisi ilk
+yazım anıdır. Test modülü sayısı **63 → 64**; routing key (49),
+logical family (37), migration (5), kapalı mutasyon giriş noktası
+(29), refusal senaryosu (44) bu slice'ta DEĞİŞMEDİ.
+
+**Gerçek dependency gate** — Root `.venv` (Python **3.14.4**)
+üzerinde gerçek import + metadata doğrulamasıyla altı paketin
+TAMAMI kendi `requirements.txt` pin'iyle birebir ve "ok_pinned":
+`faiss-cpu` **1.15.0**, `numpy` **2.5.2**, `pypdf` **6.16.2**,
+`openai` **3.6.0**, `python-dotenv` **1.2.3**, `httpx2` **2.12.0**.
+`anthropic` **1.2.0** yalnız INFORMATIONAL olarak raporlanır — gate
+koşuluna GİRMEZ (build→activate→load→retrieve zinciri anthropic'i
+hiç import/çağırmaz). Paketin dist-info/`pip`'te "kurulu"
+görünmesi TEK BAŞINA yeterli kabul EDİLMEDİ — gate her paket için
+GERÇEK `importlib.import_module()` probe'u + gerçek sürüm
+karşılaştırması çalıştırır (`classify_package()`/
+`decide_gate_outcome()`, saf ve enjekte edilebilir fonksiyonlar).
+`require` modunda eksik/kırık/sürüm-uyumsuz bir paket **skip
+DEĞİL, FAIL**tir — bu, `vergi_ui_runtime` interpreter'ında (altı
+paketin altısı da gerçekten kurulu değil) `require` ile
+çalıştırılan bağımsız bir koşuda **6 gerçek, SAYILAN FAILURE**
+(paket başına exact `ModuleNotFoundError`), 0 informational skip,
+marker YOK sonucuyla AMPİRİK olarak kanıtlanmıştır. `developer`
+(env değişkeni unset) ve geçersiz env-değeri davranışları AYRI
+sınandı: developer modunda bağımlılıklar mevcutken require ile
+AYNI tam E2E'yi çalıştırır (disclose edilmiş, sözleşmeyle uyumlu);
+bağımlılık eksikken yalnız informational skip verir, hard-fail
+ÜRETMEZ; geçersiz bir env değeri ise ortamdan BAĞIMSIZ olarak
+fail-closed reddedilir (tek FAIL, "unknown" çıktıda, sıfır PASS
+marker). Bu gate, corpus population ve RAG-bağımlı Slice 2'den
+ÖNCE **zorunlu bir açılış kapısıdır** — o iki faz `require` modunda
+bu gate'in GERÇEKTEN PASS ettiği bir ortam gerektirir.
+
+**Gerçek sentetik E2E** — Test, gerçek production zincirini uçtan
+uca sürer: gerçek, bayt-hesaplı sentetik PDF'ler → gerçek `pypdf`
+extraction (`ingest.extract_pdf_pages`, facade'in koşulsuz sabittiği
+`pdf_page_extractor=None` üzerinden — bypass EDİLEMEZ) → gerçek
+`openai.OpenAI` SDK'sı + `httpx2.MockTransport` (SDK'nın gerçek
+base64-encoded embedding decode yolu dahil) → gerçek
+`faiss.IndexFlatIP` add/search/serialize/deserialize → gerçek public
+`facade.apply_build/apply_activate` + `retriever.load_pinned_bundle/
+retrieve_detailed` build→publish→activate→load→retrieve zinciri →
+doğru source/citation attribution (döndürülen kaydın document_id/
+source/madde alanları) → tamper-before-deserialize reddi
+(`RagArtifactHashMismatchError`, hash doğrulaması faiss import'undan
+dahi ÖNCE) → önceki pin edilmiş bundle'ın devamlılığı (pointer
+ikinci bundle'a geçtikten SONRA bile eski in-memory pin doğru
+çalışır) → içerik olarak GERÇEKTEN ayırt edilebilir ikinci bir
+corpus + bundle #2 retrieval'i (GAMMA sentinel'i yalnız bundle
+#2'de). **Bu sentetik E2E gerçek mevzuat corpus population'ı
+ANLAMINA GELMEZ** — corpus, iki/üç sentetik, tek-sayfalık, tamamen
+programatik PDF'ten ibarettir; production `data/mevzuat/` içeriği bu
+gate'in hiçbir turunda okunmadı/kullanılmadı.
+
+**Dürüst kronoloji (dört ayrı aşama, karıştırılmadan)**:
+
+1. **İlk implementasyon** — tek yeni test dosyası; root `.venv`
+   `require`: **55 passed / 0 failed / 0 skipped**; ilk full suite:
+   **64 modül, 3672 passed / 0 failed / 8 counted skipped**; verdict
+   `RAG REAL-DEPENDENCY VALIDATION + SYNTHETIC E2E GATE IMPLEMENTATION READY FOR INDEPENDENT VERIFICATION`.
+2. **İlk bağımsız Fable incelemesi** — production çekirdeğinin
+   (gerçek pypdf/OpenAI-SDK-base64/FAISS zinciri, fail-closed
+   env-var sözleşmesi, sıfır network, data/index bayt-değişmezliği,
+   64-modül sweep) sağlam bulunduğu; ANCAK F1 (MEDIUM) ve F2
+   (MEDIUM) nedeniyle `NOT LOCK-READY` verdict'i.
+3. **Dar remediasyon** — yine yalnız AYNI tek test dosyasında; F1/F2
+   düzeltmeleri; root `.venv` require/developer: **72 passed / 0
+   failed / 0 skipped**; 64-modül sweep'in yeniden başarıyla
+   geçtiği (64/64 exit 0, 3672 passed, 0 failed, 8 counted skipped);
+   bu turda commit/roadmap-lock YAPILMADIĞI; verdict
+   `RAG REAL-DEPENDENCY VALIDATION + SYNTHETIC E2E GATE TARGETED REMEDIATION READY FOR INDEPENDENT RE-REVIEW`.
+4. **Ayrı, bağımsız Fable yeniden incelemesi** — F1/F2'nin kaynaktan
+   + bağımsız enstrümantasyon/tanılarla KAPANDIĞININ doğrulanması;
+   root `.venv` require/developer **72/0/0**; fresh disposable
+   PostgreSQL 16 (migration 0001-0005) ile **64/64 modül exit 0**,
+   **3672 passed / 0 failed / 8 counted skipped** (informational/
+   `SKIPPED` satırları — 11 informational + 1 ayrı sayaç-dışı satır —
+   bu 8 counted skip tabanına KARIŞTIRILMADI); bağımsız 113-dosyalık
+   `data/`+`index/` sha256 manifesti inceleme başı/sonu IDENTICAL;
+   sıfır gerçek dış network (bağımsız `sys.addaudithook` netguard
+   ledger'ı) ve sıfır `.env`-open olayı; final verdict:
+   `RAG REAL-DEPENDENCY VALIDATION + SYNTHETIC E2E GATE LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`.
+
+**İlk yeşil koşunun (aşama 1) tek başına LOCK sağlamadığı açıkça
+kaydedilir** — LOCK yalnız aşama 4'ün bağımsız, kaynak-kanıtlı
+re-review'undan sonra verilmiştir.
+
+**F1 kapanışı** — İlk kusur: `query()` closure'ı `bundle_1`'i
+kalıcı olarak yakalıyordu; "post-second-activation: retrieval
+against bundle #2 still correct" etiketli kontrol GERÇEKTE yine
+bundle #1 üzerinde koşuyordu; iki build'in artifact'leri byte-
+identical olduğundan bu yanlış-bundle kullanımı sonuç eşitliğiyle
+GÖRÜNMEZ kalıyordu. Remediasyon: `query()` artık `bundle`'ı
+zorunlu, açık ikinci parametre olarak alır (hiçbir closure-yakalanan
+bundle KALMADI); build #2'nin corpus'u GERÇEKTEN içerik olarak
+farklı yapıldı (üçüncü bir PDF, GAMMA sentinel'i, `ntotal` 2→3,
+farklı artifact hash'leri); bundle #2 GERÇEKTEN kendi benzersiz
+içeriğiyle sorgulanıp doğrulandı; ESKİ `bundle_1` nesnesi pointer
+swap'tan SONRA yeniden sorgulanıp hem doğru çalıştığı hem GAMMA'yı
+ASLA döndürmediği ayrıca kanıtlandı. Bağımsız re-review'un KENDİ
+enstrümantasyonu (retrieval çağrılarını kayıt altına alan bir
+tanı) yedi retrieve çağrısının iki bundle versiyonunu doğru sırayla
+ayırt ettiğini, GAMMA'nın yalnız bundle #2'den geldiğini ve eski
+pin'in GAMMA sorgusunda dahi sıfır gamma-hit döndürdüğünü bağımsızca
+doğruladı. **F1: CLOSED.**
+
+**F2 kapanışı** — İlk kusur: `DEPENDENCY GATE: PASS` marker'ı,
+koşunun SON zorunlu kontrolü olan `data/`/`index/` bayt-değişmezlik
+kontrolünden ÖNCE basılıyordu; bu yüzden invariance'ı İHLAL EDEN,
+exit-1 ile biten bir koşu stdout'ta yanıltıcı bir PASS marker'ı
+taşıyabiliyordu. Remediasyon: marker artık YALNIZ `run_self_test()`
+sonunda, final invariance kontrolü VE özet satırından SONRA, ve
+YALNIZ TOPLAM `failed == 0` şartıyla basılıyor. Bağımsız re-review'un
+KENDİ zorlanmış-ihlal child süreç tanısı bunu ampirik olarak
+doğruladı: gerçek E2E TAMAMEN başarılı (64 PASS satırı, tamper testi
+dahil) → yalnız SON, zorlanmış bir final-invariance kontrolü FAIL →
+exit code 1 → `DEPENDENCY GATE: PASS` alt-dizgesi çıktının HİÇBİR
+yerinde yok. Bu senaryo artık kalıcı, gerçek bir `subprocess.run`
+meta-testi olarak repoda korunmaktadır. **F2: CLOSED.**
+
+**Network ve güvenlik** — `httpx2.MockTransport` dışına SIFIR gerçek
+dış network girişimi; bu, testin kendi socket-guard'ından TAMAMEN
+AYRI, bağımsız bir `sys.addaudithook` netguard/ledger mekanizmasıyla
+her koşuda (require/developer/invalid-value/64-modül sweep) ayrıca
+kanıtlandı — sweep'teki TEK gözlenen ağ olayları yerel loopback
+PostgreSQL/TestClient trafiğidir. Gerçek OpenAI/Anthropic API
+credential'ı HİÇBİR ZAMAN kullanılmadı; `.env` HİÇBİR koşuda
+açılmadı (sıfır `.env`-open olayı, bağımsız ledger'la kanıtlı).
+`data/` ve `index/` bu gate'in hiçbir turunda (implementasyon,
+inceleme, remediasyon, re-review) değişmedi — her tur kendi
+bağımsız bayt-manifestiyle bunu doğruladı. Artifact tamper
+doğrulaması (`RagArtifactHashMismatchError`) her zaman
+`faiss.deserialize_index`'ten ÖNCE koşar.
+
+**Kalan Low/Observation (bloklamayan, backlog)** — Bağımsız
+re-review'un final bulgu tablosundan: **N1** — F2'nin PARENT-modda
+basılan meta-test check etiketi ("…no DEPENDENCY GATE: PASS marker
+anywhere in output") marker literal'ini alt-dizge olarak içerir;
+tam-satır marker tekil ve doğru kalır, ama naif bir alt-dizge
+tüketicisi bu etiket satırından YANILABİLİR. **N2** — F2 meta-
+testinin parent assertion'ları child E2E'sinin başarısını AYRICA
+pinlemez (özet "≥1 failure" yeterli sayılır). **N3** —
+`VERGI_RAG_DEPENDENCY_GATE_CHILD=1` iki subprocess meta-testini
+sessizce atlar (recursion önleme; fail-open DEĞİL, ama belgelenmiş
+davranış). **L1** (miras, bilinçli scope-dışı) — `requirements.
+txt`'te bulunmayan bir pin, sürüm doğrulaması sessizce atlanıp
+`ok_pinned` üretir; bugün altı paketin altısı da pinli olduğundan
+tetiklenmiyor. **L2** (miras, bilinçli scope-dışı) — mekanik bir
+`DEPENDENCY GATE: FAIL` marker satırı yoktur; FAIL, `FAIL …`
+satırları + özet + exit code ile taşınır. Bunların HİÇBİRİ LOCK'u
+ENGELLEMEZ; hepsi açık backlog olarak korunur.
+
+**Kalan gerçek kapılar (bu checkpoint HİÇBİRİNİ açmaz/başlatmaz)**:
+
+- Row 10/11 legal-research/case-law şema yaması (ayrı, salt-okunur
+  exact-scope/allowlist reconciliation gerektirir — bkz. §5 pointer).
+- Corpus politikası (kaynak/provenance/lisans/güncelleme).
+- Corpus edinimi (acquisition) — gerçek mevzuat/içtihat PDF/metin
+  edinimi.
+- Corpus population — `data/mevzuat/`+`documents.json`'a gerçek
+  içerik yüklenmesi.
+- Bundle activation için gerçek production corpus.
+- Legal Research/Case Law RAG-bağımlı Slice 2 (ROW 19C-3c-iv Slice
+  2 — Retrieval/Discovery-Dependent Generation).
+- `rag.py`/Anthropic gerçek agent adaptasyonu (pinlenmiş bundle
+  API'sine geçiş).
+- GC/retention/maintenance işleri.
+- Row 19D (deployment/OS hardening, OS ACL/service identity, TOCTOU
+  dahil).
+- Production deployment.
+
+**§9/LOCKED-file değerlendirmesi** — Bu gate implementasyonunda,
+incelemesinde, remediasyonunda ve re-review'unda **hiçbir LOCKED
+production dosyası değiştirilmedi** — tek değişen dosya, hiçbir
+zaman git'e commit edilmemiş, tamamen yeni bir test dosyasıdır
+(`ui/tests/test_rag_bundle_dependency_smoke.py`); Row 1-18, Row
+19A-19C ve RAG Global-Resource Bundle Foundation'ın hiçbir
+kaynak/şema/migration dosyasına dokunulmadı. Bu `CLAUDE.md`
+değişikliği, yukarıdaki dört aşamanın TAMAMLANMIŞ ve bağımsız
+doğrulanmış sonucunu kaydetmek için, ayrı ve açık kullanıcı yetkili
+bu roadmap-lock turunda yapılmıştır — implementasyon/inceleme/
+remediasyon/re-review turlarının HİÇBİRİ `CLAUDE.md`'ye
+dokunmamıştır.
+
+**Final verdict**:
+
+`RAG REAL-DEPENDENCY VALIDATION + SYNTHETIC E2E GATE LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/
+19C-3a Slice 1/Slice 2/19C-3b Slice 1/Slice 2/19C-3c-i/19C-3c-ii/
+19C-3c-iii/19C-3c-iv Slice 1/RAG Global-Resource Bundle Foundation
+örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur
+bir roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
+dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 
