@@ -1180,6 +1180,415 @@ def test_admissibility_deferred_document_rejected_before_extraction_embed_networ
         )
 
 
+# ================================================================
+# RAG CORPUS PREREQUISITE DOCUMENTS-SCHEMA PATCH (P2)
+#
+# Additive tests for the ten new optional/nullable
+# data/documents.schema.json properties (daire, esas_no, karar_no,
+# temyiz_kesinlesme_durumu, anonymization_applied, text_basis,
+# raw_byte_sha256, acquisition_timestamp, acquisition_channel,
+# acquiring_actor_ref) and src/manifest_validator.py's new
+# Yargı Kararı / Özelge per-type rules + raw_byte_sha256
+# declared-vs-computed integrity gate. No existing assertion above
+# this block is weakened or removed.
+# ================================================================
+
+REAL_SCHEMA_PATH = REPO_ROOT / "data" / "documents.schema.json"
+
+_P2_NEW_FIELDS = [
+    "daire", "esas_no", "karar_no", "temyiz_kesinlesme_durumu",
+    "anonymization_applied", "text_basis", "raw_byte_sha256",
+    "acquisition_timestamp", "acquisition_channel", "acquiring_actor_ref",
+]
+
+
+def _load_real_schema():
+    return json.loads(REAL_SCHEMA_PATH.read_text(encoding="utf-8"))
+
+
+def _p2_base_document(**overrides):
+    document = {
+        "document_id": "p2_probe_doc",
+        "file_name": "p2_probe.pdf",
+        "active": True,
+        "belge_turu": "Yargı Kararı",
+        "title": "P2 probe",
+        "short_title": "P2 probe",
+        "official_source": True,
+        "status": "active",
+        "version": "1",
+        "jurisdiction": "TR",
+        "language": "tr",
+        "tags": [],
+        "relations": [],
+        "ingest": {
+            "enabled": True,
+            "parser": "judgment_pdf",
+            "chunk_strategy": "judgment_sections",
+            "ocr_required": False,
+        },
+    }
+    document.update(overrides)
+    return document
+
+
+def _p2_validate_schema_only(document):
+    schema = _load_real_schema()
+    manifest = {"schema_version": 1, "documents": [document]}
+    return manifest_validator.validate_schema(manifest, schema)
+
+
+def test_p2_schema_absent_null_value_for_new_fields():
+    # absent: none of the 10 fields present at all
+    absent_doc = _p2_base_document()
+    for field in _P2_NEW_FIELDS:
+        check(f"p2 schema: {field} absent from base fixture", field not in absent_doc)
+    errors = _p2_validate_schema_only(absent_doc)
+    check(
+        "p2 schema: record with all 10 new fields absent is schema-valid",
+        errors == [], errors,
+    )
+
+    # explicit null on all 10 fields
+    null_doc = _p2_base_document(**{field: None for field in _P2_NEW_FIELDS})
+    errors = _p2_validate_schema_only(null_doc)
+    check(
+        "p2 schema: record with all 10 new fields explicitly null is schema-valid",
+        errors == [], errors,
+    )
+
+    # real, valid values on all 10 fields
+    value_doc = _p2_base_document(
+        daire="Dördüncü Daire",
+        esas_no="2020/1",
+        karar_no="2021/1",
+        temyiz_kesinlesme_durumu="kesinlesmis",
+        anonymization_applied=True,
+        text_basis="editorially_consolidated_current",
+        raw_byte_sha256="a" * 64,
+        acquisition_timestamp="2026-09-14T12:00:00Z",
+        acquisition_channel="resmi_gazete",
+        acquiring_actor_ref="curator_1",
+    )
+    errors = _p2_validate_schema_only(value_doc)
+    check(
+        "p2 schema: record with all 10 new fields populated with valid values is schema-valid",
+        errors == [], errors,
+    )
+
+
+def test_p2_schema_enum_rejection():
+    # temyiz_kesinlesme_durumu deliberately has NO "bilinmiyor"/"unknown"
+    # sentinel (null already carries that meaning) - pins that design
+    # decision directly.
+    cases = [
+        ("temyiz_kesinlesme_durumu", "bilinmiyor"),
+        ("text_basis", "some_invalid_basis"),
+        # acquisition_channel deliberately has NO "elle_giris"/"diger"
+        # catch-all member - unknown channel must be null, not a
+        # falsely-specific "other" string.
+        ("acquisition_channel", "elle_giris"),
+    ]
+    for field, bad_value in cases:
+        doc = _p2_base_document(**{field: bad_value})
+        errors = _p2_validate_schema_only(doc)
+        check(
+            f"p2 schema: {field}={bad_value!r} (out of closed enum) rejected",
+            errors != [], errors,
+        )
+
+
+def test_p2_schema_pattern_rejection():
+    bad_hashes = ["A" * 64, "abc123", "g" * 64, "a" * 63]
+    for bad_hash in bad_hashes:
+        doc = _p2_base_document(raw_byte_sha256=bad_hash)
+        errors = _p2_validate_schema_only(doc)
+        check(
+            f"p2 schema: raw_byte_sha256={bad_hash!r} rejected by pattern",
+            errors != [], errors,
+        )
+
+    good_hash_doc = _p2_base_document(raw_byte_sha256="a" * 64)
+    errors = _p2_validate_schema_only(good_hash_doc)
+    check(
+        "p2 schema: raw_byte_sha256 (64 lowercase hex) accepted by pattern",
+        errors == [], errors,
+    )
+
+    # this proves the field is pattern-based (jsonschema `format` is
+    # inert in this file - no FormatChecker is passed) rather than
+    # format-based: an offset-bearing / date-only / malformed value
+    # would silently PASS under a `format`-only implementation.
+    bad_timestamps = [
+        "2026-09-14",
+        "2026-09-14T12:00:00+03:00",
+        "2026-09-14 12:00:00Z",
+        "not-a-timestamp",
+    ]
+    for bad_ts in bad_timestamps:
+        doc = _p2_base_document(acquisition_timestamp=bad_ts)
+        errors = _p2_validate_schema_only(doc)
+        check(
+            f"p2 schema: acquisition_timestamp={bad_ts!r} rejected by pattern",
+            errors != [], errors,
+        )
+
+    good_ts_doc = _p2_base_document(acquisition_timestamp="2026-09-14T12:00:00.123Z")
+    errors = _p2_validate_schema_only(good_ts_doc)
+    check(
+        "p2 schema: acquisition_timestamp (UTC, Z-terminated) accepted by pattern",
+        errors == [], errors,
+    )
+
+
+def test_p2_schema_additional_properties_still_false():
+    doc = _p2_base_document(this_field_does_not_exist_anywhere="x")
+    errors = _p2_validate_schema_only(doc)
+    check(
+        "p2 schema: a genuinely unknown property is still rejected "
+        "(additionalProperties:false was not loosened by this patch)",
+        errors != [], errors,
+    )
+
+
+def test_p2_per_type_yargi_karari_required_fields():
+    active_ingest = {
+        "enabled": True, "parser": "judgment_pdf",
+        "chunk_strategy": "judgment_sections", "ocr_required": False,
+    }
+    complete = {
+        "daire": "Dördüncü Daire", "esas_no": "2020/1",
+        "karar_no": "2021/1", "karar_tarihi": "2021-01-01",
+    }
+    for missing in ("daire", "esas_no", "karar_no", "karar_tarihi"):
+        fields = dict(complete)
+        fields.pop(missing)
+        doc = _p2_base_document(
+            belge_turu="Yargı Kararı", active=True, ingest=dict(active_ingest),
+            **fields,
+        )
+        errors, _warnings = manifest_validator.validate_document_type_logic([doc])
+        check(
+            f"p2 per-type: active+ingest Yargı Kararı missing {missing} -> "
+            f"error naming {missing}",
+            any(missing in e and "p2_probe_doc" in e for e in errors), errors,
+        )
+
+    complete_doc = _p2_base_document(
+        belge_turu="Yargı Kararı", active=True, ingest=dict(active_ingest),
+        **complete,
+    )
+    errors, _warnings = manifest_validator.validate_document_type_logic([complete_doc])
+    check(
+        "p2 per-type: active+ingest Yargı Kararı with all 4 fields present "
+        "-> zero type errors",
+        errors == [], errors,
+    )
+
+    inactive_doc = _p2_base_document(
+        belge_turu="Yargı Kararı", active=False, ingest=dict(active_ingest),
+    )
+    errors, _warnings = manifest_validator.validate_document_type_logic([inactive_doc])
+    check(
+        "p2 per-type: inactive Yargı Kararı missing all 4 fields -> inert "
+        "(zero type errors)",
+        errors == [], errors,
+    )
+
+    ingest_disabled_doc = _p2_base_document(
+        belge_turu="Yargı Kararı", active=True,
+        ingest={**active_ingest, "enabled": False},
+    )
+    errors, _warnings = manifest_validator.validate_document_type_logic([ingest_disabled_doc])
+    check(
+        "p2 per-type: ingest.enabled=false Yargı Kararı missing all 4 fields "
+        "-> inert (zero type errors)",
+        errors == [], errors,
+    )
+
+
+def test_p2_per_type_ozelge_anonymization_identity_check():
+    active_ingest = {
+        "enabled": True, "parser": "legal_pdf",
+        "chunk_strategy": "legal_hierarchy", "ocr_required": False,
+    }
+    for value in (False, None, 1, "true", "yes"):
+        doc = _p2_base_document(
+            belge_turu="Özelge", active=True, ingest=dict(active_ingest),
+            anonymization_applied=value,
+        )
+        errors, _warnings = manifest_validator.validate_document_type_logic([doc])
+        check(
+            f"p2 per-type: active+ingest Özelge with anonymization_applied="
+            f"{value!r} rejected (identity check, not truthiness/presence)",
+            any("anonymization_applied" in e for e in errors), errors,
+        )
+
+    absent_doc = _p2_base_document(
+        belge_turu="Özelge", active=True, ingest=dict(active_ingest),
+    )
+    errors, _warnings = manifest_validator.validate_document_type_logic([absent_doc])
+    check(
+        "p2 per-type: active+ingest Özelge with anonymization_applied absent "
+        "rejected",
+        any("anonymization_applied" in e for e in errors), errors,
+    )
+
+    accepted_doc = _p2_base_document(
+        belge_turu="Özelge", active=True, ingest=dict(active_ingest),
+        anonymization_applied=True,
+    )
+    errors, _warnings = manifest_validator.validate_document_type_logic([accepted_doc])
+    check(
+        "p2 per-type: active+ingest Özelge with anonymization_applied=True "
+        "passes (zero type errors)",
+        errors == [], errors,
+    )
+
+
+def test_p2_sirkuler_unaffected_by_new_per_type_rules():
+    doc = _p2_base_document(
+        belge_turu="Sirküler", active=True,
+        ingest={
+            "enabled": True, "parser": "legal_pdf",
+            "chunk_strategy": "legal_hierarchy", "ocr_required": False,
+        },
+    )
+    errors, _warnings = manifest_validator.validate_document_type_logic([doc])
+    check(
+        "p2 per-type: active+ingest Sirküler produces zero "
+        "validate_document_type_logic errors (no new per-type branch was "
+        "added for Sirküler - preserves the existing deferred-gate-only "
+        "attribution claim)",
+        errors == [], errors,
+    )
+
+
+def test_p2_raw_byte_sha256_gate_match_mismatch_null():
+    with tempfile.TemporaryDirectory() as tmp:
+        mevzuat_dir = Path(tmp) / "mevzuat"
+        mevzuat_dir.mkdir()
+        content = b"%PDF-1.4\nraw byte sha256 gate probe content"
+        (mevzuat_dir / "probe.pdf").write_bytes(content)
+        real_hash = hashlib.sha256(content).hexdigest()
+        policy = make_admissibility_policy()
+
+        matching_doc = {
+            "document_id": "doc_hash_match", "file_name": "probe.pdf",
+            "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True},
+            "raw_byte_sha256": real_hash,
+        }
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility([matching_doc], policy=policy),
+        )
+        check(
+            "p2 raw_byte_sha256: declared hash matches real bytes -> no "
+            "mismatch error",
+            not any("raw_byte_sha256" in e for e in errors), errors,
+        )
+
+        mismatched_doc = {
+            "document_id": "doc_hash_mismatch", "file_name": "probe.pdf",
+            "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True},
+            "raw_byte_sha256": "0" * 64,
+        }
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility([mismatched_doc], policy=policy),
+        )
+        check(
+            "p2 raw_byte_sha256: declared hash mismatched against real bytes "
+            "-> ERROR naming document",
+            any("doc_hash_mismatch" in e and "raw_byte_sha256" in e for e in errors), errors,
+        )
+
+        null_doc = {
+            "document_id": "doc_hash_null", "file_name": "probe.pdf",
+            "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True},
+            "raw_byte_sha256": None,
+        }
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility([null_doc], policy=policy),
+        )
+        check(
+            "p2 raw_byte_sha256: null (no claim made) -> no error (skipped)",
+            not any("raw_byte_sha256" in e for e in errors), errors,
+        )
+
+        absent_doc = {
+            "document_id": "doc_hash_absent", "file_name": "probe.pdf",
+            "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True},
+        }
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility([absent_doc], policy=policy),
+        )
+        check(
+            "p2 raw_byte_sha256: absent (no claim made) -> no error (skipped)",
+            not any("raw_byte_sha256" in e for e in errors), errors,
+        )
+
+
+def test_p2_raw_byte_sha256_never_checked_before_containment():
+    with tempfile.TemporaryDirectory() as tmp:
+        mevzuat_dir = Path(tmp) / "mevzuat"
+        mevzuat_dir.mkdir()
+        policy = make_admissibility_policy()
+        doc = {
+            "document_id": "doc_hash_escape_probe", "file_name": "../outside.pdf",
+            "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True},
+            "raw_byte_sha256": "0" * 64,
+        }
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility([doc], policy=policy),
+        )
+        check(
+            "p2 raw_byte_sha256: a declared hash on a containment-failing "
+            "(escaping) file_name never produces a raw_byte_sha256 error - "
+            "containment is checked BEFORE the hash gate",
+            not any("raw_byte_sha256" in e for e in errors), errors,
+        )
+
+
+def test_p2_raw_byte_sha256_disclosed_limitation_ingest_disabled():
+    with tempfile.TemporaryDirectory() as tmp:
+        mevzuat_dir = Path(tmp) / "mevzuat"
+        mevzuat_dir.mkdir()
+        (mevzuat_dir / "probe2.pdf").write_bytes(
+            b"%PDF-1.4\nignored, never read for a disabled record",
+        )
+        policy = make_admissibility_policy()
+        doc = {
+            "document_id": "doc_hash_ingest_disabled", "file_name": "probe2.pdf",
+            "belge_turu": "Kanun", "active": True, "ingest": {"enabled": False},
+            "raw_byte_sha256": "0" * 64,
+        }
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility([doc], policy=policy),
+        )
+        check(
+            "p2 raw_byte_sha256: a deliberately-wrong declared hash on an "
+            "ingest.enabled=false record produces NO error - the disclosed "
+            "limitation (never verified for inactive/ingest-disabled records)",
+            not any("raw_byte_sha256" in e for e in errors), errors,
+        )
+
+
+def test_p2_real_manifest_still_valid_full_orchestration():
+    result = manifest_validator.validate_manifest_file(raise_on_error=False)
+    check(
+        "p2: the real committed data/documents.json is still fully valid "
+        "under validate_manifest_file() (schema + all 13 orchestration "
+        "steps incl. the new P2 per-type rules and the raw_byte_sha256 "
+        "gate) after the P2 patch",
+        result["valid"] is True, result["errors"],
+    )
+
+
 def run_self_test():
     test_import_time_zero_side_effects()
     test_compute_source_manifest_deterministic()
@@ -1220,6 +1629,19 @@ def run_self_test():
     test_admissibility_deferred_error_message_carries_context()
     test_admissibility_unknown_admission_value_not_silently_allowed()
     test_admissibility_deferred_document_rejected_before_extraction_embed_network()
+
+    # RAG CORPUS PREREQUISITE DOCUMENTS-SCHEMA PATCH (P2)
+    test_p2_schema_absent_null_value_for_new_fields()
+    test_p2_schema_enum_rejection()
+    test_p2_schema_pattern_rejection()
+    test_p2_schema_additional_properties_still_false()
+    test_p2_per_type_yargi_karari_required_fields()
+    test_p2_per_type_ozelge_anonymization_identity_check()
+    test_p2_sirkuler_unaffected_by_new_per_type_rules()
+    test_p2_raw_byte_sha256_gate_match_mismatch_null()
+    test_p2_raw_byte_sha256_never_checked_before_containment()
+    test_p2_raw_byte_sha256_disclosed_limitation_ingest_disabled()
+    test_p2_real_manifest_still_valid_full_orchestration()
 
     print(f"\n{passed} passed, {failed} failed, {informational_skips} informational skips")
     return failed == 0

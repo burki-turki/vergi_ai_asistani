@@ -36,6 +36,15 @@ import corpus_policy_validator
 #   containment-doğrulamalı (T15 sınıfı ham join kapatıldı)
 # - YENİ additive fonksiyon validate_corpus_admissibility_and_quality()
 #   ve validate_manifest_file() orkestrasyonuna 13. adım olarak eklendi
+#
+# RAG CORPUS PREREQUISITE DOCUMENTS-SCHEMA PATCH (P2) EKİ:
+# - validate_document_type_logic(): aktif+ingest açık Yargı Kararı
+#   için daire/esas_no/karar_no/karar_tarihi zorunlu; aktif+ingest
+#   açık Özelge için anonymization_applied KİMLİK olarak (is True)
+#   zorunlu
+# - validate_corpus_policy_admissibility(): raw_byte_sha256
+#   declared-vs-computed integrity gate (mevcut hash'i yeniden
+#   kullanır, ekstra I/O yok)
 # ============================================================
 
 
@@ -529,6 +538,29 @@ def validate_corpus_policy_admissibility(
             continue
 
         file_hash = _sha256_of_file(verified_path)
+
+        # ------------------------------------------------------
+        # RAG CORPUS PREREQUISITE DOCUMENTS-SCHEMA PATCH (P2):
+        # raw_byte_sha256 declared-vs-computed integrity gate.
+        # Reuses the hash already computed above for the cross-
+        # document dedup check - zero extra I/O. None/absent =
+        # no claim made, no error (skip). Only reached for
+        # active+ingest.enabled documents whose file already
+        # passed containment + %PDF magic-byte above; a declared
+        # hash on an inactive/ingest-disabled record is never
+        # verified (disclosed limitation, see the field's schema
+        # description).
+        # ------------------------------------------------------
+
+        declared_hash = document.get("raw_byte_sha256")
+
+        if declared_hash is not None and declared_hash != file_hash:
+
+            errors.append(
+                f"{document_id}: beyan edilen raw_byte_sha256 "
+                "gerçek dosya baytlarıyla eşleşmiyor (beyan: "
+                f"{declared_hash}, gerçek: {file_hash})."
+            )
 
         seen_hashes.setdefault(file_hash, []).append(document_id)
 
@@ -1398,6 +1430,105 @@ def validate_document_type_logic(
                 "Cumhurbaşkanı Kararı için "
                 "karar_tarihi boş."
             )
+
+
+        # ----------------------------------------------------
+        # RAG CORPUS PREREQUISITE DOCUMENTS-SCHEMA PATCH (P2):
+        # Yargı Kararı / Özelge per-type rules. Gated identically:
+        # active is True AND ingest.enabled is True. Inert for all
+        # 3 real documents and all 5 existing fixtures (none is an
+        # active+ingest-enabled Yargı Kararı/Özelge record).
+        # ----------------------------------------------------
+
+        active = document.get(
+            "active"
+        )
+
+        ingest_config = document.get(
+            "ingest",
+            {}
+        ) or {}
+
+        ingest_enabled = ingest_config.get(
+            "enabled"
+        )
+
+        if (
+            belge_turu == "Yargı Kararı"
+            and active is True
+            and ingest_enabled is True
+        ):
+
+            daire = document.get(
+                "daire"
+            )
+
+            esas_no = document.get(
+                "esas_no"
+            )
+
+            karar_no = document.get(
+                "karar_no"
+            )
+
+            if not daire:
+
+                errors.append(
+                    f"{document_id}: aktif ve ingest açık "
+                    "belge_turu=Yargı Kararı için daire "
+                    "zorunludur."
+                )
+
+            if not esas_no:
+
+                errors.append(
+                    f"{document_id}: aktif ve ingest açık "
+                    "belge_turu=Yargı Kararı için esas_no "
+                    "zorunludur."
+                )
+
+            if not karar_no:
+
+                errors.append(
+                    f"{document_id}: aktif ve ingest açık "
+                    "belge_turu=Yargı Kararı için karar_no "
+                    "zorunludur."
+                )
+
+            if not decision_date:
+
+                errors.append(
+                    f"{document_id}: aktif ve ingest açık "
+                    "belge_turu=Yargı Kararı için karar_tarihi "
+                    "zorunludur."
+                )
+
+
+        # ----------------------------------------------------
+        # Özelge: anonymization_applied KİMLİK olarak kontrol
+        # edilir (is True) - truthiness veya salt-varlık DEĞİL.
+        # false/null/absent/1/"true" hepsi reddedilir.
+        # ----------------------------------------------------
+
+        if (
+            belge_turu == "Özelge"
+            and active is True
+            and ingest_enabled is True
+        ):
+
+            anonymization_applied = document.get(
+                "anonymization_applied"
+            )
+
+            if anonymization_applied is not True:
+
+                errors.append(
+                    f"{document_id}: aktif ve ingest açık "
+                    "belge_turu=Özelge için "
+                    "anonymization_applied kesinlikle true "
+                    "olmalıdır (mevcut değer: "
+                    f"{anonymization_applied!r})."
+                )
 
     return (
         errors,

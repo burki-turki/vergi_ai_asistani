@@ -50,6 +50,7 @@ if str(REPO_ROOT) not in sys.path:
 import case_law_engine as cle                                 # noqa: E402
 import case_law_discovery as cld                               # noqa: E402
 import case_law_validator as clv                               # noqa: E402
+import case_law_policy as clp                                  # noqa: E402
 from ui.services import legal_research_case_law_mutation_facade as fac  # noqa: E402
 
 passed = 0
@@ -804,6 +805,153 @@ check(
     _data_snapshot_before_8 == _data_snapshot_after_8,
     f"changed/added/removed keys: "
     f"{sorted(set(_data_snapshot_before_8) ^ set(_data_snapshot_after_8))}",
+)
+
+
+# ============================================================
+# 9) RAG CORPUS PREREQUISITE DOCUMENTS-SCHEMA PATCH (P2) -
+#    case_law_policy.evaluate_case_law_document() is a PURE
+#    function taking a dict (no CASES_DIR/case-tree fixture
+#    needed). Proves the dormant daire/karar_no mapping activates
+#    with ZERO production-code change, pins the P5b esas_no
+#    deferral as an executable fact, and guards case_law_policy.py's
+#    hand-written mapping against case_law_validator.py's
+#    INDEPENDENT hand-written mirror by running the REAL
+#    validate_decisions() (not a re-implementation) against
+#    synthetic-but-schema-realistic indexes.
+# ============================================================
+
+# 9a) round-trip activation (positive proof): a synthetic
+#     Yargı Kararı dict with daire/karar_no populated yields
+#     non-None court_unit/decision_number - the dormant mapping
+#     demonstrably activates with zero production-code change.
+
+_populated_document_9a = {
+    "document_id": "p2_yk_populated",
+    "belge_turu": "Yargı Kararı",
+    "daire": "Dördüncü Daire",
+    "karar_no": "2021/1",
+}
+_mapped_9a = clp.evaluate_case_law_document(_populated_document_9a)
+check(
+    "P2 round-trip: daire populated on documents.json record -> "
+    "court_unit reads it back verbatim (dormant mapping activates "
+    "with zero code change)",
+    _mapped_9a["court_unit"] == "Dördüncü Daire",
+)
+check(
+    "P2 round-trip: karar_no populated on documents.json record -> "
+    "decision_number reads it back verbatim (dormant mapping "
+    "activates with zero code change)",
+    _mapped_9a["decision_number"] == "2021/1",
+)
+
+# 9b) absent-field regression: a Yargı Kararı with neither daire
+#     nor karar_no still yields court_unit/decision_number is None -
+#     the existing LOCKED self-test behavior is unchanged.
+
+_absent_document_9b = {
+    "document_id": "p2_yk_absent",
+    "belge_turu": "Yargı Kararı",
+}
+_mapped_9b = clp.evaluate_case_law_document(_absent_document_9b)
+check(
+    "P2 absent-field regression: daire absent -> court_unit is None "
+    "(unchanged LOCKED self-test behavior, case_law_validator.py's "
+    "own comment: \"documents.json'da 'daire' alanı yok -> null\")",
+    _mapped_9b["court_unit"] is None,
+)
+check(
+    "P2 absent-field regression: karar_no absent -> decision_number "
+    "is None (unchanged LOCKED self-test behavior)",
+    _mapped_9b["decision_number"] is None,
+)
+
+# 9c) the esas_no gap, pinned deliberately (non-tautological): with
+#     esas_no populated AND document_number set to a DIFFERENT
+#     value, case_number still equals document_number. Records the
+#     P5b re-point obligation as an executable fact, so the
+#     deferral cannot be silently forgotten or silently changed.
+
+_esas_no_gap_document_9c = {
+    "document_id": "p2_yk_esas_no_gap",
+    "belge_turu": "Yargı Kararı",
+    "esas_no": "2020/9999",
+    "document_number": "2021/1111",
+}
+_mapped_9c = clp.evaluate_case_law_document(_esas_no_gap_document_9c)
+check(
+    "P2 esas_no gap (P5b deferral pinned): case_number is STILL "
+    "sourced from document_number, NOT from the new esas_no field, "
+    "even when the two values genuinely differ - "
+    "case_law_policy.py's case_number<-document_number mapping was "
+    "deliberately NOT rewired in this patch",
+    _mapped_9c["case_number"] == "2021/1111"
+    and _mapped_9c["case_number"] != "2020/9999",
+)
+
+# 9d) mirror consistency: case_law_policy.py's evaluate_case_law_
+#     document() and case_law_validator.py's OWN, independently
+#     hand-written "expected" dict (inside validate_decisions())
+#     produce byte-identical values for the SAME record - run
+#     through the REAL validator function, not a re-implementation
+#     of its logic, so this guards against future silent divergence
+#     between the two hand-written duplicates.
+
+_mirror_document_9d = {
+    "document_id": "p2_yk_mirror_probe",
+    "belge_turu": "Yargı Kararı",
+    "kaynak_kurum": "Danıştay Dördüncü Dairesi",
+    "daire": "Dördüncü Daire",
+    "document_number": "2020/500 E",
+    "karar_no": "2021/600 K",
+    "karar_tarihi": "2021-03-01",
+    "source_url": "https://example.gov.tr/karar/9999",
+}
+_mirror_documents_index_9d = {
+    _mirror_document_9d["document_id"]: _mirror_document_9d,
+}
+_mirror_mapped_9d = clp.evaluate_case_law_document(_mirror_document_9d)
+_mirror_decision_record_9d = {
+    "decision_id": "p2_mirror_decision_1",
+    "source_issue_id": "p2_mirror_issue_1",
+    "source_research_ids": [],
+    "source_coverage_id": "p2_mirror_coverage_1",
+    "source_document_id": _mirror_document_9d["document_id"],
+    "court_name": _mirror_mapped_9d["court_name"],
+    "court_unit": _mirror_mapped_9d["court_unit"],
+    "case_number": _mirror_mapped_9d["case_number"],
+    "decision_number": _mirror_mapped_9d["decision_number"],
+    "decision_date": _mirror_mapped_9d["decision_date"],
+    "source_url": _mirror_mapped_9d["source_url"],
+    "provenance_status": "verified_against_canonical_documents",
+    "applicability_result": None,
+    "status": "candidate",
+    "requires_human_review": True,
+    "title": "P2 mirror consistency probe decision",
+    "description": "Synthetic decision used only to prove mirror consistency.",
+}
+_mirror_issue_index_9d = {"p2_mirror_issue_1": {}}
+_mirror_research_index_9d = {}
+_mirror_coverage_by_id_9d = {
+    "p2_mirror_coverage_1": {"source_issue_id": "p2_mirror_issue_1"},
+}
+_mirror_errors_9d = clv.validate_decisions(
+    [_mirror_decision_record_9d],
+    _mirror_issue_index_9d,
+    _mirror_research_index_9d,
+    _mirror_coverage_by_id_9d,
+    _mirror_documents_index_9d,
+)
+check(
+    "P2 mirror consistency: a decision record built from "
+    "case_law_policy.evaluate_case_law_document()'s own output "
+    "produces ZERO grounding-mismatch errors under "
+    "case_law_validator.validate_decisions()'s INDEPENDENT hand-"
+    "written 'expected' dict (court_name/court_unit/case_number/"
+    "decision_number/decision_date/source_url all agree)",
+    _mirror_errors_9d == [],
+    _mirror_errors_9d,
 )
 
 
