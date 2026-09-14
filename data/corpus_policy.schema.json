@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "corpus_policy.schema.json",
+
+  "title": "Vergi AI Corpus Policy Schema V1",
+
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "policy_id",
+    "policy_version",
+    "effective_from",
+    "source_authority_tiers",
+    "document_family_rules",
+    "quality_gates",
+    "security_rules",
+    "temporal_requirements",
+    "update_rules",
+    "governance",
+    "notes"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "policy_id": {
+      "const": "vergi_ai_corpus_policy_v1"
+    },
+
+    "policy_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+
+    "effective_from": {
+      "type": "string",
+      "format": "date"
+    },
+
+    "source_authority_tiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source_authority_tier"
+      }
+    },
+
+    "document_family_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Kanun",
+        "Bakanlar Kurulu Kararı",
+        "Cumhurbaşkanı Kararı",
+        "Yönetmelik",
+        "Genel Tebliğ",
+        "Tebliğ",
+        "Sirküler",
+        "Özelge",
+        "Yargı Kararı",
+        "Diğer"
+      ],
+      "properties": {
+        "Kanun": { "$ref": "#/$defs/document_family_rule" },
+        "Bakanlar Kurulu Kararı": { "$ref": "#/$defs/document_family_rule" },
+        "Cumhurbaşkanı Kararı": { "$ref": "#/$defs/document_family_rule" },
+        "Yönetmelik": { "$ref": "#/$defs/document_family_rule" },
+        "Genel Tebliğ": { "$ref": "#/$defs/document_family_rule" },
+        "Tebliğ": { "$ref": "#/$defs/document_family_rule" },
+        "Sirküler": { "$ref": "#/$defs/document_family_rule" },
+        "Özelge": { "$ref": "#/$defs/document_family_rule" },
+        "Yargı Kararı": { "$ref": "#/$defs/document_family_rule" },
+        "Diğer": { "$ref": "#/$defs/document_family_rule" }
+      }
+    },
+
+    "quality_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/quality_gate"
+      }
+    },
+
+    "security_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rag_prompt_boundary_required_before_population",
+        "anonymization_required_for",
+        "path_containment_required_for_acquisition_writers",
+        "notes"
+      ],
+      "properties": {
+        "rag_prompt_boundary_required_before_population": {
+          "type": "boolean"
+        },
+        "anonymization_required_for": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "path_containment_required_for_acquisition_writers": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+
+    "temporal_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_law_only",
+        "valid_from_requires_originating_evidence",
+        "originating_evidence_kinds",
+        "cross_version_interval_check_enabled",
+        "text_basis_declaration",
+        "notes"
+      ],
+      "properties": {
+        "current_law_only": {
+          "type": "boolean"
+        },
+        "valid_from_requires_originating_evidence": {
+          "type": "boolean"
+        },
+        "originating_evidence_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "cross_version_interval_check_enabled": {
+          "type": "boolean"
+        },
+        "text_basis_declaration": {
+          "type": "string",
+          "enum": [
+            "as_published_original",
+            "editorially_consolidated_current"
+          ]
+        },
+        "notes": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+
+    "update_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manual_curation_only",
+        "in_place_overwrite_prohibited",
+        "build_requires_human_approval",
+        "activate_requires_human_approval",
+        "automated_crawler_fetch_enabled",
+        "notes"
+      ],
+      "properties": {
+        "manual_curation_only": {
+          "type": "boolean"
+        },
+        "in_place_overwrite_prohibited": {
+          "type": "boolean"
+        },
+        "build_requires_human_approval": {
+          "type": "boolean"
+        },
+        "activate_requires_human_approval": {
+          "type": "boolean"
+        },
+        "automated_crawler_fetch_enabled": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_model",
+        "policy_change_approval",
+        "four_eyes_required_in_pilot",
+        "emergency_rollback_procedure",
+        "notes"
+      ],
+      "properties": {
+        "capability_model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy_change_approval": {
+          "type": "string",
+          "minLength": 1
+        },
+        "four_eyes_required_in_pilot": {
+          "type": "boolean"
+        },
+        "emergency_rollback_procedure": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+
+    "notes": {
+      "type": ["string", "null"]
+    }
+  },
+
+  "$defs": {
+    "source_authority_tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "name", "description"],
+      "properties": {
+        "tier": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+
+    "document_family_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admission",
+        "tier",
+        "required_provenance_fields",
+        "temporal_sensitive",
+        "prerequisites",
+        "notes"
+      ],
+      "properties": {
+        "admission": {
+          "type": "string",
+          "enum": ["allowed", "deferred", "prohibited"]
+        },
+        "tier": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "required_provenance_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "temporal_sensitive": {
+          "type": "boolean"
+        },
+        "prerequisites": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "notes": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+
+    "quality_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "enforcement_stage", "outcome", "threshold"],
+      "properties": {
+        "gate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enforcement_stage": {
+          "type": "string",
+          "enum": ["policy_foundation", "population"]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": ["reject", "needs_review"]
+        },
+        "threshold": {
+          "type": ["integer", "number", "null"]
+        }
+      }
+    }
+  }
+}

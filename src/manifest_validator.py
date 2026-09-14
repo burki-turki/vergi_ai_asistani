@@ -1,9 +1,25 @@
+import hashlib
 import os
 import json
 
 from datetime import date
 
 from jsonschema import Draft202012Validator
+
+# CORPUS POLICY FOUNDATION: the ONE shared, decision-free path-
+# containment primitive (Row 19C-3a Slice 1) - used to close the
+# raw os.path.join() escape in validate_files_exist() below and to
+# guard the new file-content admissibility/quality checks this
+# version adds.
+import path_containment
+
+# CORPUS POLICY FOUNDATION: pure, side-effect-free module (no file
+# I/O at import time) - used by the new corpus-admissibility check
+# below to load the corpus policy's document_family_rules/quality_
+# gates. `manifest_validator` -> `corpus_policy_validator` is a
+# one-directional edge (corpus_policy_validator never imports this
+# module back), so no import cycle is introduced.
+import corpus_policy_validator
 
 
 # ============================================================
@@ -14,6 +30,12 @@ from jsonschema import Draft202012Validator
 # - karar_tarihi temporal doğrulamaları
 # - süre uzatma relation semantic kontrolleri
 # - mevcut V2 public API korunmuştur
+#
+# CORPUS POLICY FOUNDATION EKİ:
+# - validate_files_exist() artık path_containment üzerinden
+#   containment-doğrulamalı (T15 sınıfı ham join kapatıldı)
+# - YENİ additive fonksiyon validate_corpus_admissibility_and_quality()
+#   ve validate_manifest_file() orkestrasyonuna 13. adım olarak eklendi
 # ============================================================
 
 
@@ -234,14 +256,36 @@ def validate_files_exist(
             "file_name"
         )
 
-        file_path = os.path.join(
+        # CORPUS POLICY FOUNDATION (§L containment closure): a
+        # containment failure (escape, broken/looping link) is
+        # deliberately reported with the SAME "dosya bulunamadı"
+        # message a genuinely missing file gets - manifest-derived
+        # file_name is never trusted for a raw os.path.join()+exists()
+        # check again (see src/path_containment.py's own "INDISTIN-
+        # GUISHABLE FAILURE MODES" contract).
+        if not isinstance(file_name, str) or not file_name:
+
+            errors.append(
+                "Aktif ve ingest açık belge için "
+                "dosya bulunamadı: "
+                f"{file_name}"
+            )
+
+            continue
+
+        candidate = os.path.join(
             MEVZUAT_DIR,
             file_name
         )
 
-        if not os.path.exists(
-            file_path
-        ):
+        try:
+
+            path_containment.resolve_existing(
+                candidate,
+                root=MEVZUAT_DIR,
+            )
+
+        except path_containment.PathContainmentError:
 
             errors.append(
                 "Aktif ve ingest açık belge için "
@@ -250,6 +294,255 @@ def validate_files_exist(
             )
 
     return errors
+
+
+# ============================================================
+# CORPUS POLICY ADMISSIBILITY + STAGE-1 QUALITY
+#
+# YENİ (Corpus Policy Foundation) additive fonksiyon: her belgeyi
+# data/corpus_policy/corpus_policy.json'un document_family_rules'una
+# karşı doğrular (aile admission'ı, zorunlu provenance alanları) ve,
+# yalnız gerçekten ingest edilebilir (active + ingest.enabled)
+# belgeler için, policy_foundation aşaması dosya-içerik kalite
+# kapılarını (%PDF magic-byte, max dosya boyutu, cross-document
+# ham-hash dedup) uygular.
+#
+# `policy=None` iken gerçek, repo-committed corpus policy'yi yükler
+# (corpus_policy_validator.load_policy() - kendi bağımsız sabiti,
+# bu modülün MEVZUAT_DIR/MANIFEST_PATH fixture-redirection'ından
+# AYRI); testler açık bir `policy=` sözlüğü geçirerek bu fonksiyonu
+# tamamen izole çağırabilir.
+# ============================================================
+
+def _corpus_policy_gate_threshold(policy, gate_id):
+
+    for gate in policy.get("quality_gates", []) or []:
+
+        if gate.get("gate_id") == gate_id:
+
+            return gate.get("threshold")
+
+    return None
+
+
+def _sha256_of_file(path):
+
+    sha256 = hashlib.sha256()
+
+    with open(path, "rb") as file:
+
+        while True:
+
+            block = file.read(1024 * 1024)
+
+            if not block:
+
+                break
+
+            sha256.update(block)
+
+    return sha256.hexdigest()
+
+
+def validate_corpus_policy_admissibility(
+    documents,
+    policy=None,
+):
+
+    errors = []
+
+    warnings = []
+
+    if policy is None:
+
+        policy = corpus_policy_validator.load_policy()
+
+    family_rules = policy.get("document_family_rules", {}) or {}
+
+    max_file_size = _corpus_policy_gate_threshold(
+        policy,
+        "max_file_size_bytes",
+    )
+
+    seen_hashes = {}
+
+    for document in documents:
+
+        document_id = document.get("document_id")
+
+        belge_turu = document.get("belge_turu")
+
+        rule = family_rules.get(belge_turu)
+
+        if rule is None:
+
+            errors.append(
+                f"{document_id}: belge_turu='{belge_turu}' için "
+                "corpus policy document_family_rules'da tanımlı "
+                "bir kural yok."
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # ADMISSION
+        #
+        # CORPUS POLICY FOUNDATION F2 REMEDIATION: exact fail-closed
+        # matrix (user-approved binding decision) -
+        #   admission="allowed"    -> passes this check (other checks
+        #                              below still apply)
+        #   admission="deferred"   -> fail-closed ERROR; prerequisites
+        #                              not yet satisfied, may not enter
+        #                              a bundle regardless of an
+        #                              otherwise-empty required_
+        #                              provenance_fields list
+        #   admission="prohibited" -> fail-closed ERROR (unchanged)
+        #   anything else (missing/unrecognized value - reachable only
+        #   when this function is called standalone with a hand-
+        #   crafted `policy=` dict that bypasses corpus_policy_
+        #   validator's own closed-vocabulary schema check) -> fail-
+        #   closed ERROR; never silently treated as allowed
+        # ----------------------------------------------------
+
+        admission = rule.get("admission")
+
+        if admission == "prohibited":
+
+            errors.append(
+                f"{document_id}: belge_turu='{belge_turu}' corpus "
+                "policy tarafından admission=prohibited olarak "
+                "işaretlenmiş; bu aileden belge kabul edilemez."
+            )
+
+        elif admission == "deferred":
+
+            prerequisites = rule.get("prerequisites") or []
+
+            errors.append(
+                f"{document_id}: belge_turu='{belge_turu}' corpus "
+                "policy tarafından admission=deferred olarak "
+                "işaretlenmiş; bu aile için prerequisites "
+                "tamamlanmadan belge bundle'a giremez "
+                "(admission=deferred, prerequisites: "
+                + (", ".join(prerequisites) if prerequisites else "yok")
+                + ")."
+            )
+
+        elif admission != "allowed":
+
+            errors.append(
+                f"{document_id}: belge_turu='{belge_turu}' için "
+                "corpus policy admission değeri tanınmıyor: "
+                f"{admission!r}."
+            )
+
+        # ----------------------------------------------------
+        # REQUIRED PROVENANCE FIELDS (alan-bazlı, dosya erişimi
+        # gerektirmez - ingest.enabled=False belgeler dahil TÜM
+        # kayıtlara uygulanır).
+        # ----------------------------------------------------
+
+        for field_name in rule.get("required_provenance_fields", []) or []:
+
+            value = document.get(field_name)
+
+            if value is None or value == "":
+
+                errors.append(
+                    f"{document_id}: corpus policy gereği zorunlu "
+                    f"provenance alanı boş/eksik: {field_name}"
+                )
+
+        # ----------------------------------------------------
+        # DOSYA-İÇERİK KALİTE KAPILARI - yalnız gerçekten
+        # ingest edilebilir belgeler için (validate_files_exist()
+        # ile AYNI erken-çıkış deseni; dosya zaten yoksa/kaçıyorsa
+        # o hata orada zaten raporlanmıştır, burada TEKRARLANMAZ).
+        # ----------------------------------------------------
+
+        active = document.get("active", True)
+
+        ingest_config = document.get("ingest", {}) or {}
+
+        ingest_enabled = ingest_config.get("enabled", True)
+
+        if not active or not ingest_enabled:
+
+            continue
+
+        file_name = document.get("file_name")
+
+        if not isinstance(file_name, str) or not file_name:
+
+            continue
+
+        candidate = os.path.join(MEVZUAT_DIR, file_name)
+
+        try:
+
+            verified_path = path_containment.resolve_existing(
+                candidate,
+                root=MEVZUAT_DIR,
+            )
+
+        except path_containment.PathContainmentError:
+
+            continue
+
+        try:
+
+            size_bytes = verified_path.stat().st_size
+
+        except OSError:
+
+            continue
+
+        if (
+            isinstance(max_file_size, (int, float))
+            and size_bytes > max_file_size
+        ):
+
+            errors.append(
+                f"{document_id}: dosya boyutu policy "
+                "max_file_size_bytes eşiğini aşıyor: "
+                f"{size_bytes} > {max_file_size}"
+            )
+
+        try:
+
+            with open(verified_path, "rb") as file:
+
+                header = file.read(5)
+
+        except OSError:
+
+            header = b""
+
+        if not header.startswith(b"%PDF"):
+
+            errors.append(
+                f"{document_id}: dosya %PDF magic-byte imzasıyla "
+                f"başlamıyor (policy pdf_magic_byte gate): "
+                f"{file_name}"
+            )
+
+            continue
+
+        file_hash = _sha256_of_file(verified_path)
+
+        seen_hashes.setdefault(file_hash, []).append(document_id)
+
+    for file_hash, document_ids in seen_hashes.items():
+
+        if len(document_ids) > 1:
+
+            errors.append(
+                "Birden fazla belge aynı ham-bayt içeriğe sahip "
+                "(cross-document raw-hash dedup): "
+                + ", ".join(sorted(document_ids))
+            )
+
+    return errors, warnings
 
 
 # ============================================================
@@ -1410,6 +1703,24 @@ def validate_manifest_file(
         validate_source_logic(
             documents
         )
+    )
+
+    # ========================================================
+    # 13. CORPUS POLICY ADMISSIBILITY + STAGE-1 QUALITY
+    # ========================================================
+
+    policy_errors, policy_warnings = (
+        validate_corpus_policy_admissibility(
+            documents
+        )
+    )
+
+    errors.extend(
+        policy_errors
+    )
+
+    warnings.extend(
+        policy_warnings
     )
 
     valid = (

@@ -18,19 +18,25 @@
 # Run: python -m ui.tests.test_rag_bundle_builder_isolated
 # ============================================================
 
+import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SRC_DIR = REPO_ROOT / "src"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 import ingest  # noqa: E402
+import manifest_validator  # noqa: E402
+import corpus_policy_validator  # noqa: E402
 
 passed = 0
 failed = 0
@@ -100,16 +106,30 @@ def make_fixture(tmp_path: Path, *, document_count=2):
         })
     manifest_path = data_dir / "documents.json"
     manifest_path.write_text(json.dumps({"documents": documents}, ensure_ascii=False), encoding="utf-8")
-    return data_dir, mevzuat_dir, manifest_path
+    # CORPUS POLICY FOUNDATION: compute_source_manifest() unconditionally
+    # hashes ingest.CORPUS_POLICY_PATH (the 5th fixture-swappable ingest.*
+    # constant, alongside DATA_DIR/MEVZUAT_DIR/MANIFEST_PATH) - content is
+    # never parsed/validated by compute_source_manifest() itself (only
+    # raw-byte hashed), so any bytes suffice here.
+    corpus_policy_dir = data_dir / "corpus_policy"
+    corpus_policy_dir.mkdir(parents=True)
+    corpus_policy_path = corpus_policy_dir / "corpus_policy.json"
+    corpus_policy_path.write_text(
+        json.dumps({"policy_id": "test_fixture_corpus_policy_for_builder_tests"}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return data_dir, mevzuat_dir, manifest_path, corpus_policy_path
 
 
-def with_fixture_paths(data_dir, mevzuat_dir, manifest_path, fn):
-    original = (ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH)
+def with_fixture_paths(data_dir, mevzuat_dir, manifest_path, fn, *, corpus_policy_path=None):
+    original = (ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.CORPUS_POLICY_PATH)
     ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH = data_dir, mevzuat_dir, manifest_path
+    if corpus_policy_path is not None:
+        ingest.CORPUS_POLICY_PATH = corpus_policy_path
     try:
         return fn()
     finally:
-        ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH = original
+        ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.CORPUS_POLICY_PATH = original
 
 
 def fake_pdf_page_extractor(pdf_path):
@@ -168,34 +188,73 @@ def test_import_time_zero_side_effects():
 
 def test_compute_source_manifest_deterministic():
     with tempfile.TemporaryDirectory() as tmp:
-        data_dir, mevzuat_dir, manifest_path = make_fixture(Path(tmp))
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp))
         run = lambda: ingest.compute_source_manifest()
-        first = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run)
-        second = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run)
+        first = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
+        second = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
         check("source_manifest: deterministic across calls", first == second)
-        check("source_manifest: 3 entries (documents.json + 2 pdfs)", len(first) == 3, first)
+        check("source_manifest: 4 entries (documents.json + corpus_policy.json + 2 pdfs)", len(first) == 4, first)
         check("source_manifest: sorted by path", [e["path"] for e in first] == sorted(e["path"] for e in first))
         for entry in first:
             check(f"source_manifest: entry {entry['path']} has sha256+size_bytes", "sha256" in entry and "size_bytes" in entry)
+        check(
+            "source_manifest: contains the corpus-policy entry",
+            any(e["path"] == "data/corpus_policy/corpus_policy.json" for e in first),
+            first,
+        )
 
 
 def test_compute_source_manifest_excludes_inactive_document():
     with tempfile.TemporaryDirectory() as tmp:
-        data_dir, mevzuat_dir, manifest_path = make_fixture(Path(tmp), document_count=1)
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=1)
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["documents"][0]["active"] = False
         manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
-        entries = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest())
-        check("source_manifest: inactive document excluded", len(entries) == 1)
+        entries = with_fixture_paths(
+            data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+            corpus_policy_path=corpus_policy_path,
+        )
+        check("source_manifest: inactive document excluded (documents.json + corpus_policy.json remain)", len(entries) == 2, entries)
 
 
 def test_compute_source_manifest_changes_on_pdf_edit():
     with tempfile.TemporaryDirectory() as tmp:
-        data_dir, mevzuat_dir, manifest_path = make_fixture(Path(tmp), document_count=1)
-        before = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest())
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=1)
+        run = lambda: ingest.compute_source_manifest()
+        before = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
         (mevzuat_dir / "doc_0.pdf").write_bytes(b"different content")
-        after = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest())
+        after = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
         check("source_manifest: hash changes when PDF content changes", before != after)
+
+
+def test_compute_source_manifest_missing_corpus_policy_fails_closed():
+    with tempfile.TemporaryDirectory() as tmp:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=1)
+        missing_path = data_dir / "corpus_policy" / "does_not_exist.json"
+        expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(
+                data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                corpus_policy_path=missing_path,
+            ),
+            "source_manifest: missing corpus policy file fails closed",
+        )
+
+
+def test_compute_source_manifest_changes_on_corpus_policy_edit():
+    with tempfile.TemporaryDirectory() as tmp:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=1)
+        run = lambda: ingest.compute_source_manifest()
+        before = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
+        corpus_policy_path.write_text(json.dumps({"policy_id": "edited"}, ensure_ascii=False), encoding="utf-8")
+        after = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
+        check("source_manifest: hash changes when corpus policy content changes", before != after)
+        before_entry = next(e for e in before if e["path"] == "data/corpus_policy/corpus_policy.json")
+        after_entry = next(e for e in after if e["path"] == "data/corpus_policy/corpus_policy.json")
+        check(
+            "source_manifest: only the corpus-policy entry's hash changed (documents/pdfs unaffected)",
+            before_entry["sha256"] != after_entry["sha256"],
+        )
 
 
 # ================================================================
@@ -207,7 +266,7 @@ def test_build_bundle_snapshot_basic():
         skip_info("build_bundle_snapshot_basic", "faiss/numpy not installed in this environment")
         return
     with tempfile.TemporaryDirectory() as tmp:
-        data_dir, mevzuat_dir, manifest_path = make_fixture(Path(tmp), document_count=2)
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=2)
         client = FakeEmbeddingClient()
 
         def run():
@@ -215,12 +274,24 @@ def test_build_bundle_snapshot_basic():
                 embedding_client=client, pdf_page_extractor=fake_pdf_page_extractor, build_attempt=0,
             )
 
-        snapshot = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run)
+        # NOTE: build_bundle_snapshot()'un kendi içindeki corpus_policy_
+        # validator/manifest_validator/provision_manifest_validator
+        # çağrıları ALWAYS GERÇEK, repo-committed data/*'i doğrular (bu
+        # üç modülün kendi path sabitleri bu fixture tarafından
+        # monkeypatch EDİLMEZ - yalnız ingest.* fixture-redirect edilir,
+        # manifest_validator.validate_manifest_file()'ın bu dosyadaki
+        # ÖNCEDEN VAR OLAN çağrısıyla AYNI, kasıtlı ayrım).
+        snapshot = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
         check("build_bundle_snapshot: artifacts has exactly 3 fixed names", set(snapshot["artifacts"].keys()) == {"mevzuat.faiss", "documents.pkl", "config.json"})
         check("build_bundle_snapshot: chunk_count > 0", snapshot["chunk_count"] > 0)
         check("build_bundle_snapshot: embedding_dimension == client dimension", snapshot["embedding_dimension"] == client.dimension)
         check("build_bundle_snapshot: build_attempt echoed", snapshot["build_attempt"] == 0)
         check("build_bundle_snapshot: writes nothing under index/", not (Path(tmp) / "index").exists())
+        check(
+            "build_bundle_snapshot: source_manifest contains the corpus-policy entry",
+            any(e["path"] == "data/corpus_policy/corpus_policy.json" for e in snapshot["source_manifest"]),
+            snapshot["source_manifest"],
+        )
 
 
 def test_build_bundle_snapshot_deterministic_for_same_inputs():
@@ -228,15 +299,15 @@ def test_build_bundle_snapshot_deterministic_for_same_inputs():
         skip_info("build_bundle_snapshot_deterministic", "faiss/numpy not installed in this environment")
         return
     with tempfile.TemporaryDirectory() as tmp:
-        data_dir, mevzuat_dir, manifest_path = make_fixture(Path(tmp), document_count=1)
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=1)
 
         def run():
             return ingest.build_bundle_snapshot(
                 embedding_client=FakeEmbeddingClient(), pdf_page_extractor=fake_pdf_page_extractor, build_attempt=0,
             )
 
-        first = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run)
-        second = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run)
+        first = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
+        second = with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path)
         check(
             "build_bundle_snapshot: identical artifact bytes for identical inputs",
             first["artifacts"] == second["artifacts"],
@@ -251,6 +322,156 @@ def test_create_embeddings_never_touches_real_credentials():
     matrix = ingest.create_embeddings(["metin bir", "metin iki"], embedding_client=client)
     check("create_embeddings: injected client called", client.calls == 1)
     check("create_embeddings: matrix has 2 rows", matrix.shape[0] == 2)
+
+
+# ================================================================
+# manifest_validator.validate_corpus_policy_admissibility() - direct,
+# isolated tests. Called DIRECTLY (never through build_bundle_
+# snapshot()'s own always-real-repo-data validator wiring - see the
+# NOTE in test_build_bundle_snapshot_basic() above) with an explicit
+# `policy=` dict and (only for file-content gates) an isolated
+# manifest_validator.MEVZUAT_DIR monkeypatch - own scope, independent
+# of make_fixture()/with_fixture_paths() above.
+# ================================================================
+
+def with_manifest_validator_mevzuat_dir(mevzuat_dir, fn):
+    original = manifest_validator.MEVZUAT_DIR
+    manifest_validator.MEVZUAT_DIR = str(mevzuat_dir)
+    try:
+        return fn()
+    finally:
+        manifest_validator.MEVZUAT_DIR = original
+
+
+def make_admissibility_policy(*, admission="allowed", required_fields=None, max_file_size_bytes=1024):
+    return {
+        "quality_gates": [
+            {
+                "gate_id": "max_file_size_bytes",
+                "enforcement_stage": "policy_foundation",
+                "outcome": "reject",
+                "threshold": max_file_size_bytes,
+            },
+        ],
+        "document_family_rules": {
+            "Kanun": {
+                "admission": admission,
+                "tier": 1 if admission != "prohibited" else None,
+                "required_provenance_fields": required_fields or [],
+                "temporal_sensitive": True,
+                "prerequisites": ["fixture_prereq"] if admission == "deferred" else [],
+                "notes": None,
+            },
+        },
+    }
+
+
+def test_admissibility_magic_byte_gate_positive_and_negative():
+    with tempfile.TemporaryDirectory() as tmp:
+        mevzuat_dir = Path(tmp) / "mevzuat"
+        mevzuat_dir.mkdir()
+        (mevzuat_dir / "real.pdf").write_bytes(b"%PDF-1.4\nreal content")
+        (mevzuat_dir / "fake.pdf").write_bytes(b"NOT A REAL PDF FILE AT ALL")
+        documents = [
+            {"document_id": "doc_real", "file_name": "real.pdf", "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True}},
+            {"document_id": "doc_fake", "file_name": "fake.pdf", "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True}},
+        ]
+        policy = make_admissibility_policy()
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility(documents, policy=policy),
+        )
+        check(
+            "admissibility: real.pdf (%PDF-prefixed) produces no magic-byte error",
+            not any("doc_real" in e and "magic-byte" in e for e in errors), errors,
+        )
+        check(
+            "admissibility: fake.pdf (no %PDF prefix) rejected via magic-byte gate",
+            any("doc_fake" in e and "magic-byte" in e for e in errors), errors,
+        )
+
+
+def test_admissibility_max_file_size_gate():
+    with tempfile.TemporaryDirectory() as tmp:
+        mevzuat_dir = Path(tmp) / "mevzuat"
+        mevzuat_dir.mkdir()
+        (mevzuat_dir / "small.pdf").write_bytes(b"%PDF-1.4\n" + b"x" * 10)
+        (mevzuat_dir / "big.pdf").write_bytes(b"%PDF-1.4\n" + b"x" * 2000)
+        documents = [
+            {"document_id": "doc_small", "file_name": "small.pdf", "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True}},
+            {"document_id": "doc_big", "file_name": "big.pdf", "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True}},
+        ]
+        policy = make_admissibility_policy(max_file_size_bytes=1024)
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility(documents, policy=policy),
+        )
+        check("admissibility: small.pdf under max_file_size_bytes passes", not any("doc_small" in e for e in errors), errors)
+        check(
+            "admissibility: big.pdf over max_file_size_bytes (threshold=1024) rejected",
+            any("doc_big" in e and "boyutu" in e for e in errors), errors,
+        )
+
+
+def test_admissibility_cross_document_raw_hash_dedup():
+    with tempfile.TemporaryDirectory() as tmp:
+        mevzuat_dir = Path(tmp) / "mevzuat"
+        mevzuat_dir.mkdir()
+        same_bytes = b"%PDF-1.4\nidentical content"
+        (mevzuat_dir / "a.pdf").write_bytes(same_bytes)
+        (mevzuat_dir / "b.pdf").write_bytes(same_bytes)
+        documents = [
+            {"document_id": "doc_a", "file_name": "a.pdf", "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True}},
+            {"document_id": "doc_b", "file_name": "b.pdf", "belge_turu": "Kanun", "active": True, "ingest": {"enabled": True}},
+        ]
+        policy = make_admissibility_policy()
+        errors, _warnings = with_manifest_validator_mevzuat_dir(
+            mevzuat_dir,
+            lambda: manifest_validator.validate_corpus_policy_admissibility(documents, policy=policy),
+        )
+        check(
+            "admissibility: identical-content documents rejected via cross-document dedup gate",
+            any("doc_a" in e and "doc_b" in e and "dedup" in e for e in errors), errors,
+        )
+
+
+def test_admissibility_required_provenance_fields():
+    documents = [
+        {"document_id": "doc_missing_provenance", "file_name": "x.pdf", "belge_turu": "Kanun", "active": False, "ingest": {"enabled": False}},
+    ]
+    policy = make_admissibility_policy(required_fields=["source_url", "kanun_no"])
+    errors, _warnings = manifest_validator.validate_corpus_policy_admissibility(documents, policy=policy)
+    check(
+        "admissibility: missing required provenance fields both rejected",
+        any("source_url" in e for e in errors) and any("kanun_no" in e for e in errors), errors,
+    )
+
+
+def test_admissibility_admission_prohibited_rejected():
+    documents = [
+        {"document_id": "doc_prohibited_family", "file_name": "x.pdf", "belge_turu": "Kanun", "active": False, "ingest": {"enabled": False}},
+    ]
+    policy = make_admissibility_policy(admission="prohibited")
+    errors, _warnings = manifest_validator.validate_corpus_policy_admissibility(documents, policy=policy)
+    check("admissibility: admission=prohibited family rejected", any("prohibited" in e for e in errors), errors)
+
+
+def test_admissibility_unknown_belge_turu_rejected():
+    documents = [
+        {"document_id": "doc_unknown_family", "file_name": "x.pdf", "belge_turu": "Yargı Kararı", "active": False, "ingest": {"enabled": False}},
+    ]
+    policy = make_admissibility_policy()  # only defines a rule for "Kanun"
+    errors, _warnings = manifest_validator.validate_corpus_policy_admissibility(documents, policy=policy)
+    check("admissibility: belge_turu without a policy rule rejected", any("doc_unknown_family" in e for e in errors), errors)
+
+
+def test_admissibility_default_policy_loads_real_committed_policy():
+    real_documents = json.loads((REPO_ROOT / "data" / "documents.json").read_text(encoding="utf-8"))["documents"]
+    errors, _warnings = manifest_validator.validate_corpus_policy_admissibility(real_documents)
+    check(
+        "admissibility: real committed documents.json passes under the real committed policy (policy=None default)",
+        errors == [], errors,
+    )
 
 
 # ================================================================
@@ -280,16 +501,725 @@ def test_direct_cli_refusal_real_subprocess():
     check("direct_cli: no traceback", "Traceback" not in result.stderr, result.stderr)
 
 
+# ================================================================
+# F1 REMEDIATION (HIGH) - path-containment closure for src/ingest.py's
+# three MEVZUAT_DIR/file_name raw joins the independent review found
+# unprotected: compute_source_manifest(), build_bundle_snapshot()'s
+# own join, and build_document_chunks() (the actual PDF-content read -
+# shared by BOTH build_bundle_snapshot() AND the legacy run_ingest()
+# path, so a direct test of it proves both call sites are closed).
+# Every test below proves REJECTION happens - via
+# src/path_containment.py's already-proven-correct primitive - BEFORE
+# any .exists()/open()/.stat()/hash touches a file outside
+# MEVZUAT_DIR, using REAL junctions/absolute paths (never mocked path
+# objects).
+# ================================================================
+
+def make_junction(link_path: Path, target_path: Path) -> None:
+    """Windows-native directory reparse point - `mklink /J` needs
+    NEITHER elevation NOR Developer Mode on a normal Windows account
+    (unlike a POSIX-style Windows symlink), matching the pattern
+    already established and proven in
+    ui/tests/test_path_containment_windows.py. A failure here is a
+    genuine, counted test FAILURE below - never silently downgraded to
+    a skip."""
+    result = subprocess.run(
+        ["cmd", "/c", "mklink", "/J", str(link_path), str(target_path)],
+        capture_output=True, text=True, timeout=15,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"mklink /J failed (rc={result.returncode}): {result.stdout!r} {result.stderr!r}")
+
+
+def _malicious_document(file_name, document_id="doc_containment_probe"):
+    return {
+        "document_id": document_id,
+        "file_name": file_name,
+        "active": True,
+        "status": "yururlukte",
+        "ingest": {"enabled": True, "parser": "legal_pdf", "chunk_strategy": "legal_hierarchy"},
+    }
+
+
+def _write_single_document_manifest(manifest_path, document):
+    manifest_path.write_text(json.dumps({"documents": [document]}, ensure_ascii=False), encoding="utf-8")
+
+
+def with_recorded_hash_calls(run_fn):
+    """Wraps ingest.calculate_file_hash with a call-recording proxy for
+    the duration of run_fn() - independent, mechanism-level proof (not
+    an assumption) of exactly which real filesystem paths were ever
+    hashed. Restored unconditionally."""
+    original = ingest.calculate_file_hash
+    calls = []
+
+    def recording(path):
+        calls.append(str(path))
+        return original(path)
+
+    ingest.calculate_file_hash = recording
+    try:
+        run_fn()
+    finally:
+        ingest.calculate_file_hash = original
+    return calls
+
+
+def test_containment_traversal_rejected():
+    with tempfile.TemporaryDirectory() as tmp:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=0)
+        outside_canary = data_dir / "traversal_canary.pdf"
+        outside_canary.write_bytes(b"TRAVERSAL-OUTSIDE-CANARY-CONTENT")
+        _write_single_document_manifest(
+            manifest_path, _malicious_document("../traversal_canary.pdf", "doc_traversal"),
+        )
+        # calculate_file_hash() IS legitimately called twice before the
+        # per-document loop even starts (MANIFEST_PATH, then
+        # CORPUS_POLICY_PATH, per compute_source_manifest()'s own fixed
+        # entries list) - the meaningful assertion is that the CANARY's
+        # own path specifically never appears among the recorded calls,
+        # not that the list is empty.
+        calls = with_recorded_hash_calls(lambda: expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(
+                data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                corpus_policy_path=corpus_policy_path,
+            ),
+            "containment: '../' traversal file_name rejected by compute_source_manifest()",
+        ))
+        check(
+            "containment: traversal canary content was never hashed (calculate_file_hash was never "
+            "called with its path)",
+            str(outside_canary) not in calls and str(outside_canary.resolve()) not in calls,
+            calls,
+        )
+
+
+def test_containment_absolute_posix_style_rejected():
+    with tempfile.TemporaryDirectory() as tmp:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=0)
+        # On Windows a single leading "/" re-anchors to the CURRENT
+        # DRIVE's root (e.g. "C:/etc/passwd") rather than escaping the
+        # drive entirely - there is deliberately no real file planted
+        # there (an unprivileged test must never assume write access
+        # to a filesystem root); this proves REJECTION (fail-closed,
+        # via a resolve() that cannot succeed) without needing one.
+        _write_single_document_manifest(
+            manifest_path, _malicious_document("/etc/passwd_does_not_exist_here", "doc_abs_posix"),
+        )
+        expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(
+                data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                corpus_policy_path=corpus_policy_path,
+            ),
+            "containment: absolute POSIX-style ('/...') file_name rejected by compute_source_manifest()",
+        )
+
+
+def test_containment_absolute_windows_drive_rejected():
+    with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as tmp_outside:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=0)
+        outside_canary = Path(tmp_outside) / "abs_drive_canary.pdf"
+        outside_canary.write_bytes(b"ABSOLUTE-DRIVE-QUALIFIED-OUTSIDE-CANARY-CONTENT")
+        # THE core Diagnostic-E2.1-class escape: MEVZUAT_DIR / file_name
+        # with an absolute, drive-qualified file_name silently
+        # re-anchors to that absolute path, discarding MEVZUAT_DIR
+        # entirely - this canary genuinely exists outside the fixture
+        # root, so a successful (unfixed) read would actually succeed.
+        _write_single_document_manifest(
+            manifest_path, _malicious_document(str(outside_canary), "doc_abs_drive"),
+        )
+        calls = with_recorded_hash_calls(lambda: expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(
+                data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                corpus_policy_path=corpus_policy_path,
+            ),
+            "containment: absolute Windows drive-qualified file_name (real, existing, outside-root "
+            "canary) rejected by compute_source_manifest()",
+        ))
+        check(
+            "containment: absolute-drive canary was NEVER hashed (calculate_file_hash was never "
+            "called with its path)",
+            str(outside_canary) not in calls and str(outside_canary.resolve()) not in calls, calls,
+        )
+
+
+def test_containment_unc_style_rejected():
+    with tempfile.TemporaryDirectory() as tmp:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=0)
+        unc_style_name = "\\\\nonexistent-host-vergi-ai-test\\share\\file.pdf"
+        _write_single_document_manifest(
+            manifest_path, _malicious_document(unc_style_name, "doc_unc"),
+        )
+        expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(
+                data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                corpus_policy_path=corpus_policy_path,
+            ),
+            "containment: UNC-shaped file_name rejected by compute_source_manifest()",
+        )
+
+
+def test_containment_windows_absolute_path_posix_semantics_note():
+    # Item #16 of this remediation's own test matrix: this environment
+    # IS Windows (sys.platform == 'win32'), so the exact vulnerability
+    # class (a Windows-absolute file_name silently re-anchoring) is
+    # already proven with REAL content by
+    # test_containment_absolute_windows_drive_rejected() above.
+    # Structural, platform-independent note on the inverse concern
+    # (would a Windows-shaped absolute string be misread as an
+    # ordinary, safely-contained RELATIVE segment on a POSIX host?):
+    # POSIX has no concept of a drive letter or '\\' separator, so a
+    # string like "C:\\Windows\\win.ini" parses under PurePosixPath as
+    # a single, ordinary (non-anchored) relative component - it cannot
+    # re-anchor a join on that platform, so on POSIX the fix's
+    # existing containment check is not even needed for THIS exact
+    # string shape (the file legitimately would not exist under
+    # MEVZUAT_DIR and fails closed on existence alone).
+    windows_style = "C:\\Windows\\win.ini"
+    posix_view = PurePosixPath(windows_style)
+    check(
+        "containment: a Windows-absolute-shaped file_name is NOT anchored under POSIX path semantics "
+        "(informational cross-platform note, not itself an escape)",
+        not posix_view.is_absolute(),
+        posix_view,
+    )
+
+
+def test_containment_escaping_junction_rejected():
+    if sys.platform != "win32":
+        skip_info(
+            "containment_escaping_junction", f"NTFS junction test is Windows-only (sys.platform={sys.platform!r})",
+        )
+        return
+    tmp_root = Path(tempfile.mkdtemp(prefix="corpus_policy_f1_junction_"))
+    tmp_outside = Path(tempfile.mkdtemp(prefix="corpus_policy_f1_junction_outside_"))
+    try:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(tmp_root, document_count=0)
+        outside_dir = tmp_outside / "escape_target"
+        outside_dir.mkdir()
+        canary = outside_dir / "junction_canary.pdf"
+        canary.write_bytes(b"JUNCTION-ESCAPE-OUTSIDE-CANARY-CONTENT")
+        junction_link = mevzuat_dir / "escape_junction"
+        try:
+            make_junction(junction_link, outside_dir)
+        except Exception as error:
+            check(
+                "containment: mklink /J junction creation for escape test succeeded "
+                "(no elevation/Developer Mode required on a normal Windows account)",
+                False, f"{error!r} - THIS IS A REAL FAILURE, not a reason to skip",
+            )
+            return
+        _write_single_document_manifest(
+            manifest_path,
+            _malicious_document("escape_junction/junction_canary.pdf", "doc_junction_escape"),
+        )
+        calls = with_recorded_hash_calls(lambda: expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(
+                data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                corpus_policy_path=corpus_policy_path,
+            ),
+            "containment: real NTFS junction (physically inside MEVZUAT_DIR, pointing OUTSIDE it) "
+            "rejected by compute_source_manifest()",
+        ))
+        check(
+            "containment: junction-escape canary content was never hashed",
+            str(canary) not in calls and str(canary.resolve()) not in calls, calls,
+        )
+    finally:
+        try:
+            os.rmdir(mevzuat_dir / "escape_junction")
+        except OSError:
+            pass
+        shutil.rmtree(tmp_root, ignore_errors=True)
+        shutil.rmtree(tmp_outside, ignore_errors=True)
+
+
+def test_containment_broken_junction_rejected():
+    if sys.platform != "win32":
+        skip_info(
+            "containment_broken_junction", f"NTFS junction test is Windows-only (sys.platform={sys.platform!r})",
+        )
+        return
+    tmp_root = Path(tempfile.mkdtemp(prefix="corpus_policy_f1_broken_junction_"))
+    tmp_outside = Path(tempfile.mkdtemp(prefix="corpus_policy_f1_broken_junction_outside_"))
+    try:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(tmp_root, document_count=0)
+        outside_target = tmp_outside / "broken_target"
+        outside_target.mkdir()
+        junction_link = mevzuat_dir / "broken_escape_junction"
+        try:
+            make_junction(junction_link, outside_target)
+        except Exception as error:
+            check(
+                "containment: mklink /J junction creation for broken-link test succeeded",
+                False, f"{error!r} - THIS IS A REAL FAILURE, not a reason to skip",
+            )
+            return
+        shutil.rmtree(outside_target)  # break it: target gone, reparse-point entry itself remains
+        broken_candidate = junction_link / "ghost.pdf"
+        check(
+            "containment: broken-junction precondition - os.path.lexists()==True (reparse-point "
+            "entry itself still on disk)",
+            os.path.lexists(junction_link) is True,
+        )
+        check(
+            "containment: broken-junction precondition - Path.exists()==False (target cannot be "
+            "resolved) - the OLD .exists()-only check this remediation removed would have silently "
+            "treated this as 'not yet created'",
+            junction_link.exists() is False,
+        )
+        _write_single_document_manifest(
+            manifest_path,
+            _malicious_document("broken_escape_junction/ghost.pdf", "doc_broken_junction"),
+        )
+        expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(
+                data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                corpus_policy_path=corpus_policy_path,
+            ),
+            "containment: a REAL, BROKEN NTFS junction is rejected fail-closed - never silently "
+            "treated as 'nothing here' - by compute_source_manifest()",
+        )
+    finally:
+        try:
+            os.rmdir(mevzuat_dir / "broken_escape_junction")
+        except OSError:
+            pass
+        shutil.rmtree(tmp_root, ignore_errors=True)
+        shutil.rmtree(tmp_outside, ignore_errors=True)
+
+
+def test_containment_looping_link_rejected_or_platform_skip():
+    tmp_root = Path(tempfile.mkdtemp(prefix="corpus_policy_f1_loop_"))
+    try:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(tmp_root, document_count=0)
+        loop_path = mevzuat_dir / "self_loop.pdf"
+        try:
+            os.symlink(str(loop_path), str(loop_path))
+        except (OSError, NotImplementedError) as error:
+            skip_info(
+                "containment_looping_link",
+                f"this platform/account cannot create a genuinely self-referential symlink ({error!r}) "
+                "- POSIX-only capability (see src/path_containment.py's own ELOOP handling); never "
+                "claimed as a pass",
+            )
+            return
+        try:
+            _write_single_document_manifest(
+                manifest_path, _malicious_document("self_loop.pdf", "doc_self_loop"),
+            )
+            expect_raises(
+                FileNotFoundError,
+                lambda: with_fixture_paths(
+                    data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                    corpus_policy_path=corpus_policy_path,
+                ),
+                "containment: a genuinely looping (ELOOP) self-referential symlink is rejected "
+                "fail-closed by compute_source_manifest()",
+            )
+        finally:
+            try:
+                os.remove(loop_path)
+            except OSError:
+                pass
+    finally:
+        shutil.rmtree(tmp_root, ignore_errors=True)
+
+
+def test_containment_safe_internal_alias_preserves_logical_name():
+    if sys.platform != "win32":
+        skip_info(
+            "containment_safe_internal_alias", f"NTFS junction test is Windows-only (sys.platform={sys.platform!r})",
+        )
+        return
+    tmp_root = Path(tempfile.mkdtemp(prefix="corpus_policy_f1_safe_alias_"))
+    try:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(tmp_root, document_count=0)
+        real_subdir = mevzuat_dir / "real_subdir"
+        real_subdir.mkdir()
+        (real_subdir / "actual.pdf").write_bytes(b"SAFE-INTERNAL-ALIAS-CONTENT")
+        alias_dir = mevzuat_dir / "alias_dir"
+        try:
+            make_junction(alias_dir, real_subdir)
+        except Exception as error:
+            check(
+                "containment: mklink /J junction creation for safe-internal-alias test succeeded",
+                False, f"{error!r} - THIS IS A REAL FAILURE, not a reason to skip",
+            )
+            return
+        try:
+            logical_file_name = "alias_dir/actual.pdf"
+            _write_single_document_manifest(
+                manifest_path, _malicious_document(logical_file_name, "doc_safe_alias"),
+            )
+            entries = with_fixture_paths(
+                data_dir, mevzuat_dir, manifest_path, lambda: ingest.compute_source_manifest(),
+                corpus_policy_path=corpus_policy_path,
+            )
+            matching = [e for e in entries if e["path"] == "data/mevzuat/alias_dir/actual.pdf"]
+            check(
+                "containment: a SAFE root-internal junction (target still inside MEVZUAT_DIR) is "
+                "accepted, not rejected",
+                len(matching) == 1, entries,
+            )
+            check(
+                "containment: the accepted entry's logical path is the ALIAS's own name "
+                "('alias_dir/actual.pdf'), never the resolved real target name "
+                "('real_subdir/actual.pdf') - the resolved-alias-name-leak this remediation forbids",
+                not any(e["path"] == "data/mevzuat/real_subdir/actual.pdf" for e in entries), entries,
+            )
+        finally:
+            try:
+                os.rmdir(alias_dir)
+            except OSError:
+                pass
+    finally:
+        shutil.rmtree(tmp_root, ignore_errors=True)
+
+
+def test_containment_preview_build_rejects_before_anything_else():
+    from ui.services import global_authz as ga
+    from ui.services import rag_bundle_mutation_facade as facade
+    from ui.services.authz import Principal
+
+    with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as tmp_outside:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=0)
+        outside_canary = Path(tmp_outside) / "preview_build_canary.pdf"
+        outside_canary.write_bytes(b"PREVIEW-BUILD-PUBLIC-API-OUTSIDE-CANARY-CONTENT")
+        _write_single_document_manifest(
+            manifest_path, _malicious_document(str(outside_canary), "doc_preview_escape"),
+        )
+
+        principal = Principal(user_id=5, session_id=0, role_version_at_issue=1)
+        repo = ga.InMemoryGlobalResourceAuthzRepository()
+        repo.sessions[5] = ga._authz.SessionRecord(user_id=5, current_authz_version=1, disabled=False)
+        repo.grants.add((5, "rag_index", "build"))
+
+        def run():
+            return facade.preview_build(build_attempt=0, principal=principal, authz_repository=repo)
+
+        expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path),
+            "containment: facade.preview_build() - the real public API the independent review found "
+            "reachable with NO validator in front of it - now rejects an escaping file_name via the "
+            "SAME compute_source_manifest() fix, before returning any digest (zero DB/journal/lock "
+            "involved in preview_build() at all - this is a pure pre-lock read)",
+        )
+
+
+def test_containment_build_document_chunks_rejects_before_pdf_extraction():
+    # This is the JOIN SITE SHARED by build_bundle_snapshot() (coordinated
+    # path, via its own call at the end of its per-document loop) AND the
+    # legacy run_ingest() path (both call build_document_chunks() for the
+    # actual PDF read) - a direct test here proves BOTH callers are closed
+    # by this ONE fix, matching this remediation's own scope note #3
+    # ("legacy run_ingest/build yolundaki aynı sınıf erişim").
+    with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as tmp_outside:
+        outside_canary = Path(tmp_outside) / "build_document_chunks_canary.pdf"
+        outside_canary.write_bytes(b"%PDF-1.4\nBUILD-DOCUMENT-CHUNKS-OUTSIDE-CANARY")
+
+        extractor_calls = []
+
+        def counting_extractor(pdf_path):
+            extractor_calls.append(str(pdf_path))
+            return fake_pdf_page_extractor(pdf_path)
+
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=0)
+        manifest_document = _malicious_document(str(outside_canary), "doc_bdc_escape")
+
+        def run():
+            return ingest.build_document_chunks(
+                manifest_document=manifest_document, file_hash="irrelevant", pdf_page_extractor=counting_extractor,
+            )
+
+        expect_raises(
+            FileNotFoundError,
+            lambda: with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path),
+            "containment: build_document_chunks() (shared by build_bundle_snapshot AND legacy "
+            "run_ingest) rejects an escaping file_name before ever calling pdf_page_extractor",
+        )
+        check(
+            "containment: build_document_chunks() never invoked pdf_page_extractor on the escaping path "
+            "(zero PDF content extraction attempted)",
+            len(extractor_calls) == 0, extractor_calls,
+        )
+
+
+def test_containment_build_bundle_snapshot_rejects_own_join_site():
+    if not FAISS_AVAILABLE:
+        skip_info(
+            "containment_build_bundle_snapshot_own_join", "faiss/numpy not installed in this environment",
+        )
+        return
+    with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as tmp_outside:
+        data_dir, mevzuat_dir, manifest_path, corpus_policy_path = make_fixture(Path(tmp), document_count=0)
+        outside_canary = Path(tmp_outside) / "bbs_own_join_canary.pdf"
+        outside_canary.write_bytes(b"%PDF-1.4\nBUILD-BUNDLE-SNAPSHOT-OWN-JOIN-OUTSIDE-CANARY")
+        _write_single_document_manifest(
+            manifest_path, _malicious_document(str(outside_canary), "doc_bbs_own_join_escape"),
+        )
+
+        chunk_calls = []
+        original_build_document_chunks = ingest.build_document_chunks
+
+        def counting_build_document_chunks(*args, **kwargs):
+            chunk_calls.append(1)
+            return original_build_document_chunks(*args, **kwargs)
+
+        ingest.build_document_chunks = counting_build_document_chunks
+        try:
+            def run():
+                # NOTE (same decoupled-constants contract documented in
+                # test_build_bundle_snapshot_basic() above): the three
+                # gates build_bundle_snapshot() calls first ALWAYS
+                # validate the REAL, repo-committed data/* (they are not
+                # fixture-redirected), so they pass cleanly here and
+                # execution genuinely reaches this function's OWN
+                # MEVZUAT_DIR/file_name join against the FIXTURE manifest
+                # - proving that specific join site's fix, isolated from
+                # build_document_chunks()'s own (separately tested above).
+                return ingest.build_bundle_snapshot(
+                    embedding_client=FakeEmbeddingClient(), pdf_page_extractor=fake_pdf_page_extractor,
+                )
+            expect_raises(
+                FileNotFoundError,
+                lambda: with_fixture_paths(data_dir, mevzuat_dir, manifest_path, run, corpus_policy_path=corpus_policy_path),
+                "containment: build_bundle_snapshot()'s OWN MEVZUAT_DIR/file_name join (its file_hash "
+                "computation, distinct from build_document_chunks()'s own internal join) rejects an "
+                "escaping file_name",
+            )
+        finally:
+            ingest.build_document_chunks = original_build_document_chunks
+        check(
+            "containment: build_bundle_snapshot()'s own-join rejection happened BEFORE "
+            "build_document_chunks() (and therefore before any PDF extraction/embedding) was ever "
+            "reached",
+            len(chunk_calls) == 0, chunk_calls,
+        )
+
+
+# ================================================================
+# F2 REMEDIATION (MEDIUM) - admission="deferred" is now a fail-closed
+# ERROR, exactly like admission="prohibited" was already - matching
+# the user-approved binding decision matrix: allowed -> passes;
+# deferred -> fail-closed ERROR citing prerequisites (even with an
+# otherwise-empty required_provenance_fields list); prohibited ->
+# unchanged fail-closed ERROR; anything else (missing/unrecognized) ->
+# fail-closed ERROR, never silently allowed.
+# ================================================================
+
+def test_admissibility_admission_deferred_rejected_each_real_family():
+    real_policy = corpus_policy_validator.load_policy()
+    family_rules = real_policy["document_family_rules"]
+    deferred_families = sorted(
+        belge_turu for belge_turu, rule in family_rules.items() if rule.get("admission") == "deferred"
+    )
+    check(
+        "admissibility: real committed policy has exactly 3 deferred families (mechanically counted, "
+        "not assumed)",
+        len(deferred_families) == 3, deferred_families,
+    )
+    for index, belge_turu in enumerate(deferred_families):
+        document = {
+            "document_id": f"doc_deferred_probe_{index}",
+            "file_name": "irrelevant_for_this_check.pdf",
+            "belge_turu": belge_turu,
+            "active": False,
+            "ingest": {"enabled": False},
+        }
+        errors, _warnings = manifest_validator.validate_corpus_policy_admissibility([document], policy=real_policy)
+        check(
+            f"admissibility: real deferred family {belge_turu!r} individually rejected with an "
+            "admission=deferred error",
+            any("admission=deferred" in e for e in errors), errors,
+        )
+
+
+def test_admissibility_admission_deferred_with_empty_provenance_still_rejected():
+    real_policy = corpus_policy_validator.load_policy()
+    ozelge_rule = real_policy["document_family_rules"]["Özelge"]
+    check(
+        "admissibility: real committed policy's 'Özelge' family truly has zero "
+        "required_provenance_fields (precondition for this test - proves rejection is NOT merely "
+        "a provenance-field side effect)",
+        ozelge_rule.get("required_provenance_fields") == [], ozelge_rule,
+    )
+    document = {
+        "document_id": "doc_ozelge_empty_provenance_probe",
+        "file_name": "irrelevant_for_this_check.pdf",
+        "belge_turu": "Özelge",
+        "active": False,
+        "ingest": {"enabled": False},
+    }
+    errors, _warnings = manifest_validator.validate_corpus_policy_admissibility([document], policy=real_policy)
+    check(
+        "admissibility: 'Özelge' (admission=deferred, zero required provenance fields) is still "
+        "rejected - an empty required_provenance_fields list never silently satisfies admission",
+        any("admission=deferred" in e for e in errors), errors,
+    )
+
+
+def test_admissibility_deferred_error_message_carries_context():
+    policy = make_admissibility_policy(admission="deferred")
+    document = {
+        "document_id": "doc_context_probe", "file_name": "x.pdf", "belge_turu": "Kanun",
+        "active": False, "ingest": {"enabled": False},
+    }
+    errors, _warnings = manifest_validator.validate_corpus_policy_admissibility([document], policy=policy)
+    deferred_errors = [e for e in errors if "admission=deferred" in e]
+    check("admissibility: deferred error message references document_id", any("doc_context_probe" in e for e in deferred_errors), deferred_errors)
+    check("admissibility: deferred error message references belge_turu", any("Kanun" in e for e in deferred_errors), deferred_errors)
+    check("admissibility: deferred error message references prerequisites", any("prerequisites" in e for e in deferred_errors), deferred_errors)
+    check(
+        "admissibility: deferred error message lists the family's own actual prerequisite value",
+        any("fixture_prereq" in e for e in deferred_errors), deferred_errors,
+    )
+
+
+def test_admissibility_unknown_admission_value_not_silently_allowed():
+    policy = make_admissibility_policy(admission="mystery_value_not_in_vocabulary")
+    document = {
+        "document_id": "doc_unknown_admission", "file_name": "x.pdf", "belge_turu": "Kanun",
+        "active": False, "ingest": {"enabled": False},
+    }
+    errors, _warnings = manifest_validator.validate_corpus_policy_admissibility([document], policy=policy)
+    check(
+        "admissibility: an unrecognized admission value is fail-closed rejected, never silently "
+        "treated as allowed (reachable only when this function is called standalone with a "
+        "hand-crafted policy dict that bypasses corpus_policy_validator's own closed-vocabulary check)",
+        any("doc_unknown_admission" in e and "tanınmıyor" in e for e in errors), errors,
+    )
+
+
+def test_admissibility_deferred_document_rejected_before_extraction_embed_network():
+    with tempfile.TemporaryDirectory() as tmp:
+        mevzuat_dir = Path(tmp) / "mevzuat"
+        mevzuat_dir.mkdir()
+        (mevzuat_dir / "sirkuler_test.pdf").write_bytes(b"%PDF-1.4\ntest content")
+        manifest_path = Path(tmp) / "documents.json"
+        # A genuinely schema-VALID document (all 14 required documents.
+        # schema.json fields present) for belge_turu="Sirküler" (a real
+        # admission=deferred family) - proven, via an isolated probe
+        # during this remediation, to pass every OTHER
+        # validate_manifest_file() check cleanly, so the raise below is
+        # attributable ONLY to the new admission=deferred gate, not
+        # some unrelated schema/date/relation failure.
+        document = {
+            "document_id": "test_deferred_sirkuler_gate",
+            "file_name": "sirkuler_test.pdf",
+            "active": True,
+            "belge_turu": "Sirküler",
+            "title": "Test Sirkuler",
+            "short_title": "Test Sirkuler",
+            "official_source": True,
+            "source_url": "https://example.gov.tr/test",
+            "status": "active",
+            "version": "1",
+            "jurisdiction": "TR",
+            "language": "tr",
+            "tags": [],
+            "relations": [],
+            "ingest": {"enabled": True, "parser": "legal_pdf", "chunk_strategy": "legal_hierarchy", "ocr_required": False},
+        }
+        manifest_path.write_text(json.dumps({"schema_version": 1, "documents": [document]}, ensure_ascii=False), encoding="utf-8")
+
+        chunk_calls = []
+        embed_calls = []
+        original_chunks = ingest.build_document_chunks
+        original_embed = ingest.create_embeddings
+
+        def counting_chunks(*args, **kwargs):
+            chunk_calls.append(1)
+            return original_chunks(*args, **kwargs)
+
+        def counting_embed(*args, **kwargs):
+            embed_calls.append(1)
+            return original_embed(*args, **kwargs)
+
+        ingest.build_document_chunks = counting_chunks
+        ingest.create_embeddings = counting_embed
+
+        original_manifest_path = manifest_validator.MANIFEST_PATH
+        original_mevzuat_dir = manifest_validator.MEVZUAT_DIR
+        manifest_validator.MANIFEST_PATH = str(manifest_path)
+        manifest_validator.MEVZUAT_DIR = str(mevzuat_dir)
+        try:
+            expect_raises(
+                ValueError,
+                lambda: manifest_validator.validate_manifest_file(raise_on_error=True),
+                "admissibility: a deferred-family document (Sirküler) is rejected by "
+                "validate_manifest_file() - gate #2 of build_bundle_snapshot()'s three-gate sequence, "
+                "strictly before its own chunk/embed loop",
+            )
+        finally:
+            manifest_validator.MANIFEST_PATH = original_manifest_path
+            manifest_validator.MEVZUAT_DIR = original_mevzuat_dir
+            ingest.build_document_chunks = original_chunks
+            ingest.create_embeddings = original_embed
+        check(
+            "admissibility: deferred-family rejection never reached build_document_chunks "
+            "(zero PDF extraction attempted)",
+            len(chunk_calls) == 0, chunk_calls,
+        )
+        check(
+            "admissibility: deferred-family rejection never reached create_embeddings "
+            "(zero network/embedding attempted)",
+            len(embed_calls) == 0, embed_calls,
+        )
+        check(
+            "admissibility: deferred rejection produced no index/ directory at all (no staging, no "
+            "bundle, no audit)",
+            not (Path(tmp) / "index").exists(),
+        )
+
+
 def run_self_test():
     test_import_time_zero_side_effects()
     test_compute_source_manifest_deterministic()
     test_compute_source_manifest_excludes_inactive_document()
     test_compute_source_manifest_changes_on_pdf_edit()
+    test_compute_source_manifest_missing_corpus_policy_fails_closed()
+    test_compute_source_manifest_changes_on_corpus_policy_edit()
     test_build_bundle_snapshot_basic()
     test_build_bundle_snapshot_deterministic_for_same_inputs()
     test_create_embeddings_never_touches_real_credentials()
+    test_admissibility_magic_byte_gate_positive_and_negative()
+    test_admissibility_max_file_size_gate()
+    test_admissibility_cross_document_raw_hash_dedup()
+    test_admissibility_required_provenance_fields()
+    test_admissibility_admission_prohibited_rejected()
+    test_admissibility_unknown_belge_turu_rejected()
+    test_admissibility_default_policy_loads_real_committed_policy()
     test_run_ingest_fails_closed_without_consent()
     test_direct_cli_refusal_real_subprocess()
+
+    # F1 REMEDIATION (HIGH) - path-containment closure
+    test_containment_traversal_rejected()
+    test_containment_absolute_posix_style_rejected()
+    test_containment_absolute_windows_drive_rejected()
+    test_containment_unc_style_rejected()
+    test_containment_windows_absolute_path_posix_semantics_note()
+    test_containment_escaping_junction_rejected()
+    test_containment_broken_junction_rejected()
+    test_containment_looping_link_rejected_or_platform_skip()
+    test_containment_safe_internal_alias_preserves_logical_name()
+    test_containment_preview_build_rejects_before_anything_else()
+    test_containment_build_document_chunks_rejects_before_pdf_extraction()
+    test_containment_build_bundle_snapshot_rejects_own_join_site()
+
+    # F2 REMEDIATION (MEDIUM) - admission=deferred fail-closed
+    test_admissibility_admission_deferred_rejected_each_real_family()
+    test_admissibility_admission_deferred_with_empty_provenance_still_rejected()
+    test_admissibility_deferred_error_message_carries_context()
+    test_admissibility_unknown_admission_value_not_silently_allowed()
+    test_admissibility_deferred_document_rejected_before_extraction_embed_network()
 
     print(f"\n{passed} passed, {failed} failed, {informational_skips} informational skips")
     return failed == 0

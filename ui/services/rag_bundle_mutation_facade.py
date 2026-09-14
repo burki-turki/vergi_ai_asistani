@@ -191,6 +191,23 @@ class BundleManifestDriftError(RagBundleMutationError):
     `precondition_callback`, strictly before `_insert_prepared`)."""
 
 
+class CorpusPolicyDriftError(RagBundleMutationError):
+    """CORPUS POLICY FOUNDATION addition (contract §J-9/§L-7): the
+    target bundle's own `manifest.json.source_manifest` carries no
+    corpus-policy source entry, OR that entry's recorded sha256 no
+    longer matches the LIVE `data/corpus_policy/corpus_policy.json`
+    raw-byte hash - activation is refused fail-closed. Checked BOTH
+    pre-lock and again (fresh) under the global lock inside
+    `precondition_callback` - the pre-lock check alone would leave a
+    race open for a policy edit landing between the pre-lock read and
+    lock acquisition. Build is NEVER affected (the policy is folded
+    into `ingest.compute_source_manifest()`, which `apply_build()`'s
+    own existing `SourceDriftDetectedError` precondition already
+    re-derives and compares - see contract §J-1..8); this is strictly
+    an activation-time gate, the ONE genuinely new facade check this
+    slice adds."""
+
+
 class BuildReplayVerificationError(RagBundleMutationError):
     """TARGETED F3 REMEDIATION addition: a safe same-key/same-
     fingerprint `rag_bundle.build` replay's own corroboration (the
@@ -377,6 +394,56 @@ def _manifest_bytes_for(index_root_real: Path, bundle_version: str) -> bytes:
     bundle_dir = _path_containment.resolve_existing(index_root_real / bundle_version, root=index_root_real)
     manifest_path = _path_containment.resolve_existing(bundle_dir / "manifest.json", root=index_root_real)
     return manifest_path.read_bytes()
+
+
+def _find_corpus_policy_manifest_entry(source_manifest):
+    """CORPUS POLICY FOUNDATION helper: returns the `{"path": "data/
+    corpus_policy/corpus_policy.json", "sha256": ..., "size_bytes":
+    ...}` entry from a bundle's own `source_manifest` list, or `None`
+    if absent/malformed - never raises."""
+    if not isinstance(source_manifest, list):
+        return None
+    for entry in source_manifest:
+        if isinstance(entry, dict) and entry.get("path") == "data/corpus_policy/corpus_policy.json":
+            return entry
+    return None
+
+
+def _verify_corpus_policy_equality(bundle_manifest_bytes: bytes) -> None:
+    """CORPUS POLICY FOUNDATION addition (contract §J-9/§L-7,
+    activation-only gate): the target bundle's own `source_manifest`
+    must carry a corpus-policy source entry whose recorded sha256
+    equals the LIVE `data/corpus_policy/corpus_policy.json` raw-byte
+    hash - a bundle built without, or under DIFFERENT, policy content
+    is never activated. `bundle_manifest_bytes` is expected to already
+    be known-valid JSON (every caller here calls this strictly AFTER
+    `_verify_bundle_self_consistent()`/`_manifest_bytes_for()` have
+    already parsed/verified the same bytes once). Raises
+    CorpusPolicyDriftError fail-closed; called BOTH pre-lock and again
+    (fresh) under the lock inside `apply_activate()`'s own
+    `_precondition_callback` - zero pointer/journal/audit writes
+    either way."""
+    manifest = json.loads(bundle_manifest_bytes.decode("utf-8"))
+    source_manifest = manifest.get("source_manifest") if isinstance(manifest, dict) else None
+    entry = _find_corpus_policy_manifest_entry(source_manifest)
+    if entry is None:
+        raise CorpusPolicyDriftError(
+            "target bundle's source_manifest carries no corpus-policy source entry - refusing to "
+            "activate (this bundle was built without the Corpus Policy Foundation in effect)"
+        )
+    ingest = _ingest_module()
+    try:
+        live_sha256 = ingest.calculate_file_hash(ingest.CORPUS_POLICY_PATH)
+    except FileNotFoundError as error:
+        raise CorpusPolicyDriftError(
+            "data/corpus_policy/corpus_policy.json is missing - refusing to activate"
+        ) from error
+    if entry.get("sha256") != live_sha256:
+        raise CorpusPolicyDriftError(
+            "target bundle was built against DIFFERENT corpus-policy content than the current "
+            "data/corpus_policy/corpus_policy.json - refusing to activate; rebuild under the "
+            "current policy"
+        )
 
 
 def _pointer_composite_hash(index_root_real: Path) -> str:
@@ -1150,7 +1217,11 @@ def apply_activate(
     index_root_real = index_root_real.resolve(strict=True)
 
     _verify_bundle_self_consistent(index_root_real, bundle_version)
-    bundle_manifest_sha256 = _sha256_bytes(_manifest_bytes_for(index_root_real, bundle_version))
+    manifest_bytes = _manifest_bytes_for(index_root_real, bundle_version)
+    bundle_manifest_sha256 = _sha256_bytes(manifest_bytes)
+    # CORPUS POLICY FOUNDATION (contract §J-9/§L-7): pre-lock policy-
+    # equality gate - zero lock/journal/pointer/audit writes on drift.
+    _verify_corpus_policy_equality(manifest_bytes)
     if not _bundle_has_verified_build_audit(index_root_real, bundle_version):
         raise BundleNotBuildAuditedError(
             f"index/{bundle_version}/ has no valid, fully-bound rag_bundle.build audit - refusing to activate"
@@ -1209,6 +1280,12 @@ def apply_activate(
                 f"index/{bundle_version}/manifest.json changed between the pre-lock snapshot and "
                 "lock acquisition - zero pointer/audit writes were made; re-run preview_activate()"
             )
+        # CORPUS POLICY FOUNDATION (contract §J-9/§L-7): re-verify under
+        # the lock, against the LIVE policy file - the bundle's own
+        # manifest bytes are confirmed unchanged above, but the policy
+        # file on disk could have been edited between the pre-lock
+        # check and lock acquisition.
+        _verify_corpus_policy_equality(fresh_manifest_bytes)
         if not _bundle_has_verified_build_audit(index_root_real, bundle_version):
             raise BundleNotBuildAuditedError(
                 f"index/{bundle_version}/ lost its build audit between preview and lock acquisition"

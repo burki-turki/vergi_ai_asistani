@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "policy_id": "vergi_ai_corpus_policy_v1",
+  "policy_version": 1,
+  "effective_from": "2026-09-14",
+
+  "source_authority_tiers": [
+    {
+      "tier": 1,
+      "name": "resmi_gazete",
+      "description": "Resmi Gazete - mevzuatin kurucu yayim mercii; en yuksek otorite. Her Tier-1 belge icin source_url tercihen bu kaynaga isaret etmelidir."
+    },
+    {
+      "tier": 2,
+      "name": "mevzuat_gov_tr",
+      "description": "mevzuat.gov.tr / T.C. Cumhurbaskanligi Mevzuat Bilgi Sistemi - yuksek otorite; bu kaynaktan alinan metin editorially_consolidated_current olarak isaretlenmek zorundadir (bkz. temporal_requirements.text_basis_declaration)."
+    },
+    {
+      "tier": 3,
+      "name": "resmi_kurum_portallari",
+      "description": "Ilgili resmi kurum portallari (orn. Gelir Idaresi Baskanligi) - yalnizca kendi yayimladigi belge turleri icin otorite tasir."
+    },
+    {
+      "tier": 4,
+      "name": "yargi_resmi_kanallari",
+      "description": "Danistay / Anayasa Mahkemesi / UYAP resmi karar kanallari - yalnizca yargi kararlari icin otorite tasir; bu corpus'a population'i Tier 1b'ye (Phase-2 case-law sema yamasi + anonimizasyon kurallari) kadar ertelenmistir."
+    },
+    {
+      "tier": 5,
+      "name": "ticari_ikincil_kaynaklar",
+      "description": "Ticari/ikincil kaynaklar (yayincilik, hukuk veritabanlari vb.) - tek basina asla content authority degildir; yalnizca tier 1-4'ten edinilmis bir belgenin metadata'sini zenginlestirmek icin kullanilabilir, hicbir zaman tek kaynak olarak kabul edilmez."
+    }
+  ],
+
+  "document_family_rules": {
+    "Kanun": {
+      "admission": "allowed",
+      "tier": 1,
+      "required_provenance_fields": ["source_url", "official_source", "resmi_gazete_tarihi", "resmi_gazete_sayisi", "kanun_no"],
+      "temporal_sensitive": true,
+      "prerequisites": [],
+      "notes": "Tier-1 population hedefi: VUK 213, IYUK 2577 (mevcut provision setinin tamamlanmasi + fiziksel PDF ingest'inin acilmasi dahil), AATUHK 6183."
+    },
+    "Bakanlar Kurulu Kararı": {
+      "admission": "allowed",
+      "tier": 1,
+      "required_provenance_fields": ["source_url", "official_source", "resmi_gazete_tarihi", "resmi_gazete_sayisi"],
+      "temporal_sensitive": true,
+      "prerequisites": [],
+      "notes": "Yalniz Tier-1 kanunlarinin dogrudan uygulanmasina/sure uzatimina iliskin kararlar icin (mevcut seed: 2016/9385 sayili BKK)."
+    },
+    "Cumhurbaşkanı Kararı": {
+      "admission": "allowed",
+      "tier": 1,
+      "required_provenance_fields": ["source_url", "official_source", "resmi_gazete_tarihi", "resmi_gazete_sayisi"],
+      "temporal_sensitive": true,
+      "prerequisites": [],
+      "notes": "Yalniz Tier-1 kanunlarinin dogrudan uygulama yonetmeliklerine iliskin kararlar icin."
+    },
+    "Yönetmelik": {
+      "admission": "allowed",
+      "tier": 1,
+      "required_provenance_fields": ["source_url", "official_source", "resmi_gazete_tarihi", "resmi_gazete_sayisi"],
+      "temporal_sensitive": true,
+      "prerequisites": [],
+      "notes": "Yalniz Tier-1 kanunlarinin dogrudan uygulama yonetmelikleri icin."
+    },
+    "Genel Tebliğ": {
+      "admission": "allowed",
+      "tier": 2,
+      "required_provenance_fields": ["source_url", "official_source", "resmi_gazete_tarihi", "resmi_gazete_sayisi"],
+      "temporal_sensitive": true,
+      "prerequisites": [],
+      "notes": "Ikincil oncelik; yalniz temporal-discipline kurali (temporal_requirements) fiilen calisir durumdayken ve secici olarak kabul edilir."
+    },
+    "Tebliğ": {
+      "admission": "allowed",
+      "tier": 2,
+      "required_provenance_fields": ["source_url", "official_source", "resmi_gazete_tarihi", "resmi_gazete_sayisi"],
+      "temporal_sensitive": true,
+      "prerequisites": [],
+      "notes": "Ikincil oncelik; Genel Tebligle ayni secici population disiplinine tabidir."
+    },
+    "Sirküler": {
+      "admission": "deferred",
+      "tier": null,
+      "required_provenance_fields": ["source_url", "official_source"],
+      "temporal_sensitive": false,
+      "prerequisites": ["phase2_documents_schema_provenance_fields"],
+      "notes": "Ertelendi (Phase-2 documents-sema yamasindaki tam provenance alanlari sart kosulana kadar). Yorum niteligindeki metinler genellikle madde-madde degil butunuyle yeni sirkulerle yer degistirir; temporal_sensitive=false bu yuzden kasitlidir."
+    },
+    "Özelge": {
+      "admission": "deferred",
+      "tier": null,
+      "required_provenance_fields": [],
+      "temporal_sensitive": false,
+      "prerequisites": ["phase2_anonymization_fields", "phase2_documents_schema_provenance_fields"],
+      "notes": "Ertelendi. Anonimizasyon sarti (security_rules.anonymization_required_for) ve Phase-2 provenance alanlari saglanmadan population'a acilmaz."
+    },
+    "Yargı Kararı": {
+      "admission": "deferred",
+      "tier": null,
+      "required_provenance_fields": [],
+      "temporal_sensitive": false,
+      "prerequisites": ["phase2_case_law_metadata_schema_patch", "phase2_anonymization_fields"],
+      "notes": "Ertelendi. data/case_case_law.schema.json'in gerektirdigi mahkeme_dairesi/esas_no/karar_no/temyiz_kesinlesme_durumu alanlari documents.schema.json'da bugun yoktur (bkz. Fable FINAL raporu §G); ayrica onaylanacak, dar kapsamli bir sema yamasi kadar bloke."
+    },
+    "Diğer": {
+      "admission": "prohibited",
+      "tier": null,
+      "required_provenance_fields": [],
+      "temporal_sensitive": false,
+      "prerequisites": [],
+      "notes": "Tanimsiz/siniflandirilamayan belge turu - kabul edilmez."
+    }
+  },
+
+  "quality_gates": [
+    {
+      "gate_id": "pdf_magic_byte",
+      "enforcement_stage": "policy_foundation",
+      "outcome": "reject",
+      "threshold": null
+    },
+    {
+      "gate_id": "max_file_size_bytes",
+      "enforcement_stage": "policy_foundation",
+      "outcome": "reject",
+      "threshold": 52428800
+    },
+    {
+      "gate_id": "cross_document_raw_hash_dedup",
+      "enforcement_stage": "policy_foundation",
+      "outcome": "reject",
+      "threshold": null
+    },
+    {
+      "gate_id": "required_provenance_fields",
+      "enforcement_stage": "policy_foundation",
+      "outcome": "reject",
+      "threshold": null
+    },
+    {
+      "gate_id": "temporal_discipline",
+      "enforcement_stage": "policy_foundation",
+      "outcome": "reject",
+      "threshold": null
+    },
+    {
+      "gate_id": "encrypted_pdf",
+      "enforcement_stage": "population",
+      "outcome": "reject",
+      "threshold": null
+    },
+    {
+      "gate_id": "max_page_count",
+      "enforcement_stage": "population",
+      "outcome": "reject",
+      "threshold": 2000
+    },
+    {
+      "gate_id": "text_layer_coverage_below_threshold",
+      "enforcement_stage": "population",
+      "outcome": "needs_review",
+      "threshold": 0.8
+    },
+    {
+      "gate_id": "text_layer_coverage_zero",
+      "enforcement_stage": "population",
+      "outcome": "reject",
+      "threshold": 0.0
+    },
+    {
+      "gate_id": "ocr_required_without_ocr",
+      "enforcement_stage": "population",
+      "outcome": "reject",
+      "threshold": null
+    },
+    {
+      "gate_id": "unicode_hygiene",
+      "enforcement_stage": "population",
+      "outcome": "needs_review",
+      "threshold": null
+    },
+    {
+      "gate_id": "pdf_embedded_javascript_or_external_reference",
+      "enforcement_stage": "population",
+      "outcome": "needs_review",
+      "threshold": null
+    },
+    {
+      "gate_id": "decompression_bomb",
+      "enforcement_stage": "population",
+      "outcome": "reject",
+      "threshold": null
+    },
+    {
+      "gate_id": "full_acquisition_provenance",
+      "enforcement_stage": "population",
+      "outcome": "reject",
+      "threshold": null
+    }
+  ],
+
+  "security_rules": {
+    "rag_prompt_boundary_required_before_population": true,
+    "anonymization_required_for": ["Özelge"],
+    "path_containment_required_for_acquisition_writers": true,
+    "notes": "Gercek RAG prompt-injection sinirinin (rag.py'nin ADAYLAR:/KAYNAKLAR: ham f-string'lerinin escape/fence edilmesi) implementasyonu Row 19C-3c-iv Slice 2'nin isidir; bu policy yalniz zorunlulugu kaydeder, uygulamaz."
+  },
+
+  "temporal_requirements": {
+    "current_law_only": true,
+    "valid_from_requires_originating_evidence": true,
+    "originating_evidence_kinds": ["statute_text", "amending_law"],
+    "cross_version_interval_check_enabled": true,
+    "text_basis_declaration": "editorially_consolidated_current",
+    "notes": "Pilot corpus metni guncel/konsolide metindir; tarihsel (as_published_original) metin dogrulugu iddia edilmez. text_basis alani documents.schema.json'a Phase-2'de eklenecektir; bu alan gelene kadar bu beyan yalniz policy seviyesinde baglayicidir."
+  },
+
+  "update_rules": {
+    "manual_curation_only": true,
+    "in_place_overwrite_prohibited": true,
+    "build_requires_human_approval": true,
+    "activate_requires_human_approval": true,
+    "automated_crawler_fetch_enabled": false,
+    "notes": "Otomatik zamanlanmis fetch/crawler yoktur; her corpus degisikligi ayri, insan-onayli bir build + ayri, insan-onayli bir activate gerektirir (rag_bundle.build / rag_bundle.activate)."
+  },
+
+  "governance": {
+    "capability_model": "Row 19A/19B admin-lawyer-analyst modeli + mevcut inspect/build/activate global-resource grant ucluleri aynen yeniden kullanilir; bu policy IAM semasini degistirmez.",
+    "policy_change_approval": "Bu dosyanin herhangi bir icerik degisikligi CLAUDE.md §8 kapsaminda acik kullanici onayi + exact-allowlist'li reviewed commit gerektirir; her icerik degisikliginde policy_version bump zorunludur (validator bunu mekanik olarak zorlayamaz - hash zaten her bayt degisikligini yakalar).",
+    "four_eyes_required_in_pilot": false,
+    "emergency_rollback_procedure": "Policy degisikligi sonrasi eski bir bundle'a donus iki denetlenebilir yoldan biriyle yapilir: (a) bu policy commit'ini git-revert et (policy hash eski degerine doner), ardindan eski bundle'i rag_bundle.activate ile yeniden aktive et; (b) corpus'u guncel policy altinda duzeltip yeniden build et. Sessiz/otomatik bir istisna yolu yoktur.",
+    "notes": null
+  },
+
+  "notes": "Corpus Policy Foundation (Phase-1 / policy_foundation stage). Bu dosya sema-versiyonlu, git-governed bir static registry'dir; hicbir gercek mevzuat/ictihat belgesi eklemez veya kaldirmaz. Population (Phase-4/5) bu policy LOCK'landiktan VE Phase-2 (documents-sema on-sart yamasi) ile Phase-3 (harici kaynak/lisans dogrulamasi) tamamlandiktan sonra, kendi ayri kullanici onayiyla baslar."
+}

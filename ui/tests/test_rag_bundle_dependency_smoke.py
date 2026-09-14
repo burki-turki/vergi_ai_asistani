@@ -736,19 +736,40 @@ def _summary_reports_at_least_one_failure(text):
 
 
 @contextlib.contextmanager
-def patched_source_paths(data_dir, mevzuat_dir, manifest_path, index_dir):
-    original_ingest = (ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR)
+def patched_source_paths(data_dir, mevzuat_dir, manifest_path, index_dir, corpus_policy_path):
+    # CORPUS POLICY FOUNDATION: ingest.CORPUS_POLICY_PATH is the 5th
+    # fixture-swappable ingest.* constant (compute_source_manifest()
+    # hashes it unconditionally). corpus_policy_validator.CORPUS_
+    # POLICY_PATH is DELIBERATELY NOT redirected here - the policy's
+    # own VALIDITY (corpus_policy_validator.validate_corpus_policy())
+    # always targets the REAL, repo-committed data/corpus_policy/
+    # corpus_policy.json, exactly like provision_manifest_validator's
+    # own decoupled constants - see src/ingest.py's own header comment
+    # on this build-gate sequence.
+    original_ingest = (ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH)
     original_mv = (mv.MANIFEST_PATH, mv.MEVZUAT_DIR)
-    ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR = data_dir, mevzuat_dir, manifest_path, index_dir
+    ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH = (
+        data_dir, mevzuat_dir, manifest_path, index_dir, corpus_policy_path,
+    )
     mv.MANIFEST_PATH, mv.MEVZUAT_DIR = str(manifest_path), str(mevzuat_dir)
     try:
         yield
     finally:
-        ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR = original_ingest
+        ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH = original_ingest
         mv.MANIFEST_PATH, mv.MEVZUAT_DIR = original_mv
 
 
 def _document_entry(document_id, file_name, kanun_no):
+    # CORPUS POLICY FOUNDATION: manifest_validator.validate_manifest_
+    # file() (called for real here, via mv.MANIFEST_PATH/MEVZUAT_DIR
+    # redirection - see patched_source_paths() below) now runs its new
+    # additive validate_corpus_policy_admissibility() step, which
+    # requires belge_turu="Kanun" documents to carry source_url +
+    # official_source + resmi_gazete_tarihi + resmi_gazete_sayisi +
+    # kanun_no (the real, repo-committed corpus_policy.json's
+    # document_family_rules.Kanun.required_provenance_fields) -
+    # dummy-but-schema-valid values are added here so this fixture
+    # keeps passing the real build_bundle_snapshot() gate sequence.
     return {
         "document_id": document_id,
         "file_name": file_name,
@@ -758,6 +779,9 @@ def _document_entry(document_id, file_name, kanun_no):
         "short_title": document_id,
         "kanun_no": kanun_no,
         "official_source": False,
+        "source_url": "https://example.invalid/rag-smoke-test-source",
+        "resmi_gazete_tarihi": "2020-01-01",
+        "resmi_gazete_sayisi": "00000-smoke",
         "status": "active",
         "version": "v1",
         "jurisdiction": "TR",
@@ -794,6 +818,18 @@ def build_main_fixture(tmp_path):
     manifest_path = data_dir / "documents.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    # CORPUS POLICY FOUNDATION: any bytes suffice - ingest.compute_
+    # source_manifest() only raw-byte hashes this file, it is never
+    # parsed/validated here (see patched_source_paths()'s own header
+    # comment on why the policy's OWN validity always targets the
+    # real, repo-committed file instead).
+    corpus_policy_dir = data_dir / "corpus_policy"
+    corpus_policy_dir.mkdir(parents=True)
+    corpus_policy_path = corpus_policy_dir / "corpus_policy.json"
+    corpus_policy_path.write_text(
+        json.dumps({"policy_id": "rag_smoke_test_fixture_corpus_policy"}, ensure_ascii=False), encoding="utf-8",
+    )
+
     return {
         "data_dir": data_dir,
         "mevzuat_dir": mevzuat_dir,
@@ -801,6 +837,7 @@ def build_main_fixture(tmp_path):
         "index_dir": index_dir,
         "alpha_pdf_path": alpha_pdf_path,
         "beta_pdf_path": beta_pdf_path,
+        "corpus_policy_path": corpus_policy_path,
     }
 
 
@@ -835,6 +872,12 @@ def run_blank_pdf_negative_test():
         manifest = {"schema_version": 1, "documents": [_document_entry("rag_smoke_doc_blank", "rag_smoke_blank.pdf", "9099")]}
         manifest_path = data_dir / "documents.json"
         manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+        corpus_policy_dir = data_dir / "corpus_policy"
+        corpus_policy_dir.mkdir(parents=True)
+        corpus_policy_path = corpus_policy_dir / "corpus_policy.json"
+        corpus_policy_path.write_text(
+            json.dumps({"policy_id": "rag_smoke_blank_pdf_negative_fixture_corpus_policy"}), encoding="utf-8",
+        )
 
         extracted = ingest.extract_pdf_pages(blank_pdf_path)
         check(
@@ -843,7 +886,7 @@ def run_blank_pdf_negative_test():
             extracted,
         )
 
-        with patched_source_paths(data_dir, mevzuat_dir, manifest_path, tmp_path / "index"):
+        with patched_source_paths(data_dir, mevzuat_dir, manifest_path, tmp_path / "index", corpus_policy_path):
             expect_raises(
                 RuntimeError,
                 lambda: ingest.build_bundle_snapshot(
@@ -923,9 +966,15 @@ def _run_full_e2e_round_trip_guarded():
         embedding_client = make_openai_mock_client(embedding_calls)
         principal, repo = make_principal_and_repo()
 
-        with patched_source_paths(fixture["data_dir"], fixture["mevzuat_dir"], fixture["manifest_path"], fixture["index_dir"]):
+        with patched_source_paths(
+            fixture["data_dir"], fixture["mevzuat_dir"], fixture["manifest_path"], fixture["index_dir"],
+            fixture["corpus_policy_path"],
+        ):
             preview_1 = facade.preview_build(build_attempt=0, principal=principal, authz_repository=repo)
-            check("preview_build: source_document_count == 3 (documents.json + 2 pdfs)", preview_1["source_document_count"] == 3, preview_1)
+            check(
+                "preview_build: source_document_count == 4 (documents.json + corpus_policy.json + 2 pdfs)",
+                preview_1["source_document_count"] == 4, preview_1,
+            )
 
             build_result_1 = facade.apply_build(
                 preview_1["input_digest"], allow_network=True, build_attempt=0,
@@ -936,6 +985,11 @@ def _run_full_e2e_round_trip_guarded():
             check("apply_build #1: NOT a replay (first-ever build)", build_result_1.replayed is False)
             manifest_1 = json.loads(Path(build_result_1.manifest_path).read_text(encoding="utf-8"))
             check("apply_build #1: manifest chunk_count == 2 (one per document)", manifest_1["chunk_count"] == 2, manifest_1)
+            check(
+                "apply_build #1: manifest source_manifest contains the corpus-policy entry",
+                any(e["path"] == "data/corpus_policy/corpus_policy.json" for e in manifest_1["source_manifest"]),
+                manifest_1["source_manifest"],
+            )
             check("apply_build #1: real embedding call happened exactly once (single batch)", len(embedding_calls) == 1, embedding_calls)
             check(
                 "apply_build #1: real embedding call used the real production model name + 2 inputs",
@@ -1001,8 +1055,8 @@ def _run_full_e2e_round_trip_guarded():
 
             preview_2 = facade.preview_build(build_attempt=1, principal=principal, authz_repository=repo)
             check(
-                "preview_build #2: source_document_count == 4 (documents.json + 3 pdfs, GAMMA added)",
-                preview_2["source_document_count"] == 4, preview_2,
+                "preview_build #2: source_document_count == 5 (documents.json + corpus_policy.json + 3 pdfs, GAMMA added)",
+                preview_2["source_document_count"] == 5, preview_2,
             )
             build_result_2 = facade.apply_build(
                 preview_2["input_digest"], allow_network=True, build_attempt=1,

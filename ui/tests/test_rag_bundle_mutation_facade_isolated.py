@@ -296,22 +296,36 @@ def make_data_fixture(tmp_path: Path):
         "ingest": {"enabled": True, "parser": "legal_pdf", "chunk_strategy": "legal_hierarchy"},
     }]
     (data_dir / "documents.json").write_text(json.dumps({"documents": documents}), encoding="utf-8")
+    # CORPUS POLICY FOUNDATION: make_snapshot_builder() below calls the
+    # REAL ingest.compute_source_manifest(), which unconditionally
+    # hashes ingest.CORPUS_POLICY_PATH - content is never parsed/
+    # validated here (only raw-byte hashed), so any bytes suffice.
+    corpus_policy_dir = data_dir / "corpus_policy"
+    corpus_policy_dir.mkdir(parents=True)
+    corpus_policy_path = corpus_policy_dir / "corpus_policy.json"
+    corpus_policy_path.write_text(
+        json.dumps({"policy_id": "test_fixture_corpus_policy_for_facade_tests"}), encoding="utf-8",
+    )
     index_dir = tmp_path / "index"
-    return data_dir, mevzuat_dir, data_dir / "documents.json", index_dir
+    return data_dir, mevzuat_dir, data_dir / "documents.json", index_dir, corpus_policy_path
 
 
 class Fixture:
     def __init__(self):
         self._tmp = tempfile.TemporaryDirectory()
         tmp_path = Path(self._tmp.name)
-        self.data_dir, self.mevzuat_dir, self.manifest_path, self.index_dir = make_data_fixture(tmp_path)
-        self._original_ingest_paths = (ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR)
-        ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR = (
-            self.data_dir, self.mevzuat_dir, self.manifest_path, self.index_dir,
+        self.data_dir, self.mevzuat_dir, self.manifest_path, self.index_dir, self.corpus_policy_path = make_data_fixture(tmp_path)
+        self._original_ingest_paths = (
+            ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH,
+        )
+        ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH = (
+            self.data_dir, self.mevzuat_dir, self.manifest_path, self.index_dir, self.corpus_policy_path,
         )
 
     def cleanup(self):
-        ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR = self._original_ingest_paths
+        (
+            ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH,
+        ) = self._original_ingest_paths
         self._tmp.cleanup()
 
 
@@ -349,7 +363,7 @@ def test_preview_build_zero_network_and_correct_digest():
         principal, repo = make_principal_and_repo()
         preview = facade.preview_build(build_attempt=0, principal=principal, authz_repository=repo)
         check("preview_build: input_digest present", isinstance(preview["input_digest"], str) and len(preview["input_digest"]) == 64)
-        check("preview_build: source_document_count == 2", preview["source_document_count"] == 2)
+        check("preview_build: source_document_count == 3 (documents.json + corpus_policy.json + 1 pdf)", preview["source_document_count"] == 3)
         preview2 = facade.preview_build(build_attempt=0, principal=principal, authz_repository=repo)
         check("preview_build: deterministic across calls", preview["input_digest"] == preview2["input_digest"])
         preview3 = facade.preview_build(build_attempt=1, principal=principal, authz_repository=repo)
@@ -502,6 +516,59 @@ def test_apply_build_source_drift_under_lock():
         fx.cleanup()
 
 
+def test_apply_build_corpus_policy_drift_under_lock():
+    # CORPUS POLICY FOUNDATION: the corpus policy is a source_manifest
+    # entry too (§J-1..8) - a live policy edit under the lock is caught
+    # by the SAME pre-existing SourceDriftDetectedError precondition
+    # drift is a regular PDF edit would be, with ZERO facade-side
+    # policy-specific code (contract §J-5).
+    fx = Fixture()
+    install_fakes()
+    reset_hooks()
+    try:
+        principal, repo = make_principal_and_repo()
+
+        def mutate_policy(resource_key):
+            fx.corpus_policy_path.write_text(json.dumps({"policy_id": "MUTATED_UNDER_LOCK"}), encoding="utf-8")
+
+        _on_acquire_hooks.append(mutate_policy)
+        conn = FakeJournalConn()
+        expect_raises(
+            facade.SourceDriftDetectedError,
+            lambda: do_apply_build(principal, repo, conn=conn)[0],
+            "apply_build: corpus-policy drift under lock -> zero journal writes",
+        )
+        check("apply_build: zero journal rows after corpus-policy drift rejection", len(conn.table) == 0)
+    finally:
+        restore_fakes()
+        fx.cleanup()
+
+
+def test_apply_build_different_corpus_policy_yields_different_digest_and_bundle_version():
+    fx = Fixture()
+    install_fakes()
+    reset_hooks()
+    try:
+        principal, repo = make_principal_and_repo()
+        preview_1 = facade.preview_build(build_attempt=0, principal=principal, authz_repository=repo)
+        result_1, _conn_1 = do_apply_build(principal, repo, build_attempt=0)
+
+        fx.corpus_policy_path.write_text(json.dumps({"policy_id": "CHANGED_POLICY_CONTENT"}), encoding="utf-8")
+        preview_2 = facade.preview_build(build_attempt=0, principal=principal, authz_repository=repo)
+        check(
+            "apply_build: different corpus-policy content -> different input_digest (same build_attempt)",
+            preview_1["input_digest"] != preview_2["input_digest"],
+        )
+        result_2, _conn_2 = do_apply_build(principal, repo, build_attempt=0, expected_input_digest=preview_2["input_digest"])
+        check(
+            "apply_build: different corpus-policy content -> different bundle_version",
+            result_1.bundle_version != result_2.bundle_version,
+        )
+    finally:
+        restore_fakes()
+        fx.cleanup()
+
+
 def test_apply_build_version_collision():
     fx = Fixture()
     install_fakes()
@@ -628,6 +695,115 @@ def test_activate_refused_without_build_audit():
                 conn_factory=lambda: FakeJournalConn(),
             ),
             "apply_activate: refused without a build audit",
+        )
+    finally:
+        restore_fakes()
+        fx.cleanup()
+
+
+def test_activate_refused_without_corpus_policy_manifest_entry():
+    # CORPUS POLICY FOUNDATION (§J-9/§L-7): a build-audited, otherwise
+    # fully self-consistent bundle whose OWN source_manifest carries NO
+    # corpus-policy entry (simulates a "legacy", pre-Foundation bundle)
+    # must never activate. The bundle is produced via a REAL apply_
+    # build() call (a genuine build audit) with a custom snapshot_
+    # builder whose OWN returned source_manifest omits the policy
+    # entry - independent of _freeze_pre_build_state()'s own (policy-
+    # bearing) input_digest/drift-check, which stays untouched.
+    fx = Fixture()
+    install_fakes()
+    reset_hooks()
+    try:
+        principal, repo = make_principal_and_repo()
+        real_manifest = ingest.compute_source_manifest()
+        stripped_manifest = [e for e in real_manifest if e["path"] != "data/corpus_policy/corpus_policy.json"]
+        check("fixture sanity: stripped manifest has exactly one fewer entry", len(stripped_manifest) == len(real_manifest) - 1)
+
+        def policyless_builder(*, embedding_client=None, pdf_page_extractor=None, build_attempt=0):
+            pipeline_config = ingest.build_pipeline_config()
+            payload_seed = json.dumps({"sm": stripped_manifest, "ba": build_attempt}, sort_keys=True).encode("utf-8")
+            return {
+                "source_manifest": stripped_manifest, "pipeline_config": pipeline_config,
+                "build_attempt": build_attempt, "chunk_count": 1, "embedding_dimension": 4,
+                "artifacts": {
+                    "mevzuat.faiss": b"FAKEFAISS:" + hashlib.sha256(payload_seed + b"1").digest(),
+                    "documents.pkl": b"FAKEPKL:" + hashlib.sha256(payload_seed + b"2").digest(),
+                    "config.json": b"FAKECFG:" + hashlib.sha256(payload_seed + b"3").digest(),
+                },
+            }
+
+        result, _conn = do_apply_build(principal, repo, builder=policyless_builder)
+        check("policyless build: build audit file exists", Path(result.audit_path).is_file())
+
+        expect_raises(
+            facade.CorpusPolicyDriftError,
+            lambda: facade.apply_activate(
+                result.bundle_version, "none", principal=principal, authz_repository=repo,
+                conn_factory=lambda: FakeJournalConn(),
+            ),
+            "apply_activate: refused when target bundle carries no corpus-policy source-manifest entry",
+        )
+    finally:
+        restore_fakes()
+        fx.cleanup()
+
+
+def test_activate_refused_when_live_corpus_policy_drifted_prelock():
+    fx = Fixture()
+    install_fakes()
+    reset_hooks()
+    try:
+        principal, repo = make_principal_and_repo()
+        build_result, _conn = do_apply_build(principal, repo)
+
+        # Edit the LIVE policy file AFTER build, BEFORE calling
+        # apply_activate() at all - the pre-lock gate must catch this.
+        fx.corpus_policy_path.write_text(json.dumps({"policy_id": "DRIFTED_BEFORE_ACTIVATE"}), encoding="utf-8")
+
+        conn = FakeJournalConn()
+        expect_raises(
+            facade.CorpusPolicyDriftError,
+            lambda: facade.apply_activate(
+                build_result.bundle_version, "none", principal=principal, authz_repository=repo,
+                conn_factory=lambda: conn,
+            ),
+            "apply_activate: refused pre-lock when live corpus policy drifted since build",
+        )
+        check("apply_activate: zero journal rows after pre-lock policy-drift refusal", len(conn.table) == 0)
+        check(
+            "apply_activate: pointer file NOT written after pre-lock policy-drift refusal",
+            not (fx.index_dir / "current_version.json").exists(),
+        )
+    finally:
+        restore_fakes()
+        fx.cleanup()
+
+
+def test_activate_refused_when_live_corpus_policy_drifts_under_lock():
+    fx = Fixture()
+    install_fakes()
+    reset_hooks()
+    try:
+        principal, repo = make_principal_and_repo()
+        build_result, _conn = do_apply_build(principal, repo)
+
+        def drift_policy(resource_key):
+            fx.corpus_policy_path.write_text(json.dumps({"policy_id": "DRIFTED_UNDER_LOCK"}), encoding="utf-8")
+
+        _on_acquire_hooks.append(drift_policy)
+        conn = FakeJournalConn()
+        expect_raises(
+            facade.CorpusPolicyDriftError,
+            lambda: facade.apply_activate(
+                build_result.bundle_version, "none", principal=principal, authz_repository=repo,
+                conn_factory=lambda: conn,
+            ),
+            "apply_activate: refused under-lock when live corpus policy drifts between pre-lock check and lock",
+        )
+        check("apply_activate: zero journal rows after under-lock policy-drift refusal", len(conn.table) == 0)
+        check(
+            "apply_activate: pointer file NOT written after under-lock policy-drift refusal",
+            not (fx.index_dir / "current_version.json").exists(),
         )
     finally:
         restore_fakes()
@@ -1727,9 +1903,14 @@ def run_self_test():
     test_apply_build_success_full_chain()
     test_apply_build_safe_replay_does_not_reinvoke_builder()
     test_apply_build_source_drift_under_lock()
+    test_apply_build_corpus_policy_drift_under_lock()
+    test_apply_build_different_corpus_policy_yields_different_digest_and_bundle_version()
     test_apply_build_version_collision()
     test_activate_full_flow_and_already_active_and_stale()
     test_activate_refused_without_build_audit()
+    test_activate_refused_without_corpus_policy_manifest_entry()
+    test_activate_refused_when_live_corpus_policy_drifted_prelock()
+    test_activate_refused_when_live_corpus_policy_drifts_under_lock()
     test_activate_authz_denied_zero_lock()
     test_build_reconciliation_post_state_verified()
     test_build_reconciliation_pre_state_unchanged_when_no_audit()

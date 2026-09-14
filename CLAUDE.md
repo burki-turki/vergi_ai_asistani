@@ -469,26 +469,72 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   Rows 1-18, Row 19A, Row 19B, Row 19C-1…19C-3c-iv Slice 1, RAG
   Global-Resource Bundle Foundation ve RAG Real-Dependency Validation
   + Synthetic E2E Gate contract'ları değişmedi.
-- **Sıradaki adım: Corpus Policy İçin Salt-Okunur Exact-Scope/
-  Allowlist Reconciliation — ACTIVE / NEXT.** İmplementasyona HENÜZ
-  BAŞLANMADI ve YETKİLENDİRİLMEMİŞTİR — sıradaki adım, mevzuat/içtihat
-  corpus'unun kaynak/provenance/lisans/güncelleme politikası için ayrı,
-  dar kapsamlı ve TAMAMEN salt-okunur bir exact-scope/allowlist
-  reconciliation'dır. Corpus politikası çalışması HENÜZ BAŞLAMAMIŞTIR;
-  mevzuat/içtihat acquisition'ı HENÜZ BAŞLAMAMIŞTIR; gerçek corpus
-  yüklenmesi (population, `data/mevzuat/`+`documents.json`'a gerçek
-  içerik) HENÜZ BAŞLAMAMIŞTIR; production RAG bundle'ı HENÜZ
-  OLUŞTURULMAMIŞ/AKTİVE EDİLMEMİŞTİR. **ROW 19C-3c-iv Slice 2 —
-  Retrieval/Discovery-Dependent Generation** (Legal Research/Case
-  Law RAG-bağımlı üretim) HENÜZ BAŞLAMAMIŞTIR. **Bu pointer hiçbir
-  dosyaya yazma veya implementasyon yetkisi VERMEZ.** Bu pointer için
-  yeni bir Row numarası veya yeni bir roadmap fazı İCAT EDİLMEMİŞTİR.
-  Onaylı sıra (bağlayıcı raporlarda kesinleştirilmiştir) KORUNUR:
-  dependency gate (TAMAMLANDI) → Row 10/11 şema yaması (TAMAMLANDI) →
-  corpus politikası → corpus population → RAG-bağımlı Slice 2.
-  Maintenance/global-resource devam işleri ve Row 19D (deployment/OS
-  hardening, OS ACL/service identity dahil) bu checkpoint ile
-  BAŞLAMAMIŞTIR ve YETKİLENDİRİLMEMİŞTİR.
+- **RAG Corpus Policy Foundation** artık **DONE / LOCKED** — kullanıcı
+  tarafından ayrıca onaylanmış tam dosya allowlist'i (4 YENİ + 8
+  DEĞİŞTİRİLMİŞ = 12 dosya) üzerinde implement edildi (bkz. RAG Corpus
+  Policy Foundation checkpoint özeti, §5 sonrası, "## 6. Cross-Cutting
+  Backlog"dan hemen önce). Tek birleşik policy artefaktı
+  (`data/corpus_policy.schema.json` +
+  `data/corpus_policy/corpus_policy.json`) + validator
+  (`src/corpus_policy_validator.py`) + enforcement wiring slice'ıdır —
+  static, git-governed bir corpus kabul politikasıdır, yeni bir
+  mutation-coordinator action family DEĞİLDİR. Policy dosyası
+  `ingest.compute_source_manifest()`'in bir kaynak girdisi olarak bağlanır;
+  bu tek bağlama noktası üzerinden `input_digest`,
+  `source_digest`/`pre_hash`, `bundle_version`, build audit, completed
+  replay ve reconciliation'ın TAMAMINI otomatik kapsar — ayrı bir
+  identity-core alanı açılmadan. `apply_activate()`'in hem pre-lock hem
+  under-lock precondition zincirine yeni bir `CorpusPolicyDriftError`
+  kapısı eklendi: hedef bundle'ın policy girdisi eksikse veya canlı,
+  repo-committed policy'nin ham-bayt hash'inden farklıysa, sıfır
+  pointer/journal/audit yazımıyla reddedilir. Belge
+  admissibility/provenance/`%PDF` magic-byte/max-boyut/cross-document dedup
+  kontrolleri (`src/manifest_validator.py`) ve provision temporal-disiplin
+  + cross-version interval kontrolleri
+  (`src/provision_manifest_validator.py`, bu validator'ın İLK gerçek
+  otomatik çağrı yolu) build gate'ine eklendi. İlk bağımsız incelemede
+  (Fable haftalık kotası dolduğu için Opus kullanıldı, implementasyondan
+  AYRI model/oturum) **F1 HIGH** (`src/ingest.py`'nin üç bundle-yolu join
+  noktasında sözleşmenin gerektirdiği path-containment kontrolü hiç
+  implement edilmemişti, `preview_build()` üzerinden gerçek bir
+  arbitrary-file read-and-hash primitive'iydi) ve **F2 MEDIUM**
+  (`admission="deferred"` build gate'i tarafından enforce edilmiyordu, üç
+  deferred aile sıfır hatayla kabul ediliyordu) bulundu, ilk verdict `NOT
+  LOCK-READY` idi. Dar, üç dosyalık bir remediasyon (`src/ingest.py`,
+  `src/manifest_validator.py`,
+  `ui/tests/test_rag_bundle_builder_isolated.py`) ikisini de kapattı;
+  TAMAMEN AYRI bir Opus yeniden incelemesi (yine Fable kotası nedeniyle)
+  F1/F2'nin kaynak + gerçek NTFS junction/absolute-path fault-injection +
+  bağımsız `sys.addaudithook` tanılarıyla KAPANDIĞINI doğruladı ve final
+  verdict'e ulaştı:
+  `RAG CORPUS POLICY FOUNDATION LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
+  Rows 1-18, Row 19A, Row 19B, Row 19C-1…19C-3c-iv Slice 1, RAG
+  Global-Resource Bundle Foundation, RAG Real-Dependency Validation +
+  Synthetic E2E Gate ve Row 10/11 Legal Research + Case Law Schema Patch
+  contract'ları değişmedi.
+- **Sıradaki adım: RAG Corpus Prerequisite Documents-Schema Patch İçin
+  Salt-Okunur Exact-Scope/Allowlist Reconciliation — ACTIVE / NEXT.**
+  İmplementasyona HENÜZ BAŞLANMADI. Hiçbir dosya için yazma yetkisi
+  VERİLMEMİŞTİR; ayrı, açık bir kullanıcı onayı olmadan hiçbir dosya
+  değiştirilemez. Bu pointer için yeni bir Row numarası İCAT EDİLMEMİŞTİR.
+  Amaç: Fable FINAL raporunun P2 olarak adlandırdığı Phase-2 prerequisite
+  documents-şema yamasının TAM kapsamını, mevcut kod/şema üzerinden
+  salt-okunur olarak belirlemektir — bu sıradaki adımın kendisi de
+  implementasyon DEĞİL, yalnız bir kapsam-belirleme incelemesidir.
+  Araştırılacak muhtemel alanlar (ÖNCEDEN ONAYLANMIŞ değişiklik SAYILMAZ,
+  yalnız incelenecek adaylardır): `mahkeme_dairesi`, `esas_no`, `karar_no`,
+  `temyiz_kesinlesme_durumu`, `anonymization_applied`, `text_basis`,
+  `raw_byte_sha256`, `acquisition_timestamp`, `acquisition_channel`,
+  `acquiring_actor_ref`, ve `manifest_validator.py`'nin per-document-type
+  kuralları. P3 (external source/licensing verification) HENÜZ
+  BAŞLAMAMIŞTIR; P4 (acquisition tooling) HENÜZ BAŞLAMAMIŞTIR; P5 (Tier-1
+  population + ilk gerçek bundle) HENÜZ BAŞLAMAMIŞTIR; P5b (Danıştay/VDDK
+  population) HENÜZ BAŞLAMAMIŞTIR; P6 (RAG-bağımlı Slice 2) HENÜZ
+  BAŞLAMAMIŞTIR. Row 19D ve diğer maintenance/global-resource devam işleri
+  bu checkpoint ile BAŞLAMAMIŞTIR ve YETKİLENDİRİLMEMİŞTİR. Onaylı sıra
+  (Fable FINAL raporunun kendi bağlayıcı sözleşmesiyle) KORUNUR: P2 ile
+  P3'ün kendi aralarındaki sıra esnektir, ama ikisi de acquisition
+  tooling'den (P4) ÖNCE bitmek ZORUNDADIR.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -4992,6 +5038,434 @@ RAG Real-Dependency Validation + Synthetic E2E Gate örneğinde olduğu
 gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
 işlemidir; hiçbir kaynak/migration/test/production dosyasına
 dokunmaz.
+
+### RAG Corpus Policy Foundation (DONE / LOCKED — checkpoint özeti)
+
+**A. Preflight ve exact scope** — Başlangıç HEAD
+`6492500405b06ddd5647cde49074cc984edfec26`; branch `claude-dev`; staged set
+boş; `stash@{0}` ("quarantine unexpected post-Row19C-2a late writes")
+dokunulmamış. Onaylı exact allowlist **4 YENİ + 8 DEĞİŞTİRİLMİŞ = 12
+dosya**: YENİ (4) — `data/corpus_policy.schema.json`,
+`data/corpus_policy/corpus_policy.json`, `src/corpus_policy_validator.py`,
+`ui/tests/test_corpus_policy_validator_isolated.py`. DEĞİŞTİRİLMİŞ (8) —
+`src/ingest.py`, `src/manifest_validator.py`,
+`src/provision_manifest_validator.py`,
+`ui/services/rag_bundle_mutation_facade.py`,
+`ui/tests/test_rag_bundle_builder_isolated.py`,
+`ui/tests/test_rag_bundle_mutation_facade_isolated.py`,
+`ui/tests/test_rag_bundle_mutation_integration_postgres.py`,
+`ui/tests/test_rag_bundle_dependency_smoke.py`. 0 migration; 0 production
+corpus içeriği (`data/cases/**`, `data/documents.json`,
+`data/provisions.json`, `data/mevzuat/**` dokunulmadı); 0 `index/**`
+değişikliği; 0 yeni web/CLI yüzeyi
+(`ui/cli_mutate.py`/`ui/reconciliation_operator.py` açılmadı); 0 yeni
+action family/routing key; 0 `ui/services/rag_bundle_mutation_adapters.py`
+değişikliği (mekanizma seçimi adapter'ı zaten değiştirmeden doğru
+bırakıyor); 0 `src/retriever.py` değişikliği (reader-side kontrol gerekçeli
+ertelendi). F1/F2 remediasyonunun exact alt-sınırı (12 dosyalık allowlist
+İÇİNDE, yeni dosya EKLENMEDEN): yalnız `src/ingest.py`,
+`src/manifest_validator.py`,
+`ui/tests/test_rag_bundle_builder_isolated.py`.
+
+**B. Policy artefaktı** — `data/corpus_policy.schema.json`: draft 2020-12,
+kök VE tüm `$defs`'te (`source_authority_tier`, `document_family_rule`,
+`quality_gate`) VE tüm inline root alt-nesnelerinde
+`additionalProperties:false`. `schema_version` integer `const:1`;
+`policy_id` `const:"vergi_ai_corpus_policy_v1"`; `policy_version` integer
+`minimum:1`, monoton. Kök `required` tam 12 kapalı anahtar.
+`data/corpus_policy/corpus_policy.json`: `policy_version=1`,
+`effective_from="2026-09-14"`. `document_family_rules` **tam 10
+belge-ailesi gerçeği** (`belge_turu` enum'uyla birebir,
+`documents.schema.json`'dan runtime'da CANLI okunur — ikinci bir tip
+sözlüğü icat edilmez): **6 `allowed`** (Kanun, Bakanlar Kurulu Kararı,
+Cumhurbaşkanı Kararı, Yönetmelik, Genel Tebliğ, Tebliğ) / **3 `deferred`**
+(Sirküler, Özelge, Yargı Kararı — her biri kendi `prerequisites[]`'iyle) /
+**1 `prohibited`** (Diğer). Pilot
+`temporal_requirements.current_law_only=true`; Tier-1 hedefi
+VUK+İYUK+AATUHK; Danıştay/VDDK (`Yargı Kararı`) Phase-2 case-law metadata
+şema yaması + anonimizasyon alanları prerequisite'lerinin ARKASINDADIR.
+Policy git-governed, static bir registry'dir (`deadline_rules.json` emsali)
+— yeni bir mutation-coordinator action family DEĞİLDİR; düzenlenmesi
+`CLAUDE.md` §8 onayı + reviewed commit ile olur.
+
+**C. Policy identity ve bundle binding** — Exact zincir: policy dosyasının
+ham baytları → `ingest.compute_source_manifest()`'in `{path, sha256,
+size_bytes}` kaynak girdisi → `source_digest`/`pre_hash` → `input_digest` →
+identity payload → `bundle_version` → build audit → completed replay +
+reconciliation doğrulaması → reader'ın (`retriever.load_pinned_bundle`)
+`bundle_version` hariç TÜM manifest alanlarını jenerik rehash'lemesi.
+Policy hash'i dosyanın KENDİ içine YAZILMAZ (self-reference yok). Ayrı,
+adlandırılmış bir identity-core alanı AÇILMADI — policy yalnız mevcut
+`source_manifest` girdi listesine bir üye olarak eklendi. Adapter
+(`ui/services/rag_bundle_mutation_adapters.py`) ve reader
+(`src/retriever.py`) HİÇ DEĞİŞTİRİLMEDİ ve doğru kaldı — ikisi de canlı
+`compute_source_manifest()`/jenerik manifest rehash üzerinden policy
+girdisini otomatik kapsar. Policy'de TEK BAYT değişikliği (corpus sabit
+tutulurken) `source_digest`, `input_digest` VE `bundle_version`'ın üçünü de
+değiştirir — bağımsız olarak kanıtlandı. Under-lock policy drift, mevcut
+`SourceDriftDetectedError` yolu üzerinden, SIFIR yeni facade kodu ile
+yakalanır (`apply_build`'in `_precondition_callback`'i zaten
+`_freeze_pre_build_state`'i yeniden çalıştırır).
+
+**D. Build enforcement** — `build_bundle_snapshot()` üç gate'i
+chunk/embed/FAISS'ten KESİNLİKLE ÖNCE, sırayla çalıştırır: (1)
+`corpus_policy_validator.validate_corpus_policy(raise_on_error=True)`, (2)
+`validate_manifest_file(raise_on_error=True)` (artık YENİ admissibility
+adımını da içeriyor), (3)
+`provision_manifest_validator.validate_provisions_file(raise_on_error=True)`
+— bu validator'ın **İLK gerçek otomatik çağrı yolu** (önceden repo
+genelinde sıfır çağıranı vardı). Policy/admission ihlalinde: sıfır staging,
+sıfır bundle, sıfır audit, sıfır network — her şey yalnız `run_mutation`
+tarafından çağrılan `_writer_callback` içinde yaşar, builder dönmeden ona
+ulaşılamaz. Belge kapıları: `%PDF` magic-byte (gerçek 5-bayt header
+okuması), policy'den okunan max-dosya-boyutu eşiği, cross-document ham-hash
+dedup (farklı `document_id`'ler altında byte-identical içeriği yakalar),
+provenance-alan-varlığı kontrolü (bugün şemada GERÇEKTEN var olan alanlara
+sınırlı). Provision kapıları: temporal-sensitive ailelerde (`verified=True`
++ dolu `valid_from`) en az bir `statute_text`/`amending_law` evidence
+zorunluluğu (yalnız `consolidated_legislation` yetmez); aynı
+`provision_id`'nin versiyonları arası interval **overlap → ERROR**,
+açıklanamayan (>1 gün) **gap → WARNING**. Mevcut 7 gerçek provision
+(`verified=False`/`status="unknown"` olan `kanun_6736_m5_f3` dahil) bu yeni
+kontrolleri **vacuous-pass** ile geçti — `verified=False` dalındaki önceden
+var olan warning davranışı BYTE-DEĞİŞMEDEN korundu, sıfır yeni hata/uyarı
+üretildi.
+
+**E. Activation enforcement** — Yeni
+`CorpusPolicyDriftError(RagBundleMutationError)`. `apply_activate()`'in HEM
+pre-lock HEM under-lock precondition zincirine bir adım eklendi: hedef
+bundle'ın `source_manifest`'inde corpus-policy girdisi (a) MEVCUT olmalı,
+(b) sha256'sı CANLI, repo-committed
+`data/corpus_policy/corpus_policy.json`'ın ham-bayt hash'ine TAM EŞİT
+olmalı. Eski-policy, policy'siz, corrupt veya duplicate-entry'li bir bundle
+**REDDEDİLİR** — sıfır pointer/journal/audit yazımıyla. Under-lock kontrol,
+kilit VERİLDİĞİ ANDA policy dosyası değiştirilerek bağımsızca test edildi
+(gerçek disposable PostgreSQL'e karşı): drift yakalandı, pointer yazılmadı,
+sıfır `rag_bundle.activate` journal satırı oluştu. Activation identity
+payload'ı ve reconciliation adapter'ı DEĞİŞMEDİ — yeni hata sınıfı yalnız
+`apply_activate()`'in KENDİ senkron akışında fırlar.
+
+**F. İlk implementasyon kanıtı (Sonnet, ayrı zaman dilimi — SONRAKİ
+remediasyon koşusuyla BİRLEŞTİRİLMEZ)** — Fresh disposable PostgreSQL 16 +
+migration 0001-0005 + `vergi_ui_runtime` ortamında **65/65 modül exit 0**:
+**3785 passed, 0 failed, 8 counted skipped, 11 informational skipped**. 8
+counted skip: `test_path_containment_isolated` (4) +
+`test_path_containment_module_isolated` (4) — önceden bilinen
+Windows-Developer-Mode-kapalı POSIX-symlink precedent'i. 11 informational
+skip: `test_rag_bundle_builder_isolated` (3, faiss/numpy
+`vergi_ui_runtime`'da yok) + `test_rag_bundle_dependency_smoke` (7, aynı
+neden + geliştirici modu) + `test_rag_bundle_reader_isolated` (1, önceden
+var olan, bu implementasyonla ilgisiz). Root `.venv`'de
+(faiss/numpy/pypdf/openai/dotenv/httpx2 GERÇEKTEN kurulu):
+`corpus_policy_validator.py --self-test` **20/20 PASS**;
+`test_corpus_policy_validator_isolated` **69/0**;
+`test_rag_bundle_builder_isolated` **39/0** (faiss VAR, hiç skip yok);
+`test_rag_bundle_mutation_facade_isolated` **148/0**; dependency smoke hem
+`developer` hem `VERGI_RAG_DEPENDENCY_GATE=require` modunda **73/0, 0
+informational skip**, `DEPENDENCY GATE: PASS`. **Bu ilk yeşil full sweep,
+ilerideki bağımsız incelemenin bulduğu F1/F2'yi YAKALAMADI** — testlerin
+geçmesi tek başına LOCK için YETERLİ SAYILMADI (bkz. §G).
+
+**G. İlk bağımsız Opus incelemesi** — Açık, dürüst kronoloji: **Fable
+haftalık kotası dolduğu için bu turun doğrudan ana bağımsız incelemecisi
+Opus olarak kullanıldı**; implementasyon Sonnet tarafından AYRI bir
+oturumda yapıldığından model ve bağlam bağımsızlığı korunmuştur; advisor
+çağrılmamıştır. Üç bağımsız, birbirine kör, salt-okunur alt-ajan +
+koordinatörün kendi doğrudan kaynak incelemesi + altı repo-dışı, sıfırdan
+yazılmış diagnostic kullanıldı. **F1 — HIGH**: `src/ingest.py`'nin
+sözleşmenin (Fable §L satır 5, §U) açıkça gerektirdiği path-containment
+kontrolü hiçbir yerde implement edilmemişti (`grep -n "path_containment"
+src/ingest.py` sıfır eşleşme); üç ham join noktası
+(`compute_source_manifest()`, `build_bundle_snapshot()`'ın kendi join'i,
+`build_document_chunks()`) hâlâ ham `.exists()`/`open()`/`.stat()`
+kullanıyordu; gerçek `mklink /J` junction + gerçek absolute-path escape ile
+ampirik olarak kanıtlandı — `compute_source_manifest()` root dışındaki bir
+kanaryayı GERÇEKTEN okuyup hash'ledi, digest kanaryeninkiyle birebir
+eşleşti; ayrıca **gerçek public `preview_build()` API'si** üzerinden,
+HİÇBİR validator'dan geçmeden erişilebilir bir arbitrary-file read-and-hash
+primitive'iydi. Dosyayı açmanın §9 gerekçesi olarak zaten belirtilen bu
+kontrol TESLİM EDİLMEMİŞ ve implementer raporunda AÇIKÇA DİSCLOSE
+EDİLMEMİŞTİ. **F2 — MEDIUM**: `src/manifest_validator.py`'nin admission
+kontrolü yalnız `"prohibited"`'i reddediyordu; `"deferred"` dalı YOKTU —
+gerçek committed policy'ye karşı çalıştırılan bağımsız bir diagnostic, üç
+deferred ailenin (Sirküler, Özelge, Yargı Kararı) TAMAMININ **sıfır hatayla
+kabul edildiğini** kanıtladı; ağırlaştırıcı detay: en yüksek PII riski
+taşıyan iki aile (`Özelge`, `Yargı Kararı`) `required_provenance_fields:[]`
+taşıyordu, yani izin verilen bir `Kanun`'dan DAHA AZ denetime tabiydi.
+**Sonuç: `NOT LOCK-READY`.** Ayrıca F3-F8 (Low) ve O1-O6 (Observation)
+bulguları raporlandı (bkz. §K — hiçbiri kaybolmadı).
+
+**H. Dar remediasyon (Sonnet, F1/F2'nin doğrudan zorunlu sonucu)** — Exact
+**3 dosya**: `src/ingest.py`, `src/manifest_validator.py`,
+`ui/tests/test_rag_bundle_builder_isolated.py`. **F1 kapanışı**: üç gerçek
+join noktasının HER BİRİ, `src/path_containment.resolve_existing(candidate,
+root=MEVZUAT_DIR)` üzerinden containment-before-query'ye taşındı (Row
+19C-3a Slice 1'in paylaşılan primitive'i — YENİDEN YAZILMADI, YENİDEN
+KULLANILDI); sonraki tüm `open`/`stat`/hash işlemleri YALNIZ
+containment-doğrulanmış `verified_path` üzerinde çalışır; genuinely-missing
+dosya ile escape AYNI `FileNotFoundError` mesajıyla raporlanır (mevcut
+`manifest_validator.py` deseniyle tutarlı); manifest'e kaydedilen LOGICAL
+isim (alias'ın kendi adı) korunur, resolve edilmiş gerçek hedef adına ASLA
+sessizce dönüştürülmez. Gerçek `mklink /J` junction, gerçek
+absolute/drive-qualified path, `../` traversal ve UNC-şekilli path'lerin
+TAMAMI reddedildi; genuine broken junction
+(`lexists()==True`/`exists()==False`) fail-closed reddedildi. Public
+`preview_build()` — incelemenin somut olarak gösterdiği erişilebilir yol —
+site #1'in kendi düzeltmesiyle kapandı,
+`ui/services/rag_bundle_mutation_facade.py`'ye DOKUNULMADAN. **F2
+kapanışı**: `validate_corpus_policy_admissibility()`'nin admission kontrolü
+dört-yönlü fail-closed matrise genişletildi — `allowed` → diğer kapılara
+devam; `deferred` → **ERROR**, ailenin kendi `prerequisites[]`'ini (veya
+`"yok"`) atıfla; `prohibited` → DEĞİŞMEDEN ERROR; tanınmayan/eksik değer →
+**ERROR** (asla sessizce `allowed` sayılmaz). Policy metninin KENDİSİ
+dokunulmadı/yumuşatılmadı — bu bir enforcement düzeltmesiydi, policy-text
+softening DEĞİL. Üç deferred aile (Sirküler, Özelge, Yargı Kararı) AYRI
+AYRI test edildi; `Özelge`'nin `required_provenance_fields=[]` olduğu ÖN
+KOŞUL olarak doğrulanıp yine de reddedildiği (boş provenance admission
+red'ini KURTARMAZ) ayrıca kanıtlandı; gerçek 3-belgelik seed corpus'un
+(tamamı `allowed` ailelerde) regresyonsuz geçtiği doğrulandı.
+
+Remediasyon implementer'ının kendi koşusu (**ayrı etiketli, §F
+implementasyon koşusuyla BİRLEŞTİRİLMEZ**): **65/65 modül exit 0**, **3817
+passed, 0 failed, 8 counted skipped, 13 informational skipped** (+2
+informational fark, tamamı `test_rag_bundle_builder_isolated`'ın yeni
+FAISS-gated + privilege-gated alt-testlerinden, matematiksel olarak
+`3785+32=3817` ve `11+2=13` şeklinde mutabık). Hedefli:
+`corpus_policy_validator.py --self-test` **20/20**;
+`test_rag_bundle_builder_isolated` **73/0/1 informational** (root `.venv`,
+faiss VAR); `test_rag_bundle_mutation_integration_postgres` **68/0/0
+skipped**; dependency smoke `developer`+`require` **73/0/0**, `DEPENDENCY
+GATE: PASS`. Bağımsız F1 audithook diagnostic'i: **7/7 DIAG-PASS**.
+Bağımsız network/`.env` invariance diagnostic'i: sıfır socket event, sıfır
+`.env` open.
+
+**I. Bağımsız Opus re-review** — Açık disclosure: **Fable haftalık kotası
+yine dolu olduğu için bu turun da ana bağımsız yeniden incelemecisi
+Opus'tur**; ilk implementasyon VE remediasyon Sonnet tarafından AYRI
+oturumlarda yapıldığından model/bağlam bağımsızlığı korunur; advisor
+çağrılmamıştır. Dört repo-dışı, sıfırdan yazılmış diagnostic (**122
+DIAG-PASS, 0 DIAG-FAIL, 1 informational skip** toplam) kullanıldı. **F1:
+CLOSED** — üç join noktası kaynaktan tek tek doğrulandı
+(`ingest.py:3148-3171`, `:3245-3257`, `:1663-1686`); `import
+path_containment` module-level; her iki join'de AYNI `ingest.MEVZUAT_DIR`
+dinamik olarak okunuyor (cached/default-arg yok); dosyanın TAMAMINDA yalnız
+3 `except` bloğu var, hepsi bu containment çevirileri — bare
+except/pass/continue/warning-downgrade YOK. Kendi 40+13 DIAG-PASS'lık
+fault-injection matrisi (gerçek `mklink /J`, gerçek broken junction, gerçek
+absolute/drive-qualified path, UNC, `../`) + bir POZİTİF KONTROL (kabul
+edilen bir dosyanın GERÇEKTEN okunduğunu kanıtlayan) + gerçek public
+`preview_build()` API'sine karşı (gerçek `Principal`, gerçek
+`InMemoryGlobalResourceAuthzRepository`) doğrudan fault injection.
+Repo-genelinde DÖRDÜNCÜ bir korumasız eşdeğer join arandı:
+`run_ingest()`'in kendi, AYRI ham join'i (`ingest.py:2631`) bulundu — bu üç
+kontratlı siteden biri DEĞİLDİR, remediasyon raporunda AÇIKÇA disclose
+edilmiştir; sıra (containment-hardened `validate_manifest_file` ondan önce
+çalışır) ve küme (aynı active+ingest-enabled filtresi) kaynaktan
+doğrulanarak transitive-safe olduğu kanıtlandı, reachability sıfır
+(production caller yok, `main()` `SystemExit(2)` ile kapalı) — **O-A**
+olarak backlog'a kaydedildi (bkz. §K). **F2: CLOSED** — dört-yönlü matris
+kaynaktan (`manifest_validator.py:407-437`) tek tek doğrulandı; GERÇEK
+committed policy'den mekanik olarak yeniden sayıldı: **6 allowed / 3
+deferred / 1 prohibited**; kendi 50 DIAG-PASS'lık diagnostic'i üç deferred
+ailenin AYRI AYRI reddini, boş-provenance'ın admission red'ini
+kurtarmadığını, policy metninin YUMUŞATILMADIĞINI (mtime karşılaştırmasıyla
+da doğrulandı) ve deferred bir belgenin `build_bundle_snapshot()`'a sıfır
+extraction/embedding/`index/` artefaktı ile reddedildiğini kanıtladı.
+
+Bağımsız 65-modüllük full sweep (kendi fresh disposable PostgreSQL 16.15
+kümesi, migration 0001-0005): **65/65 modül exit 0**, **3817 passed, 0
+failed, 8 counted skipped, 13 informational skipped** — remediasyon
+implementer'ının 3817/0/8/13'ünü bağımsız olarak BİREBİR yeniden üretti
+(kendi kümesi, kendi aritmetiği). Network/`.env`/data/index invariance:
+repo-dışı `sitecustomize.py` audithook ledger'ı (pozitif+negatif kontrollü)
+tam sweep boyunca **119 event, tümü `127.0.0.1`'e `socket.connect`**,
+**sıfır DNS lookup, sıfır `.env` open**; kapanış 90-dosyalık protected-path
+manifest'i açılışla **byte-identical**. Cleanup: disposable PostgreSQL
+durduruldu, cluster silindi, junction/temp fixture'lar temizlendi; kapanış
+git durumu açılışla birebir aynı (branch, HEAD, staged set, `stash@{0}`,
+exact 12 dosya).
+
+**Final verdict**:
+
+`RAG CORPUS POLICY FOUNDATION LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
+
+**J. Sayaçlar** — Corpus Policy Foundation sonrasında: test modülü
+**64→65**; merged routing key **49→49** (değişmedi); logical action family
+**37→37** (değişmedi); kapalı mutasyon giriş noktası **29→29** (değişmedi);
+refusal senaryosu **44→44** (değişmedi — bu sayaç, önceki checkpoint'lerde
+de kayıtlı olduğu gibi, TEK bir artefaktan mekanik olarak doğrulanamayan,
+yalnız checkpoint aritmetiğiyle tutarlı bir sayım KONVANSİYONUDUR; bu faz
+bu soft-spot'a dokunmadı, gizlemedi); migration **5→5** (değişmedi).
+
+**K. Kalan Low/Observation maddeleri — hiçbiri kaybolmadı**
+
+İlk bağımsız Opus incelemesinin F3-F8/O1-O6 bulguları (remediasyon KAPSAM
+DIŞI bıraktı, re-review'de hâlâ açık olduğu doğrulandı):
+
+- **F3 (Low)** — `Yargı Kararı` policy notu,
+  `mahkeme_dairesi`/`esas_no`/`karar_no`/`temyiz_kesinlesme_durumu`
+  alanlarını yanlışlıkla `data/case_case_law.schema.json`'a atfediyor (bu
+  dört isim o şemada SIFIR kez geçiyor; gerçekte bunlar Phase-2'nin
+  `documents.schema.json`'a eklenecek önerilen alanlarıdır). Notun VARDIĞI
+  SONUÇ doğru (court metadata bugün gerçekten yok); yalnız atıf hatalı.
+  Re-review'de HÂLÂ AÇIK olduğu doğrulandı.
+- **F4 (Low)** — `Yargı Kararı.prerequisites`,
+  `"phase2_anonymization_fields"`i içeriyor ama
+  `security_rules.anonymization_required_for` yalnız `["Özelge"]`
+  listeliyor — iki alan arasında çapraz kontrol yok; registry'nin bugün
+  sıfır tüketicisi olduğundan etkisi nil. Re-review'de HÂLÂ AÇIK.
+- **F5 (Low)** — tier-membership çapraz kontrolü yok;
+  `document_family_rules[*].tier` herhangi bir integer'ı kabul eder,
+  `source_authority_tiers`'a karşı doğrulanmaz; `tier`'in bugün sıfır
+  runtime tüketicisi var.
+- **F6 (Low)** — `official_source: false`, required-provenance kontrolünü
+  GEÇER (bu bir varlık kontrolüdür, doğruluk kontrolü değil — `False is
+  None`/`False == ""` ikisi de yanlış); gerçek 3 belgenin üçü de `true`
+  taşıdığından bugün yanlış-kabul yok.
+- **F7 (Low)** — admissibility gate'inin içerik-kapısı yarısında dar
+  fail-open `continue` yolları: `.stat()`'ta bir `OSError` o belge için
+  boyut/magic-byte/dedup'ı SESSİZCE atlar; bir containment hatası da
+  sessizce `continue` eder (`validate_manifest_file` içinde güvenli —
+  `validate_files_exist` aynı alt-kümeyi zaten reddediyor — ama fonksiyon
+  STANDALONE çağrılırsa bir escape tüm içerik kapılarını atlayıp temiz
+  dönebilir); `_sha256_of_file` unguarded, bir `OSError` ham olarak kaçar.
+- **F8 (Low)** — `validate_provisions_file`, şema hataları ile
+  `validate_manifest` arasında fail-fast yapmıyor (kardeş validator'ların
+  ikisi de yapıyor) — malformed bir `provisions.json` temiz bir
+  `ValueError` yerine tipsiz bir `KeyError`/`TypeError` çökmesi olarak
+  yüzeye çıkabilir.
+- **O1** — facade'in policy-entry lookup'ı first-match-wins'tir, duplicate
+  policy girdisini reddetmez (defense-in-depth only; sömürmek yerel
+  `index/**` yazma erişimi gerektirir — Row 19D OS-ACL sınıfı).
+- **O2** — gate yalnız `path`/`sha256` okur; `size_bytes` doğrudan kontrol
+  edilmez (dolaylı olarak `bundle_version` üzerinden bağlıdır); malformed
+  `sha256` şekil-doğrulanmaz (yine de eşleşmediği için fail-closed kalır).
+- **O3** — `preview_activate`'in policy gate'i YOK — sözleşme gate'i yalnız
+  `apply_activate`'e zorunlu kıldığından bu UYUMLUDUR, kusur değildir.
+- **O4** — `completed` idempotency replay'inde under-lock gate ÇALIŞMAZ
+  (benign: pre-lock kontrol her `apply_activate`'te çalışmaya devam eder,
+  replay yeni pointer yazmaz).
+- **O5** — 25 negatif test yalnız `result["valid"] is False` doğrular,
+  hangi kuralın tetiklendiğini pinlemez — yanlış nedenle geçme teorik
+  olarak mümkün.
+- **O6** — kozmetik: `manifest_validator.py` içinde var olmayan bir
+  fonksiyon adına (`validate_corpus_admissibility_and_quality`) yorum
+  atıfı; `validate_corpus_policy_admissibility`'nin hiç append edilmeyen
+  bir `warnings` listesi döndürmesi; interval kontrolündeki dokümante
+  edilmemiş `valid_through`-inclusive konvansiyonu; tek bir global
+  `text_basis_declaration`'ın hem as-published (Resmî Gazete) hem
+  consolidated (mevzuat.gov.tr) kaynakları kapsaması (policy'nin kendi
+  bitişik notunda dürüstçe disclose edilmiş).
+
+Re-review'in KENDİ yeni bulguları (**O-A — O-E**, remediasyon sonrası kod
+durumuna karşı):
+
+- **O-A (Low)** — `run_ingest()`'in DÖRDÜNCÜ, AYRI ham join'i
+  (`src/ingest.py:2631`, `.exists()` `:2650`, tam hash-okuması `:2661`)
+  yalnız TRANSİTİF olarak korunuyor: sıra doğrulandı (containment-hardened
+  `validate_manifest_file` ondan ~170 satır önce çalışıyor), belge kümesi
+  doğrulandı (aynı active+ingest-enabled filtresi), reachability sıfır
+  (production caller yok, `allow_network=True` açık rıza gerektiriyor,
+  `main()` `SystemExit(2)` ile kapalı). Kalan risk,
+  `manifest_validator.MEVZUAT_DIR` ile `ingest.MEVZUAT_DIR` adlı İKİ AYRI,
+  production-eşdeğer, bağımsız monkeypatch'lenebilir sabit kullanan bir
+  check-then-re-derive-raw deseninin yarattığı TOCTOU penceresidir —
+  `CLAUDE.md` Row 19A bunu AÇIKÇA Row 19D OS-ACL kapsamına atar. "Tamamen
+  çözüldü" DENMEZ; remediasyon raporunda dürüstçe disclose edildiği
+  doğrulandı.
+- **O-B (Observation)** — `CACHE_DIR` join/unlink işlemleri
+  (`get_cache_paths`, `document_cache_exists`, `delete_document_cache`)
+  containment UYGULANMAMIŞTIR; farklı bir kök (`CACHE_DIR`, `MEVZUAT_DIR`
+  değil); önceden var olan, bu slice'ın DIŞINDA; `document_id` şema
+  pattern'i (`^[a-z0-9_-]+$`, ayırıcı yok) + `run_ingest`'in erişilemezliği
+  tarafından hafifletilmiş; backlog'da kalır.
+- **O-C (Observation)** — `resolve_existing()` segment-seviyesi doğrulama
+  YAPMAZ; containment tamamen `resolve(strict=True)` + `relative_to`'ya
+  dayanır. Bu, safe-internal-alias sözleşmesi için ZORUNLUDUR
+  (çok-segmentli bir `file_name`'in root İÇİNDE kalması gerektiğinde kabul
+  edilmesi gerekir) ve bu incelemede kusur SAYILMADI — yalnız primitive'in
+  garantisinin "segmentler doğrulanıyor" diye ABARTILMAMASI için kayda
+  geçirildi. Row 19D/OS-seviyesi risklerden AYRI bir maddedir.
+- **O-D (Observation)** — admission/provenance kontrolleri
+  `ingest.enabled=False` dahil TÜM kayıtlara uygulanır (kod içinde açıkça
+  dokümante edilmiştir) — bilinçli, daha KATI (fail-closed) bir davranış;
+  bloklamayan bir observation'dır, ama gelecekte deferred bir aile için
+  devre dışı bir placeholder kayıt eklenirse bu kaydın TÜM manifest'i bloke
+  edeceği bilinmelidir.
+- **O-E (Observation)** — dependency-smoke çıktısında `DEPENDENCY GATE:
+  PASS` literal'i iki kez geçiyor (marker'ın kendisi + meta-testin kendi
+  etiket satırı) — bu, RAG Real-Dependency Validation + Synthetic E2E Gate
+  checkpoint'inde ÖNCEDEN kayıtlı, DEĞİŞMEMİŞ bir backlog notudur, bu turda
+  YENİ değildir.
+
+Korunan, önceden bilinen sınırlar (bu turda dokunulmadı, kaybolmadı):
+`validate_status_logic`'in yalnızca warning üretmesi, hiçbir zaman error
+üretmemesi; hard-neutral discovery'nin temporal sınırı
+(issue-driven/case-law discovery sorgu tarihini bastırır); policy hash'in
+whitespace/ham-bayt duyarlılığı (bilinçli, fail-closed davranış);
+`preview_build.source_document_count`'un +1 kayan, yalnız görüntüleme
+amaçlı semantiği; legacy `run_ingest` davranış sertleşmesi (gate #2'yi
+miras alır); prompt-injection sınırının implementasyonunun RAG-bağımlı
+Slice 2'ye bırakılması; population-stage
+encrypted-PDF/OCR/Unicode-hijyen/embedded-JavaScript/decompression-bomb
+kontrollerinin policy'de TANIMLI ama henüz KODLANMAMIŞ olması; case-law
+metadata/provenance/`text_basis` şema eksikliklerinin Phase-2'ye
+bırakılması; mevzuat.gov.tr/Resmî Gazete/Danıştay-UYAP erişim-lisans
+koşullarının dış doğrulama gerektirmesi (Phase-3); corpus PDF'lerinin
+git-depolama stratejisi kararının henüz verilmemiş olması; Row 19D
+TOCTOU/OS-ACL residual'ı (O-A dahil, tüm local-filesystem-actor sınıfı
+riskler).
+
+**L. Scope dışı/kalan fazlar** — Bu checkpoint aşağıdakilerin HİÇBİRİNE
+dosya-yazma veya implementasyon yetkisi VERMEZ; hiçbiri başlamamıştır:
+**P2** — documents-şema prerequisite yaması (court metadata + provenance +
+`text_basis` + anonimizasyon alanları + `manifest_validator` per-type
+kuralları); **P3** — external source/licensing verification
+(mevzuat.gov.tr/Resmî Gazete/Danıştay-UYAP); **P4** — acquisition tooling;
+**P5** — Tier-1 population + ilk gerçek bundle; **P5b** — Danıştay/VDDK
+(case-law) population; **P6** — RAG-bağımlı Slice 2 (ROW 19C-3c-iv Slice
+2); gerçek prompt-injection boundary implementasyonu (`rag.py`
+adaptasyonu); Row 19D (Operations & Recovery — OS ACL/service
+identity/TOCTOU dahil); maintenance/global-resource backlog devam işleri;
+gerçek corpus belgelerinin indirilmesi/edinimi.
+
+**M. LOCKED-file §9 gerekçesi**
+
+| Dosya | Neden yeniden açıldı | Değişiklik türü | Regresyon riski / azaltım | Neden başka katmanda çözülemez |
+|---|---|---|---|---|
+| `src/ingest.py` | Kullanıcı talebi (Corpus Policy ACTIVE/NEXT fazı) + security (T15 sınıfı ham join'lerin kapatılması; policy'nin bundle identity'ye bağlanması) | Additive: `CORPUS_POLICY_PATH` sabiti, `compute_source_manifest`'e policy girdisi, `build_bundle_snapshot`'a iki yeni validator çağrısı; **remediasyon turunda İKİNCİ KEZ açıldı** — üç join noktasına `path_containment.resolve_existing()` eklendi | Sıfır mevcut bundle olduğundan `source_manifest` şeklinin genişlemesinin uyumluluk maliyeti teoriktir; remediasyon turunun kendisi F1 HIGH bulgusunun DOĞRUDAN ZORUNLU sonucudur — dosyayı açmanın orijinal gerekçesi (security) teslim edilmemişti, ikinci açılış bunu tamamladı; azaltım: §F/§H/§I testleri + gerçek NTFS junction/absolute-path fault-injection | `compute_source_manifest`/`build_document_chunks`'ın TEK tanım yeridir; kopya bir containment implementasyonu drift riski yaratırdı |
+| `src/manifest_validator.py` | Downstream entegrasyon (corpus-policy enforcement bir gate gerektirir) + security (policy-ihlalli/deferred belgenin sessizce geçmesinin önlenmesi) | Additive: `validate_corpus_policy_admissibility()` yeni fonksiyonu + `validate_files_exist()`'e containment + orkestrasyona 13. adım; **remediasyon turunda İKİNCİ KEZ açıldı** — admission kontrolü iki-yönlü (`prohibited`-only)'den dört-yönlü fail-closed matrise genişletildi | Yeni red'ler yalnız gerçekten policy-ihlalli belgeler için; gerçek 3-belgelik seed corpus regresyon fixture'ı olarak yeniden doğrulandı; remediasyon turu F2 MEDIUM bulgusunun DOĞRUDAN ZORUNLU sonucudur | `validate_manifest_file()` `ingest`'in TEK güvendiği gate'tir; kopya validator drift riski yaratır |
+| `src/provision_manifest_validator.py` | Downstream entegrasyon — validator zaten var ama repo genelinde SIFIR çağıranı vardı; bu boşluğu kapatmak minimum-mümkün düzeltmedir | Additive: `validate_temporal_discipline()` + `validate_cross_version_provision_intervals()` + `validate_provisions_file()` (İLK gerçek otomatik çağıran) | Mevcut 7 gerçek provision yeni kontrollerle yeniden doğrulandı (vacuous-pass, `verified=False` dalı BYTE-DEĞİŞMEDEN korundu); azaltım: wire-in öncesi/sonrası fark raporu | Temporal disiplinin tek uzman validator'ıdır; kopyası yasak |
+| `ui/services/rag_bundle_mutation_facade.py` | Kullanıcı talebi + security (Row 19A stale-sonuç kuralının activation'a izdüşümü) | Additive: `CorpusPolicyDriftError` + iki yardımcı fonksiyon + `apply_activate()`'in pre-lock/under-lock zincirine 1 çağrı noktası; **remediasyon turunda AÇILMADI** (F1/F2'nin ikisi de bu dosyanın DIŞINDaydı) | Build yolu dokunulmaz; activation zinciri mevcut çift-kontrol deseninin birebir uzantısıdır; azaltım: §E'deki pre-lock/under-lock testleri (izole + gerçek PostgreSQL, kilit-anı drift injection dahil) | Pointer yazımından önceki SON kapı yalnız burasıdır; başka katmanda tekrarlanamaz |
+
+Remediasyon turunda `src/ingest.py` ve `src/manifest_validator.py`'nin
+İKİNCİ KEZ açılması, F1 (HIGH) ve F2 (MEDIUM) bloklayıcı bulgularının
+DOĞRUDAN ZORUNLU sonucudur — kozmetik bir düzeltme veya kapsam genişlemesi
+DEĞİLDİR.
+
+Bunların DIŞINDA hiçbir LOCKED dosya bu slice'ta açılmadı. Özellikle
+DEĞİŞMEYENLER: `ui/services/rag_bundle_mutation_adapters.py`,
+`src/retriever.py`, `src/path_containment.py`, `ui/cli_mutate.py`,
+`ui/reconciliation_operator.py`, `src/rag.py`,
+`data/documents.schema.json`, `data/provisions.schema.json`,
+`data/case_*.schema.json` tümü, `src/source_policy.py`,
+`src/temporal_policy.py`, `src/provision_policy.py`,
+`src/provision_version_policy.py`, `db/migrations/**`, tüm production
+`data/`.
+
+**N. Final verdict**
+
+`RAG CORPUS POLICY FOUNDATION LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — 19A/19B/19C-1/19C-2a/19C-2b/19C-2c/
+19C-3a Slice 1/Slice 2/19C-3b Slice 1/Slice 2/19C-3c-i/19C-3c-ii/
+19C-3c-iii/19C-3c-iv Slice 1/RAG Global-Resource Bundle Foundation/
+RAG Real-Dependency Validation + Synthetic E2E Gate/Row 10/11 Legal
+Research + Case Law Schema Patch örneğinde olduğu gibi yalnız
+`CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
+hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

@@ -217,11 +217,21 @@ _documents = [{
     "ingest": {"enabled": True, "parser": "legal_pdf", "chunk_strategy": "legal_hierarchy"},
 }]
 (_data_dir / "documents.json").write_text(json.dumps({"documents": _documents}), encoding="utf-8")
+# CORPUS POLICY FOUNDATION: make_snapshot_builder() below calls the
+# REAL ingest.compute_source_manifest(), which unconditionally hashes
+# ingest.CORPUS_POLICY_PATH - content is never parsed/validated here
+# (only raw-byte hashed), so any bytes suffice.
+_corpus_policy_dir = _data_dir / "corpus_policy"
+_corpus_policy_dir.mkdir(parents=True)
+_corpus_policy_path = _corpus_policy_dir / "corpus_policy.json"
+_corpus_policy_path.write_text(
+    json.dumps({"policy_id": "fixture_corpus_policy_for_pg_integration_test"}), encoding="utf-8",
+)
 _index_dir = _tmp_path / "index"
 
-_original_ingest_paths = (ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR)
-ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR = (
-    _data_dir, _mevzuat_dir, _data_dir / "documents.json", _index_dir,
+_original_ingest_paths = (ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH)
+ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH = (
+    _data_dir, _mevzuat_dir, _data_dir / "documents.json", _index_dir, _corpus_policy_path,
 )
 
 
@@ -244,7 +254,7 @@ def make_snapshot_builder(build_index=0):
 
 
 def cleanup_fixture():
-    ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR = _original_ingest_paths
+    ingest.DATA_DIR, ingest.MEVZUAT_DIR, ingest.MANIFEST_PATH, ingest.INDEX_DIR, ingest.CORPUS_POLICY_PATH = _original_ingest_paths
     _tmpdir.cleanup()
 
 
@@ -995,6 +1005,63 @@ def test_t21_real_cli_activate_preview_round_trip():
     check("T21e: real CLI activate preview's apply hint includes --activation-attempt 2", "--activation-attempt 2" in out, out)
 
 
+def test_t22_real_pg_activate_refused_when_corpus_policy_drifted():
+    """T22 - CORPUS POLICY FOUNDATION: a real build's own source_
+    manifest carries a corpus-policy entry; editing the LIVE policy
+    file afterwards must refuse activation (CorpusPolicyDriftError)
+    against REAL PostgreSQL, with zero journal rows and zero pointer
+    write - proven here rather than only against the fake-conn fixture
+    in test_rag_bundle_mutation_facade_isolated.py."""
+    wipe_journal_and_index()
+    principal = make_principal(_ACTORS["operator"])
+    repo_conn = pg_connect()
+    try:
+        outer_repo = ga.PostgresGlobalResourceAuthzRepository(repo_conn)
+        preview = facade.preview_build(build_attempt=0, principal=principal, authz_repository=outer_repo)
+        result = facade.apply_build(
+            preview["input_digest"], allow_network=True, build_attempt=0,
+            principal=principal, authz_repository=outer_repo, conn_factory=pg_connect,
+            snapshot_builder=make_snapshot_builder(build_index=22001),
+        )
+    finally:
+        repo_conn.close()
+
+    original_policy_bytes = _corpus_policy_path.read_bytes()
+    _corpus_policy_path.write_bytes(b'{"policy_id": "DRIFTED_FOR_REAL_PG_TEST"}')
+    try:
+        repo_conn2 = pg_connect()
+        try:
+            outer_repo2 = ga.PostgresGlobalResourceAuthzRepository(repo_conn2)
+            try:
+                facade.apply_activate(
+                    result.bundle_version, "none", principal=principal, authz_repository=outer_repo2,
+                    conn_factory=pg_connect,
+                )
+                check("T22: real activate refused when corpus policy drifted", False, "did not raise")
+            except facade.CorpusPolicyDriftError:
+                check("T22: real activate refused when corpus policy drifted", True)
+        finally:
+            repo_conn2.close()
+
+        conn = pg_connect()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT count(*) FROM mutation.mutation_journal WHERE resource_key = %s AND action_family = %s",
+                    (facade.RESOURCE_KEY, facade.ACTIVATE_ACTION_FAMILY),
+                )
+                (count,) = cur.fetchone()
+        finally:
+            conn.close()
+        check("T22: zero journal rows after real policy-drift refusal", count == 0, count)
+        check(
+            "T22: pointer not written after real policy-drift refusal",
+            not (_index_dir / "current_version.json").exists(),
+        )
+    finally:
+        _corpus_policy_path.write_bytes(original_policy_bytes)
+
+
 def run_self_test():
     build_result = None
     try:
@@ -1014,6 +1081,7 @@ def run_self_test():
         test_t19_real_pg_two_actor_build_mark_completed_crash_reconciles()
         test_t20_real_pg_w1_mkdir_failure_reconciles_to_failed()
         test_t21_real_cli_activate_preview_round_trip()
+        test_t22_real_pg_activate_refused_when_corpus_policy_drifted()
     finally:
         cleanup_fixture()
         repo_data_after = sha_tree(REAL_DATA_DIR)

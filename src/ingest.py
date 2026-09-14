@@ -53,6 +53,22 @@ from manifest_validator import (
     validate_manifest_file
 )
 
+# CORPUS POLICY FOUNDATION: pure, side-effect-free modules (no faiss/
+# numpy/openai/dotenv/pypdf import, no network, no .env read) - safe
+# to import at module level, same as `manifest_validator` above.
+import corpus_policy_validator
+import provision_manifest_validator
+
+# CORPUS POLICY FOUNDATION F1 REMEDIATION: the ONE shared, decision-
+# free path-containment primitive (Row 19C-3a Slice 1) - same module
+# `manifest_validator.py` already uses. Closes the raw MEVZUAT_DIR /
+# file_name joins below (compute_source_manifest, build_bundle_
+# snapshot, build_document_chunks) so a manifest-supplied file_name
+# can never read/hash a file outside MEVZUAT_DIR via an absolute
+# path, a `..` traversal, or an escaping symlink/NTFS junction -
+# before ANY .exists()/open()/.stat()/hash call on the raw candidate.
+import path_containment
+
 
 # ============================================================
 # VERSION
@@ -97,6 +113,18 @@ MEVZUAT_DIR = (
 MANIFEST_PATH = (
     DATA_DIR
     / "documents.json"
+)
+
+# CORPUS POLICY FOUNDATION: the corpus policy artifact is a source
+# input for compute_source_manifest()/build_bundle_snapshot() - a
+# byte-identical sibling constant to MANIFEST_PATH above, following
+# the SAME test-monkeypatch convention (DATA_DIR/MEVZUAT_DIR/
+# MANIFEST_PATH/INDEX_DIR are all swappable module-level attributes in
+# every existing RAG test fixture; this is the 5th).
+CORPUS_POLICY_PATH = (
+    DATA_DIR
+    / "corpus_policy"
+    / "corpus_policy.json"
 )
 
 INDEX_DIR = (
@@ -1636,10 +1664,26 @@ def build_document_chunks(
         "file_name"
     ]
 
-    pdf_path = (
+    candidate = (
         MEVZUAT_DIR
         / file_name
     )
+
+    # CORPUS POLICY FOUNDATION F1 REMEDIATION: this is the actual PDF
+    # content read (pdf_page_extractor(pdf_path) below) - containment
+    # MUST be verified before it, exactly as at the other two join
+    # sites (compute_source_manifest/build_bundle_snapshot above).
+    # This function is shared by BOTH the coordinated build path
+    # (build_bundle_snapshot, which already verifies its own separate
+    # join) AND the legacy run_ingest() path, so this one check also
+    # closes the legacy path's equivalent PDF-read access.
+    try:
+        pdf_path = path_containment.resolve_existing(
+            candidate,
+            root=MEVZUAT_DIR,
+        )
+    except path_containment.PathContainmentError as error:
+        raise FileNotFoundError(f"Dosya bulunamadı: {candidate}") from error
 
     ingest_config = (
         manifest_document.get(
@@ -3081,21 +3125,48 @@ def compute_source_manifest():
             "path": "data/documents.json",
             "sha256": calculate_file_hash(MANIFEST_PATH),
             "size_bytes": MANIFEST_PATH.stat().st_size,
-        }
+        },
+        {
+            # CORPUS POLICY FOUNDATION: the corpus policy is a source
+            # input for every build - a policy edit (even a whitespace-
+            # only one, since this is a raw-byte hash) produces a new
+            # input_digest/bundle_version and is automatically caught
+            # by the existing SourceDriftDetectedError precondition
+            # re-check (see ui.services.rag_bundle_mutation_facade's
+            # own header comment on this contract). FileNotFoundError
+            # here (the policy file missing) is deliberately fail-
+            # closed and unhandled - identical to MANIFEST_PATH above.
+            "path": "data/corpus_policy/corpus_policy.json",
+            "sha256": calculate_file_hash(CORPUS_POLICY_PATH),
+            "size_bytes": CORPUS_POLICY_PATH.stat().st_size,
+        },
     ]
 
     for document in manifest_documents:
         if not should_include_document(document):
             continue
         file_name = document["file_name"]
-        file_path = MEVZUAT_DIR / file_name
-        if not file_path.exists():
-            raise FileNotFoundError(f"Dosya bulunamadı: {file_path}")
+        candidate = MEVZUAT_DIR / file_name
+        # CORPUS POLICY FOUNDATION F1 REMEDIATION: containment MUST be
+        # verified before any .exists()/open()/.stat()/hash call - a
+        # manifest file_name is untrusted. resolve_existing() itself
+        # requires real existence (strict=True), so a genuinely
+        # missing file and an escaping one are deliberately reported
+        # with the SAME FileNotFoundError message (see path_
+        # containment.py's own "INDISTINGUISHABLE FAILURE MODES"
+        # contract, already used this way by manifest_validator.py).
+        try:
+            verified_path = path_containment.resolve_existing(
+                candidate,
+                root=MEVZUAT_DIR,
+            )
+        except path_containment.PathContainmentError as error:
+            raise FileNotFoundError(f"Dosya bulunamadı: {candidate}") from error
         entries.append(
             {
                 "path": f"data/mevzuat/{file_name}",
-                "sha256": calculate_file_hash(file_path),
-                "size_bytes": file_path.stat().st_size,
+                "sha256": calculate_file_hash(verified_path),
+                "size_bytes": verified_path.stat().st_size,
             }
         )
 
@@ -3139,7 +3210,26 @@ def build_bundle_snapshot(*, embedding_client=None, pdf_page_extractor=None, bui
     import faiss
     import numpy as np
 
+    # CORPUS POLICY FOUNDATION build-gate sequence (strictly before any
+    # chunk/embed/FAISS work): (1) the policy artifact's OWN validity
+    # (schema + closed-vocabulary + internal consistency - always the
+    # REAL, repo-committed data/corpus_policy/corpus_policy.json,
+    # independent of any test's ingest.*/manifest_validator.* fixture
+    # redirection, mirroring provision_manifest_validator's own
+    # decoupled-constants precedent below); (2) belge-aile admissibility
+    # + stage-1 quality (wired INSIDE validate_manifest_file() as an
+    # additive step - fixture-redirectable via manifest_validator's
+    # existing MANIFEST_PATH/MEVZUAT_DIR monkeypatch points);
+    # (3) provision temporal discipline (the FIRST real automated
+    # caller of provision_manifest_validator.py - always the REAL,
+    # repo-committed data/provisions.json + data/documents.json,
+    # decoupled from this function's own fixture redirection, exactly
+    # like corpus_policy_validator above).
+    corpus_policy_validator.validate_corpus_policy(raise_on_error=True)
+
     validate_manifest_file(raise_on_error=True)
+
+    provision_manifest_validator.validate_provisions_file(raise_on_error=True)
 
     manifest = load_json(MANIFEST_PATH)
     manifest_documents = manifest.get("documents", []) or []
@@ -3153,10 +3243,18 @@ def build_bundle_snapshot(*, embedding_client=None, pdf_page_extractor=None, bui
     all_chunk_documents = []
     for document in sorted(included_documents, key=lambda item: item["document_id"]):
         file_name = document["file_name"]
-        file_path = MEVZUAT_DIR / file_name
-        if not file_path.exists():
-            raise FileNotFoundError(f"Dosya bulunamadı: {file_path}")
-        file_hash = calculate_file_hash(file_path)
+        candidate = MEVZUAT_DIR / file_name
+        # CORPUS POLICY FOUNDATION F1 REMEDIATION: same containment-
+        # before-any-filesystem-query discipline as compute_source_
+        # manifest() above - see that call site's own comment.
+        try:
+            verified_path = path_containment.resolve_existing(
+                candidate,
+                root=MEVZUAT_DIR,
+            )
+        except path_containment.PathContainmentError as error:
+            raise FileNotFoundError(f"Dosya bulunamadı: {candidate}") from error
+        file_hash = calculate_file_hash(verified_path)
         chunk_documents = build_document_chunks(
             manifest_document=document,
             file_hash=file_hash,

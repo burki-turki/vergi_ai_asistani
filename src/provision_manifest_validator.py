@@ -31,7 +31,7 @@
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
 from jsonschema import (
@@ -39,8 +39,27 @@ from jsonschema import (
     FormatChecker
 )
 
+# CORPUS POLICY FOUNDATION: pure, side-effect-free module (no file
+# I/O at import time) - used by the two new additive checks below to
+# read document_family_rules.temporal_sensitive. One-directional edge
+# (corpus_policy_validator never imports this module back).
+import corpus_policy_validator
+
 
 VALIDATOR_VERSION = "1.1"
+
+# CORPUS POLICY FOUNDATION V1.1 EKİ (additive, backward-compatible):
+#
+# - validate_formal() artık `corpus_policy=None` kabul eder ve
+#   temporal-sensitive ailelerde valid_from'un statute_text/
+#   amending_law türünde en az bir evidence'a dayanmasını zorlar
+#   (parent belgenin orijinal yürürlük tarihinden sessizce
+#   default'lanamaz).
+# - validate_manifest() artık aynı provision_id'nin verified,
+#   valid_from taşıyan versiyonları arasında interval overlap
+#   (error) / kapsanmayan gap (warning) kontrolü yapar.
+# - YENİ validate_provisions_file() - bu modülün İLK gerçek otomatik
+#   çağıranı (src.ingest.build_bundle_snapshot() tarafından çağrılır).
 
 
 # ============================================================
@@ -564,7 +583,8 @@ def validate_formal(
     document_index,
     errors,
     warnings,
-    evidence_registry
+    evidence_registry,
+    corpus_policy=None
 ):
 
     formal = provision.get(
@@ -726,6 +746,322 @@ def validate_formal(
 
         require_verified_evidence=
             verified
+    )
+
+    validate_temporal_discipline(
+        provision=
+            provision,
+
+        location=
+            location,
+
+        document_index=
+            document_index,
+
+        errors=
+            errors,
+
+        corpus_policy=
+            corpus_policy
+    )
+
+
+# ============================================================
+# CORPUS POLICY FOUNDATION - TEMPORAL DISCIPLINE
+#
+# YENİ additive kontrol: corpus policy'de temporal_sensitive=true
+# işaretli bir belge ailesine ait, formal.verified=True VE valid_from
+# dolu bir provision, EN AZ BİR 'statute_text' veya 'amending_law'
+# türünde evidence taşımalıdır - yalnız 'consolidated_legislation'
+# (bugünkü metnin güncel olduğunu doğrulayan, ama valid_from'un
+# GERÇEKTEN o tarihte başladığını KANITLAMAYAN) evidence tek başına
+# yeterli değildir. Bu, parent belgenin orijinal yürürlük tarihinden
+# hiçbir gerçek kanıt olmadan sessizce default'lanmış bir valid_from'u
+# yakalar; provisions.json'daki mevcut kayıtların TÜMÜ (statute_text
+# VEYA amending_law evidence taşıdıkları için) bu kontrolü vacuous-
+# pass ile geçer (§U kanıtı).
+# ============================================================
+
+def validate_temporal_discipline(
+    provision,
+    location,
+    document_index,
+    errors,
+    corpus_policy=None
+):
+
+    if corpus_policy is None:
+
+        corpus_policy = corpus_policy_validator.load_policy()
+
+    document_id = normalize(
+        provision.get(
+            "document_id"
+        )
+    )
+
+    document = document_index.get(
+        document_id
+    )
+
+    if document is None:
+
+        # document_id zaten ayrı bir hata olarak raporlanmıştır
+        # (validate_manifest()'in "DOCUMENT" adımı) - burada
+        # tekrarlanmaz.
+
+        return
+
+    belge_turu = document.get(
+        "belge_turu"
+    )
+
+    family_rules = (
+        corpus_policy.get(
+            "document_family_rules",
+            {}
+        )
+        or {}
+    )
+
+    family_rule = family_rules.get(
+        belge_turu
+    )
+
+    if (
+        family_rule is None
+        or not family_rule.get(
+            "temporal_sensitive"
+        )
+    ):
+
+        return
+
+    formal = provision.get(
+        "formal",
+        {}
+    ) or {}
+
+    if formal.get(
+        "verified"
+    ) is not True:
+
+        return
+
+    valid_from = formal.get(
+        "valid_from"
+    )
+
+    if valid_from is None:
+
+        return
+
+    originating_kinds = set(
+        (
+            corpus_policy.get(
+                "temporal_requirements",
+                {}
+            )
+            or {}
+        ).get(
+            "originating_evidence_kinds",
+            [
+                "statute_text",
+                "amending_law"
+            ]
+        )
+    )
+
+    evidence = formal.get(
+        "evidence",
+        []
+    ) or []
+
+    has_originating_evidence = any(
+        isinstance(item, dict)
+        and item.get("kind") in originating_kinds
+        for item in evidence
+    )
+
+    if not has_originating_evidence:
+
+        errors.append(
+            f"{location}.formal: temporal-sensitive ailede "
+            f"(belge_turu={belge_turu}) valid_from yalnız "
+            + " veya ".join(sorted(originating_kinds))
+            + " türünde bir evidence ile desteklenmelidir - parent "
+            "belgenin orijinal yürürlük tarihinden sessizce "
+            "default'lanamaz (corpus policy temporal_requirements)."
+        )
+
+
+# ============================================================
+# CORPUS POLICY FOUNDATION - CROSS-VERSION INTERVAL CHECK
+#
+# YENİ additive kontrol: aynı provision_id'nin (formal.verified=True
+# VE valid_from dolu) versiyonları arasında tarih aralığı çakışması
+# ERROR, kapsanmayan (bir günden fazla) boşluk WARNING'dir. Bugün
+# provisions.json'daki her provision_id TEK versiyonlu olduğundan bu
+# kontrol vacuous-pass'tır (§U kanıtı) - gelecekte gerçek multi-
+# version provision'lar eklendiğinde devreye girer.
+# ============================================================
+
+def _provision_interval_ranges_overlap(
+    start_a,
+    end_a,
+    start_b,
+    end_b
+):
+
+    # end=None -> hâlâ yürürlükte (geleceğe açık).
+
+    from datetime import date as _date
+
+    max_date = _date.max
+
+    end_a = end_a or max_date
+
+    end_b = end_b or max_date
+
+    return (
+        start_a <= end_b
+        and start_b <= end_a
+    )
+
+
+def validate_cross_version_provision_intervals(
+    provisions
+):
+
+    errors = []
+
+    warnings = []
+
+    grouped = {}
+
+    for provision in provisions:
+
+        if not isinstance(
+            provision,
+            dict
+        ):
+
+            continue
+
+        provision_id = normalize(
+            provision.get(
+                "provision_id"
+            )
+        )
+
+        if not provision_id:
+
+            continue
+
+        formal = provision.get(
+            "formal",
+            {}
+        ) or {}
+
+        if formal.get(
+            "verified"
+        ) is not True:
+
+            continue
+
+        valid_from = parse_date(
+            formal.get(
+                "valid_from"
+            )
+        )
+
+        if valid_from is None:
+
+            continue
+
+        valid_through = parse_date(
+            formal.get(
+                "valid_through"
+            )
+        )
+
+        grouped.setdefault(
+            provision_id,
+            []
+        ).append(
+            (
+                normalize(
+                    provision.get(
+                        "provision_version_id"
+                    )
+                ),
+                valid_from,
+                valid_through
+            )
+        )
+
+    for provision_id, versions in grouped.items():
+
+        if len(versions) < 2:
+
+            continue
+
+        versions_sorted = sorted(
+            versions,
+            key=lambda entry: entry[1]
+        )
+
+        for index_a in range(len(versions_sorted)):
+
+            for index_b in range(
+                index_a + 1,
+                len(versions_sorted)
+            ):
+
+                version_a = versions_sorted[index_a]
+
+                version_b = versions_sorted[index_b]
+
+                if _provision_interval_ranges_overlap(
+                    version_a[1],
+                    version_a[2],
+                    version_b[1],
+                    version_b[2]
+                ):
+
+                    errors.append(
+                        f"provision_id={provision_id}: "
+                        "versiyonlar arası valid_from/valid_through "
+                        "aralığı çakışıyor: "
+                        f"{version_a[0]} / {version_b[0]}"
+                    )
+
+        for index in range(len(versions_sorted) - 1):
+
+            current_version = versions_sorted[index]
+
+            next_version = versions_sorted[index + 1]
+
+            current_end = current_version[2]
+
+            next_start = next_version[1]
+
+            if (
+                current_end is not None
+                and (next_start - current_end) > timedelta(days=1)
+            ):
+
+                warnings.append(
+                    f"provision_id={provision_id}: "
+                    "versiyonlar arası kapsanmayan bir boşluk var: "
+                    f"{current_version[0]} ({current_end.isoformat()}) "
+                    f"ile {next_version[0]} "
+                    f"({next_start.isoformat()}) arasında."
+                )
+
+    return (
+        errors,
+        warnings
     )
 
 
@@ -1655,12 +1991,17 @@ def validate_verification_state(
 
 def validate_manifest(
     provisions_manifest,
-    documents_manifest
+    documents_manifest,
+    corpus_policy=None
 ):
 
     errors = []
 
     warnings = []
+
+    if corpus_policy is None:
+
+        corpus_policy = corpus_policy_validator.load_policy()
 
     document_index = (
         build_document_index(
@@ -1851,7 +2192,10 @@ def validate_manifest(
                 warnings,
 
             evidence_registry=
-                evidence_registry
+                evidence_registry,
+
+            corpus_policy=
+                corpus_policy
         )
 
         # ====================================================
@@ -1980,6 +2324,35 @@ def validate_manifest(
                         "document ingest.enabled=False."
                     )
 
+    # ========================================================
+    # CROSS-VERSION INTERVAL CHECK (CORPUS POLICY FOUNDATION)
+    # ========================================================
+
+    if (
+        corpus_policy.get(
+            "temporal_requirements",
+            {}
+        )
+        or {}
+    ).get(
+        "cross_version_interval_check_enabled",
+        True
+    ):
+
+        interval_errors, interval_warnings = (
+            validate_cross_version_provision_intervals(
+                provisions
+            )
+        )
+
+        errors.extend(
+            interval_errors
+        )
+
+        warnings.extend(
+            interval_warnings
+        )
+
     return (
         errors,
         warnings
@@ -2024,6 +2397,104 @@ def build_verification_summary(
             ] += 1
 
     return counts
+
+
+# ============================================================
+# CORPUS POLICY FOUNDATION - FIRST REAL AUTOMATED CALLER
+#
+# YENİ: `src.ingest.build_bundle_snapshot()`'un bu modülü çağırdığı
+# TEK, yetkili giriş noktası. Her zaman GERÇEK, repo-committed
+# PROVISIONS_PATH/PROVISIONS_SCHEMA_PATH/DOCUMENTS_PATH'i doğrular -
+# manifest_validator.validate_manifest_file()'ın fixture-redirect
+# edilebilir MANIFEST_PATH/MEVZUAT_DIR'ından KASITLI olarak AYRIDIR
+# (bu modülün kendi sabitleri hiçbir RAG test fixture'ı tarafından
+# monkeypatch edilmez - §K precedent).
+# ============================================================
+
+def validate_provisions_file(
+    raise_on_error=True
+):
+
+    provisions_schema = load_json(
+        PROVISIONS_SCHEMA_PATH
+    )
+
+    provisions_manifest = load_json(
+        PROVISIONS_PATH
+    )
+
+    documents_manifest = load_json(
+        DOCUMENTS_PATH
+    )
+
+    schema_errors = validate_schema(
+        data=
+            provisions_manifest,
+
+        schema=
+            provisions_schema
+    )
+
+    validation_errors, warnings = (
+        validate_manifest(
+            provisions_manifest=
+                provisions_manifest,
+
+            documents_manifest=
+                documents_manifest
+        )
+    )
+
+    all_errors = (
+        schema_errors
+        + validation_errors
+    )
+
+    valid = (
+        len(
+            all_errors
+        )
+        == 0
+    )
+
+    result = {
+
+        "valid":
+            valid,
+
+        "validator_version":
+            VALIDATOR_VERSION,
+
+        "provision_count":
+            len(
+                provisions_manifest.get(
+                    "provisions",
+                    []
+                )
+                or []
+            ),
+
+        "errors":
+            all_errors,
+
+        "warnings":
+            warnings,
+    }
+
+    if (
+        raise_on_error
+        and all_errors
+    ):
+
+        raise ValueError(
+            "\nPROVISIONS MANIFEST VALIDATION HATASI\n"
+            + "\n".join(
+                f"- {error}"
+                for error in all_errors
+            )
+        )
+
+    return result
 
 
 # ============================================================
