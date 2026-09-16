@@ -437,19 +437,12 @@ def _load_provider_config():
 
 
 def _key_provider():
-    """Row 19D owns real KMS-backed custody/rotation behind this same
-    ui.services.transient_secrets.KeyProvider interface. NOT implemented
-    here - this is the documented seam, not a placeholder for the crypto
-    itself (which is fully implemented in transient_secrets.py)."""
-    raise NotImplementedError(
-        "Row 19D must supply a real KeyProvider (KMS-backed). See the "
-        "delivery report's 'known follow-ups' section."
-    )
+    from .services import key_custody
+
+    return key_custody.get_configured_key_provider()
 
 
 def _server_pepper() -> bytes:
-    """Row 19D owns real key custody for this pepper. NOT implemented here."""
-    raise NotImplementedError(
-        "Row 19D must supply the real server_pepper source. See the "
-        "delivery report's 'known follow-ups' section."
-    )
+    from .services import key_custody
+
+    return key_custody.get_configured_server_pepper()

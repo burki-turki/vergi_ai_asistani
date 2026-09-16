@@ -549,30 +549,29 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   Global-Resource Bundle Foundation, RAG Real-Dependency Validation +
   Synthetic E2E Gate, Row 10/11 Legal Research + Case Law Schema Patch
   ve RAG Corpus Policy Foundation contract'ları değişmedi.
-- **Sıradaki adım: P3 — External Source/Licensing Verification —
-  ACTIVE / NEXT.** İmplementasyona HENÜZ BAŞLANMADI; ayrı görev/onay
-  gerektirir. Bu, TAMAMEN salt-okunur, internet-erişimli bir araştırma
-  fazıdır — repo dosyasına yazma yetkisi VERMEZ, corpus belgesi
-  indirme/acquisition/population yetkisi VERMEZ. Amaç: kullanıcı-onaylı
-  bir source/licensing matrisi üretmektir. İncelenecek kaynak aileleri:
-  Resmî Gazete; mevzuat.gov.tr / Mevzuat Bilgi Sistemi; GİB ve ilgili
-  resmî kurum portalları; Danıştay/VDDK ve erişilebilen resmî karar
-  kanalları; UYAP/karar erişim yüzeyleri. İncelenecek konular: ToS;
-  robots.txt; API/bulk erişim; indirme ve yeniden kullanım koşulları;
-  lisans/telif; consolidated-vs-original metin farkı; kaynak güven
-  seviyesi; güncelleme ve provenance beklentisi. P3 sırasında repo'ya
-  SIFIR yazım ve SIFIR corpus indirme esastır — çıktısı yalnız
-  salt-okunur bir scratchpad raporudur. Onaylı sıra (Fable FINAL
-  raporunun kendi bağlayıcı sözleşmesiyle) KORUNUR: P2 ile P3'ün kendi
-  aralarındaki sıra esnekti, ama ikisi de acquisition tooling'den (P4)
-  ÖNCE bitmek ZORUNDADIR — P2 şimdi tamamlandığına göre bu koşulun P2
-  tarafı kapanmıştır. Bu pointer için yeni bir Row numarası İCAT
-  EDİLMEMİŞTİR. P4 (acquisition tooling) HENÜZ BAŞLAMAMIŞTIR; P5
-  (Tier-1 population + ilk gerçek bundle) HENÜZ BAŞLAMAMIŞTIR; P5b
-  (Danıştay/VDDK population) HENÜZ BAŞLAMAMIŞTIR; P6 (RAG-bağımlı
-  Slice 2) HENÜZ BAŞLAMAMIŞTIR. Row 19D ve diğer maintenance/
-  global-resource devam işleri bu checkpoint ile BAŞLAMAMIŞTIR ve
-  YETKİLENDİRİLMEMİŞTİR.
+- **ROW 19D Authentication Enablement Slice 1 — Local Key Custody and Auth
+  Seam Enablement — DONE / LOCKED.** Exact scope **3 NEW + 2 MODIFIED = 5
+  dosya**dır. Mevcut `KeyProvider` arayüzü genişletilmeden fail-closed
+  local-file custody desteği bağlandı; key ile server pepper ayrı tutulur ve
+  yalnız açık operatör `initialize`/rotation komutlarıyla oluşturulur veya
+  döndürülür. Production seçiminde `InMemoryKeyProvider` veya sessiz fallback
+  yoktur. Gerçek Windows ACL, processler-arası serialization, doğru commit /
+  reporting semantiği, gerçek callback regresyon kanıtı ve handle-bound
+  namespace koruması sağlandı. İlk bağımsız inceleme **F1 HIGH + F2–F5
+  MEDIUM** buldu; yalnız üç dosyalık remediation sonrasında bağımsız re-review
+  F1–F5'in tamamını kapattı. Exact final verdict:
+  `ROW 19D AUTHENTICATION ENABLEMENT SLICE 1 LOCK-READY — F1–F5 CLOSED, NO BLOCKING FINDINGS`
+- **ROW 19D Authentication Enablement Slice 2 — Production KMS/Key Vault
+  Provider Exact-Scope and Allowlist Reconciliation — ACTIVE / NEXT.** Yalnız
+  **salt-okunur scope/allowlist reconciliation** yetkilidir; Slice 2
+  implementasyonu BAŞLAMAMIŞTIR ve bu pointer hiçbir dosyaya yazma yetkisi
+  VERMEZ. Production KMS/Key Vault, deployment/workload identity, recovery,
+  rotation cadence ve production custody henüz teslim edilmedi. Slice 3'teki
+  gerçek Entra tenant/app registration, Conditional Access Authentication
+  Context–Graph binding verification, bootstrap, gerçek browser/`__Host-session`
+  cookie testi ve opt-in live smoke BAŞLAMAMIŞTIR. P3 external legal/access
+  blocker'ları, corpus acquisition/population ve diğer roadmap işleri de
+  BAŞLAMAMIŞTIR ve YETKİLENDİRİLMEMİŞTİR.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -5989,6 +5988,149 @@ Research + Case Law Schema Patch/RAG Corpus Policy Foundation
 örneğinde olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur
 bir roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
 dosyasına dokunmaz.
+
+### Row 19D Authentication Enablement Slice 1 — Local Key Custody and Auth Seam Enablement (DONE / LOCKED)
+
+**A. Başlangıç durumu ve exact scope** — Slice 1'in exact değişiklik yüzeyi
+**3 NEW + 2 MODIFIED = 5 dosya**dır:
+
+- NEW: `ui/services/key_custody.py`
+- NEW: `scripts/key_custody_admin.py`
+- NEW: `ui/tests/test_key_custody_isolated.py`
+- MODIFIED: `ui/auth_routes.py`
+- MODIFIED: `ui/tests/test_oidc_client_isolated.py`
+
+Bu slice **0 migration, 0 yeni route, 0 yeni IAM action/reason code, 0
+production credential ve 0 gerçek custody file** üretti. Test modülü sayısı
+**65 → 66** oldu. Kaynak ve bağlayıcı raporlardan doğrulanabilen diğer roadmap
+sayaçları değişmedi: merged reconciliation routing key **49**, logical action
+family **37**, kapalı mutasyon giriş noktası **29**, migration **5**. Refusal
+senaryosu **44** mevcut checkpoint-arithmetic konvansiyonudur; tek artefaktan
+mekanik olarak yeniden türetilemediği için burada bağımsız kaynak sayımı olarak
+sunulmaz.
+
+**B. Mimari sözleşme** — Existing `KeyProvider` Protocol değişmedi:
+`get_key(key_id)` ve `current_key_id()`. Local-file provider yalnız açık
+`VERGI_KEY_PROVIDER_KIND=local_file` seçimiyle kullanılabilir; unset, empty veya
+unknown seçim fail-closed'dur. `kms` seçimi Slice 1'de açık bir “not
+implemented/provider unavailable” sonucu verir; production yolunda
+`InMemoryKeyProvider` ve sessiz fallback yoktur. Import-time key/pepper üretimi
+veya dosya yazımı yapılmaz. Key file strict JSON/parser doğrulaması, canonical
+base64, 32-byte AES key, ayrı en az 32-byte pepper ve current-key bütünlüğü
+zorunludur. `initialize`, `rotate-key` ve `rotate-pepper` yalnız açık operator
+işlemleridir; key rotation eski decrypt anahtarlarını korur, pepper rotation ayrı
+bir işlemdir ve mevcut CSRF türetimlerini etkileyeceği açıkça bildirilir. Raw
+key/pepper/token/verifier/plaintext/ciphertext normal output'a veya loglara
+yazılmaz.
+
+**C. Auth seam bağlantısı** — `ui/auth_routes.py` içinde yalnız
+`_key_provider()` ve `_server_pepper()` gövdeleri provider dispatch'e bağlandı.
+Callback/login/logout/session davranışları mevcut sınırlarını aşmadı; Slice 1'in
+tek başına “gerçek kullanıcı girişini açtığı” iddia edilmez. Gerçek Entra
+tenant, app registration, Conditional Access binding verification, bootstrap ve
+browser smoke Slice 3'tedir.
+
+**D. İlk implementasyon kanıtı (implementer turu, tarihsel)** — Focused sonuç
+**356 passed / 0 failed / 3 informational skip**; full sweep sonucu fresh
+disposable PostgreSQL 16 ve migration `0001`–`0005` ile **66 modül, 3946 passed
+/ 0 failed / 22 skipped** idi. External network ve `.env` erişimi sıfırdı;
+gerçek custody path oluşturulmadı. Sonraki bağımsız incelemenin bulduğu F1–F5
+nedeniyle bu turun kanıtı LOCK için tek başına yeterli DEĞİLDİ.
+
+**E. İlk bağımsız inceleme** — Aynı **3946 passed / 0 failed / 22 skipped**
+sonucu bağımsız üretildi; verdict **NOT LOCK-READY** idi. Bulgular tarihsel
+kayıttan silinmez veya küçültülmez:
+
+- **F1 HIGH** — unsafe Windows ACL inheritance.
+- **F2 MEDIUM** — concurrent rotation lost updates.
+- **F3 MEDIUM** — post-commit failure misreporting.
+- **F4 MEDIUM** — gerçek callback regression kanıtının eksikliği.
+- **F5 MEDIUM** — path-validation / namespace race.
+
+**F. Dar remediation sınırı** — Remediation yalnız
+`ui/services/key_custody.py`, `scripts/key_custody_admin.py` ve
+`ui/tests/test_key_custody_isolated.py` dosyalarında yapıldı.
+`ui/auth_routes.py` ile `ui/tests/test_oidc_client_isolated.py` remediation
+boyunca byte-identical kaldı.
+
+**G. F1–F5 kapanış mekanizmaları**
+
+- **F1 CLOSED** — Windows objeleri creation-time private/protected DACL ile
+  oluşturulur; yalnız current operator, `SYSTEM` ve Builtin Administrators
+  trustee'leri kabul edilir. `chmod` veya sonradan düzeltme güvenlik kanıtı
+  değildir. Owner/protection/trustee/mask/flag/inherited/duplicate/unexpected
+  ACE kontrolleri uygulanır.
+- **F2 CLOSED** — Win32 processler-arası byte-range lock initialize ve bütün
+  read-modify-write/publish işlemini kapsar. Key/key, key/pepper ve pepper/key
+  yarışlarında committed mutation'lar korunur; abnormal process exit sonrası
+  OS lock release kanıtlandı.
+- **F3 CLOSED** — Tek commit point `os.rename`/`os.replace`'dir; commit sonrası
+  fallible ACL/`chmod` hardening yoktur. Pre-commit failure eski baytları korur;
+  post-commit reporting failure açık **result 3 /
+  `COMMITTED_WITH_REPORTING_ERROR`** üretir ve pepper warning kaybolmaz.
+  Power-loss durability veya tam crash-proof cleanup iddiası yapılmaz.
+- **F4 CLOSED** — Kanıt gerçek FastAPI callback, gerçek local provider parsing,
+  gerçek AEAD ve gerçek transaction/session recorder kullanır; yalnız dış OAuth
+  exchange mock/block edilir. Unknown key ve corrupt ciphertext generic 401,
+  consumed transaction ve zero exchange/session üretir; provider/configuration
+  sorunları ayrık 500 ve rollback/not-consumed üretir. Handler-deletion mutant
+  öldürülür ve reader observations **> 0**'dır.
+- **F5 CLOSED** — Validation açılmış Windows handle'ları üzerinden yapılır;
+  reparse reddi, final handle-path verification ve no-delete-sharing directory
+  handles uygulanır. Handle'lar sensitive operation boyunca açık kalır;
+  repository containment check açılmış gerçek nesne üzerinde yapılır.
+  Junction/file-reparse/parent-swap testleri bu sınırı kanıtlar.
+
+**H. Remediation implementasyon test kanıtı (implementer turu)** — Focused:
+**383 passed / 0 failed / 3 informational skip**. Full sweep: **66 modül, 3973
+passed / 0 failed / 22 informational skip**. Bu sayılar yalnız implementer'ın
+remediation turuna aittir.
+
+**I. Final bağımsız remediation re-review kanıtı** — Focused: **383 passed / 0
+failed / 3 focused-only DB skip**. Full sweep: **66/66 modül, 3973 passed / 0
+failed / 8 counted skip**. Sekiz skip yalnız
+`test_path_containment_isolated: 4` ve
+`test_path_containment_module_isolated: 4` dağılımındadır; RAG
+optional-dependency modülleri final bağımsız re-review runtime'ında **0 skip**
+verdi. Dolayısıyla implementer turundaki 22 ile re-review turundaki 8
+birleştirilmez veya tek ortak skip sayısı gibi sunulmaz; bunlar farklı gerçek
+ortam/raporlama sonuçlarıdır. External network, `.env`, Entra, Graph, OIDC
+provider, model veya RAG-service çağrısı yapılmadı; cleanup tamamlandı. Final
+exact verdict:
+
+`ROW 19D AUTHENTICATION ENABLEMENT SLICE 1 LOCK-READY — F1–F5 CLOSED, NO BLOCKING FINDINGS`
+
+**J. Kalan Low/Observation kayıtları (non-blocking backlog, AÇIK)**
+
+- **O1** — malformed field-name reflection: açık.
+- **O2** — snapshot/private mutable mapping limitation: açık.
+- **O3** — resource bounds and crash-durability limitations: dar F3
+  commit-boundary düzeltmesi dışında açık.
+- **O4** — pre-existing secret-bearing dataclass repr exposure: açık.
+- **O5** — OIDC-test strengthening opportunities: açık.
+- **O6** — pre-existing out-of-slice authentication behavior: açık.
+
+**K. Scope dışı / henüz başlamayan işler** — Production KMS/Key Vault
+provider; deployment/workload identity; production ACL/recovery/backup/rotation
+cadence; pepper'ın production kaynağına bağlanması; gerçek Entra development ve
+production tenant; public-client `InstalledClient` app registration;
+Conditional Access Authentication Context'in Graph üzerinden gerçekten policy'ye
+bağlı olduğunun doğrulanması; admin bootstrap/provisioning; gerçek browser
+üzerinden `__Host-session` cookie doğrulaması; opt-in live login/logout smoke;
+production secrets/credentials; migration `0006` veya yeni IAM reason code; P3
+legal/access blocker closure; corpus acquisition/population; web product/pilot
+deployment. Bunların hiçbiri bu checkpoint ile başlamaz veya yetkilendirilmez.
+
+**L. §9 / LOCKED-file gerekçesi** — `ui/auth_routes.py` yalnız daha önce açık
+bırakılmış iki `NotImplementedError` seam gövdesini fail-closed provider
+dispatch'e bağlamak için açıldı; route, callback policy veya dış auth protokolü
+yeniden tasarlanmadı.
+
+**M. Son durum**
+
+`ROW 19D AUTHENTICATION ENABLEMENT SLICE 1 LOCK-READY — F1–F5 CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
 
 ## 6. Cross-Cutting Backlog
 

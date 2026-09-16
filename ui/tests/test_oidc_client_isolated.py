@@ -3,26 +3,56 @@
 # ui/services/transient_secrets.py (PKCE verifier storage lives in
 # the OIDC transaction lifecycle, so its tests live here).
 #
-# This file needs NO external package - it exercises only the pure
-# functions (PKCE/state/nonce generation, claims request/validation
-# including the acrs array/membership rule, and the transient-secret
-# AEAD envelope). The Authlib/joserfc-backed I/O functions
-# (build_authorization_url's Authlib call, fetch_and_verify_id_token,
-# exchange_code_for_tokens) are NOT executed here - see the delivery
-# report - and are only smoke-checked for import-time availability
-# with a clean skip, exactly like the existing Row 18
-# `test_routes.py` pattern for FastAPI.
+# The target UI runtime must carry every auth dependency at its exact
+# ui/requirements.txt pin. Authorization and token requests execute against
+# an httpx MockTransport; real sockets and .env access are forbidden.
 #
 # Run: python -m ui.tests.test_oidc_client_isolated
 # ============================================================
 
+import asyncio
+import importlib
+import importlib.metadata
+import json
+import os
+import socket
 import sys
 from pathlib import Path
+from unittest import mock
+from urllib.parse import parse_qs, urlparse
 
 UI_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = UI_DIR.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+_ENV_OPENS = []
+_EXTERNAL_SOCKET_EVENTS = []
+
+
+def _audit(event, args):
+    if event == "open" and args:
+        try:
+            path = os.fspath(args[0])
+        except TypeError:
+            return
+        if isinstance(path, bytes):
+            path = os.fsdecode(path)
+        if Path(path).name == ".env":
+            _ENV_OPENS.append(path)
+    elif event == "socket.getaddrinfo":
+        _EXTERNAL_SOCKET_EVENTS.append((event, args))
+    elif event == "socket.connect" and len(args) > 1:
+        address = args[1]
+        if not (
+            isinstance(address, tuple)
+            and address
+            and address[0] in {"127.0.0.1", "::1"}
+        ):
+            _EXTERNAL_SOCKET_EVENTS.append((event, args))
+
+
+sys.addaudithook(_audit)
 
 from ui.services import oidc_client as oc          # noqa: E402
 from ui.services import transient_secrets as ts    # noqa: E402
@@ -320,27 +350,108 @@ dec = ts.decrypt_transient_secret(enc, key_provider=kp, associated_data=h1.encod
 check("PKCE verifier AEAD round-trip recovers the exact verifier", dec.decode() == v1)
 
 # ----------------------------------------------------------------
-# 8) I/O functions requiring Authlib/joserfc - import-time guarded,
-#    NOT EXECUTED. This mirrors the existing Row 18 test_routes.py
-#    pattern for FastAPI: the guard itself is proven to work
-#    correctly (exit 0, explicit message), not silently skipped.
+# 8) Exact dependency pins and real Authlib request construction over a
+#    mocked transport. A missing dependency is a counted failure, never skip.
 # ----------------------------------------------------------------
-try:
-    import authlib  # noqa: F401
-    import joserfc   # noqa: F401
-    _CAN_RUN_IO_TESTS = True
-except ModuleNotFoundError:
-    _CAN_RUN_IO_TESTS = False
+required_dependencies = {
+    "authlib": ("Authlib", "1.8.0"),
+    "joserfc": ("joserfc", "1.7.5"),
+    "psycopg": ("psycopg", "3.3.5"),
+    "cryptography": ("cryptography", "50.0.1"),
+}
+dependencies_ready = True
+for module_name, (distribution_name, expected_version) in required_dependencies.items():
+    try:
+        importlib.import_module(module_name)
+        actual_version = importlib.metadata.version(distribution_name)
+    except Exception as error:
+        dependencies_ready = False
+        check(
+            f"required dependency {module_name} imports at pin {expected_version}",
+            False,
+            f"{type(error).__name__}: {error}",
+        )
+    else:
+        matches = actual_version == expected_version
+        dependencies_ready = dependencies_ready and matches
+        check(
+            f"required dependency {module_name} imports at pin {expected_version}",
+            matches,
+            f"actual={actual_version}",
+        )
 
-if not _CAN_RUN_IO_TESTS:
-    print("SKIPPED build_authorization_url / fetch_and_verify_id_token / "
-          "exchange_code_for_tokens - Authlib/joserfc not installed in this "
-          "environment. NOT EXECUTED, not a pass.")
-else:
-    # Left for local runtime verification once Authlib/joserfc are
-    # installed - intentionally not implemented against a live IdP here.
-    print("Authlib/joserfc detected but real-provider I/O tests are out of "
-          "scope for this isolated module (see test_auth_routes.py).")
+if dependencies_ready:
+    import httpx
+    import authlib.integrations.httpx_client as authlib_httpx
+
+    transport_requests = []
+
+    def forbidden_sync_request(request):
+        transport_requests.append(request)
+        raise AssertionError("authorization URL construction attempted network I/O")
+
+    original_oauth2_client = authlib_httpx.OAuth2Client
+
+    def oauth2_client_factory(*args, **kwargs):
+        kwargs["transport"] = httpx.MockTransport(forbidden_sync_request)
+        return original_oauth2_client(*args, **kwargs)
+
+    with mock.patch.object(authlib_httpx, "OAuth2Client", side_effect=oauth2_client_factory), \
+         mock.patch.object(socket, "create_connection", side_effect=AssertionError("real socket forbidden")), \
+         mock.patch.object(socket, "getaddrinfo", side_effect=AssertionError("DNS forbidden")):
+        authorization_request = oc.build_authorization_url(cfg)
+
+    query = parse_qs(urlparse(authorization_request.url).query)
+    check("build_authorization_url uses PKCE S256", query.get("code_challenge_method") == ["S256"])
+    expected_live_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(authorization_request.code_verifier.encode("ascii")).digest()
+    ).rstrip(b"=").decode("ascii")
+    check("authorization URL carries the S256 challenge for its returned verifier", query.get("code_challenge") == [expected_live_challenge])
+    check("authorization URL carries non-empty state", query.get("state") == [authorization_request.state] and bool(authorization_request.state))
+    check("authorization URL carries non-empty nonce", query.get("nonce") == [authorization_request.nonce] and bool(authorization_request.nonce))
+    claims_from_url = json.loads(query["claims"][0])
+    check(
+        "authorization claims requests essential acrs with the expected value",
+        claims_from_url == {"id_token": {"acrs": {"essential": True, "value": cfg.required_authentication_context_id}}},
+    )
+    check("authorization URL construction uses zero transport calls", transport_requests == [])
+
+    token_requests = []
+
+    async def token_handler(request):
+        token_requests.append(request)
+        return httpx.Response(
+            200,
+            json={"access_token": "mock-access", "token_type": "Bearer", "id_token": "mock-id"},
+            request=request,
+        )
+
+    original_async_client = authlib_httpx.AsyncOAuth2Client
+
+    def async_client_factory(*args, **kwargs):
+        kwargs["transport"] = httpx.MockTransport(token_handler)
+        return original_async_client(*args, **kwargs)
+
+    with mock.patch.object(authlib_httpx, "AsyncOAuth2Client", side_effect=async_client_factory), \
+         mock.patch.object(socket, "create_connection", side_effect=AssertionError("real socket forbidden")), \
+         mock.patch.object(socket, "getaddrinfo", side_effect=AssertionError("DNS forbidden")):
+        token_result = asyncio.run(
+            oc.exchange_code_for_tokens(cfg, code="mock-code", code_verifier=authorization_request.code_verifier)
+        )
+
+    check("token exchange completes through the mocked transport", token_result.get("access_token") == "mock-access" and len(token_requests) == 1)
+    token_body = parse_qs(token_requests[0].content.decode("ascii"), keep_blank_values=True)
+    check("token exchange sends no client_secret", "client_secret" not in token_body)
+    check("token exchange sends no client_assertion", "client_assertion" not in token_body and "client_assertion_type" not in token_body)
+    check("token exchange sends client_id in the request body", token_body.get("client_id") == [cfg.client_id])
+    check("token exchange sends the exact PKCE verifier", token_body.get("code_verifier") == [authorization_request.code_verifier])
+
+check("OIDC isolated test opened no .env file", _ENV_OPENS == [], repr(_ENV_OPENS))
+check(
+    "OIDC isolated test made no external socket or DNS call",
+    _EXTERNAL_SOCKET_EVENTS == [],
+    repr(_EXTERNAL_SOCKET_EVENTS),
+)
 
 print(f"--- test_oidc_client_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)
