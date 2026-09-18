@@ -1018,6 +1018,83 @@ for _dom_kind, _dom_exc_cls in DOMAIN_ERROR_CASES:
             _dom_windows_path in _log_text and _dom_note_marker in _log_text,
         )
 
+# --- Row 19D Slice 2: review GET/POST provider classification and offload ---
+import asyncio as _asyncio
+import threading as _threading
+import httpx as _httpx
+from ui import auth_routes as _auth_routes
+from ui.services import key_custody as _key_custody
+
+_original_csrf_provider = main_module.csrf_secret_for_request
+with isolated_review_fixture() as fx:
+    try:
+        main_module.csrf_secret_for_request = lambda *_args: (_ for _ in ()).throw(
+            _auth_routes._provider_http_exception(
+                _key_custody.KeyCustodyConfigurationError("review-vault-marker")
+            )
+        )
+        _provider_get = client.get(fx["review_url"])
+        check(
+            "review GET permanent provider failure is generic 500 and fail-closed",
+            _provider_get.status_code == 500
+            and "review-vault-marker" not in _provider_get.text
+            and fx["calls"]["n"] == 0,
+        )
+
+        main_module.csrf_secret_for_request = lambda *_args: (_ for _ in ()).throw(
+            _auth_routes._provider_http_exception(
+                _key_custody.KeyCustodyTransientError("review-retry-marker")
+            )
+        )
+        _provider_post = client.post(
+            fx["confirm_url"],
+            data={
+                "target_state": "confirmed", "review_note": "not",
+                "expected_hash": fx["expected_hash"], "csrf_token": "x",
+            },
+        )
+        check(
+            "review POST transient provider failure is generic 503 and fail-closed",
+            _provider_post.status_code == 503
+            and "review-retry-marker" not in _provider_post.text
+            and "retry-after" not in {name.lower() for name in _provider_post.headers}
+            and fx["calls"]["n"] == 0,
+        )
+
+        _entered = _threading.Event()
+        _release = _threading.Event()
+
+        def _blocking_csrf(*_args):
+            _entered.set()
+            _release.wait()
+            return _TEST_CSRF_SECRET
+
+        main_module.csrf_secret_for_request = _blocking_csrf
+
+        async def _review_heartbeat():
+            transport = _httpx.ASGITransport(app=app, client=("127.0.0.1", 12345))
+            async with _httpx.AsyncClient(transport=transport, base_url="http://testserver") as async_client:
+                request_task = _asyncio.create_task(async_client.get(fx["review_url"]))
+                for _ in range(1000):
+                    if _entered.is_set():
+                        break
+                    await _asyncio.sleep(0)
+                heartbeat = 0
+                for _ in range(3):
+                    await _asyncio.sleep(0)
+                    heartbeat += 1
+                _release.set()
+                response = await request_task
+                return heartbeat, response
+
+        _beats, _heartbeat_response = _asyncio.run(_review_heartbeat())
+        check(
+            "review sync route provider access stays off the event loop",
+            _entered.is_set() and _beats == 3 and _heartbeat_response.status_code == 200,
+        )
+    finally:
+        main_module.csrf_secret_for_request = _original_csrf_provider
+
 # --- T14: GERÇEK data/ ve src/ ağaçları bu dosyanın HİÇBİR testiyle DEĞİŞMEDİ (byte-düzeyinde) ---
 _after_real_tree = _snapshot_real_tree()
 check(

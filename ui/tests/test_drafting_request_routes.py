@@ -917,6 +917,89 @@ with isolated_case():
 
 
 # ============================================================
+# Row 19D Slice 2: drafting GET/POST provider classification and offload
+# ============================================================
+
+import threading as _threading
+import httpx as _httpx
+from ui import auth_routes as _auth_routes
+from ui.services import key_custody as _key_custody
+
+_original_csrf_provider = main_module.csrf_secret_for_request
+with isolated_case():
+    _context = _get_fresh_context(CASE_ID)
+    _expected_hash = _extract_hidden_value(_context.text, "expected_current_input_hash")
+    _csrf_token = _extract_hidden_value(_context.text, "csrf_token")
+    _provider_form = dict(
+        _BASE_FORM, expected_current_input_hash=_expected_hash, csrf_token=_csrf_token,
+    )
+    try:
+        main_module.csrf_secret_for_request = lambda *_args: (_ for _ in ()).throw(
+            _auth_routes._provider_http_exception(
+                _key_custody.KeyCustodyConfigurationError("draft-vault-marker")
+            )
+        )
+        _provider_get = client.get(f"/cases/{CASE_ID}/drafting-request")
+        check(
+            "drafting GET permanent provider failure is generic 500 and fail-closed",
+            _provider_get.status_code == 500 and "draft-vault-marker" not in _provider_get.text,
+        )
+
+        main_module.csrf_secret_for_request = lambda *_args: (_ for _ in ()).throw(
+            _auth_routes._provider_http_exception(
+                _key_custody.KeyCustodyTransientError("draft-retry-marker")
+            )
+        )
+        _provider_post = client.post(
+            f"/cases/{CASE_ID}/drafting-request/confirm", data=_provider_form,
+        )
+        check(
+            "drafting POST transient provider failure is generic 503 and fail-closed",
+            _provider_post.status_code == 503
+            and "draft-retry-marker" not in _provider_post.text
+            and "retry-after" not in {name.lower() for name in _provider_post.headers}
+            and not draftreq.get_current_input_path(CASE_ID).exists(),
+        )
+
+        _entered = _threading.Event()
+        _release = _threading.Event()
+
+        def _blocking_csrf(*_args):
+            _entered.set()
+            _release.wait()
+            return _TEST_CSRF_SECRET
+
+        main_module.csrf_secret_for_request = _blocking_csrf
+
+        async def _drafting_heartbeat():
+            transport = _httpx.ASGITransport(app=app, client=("127.0.0.1", 12345))
+            async with _httpx.AsyncClient(transport=transport, base_url="http://testserver") as async_client:
+                request_task = asyncio.create_task(
+                    async_client.post(
+                        f"/cases/{CASE_ID}/drafting-request/confirm", data=_provider_form,
+                    )
+                )
+                for _ in range(1000):
+                    if _entered.is_set():
+                        break
+                    await asyncio.sleep(0)
+                heartbeat = 0
+                for _ in range(3):
+                    await asyncio.sleep(0)
+                    heartbeat += 1
+                _release.set()
+                response = await request_task
+                return heartbeat, response
+
+        _beats, _heartbeat_response = asyncio.run(_drafting_heartbeat())
+        check(
+            "drafting async POST provider access stays off the event loop",
+            _entered.is_set() and _beats == 3 and _heartbeat_response.status_code == 200,
+        )
+    finally:
+        main_module.csrf_secret_for_request = _original_csrf_provider
+
+# ============================================================
 # 11) GERÇEK data/ ve src/ AĞAÇLARININ HİÇBİR TESTLE DEĞİŞMEDİĞİNİN
 #     BYTE-DÜZEYİNDE KANITI
 # ============================================================

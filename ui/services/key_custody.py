@@ -5,6 +5,7 @@ operator CLI. This module owns the Windows namespace and ACL boundary.
 """
 from __future__ import annotations
 
+import asyncio
 import base64
 import binascii
 import contextlib
@@ -25,6 +26,7 @@ _DOCUMENT_FIELDS = frozenset({"version", "current_key_id", "keys", "server_peppe
 _KEY_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _LOCAL_PROVIDER_KIND = "local_file"
 _KMS_PROVIDER_KIND = "kms"
+_AZURE_PROVIDER_KIND = "azure_key_vault_secret"
 _LOCK_FILE_NAME = ".local_keys.mutation.lock"
 _LOCK_TIMEOUT_SECONDS = 5.0
 _RETRY_SECONDS = 0.01
@@ -80,6 +82,10 @@ class KeyCustodyDocumentError(KeyCustodyError):
 
 class KeyCustodyProviderUnavailableError(KeyCustodyError):
     """Raised when the selected provider cannot supply custody material."""
+
+
+class KeyCustodyTransientError(KeyCustodyProviderUnavailableError):
+    """Raised for retry-exhausted or deadline-bound transient failures."""
 
 
 class KmsProviderNotImplementedError(KeyCustodyProviderUnavailableError):
@@ -708,15 +714,19 @@ def _selected_provider_kind() -> str:
         raise KeyCustodyConfigurationError("VERGI_KEY_PROVIDER_KIND is required; choose local_file or kms explicitly")
     if kind == "":
         raise KeyCustodyConfigurationError("VERGI_KEY_PROVIDER_KIND must not be empty; choose local_file or kms explicitly")
-    if kind not in {_LOCAL_PROVIDER_KIND, _KMS_PROVIDER_KIND}:
+    if kind not in {_LOCAL_PROVIDER_KIND, _KMS_PROVIDER_KIND, _AZURE_PROVIDER_KIND}:
         raise KeyCustodyConfigurationError(f"unknown VERGI_KEY_PROVIDER_KIND: {kind!r}; expected local_file or kms")
     return kind
 
 
-def get_configured_key_provider() -> LocalFileKeyProvider:
+def get_configured_key_provider() -> Any:
     kind = _selected_provider_kind()
     if kind == _KMS_PROVIDER_KIND:
         raise KmsProviderNotImplementedError("VERGI_KEY_PROVIDER_KIND='kms' is not implemented in Row 19D Slice 1")
+    if kind == _AZURE_PROVIDER_KIND:
+        from .azure_key_vault_custody import get_azure_custody_manager
+
+        return get_azure_custody_manager().get_key_provider()
     return LocalFileKeyProvider()
 
 
@@ -724,4 +734,30 @@ def get_configured_server_pepper() -> bytes:
     kind = _selected_provider_kind()
     if kind == _KMS_PROVIDER_KIND:
         raise KmsProviderNotImplementedError("VERGI_KEY_PROVIDER_KIND='kms' is not implemented in Row 19D Slice 1")
+    if kind == _AZURE_PROVIDER_KIND:
+        from .azure_key_vault_custody import get_azure_custody_manager
+
+        return get_azure_custody_manager().get_server_pepper()
     return _load_material().server_pepper
+
+
+async def get_configured_key_provider_async() -> Any:
+    kind = _selected_provider_kind()
+    if kind == _KMS_PROVIDER_KIND:
+        raise KmsProviderNotImplementedError("VERGI_KEY_PROVIDER_KIND='kms' is not implemented in Row 19D Slice 1")
+    if kind == _AZURE_PROVIDER_KIND:
+        from .azure_key_vault_custody import get_azure_custody_manager
+
+        return await get_azure_custody_manager().get_key_provider_async()
+    return await asyncio.to_thread(LocalFileKeyProvider)
+
+
+async def get_configured_server_pepper_async() -> bytes:
+    kind = _selected_provider_kind()
+    if kind == _KMS_PROVIDER_KIND:
+        raise KmsProviderNotImplementedError("VERGI_KEY_PROVIDER_KIND='kms' is not implemented in Row 19D Slice 1")
+    if kind == _AZURE_PROVIDER_KIND:
+        from .azure_key_vault_custody import get_azure_custody_manager
+
+        return await get_azure_custody_manager().get_server_pepper_async()
+    return await asyncio.to_thread(lambda: _load_material().server_pepper)

@@ -356,6 +356,50 @@ try:
         expect_raises(kc.KmsProviderNotImplementedError, kc.get_configured_key_provider, "kms provider selection fails closed as not implemented in Slice 1")
         expect_raises(kc.KmsProviderNotImplementedError, kc.get_configured_server_pepper, "kms pepper selection fails closed as not implemented in Slice 1")
 
+        from ui.services import azure_key_vault_custody as azure_custody
+
+        class _AzureSecret:
+            value = json.dumps(_valid_document("azure-a"))
+            properties = type("_Properties", (), {"version": "vault-v1"})()
+
+        class _AzureClient:
+            def __init__(self):
+                self.calls = 0
+
+            def get_secret(self, name, **kwargs):
+                self.calls += 1
+                return _AzureSecret()
+
+        azure_client = _AzureClient()
+        azure_env = {
+            "VERGI_AZURE_KEY_VAULT_URL": "https://unit.vault.azure.net",
+            "VERGI_AZURE_KEY_VAULT_SECRET_NAME": "custody",
+        }
+        for name, value in azure_env.items():
+            os.environ[name] = value
+        os.environ.pop("VERGI_AZURE_CREDENTIAL_KIND", None)
+        os.environ["VERGI_KEY_PROVIDER_KIND"] = "azure_key_vault_secret"
+        azure_custody._reset_azure_custody_manager_for_tests(client_factory=lambda _config: azure_client)
+        azure_provider = kc.get_configured_key_provider()
+        azure_pepper = kc.get_configured_server_pepper()
+        check(
+            "explicit azure selector dispatches key and pepper through one shared manager snapshot",
+            azure_provider._snapshot is azure_custody.get_azure_custody_manager()._snapshot
+            and azure_pepper == azure_provider._snapshot.server_pepper
+            and azure_client.calls == 1,
+        )
+        azure_custody._reset_azure_custody_manager_for_tests()
+        for name in azure_env:
+            os.environ.pop(name, None)
+
+        os.environ["VERGI_KEY_PROVIDER_KIND"] = "local_file"
+        os.environ["VERGI_DEPLOYMENT_MODE"] = "production"
+        check(
+            "VERGI_DEPLOYMENT_MODE does not become a selector and local_file remains backward compatible",
+            isinstance(kc.get_configured_key_provider(), kc.LocalFileKeyProvider),
+        )
+        os.environ.pop("VERGI_DEPLOYMENT_MODE", None)
+
         validation_dir = external_root / "validation"
         missing_path = validation_dir / "missing.json"
         expect_raises(kc.KeyCustodyProviderUnavailableError, lambda: kc.LocalFileKeyProvider(missing_path), "missing local custody file fails closed")
@@ -757,6 +801,25 @@ try:
                     os.environ["VERGI_KEY_PROVIDER_KIND"] = kind
                 response, recorder = callback_http(base_row, callback_state)
                 check(f"{label} remains a 500 provider/config failure with zero writes/exchange", response.status_code == 500 and response.content != unknown_response.content and not recorder.consumed and recorder.session_inserts == 0 and exchange_calls == [])
+
+            original_async_dispatch = kc.get_configured_key_provider_async
+
+            async def transient_async_dispatch():
+                raise kc.KeyCustodyTransientError("retry-after-vault-marker")
+
+            kc.get_configured_key_provider_async = transient_async_dispatch
+            try:
+                transient_response, transient_recorder = callback_http(base_row, callback_state)
+            finally:
+                kc.get_configured_key_provider_async = original_async_dispatch
+            check(
+                "transient callback provider failure is generic 503 with rollback/not-consumed and no leak",
+                transient_response.status_code == 503
+                and not transient_recorder.consumed
+                and transient_recorder.session_inserts == 0
+                and exchange_calls == []
+                and "retry-after-vault-marker" not in transient_response.text,
+            )
 
             os.environ["VERGI_KEY_PROVIDER_KIND"] = "local_file"
             callback_path = kc.resolve_local_key_path()

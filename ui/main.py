@@ -83,6 +83,7 @@
 #      dosyada/production launcher'da HİÇBİR test-host istisnası YOK.
 # ============================================================
 
+import asyncio
 import logging
 
 from fastapi import FastAPI, Request, Form, HTTPException
@@ -107,10 +108,20 @@ from .auth_routes import (
     require_principal_and_case,
     authorize_or_redirect,
     csrf_secret_for_request,
+    csrf_secret_for_request_async,
     has_capability,
     list_accessible_case_ids,
     NotAuthenticatedError,
 )
+_DEFAULT_CSRF_SECRET_SEAM = csrf_secret_for_request
+
+
+async def _csrf_secret_for_request_async(request, principal):
+    if csrf_secret_for_request is not _DEFAULT_CSRF_SECRET_SEAM:
+        return await asyncio.to_thread(csrf_secret_for_request, request, principal)
+    return await csrf_secret_for_request_async(request, principal)
+
+
 from .services.common import (
     ApprovalUiError,
     StaleViewError,
@@ -1420,7 +1431,7 @@ async def drafting_request_confirm(request: Request, case_id: str):
     # route'undaki üretim sırasıyla BİREBİR AYNI olmalı: case_id +
     # "drafting_request" + "save" + expected_current_input_hash. Row
     # 19B: gizli anahtar bu isteğin oturumundan taze türetiliyor.
-    csrf_secret = csrf_secret_for_request(request, principal)
+    csrf_secret = await _csrf_secret_for_request_async(request, principal)
 
     if not _check_csrf_and_origin(
         request, csrf_secret, csrf_token, case_id, "drafting_request", "save", expected_current_input_hash,

@@ -13,9 +13,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 
 from .services import authz, session_store, security_events, oidc_client, mfa_adapter
@@ -169,20 +170,44 @@ def list_accessible_case_ids(request: Request, principal: Principal) -> list[str
     )
 
 
-def csrf_secret_for_request(request: Request, principal: Principal) -> bytes:
-    """Derives this request's CSRF secret fresh from the session's OWN
-    token_hash (never the raw token, never a stored csrf_secret column)
-    - same derivation logout() uses. Known simplification (see
-    _repo_conn's docstring): opens its own connection rather than
-    sharing one across the request; acceptable because this function,
-    like the rest of this module, is NOT EXECUTED in this sandbox and
-    is flagged for the same connection-sharing follow-up."""
+def _provider_http_exception(error: BaseException) -> HTTPException:
+    from .services import key_custody
+
+    status_code = 503 if isinstance(error, key_custody.KeyCustodyTransientError) else 500
+    return HTTPException(
+        status_code=status_code,
+        detail="Key custody provider is unavailable.",
+        headers=_no_store_headers(),
+    )
+
+
+def _session_token_hash(principal: Principal) -> bytes:
     from .services import db
+
     with db.transaction() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT token_hash FROM iam.sessions WHERE id = %s", (principal.session_id,))
             (token_hash,) = cur.fetchone()
-    return session_store.derive_csrf_secret(token_hash, server_pepper=_server_pepper())
+    return token_hash
+
+
+def csrf_secret_for_request(request: Request, principal: Principal) -> bytes:
+    """Derive CSRF material through the configured custody provider."""
+    from .services import key_custody
+
+    token_hash = _session_token_hash(principal)
+    try:
+        pepper = _server_pepper()
+    except key_custody.KeyCustodyError as error:
+        raise _provider_http_exception(error) from None
+    return session_store.derive_csrf_secret(token_hash, server_pepper=pepper)
+
+
+async def csrf_secret_for_request_async(request: Request, principal: Principal) -> bytes:
+    """Async CSRF path that never performs blocking custody I/O on the loop."""
+    token_hash = await asyncio.to_thread(_session_token_hash, principal)
+    pepper = await _server_pepper_async()
+    return session_store.derive_csrf_secret(token_hash, server_pepper=pepper)
 
 
 # ---------------------------------------------------------------
@@ -198,7 +223,7 @@ async def login(request: Request):
 
     with db.transaction() as conn:
         from .services import transient_secrets as ts
-        key_provider = _key_provider()
+        key_provider = await _key_provider_async()
         enc = ts.encrypt_transient_secret(
             auth_request.code_verifier.encode("utf-8"),
             key_provider=key_provider,
@@ -263,7 +288,7 @@ async def callback(request: Request):
         try:
             enc = ts.EncryptedSecret(ciphertext=pkce_ciphertext, nonce=pkce_nonce, key_id=pkce_key_id, alg=pkce_enc_alg)
             code_verifier = ts.decrypt_transient_secret(
-                enc, key_provider=_key_provider(), associated_data=state_hash.encode("utf-8"),
+                enc, key_provider=await _key_provider_async(), associated_data=state_hash.encode("utf-8"),
             ).decode("utf-8")
         except (ts.UnknownKeyError, ts.DecryptionFailedError):
             return _generic_login_denied(request)
@@ -386,7 +411,7 @@ async def logout(request: Request):
         with conn.cursor() as cur:
             cur.execute("SELECT token_hash FROM iam.sessions WHERE id = %s", (principal.session_id,))
             (token_hash,) = cur.fetchone()
-        server_pepper = _server_pepper()
+        server_pepper = await _server_pepper_async()
         csrf_secret = session_store.derive_csrf_secret(token_hash, server_pepper=server_pepper)
         csrf_ok = security_module.verify_csrf_token(csrf_secret, csrf_token, "logout")
 
@@ -446,3 +471,29 @@ def _server_pepper() -> bytes:
     from .services import key_custody
 
     return key_custody.get_configured_server_pepper()
+
+
+_DEFAULT_KEY_PROVIDER_SEAM = _key_provider
+_DEFAULT_SERVER_PEPPER_SEAM = _server_pepper
+
+
+async def _key_provider_async():
+    from .services import key_custody
+
+    try:
+        if _key_provider is not _DEFAULT_KEY_PROVIDER_SEAM:
+            return await asyncio.to_thread(_key_provider)
+        return await key_custody.get_configured_key_provider_async()
+    except key_custody.KeyCustodyError as error:
+        raise _provider_http_exception(error) from None
+
+
+async def _server_pepper_async() -> bytes:
+    from .services import key_custody
+
+    try:
+        if _server_pepper is not _DEFAULT_SERVER_PEPPER_SEAM:
+            return await asyncio.to_thread(_server_pepper)
+        return await key_custody.get_configured_server_pepper_async()
+    except key_custody.KeyCustodyError as error:
+        raise _provider_http_exception(error) from None

@@ -561,17 +561,43 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   MEDIUM** buldu; yalnız üç dosyalık remediation sonrasında bağımsız re-review
   F1–F5'in tamamını kapattı. Exact final verdict:
   `ROW 19D AUTHENTICATION ENABLEMENT SLICE 1 LOCK-READY — F1–F5 CLOSED, NO BLOCKING FINDINGS`
-- **ROW 19D Authentication Enablement Slice 2 — Production KMS/Key Vault
-  Provider Exact-Scope and Allowlist Reconciliation — ACTIVE / NEXT.** Yalnız
-  **salt-okunur scope/allowlist reconciliation** yetkilidir; Slice 2
-  implementasyonu BAŞLAMAMIŞTIR ve bu pointer hiçbir dosyaya yazma yetkisi
-  VERMEZ. Production KMS/Key Vault, deployment/workload identity, recovery,
-  rotation cadence ve production custody henüz teslim edilmedi. Slice 3'teki
-  gerçek Entra tenant/app registration, Conditional Access Authentication
-  Context–Graph binding verification, bootstrap, gerçek browser/`__Host-session`
-  cookie testi ve opt-in live smoke BAŞLAMAMIŞTIR. P3 external legal/access
-  blocker'ları, corpus acquisition/population ve diğer roadmap işleri de
-  BAŞLAMAMIŞTIR ve YETKİLENDİRİLMEMİŞTİR.
+- **ROW 19D Authentication Enablement Slice 2 — Azure Key Vault Secrets
+  Custody Provider Foundation — DONE / LOCKED.** Kullanıcı tarafından
+  onaylanan corrected final scope'un exact 11-path allowlist'i (**2 NEW +
+  9 MODIFIED**) üzerinde implement edildi: Azure Key Vault Secrets
+  üzerinde **read-only, versioned custody snapshot foundation**. Tek,
+  shared, immutable, process-local snapshot/manager; `KeyProvider` ve
+  server pepper AYNI secret version'ından ATOMİK türetilir. Yalnız
+  latest-version exact-name `get_secret(name)`; LIST/version
+  enumeration/write/delete/recover/purge YOK; prior-version veya
+  local-file fallback YOK. Tek SDK retry katmanı: **2 total attempt,
+  1.0s connect + 1.0s read, ≤0.25s backoff/Retry-After, 5.0s outer
+  monotonic budget**; revoked generation + deadline completion gate ile
+  late publish ENGELLENİR. Credential yalnız explicit Managed Identity /
+  Workload Identity; `DefaultAzureCredential` ve developer credential
+  fallback'ları YASAKTIR. Mevcut `VERGI_KEY_PROVIDER_KIND` selector'ı
+  TEK authority olarak korunur; `local_file` ve `kms` Slice 1
+  davranışları DEĞİŞMEDİ. Auth (login/callback/logout) ve altı CSRF
+  yolunda async/offload + generic 500/503 fail-closed sınıflandırma.
+  Migration ve security-event vocabulary DEĞİŞMEDİ (5 migration;
+  18/18). Bağımsız inceleme final verdict'i:
+  `ROW 19D AUTHENTICATION ENABLEMENT SLICE 2 LOCK-READY — NO BLOCKING FINDINGS`
+  (bkz. Row 19D Slice 2 checkpoint özeti, §5 sonrası, "## 6.
+  Cross-Cutting Backlog"dan hemen önce).
+- **Row 19D external activation/adoption gate — read-only
+  exact-scope/allowlist reconciliation — ACTIVE / NEXT.** Yalnız
+  **salt-okunur scope/allowlist reconciliation** yetkilidir; bu pointer
+  hiçbir dosyaya yazma yetkisi, hiçbir Azure
+  resource/RBAC/identity/secret/network/adoption/rotation/live-smoke/
+  cutover işlemi veya cloud çağrısı yetkisi VERMEZ ve yeni bir roadmap
+  Row numarası İCAT ETMEZ. Şunların HİÇBİRİ BAŞLAMAMIŞTIR:
+  tenant/subscription/region seçimi; managed/workload identity
+  kurulumu; custom GET-only role veya built-in role kararı/assignment;
+  private endpoint/firewall/DNS; initial secret material;
+  local-to-Azure adoption; pepper/key transfer veya global re-auth;
+  aktif session/PKCE/MFA pending-state invalidation;
+  rotation/recovery/backup/break-glass; live cloud smoke; production
+  cutover; Row 19D Slice 3 implementation; P3/corpus işleri.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -6129,6 +6155,312 @@ yeniden tasarlanmadı.
 **M. Son durum**
 
 `ROW 19D AUTHENTICATION ENABLEMENT SLICE 1 LOCK-READY — F1–F5 CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+### Row 19D Authentication Enablement Slice 2 — Azure Key Vault Secrets Custody Provider Foundation (DONE / LOCKED — checkpoint özeti)
+
+**A. Preflight ve exact scope** — Branch `claude-dev`; HEAD
+`f1b7c577a826a638cceee9ed47968f256166baf4` (implementasyon, bağımsız
+inceleme ve bu roadmap-lock turu boyunca DEĞİŞMEDİ; commit yapılmadı).
+Kullanıcı tarafından onaylanan corrected final scope'un exact 11-path
+allowlist'i: **2 NEW + 9 MODIFIED = 11 dosya**.
+
+NEW (2):
+1. `ui/services/azure_key_vault_custody.py`
+2. `ui/tests/test_azure_key_vault_custody_isolated.py`
+
+MODIFIED (9):
+3. `ui/services/key_custody.py`
+4. `ui/auth_routes.py`
+5. `ui/main.py`
+6. `ui/requirements.txt`
+7. `ui/tests/test_key_custody_isolated.py`
+8. `ui/tests/test_auth_routes.py`
+9. `ui/tests/test_drafting_request_routes.py`
+10. `ui/tests/test_routes.py`
+11. `ui/tests/test_review_routes.py`
+
+**0 migration**; SQL security-event vocabulary ve Python writer map
+DEĞİŞMEDİ. `CLAUDE.md` implementasyon/inceleme turlarında HİÇ
+değişmedi — bu checkpoint'in kendisi ilk yazım anıdır. `data/**`,
+`index/**`, `db/migrations/**` korunmuştur (bağımsız incelemenin
+121-dosyalık açılış/kapanış SHA-256 manifesti byte-identical).
+HİÇBİR Azure/cloud configuration yapılmadı; hiçbir gerçek Azure/Entra/
+Graph/OIDC endpoint'ine bağlanılmadı; gerçek custody dosyası
+(`%LOCALAPPDATA%\vergi_ai\key_custody`) OLUŞTURULMADI.
+
+**B. Mimari karar** — Custody modeli **Azure Key Vault Secrets**tır:
+tek, versioned bir secret value içinde bütün-custody JSON snapshot'ı.
+Bu model açıkça **transitional/provider-compatible read-only secrets
+custody foundation**dır; **KMS-grade, HSM-grade veya non-exportable
+crypto İDDİASI TAŞIMAZ**. Residual risk açık kayıttır: raw AES
+anahtarları ve server pepper, secret value ile birlikte Python process
+BELLEĞİNE gelir; secure zeroization garanti edilmez. Non-exportable
+key material isteniyorsa Azure Key Vault Keys / Managed HSM modeli
+AYRI bir mimari/protokol slice'ı gerektirir (mevcut
+`get_key(key_id) -> bytes` sözleşmesiyle karşılanamaz) — bu slice o
+iddiada bulunmaz.
+
+**C. Atomic snapshot sözleşmesi** — Tek JSON secret document; exact
+root alan kümesi: `version`, `current_key_id`, `keys`,
+`server_pepper`. Tek `get_secret(name)` sonucu TEK sefer strict
+parse/validate edilir ve frozen `AzureCustodySnapshot`'a çevrilir
+(private dict kopyası + `MappingProxyType`; dışarı mutable dict/list
+verilmez; repr'ler redakte). Cache publish YALNIZ fully validated
+candidate için, lock altında, lease current + non-revoked +
+generation-match + deadline-unexpired dörtlü kapısından sonra TEK
+snapshot pointer atamasıyla yapılır. `KeyProvider` görünümü ve server
+pepper AYNI published snapshot referansından türetilir — tek snapshot
+içinde torn key/pepper yapısal olarak imkânsızdır. Atomicity
+**process-local**'dır: multi-worker deployment'ta worker'lar 60.0s
+monotonic TTL penceresi içinde FARKLI valid version'lar görebilir —
+cache/version skew residual risk olarak açık kayıttır.
+
+**D. Parser ve bounds** — UTF-8 belge üst sınırı **16.384 bayt**;
+**1..64 key**; AES key **exact 32 bayt**; pepper **32..1024 bayt**;
+`current_key_id`'nin `keys` içinde bulunması ZORUNLU; canonical Base64
+(decode + re-encode round-trip; padding-bit ihlali dahil non-canonical
+biçimler reddedilir); duplicate alan/key-id, unknown/missing alan,
+non-finite JSON sabiti (NaN/Infinity) ve bool/non-integer `version`
+reddi; boş/whitespace/non-string Azure secret version ID reddi. Yeni
+secret-bearing tipler (`AzureCustodyConfig`, `AzureCustodySnapshot`,
+lease) repr-redakte; TÜM parser/manager exception mesajları sabit
+metindir — alan adı/değer/secret yansıtılmaz.
+
+**E. Retry, timeout ve generation lease** — TEK retry katmanı Azure
+Core SDK `RetryPolicy` tabanlı custody policy'sidir; application
+retry loop YOKTUR; identity credential'larına `retry_total=0` verilir.
+Exact değerler: **2 total attempt** (1 initial + en çok 1 retry);
+attempt başına **1.0s connect + 1.0s read**; **≤0.25s
+backoff/Retry-After** (oversize Retry-After uyumadan/retry'sız
+transient exhaustion); **5.0s outer monotonic budget**; üst sınır
+aritmetiği **2×(1.0+1.0)+0.25 = 4.25 ≤ 5.0**. Bağımsız incelemenin
+gerçek-SDK gözlemi kayıttadır: azure-core 1.41.0'da İLK retry'ın
+backoff'u 0'dır (history ≤ 1) — 0.25 yalnız Retry-After yolunda fiilen
+uyunur; 4.25s bir ÜST SINIR olarak geçerlidir. Credential/token
+acquisition, outer budget saati BAŞLADIKTAN SONRA gerçekleşir. Worker
+cache'e ASLA publish edemez (done-callback yok); caller timeout ve
+async cancellation lease'i lock altında REVOKE edip generation'ı
+ilerletir; geç worker sonucu DISCARD edilir; refresh failure'da süresi
+geçmiş snapshot SERVİS EDİLMEZ ve TTL UZATILMAZ (fail-closed transient
+hata).
+
+**F. Credential, API ve RBAC sınırı** — Default: explicit
+system-assigned `ManagedIdentityCredential`; user-assigned MI yalnız
+explicit client ID ile; workload identity yalnız explicit tenant ID +
+client ID + token-file path üçlüsüyle. `DefaultAzureCredential`,
+Azure CLI, PowerShell, VS Code, shared token cache ve interactive
+browser fallback'ları YOKTUR (repo genelinde sıfır referans). SDK
+importu ve client/credential construction lazy'dir (yalnız Azure
+seçimi + ilk fetch'te, worker thread'de); import-time
+network/discovery yoktur. Runtime API yalnız exact-name
+`get_secret(name)`'dir; LIST/version enumeration/write/delete/recover/
+purge çağrısı kod tabanında YOKTUR. Strict custom-role beklentisi
+`Microsoft.KeyVault/vaults/secrets/getSecret/action`'dır; gerçek role
+definition/assignment, identity ve resource kurulumu EXTERNAL
+GATE'tedir; built-in "Key Vault Secrets User" rolünün metadata okuma
+dahil daha GENİŞ olduğu kayıtlıdır — kod bundan daha dar bir RBAC
+iddiası yapmaz.
+
+**G. Selector ve fallback sözleşmesi** — TEK authority mevcut
+`VERGI_KEY_PROVIDER_KIND`'dır: `local_file` Slice 1 LOCKED davranışıyla
+geriye uyumlu (hata metinleri dahil bayt-aynı korundu);
+`azure_key_vault_secret` Azure'un TEK explicit seçim değeri; `kms`
+mevcut not-implemented sentinel olarak korunur; unset/empty/unknown
+fail-closed. `VERGI_DEPLOYMENT_MODE` EKLENMEDİ ve seçim üzerinde
+etkisizliği test edildi. Azure env değişkenlerinin varlığı Azure'u
+OTOMATİK SEÇMEZ. Azure config/credential/fetch/parse hatasında local
+veya stale fallback YOKTUR. Azure SDK'sı kurulu olmayan hedef
+runtime'da local path import/selection çalışır; Azure seçimi sabit
+mesajlı, redakte, fail-closed configuration error (500 sınıfı) verir.
+
+**H. Auth ve CSRF call graph** — Exact ALTI CSRF yüzeyi:
+
+1. approval GET — `/cases/{case_id}/approvals/{row_key}`
+2. approval POST — `/cases/{case_id}/approvals/{row_key}/confirm`
+3. review GET — `/cases/{case_id}/reviews/{review_kind}/{record_id}`
+4. review POST — `/cases/{case_id}/reviews/{review_kind}/{record_id}/confirm`
+5. drafting GET — `/cases/{case_id}/drafting-request`
+6. drafting POST — `/cases/{case_id}/drafting-request/confirm`
+
+İlk beşi sync `def` route'lardır ve Starlette/FastAPI worker
+thread'inde çalışır (event loop üzerinde custody erişimi yok; kalıcı
+causal heartbeat testleriyle kanıtlı); drafting POST async route'tur
+ve awaited async CSRF boundary (`_csrf_secret_for_request_async`)
+kullanır. `ui/auth_routes.py`'nin login/callback/logout yolları async
+custody accessor'ları kullanır; local-file blocking erişimi de
+`asyncio.to_thread` sınırından geçer.
+
+**I. HTTP/transaction error contract** — Unknown application key /
+corrupt ciphertext: **generic 401 + callback state consumed**. Bad
+config, credential auth, RBAC 403, missing/disabled/deleted secret,
+empty version, malformed snapshot, SDK-yok: **generic 500 +
+transaction rollback / state NOT consumed**. Retry exhaustion,
+connect/read timeout, 408/429/retryable 5xx: **generic 503 + rollback
+/ state NOT consumed**. `Retry-After` kullanıcı yanıtına ASLA forward
+edilmez. Vault URL/name, tenant/client ID, token path/value, RBAC
+detayı, key/pepper baytları yanıt/log/exception yüzeylerine SIZMAZ
+(sabit mesajlar; marker taramaları sıfır isabet). Altı CSRF yüzeyinde
+provider failure sırasında SIFIR mutation/audit yan etkisi (fixture
+sayaçlarıyla kanıtlı).
+
+**J. Dependency ve sayaçlar** — `ui/requirements.txt`'e üç exact
+doğrudan pin eklendi: `azure-keyvault-secrets==4.11.2`,
+`azure-identity==1.25.3`, `azure-core==1.41.0` (azure-core, retry
+policy sözleşmesinin doğrudan API yüzeyi olduğu için transitif
+bırakılmadı). Sayaçlar: production Python **149→150**; UI test modülü
+**66→67**; UI exact pin **12→15**; root pin **26→26** (UTF-16 root
+`requirements.txt` untouched); migration **5→5**; SQL event vocabulary
+/ Python writer map **18/18→18/18**.
+
+**K. Dürüst kronoloji (aşamalar birleştirilmeden)**:
+
+1. **İlk scope draft** — 9-path'lik taslak kapsam ve mimari araştırma.
+2. **Bağımsız architecture review: NOT READY** — dört bloklayıcı
+   düzeltme: (a) shared snapshot atomicity'nin call graph'ta garanti
+   edilmemesi (iki bağımsız factory/fetch → torn key/pepper riski);
+   (b) 7 saniyelik retry/deadline matematiğinin gerçek SDK
+   davranışı altında YANLIŞ olması; (c) `ui/main.py`'nin altı CSRF
+   call-site'ının under-scope edilmesi; (d) zorunlu
+   `VERGI_DEPLOYMENT_MODE` selector'ının Slice 1 LOCKED selector
+   sözleşmesini kırması. İlk tasarım doğruymuş gibi YENİDEN
+   YAZILMAMIŞTIR — bu verdict tarihsel kayıttır.
+3. **Corrected final exact scope** — F1-F4 düzeltmeleriyle koşulsuz
+   11-path allowlist (2 NEW + 9 MODIFIED).
+4. **Kullanıcı implementation onayı** — exact 11-path sözleşmesi
+   üzerine.
+5. **İmplementasyon** — yalnız 11 path içinde; cloud configuration
+   sıfır.
+6. **Bağımsız güvenlik incelemesi** — kaynak + diff + bağımsız
+   ampirik tanılar + testlerin bağımsız yeniden koşulması (aşağıda L).
+7. **Final verdict**:
+   `ROW 19D AUTHENTICATION ENABLEMENT SLICE 2 LOCK-READY — NO BLOCKING FINDINGS`
+
+**L. Test kanıtı — zaman ayrımlı ve dürüst**:
+
+İmplementer kanıtı (kendi koşuları):
+
+- Targeted: **11 modül, 638 passed, 0 failed**.
+- Full sweep (fresh disposable PostgreSQL 16, migration 0001-0005,
+  target runtime, her modül ayrı process): **67/67 modül exit 0, 4067
+  passed, 0 failed, 8 counted skip, 14 informational skip**.
+
+Bağımsız inceleme kanıtı (AYRI koşular; implementer sayılarıyla
+BİRLEŞTİRİLMEZ):
+
+- Targeted: **FARKLI bir 7-modül seti, 558 passed, 0 failed** — bu iki
+  targeted seti aynı test setiymiş gibi SUNULAMAZ ve toplamları
+  birleştirilemez.
+- Full sweep, KENDİ fresh disposable PostgreSQL 16 kümesiyle: **67/67
+  modül exit 0, 4067 passed, 0 failed, 8 counted skip, 14
+  informational skip** — implementer'ın full-sweep sonucunun BİREBİR
+  BAĞIMSIZ reprodüksiyonu.
+- Bağımsız repo-dışı tanılar: **31/31** snapshot-atomicity/generation-
+  lease race diagnostic; **20/20** parser/bounds boundary diagnostic;
+  **36/36** GERÇEK Azure SDK (exact üç pin, disposable venv, fake
+  transport) retry/timeout diagnostic.
+- Fail-closed audit guard (pozitif kontrollü): **0 external network, 0
+  dış DNS lookup, 0 `.env` open**; test loglarında **0 secret
+  marker/materyal sızıntısı**; korunan yolların **121-dosyalık SHA-256
+  manifesti byte-identical**.
+
+**M. O1-O6 disposition** — Hiçbiri repo-geneli tamamen kapanmış borç
+gibi SUNULMAZ:
+
+- **O1 INCLUDE (yalnız Azure parser)** — yeni parser'da field-name
+  reflection sıfır; local parser'ın kendi residual'ı AÇIK.
+- **O2 INCLUDE (yalnız Azure immutable snapshot)** — repo-geneli
+  mutable-mapping residual'ı AÇIK.
+- **O3 PARTIAL** — Azure belge/key/pepper bounds kapandı; local crash
+  durability AÇIK.
+- **O4 INCLUDE (yalnız yeni Azure secret-bearing tipleri)** — eski
+  tiplerin repr residual'ı AÇIK.
+- **O5 EXCLUDE** — OIDC/client-assertion/MFA step-up DEĞİŞMEDİ
+  (`test_oidc_client_isolated.py` byte-identical, geçmeye devam etti).
+- **O6 PARTIAL** — yalnız dokunulan auth/altı-CSRF yüzeyinde
+  classification/offload; daha geniş yüzey residual'ı AÇIK.
+
+**N. Bağımsız incelemenin TÜM Low/Observation kayıtları (R1-R11,
+hiçbiri düşürülmeden)**:
+
+- **R1 (Low)** — İki YENİ dosyada toplam ÜÇ kozmetik CRLF satırı
+  (azure modülü satır 343 ve 571; yeni test dosyası satır 449).
+  Bloklamıyor; **bu roadmap-lock turunda DÜZELTİLMEDİ** — iki dosyaya
+  dokunulmadı; açık Low kayıt olarak kalır.
+- **R2** — Gerçek azure-core'da ilk retry backoff'u 0'dır; 4.25s
+  YALNIZ geçerli bir üst sınırdır (bkz. E).
+- **R3** — Tek-flight lease'te bir async waiter'ın iptali, aynı
+  lease'i bekleyen diğer caller'lara nadir gereksiz 503 üretebilir
+  (sözleşmenin kendi revoke-on-cancel kararı; fail-closed).
+- **R4** — OS seviyesinde ASILI bir SDK çağrısı tek-thread executor'ı
+  meşgul edebilir; caller'lar 5.0s'de bounded 503 alır; kuyruğa giren
+  bayat fetch'ler budget admission'ında anında düşer (kendi kendini
+  sınırlar).
+- **R5** — Selector hata metinleri geriye uyumluluk gereği hâlâ yalnız
+  `local_file`/`kms` değerlerini anıyor (kozmetik operatör-deneyimi
+  notu).
+- **R6** — Vault URL doğrulaması path bileşenini reddetmiyor; dar
+  hardening adayı.
+- **R7** — Route testlerinde failure mapping katmanlara bölünerek
+  kanıtlanıyor (route seviyesinde mapped HTTPException enjeksiyonu;
+  ham KeyCustodyError→HTTP eşlemesi auth/callback testlerinde);
+  kombine kapsam TAMDIR.
+- **R8** — Heartbeat mutantı temiz assertion yerine deterministik
+  timeout/hang ile ölür (yine causal/öldürücü).
+- **R9** — login/callback DB transaction'ı custody fetch boyunca en
+  fazla ~5.0s açık kalabilir; rollback semantiği doğru; Row 19D
+  operasyon notu.
+- **R10** — Python 3.14 `concurrent.futures.TimeoutError == TimeoutError`
+  alias gözlemi; production'da ulaşılamaz (worker her exception'ı
+  sınıflandırır).
+- **R11** — Roadmap pointer'ının bu turdan önce salt-okunur kalması
+  süreç kaydıydı; bu checkpoint ile KAPANIYOR.
+
+**O. Residual risk ve external gate (scope dışı / kalan iş)** —
+Aşağıdakilerin TAMAMI bu slice'ın DIŞINDADIR ve başlamamıştır: Azure
+resource ve gerçek secret oluşturulması; tenant/subscription/region;
+identity ve RBAC assignment; private endpoint/firewall/DNS; initial
+secret material; adoption ve pepper/key transfer kararı (default: yeni
+pepper + planlı global re-auth); aktif session/PKCE/MFA pending-state
+invalidation; rotation/recovery/backup/break-glass; multi-worker
+coordinated refresh/version telemetry; live cloud smoke; production
+cutover. Local dosya Azure failure için silent fallback DEĞİLDİR ve
+cutover sonrası aktif ikinci authority olarak TUTULMAZ. Bu slice
+KMS/HSM-grade non-exportable custody SAĞLAMAZ (bkz. B).
+
+**P. LOCKED-file §9 gerekçesi** — Tüm değişiklikler kullanıcı onaylı
+exact 11-path allowlist İÇİNDE, migration'sız ve backward-compatible
+yapıldı; bu checkpoint ile 11 dosyanın Slice 2 sonucu LOCKED kabul
+edilir:
+
+- `ui/services/azure_key_vault_custody.py` (YENİ): Azure
+  config/credential/client, exact retry policy, strict parser,
+  immutable snapshot, generation lease, single-flight ve cache
+  manager'ın TEK production evi — corrected scope'un zorunlu kıldığı
+  yeni modül.
+- `ui/services/key_custody.py`: yalnız additive selector branch'i
+  (`azure_key_vault_secret`), `KeyCustodyTransientError` sınıfı ve
+  shared manager'a giden sync/async accessor'lar; `local_file`/`kms`
+  dalları ve hata metinleri bayt-aynı korundu (Slice 1 sözleşmesi
+  GENİŞLETİLDİ, kırılmadı).
+- `ui/auth_routes.py`: login/callback/logout'un async
+  offload/cancellation sınırı ve 401/500/503 consume/rollback
+  sözleşmesi için açıldı; route/callback policy'si ve dış auth
+  protokolü yeniden tasarlanmadı.
+- `ui/main.py`: yalnız drafting POST'un async CSRF boundary'si ve
+  seam-uyumlu async wrapper; beş sync route davranışı DEĞİŞMEDİ.
+- `ui/requirements.txt`: yalnız üç exact Azure pini (sona, additive).
+- İlgili ALTI test dosyası (`test_azure_key_vault_custody_isolated.py`
+  YENİ + beş mevcut test dosyası): yalnız additive kanıt — provider
+  failure 500/503 sınıflandırması, sıfır-mutasyon, event-loop
+  heartbeat/offload, selector geriye uyumluluğu, redaction; hiçbir
+  mevcut assertion gevşetilmedi/kaldırılmadı (beş modified test
+  diff'inde sıfır silme).
+
+**Q. Final verdict**
+
+ROW 19D AUTHENTICATION ENABLEMENT SLICE 2 LOCK-READY — NO BLOCKING FINDINGS
 
 **DONE / LOCKED**
 

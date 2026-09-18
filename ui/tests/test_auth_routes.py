@@ -34,6 +34,7 @@
 # ============================================================
 
 import asyncio
+import threading
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -371,6 +372,70 @@ def _do_login_redirect():
     check("GET /auth/login response is Cache-Control: no-store", resp.headers.get("cache-control") == "no-store")
     return _LAST_AUTH_REQUEST["value"]
 
+
+# ----------------------------------------------------------------
+# Row 19D Slice 2: provider classification and event-loop offload.
+# ----------------------------------------------------------------
+
+from ui.services import key_custody as _key_custody
+
+_original_key_provider_seam = auth_routes._key_provider
+_provider_rows_before = len(SHARED_DB.oidc_transactions)
+auth_routes._key_provider = lambda: (_ for _ in ()).throw(
+    _key_custody.KeyCustodyConfigurationError("vault-secret-marker")
+)
+_provider_500 = client.get("/auth/login", follow_redirects=False)
+check(
+    "permanent custody failure is generic 500 with no transaction insert or detail leak",
+    _provider_500.status_code == 500
+    and len(SHARED_DB.oidc_transactions) == _provider_rows_before
+    and "vault-secret-marker" not in _provider_500.text,
+)
+
+auth_routes._key_provider = lambda: (_ for _ in ()).throw(
+    _key_custody.KeyCustodyTransientError("retry-after-secret-marker")
+)
+_provider_503 = client.get("/auth/login", follow_redirects=False)
+check(
+    "transient custody failure is generic 503 with no transaction insert or Retry-After leak",
+    _provider_503.status_code == 503
+    and len(SHARED_DB.oidc_transactions) == _provider_rows_before
+    and "retry-after" not in _provider_503.text.lower()
+    and "retry-after" not in {name.lower() for name in _provider_503.headers},
+)
+
+_entered = threading.Event()
+_release = threading.Event()
+
+
+def _blocking_key_provider():
+    _entered.set()
+    _release.wait()
+    return _TEST_KEY_PROVIDER
+
+
+async def _auth_provider_heartbeat():
+    auth_routes._key_provider = _blocking_key_provider
+    task = asyncio.create_task(auth_routes._key_provider_async())
+    for _ in range(1000):
+        if _entered.is_set():
+            break
+        await asyncio.sleep(0)
+    heartbeat = 0
+    for _ in range(3):
+        await asyncio.sleep(0)
+        heartbeat += 1
+    _release.set()
+    result = await task
+    return heartbeat, result
+
+
+_heartbeat, _heartbeat_provider = asyncio.run(_auth_provider_heartbeat())
+check(
+    "blocking auth provider seam is offloaded and event-loop heartbeat advances",
+    _entered.is_set() and _heartbeat == 3 and _heartbeat_provider is _TEST_KEY_PROVIDER,
+)
+auth_routes._key_provider = _original_key_provider_seam
 
 # ----------------------------------------------------------------
 # 1) Full successful login round trip -> a session cookie is set,
@@ -719,6 +784,22 @@ SHARED_DB.case_assignments.clear()  # isolation: nothing seeded here leaks past 
 #    correct CSRF + same-origin -> session revoked, cookie cleared,
 #    redirected to /login.
 # ----------------------------------------------------------------
+
+_original_server_pepper_seam = auth_routes._server_pepper
+auth_routes._server_pepper = lambda: (_ for _ in ()).throw(
+    _key_custody.KeyCustodyTransientError("logout-retry-marker")
+)
+_provider_logout = client.post(
+    "/auth/logout", cookies={"__Host-session": _session_cookie_value},
+    data={"csrf_token": "x"}, follow_redirects=False,
+)
+check(
+    "transient logout provider failure is generic 503 and does not revoke the session",
+    _provider_logout.status_code == 503
+    and _session_row["revoked_at"] is None
+    and "logout-retry-marker" not in _provider_logout.text,
+)
+auth_routes._server_pepper = _original_server_pepper_seam
 
 resp_logout_bad_csrf = client.post(
     "/auth/logout", cookies={"__Host-session": _session_cookie_value},
