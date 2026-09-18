@@ -739,9 +739,16 @@ try:
         from fastapi.testclient import TestClient
         from ui.services import db
 
+        # Row 19B OIDC confidential-client remediation: the REAL
+        # auth_routes._load_provider_config() runs inside callback() here,
+        # so the now-required VERGI_ENTRA_CLIENT_SECRET must be present.
+        # The value is a canary; every callback response body received in
+        # this section is checked against it below.
+        _CALLBACK_CANARY_SECRET = "custody-callback-canary-secret~Zq7/Q+w=:\\end"
         callback_env = {
             "VERGI_ENTRA_TENANT_ID": "11111111-1111-1111-1111-111111111111",
             "VERGI_ENTRA_CLIENT_ID": "callback-client",
+            "VERGI_ENTRA_CLIENT_SECRET": _CALLBACK_CANARY_SECRET,
             "VERGI_ENTRA_AUTH_ENDPOINT": "https://invalid.example/authorize",
             "VERGI_ENTRA_TOKEN_ENDPOINT": "https://invalid.example/token",
             "VERGI_ENTRA_JWKS_URI": "https://invalid.example/keys",
@@ -763,11 +770,13 @@ try:
             raise AssertionError("token exchange must not occur")
 
         auth_routes.oidc_client.exchange_code_for_tokens = forbidden_exchange
+        callback_response_texts = []
 
         def callback_http(row, state):
             recorder = _SqlRecorder(row)
             db.transaction = recorder.transaction
             response = client.get("/auth/callback", params={"code": "synthetic-code", "state": state})
+            callback_response_texts.append(response.text + " ".join(f"{k}={v}" for k, v in response.headers.items()))
             return response, recorder
 
         with tempfile.TemporaryDirectory(prefix="row19d_callback_") as callback_name:
@@ -831,6 +840,67 @@ try:
             _icacls(callback_path, "/grant", "*S-1-5-32-545:(R)")
             unsafe_response, unsafe_recorder = callback_http(base_row, callback_state)
             check("unsafe custody ACL remains a 500 security/config failure with zero writes/exchange", unsafe_response.status_code == 500 and unsafe_response.content != unknown_response.content and not unsafe_recorder.consumed and unsafe_recorder.session_inserts == 0 and exchange_calls == [])
+
+            # Row 19B OIDC confidential-client remediation: with the custody
+            # provider fully healthy (restore a private ACL first), a MISSING
+            # VERGI_ENTRA_CLIENT_SECRET must fail closed at the top of
+            # callback() - before the DB transaction is even opened (the
+            # recorder never sees a single SQL statement), with no consumed
+            # transaction, no session insert and no token exchange - as a
+            # generic 500 that leaks no configuration detail.
+            callback_path.unlink()
+            _write_raw_secure(callback_path, callback_bytes)  # production publisher -> private DACL
+            healthy_again_response, healthy_again_recorder = callback_http(base_row, callback_state)
+            # A HEALTHY callback (valid secret, valid custody, decryptable
+            # verifier) is the one path that reaches the token exchange -
+            # and this section's exchange fake deliberately raises, so the
+            # observable healthy signature here is "exchange reached exactly
+            # once" (a 500 from the forbidding fake, AFTER the transaction
+            # was opened and the row was read), never a 401.
+            check(
+                "custody file restored via the production publisher is healthy again: the callback reaches the token exchange exactly once",
+                len(exchange_calls) == 1 and healthy_again_response.status_code == 500 and "iam.oidc_login_transactions" in healthy_again_recorder.last_sql,
+                f"exchange_calls={len(exchange_calls)} status={healthy_again_response.status_code}",
+            )
+            exchange_calls.clear()
+            os.environ.pop("VERGI_ENTRA_CLIENT_SECRET", None)
+            try:
+                no_secret_response, no_secret_recorder = callback_http(base_row, callback_state)
+            finally:
+                os.environ["VERGI_ENTRA_CLIENT_SECRET"] = _CALLBACK_CANARY_SECRET
+            check(
+                "missing VERGI_ENTRA_CLIENT_SECRET on the REAL callback is a generic 500 raised before any SQL, with zero consumed/session/exchange",
+                no_secret_response.status_code == 500
+                and no_secret_response.content != unknown_response.content
+                and no_secret_recorder.last_sql == ""
+                and not no_secret_recorder.consumed
+                and no_secret_recorder.session_inserts == 0
+                and exchange_calls == [],
+            )
+            check("the missing-secret 500 body carries no env-var/config detail", "VERGI_ENTRA" not in no_secret_response.text and "client_secret" not in no_secret_response.text)
+            os.environ["VERGI_ENTRA_CLIENT_SECRET"] = " \t "
+            try:
+                blank_secret_response, blank_secret_recorder = callback_http(base_row, callback_state)
+            finally:
+                os.environ["VERGI_ENTRA_CLIENT_SECRET"] = _CALLBACK_CANARY_SECRET
+            check(
+                "whitespace-only VERGI_ENTRA_CLIENT_SECRET on the REAL callback is the same pre-SQL generic 500 with zero side effects",
+                blank_secret_response.status_code == 500 and blank_secret_recorder.last_sql == "" and not blank_secret_recorder.consumed and blank_secret_recorder.session_inserts == 0 and exchange_calls == [],
+            )
+            restored_response, restored_recorder = callback_http(base_row, callback_state)
+            check(
+                "restoring the client secret restores the healthy callback path - the exchange is reached exactly once again (regression guard for the env restore itself)",
+                len(exchange_calls) == 1 and restored_response.status_code == 500 and "iam.oidc_login_transactions" in restored_recorder.last_sql,
+                f"exchange_calls={len(exchange_calls)} status={restored_response.status_code}",
+            )
+            exchange_calls.clear()
+            from urllib.parse import quote as _quote, quote_plus as _quote_plus
+            _canary_forms = (_CALLBACK_CANARY_SECRET, _quote_plus(_CALLBACK_CANARY_SECRET), _quote(_CALLBACK_CANARY_SECRET, safe=""))
+            check(
+                "no callback response body/header in this section ever carried the client secret (raw or URL-encoded)",
+                len(callback_response_texts) >= 10 and not any(form in text for text in callback_response_texts for form in _canary_forms),
+                f"responses={len(callback_response_texts)}",
+            )
 
         # Handler mutant: replacing only the exact catch tuple must change the
         # permanent unknown-key expectation from 401 to an unhandled 500.

@@ -19,7 +19,7 @@ import socket
 import sys
 from pathlib import Path
 from unittest import mock
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, quote_plus, urlparse
 
 UI_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = UI_DIR.parent
@@ -53,6 +53,60 @@ def _audit(event, args):
 
 
 sys.addaudithook(_audit)
+
+# ----------------------------------------------------------------
+# Row 19B OIDC confidential-client remediation - secret-leak ledger.
+# A canary client secret with URL-/header-hostile characters (`/`, `+`,
+# `=`, `:`, `\`, `~`) is used everywhere below. EVERY byte this test
+# process writes to stdout/stderr and EVERY logging record emitted at
+# any level (root logger forced to DEBUG so httpx/authlib debug output
+# is captured too) is recorded, and the final checks prove the canary
+# never appeared in any of them. Labels/details passed to check() must
+# therefore never embed the canary - the ledger check would catch it.
+# ----------------------------------------------------------------
+import dataclasses  # noqa: E402
+import logging      # noqa: E402
+
+_CANARY_SECRET = "canary-client-secret~Zq7/Q+w=:\\end"
+
+
+class _LeakLedgerStream:
+    def __init__(self, inner):
+        self._inner = inner
+        self.captured = []
+
+    def write(self, text):
+        self.captured.append(str(text))
+        return self._inner.write(text)
+
+    def flush(self):
+        return self._inner.flush()
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class _LeakLedgerLogHandler(logging.Handler):
+    def __init__(self):
+        super().__init__(level=logging.DEBUG)
+        self.records = []
+
+    def emit(self, record):
+        try:
+            self.records.append(self.format(record))
+            self.records.append(record.getMessage())
+        except Exception:  # pragma: no cover - defensive, never hides a leak silently
+            self.records.append(repr(record.__dict__))
+
+
+_STDOUT_LEDGER = _LeakLedgerStream(sys.stdout)
+_STDERR_LEDGER = _LeakLedgerStream(sys.stderr)
+sys.stdout = _STDOUT_LEDGER
+sys.stderr = _STDERR_LEDGER
+_LOG_LEDGER = _LeakLedgerLogHandler()
+_ROOT_LOGGER = logging.getLogger()
+_ROOT_LOGGER.addHandler(_LOG_LEDGER)
+_ROOT_LOGGER.setLevel(logging.DEBUG)
 
 from ui.services import oidc_client as oc          # noqa: E402
 from ui.services import transient_secrets as ts    # noqa: E402
@@ -113,6 +167,7 @@ check("hash_transaction_value never returns the raw value", h1 != "abc")
 cfg = oc.EntraProviderConfig(
     tenant_id="11111111-1111-1111-1111-111111111111",
     client_id="client-abc",
+    client_secret=_CANARY_SECRET,
     authorization_endpoint="https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize",
     token_endpoint="https://login.microsoftonline.com/tenant/oauth2/v2.0/token",
     jwks_uri="https://login.microsoftonline.com/tenant/discovery/v2.0/keys",
@@ -130,11 +185,85 @@ check(
 expect_raises(
     ValueError,
     lambda: oc.EntraProviderConfig(
-        tenant_id="t", client_id="c", authorization_endpoint="a", token_endpoint="b",
+        tenant_id="t", client_id="c", client_secret="s", authorization_endpoint="a", token_endpoint="b",
         jwks_uri="j", redirect_uri="r", required_authentication_context_id="", mfa_tier="entra_p1",
     ),
     "empty required_authentication_context_id is rejected at construction",
 )
+
+# ----------------------------------------------------------------
+# 2b) Row 19B OIDC confidential-client remediation - client_secret
+#     construction contract. The field is REQUIRED (a missing keyword is
+#     a TypeError from the dataclass itself, before __post_init__), must
+#     be a str, non-empty, non-whitespace; it is stored VERBATIM (never
+#     stripped/normalized); and it never appears in repr/str or in the
+#     rejection message.
+# ----------------------------------------------------------------
+
+
+def _config_kwargs(**overrides):
+    base = dict(
+        tenant_id="11111111-1111-1111-1111-111111111111",
+        client_id="client-abc",
+        client_secret=_CANARY_SECRET,
+        authorization_endpoint="https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize",
+        token_endpoint="https://login.microsoftonline.com/tenant/oauth2/v2.0/token",
+        jwks_uri="https://login.microsoftonline.com/tenant/discovery/v2.0/keys",
+        redirect_uri="https://app.example/auth/callback",
+        required_authentication_context_id="c1-lawyer-mfa",
+        mfa_tier="entra_p1",
+    )
+    base.update(overrides)
+    return base
+
+
+_no_secret_kwargs = _config_kwargs()
+del _no_secret_kwargs["client_secret"]
+expect_raises(
+    TypeError,
+    lambda: oc.EntraProviderConfig(**_no_secret_kwargs),
+    "client_secret keyword entirely MISSING is rejected at construction (required field, no default)",
+)
+
+for bad_secret, label in [
+    (None, "client_secret=None is rejected (fixed-message ValueError, not AttributeError)"),
+    (123, "client_secret as an int is rejected (non-string type)"),
+    (b"canary-bytes-secret", "client_secret as bytes is rejected (non-string type, never decoded/coerced)"),
+    (["canary-list-secret"], "client_secret as a list is rejected (non-string type)"),
+    ("", "client_secret='' (empty) is rejected"),
+    ("   ", "client_secret of spaces only is rejected"),
+    ("\t\n ", "client_secret of tabs/newlines only is rejected"),
+]:
+    try:
+        oc.EntraProviderConfig(**_config_kwargs(client_secret=bad_secret))
+    except ValueError as error:
+        check(label, True)
+        check(
+            f"rejection message for the previous case names the env var but never the value itself",
+            "VERGI_ENTRA_CLIENT_SECRET" in str(error)
+            and "canary" not in str(error).lower()
+            and "canary" not in repr(error).lower(),
+        )
+    except Exception as error:
+        check(label, False, f"unexpected exception type: {type(error).__name__}")
+    else:
+        check(label, False, "no exception raised")
+
+_padded_secret = "  " + _CANARY_SECRET + "\t"
+cfg_padded = oc.EntraProviderConfig(**_config_kwargs(client_secret=_padded_secret))
+check(
+    "a secret with surrounding whitespace is accepted and stored VERBATIM (never stripped/normalized)",
+    cfg_padded.client_secret == _padded_secret and cfg_padded.client_secret != _CANARY_SECRET,
+)
+check("the configured secret round-trips byte-for-byte on the accepted config", cfg.client_secret == _CANARY_SECRET)
+
+_secret_field = next(f for f in dataclasses.fields(oc.EntraProviderConfig) if f.name == "client_secret")
+check("client_secret dataclass field is declared repr=False", _secret_field.repr is False)
+check("client_secret dataclass field has no default (required)", _secret_field.default is dataclasses.MISSING and _secret_field.default_factory is dataclasses.MISSING)
+check("repr(config) does not contain the client secret", _CANARY_SECRET not in repr(cfg) and "client_secret" not in repr(cfg))
+check("str(config) does not contain the client secret", _CANARY_SECRET not in str(cfg))
+check("f-string/!r formatting of the config does not contain the client secret", _CANARY_SECRET not in f"{cfg!r} {cfg}")
+check("repr(config) still renders the non-secret fields (redaction is field-specific, not total)", "client-abc" in repr(cfg) and "c1-lawyer-mfa" in repr(cfg))
 
 # ----------------------------------------------------------------
 # 3) Standard claims validation (iss/aud/tid/nonce)
@@ -415,6 +544,18 @@ if dependencies_ready:
         claims_from_url == {"id_token": {"acrs": {"essential": True, "value": cfg.required_authentication_context_id}}},
     )
     check("authorization URL construction uses zero transport calls", transport_requests == [])
+    # Row 19B OIDC confidential-client remediation: the credential is a
+    # back-channel-only value - it must never reach the front-channel
+    # authorization URL in any form (raw, URL-encoded, or as a parameter).
+    check("authorization URL carries no client_secret parameter", "client_secret" not in query)
+    check("authorization URL does not contain the client secret in raw form", _CANARY_SECRET not in authorization_request.url)
+    check(
+        "authorization URL does not contain the client secret in URL-encoded form",
+        quote_plus(_CANARY_SECRET) not in authorization_request.url and quote(_CANARY_SECRET, safe="") not in authorization_request.url,
+    )
+    check("authorization URL carries the client_id", query.get("client_id") == [cfg.client_id])
+    check("authorization URL carries the redirect_uri", query.get("redirect_uri") == [cfg.redirect_uri])
+    check("authorization URL requests response_type=code", query.get("response_type") == ["code"])
 
     token_requests = []
 
@@ -427,8 +568,10 @@ if dependencies_ready:
         )
 
     original_async_client = authlib_httpx.AsyncOAuth2Client
+    async_client_constructions = []
 
     def async_client_factory(*args, **kwargs):
+        async_client_constructions.append(dict(kwargs))
         kwargs["transport"] = httpx.MockTransport(token_handler)
         return original_async_client(*args, **kwargs)
 
@@ -440,11 +583,71 @@ if dependencies_ready:
         )
 
     check("token exchange completes through the mocked transport", token_result.get("access_token") == "mock-access" and len(token_requests) == 1)
+    # ---- Row 19B OIDC confidential-client remediation (Fable FINAL §E/§P):
+    # the LOCKED "sends no client_secret" assertion is INVERTED BY DESIGN.
+    # The real Authlib 1.8.0 AsyncOAuth2Client must be constructed with
+    # the credential and the client_secret_post method, and the real
+    # token POST body must carry the secret exactly once, URL-decoded
+    # back to the exact configured value (this proves the form-encoding
+    # round trip of the hostile characters, which is why the decoded
+    # equality is asserted rather than a hand-predicted encoding).
+    check(
+        "AsyncOAuth2Client is constructed with the configured client_secret (real Authlib class, not a fake)",
+        len(async_client_constructions) == 1 and async_client_constructions[0].get("client_secret") == _CANARY_SECRET,
+    )
+    check(
+        "AsyncOAuth2Client is constructed with token_endpoint_auth_method='client_secret_post' (explicit, not Authlib's basic default)",
+        async_client_constructions[0].get("token_endpoint_auth_method") == "client_secret_post",
+    )
+    check("AsyncOAuth2Client is constructed with client_id and redirect_uri", async_client_constructions[0].get("client_id") == cfg.client_id and async_client_constructions[0].get("redirect_uri") == cfg.redirect_uri)
     token_body = parse_qs(token_requests[0].content.decode("ascii"), keep_blank_values=True)
-    check("token exchange sends no client_secret", "client_secret" not in token_body)
-    check("token exchange sends no client_assertion", "client_assertion" not in token_body and "client_assertion_type" not in token_body)
-    check("token exchange sends client_id in the request body", token_body.get("client_id") == [cfg.client_id])
-    check("token exchange sends the exact PKCE verifier", token_body.get("code_verifier") == [authorization_request.code_verifier])
+    check("token exchange sends client_secret in the POST body exactly once, decoding to the exact configured value", token_body.get("client_secret") == [_CANARY_SECRET])
+    check("token exchange sends the secret in the body ONLY (no client_secret in the token request URL query)", token_requests[0].url.query == b"" and "client_secret" not in str(token_requests[0].url))
+    check("token exchange uses no Authorization header at all (client_secret_basic is NOT used)", "authorization" not in {name.lower() for name in token_requests[0].headers.keys()})
+    check("token exchange sends no client_assertion (private_key_jwt is NOT used)", "client_assertion" not in token_body and "client_assertion_type" not in token_body)
+    check("token exchange sends client_id in the request body exactly once", token_body.get("client_id") == [cfg.client_id])
+    check("token exchange sends the exact PKCE verifier (PKCE retained alongside the credential)", token_body.get("code_verifier") == [authorization_request.code_verifier])
+    check("token exchange sends grant_type=authorization_code exactly once", token_body.get("grant_type") == ["authorization_code"])
+    check("token exchange sends the authorization code exactly once", token_body.get("code") == ["mock-code"])
+    check("token exchange sends the redirect_uri", token_body.get("redirect_uri") == [cfg.redirect_uri])
+    check("token exchange is a POST with a form-urlencoded content type", token_requests[0].method == "POST" and token_requests[0].headers.get("content-type", "").startswith("application/x-www-form-urlencoded"))
+    check("token exchange body carries the secret under exactly one parameter name (no duplicate/alias key)", sum(1 for name in token_body if "secret" in name.lower()) == 1)
+    check("token exchange targets the configured token endpoint", str(token_requests[0].url) == cfg.token_endpoint)
+
+    # ---- Error path: the provider rejects the redemption. The exchange
+    # must raise (fail closed - never return a partial/unauthenticated
+    # token), and the raised exception must not carry the secret.
+    error_token_requests = []
+
+    async def rejecting_token_handler(request):
+        error_token_requests.append(request)
+        return httpx.Response(
+            400,
+            json={"error": "invalid_client", "error_description": "AADSTS7000215: simulated rejection by the mock provider"},
+            request=request,
+        )
+
+    def rejecting_async_client_factory(*args, **kwargs):
+        kwargs["transport"] = httpx.MockTransport(rejecting_token_handler)
+        return original_async_client(*args, **kwargs)
+
+    exchange_error = None
+    exchange_error_result = None
+    with mock.patch.object(authlib_httpx, "AsyncOAuth2Client", side_effect=rejecting_async_client_factory), \
+         mock.patch.object(socket, "create_connection", side_effect=AssertionError("real socket forbidden")), \
+         mock.patch.object(socket, "getaddrinfo", side_effect=AssertionError("DNS forbidden")):
+        try:
+            exchange_error_result = asyncio.run(
+                oc.exchange_code_for_tokens(cfg, code="mock-code", code_verifier=authorization_request.code_verifier)
+            )
+        except Exception as error:  # noqa: BLE001 - the exception type is Authlib's, asserted by behavior below
+            exchange_error = error
+    check("a provider rejection of the redemption raises (fail-closed) instead of returning a token", exchange_error is not None and exchange_error_result is None and len(error_token_requests) == 1)
+    check("the exchange makes exactly ONE token request on rejection (no retry/fallback with a second auth method)", len(error_token_requests) == 1)
+    check("the rejection exception's str/repr does not contain the client secret", exchange_error is not None and _CANARY_SECRET not in str(exchange_error) and _CANARY_SECRET not in repr(exchange_error))
+    check("the rejection exception's str/repr does not contain the URL-encoded client secret", exchange_error is not None and quote_plus(_CANARY_SECRET) not in str(exchange_error) + repr(exchange_error))
+    error_body = parse_qs(error_token_requests[0].content.decode("ascii"), keep_blank_values=True)
+    check("the rejected request was itself a client_secret_post redemption (secret exactly once, no Basic header)", error_body.get("client_secret") == [_CANARY_SECRET] and "authorization" not in {name.lower() for name in error_token_requests[0].headers.keys()})
 
 check("OIDC isolated test opened no .env file", _ENV_OPENS == [], repr(_ENV_OPENS))
 check(
@@ -452,6 +655,23 @@ check(
     _EXTERNAL_SOCKET_EVENTS == [],
     repr(_EXTERNAL_SOCKET_EVENTS),
 )
+
+# ----------------------------------------------------------------
+# 9) Row 19B OIDC confidential-client remediation - secret-leak ledger
+#    (see the top of this file). Everything this process wrote to
+#    stdout/stderr and every logging record at any level is scanned for
+#    the canary in raw and URL-encoded forms. This runs AFTER every
+#    other check so it covers the FAIL-detail paths too.
+# ----------------------------------------------------------------
+_leak_forms = (_CANARY_SECRET, quote_plus(_CANARY_SECRET), quote(_CANARY_SECRET, safe=""))
+_stdout_text = "".join(_STDOUT_LEDGER.captured)
+_stderr_text = "".join(_STDERR_LEDGER.captured)
+_log_text = "\n".join(_LOG_LEDGER.records)
+check("the leak ledger actually recorded this test's own stdout (positive control of the ledger itself)", "PASS " in _stdout_text)
+check("the logging ledger is attached at DEBUG on the root logger (positive control)", _LOG_LEDGER in _ROOT_LOGGER.handlers and _ROOT_LOGGER.level == logging.DEBUG)
+check("client secret never appeared in this test's stdout (raw or URL-encoded)", not any(form in _stdout_text for form in _leak_forms))
+check("client secret never appeared in this test's stderr (raw or URL-encoded)", not any(form in _stderr_text for form in _leak_forms))
+check("client secret never appeared in any logging record at any level (httpx/authlib/root included)", not any(form in _log_text for form in _leak_forms))
 
 print(f"--- test_oidc_client_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)

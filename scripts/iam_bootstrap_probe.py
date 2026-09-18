@@ -106,8 +106,17 @@ def _load_provider_config():
     import os
     from ui.services.oidc_client import EntraProviderConfig
 
+    # Row 19B OIDC confidential-client remediation: the probe applies the
+    # SAME env contract as ui/auth_routes.py - VERGI_ENTRA_CLIENT_SECRET is
+    # REQUIRED (this script performs the same confidential-client token
+    # exchange via oidc_client.exchange_code_for_tokens). Only the NAME of
+    # a missing variable is ever reported; the value is never printed,
+    # formatted into an exception, or rendered (repr=False on the field).
+    # Whitespace-only values pass this presence check and are rejected by
+    # EntraProviderConfig.__post_init__, the single fail-closed authority.
     required_env = [
-        "VERGI_ENTRA_TENANT_ID", "VERGI_ENTRA_CLIENT_ID", "VERGI_ENTRA_AUTH_ENDPOINT",
+        "VERGI_ENTRA_TENANT_ID", "VERGI_ENTRA_CLIENT_ID", "VERGI_ENTRA_CLIENT_SECRET",
+        "VERGI_ENTRA_AUTH_ENDPOINT",
         "VERGI_ENTRA_TOKEN_ENDPOINT", "VERGI_ENTRA_JWKS_URI", "VERGI_ENTRA_REDIRECT_URI",
         "VERGI_ENTRA_REQUIRED_AUTH_CONTEXT_ID",
     ]
@@ -118,6 +127,7 @@ def _load_provider_config():
     return EntraProviderConfig(
         tenant_id=os.environ["VERGI_ENTRA_TENANT_ID"],
         client_id=os.environ["VERGI_ENTRA_CLIENT_ID"],
+        client_secret=os.environ["VERGI_ENTRA_CLIENT_SECRET"],
         authorization_endpoint=os.environ["VERGI_ENTRA_AUTH_ENDPOINT"],
         token_endpoint=os.environ["VERGI_ENTRA_TOKEN_ENDPOINT"],
         jwks_uri=os.environ["VERGI_ENTRA_JWKS_URI"],

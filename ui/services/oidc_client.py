@@ -78,6 +78,19 @@ def hash_transaction_value(value: str) -> str:
 class EntraProviderConfig:
     tenant_id: str
     client_id: str
+    # Row 19B OIDC confidential-client remediation (Row 19D external
+    # activation gate, Fable FINAL §E/§P): this application is a
+    # server-side ("Web" platform) app and is therefore a CONFIDENTIAL
+    # client under Microsoft Entra's documented contract - redeeming an
+    # authorization code without client authentication is rejected by
+    # the token endpoint (AADSTS7000218). PKCE S256 is RETAINED as
+    # defense-in-depth on top of, never instead of, this credential.
+    # `repr=False`: the dataclass repr/str never renders the value; the
+    # value is also never formatted into any exception message or log
+    # line by this module. The credential is used ONLY on the back-
+    # channel token exchange (exchange_code_for_tokens) and never on the
+    # front-channel authorization URL (build_authorization_url).
+    client_secret: str = field(repr=False)
     authorization_endpoint: str
     token_endpoint: str
     jwks_uri: str
@@ -91,6 +104,24 @@ class EntraProviderConfig:
                 "required_authentication_context_id must come from validated "
                 "tenant-specific configuration; it must never be empty or a "
                 "hardcoded universal placeholder"
+            )
+        # Fail-closed client_secret validation. Order matters: the type
+        # check comes FIRST so a None/non-str value surfaces as this fixed-
+        # message ValueError rather than an AttributeError from .strip().
+        # The value itself is NEVER normalized/stripped/stored differently
+        # from what the caller passed, and NEVER interpolated into the
+        # message (no !r, no {value}) - the message is a fixed literal.
+        if not isinstance(self.client_secret, str):
+            raise ValueError(
+                "client_secret must be a non-empty string from validated "
+                "tenant-specific configuration (VERGI_ENTRA_CLIENT_SECRET); "
+                "it is missing or has a non-string type"
+            )
+        if self.client_secret == "" or self.client_secret.strip() == "":
+            raise ValueError(
+                "client_secret must be a non-empty string from validated "
+                "tenant-specific configuration (VERGI_ENTRA_CLIENT_SECRET); "
+                "it is empty or whitespace-only"
             )
 
 
@@ -338,11 +369,25 @@ async def exchange_code_for_tokens(
 ) -> dict[str, Any]:
     """Performs the real Authorization Code + PKCE token exchange via
     Authlib's AsyncOAuth2Client (used directly, not the Starlette-session
-    wrapper). Lazy-import; NOT EXECUTED in this sandbox."""
+    wrapper). Lazy-import; NOT EXECUTED in this sandbox.
+
+    Row 19B OIDC confidential-client remediation: the exchange is a
+    CONFIDENTIAL-client redemption per Microsoft Entra's documented
+    token-endpoint contract - `client_secret` is sent, URL-encoded, in
+    the application/x-www-form-urlencoded POST body via Authlib's
+    `client_secret_post` method (Authlib's `encode_client_secret_post`
+    adds `client_id` + `client_secret` to the body; no `Authorization:
+    Basic` header is produced, no `client_assertion`/`private_key_jwt`
+    is used, and there is exactly ONE authentication method - no
+    fallback/retry with a second method). The PKCE `code_verifier` is
+    still sent alongside the credential (defense-in-depth, as Microsoft
+    recommends for confidential clients too)."""
     from authlib.integrations.httpx_client import AsyncOAuth2Client  # lazy import
 
     async with AsyncOAuth2Client(
         client_id=provider_config.client_id,
+        client_secret=provider_config.client_secret,
+        token_endpoint_auth_method="client_secret_post",
         redirect_uri=provider_config.redirect_uri,
     ) as client:
         token = await client.fetch_token(

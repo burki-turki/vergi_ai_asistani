@@ -449,9 +449,19 @@ def _load_provider_config():
     import os
     from .services.oidc_client import EntraProviderConfig
 
+    # Row 19B OIDC confidential-client remediation: VERGI_ENTRA_CLIENT_SECRET
+    # is REQUIRED. It is read with .get() (never KeyError'd) and handed,
+    # unmodified, to EntraProviderConfig, whose __post_init__ is the SINGLE
+    # fail-closed authority for the value: missing (None), non-string,
+    # empty and whitespace-only all raise a fixed-message ValueError that
+    # never contains the value. The variable's VALUE is never logged,
+    # formatted into an exception, or rendered by the config's repr
+    # (repr=False on the field). Production delivery of the value (Key
+    # Vault reference / owner-only env file) is a deployment-gate matter.
     return EntraProviderConfig(
         tenant_id=os.environ["VERGI_ENTRA_TENANT_ID"],
         client_id=os.environ["VERGI_ENTRA_CLIENT_ID"],
+        client_secret=os.environ.get("VERGI_ENTRA_CLIENT_SECRET"),
         authorization_endpoint=os.environ["VERGI_ENTRA_AUTH_ENDPOINT"],
         token_endpoint=os.environ["VERGI_ENTRA_TOKEN_ENDPOINT"],
         jwks_uri=os.environ["VERGI_ENTRA_JWKS_URI"],

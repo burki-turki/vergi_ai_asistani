@@ -294,9 +294,15 @@ db_module.get_connection = _fake_get_connection
 # environment variables; the env-var reading itself is a one-line function
 # with no branching logic worth a TestClient round trip.
 _REQUIRED_CTX = "c1-lawyer-mfa"
+# Row 19B OIDC confidential-client remediation: a canary client secret
+# with URL-/header-hostile characters. Every response body/header this
+# file receives from the routes is checked against it in section 9
+# below - labels/details must never embed it.
+_TEST_CLIENT_SECRET = "auth-routes-canary-secret~Zq7/Q+w=:\\end"
 _PROVIDER_CONFIG = oidc_client.EntraProviderConfig(
     tenant_id="11111111-1111-1111-1111-111111111111",
     client_id="client-abc",
+    client_secret=_TEST_CLIENT_SECRET,
     authorization_endpoint="https://login.microsoftonline.com/x/oauth2/v2.0/authorize",
     token_endpoint="https://login.microsoftonline.com/x/oauth2/v2.0/token",
     jwks_uri="https://login.microsoftonline.com/x/discovery/v2.0/keys",
@@ -304,6 +310,11 @@ _PROVIDER_CONFIG = oidc_client.EntraProviderConfig(
     required_authentication_context_id=_REQUIRED_CTX,
     mfa_tier="entra_p1",
 )
+# The REAL env-reading loader is captured BEFORE it is monkeypatched
+# below so section 9 can exercise its actual VERGI_ENTRA_CLIENT_SECRET
+# contract (the lambda at the next line is what every other scenario in
+# this file sees).
+_REAL_LOAD_PROVIDER_CONFIG = auth_routes._load_provider_config
 auth_routes._load_provider_config = lambda: _PROVIDER_CONFIG
 
 _TEST_KEY_PROVIDER = ts.InMemoryKeyProvider()
@@ -326,6 +337,7 @@ def _fake_build_authorization_url(provider_config, *, scope="openid profile"):
     code_verifier, _challenge = generate_pkce_pair()
     req = AuthorizationRequest(url="https://login.microsoftonline.com/x/fake-auth-url", state=state, nonce=nonce, code_verifier=code_verifier)
     _LAST_AUTH_REQUEST["value"] = req
+    _LAST_AUTH_REQUEST["config"] = provider_config
     return req
 
 
@@ -333,6 +345,15 @@ async def _fake_exchange_code_for_tokens(provider_config, *, code, code_verifier
     check(
         "exchange_code_for_tokens receives the SAME code_verifier the AEAD ciphertext decrypted to",
         code_verifier == _LAST_AUTH_REQUEST["value"].code_verifier,
+    )
+    # Row 19B OIDC confidential-client remediation: callback() hands the
+    # loaded provider config - carrying the client credential, unmodified -
+    # to the token exchange, so the exchange can authenticate as a
+    # confidential client. Proves the credential travels config -> exchange
+    # without being stripped/copied out by the route layer.
+    check(
+        "exchange_code_for_tokens receives the provider config carrying the exact configured client_secret",
+        isinstance(provider_config.client_secret, str) and provider_config.client_secret == _TEST_CLIENT_SECRET,
     )
     return {"id_token": "fake-id-token-not-a-real-jwt"}
 
@@ -618,6 +639,7 @@ check(
 _PROVIDER_CONFIG_FREE = oidc_client.EntraProviderConfig(
     tenant_id=_PROVIDER_CONFIG.tenant_id,
     client_id=_PROVIDER_CONFIG.client_id,
+    client_secret=_PROVIDER_CONFIG.client_secret,
     authorization_endpoint=_PROVIDER_CONFIG.authorization_endpoint,
     token_endpoint=_PROVIDER_CONFIG.token_endpoint,
     jwks_uri=_PROVIDER_CONFIG.jwks_uri,
@@ -835,6 +857,199 @@ check(
 
 after_logout_resp = client.get("/", cookies={"__Host-session": _session_cookie_value}, follow_redirects=False)
 check("the revoked session cookie no longer authenticates (redirects to /login again)", after_logout_resp.status_code == 302 and after_logout_resp.headers["location"] == "/login")
+
+# ----------------------------------------------------------------
+# 9) Row 19B OIDC confidential-client remediation - the REAL, env-reading
+#    auth_routes._load_provider_config() (captured before this file
+#    monkeypatched it) and scripts/iam_bootstrap_probe._load_provider_config()
+#    must apply the SAME VERGI_ENTRA_CLIENT_SECRET contract: required,
+#    fail-closed on missing/empty/whitespace, value stored verbatim, never
+#    rendered by repr, and read under the EXACT variable name. The two
+#    loaders surface the failure through the exception type each actually
+#    raises (auth_routes: ValueError from EntraProviderConfig.__post_init__
+#    for all three; the probe: RuntimeError from its own presence check for
+#    missing/empty, ValueError for whitespace-only) - asserted per loader,
+#    never collapsed into one class. No network, no DB: the loaders only
+#    read os.environ and construct the frozen dataclass.
+# ----------------------------------------------------------------
+
+import contextlib  # noqa: E402
+import os  # noqa: E402
+from urllib.parse import quote, quote_plus  # noqa: E402
+
+from scripts import iam_bootstrap_probe as _probe  # noqa: E402
+
+_ENV_CANARY_SECRET = "env-contract-canary-secret~Zq7/Q+w=:\\end"
+_ENV_FIXTURE_NAMES = (
+    "VERGI_ENTRA_TENANT_ID", "VERGI_ENTRA_CLIENT_ID", "VERGI_ENTRA_CLIENT_SECRET",
+    "VERGI_ENTRA_AUTH_ENDPOINT", "VERGI_ENTRA_TOKEN_ENDPOINT", "VERGI_ENTRA_JWKS_URI",
+    "VERGI_ENTRA_REDIRECT_URI", "VERGI_ENTRA_REQUIRED_AUTH_CONTEXT_ID", "VERGI_ENTRA_MFA_TIER",
+    "VERGI_ENTRA_CLIENTSECRET",  # deliberate look-alike name, never read by either loader
+)
+_ENV_FIXTURE_BASE = {
+    "VERGI_ENTRA_TENANT_ID": "11111111-1111-1111-1111-111111111111",
+    "VERGI_ENTRA_CLIENT_ID": "env-contract-client",
+    "VERGI_ENTRA_AUTH_ENDPOINT": "https://login.microsoftonline.com/x/oauth2/v2.0/authorize",
+    "VERGI_ENTRA_TOKEN_ENDPOINT": "https://login.microsoftonline.com/x/oauth2/v2.0/token",
+    "VERGI_ENTRA_JWKS_URI": "https://login.microsoftonline.com/x/discovery/v2.0/keys",
+    "VERGI_ENTRA_REDIRECT_URI": "https://app.example/auth/callback",
+    "VERGI_ENTRA_REQUIRED_AUTH_CONTEXT_ID": "c1-env-contract",
+    "VERGI_ENTRA_MFA_TIER": "entra_p1",
+    # Look-alike name carrying a DIFFERENT value: if either loader read this
+    # name instead of the exact contract name, the success-path equality and
+    # the missing-case failure below would both expose it.
+    "VERGI_ENTRA_CLIENTSECRET": "decoy-value-under-a-lookalike-name",
+}
+
+
+@contextlib.contextmanager
+def _env_scope(**secret_override):
+    """Applies the fixture (plus an optional client-secret override; pass
+    nothing to leave VERGI_ENTRA_CLIENT_SECRET entirely ABSENT) and restores
+    the pre-existing values of every touched name afterwards."""
+    saved = {name: os.environ.get(name) for name in _ENV_FIXTURE_NAMES}
+    try:
+        for name in _ENV_FIXTURE_NAMES:
+            os.environ.pop(name, None)
+        os.environ.update(_ENV_FIXTURE_BASE)
+        if "client_secret" in secret_override:
+            os.environ["VERGI_ENTRA_CLIENT_SECRET"] = secret_override["client_secret"]
+        yield
+    finally:
+        for name, value in saved.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+
+
+def _loader_outcome(loader):
+    """Returns (exception_or_None, config_or_None) without letting any
+    exception text reach a check() detail string."""
+    try:
+        return None, loader()
+    except Exception as error:  # noqa: BLE001 - the type is what is asserted
+        return error, None
+
+
+for scenario_label, env_kwargs, expected_auth_type, expected_probe_type in [
+    ("VERGI_ENTRA_CLIENT_SECRET entirely ABSENT", {}, ValueError, RuntimeError),
+    ("VERGI_ENTRA_CLIENT_SECRET set to '' (empty)", {"client_secret": ""}, ValueError, RuntimeError),
+    ("VERGI_ENTRA_CLIENT_SECRET whitespace-only", {"client_secret": " \t "}, ValueError, ValueError),
+]:
+    with _env_scope(**env_kwargs):
+        auth_error, auth_cfg = _loader_outcome(_REAL_LOAD_PROVIDER_CONFIG)
+        probe_error, probe_cfg = _loader_outcome(_probe._load_provider_config)
+    check(
+        f"{scenario_label}: real auth_routes._load_provider_config fails closed with {expected_auth_type.__name__}",
+        auth_cfg is None and isinstance(auth_error, expected_auth_type),
+        f"got {type(auth_error).__name__ if auth_error else 'no exception'}",
+    )
+    check(
+        f"{scenario_label}: iam_bootstrap_probe._load_provider_config fails closed with {expected_probe_type.__name__}",
+        probe_cfg is None and isinstance(probe_error, expected_probe_type),
+        f"got {type(probe_error).__name__ if probe_error else 'no exception'}",
+    )
+    check(
+        f"{scenario_label}: both loaders' failure messages name the env var, never the decoy/look-alike value",
+        auth_error is not None and probe_error is not None
+        and "VERGI_ENTRA_CLIENT_SECRET" in str(auth_error)
+        and "VERGI_ENTRA_CLIENT_SECRET" in str(probe_error)
+        and "decoy-value" not in str(auth_error) + repr(auth_error) + str(probe_error) + repr(probe_error),
+    )
+
+with _env_scope(client_secret=_ENV_CANARY_SECRET):
+    auth_error, env_auth_cfg = _loader_outcome(_REAL_LOAD_PROVIDER_CONFIG)
+    probe_error, env_probe_cfg = _loader_outcome(_probe._load_provider_config)
+check(
+    "with VERGI_ENTRA_CLIENT_SECRET set, BOTH loaders succeed",
+    auth_error is None and probe_error is None and env_auth_cfg is not None and env_probe_cfg is not None,
+    f"auth={type(auth_error).__name__ if auth_error else 'ok'} probe={type(probe_error).__name__ if probe_error else 'ok'}",
+)
+check(
+    "both loaders produce EQUAL configs from the same environment (same contract, including the credential)",
+    env_auth_cfg is not None and env_auth_cfg == env_probe_cfg,
+)
+check(
+    "both loaders read the credential under the EXACT name VERGI_ENTRA_CLIENT_SECRET, verbatim (not the look-alike decoy)",
+    env_auth_cfg is not None and env_auth_cfg.client_secret == _ENV_CANARY_SECRET and env_probe_cfg.client_secret == _ENV_CANARY_SECRET,
+)
+check(
+    "neither loader's config renders the credential in repr/str",
+    env_auth_cfg is not None
+    and _ENV_CANARY_SECRET not in repr(env_auth_cfg) + str(env_auth_cfg) + repr(env_probe_cfg) + str(env_probe_cfg),
+)
+with _env_scope(client_secret="  " + _ENV_CANARY_SECRET + "  "):
+    _padded_error, _padded_cfg = _loader_outcome(_REAL_LOAD_PROVIDER_CONFIG)
+check(
+    "the real loader hands the env value to the config VERBATIM (surrounding whitespace preserved, never stripped)",
+    _padded_error is None and _padded_cfg is not None and _padded_cfg.client_secret == "  " + _ENV_CANARY_SECRET + "  ",
+)
+
+# Route-level: with the REAL loader in place, a missing client secret fails
+# closed at the very top of GET /auth/login - before any OIDC transaction
+# row is written - as a generic 500 whose body carries no configuration
+# detail. A second TestClient with raise_server_exceptions=False is used so
+# the server-side ValueError becomes an observable 500 instead of being
+# re-raised into this test process (the module-level `client` keeps the
+# default raise_server_exceptions=True).
+_client_no_raise = TestClient(app, client=("127.0.0.1", 12345), raise_server_exceptions=False)
+auth_routes._load_provider_config = _REAL_LOAD_PROVIDER_CONFIG
+try:
+    _rows_before_missing_secret = len(SHARED_DB.oidc_transactions)
+    with _env_scope():
+        _missing_secret_login = _client_no_raise.get("/auth/login", follow_redirects=False)
+    check(
+        "GET /auth/login with the REAL loader and NO VERGI_ENTRA_CLIENT_SECRET is a 500 that writes no OIDC transaction row",
+        _missing_secret_login.status_code == 500 and len(SHARED_DB.oidc_transactions) == _rows_before_missing_secret,
+        f"status={_missing_secret_login.status_code}",
+    )
+    check(
+        "the missing-secret 500 body carries no env-var/config detail and no secret-shaped content",
+        "VERGI_ENTRA" not in _missing_secret_login.text and "client_secret" not in _missing_secret_login.text and "decoy-value" not in _missing_secret_login.text,
+    )
+
+    # Positive path through the real loader: the credential reaches the
+    # (faked) authorization-URL builder inside the config, while the
+    # front-channel redirect and response never carry it in any form.
+    _rows_before_env_login = len(SHARED_DB.oidc_transactions)
+    with _env_scope(client_secret=_ENV_CANARY_SECRET):
+        _env_login = client.get("/auth/login", follow_redirects=False)
+    check(
+        "GET /auth/login with the REAL loader and a configured secret redirects (302) and persists exactly one transaction row",
+        _env_login.status_code == 302 and len(SHARED_DB.oidc_transactions) == _rows_before_env_login + 1,
+        f"status={_env_login.status_code}",
+    )
+    check(
+        "the real loader's config (carrying the credential verbatim) is what login() hands to build_authorization_url",
+        _LAST_AUTH_REQUEST.get("config") is not None and _LAST_AUTH_REQUEST["config"].client_secret == _ENV_CANARY_SECRET
+        and _LAST_AUTH_REQUEST["config"].client_id == "env-contract-client",
+    )
+    _leak_forms = (_ENV_CANARY_SECRET, quote_plus(_ENV_CANARY_SECRET), quote(_ENV_CANARY_SECRET, safe=""))
+    _front_channel = _env_login.headers.get("location", "") + _env_login.text + " ".join(f"{k}={v}" for k, v in _env_login.headers.items())
+    check(
+        "the login redirect Location/body/headers never carry the client secret (raw or URL-encoded) - back-channel only",
+        not any(form in _front_channel for form in _leak_forms),
+    )
+finally:
+    auth_routes._load_provider_config = lambda: _PROVIDER_CONFIG
+    _client_no_raise.close()
+
+# Every response this file received from the routes above was produced
+# while a canary-bearing config was in force; none may carry it.
+_all_route_texts = " ".join(
+    r.text + " ".join(f"{k}={v}" for k, v in r.headers.items())
+    for r in (
+        resp, resp_replay, resp_unknown, resp_disabled, resp_no_mfa, resp_bad_nonce,
+        resp_acrs_absent, resp_acrs_malformed, resp_acrs_mismatch, resp_wrong_issuer,
+        resp_free_tier, resp_unrecognized, anon_resp, authed_resp, resp_listing,
+        resp_logout_bad_csrf, resp_logout_ok, after_logout_resp, _provider_500, _provider_503, _provider_logout,
+    )
+)
+check(
+    "no route response body/header in this file ever carried the fixture client secret (raw or URL-encoded)",
+    not any(form in _all_route_texts for form in (_TEST_CLIENT_SECRET, quote_plus(_TEST_CLIENT_SECRET), quote(_TEST_CLIENT_SECRET, safe=""))),
+)
 
 print(f"--- test_auth_routes: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)
