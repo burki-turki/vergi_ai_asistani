@@ -3502,5 +3502,333 @@ for _lrcl_row_key, _lrcl_config in _LRCL_ROW_CONFIGS.items():
         _shutil.rmtree(lrcl_case_dir, ignore_errors=True)
 
 
+# ============================================================
+# FACT VERIFICATION WORKFLOW - FACT VERIFICATION RECONCILIATION ADAPTER
+# (REAL, independent pre-state/post-state proof, fact-level
+# `fact.<document_id>.<fact_id>.verification` target_ref parsing). Uses
+# the REAL `FactVerificationReconciliationAdapter` against a REAL,
+# re-identified COPY of case_0001 under the real CASES_DIR
+# (fact_verification.CASES_DIR and ui.services.paths.CASES_DIR resolve
+# to the SAME real directory) - case_0001 itself is only ever COPIED
+# from, never read/mutated; the copy is removed unconditionally in
+# `finally`.
+# ============================================================
+
+import fact_verification as _fv_engine                                   # noqa: E402
+import ui.services.fact_verification_mutation_facade as _fv_facade       # noqa: E402
+import ui.services.fact_verification_mutation_adapters as _fv_adapters   # noqa: E402
+
+FV_CASE_ID = "case_fact_verification_adapter_bindings"
+FV_DOC_ID = "dava_dilekcesi_001"
+_REAL_CASE_0001_FOR_FV = REPO_ROOT / "data" / "cases" / "case_0001"
+
+fv_case_dir = _dr_real_paths.CASES_DIR / FV_CASE_ID
+if fv_case_dir.exists():
+    _shutil.rmtree(fv_case_dir)
+_shutil.copytree(_REAL_CASE_0001_FOR_FV, fv_case_dir)
+for _p in fv_case_dir.rglob("*"):
+    if _p.is_file() and (_p.suffix in (".json", ".pending", ".bak") or _p.name.endswith(".json.pending")):
+        try:
+            _text = _p.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        if "case_0001" in _text:
+            _p.write_text(_text.replace("case_0001", FV_CASE_ID), encoding="utf-8")
+
+try:
+    fv_extractions_dir = fv_case_dir / "documents" / FV_DOC_ID / "extractions"
+    fv_canonical_path = fv_extractions_dir / "facts.json"
+    fv_reviews_dir = fv_extractions_dir / "reviews" / "fact_verifications"
+
+    real_fv_adapter = _fv_adapters.FactVerificationReconciliationAdapter()
+
+    def fv_canonical_sha():
+        return _hashlib.sha256(fv_canonical_path.read_bytes()).hexdigest()
+
+    def fv_audit_manifest_digest():
+        case_root_real = _fv_facade._resolve_case_root_real(FV_CASE_ID)
+        paths = _fv_facade._derive_verified_paths(case_root_real, FV_CASE_ID, FV_DOC_ID)
+        return _fv_facade._compute_audit_manifest_digest(case_root_real, paths.reviews_dir)
+
+    def fv_pre_hash(canonical_sha256, manifest_digest):
+        return _fv_facade._compute_pre_hash(canonical_sha256, manifest_digest)
+
+    def fv_identity_payload(canonical_sha256, attempt=1):
+        return _fv_facade.compute_identity_payload(canonical_sha256, attempt)
+
+    def fv_pre_revision(identity_payload):
+        return _fv_facade.compute_pre_revision(identity_payload)
+
+    _fv_extraction = _json.loads(fv_canonical_path.read_bytes().decode("utf-8"))
+    FV_FACT_ID = _fv_extraction["facts"][0]["fact_id"]
+    FV_DOC_SOURCE = _fv_extraction["source_document_id"]
+    FV_TARGET_REF = f"fact.{FV_DOC_ID}.{FV_FACT_ID}.verification"
+    FV_ACTION_FAMILY = _fv_facade.FACT_VERIFICATION_ACTION_FAMILY
+
+    def fv_intent(**overrides):
+        base = dict(
+            actor_type="iam_user", actor_ref="7",
+            resource_key=f"case:{FV_CASE_ID}", action_family=FV_ACTION_FAMILY,
+            target_ref=FV_TARGET_REF, target_state="verified",
+            pre_hash="placeholder_not_a_real_digest", pre_revision="pre_revision_placeholder",
+            secondary_input_hash=None,
+        )
+        base.update(overrides)
+        return _MutationIntent(**base)
+
+    def fv_entry(**overrides):
+        intent = fv_intent(**{k: v for k, v in overrides.items() if k in ("pre_hash", "pre_revision", "target_ref", "target_state", "secondary_input_hash")})
+        fields = dict(
+            journal_id=1, resource_key=f"case:{FV_CASE_ID}", action_family=FV_ACTION_FAMILY,
+            target_ref=intent.target_ref, target_state=intent.target_state,
+            pre_hash=intent.pre_hash, pre_revision=intent.pre_revision, expected_post_hash=None,
+            state="reconciliation_required", idempotency_key=_compute_idk(intent),
+            request_fingerprint=_compute_fp(intent), actor_label="7",
+        )
+        return mr.JournalEntrySnapshot(**fields)
+
+    # ---- (a) never-executed row: pre_hash matches the CURRENT (never
+    # mutated) composite -> pre_state_confirmed_unchanged=True,
+    # post_state_verified=False (no audit exists at all yet). ----
+    canonical_sha_a = fv_canonical_sha()
+    manifest_digest_a = fv_audit_manifest_digest()
+    pre_hash_a = fv_pre_hash(canonical_sha_a, manifest_digest_a)
+    identity_a = fv_identity_payload(canonical_sha_a)
+    entry_a = fv_entry(pre_hash=pre_hash_a, pre_revision=fv_pre_revision(identity_a))
+    evidence_a = real_fv_adapter.gather_evidence(entry_a)
+    check(
+        "FACT VERIFICATION (a): never-executed row, pre_hash matches the untouched composite -> "
+        "pre_state_confirmed_unchanged=True, post_state_verified=False",
+        evidence_a.pre_state_confirmed_unchanged is True and evidence_a.post_state_verified is False,
+        f"got {evidence_a!r}",
+    )
+
+    # ---- a WRONG candidate pre_hash (content genuinely differs) -> pre=False. ----
+    evidence_wrong = real_fv_adapter.gather_evidence(fv_entry(pre_hash="0" * 64, pre_revision=fv_pre_revision(identity_a)))
+    check(
+        "FACT VERIFICATION: a WRONG candidate pre_hash (content genuinely differs) yields "
+        "pre_state_confirmed_unchanged=False",
+        evidence_wrong.pre_state_confirmed_unchanged is False,
+    )
+
+    # ---- malformed / cross-family target_ref -> dual-false (data
+    # anomaly, never raised as an exception). ----
+    for _bad_ref in ("not.a.valid.target_ref", f"fact.{FV_DOC_ID}.canonical", "fact..verification"):
+        evidence_bad = real_fv_adapter.gather_evidence(fv_entry(target_ref=_bad_ref, pre_revision=fv_pre_revision(identity_a)))
+        check(
+            f"FACT VERIFICATION real adapter: malformed/mismatched target_ref {_bad_ref!r} -> "
+            "dual-false (data anomaly, never raised as an exception)",
+            evidence_bad.post_state_verified is False and evidence_bad.pre_state_confirmed_unchanged is False,
+        )
+
+    # ---- (b) a REAL completed verification (via the real writer,
+    # directly - no facade/coordinator needed for this proof) + exactly
+    # one fully-bound success audit -> post=True with the REAL
+    # post-mutation canonical hash as observed_post_hash. ----
+    identity_b = fv_identity_payload(canonical_sha_a, attempt=1)
+    pre_revision_b = fv_pre_revision(identity_b)
+    # F1 REMEDIATION fixture correction: the first fixture wrote an audit
+    # with evidence_document_id=FV_DOC_SOURCE but secondary_input_hash=None
+    # - internally INCONSISTENT with the facade contract (secondary =
+    # sha256(canonical_json({"evidence_document_id": X}))). It only
+    # passed because the old matcher never bound those fields. The
+    # full-binding adapter now (correctly) rejects such an audit, so the
+    # fixture carries the genuine, consistent secondary hash (computed
+    # here independently, not via the facade).
+    secondary_b = _hashlib.sha256(
+        _json.dumps({"evidence_document_id": FV_DOC_SOURCE}, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    ).hexdigest()
+    intent_b = fv_intent(pre_hash=pre_hash_a, pre_revision=pre_revision_b, secondary_input_hash=secondary_b)
+    idem_key_b = _compute_idk(intent_b)
+    resource_key_b = f"case:{FV_CASE_ID}"
+
+    writer_result_b = _fv_engine.apply_verification(
+        FV_CASE_ID, FV_DOC_ID, FV_FACT_ID, "unverified", "verified",
+        evidence_document_id=FV_DOC_SOURCE, evidence_document_sha256="e" * 64,
+        source_locator_present=True, source_locator_sha256="l" * 64,
+        identity_payload=identity_b, attempt=1, secondary_input_hash=secondary_b,
+        verified_paths={
+            "extractions_dir": fv_extractions_dir, "canonical_path": fv_canonical_path,
+            "history_dir": fv_extractions_dir / "history", "reviews_dir": fv_reviews_dir,
+        },
+        mutation_idempotency_key=idem_key_b, mutation_resource_key=resource_key_b,
+        mutation_actor_ref="7",
+    )
+    entry_b = fv_entry(pre_hash=pre_hash_a, pre_revision=pre_revision_b, target_state="verified", secondary_input_hash=secondary_b)
+    evidence_b = real_fv_adapter.gather_evidence(entry_b)
+    check(
+        "FACT VERIFICATION (b): a REAL completed verification + exactly-one fully-bound audit -> "
+        "post_state_verified=True with the REAL post-mutation canonical hash as observed_post_hash",
+        evidence_b.post_state_verified is True and evidence_b.observed_post_hash == writer_result_b["canonical_sha256"],
+        f"got {evidence_b!r}",
+    )
+
+    # ---- binding tamper: a DUPLICATE, differently-named audit for the
+    # SAME identity -> dual-false (exactly-one rule enforced). ----
+    dup_path_b = writer_result_b["audit_path"].with_name("zzz_dup_" + writer_result_b["audit_path"].name)
+    _shutil.copy2(writer_result_b["audit_path"], dup_path_b)
+    evidence_dup = real_fv_adapter.gather_evidence(entry_b)
+    check(
+        "FACT VERIFICATION real adapter: DUPLICATE fully-bound audits -> dual-false (exactly-one "
+        "rule enforced, never auto-completed)",
+        evidence_dup.post_state_verified is False and evidence_dup.pre_state_confirmed_unchanged is False,
+    )
+    dup_path_b.unlink()
+
+    # ---- end-to-end reconcile_and_apply_journal_entry() proof, through
+    # the REAL FakeReconcileConn machinery, using the REAL adapter and
+    # the REAL clean post-state fixture from (b) above. ----
+    fv_e2e_registry = mr.MutationAdapterRegistry().with_adapter(FV_ACTION_FAMILY, real_fv_adapter)
+    fv_e2e_conn = FakeReconcileConn([make_journal_row(
+        id=1, resource_key=resource_key_b, action_family=FV_ACTION_FAMILY,
+        target_ref=FV_TARGET_REF, target_state="verified",
+        pre_hash=entry_b.pre_hash, pre_revision=entry_b.pre_revision,
+        state="reconciliation_required", idempotency_key=entry_b.idempotency_key,
+        request_fingerprint=_compute_fp(intent_b), actor_label="7",
+    )])
+    _lock_calls.clear()
+    ml.acquire_case_lock_session = _fake_acquire_case_lock_session
+    ml.release_lock_session = _fake_release_lock_session
+    try:
+        fv_e2e_outcome = mr.reconcile_and_apply_journal_entry(fv_e2e_conn, 1, fv_e2e_registry)
+    finally:
+        ml.acquire_case_lock_session = _original_acquire_case
+        ml.release_lock_session = _original_release
+    check(
+        "FACT VERIFICATION real adapter end-to-end through reconcile_and_apply_journal_entry(): "
+        "resolves to 'completed' with the real canonical hash as observed_post_hash",
+        fv_e2e_outcome.new_state == "completed"
+        and fv_e2e_outcome.observed_post_hash == writer_result_b["canonical_sha256"],
+        f"got {fv_e2e_outcome!r}",
+    )
+    check(
+        "FACT VERIFICATION real adapter end-to-end: the journal row itself was durably updated "
+        "to 'completed'",
+        fv_e2e_conn.table[0]["state"] == "completed",
+    )
+
+    # ============================================================
+    # F1 REMEDIATION (independent review, Medium): PERMANENT FULL-BINDING
+    # TAMPER MATRIX for the REAL FactVerificationReconciliationAdapter.
+    # The first implementation returned post_state_verified=True for
+    # EVERY tamper below (13/13 accepted). Each must now be post=False;
+    # pre_state_confirmed_unchanged is asserted separately (the composite
+    # pre-state is independent evidence and must stay False while the
+    # canonical is in its POST state - it never "rescues" a tampered
+    # post-proof).
+    # ============================================================
+    fv_audit_path_b = _Path(writer_result_b["audit_path"])
+    fv_audit_bytes_b = fv_audit_path_b.read_bytes()
+    fv_backup_path_b = _Path(writer_result_b["history_backup_path"])
+    fv_backup_bytes_b = fv_backup_path_b.read_bytes()
+    fv_hist_dir_b = fv_backup_path_b.parent
+
+    def fv_tamper(label, mutate, entry=None):
+        record = _json.loads(fv_audit_bytes_b.decode("utf-8"))
+        mutate(record)
+        fv_audit_path_b.write_bytes(_fv_engine.canonical_json_bytes(record))
+        try:
+            evidence = real_fv_adapter.gather_evidence(entry or entry_b)
+            check(
+                f"FACT VERIFICATION F1 adapter TAMPER {label} -> post_state_verified=False AND "
+                "pre_state_confirmed_unchanged=False (independent composite unaffected by the tamper class)",
+                evidence.post_state_verified is False and evidence.pre_state_confirmed_unchanged is False,
+                f"got {evidence!r}",
+            )
+        finally:
+            fv_audit_path_b.write_bytes(fv_audit_bytes_b)
+
+    fv_tamper("mutation_actor_ref (actor)", lambda r: r.__setitem__("mutation_actor_ref", "999"))
+    fv_tamper("from_state", lambda r: r.__setitem__("from_state", "verified"))
+    fv_tamper("target_state", lambda r: r.__setitem__("target_state", "partially_verified"))
+    fv_tamper("evidence_document_id", lambda r: r.__setitem__("evidence_document_id", "ihbarname_001"))
+    fv_tamper("secondary_input_hash", lambda r: r.__setitem__("secondary_input_hash", "0" * 64))
+    fv_tamper("evidence given but secondary None (inconsistent pair)", lambda r: r.__setitem__("secondary_input_hash", None))
+    fv_tamper("attempt (top-level)", lambda r: r.__setitem__("attempt", 5))
+    fv_tamper("attempt bool True", lambda r: r.__setitem__("attempt", True))
+    fv_tamper("identity_payload.attempt", lambda r: r["identity_payload"].__setitem__("attempt", 2))
+    fv_tamper("identity_payload extra key", lambda r: r["identity_payload"].__setitem__("extra", 1))
+    fv_tamper("document_id", lambda r: r.__setitem__("document_id", "vir_001"))
+    fv_tamper("fact_id", lambda r: r.__setitem__("fact_id", "fact_zzz"))
+    fv_tamper("mutation_resource_key", lambda r: r.__setitem__("mutation_resource_key", "case:other"))
+    fv_tamper("action_family", lambda r: r.__setitem__("action_family", "promotion.fact"))
+    fv_tamper("history_backup_path absolute escape (outside history root)", lambda r: r.__setitem__("history_backup_path", r"C:\Windows\win.ini"))
+    fv_tamper("history_backup_path traversal (relative escape)", lambda r: r.__setitem__("history_backup_path", "..\\facts.json"))
+    fv_tamper("history_backup_path directory instead of file", lambda r: r.__setitem__("history_backup_path", str(fv_hist_dir_b)))
+    fv_tamper("history_backup_sha256 mismatch", lambda r: r.__setitem__("history_backup_sha256", "0" * 64))
+    fv_tamper("canonical_sha256_before mismatch", lambda r: r.__setitem__("canonical_sha256_before", "0" * 64))
+    fv_tamper("canonical_sha256 (after) mismatch", lambda r: r.__setitem__("canonical_sha256", "0" * 64))
+    fv_tamper("outcome", lambda r: r.__setitem__("outcome", "x"))
+    fv_tamper("mutation_idempotency_key", lambda r: r.__setitem__("mutation_idempotency_key", "0" * 64))
+    fv_tamper("target_ref", lambda r: r.__setitem__("target_ref", f"fact.{FV_DOC_ID}.fact_zzz.verification"))
+    # journal-side mismatches (audit untouched)
+    fv_tamper("JOURNAL actor_label mismatch", lambda r: None,
+              entry=mr.JournalEntrySnapshot(**{**entry_b.__dict__, "actor_label": "999"}))
+    fv_tamper("JOURNAL request_fingerprint mismatch", lambda r: None,
+              entry=mr.JournalEntrySnapshot(**{**entry_b.__dict__, "request_fingerprint": "0" * 64}))
+    fv_tamper("JOURNAL idempotency_key mismatch", lambda r: None,
+              entry=mr.JournalEntrySnapshot(**{**entry_b.__dict__, "idempotency_key": "0" * 64}))
+    fv_tamper("JOURNAL target_state mismatch", lambda r: None,
+              entry=mr.JournalEntrySnapshot(**{**entry_b.__dict__, "target_state": "partially_verified"}))
+    fv_tamper("JOURNAL pre_revision for attempt=2", lambda r: None,
+              entry=mr.JournalEntrySnapshot(**{**entry_b.__dict__, "pre_revision": fv_pre_revision(fv_identity_payload(canonical_sha_a, attempt=2))}))
+    # file-level tampers
+    fv_backup_path_b.unlink()
+    try:
+        evidence_del = real_fv_adapter.gather_evidence(entry_b)
+        check("FACT VERIFICATION F1 adapter TAMPER history backup FILE deleted -> post=False, pre=False",
+              evidence_del.post_state_verified is False and evidence_del.pre_state_confirmed_unchanged is False, f"got {evidence_del!r}")
+    finally:
+        fv_backup_path_b.write_bytes(fv_backup_bytes_b)
+    backup_doc_b = _json.loads(fv_backup_bytes_b.decode("utf-8"))
+    _fv_engine.find_fact(backup_doc_b, FV_FACT_ID)["verification_state"] = "partially_verified"
+    fv_backup_path_b.write_bytes(_fv_engine.canonical_json_bytes(backup_doc_b))
+    try:
+        evidence_bc = real_fv_adapter.gather_evidence(entry_b)
+        check("FACT VERIFICATION F1 adapter TAMPER history backup CONTENT (from_state no longer carried) -> post=False",
+              evidence_bc.post_state_verified is False, f"got {evidence_bc!r}")
+    finally:
+        fv_backup_path_b.write_bytes(fv_backup_bytes_b)
+    dup_b2 = fv_audit_path_b.with_name("zzz_dup2_" + fv_audit_path_b.name)
+    _shutil.copy2(fv_audit_path_b, dup_b2)
+    try:
+        evidence_dup2 = real_fv_adapter.gather_evidence(entry_b)
+        check("FACT VERIFICATION F1 adapter DUPLICATE otherwise-valid audit -> post=False (exactly-one)",
+              evidence_dup2.post_state_verified is False)
+    finally:
+        dup_b2.unlink()
+    corrupt_b = fv_reviews_dir / "zzz_corrupt.verification.json"
+    corrupt_b.write_bytes(b"{not json")
+    try:
+        evidence_cor = real_fv_adapter.gather_evidence(entry_b)
+        check("FACT VERIFICATION F1 adapter CORRUPT sibling audit JSON -> post=False",
+              evidence_cor.post_state_verified is False)
+    finally:
+        corrupt_b.unlink()
+    evidence_ok_again = real_fv_adapter.gather_evidence(entry_b)
+    check(
+        "FACT VERIFICATION F1 POSITIVE control after every tamper was reverted: the SAME untampered "
+        "audit+backup is accepted again (post=True, observed == disk) - the matcher is not unconditional",
+        evidence_ok_again.post_state_verified is True
+        and evidence_ok_again.observed_post_hash == writer_result_b["canonical_sha256"],
+        f"got {evidence_ok_again!r}",
+    )
+    # pre-state independence: with the audit AND backup removed and the
+    # canonical restored to its pre-image, the never-executed row (entry_a)
+    # is pre=True again - the pre-proof never depends on audit content.
+    fv_audit_path_b.unlink()
+    fv_backup_path_b.unlink()
+    fv_canonical_path.write_bytes(fv_backup_bytes_b)
+    evidence_pre_again = real_fv_adapter.gather_evidence(entry_a)
+    check(
+        "FACT VERIFICATION F1 pre-state independence: audit+backup removed and canonical restored to the "
+        "pre-image -> never-executed row is pre_state_confirmed_unchanged=True, post=False",
+        evidence_pre_again.pre_state_confirmed_unchanged is True and evidence_pre_again.post_state_verified is False,
+        f"got {evidence_pre_again!r}",
+    )
+finally:
+    _shutil.rmtree(fv_case_dir, ignore_errors=True)
+
+
 print(f"--- test_reconciliation_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)

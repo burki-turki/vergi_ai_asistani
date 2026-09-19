@@ -604,22 +604,49 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   `ROW 19B OIDC CONFIDENTIAL-CLIENT REMEDIATION LOCK-READY — NO BLOCKING FINDINGS`
   (bkz. Row 19B OIDC Confidential-Client Remediation checkpoint özeti,
   §5 sonrası, "## 6. Cross-Cutting Backlog"dan hemen önce).
-- **Row 19D External Activation / Adoption Gate — Corrected Read-Only
-  Exact-Scope / Allowlist Reconciliation — ACTIVE / NEXT.** Henüz
-  cloud configuration BAŞLAMAMIŞTIR: gerçek Entra tenant/app
-  registration OLUŞTURULMADI; gerçek client secret ÜRETİLMEDİ veya
-  SAKLANMADI; Azure App Service/hosting kararı VERİLMEDİ; loopback-only
-  middleware ve `X-Forwarded-For` yasağıyla hosting uyumluluğu HÂLÂ
-  ÇÖZÜLMEDİ; id_token-hedefli `acrs` claims desteği HÂLÂ dış doğrulama
-  gerektiriyor, optional-claims fallback'i DEĞERLENDİRİLMEDİ;
-  Conditional Access/authentication-context binding operator
-  preflight'i YAPILMADI; Key Vault custom GET-only role deployment/
-  adoption YAPILMADI; Graph izinleri ve tenant preflight'i
-  UYGULANMADI; gerçek login/smoke/rollback/rotation/adoption
-  BAŞLAMADI. Bu pointer yalnız **salt-okunur exact-scope/allowlist
-  reconciliation** yetkisi verir; hiçbir cloud write, implementasyon
-  veya dosya değişikliği yetkisi VERMEZ; yeni bir roadmap Row numarası
-  İCAT ETMEZ ve "Slice 3 başladı" iddiası OLUŞTURMAZ.
+- **Fact Verification Workflow — DONE / LOCKED.** Pilot Readiness
+  Adım 1 tamamlandı (bkz. Pilot Readiness Priority Reconciliation
+  kararı — bu roadmap-lock turu Adım 0/1/2 sıralamasının `CLAUDE.md`'ye
+  İLK kaydıdır; önceki bir roadmap-lock turu bu kaydı henüz yapmamıştı,
+  aşağıdaki "Pilot Readiness Adım 2" pointer'ı bu yüzden doğrudan bu
+  turda önceki "Row 19D External Activation / Adoption Gate — ACTIVE /
+  NEXT" pointer'ının yerini alır). Exact uygulama kapsamı **6 YENİ + 12
+  DEĞİŞTİRİLMİŞ = 18 dosya**; sıfır schema değişikliği; sıfır
+  migration; sıfır web route; sıfır cloud/Entra değişikliği. Yeni,
+  CLI-only `verification.fact` action family; altı gerçek state
+  transition; üç self-transition fail-closed reddedilir; pozitif
+  hedeflerde evidence/locator zorunluluğu; safe replay + explicit
+  attempt identity; re-promotion verification-loss guard; downstream
+  stale uyarısı; gerçek timeline propagation ve gerçek deadline
+  `blocked_unverified_anchor → calculated` zinciri kanıtlı. İlk
+  bağımsız review: **NOT LOCK-READY**, F1 Medium + F2 Medium. Exact
+  5-file remediasyon (0 YENİ + 5 DEĞİŞTİRİLMİŞ). Final re-review
+  verdict'i exact olarak:
+  `FACT VERIFICATION WORKFLOW LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
+  (bkz. Fact Verification Workflow checkpoint özeti, §5 sonrası,
+  "## 6. Cross-Cutting Backlog"dan hemen önce).
+- **Pilot Readiness Adım 2 — Case-Data Repository Protection
+  Exact-Scope / Allowlist Reconciliation — ACTIVE / NEXT.** Bu pointer
+  yalnız **salt-okunur araştırma** yetkisi verir. Amaç, gerçek/sentetik
+  olmayan dava verilerinin yanlışlıkla Git'e eklenmesini önleyecek
+  exact scope'u belirlemektir. Repo-dışı case root seçeneği,
+  configurable case root ve `.gitignore` savunması birlikte
+  incelenecektir. `case_0001` canonical fixture korunacaktır. Henüz
+  hiçbir `.gitignore`, path, config, schema veya production-data
+  değişikliği YETKİLENDİRİLMEMİŞTİR; implementasyon BAŞLAMAMIŞTIR;
+  Pilot Readiness Adım 3 ve sonrası BAŞLAMAMIŞTIR. Eski "Row 19D
+  External Activation / Adoption Gate" pointer'ının kapsadığı
+  maddelerin (gerçek Entra tenant/app registration, `acrs` claims dış
+  doğrulaması, Conditional Access/authentication-context preflight'i,
+  Key Vault custom GET-only role deployment/adoption, Graph izinleri,
+  loopback-only middleware ile `X-Forwarded-For` yasağının hosting
+  uyumluluğu) TAMAMI Entra/P1 (Pilot Readiness Adım 11) ve hosting/Key
+  Vault (Adım 12)'ye ERTELENMİŞTİR — bu maddeler KAPANMAMIŞTIR, yalnız
+  sıralamada geriye alınmıştır (bkz. Row 19B OIDC Confidential-Client
+  Remediation checkpoint özeti). İlk pilot modeli concierge olarak
+  korunmaktadır. Corpus acquisition/population bu pointer tarafından
+  YETKİLENDİRİLMEZ. Yeni bir roadmap Row numarası İCAT EDİLMEMİŞTİR;
+  mevcut Pilot Readiness adım numaraları korunur.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -6839,6 +6866,434 @@ sonrasında yeniden DONE / LOCKED'dır.
 ROW 19B OIDC CONFIDENTIAL-CLIENT REMEDIATION LOCK-READY — NO BLOCKING FINDINGS
 
 **DONE / LOCKED**
+
+### Fact Verification Workflow (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve pilot blocker** — Fact/timeline/deadline doğrulama
+durumunun insan tarafından kontrollü ve auditli biçimde değiştirilmesi
+için bir mekanizma yoktu: production yolunda hiçbir writer bir fact'i
+`verified`/`partially_verified` yapamıyordu, bu yüzden gerçek deadline
+zinciri kalıcı olarak `blocked_unverified_anchor` durumunda kalıyordu.
+Bu slice bu yapısal engeli kaldırır — Pilot Readiness Priority
+Reconciliation'ın sıralamasında **Adım 1**'dir.
+
+**B. Exact kapsam** — Kullanıcı tarafından onaylanmış tam dosya
+allowlist'i: **6 YENİ + 12 DEĞİŞTİRİLMİŞ = 18 dosya**.
+
+Yeni (6):
+1. `src/fact_verification.py`
+2. `ui/services/fact_verification_mutation_facade.py`
+3. `ui/services/fact_verification_mutation_adapters.py`
+4. `ui/tests/test_fact_verification_isolated.py`
+5. `ui/tests/test_fact_verification_mutation_facade_isolated.py`
+6. `ui/tests/test_fact_verification_mutation_integration_postgres.py`
+
+Değiştirilmiş (12):
+7. `ui/cli_mutate.py`
+8. `ui/reconciliation_operator.py`
+9. `ui/services/promotion_mutation_facade.py`
+10. `ui/tests/test_cli_mutate_isolated.py`
+11. `ui/tests/test_reconciliation_isolated.py`
+12. `ui/tests/test_reconciliation_operator_isolated.py`
+13. `ui/tests/test_agent_generation_mutation_integration_postgres.py`
+14. `ui/tests/test_drafting_request_mutation_integration_postgres.py`
+15. `ui/tests/test_fact_extraction_mutation_integration_postgres.py`
+16. `ui/tests/test_legal_research_case_law_mutation_integration_postgres.py`
+17. `ui/tests/test_rag_bundle_mutation_integration_postgres.py`
+18. `ui/tests/test_promotion_mutation_facade_isolated.py`
+
+Remediasyon alt kapsamı (0 YENİ + 5 DEĞİŞTİRİLMİŞ, yukarıdaki 18
+dosyanın İÇİNDE):
+- `ui/services/fact_verification_mutation_adapters.py`
+- `ui/services/fact_verification_mutation_facade.py`
+- `ui/tests/test_reconciliation_isolated.py`
+- `ui/tests/test_fact_verification_mutation_facade_isolated.py`
+- `ui/tests/test_fact_verification_mutation_integration_postgres.py`
+
+Sıfır schema, migration, UI/web route, production case verisi ve
+cloud değişikliği.
+
+**C. Action family ve identity** — `action_family = verification.fact`,
+CLI-only. `target_ref = fact.<document_id>.<fact_id>.verification`.
+`resource_key = case:<case_id>`. `attempt` identity bileşenidir
+(`pre_revision`'a girer); varsayılan **1**; otomatik ARTIRILMAZ.
+`--note` ve `--idempotency-key` CLI'da TANIMLANMADI (argparse
+"unrecognized arguments", exit 2, sıfır I/O). Aynı byte-state'e
+dönülen bir revision cycle'da `--attempt N+1` açık operatör çıkış
+yoludur. Immediate genuine replay stored result döndürür (writer
+ikinci kez çağrılmaz). Gerçek request conflict (farklı target/evidence)
+fail-closed kalır.
+
+**D. State ve evidence sözleşmesi** — State'ler: `unverified`,
+`partially_verified`, `verified`. Altı gerçek transition kabul edilir;
+üç self-transition (`u→u`, `p→p`, `v→v`) fail-closed reddedilir, sıfır
+journal satırı. `verified`/`partially_verified` hedeflerinde
+`--evidence-ref` ZORUNLU; `unverified` hedefinde opsiyonel. İzinli
+evidence kümesi `{source_document_id} ∪ related_document_ids` —
+başka HİÇBİR belge kabul edilmez; evidence belgesi `active is True`
+(identity kontrolü, truthiness değil). Pozitif (verified/
+partially_verified) hedef için mevcut source locator ZORUNLU
+(locator'sız fact'te `partially_verified` de reddedilir — validator'dan
+daha güçlü business rule). `--note` reddedildi. Otomatik downstream
+cascade YOK.
+
+**E. Writer ve facade** — Raw/legacy writer bypass YOK; `verified_paths`
+ZORUNLU. Canonical serializer TEK kaynak: mevcut `fact_approval`
+primitive'i (`_canonical_json_bytes`/`_canonical_json_text`) yeniden
+kullanılır, yeniden yazılmaz. LF/CRLF yapısal olarak kabul edilir
+(key-order/indent farkı fail-closed reddedilir — ama bkz. F5 için
+gerçek sınır). History backup (O_EXCL), atomic `os.replace`,
+post-write validation + parse-back, audit (O_EXCL) ve herhangi bir
+adım başarısız olursa canonical byte-bayt rollback. Outer + under-lock
+authz (iki katman). Stale-hash, composite race ve evidence race
+fail-closed. Completed replay bağımsız audit corroboration gerektirir
+(sessiz başarı yok). Exact stale-downstream blok literal'leri:
+`STALE_DOWNSTREAM` / `RERUN_ORDER` / `NO_COORDINATED_PATH`.
+
+**F. Reconciliation ve F1 kapanışı** — İlk implementasyon, eksik
+binding nedeniyle bağımsız incelemede **NOT LOCK-READY** kaldı.
+
+İlk bağımsız review **F1 (Medium)**: reconciliation adapter'ın
+(`_audit_record_matches`) ve facade'in completed-replay corroboration'ının
+(`_verify_completed_replay_binding`) yalnız dar bir alan kümesini
+(idempotency_key, resource_key, action_family, target_ref,
+canonical_sha256(after), outcome, `identity_payload→pre_revision`)
+bağladığı; onaylı Fable §I kontratının ZORUNLU saydığı
+`mutation_actor_ref == entry.actor_label`, `request_fingerprint`
+recompute, `history_backup_path` containment+mevcudiyet+hash eşitliği,
+`from_state`/`target_state`/`document_id`/`fact_id` tutarlılığının
+BAĞLANMADIĞI; tamper matrisinin (actor/state/evidence/secondary/
+attempt/document-fact-id/history-backup/`request_fingerprint`
+tamper'ları dahil 13/13) HEPSİNİN kabul edildiği; emsal adapter'ların
+(`fact_extraction_mutation_adapters.py`, `agent_generation_mutation_adapters.py`)
+actor_label VE history backup'ı bağladığı, bu ailenin emsalden GERİ
+olduğu tespit edildi.
+
+Remediasyon sonrası: adapter (`_full_binding()`) ve facade
+(`_replay_audit_fully_bound()`) ayrı, bağımsız iki full-binding
+matcher taşır (biri diğerini import etmez; yalnız karar-içermeyen
+generic `path_containment`/`mutation_guard` primitive'leri paylaşılır).
+Bağlanan alanlar: outcome, idempotency_key, resource_key, actor_ref
+(journal `actor_label` ile), action_family, target_ref, target_ref'ten
+ayrıştırılan document/fact id, audit doc/fact ↔ canonical hedef fact,
+`target_state`, `from_state` (backup'taki state ile + `from ≠ target`),
+evidence_document_id ↔ `secondary_input_hash` tutarlılığı, `attempt`
+(bool reddi, `identity_payload.attempt` ile eşleşme), `identity_payload`
+exact key seti + `pre_revision` bağımsız recompute,
+`canonical_sha256_before`, `request_fingerprint` audit alanlarından
+yeniden kurulup journal ile eşitlik, `canonical_sha256`(after) diskten,
+`history_backup_path` containment (absolute/relative escape, junction,
+traversal, dizin-olarak-dosya reddi), backup sha ==
+`history_backup_sha256` == `canonical_sha256_before`, backup JSON parse
++ `source_document_id`/`from_state` tutarlılığı, exactly-one full-binding
+audit, corrupt/duplicate audit fail-closed.
+
+Final re-review kanıtı: adapter tarafında **28 tamper sınıfı** gerçek
+PostgreSQL + gerçek `reconcile_and_apply_journal_entry` (gerçek
+registry) üzerinden test edildi; diagnostic toplamı dürüstçe **"142
+DIAG-PASS + 2 reviewer-grep harness DIAG-FAIL"** olarak kaydedildi —
+iki DIAG-FAIL ürün kusuru DEĞİLDİR, reviewer'ın kendi statik grep
+kontrolünün yorum/docstring metnine takılmasıdır (gerçek adapter→facade/
+facade→adapter import topolojisi kaynaktan ayrıca doğrulandı). Facade
+replay tarafında **70/70 diagnostic** (aynı 28 sınıf + journal
+`observed_post_hash` SQL tamper'ı). Gerçek `mklink /J` junction ve
+kırık junction reddi ampirik olarak kanıtlandı. Pozitif kontroller,
+matcher'ların koşulsuz red OLMADIĞINI (untampered → `post_state_
+verified=True`, gerçek reconciliation → `completed`) gösterdi.
+
+`observed_post_hash` disposition (§F1 remediasyonunun bir parçası,
+KAPATILAN bir sapma olarak kaydedilir): non-terminal `JournalEntrySnapshot`
+`observed_post_hash` alanı TAŞIMAZ — adapter'ın görevi bu değeri
+DİSKTEN ÜRETMEKTİR, önceden var olan bir değeri doğrulamak DEĞİLDİR;
+terminal `completed` yazımı bu evidence'tan yapılır. Facade'in completed
+replay yolu, journal `observed_post_hash`'i AYRICA doğrular (adapter'dan
+bağımsız ikinci bir kontrol noktası). Final re-review bu sapmayı **ACCEPT**
+etti — bu bir güvenlik boşluğu değil, non-terminal reconciliation
+sözleşmesinin doğru sonucudur; açık bir Medium bulgu KALMADI.
+
+**G. F2 kapanışı** — İlk bağımsız review **F2 (Medium)**:
+`pre_revision` yalnız `(canonical_sha256, attempt)`'ten türediği için,
+3-durumlu ve geri alınabilir bir alanda döngü (ör. `u→v→u`) canonical
+baytlarını önceki bir revizyona geri getiriyordu; aynı aktör +
+`attempt=1` için identity daha önceki TAMAMLANMIŞ bir journal satırıyla
+ÇAKIŞIYORDU — rutin bir aynı-transition tekrarı coordinator'da "safe
+replay" sanılıp facade corroboration'ında yanıltıcı bir "audit-binding
+failed / insan reconciliation'ı gerekir" hatasına düşüyordu; farklı bir
+transition ise generic conflict veriyordu.
+
+Remediasyon: identity formülü ve genel coordinator DEĞİŞTİRİLMEDİ;
+genuine replay ayrımı korundu. Yeni `FactVerificationRevisionCycleConflictError`
+(sabit mesaj, `--attempt N+1` yönlendirmesi, "otomatik ARTIRILMAZ"
+uyarısı içerir; path/tmp/evidence-id/`reconciliation` kelimesi
+İÇERMEZ) ve yeni `FactVerificationIdentityConflictError`
+(hem `ApprovalUiError` HEM `IdempotencyConflictError` alt sınıfı,
+mevcut `except IdempotencyConflictError` yollarını ve CLI'nın
+`_is_known_domain_error` sınıflandırmasını bozmadan) eklendi. Tampered
+bir audit ASLA cycle diye sınıflandırılmaz (full-binding kontrolü
+ÖNCE koşar). `attempt` otomatik artırılmaz; `--attempt N+1` açık
+operatör çıkış yoludur. Stale hash + artırılmış attempt HÂLÂ
+`StaleViewError` verir (attempt staleness'ı BYPASS ETMEZ). State/
+self-transition kuralları attempt ile bypass edilemez.
+
+Final kanıt: F2 diagnostic **31/31**; MRO/CLI hata sınıflandırma
+diagnostic'i **11/11**; gerçek PostgreSQL + gerçek CLI ile **12 adımlı**
+attempt N+1 zinciri (ilk transition → immediate replay → h0'a dönüş →
+aynı transition attempt=1 → RevisionCycleConflict → farklı target/
+evidence attempt=1 → IdentityConflict → stale hash + attempt=2 →
+StaleViewError → doğru hash + attempt=2 → başarı + yeni full-binding
+audit → immediate replay(attempt=2) → attempt=3 self-transition →
+NoOpError → tampered eski audit cycle'a asla düşmez). Red yollarının
+HEPSİNDE sıfır yeni mutation/journal/audit/history.
+
+**H. F3 kapanışı** — F7d/F7e testindeki `check(..., True)` false-PASS
+dalı KALDIRILDI; gerçek `related_document_ids` dolu bir fact
+(`facts[1]`) dinamik olarak bulunur, fixture yoksa `AssertionError`
+(skip/koşullu PASS yok). Farklı-evidence conflict
+(`secondary_input_hash` yolu) artık GERÇEKTEN çalışır ve test edilir.
+F12a fixture'ı (eski `actor_label="iam_user"` — actor TİPİ) ve
+reconciliation `(b)` fixture'ı (`secondary_input_hash=None` — kontratla
+tutarsız) production sözleşmesine bağlandı (journal'ın gerçek `actor_ref`
+değeri, gerçek `_compute_secondary_input_hash`). Final re-review bu
+fixture düzeltmelerini ACCEPT etti — kanıt gücü ARTTI, hiçbir assertion
+gevşetilmedi.
+
+**I. Re-promotion guard** — Verified/partially_verified fact varsa
+re-promotion varsayılan olarak fail-closed reddedilir; pre-lock VE
+kilit-altı guard (iki kez). Explicit `--discard-verified-states`
+gerekir. `src/fact_approval.py` READ-ONLY kaldı. Override'ın audit'te
+açıkça kayıtlı OLMAMASI **F6 Low** olarak açık kalır (bkz. §O).
+
+**J. Downstream gerçek zincirler** — Gerçek production fonksiyonları
+kullanılarak (mock/warning-string DEĞİL) kanıtlandı:
+- Gerçek `evidence_engine` `facts_input_hash` staleness'ı.
+- Gerçek `evidence_validator` STALE INPUT ERROR.
+- Gerçek `timeline_validator` downgrade ERROR.
+- Gerçek `verification.fact → generation.timeline → promotion.timeline`
+  zinciri, HEM upgrade HEM downgrade yönünde.
+- Gerçek deadline zinciri: `blocked_unverified_anchor` → fact
+  `verified` → timeline regenerasyonu/promosyonu → gerçek
+  `generation.deadline` → `calculated`, `calculated_deadline=
+  2026-03-12`, rule `iyuk_tax_court_general_lawsuit_filing` → gerçek
+  `approval.deadline` → canonical `deadline.json`.
+- Gerçek iki-fact concurrency: iki aktör, aynı belge, iki farklı fact;
+  gerçek `pg_locks` üzerinden İKİ GERÇEK waiting satırı gözlemlendi;
+  dinamik kilit sırasına göre TAM BİR winner tam başarı, DİĞERİ düz
+  `StaleViewError`; tek journal/audit satırı; loser fact HİÇ
+  değişmedi.
+- Windows junction/path-escape matrisi (8 escape senaryosu, gerçek
+  `mklink /J`) + repo-dışı `sys.addaudithook` ile pozitif-kontrollü
+  proof-of-non-access (dış kök altında sıfır open/scandir/listdir
+  olayı).
+
+**K. Test kanıtı — aşamalar karıştırılmadan**:
+
+İmplementasyon finali: targeted testler geçti; full sweep **70/70,
+4394 passed, 0 failed, 8 counted skip, 14 informational skip**.
+
+İlk bağımsız review: aynı **70/70** ve **4394/0/8/14** bağımsız olarak
+yeniden üretildi; buna RAĞMEN F1/F2 Medium nedeniyle **NOT LOCK-READY**.
+
+Remediasyon implementasyonu (final kod, guard ARMED, gerçek disposable
+PostgreSQL): facade **149/0**; PostgreSQL integration **91/0/0**;
+reconciliation **313/0**; reconciliation operator **95/0**; writer
+**33/0**; CLI **240/0**; full sweep **70/70, 4490 passed, 0 failed, 8
+counted skip, 14 informational skip**.
+
+Final bağımsız re-review: hedefli sayılar (facade 149/0, PostgreSQL
+integration 91/0/0, reconciliation 313/0, reconciliation operator
+95/0, writer 33/0, CLI 240/0) birebir bağımsız yeniden üretildi; full
+sweep **70/70, 4490/0/8/14** — yalnız ÜÇÜNCÜ, kesintisiz sweep kanıt
+sayıldı: ilk iki sweep denemesi reviewer'ın KENDİ guard/secret-scrub
+harness hatası (loopback guard'ın asyncio self-pipe'ı bloklaması;
+secret-scrub filtresinin `VERGI_IAM_DATABASE_URL`'i de silmesi)
+nedeniyle iptal edilip DB sıfırlanarak (DROP+CREATE) baştan
+çalıştırıldı — bu iki aşamanın sonuçları KANIT SAYILMADI. Hiçbir skip
+PASS sayılmadı.
+
+**L. Güvenlik/invariance** — Sıfır external Python-level network;
+sıfır DNS; sıfır gerçek `.env` open (guard pozitif kontrollerle
+kanıtlandı — yem `.env`, `example.invalid` DNS, `203.0.113.1:9`
+connect üçü de BLOKLANDI). Açık, yapısal sınır: `sys.addaudithook`
+guard'ı libpq'nün C-seviyesi bağlantılarını GÖREMEZ — "0 external
+network" iddiası Python-seviyesi socket'lerle SINIRLIDIR; gerçek
+PostgreSQL sınırının asıl dayanağı child ortamlarının DSN'lerinin
+`127.0.0.1` + disposable cluster'a PİNLENMESİDİR (audit-hook sayacı
+değil). Protected manifest (`data/**`+`index/**`+`db/migrations/**`+
+`CLAUDE.md`, 121 dosya): **byte-identical**. `case_0001` (65 dosya):
+**byte-identical**. Branch/HEAD/stash/staged değişmedi. PostgreSQL ve
+temp residue temizlendi.
+
+**M. Sayaçlar (final)** — production Python **153**; test modülü
+**70**; merged reconciliation routing key **50**; logical mutation
+family **38**; CLI subcommand **6** (`approval, review, promotion,
+generation, rag-bundle, verification`); migration **5**.
+
+**N. Dürüst kronoloji ve süreç sapmaları**:
+
+1. Read-only scope draft.
+2. Fable scope review ve corrected exact 18-path karar (Fable FINAL'in
+   kendi F1 High bulgusu: taslağın koşullu allowlist'i mekanik olarak
+   yanlıştı — `test_promotion_mutation_integration_postgres.py` sayım
+   assertion'ı TAŞIMIYORDU, `test_legal_research_case_law_mutation_
+   integration_postgres.py` ve `test_rag_bundle_mutation_integration_
+   postgres.py` (2 site) taşıyordu ve taslakta YOKTU; §M kaynaktan
+   yeniden türetilmiş exact 18-dosyalık FINAL allowlist verdi).
+3. Kullanıcı onayı.
+4. İlk implementasyon (Sonnet 5) — kendi devam turunda 5 zorunlu kanıt
+   kategorisini (downstream staleness, timeline propagation, deadline
+   blocked→calculated, Windows junction matrisi, iki-farklı-fact
+   concurrency) tamamladı; dört test-harness bug'ı (production kodu
+   ETKİLEMEYEN) bulunup düzeltildi.
+5. İlk bağımsız review (Claude Fable 5.1 — implementasyon oturumundan
+   model VE bağlam olarak bağımsız): **F1 Medium**, **F2 Medium**,
+   `NOT LOCK-READY`.
+6. Exact 5-file remediasyon — bu tur fiilen **Claude Fable 5.1**
+   üzerinde yürütüldü (talimat "Sonnet oturumunun devamı" derken fiili
+   model Fable 5.1'dir, kendi raporunda açıkça beyan edilmiştir).
+7. Final bağımsız re-review — bu tur da **Claude Fable 5.1** üzerinde
+   yürütüldü; remediasyon oturumuyla **model bağımsızlığı YOKTUR**,
+   yalnız OTURUM/BAĞLAM bağımsızlığı vardır (remediasyon oturumunun
+   bağlamı/ara adımları/diagnostic'leri/fixture'ları bu oturumda
+   mevcut değildi, hiçbir remediasyon komutu bu oturumda çalıştırılmadı).
+   (İlk implementasyon→ilk bağımsız review çifti — Sonnet 5 → Fable
+   5.1 — GERÇEKTEN model-bağımsızdır; yalnız remediasyon→re-review
+   çifti model-bağımsız DEĞİLDİR.) Final verdict:
+   `FACT VERIFICATION WORKFLOW LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
+
+Ayrıca: final re-review talimatı advisor/alt-ajan kullanımını
+YASAKLIYORDU, ancak reviewer advisor'ı İKİ kez çağırdı — bu sapma
+kendi raporunda AÇIKÇA disclose edilmiştir. İlk çağrı yalnız YÖNTEM
+danışmasıydı (tamper matrisinin nasıl kurulacağı, hangi kaynak
+gerçeklerinin önce doğrulanacağı). İkinci çağrı, rapor yazıldıktan
+SONRA bir tamamlanmışlık kontrolüydü (üç ifadeyi düzeltti: §1.5'e
+pinlenmiş DSN cümlesi, N2'ye bağlanmayan audit alanlarının listesi,
+§18'in temizlik zaman kipi). Hiçbir bulgu, sayı veya verdict
+advisor'dan ALINMADI — N2'deki alan listesi dahi advisor'ın iddiasına
+güvenilmeden kaynaktan grep ile bağımsızca doğrulandı. Alt ajan
+ÇAĞRILMADI. Bu süreç sapması GİZLENMEZ, ama güvenlik sonucunu
+DEĞİŞTİRMEMİŞTİR — F1/F2 kapanışının kanıtı (kaynak inceleme +
+bağımsız tamper matrisi + gerçek PostgreSQL diagnostic'leri) tamamen
+bu oturumun kendi çalıştırdığı, advisor'a hiç sorulmayan kontrollere
+dayanır.
+
+**O. Açık Low bulgular — KAPATILMIŞ GÖSTERİLMEZ**:
+
+- **F4 (Low, AÇIK):** audit yazımı fd açıldıktan sonra çökerse partial
+  audit dosyası için unlink YOK (boş dosya kalır, reconciliation
+  dual-false); `facts.json.tmp` artığı kalabilir; rollback-of-rollback
+  `FactVerificationRollbackFailedError` orijinal exception'ın YERİNE
+  fırlar; history backup fsync'siz. Hepsi fail-closed.
+- **F5 (Low, AÇIK):** "key-order sapması reddi" iddiası kısmen
+  YANLIŞTIR — referans serializer `sort_keys` KULLANMAZ, JSON
+  round-trip key sırasını KORUR (yeniden sıralanmış top-level
+  key'lerle canonical KABUL edilir); yalnız `indent` farkı reddedilir.
+  Writer docstring'i, facade başlığı ve önceki rapor(lar) aksini
+  söyler — bu ifade YANLIŞTIR. İşlevsel güvenlik etkisi YOK (writer
+  aynı sırayı yazar, bayt-invariance korunur).
+- **F6 (Low, AÇIK):** `--discard-verified-states` override'ı hiçbir
+  audit alanında AÇIKÇA kayıtlı DEĞİLDİR (yalnız promotion history
+  backup içeriğinden dolaylı çıkarılabilir); `_count_verified_states`
+  okunamayan/parse edilemeyen canonical'ı **0** sayar — bozuk bir
+  canonical'daki verified state'ler sessizce atılabilir (fail-open
+  guard davranışı). Bu slice'ta DÜZELTİLMEDİ.
+- Cross-case isolation için dedike, kalıcı bir test HÂLÂ YOKTUR
+  (yalnız outer-authz testleri + bağımsız incelemenin diagnostic'i ile
+  dolaylı kapsanır).
+- Writer'ın post-write hash uyuşmazlığı için ayrı, isimli bir exception
+  sınıfı (`FactVerificationWriterPostStateMismatchError` gibi) HÂLÂ
+  TANIMLANMADI — çıplak `ValueError` → `reconciliation_required`
+  (davranış doğru, yalnız isimlendirme kozmetik eksik).
+
+**P. Eski Observation kayıtları — eksiksiz korunur**:
+
+- **O1:** Adapter dosyasındaki "ONBİRİNCİ"→"ONUNCU" ifadesi
+  remediasyon turunda DÜZELTİLDİ (allowlist içi); `ui/reconciliation_
+  operator.py`'deki "SIXTH facade/adapter pair" kozmetik numaralandırması
+  AÇIK kalır (o dosya remediasyon allowlist'i dışındadır).
+- **O2 (AÇIK):** `FactVerificationFactNotFoundError` mesajı mutlak
+  canonical path içerir (promotion emsaliyle aynı desen, yalnız
+  yetkili aktöre görünür); audit `history_backup_path` alanı mutlak
+  yerel path taşır.
+- **O3 (AÇIK, gözlendi):** Bazı testler (facade-isolated,
+  reconciliation-isolated) sentetik case dizinini GERÇEK
+  `data/cases/` ağacının içinde oluşturup `finally`'de siler — emsal
+  desendir; byte-invariance her turda ayrıca kanıtlanmıştır.
+- **O4:** Önceki bağımsız incelemede `.git/FETCH_HEAD`'in oturum dışı
+  bir git fetch (harness/IDE) tarafından güncellendiği gözlemlenmişti
+  — hiçbir ref hareket etmedi (reflog/HEAD/stash aynı kaldı). Final
+  re-review turunda bu konuda YENİ bir gözlem YOKTUR.
+- **O5 (AÇIK):** CLI `verification` preview çıktısı, evidence
+  zorunluluğunu hedef state'e göre açıklamaz (`--evidence-ref` yalnız
+  genel şablonda gösterilir).
+- **O6 (AÇIK):** Writer, `history_dir`/`reviews_dir`'i
+  `mkdir(parents=True, exist_ok=True)` ile oluşturur (Fable'ın
+  `resolve_for_create` beklentisinden sapma; facade zaten kilit
+  altında containment doğruladığı için pratik risk düşük).
+
+**Q. Yeni N1–N6 Observation kayıtları (final re-review'un kendi
+bulguları — hiçbiri kaybolmaz)**:
+
+- **N1 (Observation):** `target_ref`'ten doc/fact ayrıştırmasının
+  (`rsplit(".",1)`) tekliği bugün şema `^[a-z0-9_-]+$` pattern'ine
+  (fact_id/document_id'de nokta yasak) DAYANIR; `path_containment.
+  validate_segment` noktayı KENDİ BAŞINA yasaklamaz. Bugün canonical'a
+  girebilen hiçbir id nokta taşıyamaz; ileride şema gevşerse parse
+  belirsizleşebilir — gelecek hardening notu.
+- **N2 (Observation):** Adapter `_full_binding` ve facade
+  `_replay_audit_fully_bound`, audit'in KAPALI bir anahtar setini
+  ZORLAMAZ — bogus bir ek anahtar (ör. sahte `request_fingerprint`)
+  eklenmiş bir audit yine KABUL edilir. Writer'ın 27 alanlık audit
+  setinden matcher'ların BAĞLAMADIĞI dokuz alan: `schema_version`,
+  `audit_type`, `case_id`, `evidence_document_sha256`,
+  `source_locator_present`, `source_locator_sha256`, `channel`,
+  `reviewer_ref`, `generated_at`. Audit `case_id` alanı özellikle
+  `resource_key`'den türetilen case_id ile KARŞILAŞTIRILMAZ — ama
+  dosya konumu yalnız `resource_key`→case_id türetimiyle belirlendiği
+  için yanlış bir audit `case_id`'si hiçbir şeyi YÖNLENDİREMEZ; güvenlik
+  etkisi YOKTUR, audit-şekil sertleştirme adayıdır.
+- **N3 (Observation):** Facade replay, journal `actor_label` kolonunu
+  DOĞRUDAN OKUMAZ — actor bağı `intent.actor_ref` (idempotency
+  identity'sinin parçası) üzerinden DOLAYLIDIR. Yalnız DB-yazma
+  yetkili bir tamper adapter reconciliation'da YAKALANIR.
+- **N4 (Observation):** `FactVerificationIdentityConflictError`'ın
+  sabit mesajı, generic exception'ın taşıdığı `journal_id`/
+  `idempotency_key`'i kullanıcı mesajından DÜŞÜRÜR (yalnız `__cause__`
+  üzerinden erişilebilir) — azalmış operatör tanısı, fail-closed
+  davranışın kendisi doğrudur.
+- **N5 (Observation, tasarım özelliği, disclosed):** Identity slotu
+  `(canonical_sha256, attempt)` aynı aktörün AYNI byte-state'ten
+  yaptığı TÜM transition'larca PAYLAŞILIR — bir state'ten çıkıp aynı
+  byte-state'e dönüldükten sonra o state'ten yapılacak FARKLI bir
+  transition da attempt-1'de IdentityConflict alabilir; Fable §E'nin
+  "`--attempt N+1`" sözleşmesiyle TUTARLIDIR.
+- **N6 (Observation, harness sınıfı):** `sys.addaudithook` guard'ları
+  libpq'nün C-seviyesi bağlantılarını GÖREMEZ; bu turun ve önceki
+  turların "0 external connect" iddiaları Python-seviyesi socket'lerle
+  SINIRLIDIR (bkz. §L).
+
+**R. Kalan pilot sırası**:
+
+- Pilot Readiness Adım 0 (kullanıcı kararı) tamamlandı: ilk pilot
+  concierge; Entra/P1 Adım 11'e ertelendi; hosting/Key Vault Adım
+  12'ye ertelendi.
+- Pilot Readiness Adım 1 — Fact Verification Workflow — **DONE /
+  LOCKED** (bu checkpoint).
+- Pilot Readiness Adım 2 — Case-Data Repository Protection — yalnız
+  **read-only exact-scope reconciliation** olarak **ACTIVE / NEXT**
+  (bkz. §5).
+- Pilot Readiness Adım 3 ve sonrası BAŞLAMAMIŞTIR.
+- Corpus acquisition/population bu görevle BAŞLAMAMIŞTIR.
+- Roadmap-lock (bu checkpoint) commit EDİLMEDEN Adım 2 implementasyonu
+  BAŞLAMAZ.
+
+`FACT VERIFICATION WORKFLOW LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde
+olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
+roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
+dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 

@@ -313,7 +313,7 @@ def timeline_paths_for(case_dir):
 
 
 def approve(row_key, case_id, expected_hash, *, document_id=None, note=None,
-            principal, repo, conn=None):
+            discard_verified_states=False, principal, repo, conn=None):
     conn = conn if conn is not None else FakeJournalConn()
     calls = {"n": 0}
 
@@ -323,7 +323,7 @@ def approve(row_key, case_id, expected_hash, *, document_id=None, note=None,
 
     result = promo.approve_promotion_mutation(
         row_key, case_id, expected_hash,
-        document_id=document_id, note=note,
+        document_id=document_id, note=note, discard_verified_states=discard_verified_states,
         principal=principal, authz_repository=repo, conn_factory=conn_factory,
     )
     return result, conn, calls
@@ -1227,6 +1227,86 @@ try:
         ev18c.post_state_verified is False and ev18c.pre_state_confirmed_unchanged is False,
     )
     dup_target.unlink()
+
+    # ============================================================
+    # S19 - FACT VERIFICATION WORKFLOW re-promotion guard
+    #       (PromotionVerifiedStateLossError).
+    # ============================================================
+    case_id19, case_dir19 = make_promotion_case()
+    fp19 = fact_paths_for(case_dir19)
+    principal19, repo19 = make_principal_and_repo(case_id19)
+    pending_sha19_first = sha256_file(fp19["pending"])
+    result19_first, conn19, _ = approve(
+        "fact", case_id19, pending_sha19_first, document_id=FACT_DOC,
+        principal=principal19, repo=repo19,
+    )
+    check("S19a initial promotion (no verified facts yet) succeeds normally",
+          conn19.table[0]["state"] == "completed")
+
+    # Mark one fact 'verified' directly in canonical (simulates the
+    # durable effect of a completed verification.fact apply, without
+    # depending on that facade's own writer here).
+    canonical19 = json.loads(fp19["canonical"].read_text(encoding="utf-8"))
+    if not canonical19.get("facts"):
+        raise AssertionError("fixture must have at least one fact for S19")
+    canonical19["facts"][0]["verification_state"] = "verified"
+    fp19["canonical"].write_text(
+        json.dumps(canonical19, ensure_ascii=False, indent=2), encoding="utf-8",
+    )
+
+    preview19 = promo.preview_promotion(
+        "fact", case_id19, document_id=FACT_DOC, principal=principal19, authz_repository=repo19,
+    )
+    check("S19b preview_promotion reports verified_state_count == 1",
+          preview19["verified_state_count"] == 1, f"{preview19!r}")
+
+    # A GENUINELY new pending (different hash) - a real re-extraction,
+    # never a same-identity replay of the S19a attempt.
+    pending19 = json.loads(fp19["pending"].read_text(encoding="utf-8"))
+    pending19["facts"][0]["notes"] = "re-extraction sonrası değişen not"
+    fp19["pending"].write_text(
+        json.dumps(pending19, ensure_ascii=False, indent=2), encoding="utf-8",
+    )
+    pending_sha19_second = sha256_file(fp19["pending"])
+    check("S19c second pending genuinely differs from the first",
+          pending_sha19_second != pending_sha19_first)
+
+    canonical_sha19_before_guard = sha256_file(fp19["canonical"])
+    conn19b = FakeJournalConn()
+    expect_raises(
+        promo.PromotionVerifiedStateLossError,
+        lambda: approve(
+            "fact", case_id19, pending_sha19_second, document_id=FACT_DOC,
+            principal=principal19, repo=repo19, conn=conn19b,
+        ),
+        "S19d re-promotion with 1 verified fact and NO --discard-verified-states -> "
+        "PromotionVerifiedStateLossError",
+    )
+    check("S19e guard rejection wrote ZERO journal rows", len(conn19b.table) == 0)
+    check(
+        "S19f guard rejection left canonical byte-unchanged",
+        sha256_file(fp19["canonical"]) == canonical_sha19_before_guard,
+    )
+
+    # With discard_verified_states=True the re-promotion succeeds and
+    # resets every fact to 'unverified' (LLM-extracted facts are always
+    # unverified - fact_approval.validate_pending()'s own invariant).
+    result19_second, conn19c, _ = approve(
+        "fact", case_id19, pending_sha19_second, document_id=FACT_DOC,
+        principal=principal19, repo=repo19, discard_verified_states=True,
+    )
+    check("S19g --discard-verified-states=True allows the re-promotion",
+          conn19c.table[0]["state"] == "completed")
+    canonical19_after = json.loads(fp19["canonical"].read_text(encoding="utf-8"))
+    check(
+        "S19h post-guard-override promotion resets ALL facts to unverified",
+        all(f.get("verification_state") == "unverified" for f in canonical19_after["facts"]),
+    )
+    preview19b = promo.preview_promotion(
+        "fact", case_id19, document_id=FACT_DOC, principal=principal19, authz_repository=repo19,
+    )
+    check("S19i preview_promotion now reports verified_state_count == 0",
+          preview19b["verified_state_count"] == 0)
 
 finally:
     ml.acquire_case_lock_session = _original_acquire

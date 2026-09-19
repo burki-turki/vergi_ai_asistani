@@ -578,13 +578,20 @@ check(
     f"got {sorted(_rag_bundle_families)}",
 )
 check(
-    "RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: the merged registry's total size is exactly "
-    "10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 + 2 = 49 (no overlap, no family lost, no family duplicated) - "
-    "this is a ROUTING-KEY count, distinct from the 37 LOGICAL action families (10 approval + "
-    "12 review + 1 drafting_request + 2 promotion + 2 deterministic-generation + 5 "
-    "agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation + 2 "
-    "rag-bundle-build/activate); the 'approval.*' bucket itself stays exactly 10",
-    len(_real_families) == 49, f"got {len(_real_families)}",
+    "FACT VERIFICATION WORKFLOW: the merged registry's total size is exactly "
+    "10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 + 2 + 1 = 50 (no overlap, no family lost, no family "
+    "duplicated) - this is a ROUTING-KEY count, distinct from the 38 LOGICAL action families "
+    "(10 approval + 12 review + 1 drafting_request + 2 promotion + 2 deterministic-generation + "
+    "5 agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation + "
+    "2 rag-bundle-build/activate + 1 fact-verification); the 'approval.*' bucket itself stays "
+    "exactly 10",
+    len(_real_families) == 50, f"got {len(_real_families)}",
+)
+check(
+    "FACT VERIFICATION WORKFLOW: the merged registry contains the new 'verification.fact' "
+    "routing key",
+    "verification.fact" in _real_families,
+    f"got {sorted(_real_families)}",
 )
 check(
     "_default_registry_factory(): a representative Layer A family (approval.deadline) resolves "

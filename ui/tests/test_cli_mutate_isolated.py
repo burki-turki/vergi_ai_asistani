@@ -247,6 +247,101 @@ check(
     code == cli_mutate.EXIT_USAGE_ERROR and "--note" in err,
 )
 
+# FACT VERIFICATION WORKFLOW - `verification` subcommand usage-shape
+# grammar. Every rule fires BEFORE any connection/authz repository/
+# filesystem probe/journal access (the exploding factories prove zero
+# connections). Mirrors the `promotion` block above exactly in style.
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--target-state", "verified",
+])
+check(
+    "verification: --target-state given WITHOUT --apply -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--target-state" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--evidence-ref", "doc1",
+])
+check(
+    "verification: --evidence-ref given WITHOUT --apply -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--evidence-ref" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--expected-hash", "h",
+])
+check(
+    "verification: --expected-hash given WITHOUT --apply -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--expected-hash" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--attempt", "2",
+])
+check(
+    "verification: non-default --attempt given WITHOUT --apply -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--attempt" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1", "--apply",
+])
+check(
+    "verification: --apply WITHOUT --target-state -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--target-state" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--apply", "--target-state", "unverified",
+])
+check(
+    "verification: --apply WITHOUT --expected-hash -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--expected-hash" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--apply", "--target-state", "verified", "--expected-hash", "h",
+])
+check(
+    "verification: --target-state verified WITHOUT --evidence-ref -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--evidence-ref" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--apply", "--target-state", "partially_verified", "--expected-hash", "h",
+])
+check(
+    "verification: --target-state partially_verified WITHOUT --evidence-ref -> exit 2, "
+    "zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--evidence-ref" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--apply", "--target-state", "verified", "--expected-hash", "h", "--evidence-ref", "doc1",
+    "--attempt", "0",
+])
+check(
+    "verification: --attempt 0 -> exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--attempt" in err,
+)
+
+code, _, err = run_cli_usage_only([
+    "verification", "--case", "x", "--document", "d", "--fact-id", "f", "--actor-user-id", "1",
+    "--apply", "--target-state", "not_a_real_state", "--expected-hash", "h",
+])
+check(
+    "verification: invalid --target-state -> exit 2 (argparse choices), zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR,
+)
+
 # ROW 19C-3c-i - `generation` subcommand usage-shape grammar. Every rule
 # fires BEFORE any connection/authz repository/filesystem probe/journal
 # access (the exploding factories prove zero connections). Mirrors the

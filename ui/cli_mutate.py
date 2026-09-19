@@ -229,6 +229,14 @@ def _build_arg_parser():
         help="fact-apply-only optional review note (fingerprint-bound, never identity); "
         "REJECTED for timeline and REJECTED without --approve.",
     )
+    promotion_parser.add_argument(
+        "--discard-verified-states", action="store_true", dest="discard_verified_states", default=False,
+        help="FACT VERIFICATION WORKFLOW re-promotion guard: accepted ONLY together with "
+        "--row-key fact --approve. If the current canonical facts.json has one or more facts "
+        "whose verification_state != 'unverified', a re-promotion is refused UNLESS this flag "
+        "is given explicitly (fail-closed, zero journal row). REJECTED for --row-key timeline "
+        "and REJECTED without --approve.",
+    )
 
     # ROW 19C-3c-i: deterministic deadline/timeline PENDING GENERATION -
     # routed to ui.services.generation_mutation_facade, NEVER to
@@ -388,6 +396,47 @@ def _build_arg_parser():
         "--action build/list.",
     )
 
+    # FACT VERIFICATION WORKFLOW: a SIXTH subcommand, `verification`,
+    # routed to the NEW, separate `ui.services.fact_verification_
+    # mutation_facade` (action family `verification.fact`, target_ref
+    # `fact.<document_id>.<fact_id>.verification`, resource_key
+    # `case:<case_id>`). This is a fact-level (third segment: fact_id)
+    # mutation, distinct from BOTH the `approval`/`promotion`
+    # subcommands' row-key universes - neither is extended. No web
+    # route exists for this family; no schema/migration change; no
+    # model/network call is ever attempted by this writer.
+    verification_parser = subparsers.add_parser(
+        "verification", help="Fact-level verification_state change (Fact Verification Workflow)",
+    )
+    verification_parser.add_argument("--case", dest="case_id", required=True)
+    verification_parser.add_argument("--document", dest="document", required=True)
+    verification_parser.add_argument("--fact-id", dest="fact_id", required=True)
+    verification_parser.add_argument("--actor-user-id", dest="actor_user_id", required=True, type=int)
+    verification_parser.add_argument("--apply", action="store_true", default=False)
+    verification_parser.add_argument(
+        "--target-state", dest="target_state", default=None,
+        choices=["unverified", "partially_verified", "verified"],
+        help="REQUIRED with --apply (rejected without it): the requested new verification_state. "
+        "A self-transition (target_state == the fact's current state) is ALWAYS refused, "
+        "fail-closed, zero journal row.",
+    )
+    verification_parser.add_argument(
+        "--expected-hash", dest="expected_hash", default=None,
+        help="REQUIRED with --apply (rejected without it): the canonical facts.json file's raw-byte "
+        "sha256, as printed by a prior preview (no --apply) run of this same command.",
+    )
+    verification_parser.add_argument(
+        "--evidence-ref", dest="evidence_ref", default=None,
+        help="A document_id within {source_document_id} UNION fact.related_document_ids. REQUIRED "
+        "with --target-state verified/partially_verified; optional for --target-state unverified. "
+        "REJECTED (meaningless) without --apply.",
+    )
+    verification_parser.add_argument(
+        "--attempt", dest="attempt", type=int, default=1,
+        help="Identity-affecting retry counter (default 1, must be >= 1). REJECTED (non-default) "
+        "without --apply.",
+    )
+
     return parser
 
 
@@ -463,6 +512,53 @@ def _validate_promotion_args(args, *, stderr) -> int | None:
         return EXIT_USAGE_ERROR
     if args.row_key == "fact" and args.approve and args.document is None:
         stderr.write("error: --approve with --row-key fact requires --document\n")
+        return EXIT_USAGE_ERROR
+    if args.discard_verified_states and not (args.row_key == "fact" and args.approve):
+        stderr.write(
+            "error: --discard-verified-states is only accepted together with "
+            "--row-key fact --approve\n"
+        )
+        return EXIT_USAGE_ERROR
+    return None
+
+
+def _validate_verification_args(args, *, stderr) -> int | None:
+    """FACT VERIFICATION WORKFLOW: pure, zero-connection usage-shape
+    checks for the `verification` subcommand - every rule below fires
+    BEFORE any authz repository, filesystem probe, or journal access
+    (mirrors `_validate_promotion_args` exactly; the facade re-enforces
+    the same rules independently as its own pre-I/O
+    `FactVerificationArgumentError`)."""
+    if not args.apply:
+        if args.target_state is not None:
+            stderr.write("error: --target-state is only meaningful together with --apply\n")
+            return EXIT_USAGE_ERROR
+        if args.evidence_ref is not None:
+            stderr.write("error: --evidence-ref is only meaningful together with --apply\n")
+            return EXIT_USAGE_ERROR
+        if args.expected_hash is not None:
+            stderr.write("error: --expected-hash is only meaningful together with --apply\n")
+            return EXIT_USAGE_ERROR
+        if args.attempt != 1:
+            stderr.write("error: --attempt is only meaningful together with --apply\n")
+            return EXIT_USAGE_ERROR
+        return None
+    if args.target_state is None:
+        stderr.write("error: --apply requires --target-state\n")
+        return EXIT_USAGE_ERROR
+    if args.expected_hash is None or not args.expected_hash.strip():
+        stderr.write("error: --apply requires --expected-hash\n")
+        return EXIT_USAGE_ERROR
+    if args.attempt < 1:
+        stderr.write("error: --attempt must be a positive integer\n")
+        return EXIT_USAGE_ERROR
+    if args.evidence_ref is not None and not args.evidence_ref.strip():
+        stderr.write("error: --evidence-ref must not be blank\n")
+        return EXIT_USAGE_ERROR
+    if args.target_state in ("verified", "partially_verified") and not args.evidence_ref:
+        stderr.write(
+            f"error: --target-state {args.target_state} requires --evidence-ref\n"
+        )
         return EXIT_USAGE_ERROR
     return None
 
@@ -744,6 +840,8 @@ def main(
         usage_error = _validate_generation_args(args, stderr=stderr)
     elif args.command == "rag-bundle":
         usage_error = _validate_rag_bundle_args(args, stderr=stderr)
+    elif args.command == "verification":
+        usage_error = _validate_verification_args(args, stderr=stderr)
     else:
         usage_error = _validate_review_args(args, stderr=stderr)
     if usage_error is not None:
@@ -795,6 +893,11 @@ def main(
                 )
             elif args.command == "rag-bundle":
                 outcome = _run_rag_bundle(
+                    args, principal=principal, repository=repository,
+                    mutation_conn_factory=mutation_conn_factory,
+                )
+            elif args.command == "verification":
+                outcome = _run_verification(
                     args, principal=principal, repository=repository,
                     mutation_conn_factory=mutation_conn_factory,
                 )
@@ -909,6 +1012,7 @@ def _run_promotion(args, *, principal, repository, mutation_conn_factory) -> str
     result = _promotion_facade.approve_promotion_mutation(
         args.row_key, args.case_id, args.expected_hash,
         document_id=args.document, note=args.note,
+        discard_verified_states=args.discard_verified_states,
         principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
     )
     return (
@@ -1169,6 +1273,50 @@ def _run_rag_bundle(args, *, principal, repository, mutation_conn_factory) -> st
         f"pointer_path={result.pointer_path}\n"
         f"audit_path={result.audit_path}\n"
         f"replayed={result.replayed}\n"
+    )
+
+
+def _run_verification(args, *, principal, repository, mutation_conn_factory) -> str:
+    """FACT VERIFICATION WORKFLOW. PREVIEW (no --apply): the facade's own
+    `preview_verification()` performs the outer 'read' authorization
+    ITSELF, as its very first step, before any filesystem probe. APPLY:
+    zero authz/verification logic of our own; `--expected-hash` is
+    always the operator's explicit claim, never recomputed here."""
+    from ui.services import fact_verification_mutation_facade as _fv_facade
+
+    if not args.apply:
+        preview = _fv_facade.preview_verification(
+            args.case_id, args.document, args.fact_id,
+            principal=principal, authz_repository=repository,
+        )
+        return (
+            f"PREVIEW verification case_id={preview['case_id']} document={preview['document_id']} "
+            f"fact_id={preview['fact_id']}\n"
+            f"from_state={preview['from_state']}\n"
+            f"source_locator_present={preview['source_locator_present']}\n"
+            f"canonical_sha256={preview['canonical_sha256']}\n"
+            f"allowed_evidence_documents={preview['allowed_evidence_documents']}\n"
+            "Uygulamak için: python -m ui.cli_mutate verification --case "
+            f"{preview['case_id']} --document {preview['document_id']} --fact-id "
+            f"{preview['fact_id']} --actor-user-id {args.actor_user_id} --apply --target-state "
+            f"<unverified|partially_verified|verified> --expected-hash {preview['canonical_sha256']} "
+            "[--evidence-ref <DOCUMENT_ID>]\n"
+        )
+
+    result = _fv_facade.apply_verification_mutation(
+        args.case_id, args.document, args.fact_id, args.expected_hash, args.target_state,
+        evidence_document_id=args.evidence_ref, attempt=args.attempt,
+        principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+    )
+    return (
+        f"APPLIED verification case_id={result.case_id} document={result.document_id} "
+        f"fact_id={result.fact_id}\n"
+        f"from_state={result.from_state}\n"
+        f"target_state={result.target_state}\n"
+        f"canonical_hash={result.canonical_hash}\n"
+        f"audit_path={result.audit_path}\n"
+        f"replayed={result.replayed}\n"
+        f"{_fv_facade.render_stale_downstream_block()}"
     )
 
 

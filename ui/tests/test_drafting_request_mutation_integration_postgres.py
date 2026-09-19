@@ -329,17 +329,24 @@ PRODUCTION_REGISTRY = _legal_research_case_law_adapters.register_into(PRODUCTION
 # `_default_registry_factory()`'s own updated order exactly.
 from ui.services import rag_bundle_mutation_adapters as _rag_bundle_adapters  # noqa: E402
 PRODUCTION_REGISTRY = _rag_bundle_adapters.register_into(PRODUCTION_REGISTRY)
+# FACT VERIFICATION WORKFLOW: the TENTH merge source (single, fact-
+# level, CLI-only `verification.fact` family - a SIXTH, SEPARATE
+# facade/adapter pair from every prior one), mirroring
+# `_default_registry_factory()`'s own updated order exactly.
+from ui.services import fact_verification_mutation_adapters as _fact_verification_adapters  # noqa: E402
+PRODUCTION_REGISTRY = _fact_verification_adapters.register_into(PRODUCTION_REGISTRY)
 
 check(
-    "RAG GLOBAL-RESOURCE BUNDLE FOUNDATION: the REAL merged production registry covers 10 "
+    "FACT VERIFICATION WORKFLOW: the REAL merged production registry covers 10 "
     "(Layer A) + 24 (Layer B - 12 review_kinds x 2 channels, web + CLI) + 1 (Row 18C) + 2 "
     "(fact/timeline promotion) + 2 (deterministic deadline/timeline generation) + 5 (agent-gated "
     "issue_spotting/evidence/argument/risk_strategy/drafting generation) + 1 (document-scoped "
     "agent-gated fact_extraction generation) + 2 (case-scoped deterministic+agent legal_research/"
-    "case_law generation) + 2 (global rag_bundle.build/rag_bundle.activate) = 49 routing keys - "
-    "the number of LOGICAL Layer B review_kinds is still 12, unchanged; 24 is a channel-separated "
-    "ADAPTER ROUTING-KEY count, not a doubling of logical families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 49,
+    "case_law generation) + 2 (global rag_bundle.build/rag_bundle.activate) + 1 (fact-level "
+    "verification.fact) = 50 routing keys - the number of LOGICAL Layer B review_kinds is still "
+    "12, unchanged; 24 is a channel-separated ADAPTER ROUTING-KEY count, not a doubling of "
+    "logical families",
+    len(PRODUCTION_REGISTRY.known_action_families()) == 50,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(

@@ -203,6 +203,22 @@ class PromotionWriterPostStateMismatchError(ApprovalUiError):
     reconciliation_required'a çevirir; asla sessiz başarı."""
 
 
+class PromotionVerifiedStateLossError(ApprovalUiError):
+    """FACT VERIFICATION WORKFLOW re-promotion guard (row_key='fact'
+    only): the CURRENT canonical facts.json has one or more facts whose
+    verification_state != 'unverified' (i.e. a human already verified
+    them via `verification.fact`); `promote()` unconditionally rewrites
+    the canonical array wholesale from the pending extraction (whose
+    facts are always freshly-extracted `unverified`), so a plain
+    re-promotion would SILENTLY DISCARD every previously-verified
+    fact's state. Refused, fail-closed, UNLESS the caller explicitly
+    passes `discard_verified_states=True` - both pre-lock and again
+    under the case lock (a race where verified states appear/change
+    while waiting for the lock must not slip through). Zero journal
+    row is written on this rejection. `src/fact_approval.py` remains
+    strictly READ-ONLY - this guard lives entirely in this facade."""
+
+
 class PromotionAuditBindingVerificationFailedError(ApprovalUiError):
     """Safe-replay corroboration başarısız - ne doğrulanmış başarı ne
     doğrulanmış başarısızlık; insan reconciliation'ı gerekir (Layer A
@@ -602,6 +618,29 @@ def _check_argument_shapes(row_key: str, document_id, note, expected_hash=None, 
         raise PromotionArgumentError("expected_hash apply için zorunlu, boş olamaz.")
 
 
+def _count_verified_states(canonical_path: Path) -> int:
+    """FACT VERIFICATION WORKFLOW re-promotion guard helper: how many
+    facts in the CURRENT canonical (if any) carry a verification_state
+    other than 'unverified'. Read-only, tolerant of a missing/unparseable
+    file (both simply count as 0 - the guard only ever BLOCKS a
+    re-promotion that would discard real prior verification work; it
+    never blocks a first-ever promotion)."""
+    canonical_path = Path(canonical_path)
+    if not canonical_path.is_file():
+        return 0
+    try:
+        with open(canonical_path, "r", encoding="utf-8") as file:
+            data = json.load(file)
+    except Exception:
+        return 0
+    if not isinstance(data, dict):
+        return 0
+    return sum(
+        1 for fact in data.get("facts", []) or []
+        if isinstance(fact, dict) and fact.get("verification_state") != "unverified"
+    )
+
+
 def _normalized_note(note):
     """(writer'a geçecek not metni, secondary_input_hash) çifti.
     None -> sabit varsayılan not + None hash (kimlik/fingerprint
@@ -700,6 +739,9 @@ def preview_promotion(row_key: str, case_id: str, *, document_id=None, principal
             "canonical_exists": paths.canonical_path.is_file(),
             "canonical_sha256": sha256_file(paths.canonical_path),
             "validation_ready": validation_ready,
+            "verified_state_count": (
+                _count_verified_states(paths.canonical_path) if row_key == "fact" else None
+            ),
         }
     finally:
         try:
@@ -734,6 +776,7 @@ def approve_promotion_mutation(
     *,
     document_id=None,
     note=None,
+    discard_verified_states: bool = False,
     principal,
     authz_repository=None,
     conn_factory=None,
@@ -771,6 +814,18 @@ def approve_promotion_mutation(
         if not pre_paths.pending_path.is_file():
             raise PendingNotFoundError(f"Pending bulunamadı: {pre_paths.pending_path}")
         _cross_check_pending_content(row_key, outer_resolved_case_id, document_id, pre_paths.pending_path)
+
+        # FACT VERIFICATION WORKFLOW re-promotion guard (row_key='fact'
+        # only) - pre-lock check. See PromotionVerifiedStateLossError's
+        # own docstring.
+        if row_key == "fact" and not discard_verified_states:
+            n_verified_pre = _count_verified_states(pre_paths.canonical_path)
+            if n_verified_pre > 0:
+                raise PromotionVerifiedStateLossError(
+                    f"Canonical'da verification_state != 'unverified' olan {n_verified_pre} adet "
+                    "fact var; bu re-promotion --discard-verified-states olmadan reddedildi "
+                    "(sıfır journal satırı, sıfır dosya değişikliği)."
+                )
 
         pre_snapshot = _compute_promotion_snapshot(pre_paths.pending_path, pre_paths.canonical_path)
 
@@ -823,6 +878,18 @@ def approve_promotion_mutation(
                 )
             if not ul_paths.pending_path.is_file():
                 raise PendingNotFoundError(f"Pending bulunamadı: {ul_paths.pending_path}")
+            # FACT VERIFICATION WORKFLOW re-promotion guard - kilit-altı
+            # yeniden kontrol (kilit beklerken verification.fact ile
+            # verified state'ler eklenmiş/değişmiş olabilir).
+            if row_key == "fact" and not discard_verified_states:
+                n_verified_ul = _count_verified_states(ul_paths.canonical_path)
+                if n_verified_ul > 0:
+                    raise PromotionVerifiedStateLossError(
+                        f"Canonical'da verification_state != 'unverified' olan {n_verified_ul} adet "
+                        "fact var (kilit-altı yeniden kontrol); bu re-promotion "
+                        "--discard-verified-states olmadan reddedildi (sıfır journal satırı, "
+                        "sıfır dosya değişikliği)."
+                    )
             ul_snapshot = _compute_promotion_snapshot(ul_paths.pending_path, ul_paths.canonical_path)
             if ul_snapshot.composite_digest != pre_snapshot.composite_digest:
                 raise PreconditionRaceDetectedError(
