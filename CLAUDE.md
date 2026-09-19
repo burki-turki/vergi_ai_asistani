@@ -625,26 +625,57 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   `FACT VERIFICATION WORKFLOW LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
   (bkz. Fact Verification Workflow checkpoint özeti, §5 sonrası,
   "## 6. Cross-Cutting Backlog"dan hemen önce).
-- **Pilot Readiness Adım 2 — Case-Data Repository Protection
-  Exact-Scope / Allowlist Reconciliation — ACTIVE / NEXT.** Bu pointer
-  yalnız **salt-okunur araştırma** yetkisi verir. Amaç, gerçek/sentetik
-  olmayan dava verilerinin yanlışlıkla Git'e eklenmesini önleyecek
-  exact scope'u belirlemektir. Repo-dışı case root seçeneği,
-  configurable case root ve `.gitignore` savunması birlikte
-  incelenecektir. `case_0001` canonical fixture korunacaktır. Henüz
-  hiçbir `.gitignore`, path, config, schema veya production-data
-  değişikliği YETKİLENDİRİLMEMİŞTİR; implementasyon BAŞLAMAMIŞTIR;
-  Pilot Readiness Adım 3 ve sonrası BAŞLAMAMIŞTIR. Eski "Row 19D
+- **Pilot Readiness Adım 2 — Case-Data Repository Protection — DONE /
+  LOCKED.** Exact kapsam **1 YENİ + 1 DEĞİŞTİRİLMİŞ = 2 dosya**:
+  `.gitignore` (MODIFIED — tek, root-anchored, istisnasız `/data/cases/`
+  kuralı; negation YOK) ve `ui/tests/test_case_data_gitignore_guard_
+  isolated.py` (YENİ — kalıcı, non-tautological regresyon testi).
+  Tracked `case_0001` fixture'ının TAMAMI (65 dosya) tracked kalır;
+  edit/delete normal ` M`/` D` olarak görünür ve stageable kalır.
+  `case_0001` içine veya herhangi bir başka case dizinine eklenen YENİ
+  untracked içerik, normal `git add -A`, `git add .` ve IDE "stage all"
+  akışından korunur; yeni bir fixture dosyası yalnız açık, incelenen
+  `git add -f` ile eklenebilir. Configurable repo-dışı case root
+  implementasyonu bu slice'a DAHİL DEĞİLDİR — post-pilot Adım 13c için
+  ayrı bir scope/onay turu gerektirir. Final bağımsız verdict, exact
+  olarak:
+  `PILOT READINESS STEP 2 CASE-DATA REPOSITORY PROTECTION LOCK-READY — NO BLOCKING FINDINGS`
+  (bkz. Pilot Readiness Adım 2 checkpoint özeti, §5 sonrası, "## 6.
+  Cross-Cutting Backlog"dan hemen önce). **Dar, exact güvenlik iddiası**
+  (abartılmaz, "tüm case verisi güvenlidir" veya "risk tamamen kapandı"
+  DENMEZ): normal `git add -A` / `git add .` / IDE stage-all yoluyla
+  `data/cases/` altındaki YENİ untracked case içeriğinin kazara
+  stage/commit edilmesi engellenir (bkz. checkpoint özeti §O).
+- **Pilot Readiness Adım 3 — Runner / Environment / Skip Reporting —
+  ACTIVE / NEXT.** Bu pointer YALNIZ **salt-okunur exact-scope/
+  allowlist reconciliation** yetkisi verir; implementasyon veya dosya
+  değişikliği YETKİSİ VERMEZ. Araştırma kapsamı: (a) tek ve dürüst bir
+  test-runner sözleşmesi; (b) gerekli environment-variable/DSN
+  sözleşmesi; (c) `VERGI_TEST_PG_DSN` ile `VERGI_IAM_DATABASE_URL`
+  ilişkisinin/açık bağımlılığının uzlaştırılması; (d) PostgreSQL
+  gerektiren modüllerin sessiz 0-check/exit-0 veya yanlış-yeşil
+  görünmemesi; (e) counted skip ile informational skip'in ayrı ve
+  mekanik raporlanması; (f) modül özeti formatlarındaki `---`,
+  `TOTAL:` ve bare-summary çeşitlerinin normalize edilmesi; (g)
+  fail-closed exit/status ve per-module tally; (h) network/`.env`
+  guard ve cleanup/invariance kanıt disiplininin tek bir çalıştırıcıya
+  bağlanıp bağlanmayacağının araştırılması. Açıkça BAŞLAMAMIŞ/
+  YETKİLENDİRİLMEMİŞ: Adım 3 kodlama/runner yazımı; LLM masking (Adım
+  4); resmî tatil takvimi (Adım 5); avukat altın örnekleri (Adım 6);
+  deadline hardening (Adım 7); yerel PostgreSQL/IAM adoption (Adım 8);
+  sentetik concierge dry-run (Adım 9); ilk gerçek concierge pilotu
+  (Adım 10); Entra/P1 (Adım 11); hosting/Key Vault (Adım 12);
+  configurable external case root (post-pilot Adım 13c). Eski "Row 19D
   External Activation / Adoption Gate" pointer'ının kapsadığı
   maddelerin (gerçek Entra tenant/app registration, `acrs` claims dış
   doğrulaması, Conditional Access/authentication-context preflight'i,
   Key Vault custom GET-only role deployment/adoption, Graph izinleri,
   loopback-only middleware ile `X-Forwarded-For` yasağının hosting
   uyumluluğu) TAMAMI Entra/P1 (Pilot Readiness Adım 11) ve hosting/Key
-  Vault (Adım 12)'ye ERTELENMİŞTİR — bu maddeler KAPANMAMIŞTIR, yalnız
-  sıralamada geriye alınmıştır (bkz. Row 19B OIDC Confidential-Client
-  Remediation checkpoint özeti). İlk pilot modeli concierge olarak
-  korunmaktadır. Corpus acquisition/population bu pointer tarafından
+  Vault (Adım 12)'ye ERTELENMİŞ olarak KALMAYA devam eder — bu maddeler
+  KAPANMAMIŞTIR (bkz. Row 19B OIDC Confidential-Client Remediation
+  checkpoint özeti). İlk pilot modeli concierge olarak korunmaktadır.
+  Corpus acquisition/population bu pointer tarafından
   YETKİLENDİRİLMEZ. Yeni bir roadmap Row numarası İCAT EDİLMEMİŞTİR;
   mevcut Pilot Readiness adım numaraları korunur.
 
@@ -7287,6 +7318,257 @@ bulguları — hiçbiri kaybolmaz)**:
   BAŞLAMAZ.
 
 `FACT VERIFICATION WORKFLOW LOCK-READY — F1/F2 CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde
+olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
+roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
+dosyasına dokunmaz.
+
+### Pilot Readiness Adım 2 — Case-Data Repository Protection (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve final karar** — Bu slice, gerçek/yeni dava verisinin
+normal Git staging yoluyla (`git add -A`, `git add .`, bir IDE'nin
+"stage all"ı) kazara commit edilme riskini **dar** biçimde kapatır.
+Bu, repo-dışı storage, encryption, masking veya veri-sızıntısının
+diğer tüm yollarını (manual zip/e-posta/cloud-sync, `git add -f`,
+zaten-tracked bir dosyaya gerçek veri yazımı, `git clean -fdx`/`git
+stash --all`) kapatmaz — bu ayrım kasıtlı ve §O'da dar biçimde
+kaydedilmiştir. Durum: **DONE / LOCKED**. Final verdict, exact olarak:
+`PILOT READINESS STEP 2 CASE-DATA REPOSITORY PROTECTION LOCK-READY — NO BLOCKING FINDINGS`.
+
+**B. Exact implementation scope** — **1 YENİ**:
+`ui/tests/test_case_data_gitignore_guard_isolated.py`. **1
+DEĞİŞTİRİLMİŞ**: `.gitignore`. **0** migration, **0** schema, **0**
+production Python, **0** production data, **0** `case_0001` mutasyonu,
+**0** implementasyon-anı `CLAUDE.md` değişikliği. Configurable-root
+Slice 2 bu turda YOKTUR.
+
+**C. Exact `.gitignore` sözleşmesi** — Exact tek pattern `/data/cases/`
+— root-anchored, trailing-slash (yalnız dizin), negation YOK. Diff: 1
+güvenlik-kuralı satırı + 4 yorum satırı + 1 boş ayırıcı satır = **6
+insertion, 0 deletion**, tek `@@` hunk. LF-only, ASCII, final newline
+var, 0 CR bayt. Eski tracked `case_0001` dosyaları ETKİLENMEZ; yeni
+untracked case dosyaları ignore edilir; `/data/cases/` dışındaki
+ilgisiz yollar (`data/schemas/`, `data/documents.json`,
+`db/migrations/` vb.) bu kuralla ignore EDİLMEZ (bkz. M N1).
+
+**D. `case_0001` tracked/untracked sınırı** — 65 tracked canonical
+fixture dosyası korunur; tracked edit/delete görünür ve stageable
+kalır. Yeni fixture dosyaları varsayılan olarak ignore edilir; kasıtlı
+fixture ekleme açık `git add -f` + ayrı review gerektirir. Gerçek dava
+verisi ASLA `case_0001` içine konmamalıdır. Yeni review/history fixture
+artefaktları için fixture-drift protokolü: `git status --ignored --
+data/cases/case_0001` + seçici, incelenmiş force-add.
+
+**E. Kalıcı test sözleşmesi** — `ui/tests/test_case_data_gitignore_
+guard_isolated.py`: production `.gitignore` baytlarını verbatim okur
+(SHA-256 eşitliği assert edilir); disposable temp Git repository
+kurar; fixture guard'dan ÖNCE commit edilir (gerçek tarihi yansıtır);
+production baytlarından kuralı çıkaran bir rule-stripped pozitif
+kontrol taşır (non-tautology); tracked edit/delete; new file/nested/
+new case/stray dosya senaryoları; `add -A`/`add .`/force-add; root
+anchoring (`other/data/cases/...` ignore edilmez); gerçek repo üzerinde
+YALNIZ read-only `check-ignore --no-index` ve `ls-files`; Git yoksa
+pure-Python kontroller + informational skip; gerçek repo içine sentetik
+dosya YAZMAZ; temp cleanup ve production bytes invariance assert eder.
+
+**F. Dürüst kronoloji** — 1) Sonnet scope DRAFT: 0 NEW + 1 MODIFIED ve
+iki-pattern (`data/cases/*` + `!data/cases/case_0001`) önerisi. 2) İlk
+Fable scope review: iki-pattern önerisini REDDETTİ; tek `/data/cases/`
++ kalıcı test kararını verdi; READY verdict; **advisor yasağını bir
+kez ihlal etti** (kendi raporunda disclose edilmiş). 3) İmplementasyon:
+**aynı Fable review oturumunda** yapıldı — model/bağlam bağımsızlığı
+YOKTU; advisor **bir kez daha** kullanıldı; ilk test-harness ordering
+bug'ı (`build_repo()` guard'lı `.gitignore`'u fixture'ların ilk `add
+-A`'sından ÖNCE yazıyordu) düzeltildi; advisor sonrası üç küçük test
+iyileştirmesi yapıldı (özet-satırı formatı, `onexc`, real-repo probe
+global-config izolasyonu); implementer full sweep ÇALIŞTIRMADI. 4) Ayrı
+bağımsız Fable review: yeni, temiz bir oturum; advisor VE alt ajan
+KULLANILMADI; bütün yük taşıyan iddialar yeniden üretildi; full sweep
+boşluğunu KAPATTI; `LOCK-READY` verdict. Süreç sapmaları (2 ve 3'teki
+advisor kullanımı, implementasyon/ilk-review model/bağlam
+bağımsızlığının yokluğu) GİZLENMEZ ve teknik bulgularla
+KARIŞTIRILMAZ — bunlar bağımsız değildi, ama 4. adım GERÇEKTEN
+bağımsızdı ve tüm yük taşıyan iddiaları kaynaktan yeniden üretti.
+
+**G. Implementer test kanıtı — ayrı etiket** — Hedef `vergi_ui_runtime`
+interpreter'ı, `-W error::DeprecationWarning`: **48 passed, 0 failed**.
+Root `.venv`, aynı bayrak: **48 passed, 0 failed**. Plain hedef
+interpreter (PASS satırı sayımı): **48 PASS**. Full 71-modül sweep
+implementer tarafından ÇALIŞTIRILMADI (gerekçe: değişiklik hiçbir
+Python production modülüne dokunmaz). İlk test-harness ordering bug'ı
+ve düzeltmesi §F'de dürüstçe kaydedilmiştir.
+
+**H. Bağımsız test/diagnostic kanıtı — ayrı etiket** — Reviewer'ın
+kendi Git laboratuvarı: **79 LAB-PASS / 0 LAB-FAIL** (pozitif kontrol +
+iki `core.autocrlf` varyantı). Fault-injection: **21/21** enjekte
+edilmiş bozulma varyantı (V1-V17, V6b, V8b, V9b, V10b, V11b, V11c,
+V12-V15) test tarafından REDDEDİLDİ. Targeted (bağımsız, ayrı koşular):
+hedef interpreter **48/0**; root `.venv` **48/0**; plain **48/0**;
+no-git **10/0 + 3 informational skip**. Full PostgreSQL sweep
+(bağımsız, kendi fresh disposable PostgreSQL 16.15 kümesi, migration
+0001-0005): **71/71 modül exit 0; 4538 passed; 0 failed; 8 counted
+skipped; 14 informational skipped**. Implementer ve reviewer sayıları
+AYRI koşulardan gelir, TEK bir sonuçmuş gibi BİRLEŞTİRİLMEZ.
+
+**I. Network, `.env` ve process guard** — Full sweep sırasında **151**
+Python process `GUARD_ARMED`; **150** connect'in TAMAMI loopback
+PostgreSQL (`127.0.0.1`); **0** DNS; **0** external connect; **0**
+`.env` open. Git subprocess'leri local-only (`fetch`/`push`/`pull`/
+`clone`/`remote`/`ls-remote`: **0**). Gerçek repo üzerinde testin
+çalıştırdığı yalnız iki read-only command class: `check-ignore
+--no-index` ve `ls-files --error-unmatch`. Guard pozitif kontrollerle
+kanıtlandı (decoy `.env`/DNS/connect blokları, loopback izinli).
+Bilinen yapısal sınır: `sys.addaudithook` guard'ı libpq'nün C-seviyesi
+socket'lerini GÖREMEZ — "0 external connect" iddiası Python-seviyesi
+socket'lerle SINIRLIDIR; PostgreSQL sınırının asıl dayanağı child
+ortamlarının DSN'lerinin `127.0.0.1` + disposable kümeye PİNLENMESİDİR.
+
+**J. Data/protected-path invariance ve cleanup** — `data/**` **109**
+dosya byte-identical (açılış↔kapanış); `data/cases/**` **65** dosya
+byte-identical; `index/**` **6**; migrations **5**; `CLAUDE.md`
+byte-identical. `data/cases` yalnız `case_0001` (65 disk = 65 tracked).
+Ignored/untracked residue **0** (`git status --porcelain --ignored
+-uall -- data/cases` boş). PostgreSQL durduruldu, port serbest,
+pgdata/log/lab/guard/bytecode residue **0**. İki implementation dosyası
+(`.gitignore`, yeni test) bağımsız review açılış↔kapanış
+byte-identical.
+
+**K. Sayaçlar** — test modülü **70 → 71**; production Python **153**
+(değişmedi — tracked `*.py` − `ui/tests/**`); merged reconciliation
+routing key **50**; logical mutation family **38**; CLI subcommand
+**6**; migration **5**; tracked `data/cases` dosya sayısı **65**;
+`CASES_DIR` birincil tanım/toplam referans **36/68** (değişmedi).
+
+**L. R1–R11 residual dispositions** — hiçbiri kaybolmadı, her biri ayrı
+etiketle:
+
+- **R1** — `git add -f` bypass: **hâlâ açık**; normal iş akışında
+  yasak, yalnız kasıtlı, incelenmiş fixture ekleme için.
+- **R2** — tracked `case_0001` içine gerçek veri yazımı korunmaz:
+  **hâlâ açık**; operatör sınırı — gerçek veri ASLA `case_0001` içine
+  konmaz.
+- **R3** — hook/CI yok: **hâlâ açık**; kalıcı test (§E) kısmi telafi.
+- **R4** — `.gitignore` sonradan zayıflatılabilir: **daraldı** — 21
+  fault-injection varyantının 21'i yakalanıyor; N1 kapsam sınırı ayrı
+  kaydedilmiştir (madde M).
+- **R5** — zip/e-posta/cloud-sync: **hâlâ açık**, kapsam dışı.
+- **R6** — `git clean -fdx` / `git stash --all`: **hâlâ açık**; ignored
+  gerçek veriyi silebilir/yakalayabilir; operatör kuralıyla YASAK.
+- **R7** — fixture drift: **hâlâ açık**; `git status --ignored -- data/
+  cases/case_0001` + reviewed force-add protokolü.
+- **R8** — Windows `core.ignorecase=true` / Linux case-sensitive farkı:
+  **hâlâ açık**; hosting/post-pilot (Row 19D) konusu.
+- **R9** — working-tree stray CR: **implementasyonla kapandı**;
+  `core.autocrlf` uyarısı kozmetik olarak kalır.
+- **R10** — remote repository private beyanı: **hâlâ açık**,
+  doğrulanmadı.
+- **R11** — ignored test residue: **hâlâ açık ve BAĞLAYICI** —
+  `/data/cases/` altında çöken bir testin bıraktığı sentetik residue
+  plain `git status`'ta GÖRÜNMEYEBİLİR; bundan sonraki her sweep/
+  inceleme raw `data/cases/**` manifesti VEYA `git status --ignored --
+  data/cases` kontrolü kullanmalıdır — plain `git status` artık YETERLİ
+  DEĞİLDİR.
+
+**M. N1–N8 bağımsız-review bulguları** — sekizi de ayrı etiketle
+korunur, hiçbiri toplu geçilmez:
+
+- **N1 — Low** (bloklamaz): kalıcı test, case verisine dokunmayan
+  kardeş production paths ignore genişlemelerini (`/data/schemas/`,
+  `/data/corpus_policy/`, `/data/mevzuat/`, `/data/deadline_rules/`,
+  `db/migrations/` vb.) YAKALAMAZ (W1-W6, W10 varyantları 48/0 ile
+  GEÇTİ); case-data güvenlik kontrolü ZAYIFLAMAZ (case verisini de
+  yutan HER `data/`-genelinde kural V9-V11c'de zaten yakalanıyor); bu,
+  onaylı sözleşmenin (Fable §I) İSTEMEDİĞİ bir kapsamdır, implementasyon
+  sapması DEĞİLDİR; gelecekte additive unrelated-data probe önerisi
+  (yetki DEĞİL, yalnız kayıt).
+- **N2 — Observation**: bazı overbroad varyantlar (V10b, V11c — kural
+  `/data/**`/`/data/*` ÖNCESİNE eklendiğinde) yalnız pozitif kontrolün
+  yan etkisiyle yakalanır, tasarlanmış bir ilgisiz-yol assert'i ile
+  DEĞİL.
+- **N3 — Observation**: "temp base repository DIŞINDA" kontrolü yumuşak
+  (`check()`, abort etmez) bir check'tir; yazma-güvenliği asıl olarak
+  `GIT_CEILING_DIRECTORIES` + `cwd=temp`'e dayanır (ampirik kanıtlı,
+  V17 varyantında sahte kök HEAD/index/status DEĞİŞMEDİ).
+- **N4 — Observation/Low**: real-repo probe env'i `GIT_DIR`/
+  `GIT_WORK_TREE`/`GIT_INDEX_FILE`'ı temizlemiyor (temp env temizliyor);
+  mevcut davranış fail-closed sahte FAIL yönündedir (saldırgan-kontrollü
+  bir sahte PASS için tehdit modeli dışı bir önkoşul gerekir).
+- **N5 — Observation**: `GIT_CONFIG_PARAMETERS`/`GIT_CONFIG_COUNT`
+  hiçbir env'de temizlenmiyor (uzak ihtimal, yalnız üst süreçte `git
+  -c` sarmalayıcısı varsa oluşur).
+- **N6 — Observation**: junction cleanup kolu güvenli kanıtlandı
+  (`shutil.rmtree` 3.14 junction'ı takip etmedi, dış canary hayatta
+  kaldı); symlink-to-dir kolu bu makinede ayrıcalıksız
+  oluşturulamadığından DOĞRULANAMADI.
+- **N7 — Observation**: "`data/cases` alt-dizesi geçen tam BİR kural
+  satırı" kontrolü alt-dize tabanlıdır; ileride meşru bir
+  `/data/cases_archive/` benzeri kural bile aşırı katı FAIL üretebilir
+  — fail-closed yönde bir sınır, boşluk DEĞİL.
+- **N8 — Observation**: reviewer'ın ilk kaba `grep '[ \t]+$'`
+  trailing-whitespace taraması (ERE'de `\t` harfi `t` sayıldığından) 9
+  yanlış-pozitif verdi; bayt-düzeyi Python kontrolü **0** buldu;
+  implementer'ın orijinal beyanı (0 trailing whitespace) DOĞRUYDU — bu
+  bir reviewer-harness notu, dosya bulgusu DEĞİLDİR.
+
+**N. Deferred configurable-root backlog** — Post-pilot, ayrı bir scope
+turu (Adım 13c) gerektiren, bu turda KAPATILMAYAN maddeler: **36**
+bağımsız `CASES_DIR` tanımı (35 `src/*.py` + `ui/services/paths.py`) +
+**68** toplam referans; `qa_validator.py`'nin `BASE_DIR/"data"/"cases"`
+hardcode'u; `ui/services/drafting_request.py`'nin by-value import'u;
+**8** by-value `src/` zincir dosyası (`drafting_discovery.py`,
+`drafting_engine.py`, `orchestrator_approval.py`, `orchestrator_
+discovery.py`, `qa_approval.py`, `qa_engine.py`, `risk_strategy_
+discovery.py`, `risk_strategy_engine.py`); test-redirect unutma riski
+(birleşik seam YOK); kök-değeri (root value) için containment boşluğu
+(`path_containment._resolve_root()` symlink/junction'ı takip edip
+güvenir, reddetmez); OneDrive/junction/reparse-point riski; git-worktree
+tespitinin production kodda YOKLUĞU (0 eşleşme); Windows reserved-name/
+trailing-dot/trailing-space segment boşlukları (Row 19C-3a Slice 1
+backlog'uyla AYNI); `case_0001` için sessiz dual-root merge YASAĞI
+(ayrı `FIXTURE_CASES_DIR` türü açık kök gerektirir); gerçek migration'ın
+bugün teorik olması (taşınacak veri yok); facade-only/monkeypatch-
+bootstrap kısayolunun REDDİ gerekçesi (kalıcı olarak kayıtlı — Slice 2
+bunu yeniden ARAMASIN); split-brain'in koşullu sessizliği (iki kökte
+de var olan `case_id` senaryosu Slice 2 testlerinde AÇIKÇA kapatılmalı);
+Windows/Linux case-sensitivity farkının configurable root'un kök/segment
+doğrulamasında ele alınması gerektiği; configurable root'un post-pilot
+Adım 13c'de, ayrı exact-scope/onayla ele alınacağı.
+
+**O. Güvenlik iddiası ve operatör protokolü** — **Neyi kapattığı**
+(dar): normal `git add -A` / `git add .` / IDE stage-all ile
+`data/cases/` altındaki YENİ untracked case içeriğinin kazara Git'e
+girmesi. **Neyi kapatmadığı**: tracked fixture'a yazım; force-add;
+manual archive/e-posta/cloud; disk encryption; masking; repo-dışı
+storage; `git clean -fdx`/`git stash --all`; gerçek case verisinin
+filesystem erişimi. **Operatör sınırları**: gerçek veri `case_0001`
+içine ASLA konmaz; force-add yalnız fixture değişikliğinde, review ile;
+gerçek case verisi mevcutken `git clean -fdx` ve `git stash --all`
+YASAK; her test/sweep raw `data/cases/**` manifesti veya `git status
+--ignored -- data/cases` kontrolü kullanır (R11).
+
+**P. LOCKED-file / §9 değerlendirmesi** — `.gitignore`, CLAUDE.md'nin
+"LOCKED row" kavramının kapsamında DEĞİLDİR (kod/schema/migration/data
+dosyası değil; §10 içeriğinin kaldırılmasını kullanıcı onayına bağlar,
+ekleme/genişletme için §9 gerekçesi GEREKTİRMEZ) — bu değişiklik §10'un
+ruhunu GÜÇLENDİRİR (yeni bir güvenlik exclusion'ı ekler, hiçbirini
+kaldırmaz). Yeni test dosyası YENİ bir dosyadır, §9 uygulanmaz. Hiçbir
+LOCKED production/schema/migration/data dosyası bu turda AÇILMADI.
+Configurable-root Slice 2 için gelecekte LOCKED-file §9 gerekçeleri
+(en az 36 dosya için ayrı ayrı) ZORUNLU olacaktır. Bu roadmap turunda
+yalnız `CLAUDE.md` değişir.
+
+**Q. Kalan pilot sırası** — Adım 3 (runner/env/skip reporting) —
+sıradaki, salt-okunur scope reconciliation (bkz. §5). Adım 4 LLM
+masking. Adım 5 resmî tatil takvimi. Adım 6 avukat altın örnekleri.
+Adım 7 deadline hardening. Adım 8 yerel PostgreSQL/IAM. Adım 9 sentetik
+concierge dry-run. Adım 10 ilk gerçek concierge pilotu. Adım 11 Entra/
+P1. Adım 12 hosting/Key Vault. Adım 13 post-pilot configurable root ve
+diğer genişletmeler.
+
+`PILOT READINESS STEP 2 CASE-DATA REPOSITORY PROTECTION LOCK-READY — NO BLOCKING FINDINGS`
 
 **DONE / LOCKED**
 

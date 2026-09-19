@@ -4,3 +4,9 @@ __pycache__/
 *.pyc
 index/
 *.bak
+
+# Pilot Readiness Adim 2 - case-data repository protection: ignore everything
+# NEW under data/cases/. Already-tracked files (canonical case_0001 fixture)
+# stay tracked; edits/deletions stay visible. New fixture files need an
+# explicit, reviewed `git add -f`. NOT a safe-storage claim for real case data.
+/data/cases/
