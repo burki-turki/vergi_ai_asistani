@@ -171,6 +171,42 @@ _AGENT_VERSION_ATTR_BY_ROW_KEY = {
     "drafting": "DRAFTING_AGENT_VERSION",
 }
 
+# ----------------------------------------------------------------
+# PILOT READINESS ADIM 4b - HAM CASE METNİ TAŞIYAN AİLELER.
+#
+# Bu ÜÇ ailenin prompt'u ham case metni taşır (kaynaktan doğrulandı):
+#   issue_spotting -> canonical_facts[].statement (ham fact cümlesi)
+#   evidence       -> fact_text + source_excerpt (BELGEDEN BİREBİR
+#                     alıntı) + issue_text (title + description)
+#   argument       -> eligible_fact_statements + issue_text
+# Ayrıca `issue_spotting_policy.py`'nin `legal_basis_reference` kuralı
+# ham fact `statement`'ını issue `description`'ına birebir gömer, yani
+# evidence/argument ham metni İKİ bağımsız vektörden taşır.
+#
+# Adım 4a maskelemesi YALNIZ `fact_extraction` ailesine bağlıdır ve bu
+# üç aile için bir maskeleme katmanı HENÜZ YOKTUR. Bu yüzden üretim
+# istemcisiyle (`llm_client is None`) agent modu bu ailelerde KOŞULSUZ
+# reddedilir - preview'da da apply'da da (Seçenek B, kullanıcı kararı
+# K1): yalnız `--with-agent --allow-network` reddedilseydi, `--with-
+# agent` TEK BAŞINA kabul edilmeye devam eder ve model HİÇ çağrılmadan
+# `generation_mode="agent"` + gerçek model adı yazan KALICI bir sahte
+# provenans kaydı (+ tüketilmiş idempotency slotu) bırakırdı.
+#
+# `risk_strategy` ve `drafting` bu kümede DEĞİLDİR - prompt'ları yalnız
+# ID listesi/sabit enum taşır (C2), ham case metni taşımaz.
+#
+# Enjekte edilmiş bir test istemcisi (`llm_client is not None`) bu
+# reddin DIŞINDADIR: o yol hiçbir zaman dış bir modele ulaşmaz (mevcut
+# DI seam'i, `_resolve_generation_provenance` ->
+# `model_id="external_injected_client"`).
+# ----------------------------------------------------------------
+
+AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS = frozenset({
+    "issue_spotting",
+    "evidence",
+    "argument",
+})
+
 _ACTION_FAMILY_PREFIX = "generation."
 
 _CASE_RESOURCE_KEY_PREFIX = "case:"
@@ -216,6 +252,15 @@ def _nonblank(value) -> bool:
 class AgentGenerationArgumentError(ApprovalUiError):
     """Kullanım-şekli/argüman sözleşmesi ihlali - HERHANGİ bir DB/
     filesystem I/O'sundan ÖNCE fırlatılır."""
+
+
+class AgentGenerationRawTextEgressRefusedError(AgentGenerationArgumentError):
+    """PILOT READINESS ADIM 4b: ham case metni taşıyan bir aile için
+    ÜRETİM istemcisiyle agent modu istendi. `AgentGenerationArgumentError`
+    alt sınıfıdır (dolayısıyla `ApprovalUiError`), yani HERHANGİ bir DB/
+    filesystem I/O'sundan ÖNCE fırlatılır ve `ui.cli_mutate`'in mevcut,
+    DEĞİŞTİRİLMEMİŞ `_is_known_domain_error` tanıma mekanizması bunu
+    tek satırlık temiz bir hata olarak basar."""
 
 
 class AgentGenerationInputContainmentError(ApprovalUiError):
@@ -804,9 +849,42 @@ def _load_drafting_lawyer_input(case_id):
 # ----------------------------------------------------------------
 
 
-def _check_argument_shapes(row_key: str, expected_input_digest=None, *, for_apply: bool):
+def raw_text_egress_refusal_message(row_key: str) -> str:
+    """PILOT READINESS ADIM 4b: SABİT ret metni (tek otorite - facade
+    burada fırlatır, `ui.cli_mutate` kendi usage-shape katmanında AYNI
+    fonksiyonu çağırır; iki katman farklı metinlere kayamaz). Hiçbir
+    path/exception/case verisi yansıtmaz."""
+    return (
+        f"HATA: --row-key {row_key} için agent modu KAPALIDIR (Pilot Readiness Adım 4b): "
+        "bu ailenin prompt'u ham fact cümlesi ve/veya belgeden birebir alıntı taşır ve bu "
+        "aile için HENÜZ bir maskeleme katmanı yoktur. --with-agent bu ailede preview'da da "
+        "apply'da da kabul edilmez; deterministik mod (--with-agent OLMADAN) çalışmaya devam "
+        "eder."
+    )
+
+
+def _check_argument_shapes(
+    row_key: str,
+    expected_input_digest=None,
+    *,
+    for_apply: bool,
+    with_agent: bool = False,
+    llm_client=None,
+):
+    """PILOT READINESS ADIM 4b additive genişletme: `with_agent`/
+    `llm_client` keyword-only VE defaultlu - mevcut her çağıran
+    (kwarg'sız) davranış olarak BYTE-DEĞİŞMEZ kalır. Ret kontrolü
+    bilinmeyen-row_key `KeyError`'ından SONRA gelir (aksi hâlde
+    bilinmeyen bir row_key için exception TÜRÜ değişirdi)."""
     if row_key not in AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME:
         raise KeyError(f"row_key={row_key!r} is not a known agent-generation family")
+
+    # `llm_client is None` = ÜRETİM istemcisi kullanılacak demektir
+    # (ajan modülleri gerçek `Anthropic()` nesnesini orada kurar).
+    # Enjekte edilmiş bir istemci bu reddin DIŞINDADIR - dış bir modele
+    # hiçbir zaman ulaşmaz.
+    if row_key in AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS and with_agent and llm_client is None:
+        raise AgentGenerationRawTextEgressRefusedError(raw_text_egress_refusal_message(row_key))
 
     if for_apply and (
         not isinstance(expected_input_digest, str) or not expected_input_digest.strip()
@@ -856,7 +934,7 @@ def preview_generation(
     """Salt-okunur preview. SIRA: dış 'read' authz HER filesystem
     probundan ÖNCE koşar. `llm_client` yalnız identity/provenance
     seçimini belirlemek için KULLANILIR - hiçbir metodu ÇAĞRILMAZ."""
-    _check_argument_shapes(row_key, for_apply=False)
+    _check_argument_shapes(row_key, for_apply=False, with_agent=with_agent, llm_client=llm_client)
     import importlib
     module = importlib.import_module(AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME[row_key])
 
@@ -1049,7 +1127,10 @@ def apply_generation(
     corroboration; (9) maskelemeyen temizlik."""
     import importlib
 
-    _check_argument_shapes(row_key, expected_input_digest, for_apply=True)
+    _check_argument_shapes(
+        row_key, expected_input_digest, for_apply=True,
+        with_agent=with_agent, llm_client=llm_client,
+    )
 
     if allow_network and not with_agent:
         raise AgentGenerationArgumentError(

@@ -12,6 +12,7 @@
 # Run: python ui/tests/test_agent_generation_mutation_facade_isolated.py
 # ============================================================
 
+import importlib
 import json
 import os
 import shutil
@@ -33,6 +34,7 @@ import evidence_engine                                        # noqa: E402
 import argument_engine                                        # noqa: E402
 import risk_strategy_agent                                    # noqa: E402
 from ui.services import agent_generation_mutation_facade as agf  # noqa: E402
+from ui.services import common as _common                        # noqa: E402
 
 passed = 0
 failed = 0
@@ -332,6 +334,212 @@ check(
     _glob_calls == [],
     f"unexpected glob calls: {_glob_calls}",
 )
+
+
+# ============================================================
+# PILOT READINESS ADIM 4b - RAW-TEXT EGRESS REFUSAL (facade layer,
+# INDEPENDENT of ui.cli_mutate's own usage-shape layer).
+#
+# Contract under test: for the THREE families whose prompt carries raw
+# case text (issue_spotting/evidence/argument), `with_agent=True`
+# together with the PRODUCTION client (`llm_client is None`) is refused
+# BEFORE any module import, authz repository, or filesystem probe.
+# `risk_strategy`/`drafting` are NOT refused, an INJECTED test client is
+# NOT refused (that DI seam never reaches an external model), and
+# deterministic mode (`with_agent=False`) is untouched.
+# ============================================================
+
+check(
+    "AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS is EXACTLY the three raw-text families "
+    "(risk_strategy/drafting deliberately absent - their prompts carry only IDs/fixed enums)",
+    agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS == frozenset(
+        {"issue_spotting", "evidence", "argument"}
+    ),
+    f"got: {sorted(agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS)}",
+)
+check(
+    "the refused set is a strict SUBSET of the five known agent-generation families (no "
+    "invented row_key)",
+    agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS
+    < set(agf.AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME),
+)
+check(
+    "AgentGenerationRawTextEgressRefusedError subclasses AgentGenerationArgumentError (and thus "
+    "ApprovalUiError) - so ui.cli_mutate's UNCHANGED _is_known_domain_error prints it as one "
+    "clean line, never a traceback",
+    issubclass(agf.AgentGenerationRawTextEgressRefusedError, agf.AgentGenerationArgumentError)
+    and issubclass(agf.AgentGenerationRawTextEgressRefusedError, _common.ApprovalUiError),
+)
+
+for _refused in sorted(agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS):
+    expect_raises(
+        agf.AgentGenerationRawTextEgressRefusedError,
+        lambda rk=_refused: agf._check_argument_shapes(
+            rk, for_apply=False, with_agent=True, llm_client=None,
+        ),
+        f"_check_argument_shapes({_refused}, PREVIEW, with_agent=True, production client) is "
+        "REFUSED",
+    )
+    expect_raises(
+        agf.AgentGenerationRawTextEgressRefusedError,
+        lambda rk=_refused: agf._check_argument_shapes(
+            rk, "somedigest", for_apply=True, with_agent=True, llm_client=None,
+        ),
+        f"_check_argument_shapes({_refused}, APPLY, with_agent=True, production client) is "
+        "REFUSED",
+    )
+    _msg = agf.raw_text_egress_refusal_message(_refused)
+    check(
+        f"{_refused}: the fixed refusal message names the family AND --with-agent, and leaks no "
+        "filesystem path / case data (no drive letter, no backslash, no data/ or case_ segment)",
+        _refused in _msg and "--with-agent" in _msg and "Adım 4b" in _msg
+        and "C:" not in _msg and "\\" not in _msg
+        and "data/" not in _msg and "case_" not in _msg and str(REPO_ROOT) not in _msg,
+        f"message={_msg!r}",
+    )
+    try:
+        agf._check_argument_shapes(_refused, for_apply=False, with_agent=True, llm_client=_FakeLLMClient())
+        check(
+            f"{_refused}: an INJECTED test client is NOT refused - the DI seam that never reaches "
+            "an external model is preserved",
+            True,
+        )
+    except Exception as error:  # noqa: BLE001
+        check(
+            f"{_refused}: an INJECTED test client is NOT refused - the DI seam that never reaches "
+            "an external model is preserved",
+            False, f"{type(error).__name__}: {error}",
+        )
+    try:
+        agf._check_argument_shapes(_refused, for_apply=False, with_agent=False, llm_client=None)
+        agf._check_argument_shapes(_refused, "somedigest", for_apply=True, with_agent=False, llm_client=None)
+        check(f"{_refused}: DETERMINISTIC mode (with_agent=False) is completely unaffected", True)
+    except Exception as error:  # noqa: BLE001
+        check(
+            f"{_refused}: DETERMINISTIC mode (with_agent=False) is completely unaffected",
+            False, f"{type(error).__name__}: {error}",
+        )
+
+for _open_family in ["risk_strategy", "drafting"]:
+    try:
+        agf._check_argument_shapes(_open_family, for_apply=False, with_agent=True, llm_client=None)
+        agf._check_argument_shapes(
+            _open_family, "somedigest", for_apply=True, with_agent=True, llm_client=None,
+        )
+        check(
+            f"{_open_family}: with_agent=True + PRODUCTION client is NOT refused (deliberately "
+            "still open - this family's prompt carries no raw case text)",
+            True,
+        )
+    except Exception as error:  # noqa: BLE001
+        check(
+            f"{_open_family}: with_agent=True + PRODUCTION client is NOT refused (deliberately "
+            "still open - this family's prompt carries no raw case text)",
+            False, f"{type(error).__name__}: {error}",
+        )
+
+expect_raises(
+    KeyError,
+    lambda: agf._check_argument_shapes(
+        "not_a_real_family", for_apply=False, with_agent=True, llm_client=None,
+    ),
+    "unknown row_key STILL raises KeyError even with with_agent=True - the refusal check is "
+    "placed AFTER the KeyError guard, so no caller sees a changed exception TYPE",
+)
+
+
+# ------------------------------------------------------------
+# ORDERING PROOF: the refusal fires before importlib.import_module AND
+# before the authz repository is ever touched (an exploding repository
+# and a recording import hook prove it - not merely asserted).
+# ------------------------------------------------------------
+
+class _ExplodingAuthzRepository:
+    def __getattr__(self, name):
+        raise AssertionError(
+            f"the authz repository was touched ({name}) - the Adım 4b refusal must fire first"
+        )
+
+
+class _DummyPrincipal:
+    user_id = 1
+    roles = ()
+
+
+_import_calls_4b = []
+_real_import_module = importlib.import_module
+
+
+def _recording_import_module(name, *a, **kw):
+    _import_calls_4b.append(name)
+    return _real_import_module(name, *a, **kw)
+
+
+for _refused in sorted(agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS):
+    _import_calls_4b.clear()
+    with mock.patch.object(importlib, "import_module", _recording_import_module):
+        expect_raises(
+            agf.AgentGenerationRawTextEgressRefusedError,
+            lambda rk=_refused: agf.preview_generation(
+                rk, CASE_ID, with_agent=True, llm_client=None,
+                principal=_DummyPrincipal(), authz_repository=_ExplodingAuthzRepository(),
+            ),
+            f"preview_generation({_refused}, with_agent=True, production client) is REFUSED",
+        )
+    check(
+        f"preview_generation({_refused}): ZERO engine-module imports and ZERO authz repository "
+        "access before the refusal",
+        _import_calls_4b == [],
+        f"unexpected import_module calls: {_import_calls_4b}",
+    )
+
+    _import_calls_4b.clear()
+    with mock.patch.object(importlib, "import_module", _recording_import_module):
+        expect_raises(
+            agf.AgentGenerationRawTextEgressRefusedError,
+            lambda rk=_refused: agf.apply_generation(
+                rk, CASE_ID, "somedigest", with_agent=True, allow_network=True, llm_client=None,
+                principal=_DummyPrincipal(), authz_repository=_ExplodingAuthzRepository(),
+                conn_factory=lambda: (_ for _ in ()).throw(
+                    AssertionError("a mutation connection was opened - refusal must fire first")
+                ),
+            ),
+            f"apply_generation({_refused}, with_agent=True, --allow-network equivalent, production "
+            "client) is REFUSED",
+        )
+    check(
+        f"apply_generation({_refused}): ZERO engine-module imports, ZERO authz repository access "
+        "and ZERO mutation connection before the refusal",
+        _import_calls_4b == [],
+        f"unexpected import_module calls: {_import_calls_4b}",
+    )
+
+# The same apply path for a family that is NOT refused must get PAST the
+# argument-shape layer and reach the authz repository (proving the
+# refusal above is genuinely family-scoped, not a blanket rejection).
+for _open_family in ["risk_strategy", "drafting"]:
+    try:
+        agf.apply_generation(
+            _open_family, CASE_ID, "somedigest", with_agent=True, allow_network=True,
+            llm_client=None, principal=_DummyPrincipal(),
+            authz_repository=_ExplodingAuthzRepository(),
+        )
+        check(f"apply_generation({_open_family}) reaches the authz layer (not refused)", False,
+              "no exception at all")
+    except agf.AgentGenerationRawTextEgressRefusedError as error:
+        check(f"apply_generation({_open_family}) reaches the authz layer (not refused)", False,
+              f"wrongly refused: {error}")
+    except AssertionError as error:
+        check(
+            f"apply_generation({_open_family}) with_agent=True + production client gets PAST the "
+            "argument-shape layer and reaches the authz repository - the Adım 4b refusal is "
+            "strictly family-scoped",
+            "authz repository was touched" in str(error),
+            f"unexpected AssertionError: {error}",
+        )
+    except Exception as error:  # noqa: BLE001
+        check(f"apply_generation({_open_family}) reaches the authz layer (not refused)", False,
+              f"unexpected {type(error).__name__}: {error}")
 
 
 print(f"--- test_agent_generation_mutation_facade_isolated: {passed} passed, {failed} failed ---")

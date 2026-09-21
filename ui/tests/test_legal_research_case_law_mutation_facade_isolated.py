@@ -27,6 +27,7 @@
 # ============================================================
 
 import builtins
+import importlib
 import json
 import os
 import shutil
@@ -48,6 +49,7 @@ import case_law_engine as cle                                  # noqa: E402
 import legal_research_agent                                    # noqa: E402
 import case_law_agent                                           # noqa: E402
 from ui.services import legal_research_case_law_mutation_facade as fac  # noqa: E402
+from ui.services import common as _common_lrcl                          # noqa: E402
 
 passed = 0
 failed = 0
@@ -586,6 +588,208 @@ check(
     )
     and build_result_8b["agent_suggestion_count"] == 0,
 )
+
+
+# ============================================================
+# PILOT READINESS ADIM 4b - RAW-TEXT EGRESS REFUSAL, PER-FAMILY through
+# a SHARED facade.
+#
+# This facade is shared by `legal_research` (whose prompt carries raw
+# `canonical_facts[].statement` text) and `case_law` (whose prompt
+# carries only issue_id/issue_type/title, structured `citation_refs`
+# locators and fixed literal coverage titles). The refusal therefore
+# MUST be family-scoped: `legal_research` is refused with the production
+# client, `case_law` must remain completely unaffected. That
+# `case_law`-unaffected regression is the permanent proof of the
+# per-family split and is the whole reason this file is in the Adım 4b
+# allowlist.
+# ============================================================
+
+check(
+    "LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS is EXACTLY {'legal_research'} - case_law "
+    "is deliberately NOT in it even though it shares this facade",
+    fac.LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS == frozenset({"legal_research"}),
+    f"got: {sorted(fac.LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS)}",
+)
+check(
+    "case_law is NOT in the refused set (explicit, standalone assertion - a future edit that "
+    "adds it must turn this red)",
+    "case_law" not in fac.LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS,
+)
+check(
+    "LegalResearchCaseLawRawTextEgressRefusedError subclasses LegalResearchCaseLawArgumentError "
+    "(and thus ApprovalUiError) - ui.cli_mutate's UNCHANGED _is_known_domain_error prints it as "
+    "one clean line, never a traceback",
+    issubclass(
+        fac.LegalResearchCaseLawRawTextEgressRefusedError, fac.LegalResearchCaseLawArgumentError,
+    )
+    and issubclass(fac.LegalResearchCaseLawRawTextEgressRefusedError, _common_lrcl.ApprovalUiError),
+)
+
+expect_raises(
+    fac.LegalResearchCaseLawRawTextEgressRefusedError,
+    lambda: fac._check_argument_shapes(
+        "legal_research", for_apply=False, with_agent=True, llm_client=None,
+    ),
+    "_check_argument_shapes(legal_research, PREVIEW, with_agent=True, production client) is "
+    "REFUSED",
+)
+expect_raises(
+    fac.LegalResearchCaseLawRawTextEgressRefusedError,
+    lambda: fac._check_argument_shapes(
+        "legal_research", "somedigest", for_apply=True, with_agent=True, llm_client=None,
+    ),
+    "_check_argument_shapes(legal_research, APPLY, with_agent=True, production client) is REFUSED",
+)
+
+_msg_4b = fac.raw_text_egress_refusal_message("legal_research")
+check(
+    "legal_research: the fixed refusal message names the family AND --with-agent, and leaks no "
+    "filesystem path / case data (no drive letter, no backslash, no data/ or case_ segment)",
+    "legal_research" in _msg_4b and "--with-agent" in _msg_4b and "Adım 4b" in _msg_4b
+    and "C:" not in _msg_4b and "\\" not in _msg_4b
+    and "data/" not in _msg_4b and "case_" not in _msg_4b and str(REPO_ROOT) not in _msg_4b,
+    f"message={_msg_4b!r}",
+)
+
+try:
+    fac._check_argument_shapes(
+        "legal_research", for_apply=False, with_agent=True, llm_client=_FakeLLMClient(),
+    )
+    check(
+        "legal_research: an INJECTED test client is NOT refused - the DI seam (which never "
+        "reaches an external model) is preserved, so the existing PostgreSQL integration "
+        "scenarios keep working unchanged",
+        True,
+    )
+except Exception as error:  # noqa: BLE001
+    check(
+        "legal_research: an INJECTED test client is NOT refused - the DI seam (which never "
+        "reaches an external model) is preserved",
+        False, f"{type(error).__name__}: {error}",
+    )
+
+try:
+    fac._check_argument_shapes("legal_research", for_apply=False, with_agent=False, llm_client=None)
+    fac._check_argument_shapes(
+        "legal_research", "somedigest", for_apply=True, with_agent=False, llm_client=None,
+    )
+    check("legal_research: DETERMINISTIC mode (with_agent=False) is completely unaffected", True)
+except Exception as error:  # noqa: BLE001
+    check(
+        "legal_research: DETERMINISTIC mode (with_agent=False) is completely unaffected",
+        False, f"{type(error).__name__}: {error}",
+    )
+
+# --- case_law REGRESSION: the whole point of the per-family split. ---
+try:
+    fac._check_argument_shapes("case_law", for_apply=False, with_agent=True, llm_client=None)
+    fac._check_argument_shapes(
+        "case_law", "somedigest", for_apply=True, with_agent=True, llm_client=None,
+    )
+    fac._check_argument_shapes(
+        "case_law", for_apply=False, with_agent=True, llm_client=_FakeLLMClient(),
+    )
+    fac._check_argument_shapes("case_law", for_apply=False, with_agent=False, llm_client=None)
+    check(
+        "case_law: with_agent=True + PRODUCTION client is NOT refused on preview OR apply "
+        "(PERMANENT per-family regression proof - case_law shares this facade with the refused "
+        "legal_research family and must stay byte-identical in behaviour)",
+        True,
+    )
+except Exception as error:  # noqa: BLE001
+    check(
+        "case_law: with_agent=True + PRODUCTION client is NOT refused on preview OR apply "
+        "(PERMANENT per-family regression proof)",
+        False, f"{type(error).__name__}: {error}",
+    )
+
+expect_raises(
+    KeyError,
+    lambda: fac._check_argument_shapes(
+        "not_a_real_family", for_apply=False, with_agent=True, llm_client=None,
+    ),
+    "unknown row_key STILL raises KeyError even with with_agent=True - the refusal check is "
+    "placed AFTER the KeyError guard, so no caller sees a changed exception TYPE",
+)
+
+
+# ------------------------------------------------------------
+# ORDERING PROOF: the refusal fires before importlib.import_module and
+# before the authz repository is ever touched; and the SAME call shape
+# for case_law gets PAST the argument layer and reaches authz.
+# ------------------------------------------------------------
+
+class _ExplodingAuthzRepository4b:
+    def __getattr__(self, name):
+        raise AssertionError(
+            f"the authz repository was touched ({name}) - the Adım 4b refusal must fire first"
+        )
+
+
+class _DummyPrincipal4b:
+    user_id = 1
+    roles = ()
+
+
+_import_calls_lrcl_4b = []
+_real_import_module_4b = importlib.import_module
+
+
+def _recording_import_module_4b(name, *a, **kw):
+    _import_calls_lrcl_4b.append(name)
+    return _real_import_module_4b(name, *a, **kw)
+
+
+for _for_apply, _call in [
+    (False, lambda: fac.preview_generation(
+        "legal_research", CASE_ID, with_agent=True, llm_client=None,
+        principal=_DummyPrincipal4b(), authz_repository=_ExplodingAuthzRepository4b(),
+    )),
+    (True, lambda: fac.apply_generation(
+        "legal_research", CASE_ID, "somedigest", with_agent=True, allow_network=True,
+        llm_client=None, principal=_DummyPrincipal4b(),
+        authz_repository=_ExplodingAuthzRepository4b(),
+        conn_factory=lambda: (_ for _ in ()).throw(
+            AssertionError("a mutation connection was opened - refusal must fire first")
+        ),
+    )),
+]:
+    _label = "apply_generation" if _for_apply else "preview_generation"
+    _import_calls_lrcl_4b.clear()
+    with mock.patch.object(importlib, "import_module", _recording_import_module_4b):
+        expect_raises(
+            fac.LegalResearchCaseLawRawTextEgressRefusedError, _call,
+            f"{_label}(legal_research, with_agent=True, production client) is REFUSED",
+        )
+    check(
+        f"{_label}(legal_research): ZERO engine-module imports, ZERO authz repository access and "
+        "ZERO mutation connection before the refusal",
+        _import_calls_lrcl_4b == [],
+        f"unexpected import_module calls: {_import_calls_lrcl_4b}",
+    )
+
+try:
+    fac.apply_generation(
+        "case_law", CASE_ID, "somedigest", with_agent=True, allow_network=True, llm_client=None,
+        principal=_DummyPrincipal4b(), authz_repository=_ExplodingAuthzRepository4b(),
+    )
+    check("apply_generation(case_law) reaches the authz layer (not refused)", False,
+          "no exception at all")
+except fac.LegalResearchCaseLawRawTextEgressRefusedError as error:
+    check("apply_generation(case_law) reaches the authz layer (not refused)", False,
+          f"wrongly refused: {error}")
+except AssertionError as error:
+    check(
+        "apply_generation(case_law) with_agent=True + --allow-network + production client gets "
+        "PAST the argument-shape layer and reaches the authz repository - the Adım 4b refusal is "
+        "strictly family-scoped even inside this SHARED facade",
+        "authz repository was touched" in str(error),
+        f"unexpected AssertionError: {error}",
+    )
+except Exception as error:  # noqa: BLE001
+    check("apply_generation(case_law) reaches the authz layer (not refused)", False,
+          f"unexpected {type(error).__name__}: {error}")
 
 
 print(f"--- test_legal_research_case_law_mutation_facade_isolated: {passed} passed, {failed} failed ---")

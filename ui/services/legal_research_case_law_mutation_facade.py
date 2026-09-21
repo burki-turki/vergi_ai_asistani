@@ -155,6 +155,28 @@ _AGENT_VERSION_ATTR_BY_ROW_KEY = {
     "case_law": "CASE_LAW_AGENT_VERSION",
 }
 
+# ----------------------------------------------------------------
+# PILOT READINESS ADIM 4b - HAM CASE METNİ TAŞIYAN AİLE.
+#
+# `legal_research` ajanının prompt'u `canonical_facts[].statement`
+# (ham fact cümlesi) taşır (kaynaktan doğrulandı). Adım 4a maskelemesi
+# YALNIZ `fact_extraction` ailesine bağlıdır ve bu aile için bir
+# maskeleme katmanı HENÜZ YOKTUR - bu yüzden üretim istemcisiyle
+# (`llm_client is None`) agent modu KOŞULSUZ reddedilir (preview +
+# apply; Seçenek B, kullanıcı kararı K1).
+#
+# `case_law` bu kümede DEĞİLDİR ve bu facade'i `legal_research` ile
+# PAYLAŞTIĞI için ret AİLE BAZLI olmak ZORUNDADIR: `case_law` ajanının
+# prompt'u yalnız issue_id/issue_type/title, yapılandırılmış
+# `citation_refs` locator'ları ve sabit literal coverage başlıkları
+# taşır - issue `description` alanını HİÇ taşımaz, yani ham case metni
+# taşımaz (C1/C2).
+# ----------------------------------------------------------------
+
+LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS = frozenset({
+    "legal_research",
+})
+
 _MANIFEST_VERSION_BY_ROW_KEY = {
     "legal_research": "row19c3civ.legal_research.manifest.v1",
     "case_law": "row19c3civ.case_law.manifest.v1",
@@ -247,6 +269,16 @@ def _nonblank(value) -> bool:
 class LegalResearchCaseLawArgumentError(ApprovalUiError):
     """Kullanım-şekli/argüman sözleşmesi ihlali - HERHANGİ bir DB/
     filesystem I/O'sundan ÖNCE fırlatılır."""
+
+
+class LegalResearchCaseLawRawTextEgressRefusedError(LegalResearchCaseLawArgumentError):
+    """PILOT READINESS ADIM 4b: ham case metni taşıyan bir aile
+    (`legal_research`) için ÜRETİM istemcisiyle agent modu istendi.
+    `LegalResearchCaseLawArgumentError` alt sınıfıdır (dolayısıyla
+    `ApprovalUiError`), yani HERHANGİ bir DB/filesystem I/O'sundan ÖNCE
+    fırlatılır ve `ui.cli_mutate`'in mevcut, DEĞİŞTİRİLMEMİŞ
+    `_is_known_domain_error` tanıma mekanizması bunu tek satırlık temiz
+    bir hata olarak basar. `case_law` bu reddin DIŞINDADIR."""
 
 
 class LegalResearchCaseLawInputContainmentError(ApprovalUiError):
@@ -728,9 +760,46 @@ def _invoke_writer(
 # ----------------------------------------------------------------
 
 
-def _check_argument_shapes(row_key: str, expected_input_digest=None, *, for_apply: bool):
+def raw_text_egress_refusal_message(row_key: str) -> str:
+    """PILOT READINESS ADIM 4b: SABİT ret metni (tek otorite - facade
+    burada fırlatır, `ui.cli_mutate` kendi usage-shape katmanında AYNI
+    fonksiyonu çağırır; iki katman farklı metinlere kayamaz). Hiçbir
+    path/exception/case verisi yansıtmaz."""
+    return (
+        f"HATA: --row-key {row_key} için agent modu KAPALIDIR (Pilot Readiness Adım 4b): "
+        "bu ailenin prompt'u ham fact cümlesi ve/veya belgeden birebir alıntı taşır ve bu "
+        "aile için HENÜZ bir maskeleme katmanı yoktur. --with-agent bu ailede preview'da da "
+        "apply'da da kabul edilmez; deterministik mod (--with-agent OLMADAN) çalışmaya devam "
+        "eder."
+    )
+
+
+def _check_argument_shapes(
+    row_key: str,
+    expected_input_digest=None,
+    *,
+    for_apply: bool,
+    with_agent: bool = False,
+    llm_client=None,
+):
+    """PILOT READINESS ADIM 4b additive genişletme: `with_agent`/
+    `llm_client` keyword-only VE defaultlu - mevcut her çağıran
+    (kwarg'sız) davranış olarak BYTE-DEĞİŞMEZ kalır. Ret kontrolü
+    bilinmeyen-row_key `KeyError`'ından SONRA gelir ve AİLE BAZLIDIR:
+    `case_law` bu facade'i paylaşır ama ASLA reddedilmez."""
     if row_key not in LEGAL_RESEARCH_CASE_LAW_ROW_KEY_TO_MODULE_NAME:
         raise KeyError(f"row_key={row_key!r} is not a known legal-research/case-law family")
+
+    # `llm_client is None` = ÜRETİM istemcisi kullanılacak demektir.
+    # Enjekte edilmiş bir istemci bu reddin DIŞINDADIR.
+    if (
+        row_key in LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS
+        and with_agent
+        and llm_client is None
+    ):
+        raise LegalResearchCaseLawRawTextEgressRefusedError(
+            raw_text_egress_refusal_message(row_key)
+        )
 
     if for_apply and (
         not isinstance(expected_input_digest, str) or not expected_input_digest.strip()
@@ -780,7 +849,7 @@ def preview_generation(
     """Salt-okunur preview. SIRA: dış 'read' authz HER filesystem
     probundan ÖNCE koşar. `llm_client` yalnız identity/provenance
     seçimini belirlemek için KULLANILIR - hiçbir metodu ÇAĞRILMAZ."""
-    _check_argument_shapes(row_key, for_apply=False)
+    _check_argument_shapes(row_key, for_apply=False, with_agent=with_agent, llm_client=llm_client)
     import importlib
     module = importlib.import_module(LEGAL_RESEARCH_CASE_LAW_ROW_KEY_TO_MODULE_NAME[row_key])
 
@@ -972,7 +1041,10 @@ def apply_generation(
     tam corroboration; (9) maskelemeyen temizlik."""
     import importlib
 
-    _check_argument_shapes(row_key, expected_input_digest, for_apply=True)
+    _check_argument_shapes(
+        row_key, expected_input_digest, for_apply=True,
+        with_agent=with_agent, llm_client=llm_client,
+    )
 
     if allow_network and not with_agent:
         raise LegalResearchCaseLawArgumentError(

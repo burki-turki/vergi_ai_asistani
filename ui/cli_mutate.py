@@ -318,17 +318,24 @@ def _build_arg_parser():
     )
     generation_parser.add_argument(
         "--with-agent", action="store_true", dest="with_agent", default=False,
-        help="ROW 19C-3c-ii: issue_spotting/evidence/argument/risk_strategy/drafting only - "
-        "optional (enables the family's own optional LLM agent layer, no real model call without "
-        "--allow-network too). ROW 19C-3c-iii: fact_extraction only - REQUIRED for BOTH preview "
-        "and apply (this family has no deterministic mode). REJECTED for deadline/timeline.",
+        help="ROW 19C-3c-ii: risk_strategy/drafting only - optional (enables the family's own "
+        "optional LLM agent layer, no real model call without --allow-network too). ROW "
+        "19C-3c-iv Slice 1: case_law only - same optional shape. ROW 19C-3c-iii: "
+        "fact_extraction only - REQUIRED for BOTH preview and apply (this family has no "
+        "deterministic mode). PILOT READINESS ADIM 4b: REJECTED UNCONDITIONALLY (preview AND "
+        "apply) for issue_spotting/evidence/argument/legal_research - those four prompts carry "
+        "raw fact statements and/or verbatim document excerpts and have no masking layer yet, "
+        "so they have NO agent mode at all; their deterministic mode is unaffected. REJECTED "
+        "for deadline/timeline.",
     )
     generation_parser.add_argument(
         "--allow-network", action="store_true", dest="allow_network", default=False,
         help="ROW 19C-3c-ii: SECOND, EXPLICIT gate - a real model call is only ever attempted "
         "when BOTH --with-agent AND --allow-network are given together; REJECTED alone. ROW "
         "19C-3c-iii: fact_extraction only - REJECTED on preview (STRICTER than the other "
-        "agent-gated families); REQUIRED together with --with-agent on apply. REJECTED for "
+        "agent-gated families); REQUIRED together with --with-agent on apply. PILOT READINESS "
+        "ADIM 4b: for issue_spotting/evidence/argument/legal_research this flag can never be "
+        "usefully combined with anything - --with-agent itself is rejected first. REJECTED for "
         "deadline/timeline.",
     )
     generation_parser.add_argument(
@@ -592,6 +599,44 @@ def _legal_research_case_law_row_keys():
     )
 
 
+# ----------------------------------------------------------------
+# PILOT READINESS ADIM 4b - ham case metni taşıyan ailelerin kapalı
+# kümeleri ve SABİT ret metni. TEK OTORİTE her iki facade'in KENDİ
+# `*_RAW_TEXT_REFUSED_ROW_KEYS` frozenset'i ve KENDİ
+# `raw_text_egress_refusal_message()` fonksiyonudur - burada ne aile
+# adı ne de metin İKİNCİ KEZ yazılır (mevcut `_agent_generation_row_
+# keys()`/`_legal_research_case_law_row_keys()` deseninin birebir
+# aynısı: lazy, fonksiyon-içi import, modül-import-zamanı bağımlılık
+# YOK).
+# ----------------------------------------------------------------
+
+
+def _agent_generation_refused_row_keys():
+    from ui.services import agent_generation_mutation_facade as _agent_generation_facade
+
+    return frozenset(_agent_generation_facade.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS)
+
+
+def _agent_generation_refusal_message(row_key):
+    from ui.services import agent_generation_mutation_facade as _agent_generation_facade
+
+    return _agent_generation_facade.raw_text_egress_refusal_message(row_key)
+
+
+def _legal_research_case_law_refused_row_keys():
+    from ui.services import legal_research_case_law_mutation_facade as _legal_research_case_law_facade
+
+    return frozenset(
+        _legal_research_case_law_facade.LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS
+    )
+
+
+def _legal_research_case_law_refusal_message(row_key):
+    from ui.services import legal_research_case_law_mutation_facade as _legal_research_case_law_facade
+
+    return _legal_research_case_law_facade.raw_text_egress_refusal_message(row_key)
+
+
 def _validate_generation_args(args, *, stderr) -> int | None:
     """ROW 19C-3c-i/3c-ii/3c-iii: pure, zero-connection usage-shape
     checks for the `generation` subcommand - every rule below fires
@@ -631,6 +676,20 @@ def _validate_generation_args(args, *, stderr) -> int | None:
             return EXIT_USAGE_ERROR
         if args.mask_term:
             stderr.write(f"error: --mask-term is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        # PILOT READINESS ADIM 4b: ham case metni taşıyan üç aile
+        # (issue_spotting/evidence/argument) için --with-agent KOŞULSUZ
+        # reddedilir - preview'da da apply'da da. Bu CLI ASLA bir
+        # `llm_client` geçmez (dört üretim çağrı şeklinin dördü de
+        # kwarg'sızdır), yani buradan gelen her agent-mode isteği
+        # facade'de `llm_client is None`'dır = ÜRETİM istemcisi. Ret
+        # BAYRAK üzerinden verilir ve facade'in KENDİ, bağımsız ikinci
+        # enforcement'ı (`_check_argument_shapes`) yerine GEÇMEZ.
+        # --allow-network'ün KENDİ mevcut kuralından ÖNCE gelir ki
+        # `--allow-network` TEK BAŞINA verildiğinde (with_agent False)
+        # eski "requires --with-agent" metni BYTE-DEĞİŞMEZ kalsın.
+        if args.with_agent and args.row_key in _agent_generation_refused_row_keys():
+            stderr.write(_agent_generation_refusal_message(args.row_key) + "\n")
             return EXIT_USAGE_ERROR
         if args.allow_network and not args.with_agent:
             stderr.write("error: --allow-network requires --with-agent\n")
@@ -713,6 +772,13 @@ def _validate_generation_args(args, *, stderr) -> int | None:
             return EXIT_USAGE_ERROR
         if args.mask_term:
             stderr.write(f"error: --mask-term is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        # PILOT READINESS ADIM 4b: bu dal `legal_research` VE `case_law`
+        # tarafından PAYLAŞILDIĞI için ret AİLE BAZLIDIR - yalnız
+        # `legal_research` reddedilir, `case_law` bu daldan eskisi gibi
+        # geçmeye devam eder.
+        if args.with_agent and args.row_key in _legal_research_case_law_refused_row_keys():
+            stderr.write(_legal_research_case_law_refusal_message(args.row_key) + "\n")
             return EXIT_USAGE_ERROR
         if args.allow_network and not args.with_agent:
             stderr.write("error: --allow-network requires --with-agent\n")

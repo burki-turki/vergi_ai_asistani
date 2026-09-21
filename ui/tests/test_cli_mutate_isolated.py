@@ -18,11 +18,14 @@
 # Run: python ui/tests/test_cli_mutate_isolated.py
 # ============================================================
 
+import ast
 import hashlib
 import io
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import types
 from pathlib import Path
 
@@ -1640,6 +1643,405 @@ check(
         "rag-bundle", "--action", "activate", "--bundle-version", _v64, "--actor-user-id", "1",
         "--apply", "--expected-current-version", "none", "--activation-attempt", "1",
     ]),
+)
+
+
+# ============================================================
+# PILOT READINESS ADIM 4b (1/2) - RAW-TEXT EGRESS REFUSAL at the CLI
+# usage-shape layer, for the FOUR families whose prompt carries raw case
+# text (issue_spotting/evidence/argument via the agent-generation
+# branch; legal_research via the legal_research/case_law branch it
+# SHARES with case_law).
+#
+# Contract: `--with-agent` is refused UNCONDITIONALLY - on preview AND
+# on apply, with or without `--allow-network` - BEFORE any connection,
+# authz repository, filesystem probe or journal access (the exploding
+# factories prove zero connections). This is Layer 1; the two facades
+# enforce the same rule INDEPENDENTLY as Layer 2 (proven in
+# `test_agent_generation_mutation_facade_isolated.py` /
+# `test_legal_research_case_law_mutation_facade_isolated.py`).
+# ============================================================
+
+_STEP4B_REFUSED_FAMILIES = ["issue_spotting", "evidence", "argument", "legal_research"]
+
+# The two facades' own fixed message text, reproduced here as a literal
+# so a wording drift in either facade turns this red (the CLI imports
+# the message from the facades - it is never written twice in
+# production code).
+_STEP4B_REFUSAL_MESSAGE_TEMPLATE = (
+    "HATA: --row-key {row_key} için agent modu KAPALIDIR (Pilot Readiness Adım 4b): "
+    "bu ailenin prompt'u ham fact cümlesi ve/veya belgeden birebir alıntı taşır ve bu "
+    "aile için HENÜZ bir maskeleme katmanı yoktur. --with-agent bu ailede preview'da da "
+    "apply'da da kabul edilmez; deterministik mod (--with-agent OLMADAN) çalışmaya devam "
+    "eder."
+)
+
+_data_snapshot_before_step4b = _snapshot_data_tree()
+
+for _family in _STEP4B_REFUSED_FAMILIES:
+    _expected_msg = _STEP4B_REFUSAL_MESSAGE_TEMPLATE.format(row_key=_family)
+
+    # (a) PREVIEW with --with-agent alone.
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1", "--with-agent",
+    ])
+    check(
+        f"ADIM 4b: generation --row-key {_family} --with-agent (PREVIEW) -> exit 2, zero "
+        "connections",
+        code == cli_mutate.EXIT_USAGE_ERROR,
+        f"code={code!r} stderr={err!r}",
+    )
+    check(
+        f"ADIM 4b: {_family} PREVIEW refusal stderr is EXACTLY the facade's fixed message (names "
+        "the family and --with-agent), stdout empty, no traceback",
+        err == _expected_msg + "\n" and out == "" and "Traceback" not in err,
+        f"stderr={err!r} stdout={out!r}",
+    )
+
+    # (b) APPLY with --with-agent alone - the F3 residue path. Before
+    #     Adım 4b this was ACCEPTED and would write a pending + audit
+    #     claiming `generation_mode="agent"` with the real model name,
+    #     while never calling a model at all.
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        "--with-agent", "--apply", "--expected-input-digest", "h",
+    ])
+    check(
+        f"ADIM 4b / F3: generation --row-key {_family} --with-agent --apply WITHOUT "
+        "--allow-network -> exit 2, zero connections (previously ACCEPTED: it produced a pending "
+        "+ audit recording agent provenance although no model was ever called)",
+        code == cli_mutate.EXIT_USAGE_ERROR and err == _expected_msg + "\n" and out == "",
+        f"code={code!r} stderr={err!r} stdout={out!r}",
+    )
+
+    # (c) APPLY with the full --with-agent --allow-network combination.
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        "--with-agent", "--allow-network", "--apply", "--expected-input-digest", "h",
+    ])
+    check(
+        f"ADIM 4b: generation --row-key {_family} --with-agent --allow-network --apply -> exit 2, "
+        "zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and err == _expected_msg + "\n" and out == "",
+        f"code={code!r} stderr={err!r} stdout={out!r}",
+    )
+
+    # (d) PREVIEW with --with-agent --allow-network.
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        "--with-agent", "--allow-network",
+    ])
+    check(
+        f"ADIM 4b: generation --row-key {_family} --with-agent --allow-network (PREVIEW) -> exit "
+        "2, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and err == _expected_msg + "\n" and out == "",
+        f"code={code!r} stderr={err!r} stdout={out!r}",
+    )
+
+    # (e) --allow-network ALONE keeps its OLD, unchanged message (the
+    #     Adım 4b check is deliberately placed BEFORE that rule but is
+    #     gated on --with-agent, so this path is byte-identical to
+    #     before).
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        "--allow-network",
+    ])
+    check(
+        f"ADIM 4b: {_family} --allow-network ALONE still yields the OLD '--allow-network requires "
+        "--with-agent' message, NOT the new refusal (pre-existing behaviour preserved)",
+        code == cli_mutate.EXIT_USAGE_ERROR
+        and err == "error: --allow-network requires --with-agent\n",
+        f"code={code!r} stderr={err!r}",
+    )
+
+    # (f) DETERMINISTIC mode (no --with-agent) is untouched: the usage
+    #     shape passes and the command proceeds to open a connection.
+    check(
+        f"ADIM 4b: {_family} WITHOUT --with-agent (deterministic preview) still passes usage-shape "
+        "and reaches the connection layer - deterministic generation is completely unaffected",
+        _usage_shape_passed_to_connection([
+            "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        ]),
+    )
+
+# --- POSITIVE CONTROLS: the families that are deliberately NOT refused.
+# `case_law` is the critical one - it shares BOTH the CLI branch and the
+# facade with the refused `legal_research`, so this is the permanent
+# per-family regression proof at the CLI layer.
+for _open_family in ["case_law", "risk_strategy", "drafting"]:
+    check(
+        f"ADIM 4b: --row-key {_open_family} --with-agent is NOT refused - usage-shape passes and "
+        "reaches the connection layer (per-family scoping; case_law shares its CLI branch AND "
+        "facade with the refused legal_research)",
+        _usage_shape_passed_to_connection([
+            "generation", "--case", "x", "--row-key", _open_family, "--actor-user-id", "1",
+            "--with-agent",
+        ]),
+    )
+    check(
+        f"ADIM 4b: --row-key {_open_family} --with-agent --allow-network --apply is NOT refused - "
+        "usage-shape passes and reaches the connection layer",
+        _usage_shape_passed_to_connection([
+            "generation", "--case", "x", "--row-key", _open_family, "--actor-user-id", "1",
+            "--with-agent", "--allow-network", "--apply", "--expected-input-digest", "h",
+        ]),
+    )
+
+check(
+    "ADIM 4b: --row-key fact_extraction --document d --with-agent is NOT refused - that family "
+    "keeps its OWN, unchanged Row 19C-3c-iii dual gate (Adım 4a masking already applies there)",
+    _usage_shape_passed_to_connection([
+        "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+        "--actor-user-id", "1", "--with-agent",
+    ]),
+)
+check(
+    "ADIM 4b: --row-key fact_extraction --document d --with-agent --allow-network --apply is NOT "
+    "refused - its own apply-time dual gate is untouched",
+    _usage_shape_passed_to_connection([
+        "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+        "--actor-user-id", "1", "--with-agent", "--allow-network", "--apply",
+        "--expected-input-digest", "h",
+    ]),
+)
+
+# deadline/timeline keep their OWN, unchanged unconditional rejection
+# message (a DIFFERENT message from the Adım 4b one - proof the new rule
+# did not leak into those branches).
+for _flagless_family, _extra in [("timeline", []), ("deadline", ["--anchor", "timeline_event_001"])]:
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _flagless_family, "--actor-user-id", "1",
+        "--with-agent", *_extra,
+    ])
+    check(
+        f"ADIM 4b: --row-key {_flagless_family} --with-agent still yields its OWN pre-existing "
+        "'--with-agent/--allow-network are not accepted' message, NOT the Adım 4b refusal",
+        code == cli_mutate.EXIT_USAGE_ERROR
+        and "--with-agent/--allow-network are not accepted" in err
+        and "Adım 4b" not in err,
+        f"code={code!r} stderr={err!r}",
+    )
+
+_data_snapshot_after_step4b = _snapshot_data_tree()
+check(
+    "ADIM 4b: the whole CLI refusal/positive-control block left the REAL data/ tree byte-for-byte "
+    "UNCHANGED (zero pending, zero generation audit, zero journal row could have been written - "
+    "every refusal fires before any connection is even opened)",
+    _data_snapshot_before_step4b == _data_snapshot_after_step4b,
+    f"changed/added/removed keys: "
+    f"{sorted(set(_data_snapshot_before_step4b) ^ set(_data_snapshot_after_step4b))}",
+)
+
+
+# ============================================================
+# PILOT READINESS ADIM 4b (2/2) - `app.py` EGRESS ENTRY-POINT CLOSURE
+# (persistent, REAL-subprocess).
+#
+# `app.py` used to be the repo's only un-gated free-text entry point: it
+# read the lawyer's own words with `input()` and passed them to
+# `src.rag.answer_question`, whose module imported `anthropic` and built
+# a client at import time. It now refuses with a fixed message and a
+# genuine OS exit code 2, and - critically - imports NOTHING at module
+# level, so `src.rag`/`anthropic` are never even reached.
+#
+# `app.py` lives at the REPO ROOT, not under `src/`, so
+# `_run_legacy_script()` (which resolves `src/<name>.py`) cannot run it -
+# this section uses its own narrow runner with the SAME discipline:
+# `sys.executable`, explicit `cwd=REPO_ROOT`, bounded timeout, never
+# `shell=True`, `PYTHONIOENCODING=utf-8`, raw bytes + strict UTF-8
+# decode, and `stdin=DEVNULL` (so a regression that still reached
+# `input()` would fail loudly with EOFError instead of hanging).
+# ============================================================
+
+_APP_PY_REFUSAL_MESSAGE = (
+    "HATA: Bu etkileşimli sohbet giriş noktası artık DEVRE DIŞIDIR "
+    "(Pilot Readiness Adım 4b).\n"
+    "Avukatın serbest metnini hiçbir maskeleme/yetkilendirme/audit katmanı olmadan "
+    "dış bir LLM'e gönderebilen tek kapısız yol buydu.\n"
+    "Denetlenen üretim yolları için: python -m ui.cli_mutate --help"
+)
+
+
+def _run_repo_root_script(script_name, args=(), *, extra_pythonpath=None, timeout=90):
+    """Same discipline as `_run_legacy_script()` above, for a script that
+    lives at the REPO ROOT instead of under `src/`. `extra_pythonpath` is
+    PREPENDED to (never replaces) the inherited PYTHONPATH, so any
+    sitecustomize-based guard the sweep runner installs via PYTHONPATH
+    keeps working in the child while the prepended directory still
+    shadows real site-packages."""
+    script_path = REPO_ROOT / script_name
+    child_env = os.environ.copy()
+    child_env["PYTHONIOENCODING"] = "utf-8"
+    if extra_pythonpath is not None:
+        inherited = child_env.get("PYTHONPATH", "")
+        child_env["PYTHONPATH"] = (
+            f"{extra_pythonpath}{os.pathsep}{inherited}" if inherited else str(extra_pythonpath)
+        )
+    completed = subprocess.run(
+        [sys.executable, str(script_path), *args],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        stdin=subprocess.DEVNULL,
+        timeout=timeout,
+        env=child_env,
+    )
+    stdout_text = completed.stdout.decode("utf-8") if completed.stdout else ""
+    stderr_text = completed.stderr.decode("utf-8") if completed.stderr else ""
+    return script_path, types.SimpleNamespace(
+        returncode=completed.returncode,
+        stdout=stdout_text,
+        # Windows text-mode children emit CRLF; normalise ONLY the line
+        # separator so the exact-equality assertion below stays exact.
+        stderr=stderr_text.replace("\r\n", "\n"),
+    )
+
+
+_data_snapshot_before_apppy = _snapshot_data_tree()
+
+_app_path, _app_result = _run_repo_root_script("app.py")
+check(
+    f"app.py: the real script file exists at the repo root and is the one actually invoked "
+    f"({_app_path})",
+    _app_path.is_file(),
+    f"resolved path: {_app_path}",
+)
+check(
+    "app.py: real OS subprocess returncode is exactly 2 (the genuine process exit code "
+    "SystemExit(2) produces, not merely main()'s Python-level return value)",
+    _app_result.returncode == 2,
+    f"got returncode={_app_result.returncode!r} stdout={_app_result.stdout!r} "
+    f"stderr={_app_result.stderr!r}",
+)
+check(
+    "app.py: stderr is EXACTLY the fixed Adım 4b refusal message",
+    _app_result.stderr == _APP_PY_REFUSAL_MESSAGE + "\n",
+    f"stderr={_app_result.stderr!r}",
+)
+check(
+    "app.py: stderr contains no 'Traceback' - a clean, deliberate SystemExit(2), never an "
+    "unhandled exception (an EOFError from a surviving input() call, or a ModuleNotFoundError/"
+    "RuntimeError from a re-introduced src.rag import, would show up here)",
+    "Traceback" not in _app_result.stderr,
+    f"stderr={_app_result.stderr!r}",
+)
+check(
+    "app.py: stdout is completely empty - the old chat banner (print_header) is gone and the "
+    "refusal goes to stderr only",
+    _app_result.stdout == "",
+    f"stdout={_app_result.stdout!r}",
+)
+
+# --- IMPORT-ORDER PROOF: a poisoned `anthropic` that raises on import
+#     is placed FIRST on the child's PYTHONPATH. If `app.py` still
+#     imported `src.rag` (which imports `anthropic` and builds a client
+#     at module level), the child would die with that RuntimeError
+#     instead of refusing cleanly.
+_poison_dir = tempfile.mkdtemp(prefix="step4b_poison_")
+try:
+    (Path(_poison_dir) / "anthropic.py").write_text(
+        'raise RuntimeError("STEP4B_POISONED_ANTHROPIC_IMPORTED")\n', encoding="utf-8",
+    )
+
+    # POSITIVE CONTROL (mandatory): the SAME PYTHONPATH must genuinely
+    # shadow the real package in THIS interpreter - otherwise the proof
+    # below would pass vacuously.
+    _control_env = os.environ.copy()
+    _control_env["PYTHONIOENCODING"] = "utf-8"
+    _inherited_pp = _control_env.get("PYTHONPATH", "")
+    _control_env["PYTHONPATH"] = (
+        f"{_poison_dir}{os.pathsep}{_inherited_pp}" if _inherited_pp else _poison_dir
+    )
+    _control = subprocess.run(
+        [sys.executable, "-c", "import anthropic"],
+        cwd=str(REPO_ROOT), capture_output=True, stdin=subprocess.DEVNULL,
+        timeout=90, env=_control_env,
+    )
+    _control_stderr = _control.stderr.decode("utf-8") if _control.stderr else ""
+    check(
+        "app.py POSITIVE CONTROL: with the SAME poisoned PYTHONPATH, a child that DELIBERATELY "
+        "does `import anthropic` really does fail with the stub's RuntimeError - the shadowing "
+        "is genuinely effective, so the import-order proof below is not vacuous",
+        _control.returncode != 0 and "STEP4B_POISONED_ANTHROPIC_IMPORTED" in _control_stderr,
+        f"returncode={_control.returncode!r} stderr={_control_stderr!r}",
+    )
+
+    _app_path_p, _app_poisoned = _run_repo_root_script("app.py", extra_pythonpath=_poison_dir)
+    check(
+        "app.py IMPORT-ORDER PROOF: with a poisoned `anthropic` first on PYTHONPATH the refusal "
+        "is UNCHANGED (exit 2, exact fixed message, no traceback, empty stdout) - `src.rag` and "
+        "therefore `anthropic` are NEVER imported by app.py",
+        _app_poisoned.returncode == 2
+        and _app_poisoned.stderr == _APP_PY_REFUSAL_MESSAGE + "\n"
+        and "Traceback" not in _app_poisoned.stderr
+        and "STEP4B_POISONED_ANTHROPIC_IMPORTED" not in _app_poisoned.stderr
+        and _app_poisoned.stdout == "",
+        f"returncode={_app_poisoned.returncode!r} stdout={_app_poisoned.stdout!r} "
+        f"stderr={_app_poisoned.stderr!r}",
+    )
+finally:
+    shutil.rmtree(_poison_dir, ignore_errors=True)
+
+# Static companion check, AST-based so explanatory COMMENTS (which do
+# name the removed code, deliberately) can never satisfy or break it:
+# app.py must have ZERO module-level imports at all, and the dead chat
+# body's identifiers must appear nowhere in the parsed code. Cheap, and
+# it stays red even in an environment where `anthropic` is not installed
+# at all (where a re-introduced `from src.rag import ...` would fail
+# with ModuleNotFoundError rather than the poisoned stub's RuntimeError).
+_app_tree = ast.parse((REPO_ROOT / "app.py").read_text(encoding="utf-8"))
+_app_toplevel_imports = [
+    node for node in _app_tree.body if isinstance(node, (ast.Import, ast.ImportFrom))
+]
+check(
+    "app.py has ZERO module-level import statements (even `sys` is imported lazily inside "
+    "main(), matching the src/ingest.py precedent) - so importing or running this file can "
+    "never pull in src.rag and therefore never construct an Anthropic client",
+    _app_toplevel_imports == [],
+    f"unexpected top-level imports: {[ast.dump(n) for n in _app_toplevel_imports]}",
+)
+_app_identifiers = {
+    node.id for node in ast.walk(_app_tree) if isinstance(node, ast.Name)
+} | {
+    node.attr for node in ast.walk(_app_tree) if isinstance(node, ast.Attribute)
+} | {
+    node.name for node in ast.walk(_app_tree) if isinstance(node, ast.FunctionDef)
+} | {
+    alias.name for node in ast.walk(_app_tree)
+    if isinstance(node, (ast.Import, ast.ImportFrom)) for alias in node.names
+} | {
+    node.module for node in ast.walk(_app_tree)
+    if isinstance(node, ast.ImportFrom) and node.module
+}
+check(
+    "app.py CODE (not comments) references none of answer_question / run_chat / print_header / "
+    "print_sources / input / rag - the ~150-line dead chat body was genuinely deleted, not "
+    "merely bypassed",
+    not (_app_identifiers & {
+        "answer_question", "run_chat", "print_header", "print_sources", "input",
+        "rag", "src.rag", "anthropic", "Anthropic",
+    }),
+    f"unexpected identifiers still present: "
+    f"{sorted(_app_identifiers & {'answer_question', 'run_chat', 'print_header', 'print_sources', 'input', 'rag', 'src.rag', 'anthropic', 'Anthropic'})}",
+)
+
+_data_snapshot_after_apppy = _snapshot_data_tree()
+check(
+    "app.py closure scenarios: the REAL data/ tree is byte-for-byte UNCHANGED",
+    _data_snapshot_before_apppy == _data_snapshot_after_apppy,
+    f"changed/added/removed keys: "
+    f"{sorted(set(_data_snapshot_before_apppy) ^ set(_data_snapshot_after_apppy))}",
+)
+
+# Refusal-scenario counter: 44 -> 45. `app.py` is the ONLY addition that
+# meets this counter's definition (a REAL-OS-subprocess refusal
+# scenario); the four families' CLI refusals above are in-process usage-
+# shape checks, which this counter has never tracked.
+check(
+    "ADIM 4b: exactly ONE new real-OS-subprocess refusal scenario is added by this slice "
+    "(app.py) - LEGACY_MUTATION_MATRIX (19) + EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX (3) + app.py "
+    "(1) = 23 real-subprocess refusal scenarios in THIS file; app.py is counted as a closed "
+    "EGRESS entry point, NOT as one of the 29 closed MUTATION entry points",
+    len(LEGACY_MUTATION_MATRIX) + len(EVIDENCE_REVIEW_EXTRA_FLAG_MATRIX) + 1 == 23,
 )
 
 
