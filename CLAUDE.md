@@ -699,19 +699,43 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   soruları KODLA KAPANMAZ (Adım 6'ya `EXTERNAL LEGAL VERIFICATION
   REQUIRED`).
 - **Pilot Readiness Adım 4b — Ham Veri Taşıyan Ajanların ve `app.py`'nin
-  Mekanik Kapatılması — ACTIVE / NEXT.** Bu pointer YALNIZ **salt-okunur
-  exact-scope/allowlist reconciliation** yetkisi verir; implementasyon
-  veya dosya değişikliği YETKİSİ VERMEZ. Kapsam adayı (Adım 4 scope
-  raporu §7, repo dışı `pilot_readiness_step4_llm_masking_scope_FINAL.md`):
-  `issue_spotting`, `legal_research`, `evidence`, `argument` ajanlarının
-  ham fact cümlesi/belge alıntısı taşıması nedeniyle üretim istemcisiyle
-  (`llm_client is None`) `--with-agent --allow-network` istendiğinde
-  kimlik/DB/dosya/model erişiminden ÖNCE reddedilmesi; hiçbir kapısı
-  olmayan `app.py`'nin (avukatın serbest metnini `src/rag.py` üzerinden
-  Anthropic'e gönderebilir) kapatılması. Açıkça BAŞLAMAMIŞ/
-  YETKİLENDİRİLMEMİŞ: 4b kodlama/implementasyon; resmî tatil takvimi
-  (Adım 5); avukat altın
-  örnekleri (Adım 6); deadline hardening (Adım 7); yerel PostgreSQL/IAM
+  Mekanik Kapatılması — DONE / LOCKED.** Exact kapsam **0 YENİ + 7
+  DEĞİŞTİRİLMİŞ = 7 dosya**, yerel commit `2097b9e` (push YAPILMADI):
+  `ui/cli_mutate.py`, `ui/services/agent_generation_mutation_facade.py`,
+  `ui/services/legal_research_case_law_mutation_facade.py`, `app.py` ve üç
+  test dosyası. `issue_spotting`, `legal_research`, `evidence`, `argument`
+  ajanları ham fact cümlesi/belge alıntısı dış LLM'e yolladığı ve bunlar için
+  maskeleme OLMADIĞI için, bu dört ailede `--with-agent` (ajan modu) hem
+  önizlemede hem uygulamada KOŞULSUZ reddedilir — iki bağımsız katmanda:
+  CLI usage-shape (her bağlantı/authz/dosya/model erişiminden ÖNCE; CLI
+  `llm_client` geçmez) ve facade (`llm_client is None` = üretim istemcisi;
+  enjekte edilmiş sahte istemci çalışmaya devam eder). `legal_research` reddedilirken
+  aynı facade/CLI dalını paylaşan `case_law` (C2) açık kalır; deterministik mod,
+  fact_extraction, risk_strategy, drafting, timeline, deadline AYNEN çalışır.
+  `--with-agent`'ın tümden reddi, ağsız agent modunun model çağrılmadan agent
+  provenansı yazan kalıcı sahte kaydını (Row 19C-3c-iv F3) da ortadan kaldırır.
+  Hiçbir kapısı olmayan `app.py` (avukatın serbest metnini `src/rag.py`
+  üzerinden Anthropic'e gönderebilirdi; bugün gizli/latent, canlı değil) kapatıldı:
+  modül-başı `src.rag` importu ve ölü sohbet gövdesi silindi, sabit mesaj +
+  `SystemExit(2)`. Final bağımsız verdict, exact olarak:
+  `PILOT READINESS STEP 4b RAW-DATA AGENT CLOSURE LOCK-READY — NO BLOCKING FINDINGS`
+  (bkz. Pilot Readiness Adım 4b checkpoint özeti, §5 sonrası, "## 6.
+  Cross-Cutting Backlog"dan hemen önce).
+- **Pilot Readiness Adım 5 — Resmî Tatil Takvimi Registry'si +
+  `calendar_complete` Türetimi — ACTIVE / NEXT.** Bu pointer YALNIZ
+  **salt-okunur exact-scope/allowlist reconciliation** yetkisi verir;
+  implementasyon veya dosya değişikliği YETKİSİ VERMEZ (bağlayıcı tanım:
+  Pilot Readiness Priority Reconciliation §4 Adım 5 — git-governed, şemalı,
+  yıl-kapsamlı tatil takvimi artefaktı + validator; `deadline_engine`'in
+  `holiday_dates`/`calendar_complete`'i elle bayrak yerine kapsanan yıl
+  aralığından türetmesi; takvim içeriği bu adımda sentetik/yer tutucu,
+  `verified=false`; `deadline_engine.py`/`deadline_calculator.py` LOCKED Row
+  8 açılacaksa §9 gerekçesi). Not: Adım 6'nın (avukat doğrulaması) avukat
+  paketi taslağı repo dışında hazırlanmıştır (`avukat_dogrulama_paketi_DRAFT2`;
+  avukata verilebilir — Adım 4b kilidiyle önkoşulu sağlandı); avukatın yazılı
+  cevabı Adım 5'in takvim içeriğini (`verified=true`) ve Adım 7'yi besler.
+  Açıkça BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 5 kodlama/implementasyon; avukat
+  altın
   adoption (Adım 8); sentetik concierge dry-run (Adım 9); ilk gerçek
   concierge pilotu (Adım 10); Entra/P1 (Adım 11); hosting/Key Vault
   (Adım 12); configurable external case root (post-pilot Adım 13c).
@@ -8028,6 +8052,171 @@ etmek için yapıldı (200.000 rastgele girdide 0 uyuşmazlık; yetkili GİB bel
 BULUNAMADI — tasarım VKN'yi sağlamaya bağımlı kılmaz).
 
 `PILOT READINESS STEP 4a LLM PRIVACY BOUNDARY LOCK-READY — NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi
+yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
+hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Pilot Readiness Adım 4b — Ham Veri Taşıyan Ajanların ve `app.py`'nin Mekanik Kapatılması (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve pilot blocker** — Adım 4a yalnız fact extraction'ı maskeler. Diğer
+ajanların "concierge pilotunda kapalı kalır" varsayımı MEKANİK olarak doğru
+değildi: yedi ajan, aynı operatörün eklediği iki bayrakla
+(`--with-agent --allow-network`) çalışabiliyor ve dördü ham veri taşıyordu.
+Bu slice bu dört ailenin ajan modunu mekanik olarak kapatır.
+
+**B. Exact kapsam ve commit** — Kullanıcı tarafından, yedi karar (K1-K7) ve
+exact 7 dosyalık allowlist ile onaylandı: **0 YENİ + 7 DEĞİŞTİRİLMİŞ = 7
+dosya**, allowlist dışında hiçbir dosyaya dokunulmadı. Yerel commit
+`2097b9e3b84c205a8c0206411f7264594da2e9e2` (push YAPILMADI); 7 dosya, 1096
+ekleme, 166 silme (üç test dosyasında silme YOK; `app.py`'deki silmeler
+onaylı ölü sohbet gövdesidir). Sıfır migration, schema, production-data,
+bağımlılık değişikliği.
+
+| Dosya | SHA-256 (HEAD `2097b9e`) |
+|---|---|
+| `ui/cli_mutate.py` (LOCKED 19C-3b/3c + 4a) | `63513cc46196cc326bb6ef7feda9b5a78a14a8ef21e5c6f3dd26c54b51631494` |
+| `ui/services/agent_generation_mutation_facade.py` (LOCKED 19C-3c-ii) | `bb2567d3ccb5ccd35b01f31c98330ea1417b50345d275239e1df5bf53e8c86cb` |
+| `ui/services/legal_research_case_law_mutation_facade.py` (LOCKED 19C-3c-iv) | `8621a3a3acc14a169738923fe1f4772ee8a306ed936780eac14836debcb17435` |
+| `app.py` | `89161317e7e4d681f6f63a800808683c40d3bca33c462585caafb7250dfe4f2d` |
+| `ui/tests/test_cli_mutate_isolated.py` | `d9c91f0e1356d2d211f86d892c3a356ce4a45c795ededfc21e3c55b21cfde807` |
+| `ui/tests/test_agent_generation_mutation_facade_isolated.py` | `2d9b979aa265386ebb6c0f08794500824acdda9e2b0024d606296a2d9ef41afe` |
+| `ui/tests/test_legal_research_case_law_mutation_facade_isolated.py` | `5124b20b784ac4b500b26df693987f50dfe99df9a5763db44b66409938306ec2` |
+
+**C. Tasarım ve kararlar (K1-K7)** — **K1 Seçenek B:** `issue_spotting`,
+`legal_research`, `evidence`, `argument` için `--with-agent` önizlemede VE
+uygulamada koşulsuz reddedilir. Seçenek A (yalnız `--with-agent
+--allow-network`) REDDEDİLDİ: `_resolve_generation_provenance()` `allow_network`'ü
+hiç görmediğinden, `--with-agent` tek başına apply'da kabul edilmeye devam eder ve
+model HİÇ çağrılmadan `generation_mode="agent", model_id="claude-sonnet-4-6"`
+yazan bir audit + tüketilmiş idempotency slotu üretirdi (Row 19C-3c-iv F3);
+Seçenek A bunu kalıcı hâle getirirdi, B ortadan kaldırır. **K2 iki bağımsız
+katman:** CLI usage-shape (`_validate_generation_args`, her bağlantı/authz/dosya/
+model erişiminden ÖNCE; CLI `llm_client` HİÇBİR ZAMAN geçmez, bayrakla reddeder) ve
+facade (`_check_argument_shapes`; ayrım `llm_client is None`; DI seam'i korunur);
+frozenset ve ret mesajı facade'lerde TEK kaynaktır, CLI import eder. **Aile
+bazlı:** `legal_research` ile `case_law` AYNI facade ve CLI dalını paylaşır; yalnız
+`legal_research` reddedilir. **K3** `app.py`: modül-başı `src.rag` importu ve ~150
+satırlık ölü sohbet gövdesi silindi (onaylı silme), hiçbir modül-seviyesi import
+kalmadı, sabit mesaj + `SystemExit(2)`, hiçbir şeyi import etmeden. **K4**
+`evaluation*.py` kapsam dışı; **K5** `src/rag.py` DEĞİŞMEDİ; **K6** `app.py`
+"kapalı mutasyon giriş noktası" sayacına (29) katılmaz, ayrı bir "kapalı egress
+giriş noktası: 1" satırıdır; **K7** yeni test modülü YOK.
+
+**D. Dürüst kronoloji** — (1) Adım 4 scope çalışmasında Dilim 4b adayı belirlendi;
+(2) bağımsız bir Opus ajanı 4b'nin exact kapsamını KAYNAKTAN çıkardı ve iki düzeltme
+getirdi (bayrak birleşimi yetersizdi — F3; iki facade isolated testi eksikti) ve yeni
+bir sızıntı vektörü buldu (issue `description`, `legal_basis_reference` kuralında ham
+fact `statement`'ını birebir gömüyor ve `evidence`/`argument` prompt'larına giriyor —
+bu iki aile zaten kapatılanlar arasında); `app.py`'nin bugün canlı değil GİZLİ
+(latent) olduğunu buldu (ilk turda `history` boş → `rewrite_query` model çağırmadan
+döner → aramada `RagBundleNotPinnedError`). **Bu 4b kapsam raporu, 4a'daki gibi ayrı
+bir bağımsız incelemeden GEÇİRİLMEDİ** (slice küçük ve geri alınabilir sayıldı; hata
+uygulama sonrası incelemede yakalanacaktı — yakalanmadı, çünkü bulgu çıkmadı);
+(3) kullanıcı onayı; implementasyon (bağımsız bir Opus ajanı); (4) bağımsız inceleme:
+**LOCK-READY — NO BLOCKING FINDINGS** (0 Blocker, 0 Should-fix, 5 Note).
+
+**E. Kanıt — implementer ve bağımsız inceleyici sayıları AYRI** — Implementer:
+dokunulan modüller `test_cli_mutate_isolated` 304→354/0,
+`test_agent_generation_mutation_facade_isolated` 47→82/0,
+`test_legal_research_case_law_mutation_facade_isolated` 55→70/0; developer sweep
+74/74, 5639 passed, 0 failed; 8 mutasyon öldürüldü. **Bağımsız inceleyicinin KENDİ
+koşusu:** CLI matrisi 10 row-key × 4 bayrak × preview/apply = 80 hücre × HEAD ağacı
+vs çalışma ağacı — değişen hücreler TAM OLARAK dört ailenin `--with-agent` içeren
+16 hücresi (hepsinde rc=2, bağlantı gözcüsü hiç tetiklenmedi, çıktı boş, sıfır
+data/`.env` olayı, sıfır engine/agent modül importu); altı açık ailenin 48 hücresi
+HEAD ile bayt-bayt aynı; `--allow-network` tek başına 10 ailede aynı; `app.py` gerçek
+OS alt süreci exit 2, bayt-bayt sabit stderr, boş stdout, traceback yok, zehirli
+`anthropic` paketiyle (ikinci pozitif kontrolle) hiç import edilmiyor, her iki
+interpreter'da; 9/9 bağımsız mutasyon öldürüldü (retin DB erişiminden SONRAYA
+taşınması ve `llm_client is None` ayrımının silinmesi dahil — yani testler yalnız
+"exit 2"yi değil SIRALAMAYI ve DI seam'ini sabitler); developer sweep 74/74, 5639
+passed, 0 failed, 8 counted / 14 informational skip, guard 197/197, ağ 0, `.env` 0.
+**Resmî kapılar (commit `2097b9e`, çalışma ağacı temiz, ben koştum):**
+`production-parity` FULL exit 0 — 74 izlenen = 74 dosya sistemi, **74/74 PASS, 5639
+passed, 0 failed, 8 counted, 14 informational**; 14 `*_postgres` modülünün hepsi
+gerçekten koştu; guard armed 197 = expected 197, `NET_BLOCKED` 0, `ENV_OPEN_BLOCKED`
+0, 10/10 pozitif kontrol; korunan-yol manifesti (122 giriş) kapıdan önce/sonra
+bayt-bayt aynı; secret taraması 148 dosya 0 isabet; artık yok. `rag-dependency`
+`RAG_GATE_PASS` exit 0 (216 passed; etkin skip 0). **Sınır:** resmî kapı koşuları ana
+oturumun koşularıdır; bağımsız inceleyici aynı ağaca karşı kendi developer süpürmesini
+ayrıca koştu (runner bunu `DIAGNOSTIC` damgalar). Adım 3'ün libpq/audit-hook sınırı
+geçerli. Uygulayıcının süpürme `report.json`'u temizlikte silinmiş, sayılar konsol
+çıktısından yeniden sayılmıştır (resmî kapılar için bu sorun YOK).
+
+**F. Sayaçlar** — `ui/tests/test_*.py` modülü **74 → 74**; production Python
+**156 → 156**; refusal senaryosu konvansiyonu **44 → 45** (yalnız `app.py`'nin
+gerçek-OS-subprocess ret senaryosu; dört ailenin CLI retleri usage-shape
+kontrolüdür); routing key (50), logical mutation family (38), CLI subcommand (6),
+migration (5), kapalı mutasyon giriş noktası (29) DEĞİŞMEDİ; kapalı egress giriş
+noktası **1** (`app.py`).
+
+**G. AÇIK sınırlar (kapatılmış gösterilmez)**
+1. **Facade ayrımı `llm_client is None`:** yerel bir çağıran facade'e ANY non-`None`
+   nesne (gerçek bir Anthropic sarmalayıcısı dahil) enjekte ederek reddi atlayabilir
+   ve provenans `model_id="external_injected_client"` olarak yazılır. Onaylı K2
+   tasarımıdır ve regresyon DEĞİLDİR (4b öncesi aynı çağıran aynı yola `None` ile
+   ulaşırdı); kapatan kod-seviyesi engel yoktur (OS-seviyesi yerel kod sınırı Row
+   19D). Yerel Python'un writer fonksiyonlarını doğrudan import etmesi de
+   ENGELLENMEZ.
+2. **Ajan modu bu dört ailede KAPALIDIR, maskelenmiş DEĞİLDİR:** yeniden açılmaları
+   ayrı bir maskeleme dilimi ister (`argument`/`evidence` için ayrıca SİMETRİK
+   geri-çevirme gerekir — doğrulayıcılar modelin döndürdüğü alıntıyı maskesiz
+   `fact_index`'e karşı kontrol eder). `case_law`, `risk_strategy`, `drafting` açık
+   kalır: prompt'ları yalnız kanonik kimlik/sabit-literal issue başlığı taşır (C1/C2,
+   kaynaktan bağımsız doğrulandı; `drafting`'in `lawyer_provided_text`'i prompt'a
+   GİRMEZ) — bu bilinçli, kanıtlı bir karardır; ancak Adım 4a sonrası kanonik fact
+   `statement`/`text_excerpt` gerçek (geri çevrilmiş) metin taşır ve bu üç ailenin
+   girdisi ileride bu metne yaklaşırsa sınıf yeniden değerlendirilmelidir.
+3. **`src/rag.py` DEĞİŞMEDİ:** modül-başı `from anthropic import Anthropic` (`:53`) ve
+   import-anı `client = Anthropic()` (`:108`) durur; `import src.rag` yapan herhangi bir
+   kod hâlâ istemci kurar. `Anthropic()`'in import anındaki davranışı (hiçbir şey yapmaz
+   mı, anahtar yoksa fırlatır mı) DOĞRULANMADI; her iki yön de "egress yok" der. RAG
+   Slice 2 bu dosyayı zaten açacaktır. `src/evaluation.py`/`src/evaluation_v6.py`
+   sabit mevzuat soruları çalıştırır (dava verisi taşımaz; soru setlerinin TAMAMI
+   okunmadı), bugün `RagBundleNotPinnedError` ile fail-closed'dır — kapsam dışı.
+4. **Diskteki eski agent-mod pending'ler:** doğrulandı — `data/` altında HİÇ
+   `generation_mode` yok, dolayısıyla eski agent-mod pending kaydı yok; `src/*_approval.py`
+   `generation_mode`'u incelemez.
+5. Ret metni literali iki facade'de ayrı tanımlıdır (facade'ler birbirini import
+   etmez); testler literali dört aile için pinler (kayma testle yakalanır). Yardım
+   metni "ajan modu YOK" ifadesi CLI bağlamı için kesin doğrudur, facade katmanında
+   enjekte test istemcisiyle ajan modu hâlâ çalışır. `app.py` çalışma kopyası CRLF
+   (HEAD blob LF; `core.autocrlf` commit'te LF'e normalize eder, churn yok).
+6. Kapatma, operatörün metni başka bir araca kopyalamasını veya ham fact
+   `statement` içeren `issue.description` alanının bu dört ailenin dışındaki
+   yollardan taşınmasını ENGELLEMEZ; issue `description`'ın ham fact cümlesi
+   taşıması `evidence`/`argument` için ikinci, bağımsız bir sızıntı vektörüydü ve
+   ikisi de artık kapalıdır.
+
+**H. Kapsam dışı / başlamamış** — Bu checkpoint aşağıdakilerin HİÇBİRİNE yetki
+VERMEZ: Adım 5 resmî tatil takvimi (yalnız salt-okunur reconciliation, bkz. §5);
+Adım 6 avukat doğrulaması (yalnız repo dışı paket taslağı); Adım 7 deadline
+hardening; Adım 8 yerel PostgreSQL/IAM; Adım 9 sentetik concierge dry-run; Adım 10
+ilk gerçek pilot; Adım 11 Entra/P1; Adım 12 hosting/Key Vault; Adım 13c
+configurable case root; maskelenmiş ajan modu (dört aile için ayrı slice); RAG
+Slice 2; push.
+
+**I. §9 / LOCKED-file gerekçesi** — Üç LOCKED üretim dosyası açıldı (`ui/cli_mutate.py`,
+iki mutation facade); sebep **security/privacy** (ham case metninin dış LLM'e
+gitmesinin mekanik olarak engellenmesi). Row 19C-3c-ii/iv'ün usage-shape sözleşmesi
+DARALTILIYOR, genişletilmiyor; `_check_argument_shapes` imzası additive/defaultlu
+genişletildi, ret `KeyError` korumasından SONRA yerleştirildi (hiçbir çağıran
+istisna türü değişikliği görmez); `_resolve_generation_provenance`/`_invoke_builder`/
+identity/writer/audit/reconciliation/adapters DEĞİŞMEDİ; fact_extraction/case_law/
+risk_strategy/drafting/deadline/timeline dalları davranışça bayt-değişmezdir
+(48/48 hücre kanıtı). `app.py` hiçbir LOCKED Row'a ait değildir; üç test dosyası
+yalnız additive kanıt aldı.
+
+**J. Süreç notları (gizlenmez)** — İmplementasyon bağımsız bir Opus ajanı,
+kapsam çalışması ve inceleme ayrı taze ajanlar tarafından yapıldı; ana oturum
+koordinatör ve resmî kapı koşucusuydu. Bağımsız doğrulama, karar ve sayılar
+raporlardaki kaynak ve komut çıktılarına dayanır; ana oturum bunları yeniden
+türetmedi.
+
+`PILOT READINESS STEP 4b RAW-DATA AGENT CLOSURE LOCK-READY — NO BLOCKING FINDINGS`
 
 **DONE / LOCKED**
 
