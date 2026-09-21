@@ -673,19 +673,44 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   disiplini çalıştırıcısıdır; libpq'nun C-seviyesi soketlerini
   `sys.addaudithook` göremez; production ortamı veya hosting doğrulaması
   DEĞİLDİR.
-- **Pilot Readiness Adım 4 — LLM Privacy Boundary / Masking — ACTIVE /
-  NEXT.** Bu pointer YALNIZ **salt-okunur exact-scope/allowlist
-  reconciliation** yetkisi verir; implementasyon veya dosya
-  değişikliği YETKİSİ VERMEZ. Araştırma kapsamı: dış LLM/API'ye giden
-  verinin (case fact, belge metni, avukat girdisi, prompt) hangi
-  katmanlarda ne ölçüde maskelenmesi/minimize edilmesi gerektiği;
-  mevcut agent modüllerinin (`fact_extraction_engine`, issue_spotting/
-  legal_research/case_law/evidence/argument/risk_strategy/drafting/qa
-  agent'ları) gerçek egress noktalarının envanteri; mevcut çift açık
-  network gate'inin (`--with-agent` + `--allow-network`) maskeleme ile
-  ilişkisi; maskelemenin identity/`input_digest`/audit/reconciliation
-  zincirine etkisi. Açıkça BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 4
-  kodlama/implementasyon; resmî tatil takvimi (Adım 5); avukat altın
+- **Pilot Readiness Adım 4a — LLM Gizlilik Sınırı: Fact Extraction
+  Takma Adlandırma — DONE / LOCKED.** Exact kapsam **2 YENİ + 9
+  DEĞİŞTİRİLMİŞ = 11 dosya**, yerel commit `77f96c9` (push YAPILMADI):
+  `src/llm_privacy_boundary.py` (YENİ — ortak, stdlib-only maskele/geri-
+  çevir/tara modülü), `ui/tests/test_llm_privacy_boundary_isolated.py`
+  (YENİ), `src/fact_extraction_engine.py`,
+  `ui/services/fact_extraction_mutation_facade.py`,
+  `ui/services/fact_extraction_mutation_adapters.py`, `ui/cli_mutate.py`
+  ve beş test dosyası. Belge metni ve taraf adı/TCKN/VKN/IBAN/telefon/
+  e-posta, fact extraction ajanının dış LLM'e (Anthropic) gitmeden önce
+  geri çevrilebilir biçimde takma adlandırılır; harita YALNIZ bellekte
+  tutulur, diske/log'a/audit'e/exception'a yazılmaz; hayatta kalan
+  bilinen desen veya bozuk/bilinmeyen dönüş token'ı fail-closed reddedilir
+  (pending YAZILMAZ); `masking_policy_version` ve
+  `masking_extra_terms_digest` identity'ye girer (7→9 anahtar);
+  önizleme maskeli metni gösterir, haritayı ASLA. Final bağımsız verdict,
+  exact olarak:
+  `PILOT READINESS STEP 4a LLM PRIVACY BOUNDARY LOCK-READY — NO BLOCKING FINDINGS`
+  (bkz. Pilot Readiness Adım 4a checkpoint özeti, §5 sonrası, "## 6.
+  Cross-Cutting Backlog"dan hemen önce). **Dar, exact iddia**
+  (abartılmaz): bu takma adlandırmadır, ANONİMLEŞTİRME DEĞİLDİR;
+  tohum listesinde olmayan veya farklı yazılmış isimler hayatta kalır;
+  sağlayıcı veri-işleme şartları, avukatlık sırrı ve KVKK yurt dışı aktarım
+  soruları KODLA KAPANMAZ (Adım 6'ya `EXTERNAL LEGAL VERIFICATION
+  REQUIRED`).
+- **Pilot Readiness Adım 4b — Ham Veri Taşıyan Ajanların ve `app.py`'nin
+  Mekanik Kapatılması — ACTIVE / NEXT.** Bu pointer YALNIZ **salt-okunur
+  exact-scope/allowlist reconciliation** yetkisi verir; implementasyon
+  veya dosya değişikliği YETKİSİ VERMEZ. Kapsam adayı (Adım 4 scope
+  raporu §7, repo dışı `pilot_readiness_step4_llm_masking_scope_FINAL.md`):
+  `issue_spotting`, `legal_research`, `evidence`, `argument` ajanlarının
+  ham fact cümlesi/belge alıntısı taşıması nedeniyle üretim istemcisiyle
+  (`llm_client is None`) `--with-agent --allow-network` istendiğinde
+  kimlik/DB/dosya/model erişiminden ÖNCE reddedilmesi; hiçbir kapısı
+  olmayan `app.py`'nin (avukatın serbest metnini `src/rag.py` üzerinden
+  Anthropic'e gönderebilir) kapatılması. Açıkça BAŞLAMAMIŞ/
+  YETKİLENDİRİLMEMİŞ: 4b kodlama/implementasyon; resmî tatil takvimi
+  (Adım 5); avukat altın
   örnekleri (Adım 6); deadline hardening (Adım 7); yerel PostgreSQL/IAM
   adoption (Adım 8); sentetik concierge dry-run (Adım 9); ilk gerçek
   concierge pilotu (Adım 10); Entra/P1 (Adım 11); hosting/Key Vault
@@ -7802,6 +7827,213 @@ olmadan 68/68 PASS eder.
 olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
 roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
 dosyasına dokunmaz.
+
+### Pilot Readiness Adım 4a — LLM Gizlilik Sınırı: Fact Extraction Takma Adlandırma (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve pilot blocker** — İlk gerçek belge dış LLM'e (Anthropic) gitmeden
+önce taraf adı/TCKN/VKN/IBAN/telefon/e-posta takma adlandırılmalıdır; bağlayıcı
+kaynak: Pilot Readiness Priority Reconciliation §4 Adım 4 + D-17 (fact
+extraction belge metninin TAMAMINI ve `parties[].display_name`'i maskesiz
+gönderiyordu). Bu slice yalnız fact extraction'ı kapsar (Pipeline A'nın tek LLM
+adımı); diğer ajanlar Dilim 4b'dir.
+
+**B. Exact kapsam ve commit** — Kullanıcı tarafından ayrıca onaylanmış tam
+allowlist: **2 YENİ + 9 DEĞİŞTİRİLMİŞ = 11 dosya**; allowlist dışında hiçbir
+dosyaya dokunulmadı. Yerel commit `77f96c9f21425d825d4e50b0a098e7f35accf986`
+(push YAPILMADI); 11 dosya, 5907 ekleme, 15 silme. Sıfır migration, sıfır schema,
+sıfır production-data, sıfır bağımlılık (pin) değişikliği.
+
+| Dosya | Durum | SHA-256 (HEAD `77f96c9`) |
+|---|---|---|
+| `src/llm_privacy_boundary.py` | YENİ | `72b2fe9d7f6fdb0bbb5a25226420eab3b3d6ae6ab5a09d2cbcfdb281bebe5984` |
+| `ui/tests/test_llm_privacy_boundary_isolated.py` | YENİ | `615287f68e8a38ea1c2b2b6eb306e2804b1ea54680c79f1e6104798fbb061e39` |
+| `src/fact_extraction_engine.py` | DEĞİŞTİRİLMİŞ (LOCKED Row 4 + 19C-3c-iii) | `8684b2c45fda56f6d2d24b735bdd73857bb8cccf425f9dbc40ed8f7cece040bf` |
+| `ui/services/fact_extraction_mutation_facade.py` | DEĞİŞTİRİLMİŞ (LOCKED 19C-3c-iii) | `268278349b0c8f16c90f8d555bd6c9003dd16476fb198d0f9c1594436dba62be` |
+| `ui/services/fact_extraction_mutation_adapters.py` | DEĞİŞTİRİLMİŞ (LOCKED 19C-3c-iii) | `c5da76eb84908a174e63b1ec8766bf11df62ee80aa795466a1f0bf8d7ccd03fc` |
+| `ui/cli_mutate.py` | DEĞİŞTİRİLMİŞ (LOCKED 19C-3b/3c) | `546c0717cd38ba20bc7aa1c798f1bf73f21f96859e1d39a5a4dcb34a71090ad0` |
+| beş test dosyası | DEĞİŞTİRİLMİŞ | `test_reconciliation_isolated`, `test_fact_extraction_mutation_facade_isolated`, `test_fact_extraction_engine_isolated`, `test_fact_extraction_mutation_integration_postgres`, `test_cli_mutate_isolated` |
+
+**C. Tasarım (Tasarım R — geri çevrilebilir takma adlandırma)** — Tasarım I
+(geri çevrilemez redaksiyon) REDDEDİLDİ: aynı üç LOCKED üretim dosyasını açar,
+canonical `text_excerpt`'in kaynağa sadakatini bozar, token'ları 10 downstream
+tüketiciye yayar ve kalıcı harita gerektirir ("eşleşme tablosu diske YAZILMAZ"
+şartıyla çelişir). R'de: (1) prompt için context'in ve metnin KOPYASI aynı
+haritayla maskelenir; `build_extraction`'a ORİJİNAL context verilir (aksi halde
+`normalize_attribution` idare atfını hatasız düşürürdü); (2) geri çevirme
+`parse_llm_json` ile `build_extraction` ARASINDA, `json.loads`'tan SONRA ağaç
+üzerinde yapılır (dict ANAHTARINDA token görülürse REDDET); (3) token
+`VGMASK_<NNNN><C>` — sınıf harfi SONDA (`P` isim, `T` 11 hane, `V` 10 hane, `B`
+IBAN, `F` telefon, `E` e-posta), sıra numarası ilk-görülme sırasıyla
+deterministik; (4) maksimal 10/11 haneli ASCII rakam dizisinin TAMAMI maskelenir
+(sağlama yalnız etiket için; ayraç ASLA temizlenmez, kayan pencere yok — `12.345.678,90`
+tutarı ve 17 haneli tebligat no yanlış kimlik olmasın diye); IBAN (biçim + mod-97,
+boşluk/NBSP/tire/nokta gruplu), telefon, e-posta, tohum adları (sondaki `\b` YOK —
+Türkçe ekler); boşluk/satır sonu/görünmez karakter esnek çok-kelimeli ad
+eşleştirmesi; fixpoint'e kadar tekrar; en uzun eşleşme önce; (5) tohum
+listesi: `parties[].display_name` (YALNIZ `party_type ∈ {individual, company}`
+— kamu kurumu/mahkeme/idare adları BİLİNÇLİ maskelenmez, karar U2),
+`reference_code`, dosya adı/`uploaded_by_ref`, operatör ek terimleri
+(`--mask-term`, tekrarlanabilir, karar U3); şirket eki varyantları, ek'siz
+çekirdek ad, ASCII transliterasyon; (6) fail-closed tablosu: boş tohum listesi
+(koşulsuz ret, override yok), token öneki çakışması, hayatta kalan
+TCKN/VKN/IBAN/e-posta/tohum adı, ASCII olmayan rakam, `case_id`/`party_id`/
+`document_id`/`source_document_issuer_party_id` içinde tohum çekirdek adı
+(opak olmayan kimlik), kelime-İÇİ görünmez karakter/NFD, bilinmeyen/bozuk/kesik/
+büyük-küçük harf değişmiş/uzamış-rakamlı dönüş token'ı, dönüşte düşen/fazla
+token, maskeli metnin `MAX_INPUT_CHARS` aşması; (7) maskeleme fact extraction
+ajan yolunda ZORUNLUDUR (üretim ve enjekte-istemci; opt-out yok); modelin
+token'ı aynen kopyalaması için sabit bir talimat bloğu YALNIZ maskeleme
+aktifken USER prompt'a eklenir (`SYSTEM_PROMPT`/`PROMPT_VERSION` DEĞİŞMEZ;
+blok `masking_policy_version` ile kapsanır); (8) identity_payload **7 → 9**
+anahtar (`+ masking_policy_version`, `+ masking_extra_terms_digest`),
+`_MANIFEST_VERSION` facade VE adapter'da birlikte `.v2` (`_SNAPSHOT_VERSION`
+DEĞİŞMEDİ), üç çağrı noktasında; digest kilit altında yeniden hesaplanır;
+`--mask-term` değişimi yeni, bağımsız idempotency slotu üretir; audit kaydı
+iki alanı identity_payload'dan tek kaynaktan taşır, adapter bağlar
+(`generation_parameters_digest is None` kuralı DEĞİŞMEDİ); (9) önizleme
+belge metnini yükler, maskeler ve maskeli metin + sayaçlar + sınıf dağılımı +
+ipucu sayaçlarını (`possible_over_masking`, `possible_split_identifier`,
+`possible_squeeze_seed_match`) gösterir, haritayı ASLA; hatalar sabit mesajlı
+`ApprovalUiError` alt sınıflarıdır (traceback yok); (10) `--mask-term` yalnız
+fact_extraction satırında kabul edilir, diğer beş generation dalında usage-shape
+ile authz/DB/dosya erişiminden ÖNCE reddedilir; önerilen apply komutu yalnız
+güvenli-desenli terimleri gömer, aksi halde terimleri ayrı blokta listeler.
+
+**D. Kullanıcı kararları ve delege edilen kararlar** — Kullanıcı onayı: U1 (iki
+dilim: 4a sonra 4b), U2 (kamu kurumu adları maskelenmez), U3 (`--mask-term`);
+ayrıca exact 11 dosyalık allowlist. Kullanıcının bana delege ettiği teknik takaslar
+(kaynakta kayıtlı, sonradan itiraz edilebilir): bölünmüş TCKN/VKN için **b2**
+(reddetme, yalnız önizleme sayacı — operatör düzeltemeyen haksız ret riski);
+squeeze-only tohum isabetinin reddedilmek yerine sayaca indirilmesi (R1(iii));
+kelime-içi `scan_fold`'un NFKD+birleştirici-at yerine NFKC olması (`TAS` çekirdeği
+vs `taşınmaz` kalıcı haksız retini kaldırmak için); gerçek-model smoke testi
+Adım 9'a ertelendi.
+
+**E. Dürüst kronoloji (aşamalar birleştirilmeden)** — (1) Salt-okunur scope
+reconciliation: üç bağımsız araştırma ajanı (fact extraction hattı; repo-geneli
+çıkış envanteri; maskeleme tasarım kısıtları) + advisor; (2) taze bir bağımsız
+inceleme scope taslağına 15 mekanik düzeltme getirdi (0 Blocker), hepsi FINAL'e
+işlendi; (3) kullanıcı onayı; implementasyon (bağımsız bir Opus ajanı, ayrı
+brief); (4) **ilk bağımsız inceleme: NOT LOCK-READY** — B1: maskeleyici ve
+giden-metin taraması aynı `fold1to1` karşılaştırmasını paylaştığından satır
+sonu/çift boşluk/sekme/NBSP/yumuşak tire/ZWSP ile bölünmüş veya NFD taraf adı
+SESSİZCE LLM'e gidiyordu; ayrıca S1 (isim maskelenmeyen context alanlarında
+hayatta kalıyordu), S2 (aşırı-maskeleme sayacı kör), S3 (önerilen komutta
+güvensiz kabuk alıntılaması); (5) remediasyon 1 (B1 isim yarısı: normalize eden
+bağımsız backstop + boşluk-esnek maskeleyici; kimlik yarısı b2); (6) ikinci
+bağımsız inceleme: **READY WITH CORRECTIONS** — R1 (kelime-ortası tüm-boşluk
+silen `scan_squeeze` operatörün düzeltemediği haksız ret üretiyordu: 25/249
+gerçek-fixture kombinasyonu), R2 (`source_document_issuer_party_id` opaklık
+kontrolünde yoktu), R3 (tire/nokta gruplu geçerli IBAN maskelenmiyordu);
+(7) remediasyon 2 (R1 ii/iii, R2, R3) ve remediasyon 3 (NFKC); (8) son bağımsız
+doğrulama: **LOCK-READY — NO BLOCKING FINDINGS**.
+
+**F. Kanıt — implementer ve bağımsız inceleyici sayıları AYRI** —
+Implementer (Opus ajanı) final: developer sweep 74/74 modül, 5535 passed, 0
+failed; 34 mutasyon öldürüldü + 1 kanıtlı eşdeğer. Bağımsız inceleyicinin KENDİ
+koşusu (kendi disposable PostgreSQL 16'sı): touched modüller yeşil (gizlilik
+modülü 453/0), developer sweep **74/74, 5539 passed, 0 failed**, 8 counted /
+14 informational skip, guard `net_blocked=0`/`env_open_blocked=0`, 10/10 pozitif
+kontrol; 14/14 bağımsız mutasyon öldürüldü. **Resmî kapılar (commit `77f96c9`,
+çalışma ağacı temiz, ben koştum):** `production-parity` FULL exit 0 — 74
+izlenen = 74 dosya sistemi, **74/74 PASS, 5539 passed, 0 failed, 8 counted, 14
+informational**; 14 `*_postgres` modülünün hepsi gerçekten koştu (fact extraction
+entegrasyonu 58/0); guard armed 194 = expected 194, `NET_BLOCKED` 0,
+`ENV_OPEN_BLOCKED` 0, 10/10 pozitif kontrol, secret taraması 148 dosya 0 isabet;
+korunan-yol manifesti (122 giriş) kapıdan önce/sonra bayt-bayt aynı,
+`data/cases` artığı 0. `rag-dependency` `RAG_GATE_PASS` exit 0 (216 passed; K.1
+muafiyeti isimle, etkin skip 0). **Sınır:** resmî kapı koşuları implementer'ın
+(ana oturumun) koşularıdır; bağımsız inceleyici aynı ağaca karşı kendi süpürmesini
+ayrıca koştu. `sys.addaudithook` libpq C-seviyesi soketlerini görmez (Adım 3
+sınırı geçerli).
+
+**G. Sayaçlar** — `ui/tests/test_*.py` modülü **73 → 74**; production Python
+**155 → 156**; routing key (50), logical mutation family (38), CLI subcommand
+(6), migration (5) DEĞİŞMEDİ.
+
+**H. AÇIK sınırlar (kapatılmış gösterilmez)**
+1. **Bu takma adlandırmadır, anonimleştirme DEĞİLDİR.** Tarih+tutar+vergi
+   türü+mahkeme birleşimi yeniden kimliklendirebilir; tohum listesinde olmayan
+   (tanık, müdür, muhasebeci, karşı taraf, adres) ve **farklı yazılmış** isimler
+   hayatta kalır — NER yok. Tohumda olmayan bir aksan taşıyan ad (`Ahmet` →
+   `Ahmét`) maskelenmez VE reddedilmez (NFKC altında Türk alfabesinin 12 aksanlı
+   harfinin tamamı yeniden birleştiği için NFD kodlanmış Türkçe ad tohumla
+   eşleşmeye devam eder; NFC'de birleşmeyen işaret hâlâ reddedilir).
+2. **Bölünmüş kimlik numarası (b2):** satır sonu/boşluk ile bölünmüş TCKN/VKN
+   ne maskelenir ne reddedilir, yalnız `possible_split_identifier` önizleme
+   sayacıyla raporlanır; avukat maskeli önizlemeyi kontrol etmelidir (apply
+   önizleme digest'ine bağlıdır).
+3. **Kelime İÇİNE sokulmuş düz boşluk/satır sonu/sekme veya satır sonu YUMUŞAK
+   tirelemesi** (tek kelimelik tohum: `Ah met`, `Ah­\nmet`) reddedilmez,
+   yalnız `possible_squeeze_seed_match` sayaçlanır. **Satır sonu GERÇEK tire
+   (`Ah-\nmet`)** sayaç bile ateşlemez — tamamen sessizdir (bu turdan önce de
+   böyleydi, regresyon DEĞİL).
+4. Tireli/noktalı **telefon** (`0532-123-45-67`) ve baştaki `0`'sız cep telefonu
+   maskelenmez; sağlaması bozuk TR IBAN maskelenmez; `party_type="other"` hiç
+   tohumlanmaz; ASCII-dışı e-posta yerel kısmı kısmen maskelenir.
+5. Kimlik sınıflarında (IBAN/telefon/e-posta/rakam) maskeleyici ve backstop
+   HÂLÂ aynı regex'i paylaşır — B1'in yapısal deseni yalnız tohum sınıfı için
+   kırıldı (mimari not).
+6. `VGMASK_0001PP` (modelin token'ın hemen ardına harf eklemesi) sessiz
+   `<ad>P` bozulmasıdır, sızıntı değil; maskeleyici sınırsız uzunlukta
+   boşluk/görünmez dizisini köprüleyip iki ilgisiz kelimeyi tek token'a
+   yutabilir (geri çevrilebilir, yalnız model anlaması zayıflar).
+7. **Modelin token'ı aynen yansıtıp yansıtmadığı ÖLÇÜLMEDİ** (ağ yok; yalnız
+   sahte istemci). Güvenlik ağı: bozuk/bilinmeyen token sessizce geçmez, pending
+   YAZILMAZ. Maskelemenin çıkarım kalitesine etkisi ölçülmedi; ikisi de Adım
+   9'da (gerçek Anthropic çağrısı, sentetik belge) ölçülür.
+8. Süre: maliyet ≈ tohum × yerleştirme; 60k karakter + 20 terim ≈ 2,7 s, 300 terim
+   ≈ 34 s (zaman aşımı yok, fail-closed etkilenmez).
+9. `case_id`/`party_id`/`document_id` opaklık kontrolü, bir şirket çekirdeği
+   bir kimlik parçasıyla çakışırsa (`Belge Ltd. Şti.` + `belge_9001`) yanlış
+   pozitif üretebilir; `--mask-term` komut alıntılaması CRT/CMD tarzıdır
+   (yalnız güvenli desenli terimler komuta gömülür, diğerleri ayrı blokta).
+   Konsoldaki `Source actor:` satırı (yerel, yetkili operatör) ham kalır.
+10. **LOCKED Row 4'te önceden var olan kusur (bu slice'ta DÜZELTİLMEDİ,
+    Backlog):** `fact_extraction_engine.py` `text_contains_party_name`
+    `display_name.casefold()` kullanır; `"İstanbul Vergi Mahkemesi".casefold()`
+    büyük harfli `"İSTANBUL VERGİ MAHKEMESİ…".casefold()` içinde BULUNMAZ
+    (İ → i + U+0307). Kamu kurumu maskelenmediği için Adım 4 bundan etkilenmez.
+11. Anthropic veri-işleme/saklama şartları, avukatlık sırrı ve KVKK yurt dışı
+    aktarım soruları KODLA KAPANMAZ — Adım 6'ya `EXTERNAL LEGAL VERIFICATION
+    REQUIRED`.
+
+**I. Kapsam dışı / başlamamış** — Bu checkpoint aşağıdakilerin HİÇBİRİNE
+yetki VERMEZ: **Dilim 4b** (dört C3 ajanın mekanik kapatılması ve `app.py`);
+Adım 5 resmî tatil takvimi; Adım 6 avukat doğrulaması; Adım 7 deadline
+hardening; Adım 8 yerel PostgreSQL/IAM; Adım 9 sentetik concierge dry-run; Adım
+10 ilk gerçek pilot; Adım 11 Entra/P1; Adım 12 hosting/Key Vault; Adım 13c
+configurable case root; push.
+
+**J. §9 / LOCKED-file gerekçesi** — Dört LOCKED üretim dosyası açıldı
+(engine, facade, adapter, `ui/cli_mutate.py`); sebep hepsinde
+**security/privacy** (§9 "security/safety ihlali"): prompt'un üretildiği TEK yer
+engine'dir; `identity_payload`'ın TEK üretildiği yer facade'dir ve bağlayıcı
+tanım `masking_version`'ı identity'ye sokmayı zorunlu kılar; adapter identity
+anahtar kümesini EXACT doğruladığı için facade'le birlikte değişmek zorundadır
+(aksi halde her reconciliation fail-closed çözümsüz kalırdı); `cli_mutate`
+önizleme şartı ve `--mask-term` için. Değişiklikler katmasaldır (15 silinen
+satırın tamamı tek tek incelenip meşru bulundu); `SYSTEM_PROMPT`,
+`PROMPT_VERSION`, `_SNAPSHOT_VERSION`, `--with-agent`/`--allow-network` çift
+kapısı ve Row 4 domain mantığı DEĞİŞMEDİ.
+
+**K. Süreç notları (gizlenmez)** — İmplementasyon ve düzeltmeler bağımsız Opus
+ajanları tarafından, incelemeler ayrı taze ajanlar tarafından yapıldı; ana oturum
+koordinatör ve resmî kapı koşucusuydu. Advisor iki kez (scope başında ve
+implementasyon başında) çağrıldı; hiçbir bulgu/sayı ondan alınmadı. İnceleyiciye
+verilen bir brief "yalnız 2 dosya değişti" diyordu, gerçekte 7 dosya değişmişti
+(5'i R1(iii) sayaç tesisatı; katmasal, silmeler birebir aynı) — inceleyici
+düzeltti. Web araması yalnız VKN/TCKN algoritmasının yayımlanmış biçimini teyit
+etmek için yapıldı (200.000 rastgele girdide 0 uyuşmazlık; yetkili GİB belgesi
+BULUNAMADI — tasarım VKN'yi sağlamaya bağımlı kılmaz).
+
+`PILOT READINESS STEP 4a LLM PRIVACY BOUNDARY LOCK-READY — NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi
+yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
+hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 
