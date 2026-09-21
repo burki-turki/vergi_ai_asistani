@@ -1472,7 +1472,7 @@ try:
             (hr2 / "logs" / (name + ".stderr.bin")).write_bytes(b"")
             rag_logs[name] = (str(hr2 / "logs" / (name + ".stdout.bin")), str(hr2 / "logs" / (name + ".stderr.bin")))
 
-        def rag_sweep(builder_info):
+        def rag_sweep(builder_info, smoke_info=0):
             sw = runner.Sweep(make_args(profile="rag-dependency"), {"PATH": os.environ.get("PATH", "")}, str(fr2), io.StringIO())
             sw.run_dir = str(hr2)
             sw.tmp_dir = str(hr2 / "tmp")
@@ -1483,7 +1483,7 @@ try:
             sw.bytecode_before = runner.bytecode_manifest(str(fr2))
             sw.report["modules"] = []
             for name in runner.RAG_GATE_MODULES:
-                info = builder_info if name == "test_rag_bundle_builder_isolated" else 0
+                info = builder_info if name == "test_rag_bundle_builder_isolated" else (smoke_info if name == "test_rag_bundle_dependency_smoke" else 0)
                 sw.report["modules"].append({"name": name, "outcome": "PASS", "passed": 1, "failed": 0, "counted_skips": 0,
                                              "informational_skips": info, "temp_residue": [], "guard_armed": True,
                                              "stdout_log": rag_logs[name][0], "stderr_log": rag_logs[name][1]})
@@ -1514,6 +1514,89 @@ try:
               "FAIL" in sw_gate_nomarker.module_outcomes and (sw_gate_nomarker.report.get("rag_gate") or {}).get("marker_present") is False
               and runner.decide_exit_code("rag-dependency", sw_gate_nomarker.module_outcomes, sw_gate_nomarker.integrity_failures) == 1,
               (sw_gate_nomarker.module_outcomes, sw_gate_nomarker.report.get("rag_gate")))
+
+        # K.1 amendment (user decision): exactly ONE named, platform-gated builder skip is exempt from the
+        # zero-informational-skip rule; everything else still fails the gate and the raw total is always reported.
+        k1_skip = ("SKIPPED (NOT counted as pass/fail) containment_looping_link - this platform/account cannot create a "
+                   "genuinely self-referential symlink (OSError(1314, 'A required privilege is not held by the client')) - POSIX-only "
+                   "capability (see src/path_containment.py's own ELOOP handling); never claimed as a pass")
+        k1_builder = "test_rag_bundle_builder_isolated"
+        k1_ex = runner.rag_gate_platform_exempt_skips
+        check("K.1 pure: the exact named line is exempt on win32 (LF and CRLF), capped at ONE occurrence",
+              k1_ex(k1_builder, (k1_skip + "\n").encode(), "win32") == 1 and k1_ex(k1_builder, (k1_skip + "\r\n").encode(), "win32") == 1
+              and k1_ex(k1_builder, (k1_skip + "\n" + k1_skip + "\n").encode(), "win32") == 1)
+        check("K.1 pure: NOT exempt on another platform, for another module, for any other text (label, wording, counted-skip variant, leading space, non-UTF-8 log)",
+              k1_ex(k1_builder, (k1_skip + "\n").encode(), "linux") == 0 and k1_ex(k1_builder, (k1_skip + "\n").encode(), "darwin") == 0
+              and k1_ex("test_rag_bundle_reader_isolated", (k1_skip + "\n").encode(), "win32") == 0
+              and k1_ex("test_rag_bundle_dependency_smoke", (k1_skip + "\n").encode(), "win32") == 0
+              and k1_ex(k1_builder, (k1_skip.replace("containment_looping_link", "another_label") + "\n").encode(), "win32") == 0
+              and k1_ex(k1_builder, (k1_skip.replace("NOT counted as pass/fail", "counted as pass/fail") + "\n").encode(), "win32") == 0
+              and k1_ex(k1_builder, (k1_skip + " and more\n").encode(), "win32") == 0
+              and k1_ex(k1_builder, (" " + k1_skip + "\n").encode(), "win32") == 0
+              and k1_ex(k1_builder, b"PASS a\n\xff\xfe\n" + k1_skip.encode() + b"\n", "win32") == 0
+              and k1_ex(k1_builder, b"", "win32") == 0)
+        check("K.1 static: the exemption table names exactly one module, one platform (win32) and at most one occurrence (it cannot silently widen)",
+              set(runner.RAG_GATE_PLATFORM_SKIPS) == {k1_builder} and runner.RAG_GATE_PLATFORM_SKIPS[k1_builder]["platform"] == "win32"
+              and runner.RAG_GATE_PLATFORM_SKIPS[k1_builder]["max_occurrences"] == 1
+              and sorted(runner.RAG_GATE_PLATFORM_SKIPS[k1_builder]) == ["max_occurrences", "pattern", "platform"], runner.RAG_GATE_PLATFORM_SKIPS)
+        builder_src = (REPO_ROOT / "ui" / "tests" / "test_rag_bundle_builder_isolated.py").read_text(encoding="utf-8")
+        check("K.1 drift guard: the byte-locked builder test still emits that skip (label, wording, skip_info line format) and the table matches its rendering",
+              'print(f"SKIPPED (NOT counted as pass/fail) {label} - {detail}")' in builder_src and '"containment_looping_link"' in builder_src
+              and "this platform/account cannot create a genuinely self-referential symlink" in builder_src
+              and "- POSIX-only capability (see src/path_containment.py's own ELOOP handling); never " in builder_src
+              and '"claimed as a pass"' in builder_src and k1_ex(k1_builder, (k1_skip + "\n").encode(), "win32") == 1)
+
+        def k1_builder_body(skip_lines, info):
+            return ("PASS x\n" + "".join(s + "\n" for s in skip_lines)
+                    + "--- test_rag_bundle_builder_isolated: 1 passed, 0 failed, %d informational skips ---\n" % info).encode("utf-8")
+
+        k1_builder_log = hr2 / "logs" / "test_rag_bundle_builder_isolated.stdout.bin"
+        k1_smoke_log = hr2 / "logs" / "test_rag_bundle_dependency_smoke.stdout.bin"
+        k1_smoke_log.write_bytes(smoke_with_marker)
+        k1_saved_platform = runner._rag_gate_platform
+        try:
+            runner._rag_gate_platform = lambda: "win32"
+            k1_builder_log.write_bytes(k1_builder_body([k1_skip], 1))
+            sw_k1 = rag_sweep(1)
+            rgk = sw_k1.report.get("rag_gate") or {}
+            check("K.1 gate (win32): the named builder skip alone -> raw 1, exempt 1, effective 0, no FAIL, exit 0, RAG_GATE_PASS; the exemption is announced in a warning",
+                  "FAIL" not in sw_k1.module_outcomes and rgk.get("informational_skips_all_modules") == 1 and rgk.get("informational_skips_platform_exempt") == 1
+                  and rgk.get("informational_skips_effective") == 0 and rgk.get("informational_skips_platform_exempt_by_module") == {k1_builder: 1}
+                  and rgk.get("marker_present") is True and sw_k1.integrity_failures == []
+                  and runner.decide_exit_code("rag-dependency", sw_k1.module_outcomes, sw_k1.integrity_failures) == 0
+                  and any("exempted 1 platform-gated informational skip(s) by name on win32" in w for w in sw_k1.report["warnings"]),
+                  (sw_k1.module_outcomes, rgk, sw_k1.report["warnings"]))
+            k1_builder_log.write_bytes(k1_builder_body([k1_skip, "SKIPPED (NOT counted as pass/fail) missing_dependency - no faiss"], 2))
+            sw_k1b = rag_sweep(2)
+            rgb = sw_k1b.report.get("rag_gate") or {}
+            check("K.1 gate (win32): the named skip PLUS a second informational skip in the builder -> effective 1 -> FAIL, exit 1",
+                  "FAIL" in sw_k1b.module_outcomes and rgb.get("informational_skips_all_modules") == 2 and rgb.get("informational_skips_platform_exempt") == 1
+                  and rgb.get("informational_skips_effective") == 1
+                  and runner.decide_exit_code("rag-dependency", sw_k1b.module_outcomes, sw_k1b.integrity_failures) == 1, (sw_k1b.module_outcomes, rgb))
+            k1_builder_log.write_bytes(k1_builder_body([k1_skip, k1_skip], 2))
+            sw_k1c = rag_sweep(2)
+            rgc = sw_k1c.report.get("rag_gate") or {}
+            check("K.1 gate (win32): the named line TWICE -> only one is exempt, effective 1 -> FAIL",
+                  "FAIL" in sw_k1c.module_outcomes and rgc.get("informational_skips_platform_exempt") == 1 and rgc.get("informational_skips_effective") == 1, rgc)
+            k1_builder_log.write_bytes(k1_builder_body(["SKIPPED (NOT counted as pass/fail) missing_dependency - no faiss"], 1))
+            sw_k1d = rag_sweep(1)
+            check("K.1 gate (win32): a DIFFERENT builder skip text (a missing dependency) is never exempt -> FAIL",
+                  "FAIL" in sw_k1d.module_outcomes and (sw_k1d.report.get("rag_gate") or {}).get("informational_skips_platform_exempt") == 0, sw_k1d.report.get("rag_gate"))
+            k1_builder_log.write_bytes(k1_builder_body([k1_skip], 1))
+            k1_smoke_log.write_bytes(smoke_with_marker.replace(b"PASS z\n", ("PASS z\n" + k1_skip + "\n").encode()))
+            sw_k1e = rag_sweep(1, smoke_info=1)
+            check("K.1 gate (win32): a skip in the SMOKE module is never exempt, even with the named text -> FAIL",
+                  "FAIL" in sw_k1e.module_outcomes and (sw_k1e.report.get("rag_gate") or {}).get("informational_skips_platform_exempt") == 1
+                  and (sw_k1e.report.get("rag_gate") or {}).get("informational_skips_effective") == 1, sw_k1e.report.get("rag_gate"))
+            k1_smoke_log.write_bytes(smoke_with_marker)
+            runner._rag_gate_platform = lambda: "linux"
+            k1_builder_log.write_bytes(k1_builder_body([k1_skip], 1))
+            sw_k1f = rag_sweep(1)
+            check("K.1 gate (linux): the same named line is NOT exempt on another platform -> FAIL",
+                  "FAIL" in sw_k1f.module_outcomes and (sw_k1f.report.get("rag_gate") or {}).get("informational_skips_platform_exempt") == 0
+                  and not any("exempted" in w for w in sw_k1f.report["warnings"]), sw_k1f.report.get("rag_gate"))
+        finally:
+            runner._rag_gate_platform = k1_saved_platform
 
     # -----------------------------------------------------------------------
     # 27. B4: case-insensitive suspicious subprocess patterns -- pure + nested

@@ -94,6 +94,30 @@ RAG_GATE_MODULES = (
 RAG_GATE_MARKER_MODULE = "test_rag_bundle_dependency_smoke"
 RAG_GATE_MARKER_LINE = "DEPENDENCY GATE: PASS"
 
+# K.1 amendment (user decision 2026-09-21). The RAG dependency gate demands ZERO
+# informational skips across its three modules, because in require mode a skip
+# means a missing dependency. One skip is different in kind: the builder test
+# cannot create a self-referential symlink on Windows (POSIX-only capability,
+# no dependency involved) and always reports it as an informational skip. This
+# table is the ONLY exemption and is deliberately the narrowest possible: one
+# module, one platform, one exact whole-line pattern, at most one occurrence.
+# Anything else -- another module, another platform, another skip text, a
+# second occurrence -- still fails the gate. The raw total is always reported.
+RAG_GATE_PLATFORM_SKIPS = {
+    "test_rag_bundle_builder_isolated": {
+        "platform": "win32",
+        "max_occurrences": 1,
+        "pattern": (r"^SKIPPED \(NOT counted as pass/fail\) containment_looping_link - this platform/account cannot create "
+                    r"a genuinely self-referential symlink \([^\r\n]*\) - POSIX-only capability "
+                    r"\(see src/path_containment\.py's own ELOOP handling\); never claimed as a pass$"),
+    },
+}
+_RAG_GATE_PLATFORM_SKIP_RES = {_n: re.compile(_s["pattern"]) for _n, _s in RAG_GATE_PLATFORM_SKIPS.items()}
+
+
+def _rag_gate_platform():
+    return sys.platform
+
 REQUIRED_PYTHON = (3, 14)
 
 # (import name used with find_spec, distribution name used with importlib.metadata)
@@ -289,6 +313,23 @@ def classify_skipped_lines(lines):
             else:
                 counted += 1
     return counted, informational
+
+
+def rag_gate_platform_exempt_skips(module_name, stdout_bytes, platform):
+    """K.1 amendment. Pure. How many informational SKIPPED lines of
+    ``module_name`` the named platform-gated table exempts on ``platform``:
+    0 unless the module is listed, the platform matches and the line is an
+    informational skip ("NOT counted") matching the module's exact
+    whole-line pattern; capped at the table's max_occurrences."""
+    spec = RAG_GATE_PLATFORM_SKIPS.get(module_name)
+    if spec is None or platform != spec["platform"]:
+        return 0
+    lines, _err = split_stdout_lines(stdout_bytes if stdout_bytes is not None else b"")
+    if lines is None:
+        return 0
+    rx = _RAG_GATE_PLATFORM_SKIP_RES[module_name]
+    hits = sum(1 for ln in lines if RE_SKIPPED.match(ln) and RE_NOT_COUNTED.search(ln) and rx.match(ln))
+    return min(hits, spec["max_occurrences"])
 
 
 def parse_module_output(module_name, stdout_bytes, exit_code, timed_out=False, spawn_failed=False):
@@ -1676,6 +1717,7 @@ class Sweep:
             "deviations": [
                 "TEMP/TMP for children point at a short private runner-owned %TEMP%/vsw_<pid> directory instead of the parent %TEMP% itself",
                 "NESTED_RUNNER ledger record: a runner armed by a parent sweep announces itself so the parent excludes its spawns; the exclusion is limited to that nested runner's life window (its GUARD_ARMED line up to the same pid's next GUARD_ARMED) because Windows reuses pids and a bare-pid exclusion hid the python spawns of ordinary processes (V2); nested_runner_count counts NESTED_RUNNER records, nested_runner_unique_pids the distinct pids",
+                "RAG gate K.1 amendment (user decision): the informational-skip total must be zero after subtracting the ONE named platform-gated skip of RAG_GATE_PLATFORM_SKIPS (builder module, win32, exact whole-line pattern, at most once); the raw total and the exempted count are reported separately",
                 "Windows children are spawned CREATE_SUSPENDED, assigned to the per-module Job Object and only then resumed: N.2's assignment window (W11) is closed, not merely disclosed; an assignment/resume failure kills the never-started child, is recorded as JOB_CONTAINMENT_FAILURE and STOPS the sweep (exit 3)",
                 "A Job Object CREATION failure is a refusal (exit 2) only BEFORE the first module; after at least one module has run it is recorded as JOB_CONTAINMENT_FAILURE (stage create, module never spawned), STOPS the sweep and phase_post_run still collects the evidence of the modules that did run (exit 3) -- never a late refusal that would relabel partial work as 'no module ran' (B2-R1)",
             ],
@@ -2326,15 +2368,31 @@ class Sweep:
         # rag gate marker
         if self.profile == "rag-dependency":
             marker_ok = False
-            # K.1 exact contract (B3): every module of the exact three-module
-            # set PASS, informational skips == 0 across ALL modules (require
-            # mode), and the smoke marker present as a full line. The rule
-            # is NOT relaxed to the smoke module only: a builder informational
-            # skip fails the official gate and is reported as an open contract
-            # blocker (a separate amendment is required to change K.1).
+            # K.1 contract (B3) as amended: every module of the exact
+            # three-module set PASS, EFFECTIVE informational skips == 0 across
+            # ALL modules (require mode), and the smoke marker present as a
+            # full line. Effective = raw total minus the named platform-gated
+            # skips of RAG_GATE_PLATFORM_SKIPS (one exact line of one module
+            # on one platform). The rule is NOT relaxed to the smoke module
+            # only, and the raw total is always reported.
             info_smoke = sum(m["informational_skips"] for m in self.report["modules"] if m["name"] == RAG_GATE_MARKER_MODULE)
             info_by_module = {m["name"]: m["informational_skips"] for m in self.report["modules"]}
             info_all = sum(info_by_module.values())
+            exempt_by_module = {}
+            for m in self.report["modules"]:
+                if m["name"] not in RAG_GATE_PLATFORM_SKIPS:
+                    continue
+                try:
+                    with open(m["stdout_log"], "rb") as f:
+                        exempt_source = f.read()
+                except OSError:
+                    exempt_source = b""
+                n_exempt = min(rag_gate_platform_exempt_skips(m["name"], exempt_source, _rag_gate_platform()), m["informational_skips"])
+                if n_exempt:
+                    exempt_by_module[m["name"]] = n_exempt
+            effective_by_module = {n: c - exempt_by_module.get(n, 0) for n, c in info_by_module.items()}
+            info_exempt = sum(exempt_by_module.values())
+            info_effective = sum(effective_by_module.values())
             for m in self.report["modules"]:
                 if m["name"] == RAG_GATE_MARKER_MODULE:
                     try:
@@ -2346,15 +2404,22 @@ class Sweep:
             self.report["rag_gate"] = {"marker_present": marker_ok, "informational_skips_smoke": info_smoke,
                                        "informational_skips_all_modules": info_all,
                                        "informational_skips_by_module": info_by_module,
-                                       "rule": "K.1 exact: all modules PASS, informational_skips_all_modules == 0, marker full line"}
+                                       "informational_skips_platform_exempt": info_exempt,
+                                       "informational_skips_platform_exempt_by_module": exempt_by_module,
+                                       "informational_skips_effective": info_effective,
+                                       "rule": "K.1 amended: all modules PASS, informational_skips_effective == 0 (raw total minus the named platform-gated skips), marker full line"}
             if not marker_ok:
                 self.module_outcomes.append(OUTCOME_FAIL)
                 self.report["warnings"].append("rag gate: '%s' marker line absent" % RAG_GATE_MARKER_LINE)
-            if info_all != 0:
-                offenders = ", ".join("%s=%d" % (n, c) for n, c in sorted(info_by_module.items()) if c)
+            if info_exempt:
+                self.report["warnings"].append(
+                    "rag gate: K.1 amendment exempted %d platform-gated informational skip(s) by name on %s (%s)" % (
+                        info_exempt, _rag_gate_platform(), ", ".join("%s=%d" % (n, c) for n, c in sorted(exempt_by_module.items()))))
+            if info_effective != 0:
+                offenders = ", ".join("%s=%d" % (n, c) for n, c in sorted(effective_by_module.items()) if c)
                 self.module_outcomes.append(OUTCOME_FAIL)
                 self.report["warnings"].append(
-                    "rag gate: K.1 requires informational skips == 0 across all modules in require mode (got %d: %s)" % (info_all, offenders))
+                    "rag gate: K.1 requires informational skips == 0 across all modules in require mode (got %d: %s)" % (info_effective, offenders))
 
     def finish(self, exit_code, aborted=False):
         self.report["integrity"]["failures"] = self.integrity_failures
