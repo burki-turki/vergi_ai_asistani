@@ -623,7 +623,7 @@ def test_activate_and_reconciliation_real(build_result):
 
 def run_cli(argv):
     stdout, stderr = io.StringIO(), io.StringIO()
-    code = cli_mutate.main(argv, mutation_conn_factory=pg_connect, stdout=stdout, stderr=stderr)
+    code = cli_mutate.main(argv, authz_conn_factory=pg_connect, mutation_conn_factory=pg_connect, stdout=stdout, stderr=stderr)
     return code, stdout.getvalue(), stderr.getvalue()
 
 
