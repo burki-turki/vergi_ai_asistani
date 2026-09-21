@@ -647,37 +647,61 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   `data/cases/` altındaki YENİ untracked case içeriğinin kazara
   stage/commit edilmesi engellenir (bkz. checkpoint özeti §O).
 - **Pilot Readiness Adım 3 — Runner / Environment / Skip Reporting —
-  ACTIVE / NEXT.** Bu pointer YALNIZ **salt-okunur exact-scope/
-  allowlist reconciliation** yetkisi verir; implementasyon veya dosya
-  değişikliği YETKİSİ VERMEZ. Araştırma kapsamı: (a) tek ve dürüst bir
-  test-runner sözleşmesi; (b) gerekli environment-variable/DSN
-  sözleşmesi; (c) `VERGI_TEST_PG_DSN` ile `VERGI_IAM_DATABASE_URL`
-  ilişkisinin/açık bağımlılığının uzlaştırılması; (d) PostgreSQL
-  gerektiren modüllerin sessiz 0-check/exit-0 veya yanlış-yeşil
-  görünmemesi; (e) counted skip ile informational skip'in ayrı ve
-  mekanik raporlanması; (f) modül özeti formatlarındaki `---`,
-  `TOTAL:` ve bare-summary çeşitlerinin normalize edilmesi; (g)
-  fail-closed exit/status ve per-module tally; (h) network/`.env`
-  guard ve cleanup/invariance kanıt disiplininin tek bir çalıştırıcıya
-  bağlanıp bağlanmayacağının araştırılması. Açıkça BAŞLAMAMIŞ/
-  YETKİLENDİRİLMEMİŞ: Adım 3 kodlama/runner yazımı; LLM masking (Adım
-  4); resmî tatil takvimi (Adım 5); avukat altın örnekleri (Adım 6);
-  deadline hardening (Adım 7); yerel PostgreSQL/IAM adoption (Adım 8);
-  sentetik concierge dry-run (Adım 9); ilk gerçek concierge pilotu
-  (Adım 10); Entra/P1 (Adım 11); hosting/Key Vault (Adım 12);
-  configurable external case root (post-pilot Adım 13c). Eski "Row 19D
-  External Activation / Adoption Gate" pointer'ının kapsadığı
-  maddelerin (gerçek Entra tenant/app registration, `acrs` claims dış
-  doğrulaması, Conditional Access/authentication-context preflight'i,
-  Key Vault custom GET-only role deployment/adoption, Graph izinleri,
-  loopback-only middleware ile `X-Forwarded-For` yasağının hosting
-  uyumluluğu) TAMAMI Entra/P1 (Pilot Readiness Adım 11) ve hosting/Key
-  Vault (Adım 12)'ye ERTELENMİŞ olarak KALMAYA devam eder — bu maddeler
-  KAPANMAMIŞTIR (bkz. Row 19B OIDC Confidential-Client Remediation
-  checkpoint özeti). İlk pilot modeli concierge olarak korunmaktadır.
-  Corpus acquisition/population bu pointer tarafından
-  YETKİLENDİRİLMEZ. Yeni bir roadmap Row numarası İCAT EDİLMEMİŞTİR;
-  mevcut Pilot Readiness adım numaraları korunur.
+  DONE / LOCKED.** Exact kapsam **4 YENİ + 1 DEĞİŞTİRİLMİŞ = 5 dosya**:
+  `scripts/run_ui_tests.py` (YENİ — tek, dürüst, fail-closed test
+  çalıştırıcısı), `scripts/sweep_env_guard.py` (YENİ — çalıştırıcının her
+  koşuda private dizine bayt-bayt kopyaladığı `sitecustomize` guard
+  kaynağı), `ui/tests/test_run_ui_tests_isolated.py` (YENİ — T.1),
+  `ui/tests/test_run_ui_tests_integration_postgres.py` (YENİ — T.2,
+  gerçek PostgreSQL) ve `ui/tests/test_rag_bundle_mutation_integration_
+  postgres.py` (DEĞİŞTİRİLMİŞ — `run_cli()`'de tek satır
+  `authz_conn_factory=pg_connect`). İki yerel commit: `4ee72ef` (beş
+  yol) ve `2afff40` (RAG kapısı K.1 daraltması); ikisi de yalnız yerel,
+  **push YAPILMADI**. Çalıştırıcı, PostgreSQL gerektiren modüllerin
+  sessiz 0-check/exit-0 görünmesini, counted skip ile informational
+  skip'in karışmasını ve `.env`/network/secret sızıntısını mekanik
+  olarak engeller; tek yetkili çıktı sırası: exit code > özet
+  varlığı/ad bağı > sayılar > ham PASS/FAIL çapraz kontrolü > SKIPPED
+  taraması. Resmî `production-parity` (gerçek PostgreSQL) ve
+  `rag-dependency` kapıları commit'li baytlarla exit 0 verdi (bkz.
+  checkpoint özeti). Final verdict, exact olarak:
+  `PILOT READINESS STEP 3 RUNNER / ENVIRONMENT / SKIP REPORTING LOCK-READY — NO BLOCKING FINDINGS`
+  (bkz. Pilot Readiness Adım 3 checkpoint özeti, §5 sonrası, "## 6.
+  Cross-Cutting Backlog"dan hemen önce). **Dar, exact iddia**
+  (abartılmaz): bu, Python-seviyesi guard sayaçlarına ve DSN'nin
+  `127.0.0.1` + disposable kümeye sabitlenmesine dayanan bir test-
+  disiplini çalıştırıcısıdır; libpq'nun C-seviyesi soketlerini
+  `sys.addaudithook` göremez; production ortamı veya hosting doğrulaması
+  DEĞİLDİR.
+- **Pilot Readiness Adım 4 — LLM Privacy Boundary / Masking — ACTIVE /
+  NEXT.** Bu pointer YALNIZ **salt-okunur exact-scope/allowlist
+  reconciliation** yetkisi verir; implementasyon veya dosya
+  değişikliği YETKİSİ VERMEZ. Araştırma kapsamı: dış LLM/API'ye giden
+  verinin (case fact, belge metni, avukat girdisi, prompt) hangi
+  katmanlarda ne ölçüde maskelenmesi/minimize edilmesi gerektiği;
+  mevcut agent modüllerinin (`fact_extraction_engine`, issue_spotting/
+  legal_research/case_law/evidence/argument/risk_strategy/drafting/qa
+  agent'ları) gerçek egress noktalarının envanteri; mevcut çift açık
+  network gate'inin (`--with-agent` + `--allow-network`) maskeleme ile
+  ilişkisi; maskelemenin identity/`input_digest`/audit/reconciliation
+  zincirine etkisi. Açıkça BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 4
+  kodlama/implementasyon; resmî tatil takvimi (Adım 5); avukat altın
+  örnekleri (Adım 6); deadline hardening (Adım 7); yerel PostgreSQL/IAM
+  adoption (Adım 8); sentetik concierge dry-run (Adım 9); ilk gerçek
+  concierge pilotu (Adım 10); Entra/P1 (Adım 11); hosting/Key Vault
+  (Adım 12); configurable external case root (post-pilot Adım 13c).
+  Eski "Row 19D External Activation / Adoption Gate" pointer'ının
+  kapsadığı maddelerin (gerçek Entra tenant/app registration, `acrs`
+  claims dış doğrulaması, Conditional Access/authentication-context
+  preflight'i, Key Vault custom GET-only role deployment/adoption,
+  Graph izinleri, loopback-only middleware ile `X-Forwarded-For`
+  yasağının hosting uyumluluğu) TAMAMI Entra/P1 (Pilot Readiness Adım
+  11) ve hosting/Key Vault (Adım 12)'ye ERTELENMİŞ olarak KALMAYA devam
+  eder — bu maddeler KAPANMAMIŞTIR (bkz. Row 19B OIDC Confidential-
+  Client Remediation checkpoint özeti). İlk pilot modeli concierge
+  olarak korunmaktadır. Corpus acquisition/population bu pointer
+  tarafından YETKİLENDİRİLMEZ. Yeni bir roadmap Row numarası İCAT
+  EDİLMEMİŞTİR; mevcut Pilot Readiness adım numaraları korunur.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -7569,6 +7593,208 @@ P1. Adım 12 hosting/Key Vault. Adım 13 post-pilot configurable root ve
 diğer genişletmeler.
 
 `PILOT READINESS STEP 2 CASE-DATA REPOSITORY PROTECTION LOCK-READY — NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde
+olduğu gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir
+roadmap-lock işlemidir; hiçbir kaynak/migration/test/production
+dosyasına dokunmaz.
+
+### Pilot Readiness Adım 3 — Runner / Environment / Skip Reporting (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve pilot blocker** — Repo'nun 73 test modülünü tek, dürüst bir
+komutla koşturan bir mekanizma yoktu: PATH'teki `python` yanlış
+interpreter'a düşebiliyor (root `.venv`'de psycopg/authlib yok,
+`vergi_ui_runtime`'da faiss/numpy/openai/pypdf/dotenv yok — hiçbir tek
+interpreter tüm modülleri koşamaz); PostgreSQL gerektiren modüller DSN
+yokken sessiz 0-check/exit-0 verebiliyor; counted skip ile informational
+skip karışıyor; her modülün özet formatı farklı (`---`, `TOTAL:`, bare
+summary); `.env`/network/secret koruması her test dosyasında ayrı ve
+tutarsız. Bu slice bu boşlukları kapatan, stdlib-only, fail-closed tek bir
+çalıştırıcı getirir — Pilot Readiness Priority Reconciliation
+sıralamasında **Adım 3**'tür.
+
+**B. Exact scope ve commit'ler** — Kullanıcı tarafından onaylanmış
+koşulsuz allowlist: **4 YENİ + 1 DEĞİŞTİRİLMİŞ = 5 dosya**; allowlist
+dışında hiçbir dosyaya dokunulmadı. İki yerel commit, ikisi de **push
+edilmedi**:
+
+- `4ee72ef3f4892b73c5c58264537429edfa3f638e` — beş yol (V1/V2
+  remediasyonları dahil).
+- `2afff40dbf1be465782d6c0490ed1ef14c11fb10` — RAG kapısı K.1
+  daraltması (yalnız runner + T.1).
+
+`git diff --stat HEAD~2 HEAD`: 5 dosya, 5552 ekleme, 1 silme.
+
+| Dosya | Durum | SHA-256 (HEAD `2afff40`) |
+|---|---|---|
+| `scripts/run_ui_tests.py` | YENİ | `5e3d227c91ed725202808a76bfd00c3eb62912261468b8c9cbb0c01205fd75ee` |
+| `scripts/sweep_env_guard.py` | YENİ | `ac3e70be7dc161d776c43004b0350c78f7f3dc30d6cfa8a963246c67a77988bd` |
+| `ui/tests/test_run_ui_tests_isolated.py` | YENİ (T.1) | `bb32bcdf570e2920720dbb74fc1b841c230995a7c9563deb11f776a93dc899f9` |
+| `ui/tests/test_run_ui_tests_integration_postgres.py` | YENİ (T.2) | `75c77e3459ff818906bef92c77bcfc81c808ed426783658a5d3c84b37b3dec98` |
+| `ui/tests/test_rag_bundle_mutation_integration_postgres.py` | DEĞİŞTİRİLMİŞ (tek satır) | `ec4fdd6ec52545eb2dbc5a832c008753b9f80430486b0a4b735cd170a1157e81` |
+
+Sıfır migration, sıfır schema, sıfır production-data, sıfır web/CLI
+yüzeyi, sıfır bağımlılık (pin) değişikliği; `data/**`, `index/**`,
+`db/migrations/**` ve `case_0001` (65 dosya) her turda byte-identical
+kanıtlandı.
+
+**C. Çalıştırıcı sözleşmesi (kısa)** — Üç profil: `production-parity`
+(gerçek PostgreSQL, `vergi_ui_runtime`), `rag-dependency` (root `.venv`,
+gerçek faiss/numpy/pypdf/openai/dotenv/httpx2), `developer`
+(`--allow-untracked` YALNIZ developer profilinde; resmî profiller
+untracked test modülünü reddeder — tracked küme ≡ dosya sistemi kümesi
+zorunlu). Tek ve mekanik yetki sırası: exit code > özet varlığı/ad bağı
+> sayılar > ham PASS/FAIL çapraz kontrolü > SKIPPED taraması; sıfır-kontrol
+(`ZERO_CHECK_*`) sonuçları PASS SAYILMAZ; counted skip ile informational
+skip ayrı raporlanır. Çocuk ortamı beyaz liste + denylist; `.env` ve dış
+network için fail-closed audit-hook guard (`sweep_env_guard.py`, her
+koşuda private run dizinine bayt-bayt `sitecustomize.py` olarak kopyalanır;
+repo'da `sitecustomize.py` adlı dosya BULUNMAZ); modül başına Windows Job
+Object (CREATE_SUSPENDED → assign → resume, kill-on-close, artık-süreç
+tespiti); exit kodları 0 / 1 / 2 (refusal) / 3 (integrity) / 130; atomik
+rapor (`report.json`, repo dışı run dizini); korunan-yol manifesti (tüm
+izlenen dosyalar + `data/**` + `index/**` + git status özeti) koşu
+öncesi/sonrası karşılaştırılır; `guard_accounting` (silahlanan process =
+modül kökleri + sayılan python POPEN'ları; iç içe runner pencereleri V2
+düzeltmesiyle sınırlı). Runner, `VERGI_IAM_DATABASE_URL` TÜRETMEZ ve
+enjekte etmez (Fable kararı #1 — bağımlılık, rag testindeki tek satırlık
+`authz_conn_factory=pg_connect` düzeltmesiyle kaldırıldı).
+
+**D. Dürüst kronoloji (aşamalar birleştirilmeden)**
+
+1. Salt-okunur scope DRAFT.
+2. Bağımsız Fable scope/mimari incelemesi: taslağın dokuz kusuru (A1–A9;
+   3 HIGH, 5 MEDIUM, 1 LOW) düzeltildi; allowlist 3+1'den 4+1'e
+   yeniden kuruldu; üç açık karar kesinleşti (runner DSN türetmez; guard
+   hem committed kaynak hem ephemeral `sitecustomize`; interpreter
+   capability profili, varsayılan profil YOK).
+3. Kullanıcı onayı: exact 5 dosya. İmplementasyon (Claude Fable 5.1;
+   advisor iki kez kullanıldı — kendi raporunda disclose edilmiştir).
+   İmplementasyon turunda resmî kapılar üretilemedi: makinede PostgreSQL
+   kümesi yoktu ve yeni dosyalar untracked idi.
+4. İlk bağımsız inceleme: **NOT LOCK-READY** — B1–B5 (3 HIGH + 2 MEDIUM):
+   B1 Windows `.env` guard bypass, B2 Job Object / Ctrl-C exception
+   safety, B3 RAG kapısı exact sözleşmesi (K.1), B4 büyük/küçük harf
+   duyarsız subprocess desenleri, B5 PostgreSQL env değeri sızıntısı.
+5. Dar remediasyon (yalnız 4 dosya, beşinci dosya byte-identical).
+6. Bağımsız doğrulama (ayrı oturum, gerçek disposable PostgreSQL 16 ile):
+   B2-R1 ve B5-R1 KAPANDI; ancak gerçek PostgreSQL'le ilk kez koşan
+   yollar iki yeni engelleyici bulgu çıkardı: **V1 (HIGH)** — T.2
+   gerçek-PG modunda deterministik kırmızı (54/1): B5 log taraması gerçek
+   rag modülünün kendi başlık satırını sızıntı sayıyordu (test-harness
+   kusuru); **V2 (HIGH)** — `guard_accounting` bare-pid dışlaması Windows
+   pid yeniden kullanımı altında üç gerçek süpürmenin ikisinde yanlış
+   integrity hatası (exit 3) üretiyordu, ayrıca fail-open yönü vardı.
+7. Kullanıcı onayı: exact 3 dosya (runner, T.1, T.2) — V1: T.2'de tek,
+   tam-satır banner muafiyet tablosu; V2: iç içe runner penceresi =
+   [ilgili pid'in NESTED_RUNNER kaydından önceki son GUARD_ARMED,
+   aynı pid'in sonraki GUARD_ARMED'ı); python POPEN yalnız pencerenin
+   KESİN içindeyse dışlanır.
+8. Ayrı bağımsız yeniden inceleme (Opus, kendi PostgreSQL kümesi): V1 ve
+   V2 KAPANDI, engelleyici bulgu YOK — 20.000 izlik olasılıksal
+   simülasyon (yeni mantık 20.000/20.000 doğru; eski mantık 18.786'sında
+   yanlış), monotonluk özelliği ihlal edilmeden; V2'nin aynı zamanda gerçek
+   bir fail-open'ı kapattığı gösterildi.
+9. Resmî `production-parity` FULL (commit `4ee72ef`): exit 0, 73/73,
+   4896 passed. Resmî `rag-dependency`: `RAG_GATE_FAIL` — yalnız builder
+   testinin Windows'ta self-referanslı symlink oluşturamadığı için
+   raporladığı, bağımlılıkla ilgisiz TEK informational skip yüzünden
+   (**K.1**).
+10. Kullanıcı kararı: K.1 daraltılarak çözülsün. `RAG_GATE_PLATFORM_SKIPS`
+    tablosu: TEK modül (`test_rag_bundle_builder_isolated`), TEK platform
+    (`win32`), TEK tam-satır kalıbı, en fazla 1 tekrar; kapı artık
+    `informational_skips_effective == 0` (efektif = ham − muaf) arar; ham,
+    muaf ve etkin sayı ayrı raporlanır ve muafiyet bir uyarı satırıyla
+    duyurulur; smoke modülündeki skip, başka modül/platform/metin ve
+    ikinci tekrar HÂLÂ kapıyı bozar. Kilitli builder testine dokunulmadı.
+11. Ayrı bağımsız K.1 incelemesi (Opus, PostgreSQL'siz): doğru ve dar,
+    engelleyici bulgu YOK — 81 saldırı senaryosu, 6 mutasyon testi.
+12. Commit `2afff40` ve resmî kapıların son commit'li baytlarla
+    tekrarı (Bölüm E).
+
+**E. Final resmî kanıt (HEAD `2afff40`, çalışma ağacı temiz)**
+
+- **`production-parity` FULL** — exit 0; kendi fresh disposable
+  PostgreSQL 16 (yalnız `127.0.0.1`, `--no-locale`, migration 0001-0005),
+  `VERGI_IAM_DATABASE_URL` yok, çocuk ortamı beyaz liste. Discovery: 73
+  izlenen = 73 dosya sistemi, untracked `[]`. **73/73 modül PASS**:
+  **4906 passed, 0 failed, 8 counted skipped, 14 informational**
+  (4896 → 4906 = T.1'e eklenen 10 K.1 kontrolü). 14 `*_postgres` modülünün
+  hepsi gerçekten koştu, sıfır-kontrol yok; T.2 gerçek modda **55/0**; rag
+  modülü **68/0**. Guard: 10/10 pozitif kontrol; armed 193 = expected 193;
+  `NET_BLOCKED` 0; `ENV_OPEN_BLOCKED` 0; suspicious `[]`; integrity
+  failures `[]`; korunan manifest ok (371 giriş); secret taraması 146
+  dosya 0 isabet; temp/DB/bytecode/süreç residue yok.
+- **`rag-dependency`** — `RAG_GATE_PASS`, exit 0 (`.venv`, PG env yok):
+  builder 122 (1 informational skip), reader 21, smoke 73 (marker tam
+  satır); toplam 216 passed, 0 failed. `rag_gate`: ham 1 / muaf 1 (builder,
+  win32) / **etkin 0**; muafiyet uyarı satırıyla duyuruldu.
+- **T.1** — `vergi_ui_runtime` **313/0/0**; root `.venv` **311/0/1
+  informational**. **T.2** — gerçek PostgreSQL **55/0/0**.
+- Bağımsız incelemeler kaynak + repo-dışı diagnostic/simülatör + kendi
+  PostgreSQL kümeleriyle yürütüldü; her turun sayıları AYRI etiketlidir,
+  tek bir koşuymuş gibi BİRLEŞTİRİLMEZ.
+
+**F. Sayaçlar** — `ui/tests/test_*.py` modülü **71 → 73**; production
+Python (tracked `*.py` − `ui/tests/**`) **153 → 155** (yeni: iki
+`scripts/*.py`); migration **5**, merged reconciliation routing key
+**50**, logical mutation family **38**, CLI subcommand **6** —
+değişmedi.
+
+**G. Dürüst sınırlar ve açık kalanlar (kapatılmış gösterilmez)**
+
+1. **Son resmî koşular implementer (Claude Sonnet 5) koşularıdır**;
+   aynı son baytlarla ayrı bir oturum tarafından yeniden koşulmadı.
+   Önceki bağımsız incelemeler aynı mantığı ve 73 modüllük süpürmeyi
+   doğruladı. V1/V2 ve K.1 kodunu yazan oturum ile bunları inceleyen
+   oturumlar ayrıdır; B1–B5 remediasyonunu yazan oturum (Fable 5.1) ile
+   onu doğrulayan oturum (Sonnet 5) model olarak da ayrıdır.
+2. **"0 external network" iddiası Python-seviyesi guard sayaçlarıyla
+   SINIRLIDIR**: `sys.addaudithook` libpq'nun C-seviyesi soketlerini
+   GÖRMEZ; PostgreSQL sınırının asıl dayanağı DSN'nin `127.0.0.1` +
+   kendi disposable kümeye sabitlenmesidir.
+3. **Low/Observation backlog (AÇIK):** (a) K.1 muafiyeti stdout log'unu
+   diskten yeniden okur, `stdout_sha256` ile karşılaştırmaz (Low); (b) V2
+   penceresi, kayıp `GUARD_ARMED` + pid yeniden kullanımı BİRLİKTE olursa
+   hâlâ kördür (önceden var olan Observation); (c) T.2 başlığındaki bir
+   yorum satırı (≈77–79) varsayılan bakım DB adının taranmadığını
+   söyler, oysa taranır (yalnız dokümantasyon); (d) diğer Observation'lar
+   ilgili bağımsız inceleme raporlarında kayıtlıdır.
+4. Fable review E-27: `test_mutation_journal_postgres.py` ve
+   `test_mutation_reconciliation_provenance_postgres.py` özet
+   satırlarına skip sayacı ekleme maddesi **DEFER** olarak kalır (Low
+   backlog; iki dosya allowlist DIŞINDA bırakıldı). Runner bu iki
+   modülü kendi bağımsız SKIPPED taraması ve `passed+failed==0` kuralıyla
+   mekanik olarak kapsar.
+5. Operatör kuralları: resmî kapılar yalnız commit'li baytlarla ve tek
+   sweep olarak koşulur; bir sweep sürerken repo dosyası düzenlenmez;
+   iki sweep eşzamanlı koşulmaz (sentetik case dizinleri `data/cases/`
+   içinde oluşur — bkz. Adım 2, R11: ham `data/cases/**` manifesti veya
+   `git status --ignored -- data/cases` kullanılır).
+
+**H. Kapsam dışı / başlamamış** — Bu checkpoint aşağıdakilerin HİÇBİRİNE
+dosya-yazma veya implementasyon yetkisi VERMEZ: Adım 4 (LLM masking —
+yalnız salt-okunur scope reconciliation, bkz. §5); Adım 5 resmî tatil
+takvimi; Adım 6 avukat altın örnekleri; Adım 7 deadline hardening; Adım
+8 yerel PostgreSQL/IAM adoption; Adım 9 sentetik concierge dry-run; Adım
+10 ilk gerçek concierge pilotu; Adım 11 Entra/P1; Adım 12 hosting/Key
+Vault; Adım 13c configurable case root; corpus acquisition/population;
+Row 19D OS-ACL/service-identity/TOCTOU ve advisory-lock timeout
+backlog'u; **push** (commit'ler yalnız yerel).
+
+**I. §9 / LOCKED-file değerlendirmesi** — Dört dosya YENİDİR (§9
+uygulanmaz). Beşinci dosya, LOCKED lineage'a (RAG Global-Resource Bundle
+Foundation) ait bir TEST dosyasıdır ve yalnız tek satırla değişti
+(`authz_conn_factory=pg_connect`): runner'ın `VERGI_IAM_DATABASE_URL`
+türetmemesi kararının doğrudan sonucu; kaynak-kanıtlı gerekçe — tek
+gerçek tetikleyici bu testin factory'yi atlamasıydı, 7 kardeş test
+factory'yi zaten geçiyor; production kod, schema, migration ve data
+dosyası açılmadı. Rag testi bu değişiklikle `VERGI_IAM_DATABASE_URL`
+olmadan 68/68 PASS eder.
+
+`PILOT READINESS STEP 3 RUNNER / ENVIRONMENT / SKIP REPORTING LOCK-READY — NO BLOCKING FINDINGS`
 
 **DONE / LOCKED**
 
