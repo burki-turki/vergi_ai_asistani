@@ -2775,6 +2775,7 @@ finally:
 # ============================================================
 
 import fact_extraction_engine as _fact_engine                            # noqa: E402
+import llm_privacy_boundary as _fact_privacy                             # noqa: E402
 import ui.services.fact_extraction_mutation_facade as _fact_facade       # noqa: E402
 import ui.services.fact_extraction_mutation_adapters as _fact_adapters   # noqa: E402
 
@@ -2827,6 +2828,9 @@ try:
             model_id="external_injected_client",
             engine_version=_fact_engine.FACT_EXTRACTION_ENGINE_VERSION,
             prompt_agent_version=_fact_engine.PROMPT_VERSION,
+            # PILOT READINESS ADIM 4a: identity_payload 7 -> 9 anahtar.
+            masking_policy_version=_fact_privacy.MASKING_POLICY_VERSION,
+            masking_extra_terms_digest=_fact_privacy.EMPTY_EXTRA_TERMS_DIGEST,
         )
         base.update(overrides)
         return base
@@ -2915,6 +2919,11 @@ try:
         "generation_mode": "agent", "model_id": "external_injected_client",
         "engine_version": _fact_engine.FACT_EXTRACTION_ENGINE_VERSION,
         "prompt_agent_version": _fact_engine.PROMPT_VERSION,
+        # PILOT READINESS ADIM 4a: audit kaydının iki YENİ üst-seviye
+        # kopyası - adapter bunları identity_payload'ın KENDİ
+        # kopyalarıyla BİREBİR bağlar.
+        "masking_policy_version": _fact_privacy.MASKING_POLICY_VERSION,
+        "masking_extra_terms_digest": _fact_privacy.EMPTY_EXTRA_TERMS_DIGEST,
         "identity_payload": fact_identity_d,
         "first_write": True, "history_backup_path": None, "history_backup_sha256": None,
         "pending_sha256": pending_hash_d, "generated_at": "2026-01-01T00:00:00+00:00",
@@ -2940,6 +2949,13 @@ try:
         ("channel WRONG (cross-family channel-tamper)", {"channel": "local_lawyer_generation_cli"}),
         ("generation_mode WRONG", {"generation_mode": "deterministic"}),
         ("engine_version WRONG", {"engine_version": "999.0"}),
+        # PILOT READINESS ADIM 4a: iki YENİ bağlama satırının gerçekten
+        # yük taşıdığını kanıtlayan tamper vakaları - üst-seviye kopya
+        # identity_payload'ınkinden saparsa post-state kanıtı ÇÖKER.
+        ("masking_policy_version WRONG (top-level vs identity_payload)",
+         {"masking_policy_version": "tr_pseudonymisation_v999"}),
+        ("masking_extra_terms_digest WRONG (top-level vs identity_payload)",
+         {"masking_extra_terms_digest": "f" * 64}),
     ]
     for label, override in fact_binding_cases:
         write_fact_audit({**good_fact_audit, **override})
@@ -3098,6 +3114,70 @@ try:
         f"got {evidence_i!r}",
     )
     write_fact_audit(good_fact_audit)
+
+    # ---- PILOT READINESS ADIM 4a: identity_payload ŞEKİL kontrolü ----
+    # Adapter EXACT 9 anahtar bekler. Bu blok hem (a) eski 7-anahtarlı
+    # bir payload'ın artık reddedildiğini, hem (b) iki yeni alanın
+    # boş/eksik olamayacağını, hem de (c) adapter'ın canlı politika
+    # sabitine PİNLENMEDİĞİNİ (bir sürüm bump'ından sonra eski satırlar
+    # hâlâ reconcile edilebilir kalır) kanıtlar.
+    _legacy7 = fact_identity_payload()
+    _legacy7.pop("masking_policy_version")
+    _legacy7.pop("masking_extra_terms_digest")
+    check(
+        "ADIM 4a shape: a LEGACY 7-key identity_payload is rejected by the adapter "
+        "(the exact-key set moved 7 -> 9)",
+        _fact_adapters._validate_identity_payload_shape(_legacy7) is False,
+    )
+    check(
+        "ADIM 4a shape: the current 9-key identity_payload is accepted",
+        _fact_adapters._validate_identity_payload_shape(fact_identity_payload()) is True,
+    )
+    for _bad_value, _bad_label in [("", "empty string"), ("   ", "whitespace only"), (None, "None")]:
+        for _field in ("masking_policy_version", "masking_extra_terms_digest"):
+            check(
+                f"ADIM 4a shape: {_field} = {_bad_label} is rejected (non-blank required)",
+                _fact_adapters._validate_identity_payload_shape(
+                    fact_identity_payload(**{_field: _bad_value})
+                ) is False,
+            )
+    check(
+        "ADIM 4a shape: an OLDER masking_policy_version is still SHAPE-VALID - the adapter "
+        "is deliberately NOT pinned to the live constant, so a journal row written before a "
+        "policy bump stays reconcilable",
+        _fact_adapters._validate_identity_payload_shape(
+            fact_identity_payload(masking_policy_version="tr_pseudonymisation_v0")
+        ) is True,
+    )
+    check(
+        "ADIM 4a: facade and adapter carry the SAME bumped _MANIFEST_VERSION literal, and it "
+        "is distinct from the UNCHANGED _SNAPSHOT_VERSION",
+        _fact_facade._MANIFEST_VERSION == _fact_adapters._MANIFEST_VERSION
+        == "row19c3ciii.fact_extraction.manifest.v2"
+        and _fact_facade._SNAPSHOT_VERSION == _fact_adapters._SNAPSHOT_VERSION
+        == "row19c3ciii.fact_extraction.snapshot.v1",
+        f"{_fact_facade._MANIFEST_VERSION} / {_fact_adapters._MANIFEST_VERSION} / "
+        f"{_fact_facade._SNAPSHOT_VERSION}",
+    )
+
+    # A DIFFERENT --mask-term list yields a DIFFERENT input_digest, so a
+    # different idempotency identity: a NEW independent attempt, never a
+    # silent replay of the first one (Row 19A stale-result rule).
+    _digest_empty = fact_input_digest(fact_identity_payload())
+    _digest_terms = fact_input_digest(fact_identity_payload(
+        masking_extra_terms_digest=_fact_privacy.compute_extra_terms_digest(["Eski Ünvan A.Ş."]),
+    ))
+    check(
+        "ADIM 4a identity: a different --mask-term list produces a DIFFERENT input_digest "
+        "(new, independent attempt - not a replay)",
+        _digest_empty != _digest_terms,
+    )
+    check(
+        "ADIM 4a identity: a different masking_policy_version produces a DIFFERENT input_digest",
+        _digest_empty != fact_input_digest(
+            fact_identity_payload(masking_policy_version="tr_pseudonymisation_v2")
+        ),
+    )
 
     # ---- end-to-end reconcile_and_apply_journal_entry() proof, through
     # the REAL FakeReconcileConn machinery, using the REAL adapter and a

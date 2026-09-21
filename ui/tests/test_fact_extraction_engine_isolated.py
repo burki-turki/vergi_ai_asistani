@@ -20,8 +20,11 @@
 # Run: python ui/tests/test_fact_extraction_engine_isolated.py
 # ============================================================
 
+import datetime as _dt
 import hashlib
+import inspect
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -37,6 +40,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import fact_extraction_engine as fee                       # noqa: E402
+import llm_privacy_boundary as lpb                          # noqa: E402
 import fact_approval                                        # noqa: E402
 import document_reference_resolver as drr                   # noqa: E402
 from ui.services import fact_extraction_mutation_facade as fac  # noqa: E402
@@ -320,13 +324,17 @@ try:
     )
     payload_4 = fac._build_identity_payload(
         DOCUMENT_ID, manifest_4, generation_mode_4, model_id_4, engine_version_4, prompt_agent_version_4,
+        lpb.MASKING_POLICY_VERSION, lpb.EMPTY_EXTRA_TERMS_DIGEST,
     )
     check(
-        "identity_payload has exactly the 7 expected keys",
+        "identity_payload has exactly the 9 expected keys (PILOT READINESS ADIM 4a moved it "
+        "from 7 to 9 by adding masking_policy_version + masking_extra_terms_digest)",
         set(payload_4.keys()) == {
             "manifest_version", "document_id", "manifest", "generation_mode", "model_id",
             "engine_version", "prompt_agent_version",
+            "masking_policy_version", "masking_extra_terms_digest",
         },
+        sorted(payload_4.keys()),
     )
     payload_bytes_4 = fac._canonical_identity_bytes(payload_4)
     input_digest_4 = fac._compute_input_digest(payload_bytes_4)
@@ -395,6 +403,28 @@ try:
         "audit record: generation_parameters_digest is None (no ancillary per-run parameters "
         "exist for this family)",
         audit_record_4["generation_parameters_digest"] is None,
+    )
+    check(
+        "ADIM 4a audit record: masking_policy_version / masking_extra_terms_digest are present "
+        "and taken VERBATIM from the passed identity_payload (single source - the engine never "
+        "recomputes them)",
+        audit_record_4["masking_policy_version"] == identity_for_audit_4["masking_policy_version"]
+        and audit_record_4["masking_extra_terms_digest"]
+        == identity_for_audit_4["masking_extra_terms_digest"]
+        == lpb.EMPTY_EXTRA_TERMS_DIGEST,
+        f"{audit_record_4.get('masking_policy_version')!r} / "
+        f"{audit_record_4.get('masking_extra_terms_digest')!r}",
+    )
+    check(
+        "ADIM 4a audit record: the mapping/raw values NEVER reach the audit record",
+        "VGMASK" not in json.dumps(audit_record_4, ensure_ascii=False)
+        and "ABC Ltd" not in json.dumps(audit_record_4, ensure_ascii=False),
+    )
+    check(
+        "ADIM 4a: the pending artefact carries NO masking field and NO token "
+        "(the schema is additionalProperties:false - masking lives only in identity/audit)",
+        "VGMASK" not in paths_4.pending_path.read_text(encoding="utf-8")
+        and "masking_policy_version" not in paths_4.pending_path.read_text(encoding="utf-8"),
     )
     check(
         "audit record: generated_at is written['extractor']['run_at'] - NOT a top-level "
@@ -530,6 +560,439 @@ try:
         "'anthropic' - preview reads fee.DEFAULT_MODEL as a plain constant, never touches "
         "credentials/network",
         preview_8["model_id"] == fee.DEFAULT_MODEL,
+    )
+
+    # ============================================================
+    # 10) PILOT READINESS ADIM 4a - LLM GİZLİLİK SINIRI
+    #
+    # case_0001's taxpayer party is a `company`: "ABC Ltd. Şti. - Demo".
+    # It appears VERBATIM in dava_dilekcesi_001's extracted text and in
+    # the case context, so this section works against a REAL fixture,
+    # not a synthetic one. The public-authority party ("Örnek Vergi
+    # Dairesi Müdürlüğü") is deliberately NOT masked (decision U2).
+    # ============================================================
+
+    class _PromptRecordingMessages:
+        """Records the prompt actually handed to the model and answers
+        with whatever `responder(prompt)` produces."""
+
+        def __init__(self, responder):
+            self._responder = responder
+            self.create_calls = []
+            self.prompts = []
+
+        def create(self, **kwargs):
+            self.create_calls.append(kwargs)
+            prompt = kwargs["messages"][0]["content"]
+            self.prompts.append(prompt)
+            return _FakeResponse(self._responder(prompt))
+
+    class _PromptRecordingClient:
+        def __init__(self, responder):
+            self.messages = _PromptRecordingMessages(responder)
+
+    def _party_token_from_prompt(prompt):
+        """Pull the party token out of the masked CASE CONTEXT exactly
+        the way a real model would have to - by reading the prompt. The
+        fake NEVER touches the mapping."""
+        match = re.search(r'"display_name":\s*"(VGMASK_[0-9]{4}P)"', prompt)
+        return match.group(1) if match else None
+
+    def _answer_with(statement, excerpt):
+        return json.dumps({
+            "facts": [{
+                "fact_kind": "taxpayer_claim",
+                "statement": statement,
+                "normalized_statement": None,
+                "extraction_basis": "explicit_text",
+                "attributed_party_id": None,
+                "attributed_actor_label": None,
+                "source": {"page": None, "section": None, "paragraph": None,
+                           "text_excerpt": excerpt},
+                "structured_values": [],
+                "related_party_ids": [],
+                "related_document_ids": [],
+                "related_dispute_item_ids": [],
+                "confidence": 0.8,
+                "verification_state": "unverified",
+                "notes": None,
+            }],
+            "warnings": [],
+        })
+
+    REAL_PARTY_NAME = "ABC Ltd. Şti. - Demo"
+    PUBLIC_AUTHORITY_NAME = "Örnek Vergi Dairesi Müdürlüğü"
+
+    # ---- 10a) the prompt that actually leaves the process is masked ----
+    _fresh_case_copy()
+    recorded_10a = _PromptRecordingClient(
+        lambda prompt: _answer_with("Davacı iddia ileri sürmüştür.", "örnek alıntı"),
+    )
+    text_path_10a = fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID)
+    build_10a = fee.build_fact_extraction(
+        CASE_ID, DOCUMENT_ID, text_path_10a, model=fee.DEFAULT_MODEL, llm_client=recorded_10a,
+    )
+    prompt_10a = recorded_10a.messages.prompts[0]
+    raw_text_10a = text_path_10a.read_text(encoding="utf-8-sig")
+    check(
+        "ADIM 4a: PRECONDITION - the real party name IS present in the raw source text and "
+        "context (so masking it is a real, not vacuous, property)",
+        REAL_PARTY_NAME in raw_text_10a,
+    )
+    check(
+        "ADIM 4a: the party name is ABSENT from the prompt actually handed to the model",
+        REAL_PARTY_NAME not in prompt_10a,
+    )
+    check(
+        "ADIM 4a: neither the suffix-less core nor an ASCII-transliterated spelling of the "
+        "party name survives in the prompt",
+        "ABC Ltd" not in prompt_10a and "ABC Ltd. Sti." not in prompt_10a,
+    )
+    check(
+        "ADIM 4a: the prompt carries at least one VGMASK token",
+        lpb.TOKEN_RE.search(prompt_10a) is not None,
+    )
+    check(
+        "ADIM 4a: the prompt carries the fixed model-facing token instruction block",
+        "GIZLILIK TOKEN KURALI" in prompt_10a,
+    )
+    check(
+        "ADIM 4a: SYSTEM_PROMPT is untouched - the instruction block rides on the USER prompt",
+        "GIZLILIK TOKEN KURALI" not in fee.SYSTEM_PROMPT
+        and recorded_10a.messages.create_calls[0]["system"] == fee.SYSTEM_PROMPT,
+    )
+    check(
+        "ADIM 4a: PROMPT_VERSION was NOT bumped (masking has its own separate policy version)",
+        fee.PROMPT_VERSION == "fact_extraction_v1_3",
+    )
+    check(
+        "ADIM 4a (decision U2): the public-authority party name is deliberately NOT masked - "
+        "it is load-bearing for jurisdiction/deadline reasoning",
+        PUBLIC_AUTHORITY_NAME in prompt_10a,
+    )
+    for keep, keep_label in [("2024/03", "taxation period"), ("850.000,00", "amount"),
+                             ("05.03.2026", "date"), ("case_0001", "case_id"),
+                             ("party_taxpayer_001", "party_id")]:
+        check(
+            f"ADIM 4a: the load-bearing {keep_label} is still present in the masked prompt",
+            keep in prompt_10a,
+        )
+    check(
+        "ADIM 4a: build_fact_extraction() NEVER returns the mapping - only counters",
+        "masking_summary" in build_10a
+        and "VGMASK" not in json.dumps(build_10a["masking_summary"], ensure_ascii=False)
+        and REAL_PARTY_NAME not in json.dumps(build_10a["masking_summary"], ensure_ascii=False),
+        build_10a.get("masking_summary"),
+    )
+    check(
+        "ADIM 4a: the returned context is the ORIGINAL (unmasked) one - attribution depends on it",
+        build_10a["context"]["parties"][0]["display_name"] == REAL_PARTY_NAME,
+    )
+
+    # ---- 10b) PAIRED-ANSWER BYTE IDENTITY, with a frozen clock ----
+    # The masked flow's fake client answers with the TOKEN form (read
+    # out of the prompt it received); the unmasked reference flow's fake
+    # client answers with the REAL-NAME form. With the clock frozen the
+    # two pending files must be byte-for-byte identical.
+    class _FrozenDatetime(fee.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fee.datetime(2026, 1, 1, 12, 0, 0, tzinfo=_dt.timezone.utc)
+
+    class _PassThroughPrivacy:
+        """Test-only shim installed over the engine's module-level
+        `llm_privacy_boundary` name to obtain a genuine UNMASKED
+        reference run. There is NO production opt-out flag; this uses
+        the already-accepted 'temporarily swapped module attribute'
+        pattern and is reverted immediately."""
+
+        MASKING_POLICY_VERSION = "reference_flow_no_masking"
+
+        class _Result:
+            def __init__(self, context, text):
+                self.masked_context = context
+                self.masked_text = text
+                self.prompt_instruction_block = ""
+                self.summary = {"token_count": 0}
+
+        @staticmethod
+        def mask_prompt_inputs(*, case_data, document_data, context, document_text, extra_terms=()):
+            return _PassThroughPrivacy._Result(context, document_text)
+
+        @staticmethod
+        def assert_masked_length_within(masked_text, limit):
+            return None
+
+        @staticmethod
+        def scan_outbound(prompt, result):
+            return None
+
+        @staticmethod
+        def count_dropped_tokens(obj, result):
+            return {"dropped_token_count": 0, "dropped_by_class": {}}
+
+        @staticmethod
+        def de_mask_tree(obj, result):
+            return obj
+
+        @staticmethod
+        def assert_no_tokens_remain(obj, result=None):
+            return None
+
+    PAIRED_STATEMENT_REAL = f"{REAL_PARTY_NAME} adına tarhiyat yapılmıştır."
+    PAIRED_EXCERPT_REAL = f"{REAL_PARTY_NAME} adına"
+
+    _original_engine_datetime = fee.datetime
+    _original_engine_privacy = fee.llm_privacy_boundary
+    try:
+        fee.datetime = _FrozenDatetime
+
+        # masked flow - the fake answers in the TOKEN form
+        _fresh_case_copy()
+        masked_client = _PromptRecordingClient(
+            lambda prompt: _answer_with(
+                f"{_party_token_from_prompt(prompt)} adına tarhiyat yapılmıştır.",
+                f"{_party_token_from_prompt(prompt)} adına",
+            ),
+        )
+        text_path_10b = fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID)
+        masked_build = fee.build_fact_extraction(
+            CASE_ID, DOCUMENT_ID, text_path_10b, model=fee.DEFAULT_MODEL, llm_client=masked_client,
+        )
+        masked_bytes = fac._freeze_pending_bytes(masked_build["extraction"])
+        check(
+            "ADIM 4a paired-answer: the masked flow's fake client genuinely answered in TOKEN "
+            "form (it read the token out of the prompt, never out of the mapping)",
+            lpb.TOKEN_RE.search(masked_client.messages.prompts[0]) is not None
+            and _party_token_from_prompt(masked_client.messages.prompts[0]) is not None,
+        )
+
+        # unmasked reference flow - the fake answers in the REAL-NAME form
+        _fresh_case_copy()
+        fee.llm_privacy_boundary = _PassThroughPrivacy
+        reference_client = _PromptRecordingClient(
+            lambda prompt: _answer_with(PAIRED_STATEMENT_REAL, PAIRED_EXCERPT_REAL),
+        )
+        reference_build = fee.build_fact_extraction(
+            CASE_ID, DOCUMENT_ID, text_path_10b, model=fee.DEFAULT_MODEL, llm_client=reference_client,
+        )
+        reference_bytes = fac._freeze_pending_bytes(reference_build["extraction"])
+        check(
+            "ADIM 4a paired-answer CONTROL: the reference flow really was unmasked - its prompt "
+            "contains the raw party name and no token",
+            REAL_PARTY_NAME in reference_client.messages.prompts[0]
+            and lpb.TOKEN_RE.search(reference_client.messages.prompts[0]) is None,
+        )
+    finally:
+        fee.llm_privacy_boundary = _original_engine_privacy
+        fee.datetime = _original_engine_datetime
+
+    check(
+        "ADIM 4a STOP CONDITION: with the clock frozen and logically equivalent answers, the "
+        "masked flow's pending artefact is BYTE-FOR-BYTE identical to the unmasked reference "
+        "flow's - masking changes what the model sees, never what is written",
+        masked_bytes == reference_bytes,
+        f"masked={hashlib.sha256(masked_bytes).hexdigest()} "
+        f"reference={hashlib.sha256(reference_bytes).hexdigest()}",
+    )
+    check(
+        "ADIM 4a: the de-masked statement/excerpt carry the REAL party name byte-exactly "
+        "(the excerpt must round-trip exactly - Rows 12/15 compare it verbatim)",
+        masked_build["extraction"]["facts"][0]["statement"] == PAIRED_STATEMENT_REAL
+        and masked_build["extraction"]["facts"][0]["source"]["text_excerpt"] == PAIRED_EXCERPT_REAL,
+        masked_build["extraction"]["facts"][0]["statement"],
+    )
+    check(
+        "ADIM 4a: no VGMASK token survives anywhere in the written pending bytes",
+        b"VGMASK" not in masked_bytes,
+    )
+
+    # ---- 10c) return-path refusals: pending is NEVER written ----
+    for bad_answer, bad_label, expected in [
+        (lambda prompt: _answer_with("VGMASK_0099P adına tarh", "alıntı"),
+         "an UNKNOWN token index in the model answer", lpb.UnknownTokenError),
+        (lambda prompt: _answer_with(
+            (_party_token_from_prompt(prompt) or "VGMASK_0001P").lower() + " adına tarh", "alıntı"),
+         "a LOWER-CASED token in the model answer", lpb.MalformedTokenError),
+        (lambda prompt: _answer_with("VGMASK_00011P adına tarh", "alıntı"),
+         "an EXTENDED digit run in the model answer", lpb.MalformedTokenError),
+        (lambda prompt: _answer_with("VGMASK adına tarh", "alıntı"),
+         "a bare prefix in the model answer", lpb.MalformedTokenError),
+        (lambda prompt: json.dumps({"facts": [], "warnings": [], "VGMASK_0001P": "x"}),
+         "a token in a JSON KEY", lpb.TokenInKeyError),
+    ]:
+        _fresh_case_copy()
+        pending_before = fee.get_pending_path(CASE_ID, DOCUMENT_ID)
+        bad_client = _PromptRecordingClient(bad_answer)
+        expect_raises(
+            expected,
+            lambda c=bad_client: fee.build_fact_extraction(
+                CASE_ID, DOCUMENT_ID, fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID),
+                model=fee.DEFAULT_MODEL, llm_client=c,
+            ),
+            f"ADIM 4a return path REFUSES {bad_label}",
+        )
+        check(
+            f"ADIM 4a return path: NO pending artefact is written after refusing {bad_label}",
+            not pending_before.exists(),
+        )
+
+    # ---- 10d) dropped-token reporting (D3: report, never refuse) ----
+    _fresh_case_copy()
+    dropping_client = _PromptRecordingClient(
+        lambda prompt: _answer_with("Davacı iddia ileri sürmüştür.", "örnek alıntı"),
+    )
+    build_10d = fee.build_fact_extraction(
+        CASE_ID, DOCUMENT_ID, fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID),
+        model=fee.DEFAULT_MODEL, llm_client=dropping_client,
+    )
+    check(
+        "ADIM 4a (D3): a model answer that echoes NO token still succeeds - a dropped token is "
+        "a quality loss, not a leak; it is REPORTED as a counter, never refused",
+        build_10d["masking_summary"]["dropped_token_count"]
+        == build_10d["masking_summary"]["token_count"]
+        and build_10d["masking_summary"]["token_count"] > 0,
+        build_10d["masking_summary"],
+    )
+    check(
+        "ADIM 4a (D3): the dropped-token report is per class and carries no values",
+        isinstance(build_10d["masking_summary"]["dropped_by_class"], dict),
+    )
+
+    # ---- 10e) ORDER PROOF: de-mask happens BETWEEN parse_llm_json()
+    # and build_extraction(), and build_extraction() receives the
+    # ORIGINAL (unmasked) context.
+    #
+    # This is asserted DIRECTLY by capturing build_extraction()'s actual
+    # arguments, not inferred from an output. If the masked context were
+    # handed down, build_party_map()/text_contains_party_name()/
+    # normalize_attribution() would silently drop an administration
+    # attribution WITHOUT raising - a silent corruption no output check
+    # could reliably catch.
+    _fresh_case_copy()
+    _captured_10e = {}
+    _real_build_extraction = fee.build_extraction
+
+    def _capturing_build_extraction(raw_result, case_id_arg, document_id_arg, context_arg, model_arg):
+        _captured_10e["raw_result"] = json.loads(json.dumps(raw_result, ensure_ascii=False))
+        _captured_10e["context"] = json.loads(json.dumps(context_arg, ensure_ascii=False))
+        return _real_build_extraction(raw_result, case_id_arg, document_id_arg, context_arg, model_arg)
+
+    order_client = _PromptRecordingClient(
+        lambda prompt: _answer_with(
+            f"{_party_token_from_prompt(prompt)} adına tarhiyat yapılmıştır.",
+            f"{_party_token_from_prompt(prompt)} adına",
+        ),
+    )
+    with mock.patch.object(fee, "build_extraction", _capturing_build_extraction):
+        build_10e = fee.build_fact_extraction(
+            CASE_ID, DOCUMENT_ID, fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID),
+            model=fee.DEFAULT_MODEL, llm_client=order_client,
+        )
+    _captured_context_json = json.dumps(_captured_10e["context"], ensure_ascii=False)
+    _captured_raw_json = json.dumps(_captured_10e["raw_result"], ensure_ascii=False)
+    check(
+        "ADIM 4a ORDER: build_extraction() receives the ORIGINAL context - the taxpayer "
+        "display_name is the REAL name, not a token",
+        _captured_10e["context"]["parties"][0]["display_name"] == REAL_PARTY_NAME,
+        _captured_10e["context"]["parties"][0]["display_name"],
+    )
+    check(
+        "ADIM 4a ORDER: no VGMASK token appears ANYWHERE in the context handed to "
+        "build_extraction()",
+        "VGMASK" not in _captured_context_json,
+    )
+    check(
+        "ADIM 4a ORDER: the model answer reaching build_extraction() is ALREADY de-masked - it "
+        "carries the real party name and no token",
+        REAL_PARTY_NAME in _captured_raw_json and "VGMASK" not in _captured_raw_json,
+        _captured_raw_json[:200],
+    )
+    check(
+        "ADIM 4a ORDER CONTROL: the model genuinely answered in TOKEN form, so the de-mask step "
+        "really ran (this check is not vacuous)",
+        lpb.TOKEN_RE.search(order_client.messages.prompts[0]) is not None
+        and lpb.TOKEN_RE.search(
+            _answer_with(
+                f"{_party_token_from_prompt(order_client.messages.prompts[0])} adına tarhiyat "
+                "yapılmıştır.", "x",
+            )
+        ) is not None,
+    )
+    check(
+        "ADIM 4a: the produced fact keeps a real, non-empty attribution (nothing was silently "
+        "dropped by the attribution pipeline)",
+        build_10e["extraction"]["facts"][0]["attributed_party_id"] in {
+            "party_taxpayer_001", "party_admin_001",
+        },
+        build_10e["extraction"]["facts"][0].get("attributed_party_id"),
+    )
+    check(
+        "ADIM 4a (decision U2 structural consequence): because administration parties are NOT "
+        "masked, the administration-attribution-drop branch of normalize_attribution() cannot "
+        "be triggered by masking at all - the masked and original context carry the SAME "
+        "administration display_name",
+        build_10a["context"]["parties"][1]["display_name"] == PUBLIC_AUTHORITY_NAME
+        and PUBLIC_AUTHORITY_NAME in prompt_10a,
+    )
+
+    # ---- 10f) the SECOND, additive MAX_INPUT_CHARS check ----
+    check(
+        "ADIM 4a: assert_masked_length_within() rejects a masked text over the limit",
+        True,
+    )
+    expect_raises(
+        lpb.MaskedInputTooLongError,
+        lambda: lpb.assert_masked_length_within("x" * (fee.MAX_INPUT_CHARS + 1), fee.MAX_INPUT_CHARS),
+        "ADIM 4a: the second (masked-text) length check is enforced against the engine's own "
+        "MAX_INPUT_CHARS",
+    )
+    check(
+        "ADIM 4a: the ORIGINAL raw-text check inside load_text() is still in place (the second "
+        "check is ADDITIVE, it did not replace it)",
+        "MAX_INPUT_CHARS" in inspect.getsource(fee.load_text),
+    )
+
+    # ---- 10g) outbound refusals leave nothing behind ----
+    _fresh_case_copy()
+    _collide_path = fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID)
+    _collide_original = _collide_path.read_text(encoding="utf-8-sig")
+    _collide_path.write_text(_collide_original + "\nVGMASK_0001P\n", encoding="utf-8")
+    poisoned_client = _PromptRecordingClient(
+        lambda prompt: _answer_with("asla çağrılmamalı", "asla"),
+    )
+    expect_raises(
+        lpb.MaskCollisionError,
+        lambda: fee.build_fact_extraction(
+            CASE_ID, DOCUMENT_ID, _collide_path, model=fee.DEFAULT_MODEL, llm_client=poisoned_client,
+        ),
+        "ADIM 4a outbound: a source text already carrying the token prefix is REFUSED",
+    )
+    check(
+        "ADIM 4a outbound: the model was NEVER called on a refused request",
+        poisoned_client.messages.create_calls == [],
+    )
+    check(
+        "ADIM 4a outbound: no pending artefact after an outbound refusal",
+        not fee.get_pending_path(CASE_ID, DOCUMENT_ID).exists(),
+    )
+
+    # ---- 10h) operator extra terms flow through ----
+    _fresh_case_copy()
+    extra_client = _PromptRecordingClient(
+        lambda prompt: _answer_with("Davacı iddia ileri sürmüştür.", "örnek alıntı"),
+    )
+    build_10h = fee.build_fact_extraction(
+        CASE_ID, DOCUMENT_ID, fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID),
+        model=fee.DEFAULT_MODEL, llm_client=extra_client,
+        mask_terms=("Katma Değer Vergisi",),
+    )
+    check(
+        "ADIM 4a: an operator --mask-term is genuinely applied to the outbound prompt",
+        "Katma Değer Vergisi" not in extra_client.messages.prompts[0]
+        and build_10h["masking_summary"]["token_count"]
+        > build_10d["masking_summary"]["token_count"],
+        build_10h["masking_summary"],
     )
 
 finally:

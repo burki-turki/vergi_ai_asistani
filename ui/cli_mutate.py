@@ -331,6 +331,15 @@ def _build_arg_parser():
         "agent-gated families); REQUIRED together with --with-agent on apply. REJECTED for "
         "deadline/timeline.",
     )
+    generation_parser.add_argument(
+        "--mask-term", dest="mask_term", action="append", default=[],
+        help="PILOT READINESS ADIM 4a, fact_extraction-only: an EXTRA term the lawyer knows "
+        "appears in the document and must be pseudonymised before the prompt leaves the machine "
+        "(former trade name, director, representative, accountant). Repeatable; OPTIONAL. The "
+        "SAME terms must be given on preview AND apply - the canonical digest of this list is "
+        "part of input_digest, so a different list is a DIFFERENT, independent attempt. REJECTED "
+        "for every other row-key.",
+    )
     generation_parser.add_argument("--actor-user-id", dest="actor_user_id", required=True, type=int)
     generation_parser.add_argument("--apply", action="store_true", default=False)
     generation_parser.add_argument(
@@ -620,6 +629,9 @@ def _validate_generation_args(args, *, stderr) -> int | None:
                 f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
             )
             return EXIT_USAGE_ERROR
+        if args.mask_term:
+            stderr.write(f"error: --mask-term is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
         if args.allow_network and not args.with_agent:
             stderr.write("error: --allow-network requires --with-agent\n")
             return EXIT_USAGE_ERROR
@@ -638,6 +650,9 @@ def _validate_generation_args(args, *, stderr) -> int | None:
             return EXIT_USAGE_ERROR
         if args.judicial_recess_applicable != "unknown":
             stderr.write("error: --judicial-recess-applicable is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
+        if args.mask_term:
+            stderr.write("error: --mask-term is not accepted for --row-key timeline\n")
             return EXIT_USAGE_ERROR
         if args.with_agent or args.allow_network:
             stderr.write("error: --with-agent/--allow-network are not accepted for --row-key timeline\n")
@@ -696,12 +711,18 @@ def _validate_generation_args(args, *, stderr) -> int | None:
                 f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
             )
             return EXIT_USAGE_ERROR
+        if args.mask_term:
+            stderr.write(f"error: --mask-term is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
         if args.allow_network and not args.with_agent:
             stderr.write("error: --allow-network requires --with-agent\n")
             return EXIT_USAGE_ERROR
     else:
         if args.document is not None:
             stderr.write("error: --document is not accepted for --row-key deadline\n")
+            return EXIT_USAGE_ERROR
+        if args.mask_term:
+            stderr.write("error: --mask-term is not accepted for --row-key deadline\n")
             return EXIT_USAGE_ERROR
         if args.anchor_event_id is None:
             stderr.write("error: --row-key deadline requires --anchor\n")
@@ -1025,6 +1046,52 @@ def _run_promotion(args, *, principal, repository, mutation_conn_factory) -> str
     )
 
 
+_SAFE_MASK_TERM_EXTRA_CHARS = frozenset(" ._-")
+
+
+def _mask_term_is_shell_safe(term: str) -> bool:
+    """PILOT READINESS ADIM 4a / S3: bir `--mask-term` değeri önerilen
+    apply komutuna GÖMÜLEBİLİR mi?
+
+    Muhafazakâr bir allowlist: Unicode harf/rakam, boşluk, `.`, `-`,
+    `_`. Kabuk metakarakterlerinin (`& | > < ^ % ! " ' ` $ ( ) ; ,`) ve
+    baştaki/sondaki boşluğun TAMAMI dışarıda kalır. Denylist DEĞİL
+    allowlist kullanılır - hangi kabuğun hangi karakteri özel saydığını
+    tam olarak bilemeyiz (cmd.exe, PowerShell 5.1 ve POSIX kabuklar
+    farklıdır)."""
+    if not term or term != term.strip():
+        return False
+    return all(ch.isalnum() or ch in _SAFE_MASK_TERM_EXTRA_CHARS for ch in term)
+
+
+def _format_mask_terms_for_operator(mask_terms):
+    """(komuta gömülecek parça, ayrı bilgi bloğu).
+
+    TÜM terimler güvenliyse komuta gömülür (boşluk içerenler çift
+    tırnakla). HERHANGİ biri güvenli değilse HİÇBİRİ gömülmez ve
+    operatöre terimleri kendi kabuğunun alıntılama kurallarıyla
+    geçirmesi söylenir. Yanlış/eksik bir liste zaten farklı bir
+    `masking_extra_terms_digest` → farklı `input_digest` → fail-closed
+    `StaleViewError` üretir; sessiz yanlış maskeleme ASLA olmaz."""
+    if not mask_terms:
+        return "", ""
+    if all(_mask_term_is_shell_safe(term) for term in mask_terms):
+        part = "".join(
+            ' --mask-term "%s"' % term if " " in term else " --mask-term " + term
+            for term in mask_terms
+        )
+        return part, ""
+    block = (
+        "--- --mask-term DEĞERLERİ (komuta GÖMÜLMEDİ - kabuk metakarakteri içeriyor) ---\n"
+        + "".join(term + "\n" for term in mask_terms)
+        + "--- --mask-term DEĞERLERİ (son) ---\n"
+        "Bu değerleri apply komutuna TAM OLARAK, her biri ayrı bir --mask-term olarak, "
+        "kendi kabuğunuzun alıntılama kurallarıyla geçirin. Liste farklı olursa "
+        "--expected-input-digest uyuşmaz ve işlem fail-closed reddedilir.\n"
+    )
+    return "", block
+
+
 def _run_generation(args, *, principal, repository, mutation_conn_factory) -> str:
     """ROW 19C-3c-i/3c-ii/3c-iii. Dispatches by `--row-key` to ONE of
     THREE backing facades, sharing the single `generation` CLI
@@ -1040,10 +1107,51 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
     if args.row_key in _fact_extraction_row_keys():
         from ui.services import fact_extraction_mutation_facade as _fact_extraction_facade
 
+        mask_terms = tuple(args.mask_term or ())
+
         if not args.apply:
             preview = _fact_extraction_facade.preview_generation(
                 args.case_id, args.document, with_agent=args.with_agent,
                 principal=principal, authz_repository=repository,
+                mask_terms=mask_terms,
+            )
+            # PILOT READINESS ADIM 4a + S3: verilen `--mask-term` listesi
+            # `input_digest`'e GİRDİĞİ için önerilen apply komutu
+            # terimleri yansıtmalıdır - aksi halde kopyala-yapıştır
+            # edilen komut `--expected-input-digest` uyuşmazlığına
+            # düşer.
+            #
+            # ANCAK: `subprocess.list2cmdline` bir ARGV KODLAYICISIDIR,
+            # bir KABUK KAÇIŞLAYICISI DEĞİLDİR. Yalnız boşluk/tab/tırnak
+            # varsa alıntılar; boşluksuz bir metakarakter (`&`, `>`,
+            # `|`, `^`, `%VAR%`) ÇIPLAK kalır ve kopyalanan satır
+            # kullanıcının kabuğunda YAN ETKİ üretir (bağımsız inceleme
+            # gerçek bir `>` testinin çalışma dizininde dosya yarattığını
+            # gösterdi). Bu yüzden terimler YALNIZ muhafazakâr bir
+            # güvenli desene uyuyorsa gömülür; aksi halde komut
+            # terimsiz basılır ve terimler AYRI, sınırlandırılmış bir
+            # blokta listelenir.
+            mask_term_part, mask_term_block = _format_mask_terms_for_operator(mask_terms)
+            over_masking = preview["possible_over_masking"]
+            over_masking_line = ", ".join(
+                f"{key}={value}" for key, value in sorted(over_masking.items())
+            )
+            # N7: ham dict repr yerine okunabilir, sıralı "P=3 T=1" biçimi.
+            class_distribution_line = " ".join(
+                f"{key}={value}" for key, value in sorted(preview["class_distribution"].items())
+            )
+            split_identifier_count = preview["possible_split_identifier"]
+            split_identifier_note = (
+                "  (kimlik numarası satır sonu/boşlukla bölünmüş olabilir; "
+                "önizlemede maskeli metni kontrol edin)"
+                if split_identifier_count else ""
+            )
+            # R1(iii): squeeze-only tohum isabeti - bilgi amaçlı sayaç.
+            squeeze_seed_count = preview["possible_squeeze_seed_match"]
+            squeeze_seed_note = (
+                "  (bir taraf adı, boşlukla ayrılmış sıradan kelimelerin birleşimiyle "
+                "eşleşmiş olabilir; önizlemedeki maskeli metni kontrol edin)"
+                if squeeze_seed_count else ""
             )
             return (
                 f"PREVIEW generation row_key={args.row_key} case_id={preview['case_id']} "
@@ -1056,8 +1164,27 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
                 f"prompt_agent_version={preview['prompt_agent_version']}\n"
                 f"pending_exists={preview['pending_exists']}\n"
                 f"pending_sha256={preview['pending_sha256']}\n"
+                f"masking_policy_version={preview['masking_policy_version']}\n"
+                f"masking_extra_terms_digest={preview['masking_extra_terms_digest']}\n"
+                f"mask_term_count={preview['mask_term_count']}\n"
+                f"masking_token_count={preview['token_count']}\n"
+                f"masking_class_distribution={class_distribution_line}\n"
+                f"masking_possible_over_masking={over_masking_line}\n"
+                f"masking_possible_split_identifier={split_identifier_count}"
+                f"{split_identifier_note}\n"
+                f"masking_possible_squeeze_seed_match={squeeze_seed_count}"
+                f"{squeeze_seed_note}\n"
+                f"masking_chars={preview['original_text_chars']} -> {preview['masked_text_chars']}\n"
+                "--- MODELE GİDECEK MASKELİ CASE CONTEXT (başlangıç) ---\n"
+                f"{preview['masked_context_json']}\n"
+                "--- MODELE GİDECEK MASKELİ CASE CONTEXT (son) ---\n"
+                "--- MODELE GİDECEK MASKELİ BELGE METNİ (başlangıç) ---\n"
+                f"{preview['masked_document_text']}\n"
+                "--- MODELE GİDECEK MASKELİ BELGE METNİ (son) ---\n"
+                f"{mask_term_block}"
                 "Üretmek için: python -m ui.cli_mutate generation --case "
-                f"{preview['case_id']} --row-key {args.row_key} --document {preview['document_id']} "
+                f"{preview['case_id']} --row-key {args.row_key} --document {preview['document_id']}"
+                f"{mask_term_part} "
                 "--with-agent --allow-network --actor-user-id "
                 f"{args.actor_user_id} --apply --expected-input-digest {preview['input_digest']}\n"
             )
@@ -1066,6 +1193,7 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
             args.case_id, args.document, args.expected_input_digest,
             with_agent=args.with_agent, allow_network=args.allow_network,
             principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+            mask_terms=mask_terms,
         )
         return (
             f"APPLIED generation row_key={args.row_key} document={result.document_id}\n"

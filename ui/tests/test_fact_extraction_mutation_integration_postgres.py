@@ -100,6 +100,7 @@ from ui.services import paths as _paths                                 # noqa: 
 from ui.services.common import sha256_file                              # noqa: E402
 
 import fact_extraction_engine as fee                                    # noqa: E402
+import llm_privacy_boundary as lpb                                      # noqa: E402
 import document_reference_resolver as drr                               # noqa: E402
 import fact_approval                                                    # noqa: E402
 
@@ -751,6 +752,267 @@ try:
         )
     finally:
         authz_conn_b10.close()
+
+    # ============================================================
+    # B11 - PILOT READINESS ADIM 4a: the two NEW identity/audit fields
+    #      end to end against REAL PostgreSQL, and the rule that a
+    #      CHANGED --mask-term list is a NEW, INDEPENDENT attempt (never
+    #      a conflict and never a silent replay).
+    # ============================================================
+    case_b11, dir_b11 = make_generation_case("b11")
+    seed_assignment(_ACTORS["lawyer"], case_b11, "lawyer")
+
+    authz_conn_b11 = authz_conn_factory()
+    try:
+        principal_b11 = _cli_authz.build_cli_principal(authz_conn_b11, _ACTORS["lawyer"])
+        repository_b11 = _cli_authz.CliActorAuthzRepository(authz_conn_b11)
+
+        fake_client_b11 = _FakeAgentLLMClient(_valid_fact_payload_text(count=1, tag="b11_"))
+        preview_b11 = fac.preview_generation(
+            case_b11, DOCUMENT_ID, with_agent=True, llm_client=fake_client_b11,
+            principal=principal_b11, authz_repository=repository_b11,
+        )
+        check(
+            "B11a preview surfaces masking_policy_version / masking_extra_terms_digest and the "
+            "masked document text",
+            preview_b11["masking_policy_version"] == lpb.MASKING_POLICY_VERSION
+            and preview_b11["masking_extra_terms_digest"] == lpb.EMPTY_EXTRA_TERMS_DIGEST
+            and "ABC Ltd. Şti. - Demo" not in preview_b11["masked_document_text"],
+        )
+
+        result_b11 = fac.apply_generation(
+            case_b11, DOCUMENT_ID, preview_b11["input_digest"],
+            with_agent=True, allow_network=True, llm_client=fake_client_b11,
+            principal=principal_b11, authz_repository=repository_b11,
+            conn_factory=mutation_conn_factory,
+        )
+        check("B11b fresh apply succeeded, NOT replayed", result_b11.replayed is False)
+
+        rows_b11 = journal_rows(f"case:{case_b11}")
+        audit_files_b11 = list(fee.get_reviews_dir(case_b11, DOCUMENT_ID).glob("*.generation_audit.json"))
+        check("B11c exactly one real journal row and one real audit file", len(rows_b11) == 1 and len(audit_files_b11) == 1)
+        audit_b11 = json.loads(audit_files_b11[0].read_text(encoding="utf-8"))
+        check(
+            "B11d the REAL audit record carries both new top-level masking fields, matching the "
+            "identity_payload's own copies byte-for-byte",
+            audit_b11["masking_policy_version"]
+            == audit_b11["identity_payload"]["masking_policy_version"]
+            == lpb.MASKING_POLICY_VERSION
+            and audit_b11["masking_extra_terms_digest"]
+            == audit_b11["identity_payload"]["masking_extra_terms_digest"]
+            == lpb.EMPTY_EXTRA_TERMS_DIGEST,
+            f"{audit_b11.get('masking_policy_version')!r} / {audit_b11.get('masking_extra_terms_digest')!r}",
+        )
+        check(
+            "B11e the REAL identity_payload has exactly 9 keys and the bumped manifest_version",
+            set(audit_b11["identity_payload"]) == {
+                "manifest_version", "document_id", "manifest", "generation_mode", "model_id",
+                "engine_version", "prompt_agent_version",
+                "masking_policy_version", "masking_extra_terms_digest",
+            }
+            and audit_b11["identity_payload"]["manifest_version"]
+            == "row19c3ciii.fact_extraction.manifest.v2",
+            sorted(audit_b11["identity_payload"]),
+        )
+        check(
+            "B11f no VGMASK token and no raw party name reached the REAL pending artefact, the "
+            "REAL audit record or the REAL journal row",
+            b"VGMASK" not in fee.get_pending_path(case_b11, DOCUMENT_ID).read_bytes()
+            and "VGMASK" not in json.dumps(audit_b11, ensure_ascii=False)
+            and "ABC Ltd. Şti. - Demo" not in json.dumps(audit_b11, ensure_ascii=False)
+            and "VGMASK" not in json.dumps(rows_b11[0], ensure_ascii=False, default=str),
+        )
+
+        adapter_b11 = ada.FactExtractionReconciliationAdapter(fee)
+        matches_b11 = ada._audit_record_matches(
+            audit_b11,
+            idempotency_key=rows_b11[0]["idempotency_key"], resource_key=f"case:{case_b11}",
+            action_family="generation.fact_extraction", document_id=DOCUMENT_ID,
+            target_ref=f"fact.{DOCUMENT_ID}.pending", target_state="generated",
+            actor_label=str(_ACTORS["lawyer"]),
+            pending_sha256=sha256_file(fee.get_pending_path(case_b11, DOCUMENT_ID)),
+            entry_pre_revision=rows_b11[0]["pre_revision"],
+        )
+        check("B11g the adapter independently re-verifies the REAL 9-key record end to end", matches_b11)
+        for tamper_label, tamper in [
+            ("masking_policy_version", {"masking_policy_version": "tr_pseudonymisation_v999"}),
+            ("masking_extra_terms_digest", {"masking_extra_terms_digest": "f" * 64}),
+        ]:
+            check(
+                f"B11h tampering the REAL audit's {tamper_label} breaks the adapter binding",
+                not ada._audit_record_matches(
+                    {**audit_b11, **tamper},
+                    idempotency_key=rows_b11[0]["idempotency_key"], resource_key=f"case:{case_b11}",
+                    action_family="generation.fact_extraction", document_id=DOCUMENT_ID,
+                    target_ref=f"fact.{DOCUMENT_ID}.pending", target_state="generated",
+                    actor_label=str(_ACTORS["lawyer"]),
+                    pending_sha256=sha256_file(fee.get_pending_path(case_b11, DOCUMENT_ID)),
+                    entry_pre_revision=rows_b11[0]["pre_revision"],
+                ),
+            )
+
+        # ---- a CHANGED --mask-term list is a NEW, INDEPENDENT attempt ----
+        fake_client_b11b = _FakeAgentLLMClient(_valid_fact_payload_text(count=1, tag="b11_"))
+        preview_b11b = fac.preview_generation(
+            case_b11, DOCUMENT_ID, with_agent=True, llm_client=fake_client_b11b,
+            principal=principal_b11, authz_repository=repository_b11,
+            mask_terms=("Katma Değer Vergisi",),
+        )
+        check(
+            "B11i a different --mask-term list yields a DIFFERENT input_digest",
+            preview_b11b["input_digest"] != preview_b11["input_digest"],
+        )
+        result_b11b = fac.apply_generation(
+            case_b11, DOCUMENT_ID, preview_b11b["input_digest"],
+            with_agent=True, allow_network=True, llm_client=fake_client_b11b,
+            principal=principal_b11, authz_repository=repository_b11,
+            conn_factory=mutation_conn_factory, mask_terms=("Katma Değer Vergisi",),
+        )
+        rows_b11b = journal_rows(f"case:{case_b11}")
+        check(
+            "B11j the changed --mask-term list produced a SECOND, INDEPENDENT journal row "
+            "(a genuinely new attempt) - NOT an IdempotencyConflictError and NOT a silent replay",
+            result_b11b.replayed is False and len(rows_b11b) == 2
+            and rows_b11b[0]["idempotency_key"] != rows_b11b[1]["idempotency_key"]
+            and all(row["state"] == "completed" for row in rows_b11b),
+            f"rows={[(r['state'], r['idempotency_key'][:8]) for r in rows_b11b]}",
+        )
+        check(
+            "B11k the model was genuinely re-invoked for the new attempt (the build was NOT "
+            "skipped, because the identity really is different)",
+            fake_client_b11b.generate_calls == 1,
+        )
+        audit_files_b11b = list(fee.get_reviews_dir(case_b11, DOCUMENT_ID).glob("*.generation_audit.json"))
+        check("B11l a SECOND real audit record was written", len(audit_files_b11b) == 2)
+        _b11_digests = {
+            json.loads(path.read_text(encoding="utf-8"))["masking_extra_terms_digest"]
+            for path in audit_files_b11b
+        }
+        check(
+            "B11m the two real audit records carry DIFFERENT masking_extra_terms_digest values",
+            len(_b11_digests) == 2 and lpb.EMPTY_EXTRA_TERMS_DIGEST in _b11_digests,
+            _b11_digests,
+        )
+
+        # ---- the SAME terms replay safely ----
+        exploding_b11c = _ExplodingLLMClient()
+        preview_b11c = fac.preview_generation(
+            case_b11, DOCUMENT_ID, with_agent=True, llm_client=exploding_b11c,
+            principal=principal_b11, authz_repository=repository_b11,
+            mask_terms=("Katma Değer Vergisi",),
+        )
+        result_b11c = fac.apply_generation(
+            case_b11, DOCUMENT_ID, preview_b11c["input_digest"],
+            with_agent=True, allow_network=True, llm_client=exploding_b11c,
+            principal=principal_b11, authz_repository=repository_b11,
+            conn_factory=mutation_conn_factory, mask_terms=("Katma Değer Vergisi",),
+        )
+        check(
+            "B11n repeating the SAME --mask-term list is a SAFE REPLAY (replayed=True, still "
+            "two journal rows) - the replay corroboration, which now ALSO binds the two masking "
+            "fields, accepted the existing audit",
+            result_b11c.replayed is True and len(journal_rows(f"case:{case_b11}")) == 2,
+        )
+    finally:
+        authz_conn_b11.close()
+
+    # ============================================================
+    # B12 - N9: a MASKING REFUSAL must leave ZERO journal rows.
+    #      The build (and therefore the masking) runs OUTSIDE the case
+    #      lock and BEFORE run_mutation() is ever called, so a refusal
+    #      must produce no journal row at all - not a 'failed' one, not
+    #      a 'prepared' one. Structurally implied by the source order;
+    #      this is the explicit positive proof against REAL PostgreSQL.
+    # ============================================================
+    case_b12, dir_b12 = make_generation_case("b12")
+    seed_assignment(_ACTORS["lawyer"], case_b12, "lawyer")
+
+    authz_conn_b12 = authz_conn_factory()
+    try:
+        principal_b12 = _cli_authz.build_cli_principal(authz_conn_b12, _ACTORS["lawyer"])
+        repository_b12 = _cli_authz.CliActorAuthzRepository(authz_conn_b12)
+
+        fake_client_b12 = _FakeAgentLLMClient(_valid_fact_payload_text(count=1, tag="b12_"))
+        preview_b12 = fac.preview_generation(
+            case_b12, DOCUMENT_ID, with_agent=True, llm_client=fake_client_b12,
+            principal=principal_b12, authz_repository=repository_b12,
+        )
+        check("B12a rows are empty before the refusal", journal_rows(f"case:{case_b12}") == [])
+
+        # Poison the extracted text so masking refuses fail-closed: a
+        # ZWSP hidden INSIDE the first word of the party name (B1 class)
+        # can never be masked and must be REFUSED, not silently sent.
+        # NOTE: the ZWSP must sit INSIDE a word. Placed at a word
+        # BOUNDARY ("ABC<ZWSP>Ltd.") the derived single-word core "ABC"
+        # still matches and masks that word, so the full-name seed can
+        # no longer match and the generic suffix survives unrefused -
+        # a disclosed partial-masking residual, not a refusal case.
+        text_path_b12 = fee.get_extracted_text_path(case_b12, DOCUMENT_ID)
+        original_b12 = text_path_b12.read_text(encoding="utf-8-sig")
+        text_path_b12.write_text(
+            original_b12 + "\nMükellef A​BC Ltd. Şti. - Demo adına.\n", encoding="utf-8",
+        )
+
+        refusal_b12 = None
+        try:
+            fac.apply_generation(
+                case_b12, DOCUMENT_ID, preview_b12["input_digest"],
+                with_agent=True, allow_network=True, llm_client=fake_client_b12,
+                principal=principal_b12, authz_repository=repository_b12,
+                conn_factory=mutation_conn_factory,
+            )
+        except Exception as error:  # noqa: BLE001
+            refusal_b12 = error
+        check(
+            "B12b a masking refusal surfaces as a clean domain error (StaleViewError for the "
+            "changed input, or FactExtractionMaskingError) - never a raw traceback class",
+            type(refusal_b12).__name__ in {
+                "StaleViewError", "PreconditionRaceDetectedError",
+                "FactExtractionMaskingError",
+            },
+            f"got {type(refusal_b12).__name__}: {refusal_b12}",
+        )
+        check(
+            "B12c N9: the refusal left ZERO journal rows for this case - no 'prepared', no "
+            "'failed', nothing",
+            journal_rows(f"case:{case_b12}") == [],
+            journal_rows(f"case:{case_b12}"),
+        )
+        check(
+            "B12d the refusal wrote NO pending artefact and NO generation audit",
+            not fee.get_pending_path(case_b12, DOCUMENT_ID).is_file()
+            and not list(fee.get_reviews_dir(case_b12, DOCUMENT_ID).glob("*.generation_audit.json")),
+        )
+
+        # Now take a FRESH preview of the poisoned text: the masking
+        # refusal must fire in preview too, still with zero journal rows.
+        refusal_preview_b12 = None
+        try:
+            fac.preview_generation(
+                case_b12, DOCUMENT_ID, with_agent=True, llm_client=fake_client_b12,
+                principal=principal_b12, authz_repository=repository_b12,
+            )
+        except fac.FactExtractionMaskingError as error:
+            refusal_preview_b12 = error
+        check(
+            "B12e the same poisoned text is REFUSED in preview as FactExtractionMaskingError "
+            "(B1 class: a ZWSP-hidden party name is fail-closed, never silently sent)",
+            refusal_preview_b12 is not None,
+            f"got {type(refusal_preview_b12).__name__ if refusal_preview_b12 else None}",
+        )
+        check(
+            "B12f still ZERO journal rows after the preview refusal",
+            journal_rows(f"case:{case_b12}") == [],
+        )
+        check(
+            "B12g the refusal message leaks no party name and no absolute path",
+            refusal_preview_b12 is not None
+            and "ABC Ltd" not in str(refusal_preview_b12)
+            and str(_TMP_CASES) not in str(refusal_preview_b12),
+            str(refusal_preview_b12),
+        )
+    finally:
+        authz_conn_b12.close()
 
 finally:
     for _m in _cases_dir_holders:

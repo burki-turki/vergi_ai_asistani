@@ -36,6 +36,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import fact_extraction_engine as fee                          # noqa: E402
+import llm_privacy_boundary as lpb                            # noqa: E402
 import document_reference_resolver as drr                     # noqa: E402
 from ui.services import fact_extraction_mutation_facade as fac  # noqa: E402
 from ui.services import authz as _authz                       # noqa: E402
@@ -186,13 +187,32 @@ check(
 payload_c = fac._build_identity_payload(
     "doc_x", [{"logical_name": "case", "state": "present", "files": []}],
     "agent", fee.DEFAULT_MODEL, fee.FACT_EXTRACTION_ENGINE_VERSION, fee.PROMPT_VERSION,
+    lpb.MASKING_POLICY_VERSION, lpb.EMPTY_EXTRA_TERMS_DIGEST,
 )
 check(
-    "identity_payload has exactly the 7 expected keys",
+    "identity_payload has exactly the 9 expected keys (PILOT READINESS ADIM 4a moved it from "
+    "7 to 9 by adding masking_policy_version + masking_extra_terms_digest)",
     set(payload_c.keys()) == {
         "manifest_version", "document_id", "manifest", "generation_mode", "model_id",
         "engine_version", "prompt_agent_version",
+        "masking_policy_version", "masking_extra_terms_digest",
     },
+    sorted(payload_c.keys()),
+)
+check(
+    "ADIM 4a: the facade's _MANIFEST_VERSION literal was bumped to .v2 (the payload SHAPE "
+    "changed), while the deliberately separate _SNAPSHOT_VERSION literal was NOT",
+    fac._MANIFEST_VERSION == "row19c3ciii.fact_extraction.manifest.v2"
+    and fac._SNAPSHOT_VERSION == "row19c3ciii.fact_extraction.snapshot.v1",
+    f"{fac._MANIFEST_VERSION} / {fac._SNAPSHOT_VERSION}",
+)
+check(
+    "ADIM 4a: masking_policy_version is read from the live module constant, not hard-coded",
+    payload_c["masking_policy_version"] == lpb.MASKING_POLICY_VERSION,
+)
+check(
+    "ADIM 4a: an empty --mask-term list yields the fixed canonical empty digest",
+    payload_c["masking_extra_terms_digest"] == lpb.compute_extra_terms_digest([]),
 )
 bytes_c1 = fac._canonical_identity_bytes(payload_c)
 bytes_c2 = fac._canonical_identity_bytes(json.loads(json.dumps(payload_c)))
@@ -624,6 +644,11 @@ try:
         # injected-client sentinel.
         "model_id": fee.DEFAULT_MODEL, "engine_version": fee.FACT_EXTRACTION_ENGINE_VERSION,
         "prompt_agent_version": fee.PROMPT_VERSION,
+        # PILOT READINESS ADIM 4a: the replay corroboration now ALSO
+        # binds these two top-level audit fields against the values the
+        # apply call itself is using.
+        "masking_policy_version": lpb.MASKING_POLICY_VERSION,
+        "masking_extra_terms_digest": lpb.EMPTY_EXTRA_TERMS_DIGEST,
         "identity_payload": json.loads(json.dumps({
             "manifest_version": fac._MANIFEST_VERSION, "document_id": DOCUMENT_ID,
             "manifest": fac._build_manifest_containers(
@@ -631,6 +656,8 @@ try:
             ),
             "generation_mode": "agent", "model_id": fee.DEFAULT_MODEL,
             "engine_version": fee.FACT_EXTRACTION_ENGINE_VERSION, "prompt_agent_version": fee.PROMPT_VERSION,
+            "masking_policy_version": lpb.MASKING_POLICY_VERSION,
+            "masking_extra_terms_digest": lpb.EMPTY_EXTRA_TERMS_DIGEST,
         })),
         "first_write": True, "history_backup_path": None, "history_backup_sha256": None,
         "pending_sha256": pending_sha_10, "generated_at": "2026-01-01T00:00:00+00:00",
@@ -678,6 +705,252 @@ try:
         result_10.replayed is True and result_10.pending_sha256 == pending_sha_10,
         f"got {result_10!r}",
     )
+
+    # ============================================================
+    # 11) PILOT READINESS ADIM 4a - facade masking surface.
+    # ============================================================
+
+    _fresh_sentinel_case()
+    preview_11 = fac.preview_generation(
+        CASE_ID, DOCUMENT_ID, with_agent=True,
+        principal=_principal_9, authz_repository=_FakeAuthzRepo(),
+    )
+    REAL_PARTY_NAME_11 = "ABC Ltd. Şti. - Demo"
+    check(
+        "ADIM 4a preview: the masked document text and masked context JSON are returned so the "
+        "lawyer can see exactly what would be sent",
+        isinstance(preview_11["masked_document_text"], str)
+        and isinstance(preview_11["masked_context_json"], str)
+        and preview_11["masked_document_text"] != "",
+    )
+    check(
+        "ADIM 4a preview: the real party name is ABSENT from both masked artefacts",
+        REAL_PARTY_NAME_11 not in preview_11["masked_document_text"]
+        and REAL_PARTY_NAME_11 not in preview_11["masked_context_json"],
+    )
+    check(
+        "ADIM 4a preview: PRECONDITION - the party name IS in the raw source text "
+        "(so the previous check is not vacuous)",
+        REAL_PARTY_NAME_11 in fee.get_extracted_text_path(
+            CASE_ID, DOCUMENT_ID,
+        ).read_text(encoding="utf-8-sig"),
+    )
+    check(
+        "ADIM 4a preview: token count, class distribution and possible-over-masking flags are "
+        "reported",
+        preview_11["token_count"] > 0
+        and set(preview_11["class_distribution"]) == set(lpb.ALL_CLASSES)
+        and "vkn_without_context_word" in preview_11["possible_over_masking"],
+        preview_11.get("class_distribution"),
+    )
+    check(
+        "b2: preview surfaces the possible_split_identifier hint counter (informational, "
+        "never a refusal)",
+        "possible_split_identifier" in preview_11
+        and isinstance(preview_11["possible_split_identifier"], int),
+        preview_11.get("possible_split_identifier"),
+    )
+    check(
+        "R1(iii): preview surfaces the possible_squeeze_seed_match hint counter",
+        "possible_squeeze_seed_match" in preview_11
+        and isinstance(preview_11["possible_squeeze_seed_match"], int),
+        preview_11.get("possible_squeeze_seed_match"),
+    )
+    check(
+        "S2: preview surfaces the party_name_midword_matches over-masking counter",
+        "party_name_midword_matches" in preview_11["possible_over_masking"],
+        preview_11["possible_over_masking"],
+    )
+    check(
+        "ADIM 4a preview: the MAPPING is NEVER part of the preview result",
+        not any(
+            key in preview_11
+            for key in ("mapping", "mask_mapping", "token_map", "seeds")
+        ),
+        sorted(preview_11),
+    )
+    check(
+        "ADIM 4a preview: masking_policy_version and masking_extra_terms_digest are surfaced",
+        preview_11["masking_policy_version"] == lpb.MASKING_POLICY_VERSION
+        and preview_11["masking_extra_terms_digest"] == lpb.EMPTY_EXTRA_TERMS_DIGEST
+        and preview_11["mask_term_count"] == 0,
+    )
+    check(
+        "ADIM 4a preview: the pre-existing preview contract fields are all still present "
+        "(the change is purely ADDITIVE)",
+        all(
+            key in preview_11
+            for key in ("case_id", "document_id", "target_ref", "input_digest", "generation_mode",
+                        "model_id", "engine_version", "prompt_agent_version", "pending_exists",
+                        "pending_sha256")
+        ),
+    )
+
+    # ---- the digest is genuinely part of identity ----
+    preview_11_terms = fac.preview_generation(
+        CASE_ID, DOCUMENT_ID, with_agent=True,
+        principal=_principal_9, authz_repository=_FakeAuthzRepo(),
+        mask_terms=("Katma Değer Vergisi",),
+    )
+    check(
+        "ADIM 4a: a DIFFERENT --mask-term list yields a DIFFERENT input_digest - a new, "
+        "independent attempt, never a silent replay of the previous one",
+        preview_11_terms["input_digest"] != preview_11["input_digest"]
+        and preview_11_terms["masking_extra_terms_digest"] != preview_11["masking_extra_terms_digest"],
+    )
+    check(
+        "ADIM 4a: the SAME --mask-term list reproduces the SAME input_digest (deterministic)",
+        fac.preview_generation(
+            CASE_ID, DOCUMENT_ID, with_agent=True,
+            principal=_principal_9, authz_repository=_FakeAuthzRepo(),
+            mask_terms=("Katma Değer Vergisi",),
+        )["input_digest"] == preview_11_terms["input_digest"],
+    )
+    check(
+        "ADIM 4a: --mask-term order does not change identity (the digest is canonical: "
+        "NFC -> strip -> dedupe -> sort)",
+        fac.preview_generation(
+            CASE_ID, DOCUMENT_ID, with_agent=True,
+            principal=_principal_9, authz_repository=_FakeAuthzRepo(),
+            mask_terms=("b terimi", "a terimi"),
+        )["input_digest"] == fac.preview_generation(
+            CASE_ID, DOCUMENT_ID, with_agent=True,
+            principal=_principal_9, authz_repository=_FakeAuthzRepo(),
+            mask_terms=("a terimi", "b terimi"),
+        )["input_digest"],
+    )
+    check(
+        "ADIM 4a: an operator term genuinely raises the token count in the preview",
+        preview_11_terms["token_count"] > preview_11["token_count"],
+        f"{preview_11_terms['token_count']} vs {preview_11['token_count']}",
+    )
+
+    # ---- argument-shape rejection happens BEFORE any I/O ----
+    for bad_terms, bad_label in [
+        (("",), "an empty term"),
+        (("   ",), "a whitespace-only term"),
+        ((None,), "a non-string term"),
+        (("VGMASK deneme",), "a term carrying the token prefix"),
+        ("tek bir string", "a bare string instead of a sequence"),
+    ]:
+        expect_raises(
+            fac.FactExtractionArgumentError,
+            lambda t=bad_terms: fac.preview_generation(
+                CASE_ID, DOCUMENT_ID, with_agent=True,
+                principal=_principal_9, authz_repository=_FakeAuthzRepo(), mask_terms=t,
+            ),
+            f"ADIM 4a: preview REJECTS {bad_label} with a clean ApprovalUiError",
+        )
+
+    class _ExplodingAuthzRepo(_FakeAuthzRepo):
+        def get_session_authz_state(self, principal):
+            raise AssertionError("authz was reached despite an invalid --mask-term")
+
+    expect_raises(
+        fac.FactExtractionArgumentError,
+        lambda: fac.preview_generation(
+            CASE_ID, DOCUMENT_ID, with_agent=True,
+            principal=_principal_9, authz_repository=_ExplodingAuthzRepo(), mask_terms=("",),
+        ),
+        "ADIM 4a: the --mask-term shape check fires BEFORE any authz/DB/filesystem access",
+    )
+
+    # ---- masking refusals become clean domain errors, never tracebacks ----
+    _fresh_sentinel_case()
+    _collide_text_path = fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID)
+    _collide_text_path.write_text(
+        _collide_text_path.read_text(encoding="utf-8-sig") + "\nVGMASK_0001P\n", encoding="utf-8",
+    )
+    _masking_error = None
+    try:
+        fac.preview_generation(
+            CASE_ID, DOCUMENT_ID, with_agent=True,
+            principal=_principal_9, authz_repository=_FakeAuthzRepo(),
+        )
+    except fac.FactExtractionMaskingError as error:
+        _masking_error = error
+    check(
+        "ADIM 4a: a masking refusal in preview surfaces as FactExtractionMaskingError",
+        _masking_error is not None,
+    )
+    check(
+        "ADIM 4a: FactExtractionMaskingError is an ApprovalUiError, so ui.cli_mutate recognises "
+        "it as a known domain error and prints ONE clean line instead of a traceback",
+        isinstance(_masking_error, fac.ApprovalUiError),
+    )
+    check(
+        "ADIM 4a: FactExtractionDeMaskingError is also an ApprovalUiError",
+        issubclass(fac.FactExtractionDeMaskingError, fac.ApprovalUiError),
+    )
+
+    # ---- the preview's NEW raw read must also be translated ----
+    # A MISSING extracted text was ALREADY fail-closed before this slice:
+    # _build_manifest_containers() scans `target_document_text` with
+    # required=True. That path is unchanged and is asserted here so the
+    # distinction is on the record.
+    _fresh_sentinel_case()
+    fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID).unlink()
+    _missing_error = None
+    try:
+        fac.preview_generation(
+            CASE_ID, DOCUMENT_ID, with_agent=True,
+            principal=_principal_9, authz_repository=_FakeAuthzRepo(),
+        )
+    except fac.ApprovalUiError as error:
+        _missing_error = error
+    check(
+        "ADIM 4a (pre-existing, UNCHANGED): a MISSING extracted text is still refused by the "
+        "manifest containment scan (required=True), as a clean FactExtractionInputContainmentError",
+        isinstance(_missing_error, fac.FactExtractionInputContainmentError),
+        repr(_missing_error),
+    )
+
+    # An EMPTY or oversized text is a genuinely NEW failure mode: the file
+    # EXISTS (so the manifest scan passes) but load_text() - which preview
+    # never used to call - raises ValueError. Untranslated it would escape
+    # as a raw traceback through ui.cli_mutate.
+    for _bad_text, _bad_label, _bad_rule in [
+        ("   \n", "an EMPTY extracted text", "ValueError"),
+        ("x" * (fee.MAX_INPUT_CHARS + 1), "an OVERSIZED raw extracted text", "ValueError"),
+    ]:
+        _fresh_sentinel_case()
+        fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID).write_text(_bad_text, encoding="utf-8")
+        _new_error = None
+        try:
+            fac.preview_generation(
+                CASE_ID, DOCUMENT_ID, with_agent=True,
+                principal=_principal_9, authz_repository=_FakeAuthzRepo(),
+            )
+        except fac.ApprovalUiError as error:
+            _new_error = error
+        check(
+            f"ADIM 4a: {_bad_label} in preview is translated to a clean "
+            "FactExtractionSourceTextUnavailableError (NEW failure mode - preview now loads "
+            "the text; untranslated this would be a raw traceback)",
+            isinstance(_new_error, fac.FactExtractionSourceTextUnavailableError),
+            repr(_new_error),
+        )
+        check(
+            f"ADIM 4a: the {_bad_label} message leaks NO absolute path and no document content",
+            _new_error is not None
+            and str(_tmp_sentinel_cases) not in str(_new_error)
+            and _bad_rule in str(_new_error)
+            and "xxxx" not in str(_new_error),
+            str(_new_error),
+        )
+    _fresh_sentinel_case()
+    check(
+        "ADIM 4a: the translated message carries NO document text, NO party name, NO token and "
+        "NO absolute path - only a fixed prefix plus the source rule's CLASS NAME",
+        _masking_error is not None
+        and "MaskCollisionError" in str(_masking_error)
+        and "VGMASK" not in str(_masking_error)
+        and REAL_PARTY_NAME_11 not in str(_masking_error)
+        and str(_tmp_sentinel_cases) not in str(_masking_error),
+        str(_masking_error),
+    )
+    _fresh_sentinel_case()
+
 finally:
     fee.CASES_DIR = _original_fee_cases_dir
     drr.CASES_DIR = _original_drr_cases_dir

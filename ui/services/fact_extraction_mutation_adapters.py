@@ -91,7 +91,10 @@ _DUAL_FALSE = mr.ReconciliationEvidence(post_state_verified=False, pre_state_con
 _SNAPSHOT_ABSENT = "__absent__"
 _SNAPSHOT_PRESENT = "__present__"
 _SNAPSHOT_VERSION = "row19c3ciii.fact_extraction.snapshot.v1"
-_MANIFEST_VERSION = "row19c3ciii.fact_extraction.manifest.v1"
+# PILOT READINESS ADIM 4a: identity_payload 7 -> 9 anahtar olduğu için
+# facade ile BİRLİKTE, AYNI turda `.v2`'ye bump edildi. `_SNAPSHOT_
+# VERSION` (yukarıda) BİLİNÇLİ OLARAK AYRI bir literaldir ve DEĞİŞMEDİ.
+_MANIFEST_VERSION = "row19c3ciii.fact_extraction.manifest.v2"
 
 _CHANNEL = "local_lawyer_fact_extraction_cli"
 
@@ -228,9 +231,11 @@ def _validate_identity_payload_shape(identity_payload) -> bool:
     BİLİNÇLİ olarak FARKLIDIR)."""
     if not isinstance(identity_payload, dict):
         return False
+    # PILOT READINESS ADIM 4a: EXACT anahtar kümesi 7 -> 9.
     if set(identity_payload.keys()) != {
         "manifest_version", "document_id", "manifest", "generation_mode", "model_id",
         "engine_version", "prompt_agent_version",
+        "masking_policy_version", "masking_extra_terms_digest",
     }:
         return False
     if identity_payload.get("manifest_version") != _MANIFEST_VERSION:
@@ -247,6 +252,14 @@ def _validate_identity_payload_shape(identity_payload) -> bool:
     if not _nonblank(identity_payload.get("engine_version")):
         return False
     if not _nonblank(identity_payload.get("prompt_agent_version")):
+        return False
+    # PILOT READINESS ADIM 4a: yalnız NON-BLANK kontrolü. Canlı modül
+    # sabitine PİNLENMEZ - pinlenseydi, politika sürümü bump'ından
+    # SONRA daha eski bir journal satırı BİR DAHA ASLA reconcile
+    # edilemez (kalıcı `reconciliation_required`) hâle gelirdi.
+    if not _nonblank(identity_payload.get("masking_policy_version")):
+        return False
+    if not _nonblank(identity_payload.get("masking_extra_terms_digest")):
         return False
 
     manifest = identity_payload.get("manifest")
@@ -383,6 +396,16 @@ def _audit_record_matches(
     if record.get("engine_version") != identity_payload.get("engine_version"):
         return False
     if record.get("prompt_agent_version") != identity_payload.get("prompt_agent_version"):
+        return False
+    # PILOT READINESS ADIM 4a: iki YENİ bağlama satırı - audit kaydının
+    # üst-seviye kopyaları `identity_payload`'ın KENDİ kopyalarıyla
+    # BİREBİR eşleşmek ZORUNDADIR (mode/model/engine/prompt ile AYNI
+    # desen). `recomputed_input_digest` zaten `identity_payload`'ın
+    # tamamı üzerinden hesaplandığı için bu iki alan dolaylı olarak
+    # journal'ın `pre_revision`'ına da bağlıdır.
+    if record.get("masking_policy_version") != identity_payload.get("masking_policy_version"):
+        return False
+    if record.get("masking_extra_terms_digest") != identity_payload.get("masking_extra_terms_digest"):
         return False
 
     return True

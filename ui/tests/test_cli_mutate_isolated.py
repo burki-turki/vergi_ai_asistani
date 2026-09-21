@@ -590,6 +590,299 @@ check(
     code == cli_mutate.EXIT_USAGE_ERROR and "--judicial-recess-applicable" in err,
 )
 
+# ============================================================
+# PILOT READINESS ADIM 4a - `--mask-term` lives on the SHARED
+# `generation` subparser, so every OTHER row-key must reject it
+# explicitly, BEFORE any authz/DB/filesystem access (the repo's
+# established `--document`/`--anchor`/`--holiday` pattern).
+# ============================================================
+
+for _mt_row_key, _mt_extra, _mt_label in [
+    ("issue_spotting", [], "agent-five branch"),
+    ("timeline", [], "timeline branch"),
+    ("legal_research", [], "legal_research/case_law branch"),
+    ("case_law", [], "legal_research/case_law branch (second row-key)"),
+    ("deadline", ["--anchor", "timeline_event_001"], "deadline else-branch"),
+]:
+    code, out, err = run_cli_usage_only(
+        ["generation", "--case", "x", "--row-key", _mt_row_key]
+        + _mt_extra
+        + ["--mask-term", "Bir Ad", "--actor-user-id", "1"]
+    )
+    check(
+        f"ADIM 4a: --mask-term is not accepted for --row-key {_mt_row_key} ({_mt_label}) "
+        "-> exit 2, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and "--mask-term" in err,
+        f"code={code} err={err!r}",
+    )
+    check(
+        f"ADIM 4a: the --mask-term rejection for --row-key {_mt_row_key} prints nothing on "
+        "stdout (usage errors go to stderr only)",
+        out == "",
+        f"out={out!r}",
+    )
+
+# CONTROL: the same deadline invocation WITHOUT --mask-term reaches a
+# LATER usage rule (--apply requires --expected-input-digest), proving
+# the new --mask-term guard is narrow and did not fire.
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline", "--anchor", "e1",
+    "--actor-user-id", "1", "--apply",
+])
+check(
+    "ADIM 4a CONTROL: without --mask-term, the same deadline invocation falls through to the "
+    "LATER --expected-input-digest rule - the new guard is narrow, not a blanket refusal",
+    code == cli_mutate.EXIT_USAGE_ERROR
+    and "--expected-input-digest" in err and "--mask-term" not in err,
+    f"code={code} err={err!r}",
+)
+
+# fact_extraction ACCEPTS --mask-term: the invocation gets past every
+# usage-shape guard and fails only at the LATER --expected-input-digest
+# rule, i.e. --mask-term itself was never rejected.
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "fact_extraction", "--document", "d",
+    "--with-agent", "--allow-network", "--mask-term", "Bir Ad", "--mask-term", "Başka Ad",
+    "--actor-user-id", "1", "--apply",
+])
+check(
+    "ADIM 4a: --mask-term IS accepted (repeatably) for --row-key fact_extraction - the "
+    "invocation passes every usage-shape guard and is stopped only by the LATER "
+    "--expected-input-digest rule, with zero connections opened",
+    code == cli_mutate.EXIT_USAGE_ERROR
+    and "--expected-input-digest" in err and "--mask-term" not in err,
+    f"code={code} err={err!r}",
+)
+
+_generation_actions = {}
+for _sub_action in cli_mutate._build_arg_parser()._subparsers._group_actions[0].choices[
+    "generation"
+]._actions:
+    for _opt in _sub_action.option_strings:
+        _generation_actions[_opt] = _sub_action
+_mask_term_action = _generation_actions.get("--mask-term")
+check(
+    "ADIM 4a: --mask-term is declared on the SHARED generation subparser with action='append', "
+    "so it is genuinely repeatable and defaults to an empty list",
+    _mask_term_action is not None
+    and _mask_term_action.__class__.__name__ == "_AppendAction"
+    and _mask_term_action.default == []
+    and _mask_term_action.dest == "mask_term",
+    f"{_mask_term_action!r}",
+)
+
+# ---- the suggested apply command must ECHO the given --mask-term list ----
+# The canonical digest of that list is part of input_digest, so a
+# copy-pasted apply command that dropped the terms would fail
+# fail-closed with an --expected-input-digest mismatch, every time.
+import types as _mt_types                                                # noqa: E402
+from unittest import mock as _mt_mock                                    # noqa: E402
+from ui.services import fact_extraction_mutation_facade as _mt_facade    # noqa: E402
+
+_MT_PREVIEW = {
+    "case_id": "case_0001", "document_id": "doc_1",
+    "target_ref": "fact.doc_1.pending", "input_digest": "d" * 64,
+    "generation_mode": "agent", "model_id": "m", "engine_version": "1.3",
+    "prompt_agent_version": "p", "pending_exists": False, "pending_sha256": None,
+    "masking_policy_version": "tr_pseudonymisation_v1",
+    "masking_extra_terms_digest": "e" * 64, "mask_term_count": 2,
+    "masked_document_text": "VGMASK_0001P adına", "masked_context_json": "{}",
+    "token_count": 1, "class_distribution": {"T": 2, "P": 1},
+    "possible_over_masking": {"vkn_without_context_word": 0,
+                              "party_name_midword_matches": 3},
+    "possible_split_identifier": 2,
+    "possible_squeeze_seed_match": 4,
+    "original_text_chars": 10, "masked_text_chars": 18,
+}
+_mt_captured = {}
+
+
+def _mt_fake_preview(case_id, document_id, **kwargs):
+    _mt_captured.update(kwargs)
+    return dict(_MT_PREVIEW)
+
+
+_mt_args = _mt_types.SimpleNamespace(
+    row_key="fact_extraction", case_id="case_0001", document="doc_1",
+    with_agent=True, allow_network=False, apply=False, actor_user_id=7,
+    mask_term=["Eski Ünvan Ltd. Şti.", 'Boşluklu "Ad" A.Ş.'],
+    expected_input_digest=None,
+)
+with _mt_mock.patch.object(_mt_facade, "preview_generation", _mt_fake_preview):
+    _mt_out = cli_mutate._run_generation(
+        _mt_args, principal=object(), repository=object(), mutation_conn_factory=None,
+    )
+check(
+    "ADIM 4a: the CLI forwards the --mask-term list to the facade preview verbatim",
+    _mt_captured.get("mask_terms") == ("Eski Ünvan Ltd. Şti.", 'Boşluklu "Ad" A.Ş.'),
+    _mt_captured.get("mask_terms"),
+)
+_mt_suggested = [ln for ln in _mt_out.splitlines() if ln.startswith("Üretmek için:")][0]
+
+# SAFE terms ARE still echoed into the command (the digest depends on
+# the exact list, so a copy-pasted command that dropped them would fail
+# closed with an --expected-input-digest mismatch).
+_mt_args_safe = _mt_types.SimpleNamespace(
+    row_key="fact_extraction", case_id="case_0001", document="doc_1",
+    with_agent=True, allow_network=False, apply=False, actor_user_id=7,
+    mask_term=["Eski Unvan Ltd", "Ahmet"],
+    expected_input_digest=None,
+)
+with _mt_mock.patch.object(_mt_facade, "preview_generation", _mt_fake_preview):
+    _mt_out_safe = cli_mutate._run_generation(
+        _mt_args_safe, principal=object(), repository=object(), mutation_conn_factory=None,
+    )
+_mt_suggested_safe = [ln for ln in _mt_out_safe.splitlines() if ln.startswith("Üretmek için:")][0]
+check(
+    "ADIM 4a: the suggested apply command ECHOES every SAFE --mask-term (otherwise the "
+    "copy-pasted command would fail with an --expected-input-digest mismatch)",
+    _mt_suggested_safe.count("--mask-term") == 2
+    and '"Eski Unvan Ltd"' in _mt_suggested_safe
+    and " --mask-term Ahmet" in _mt_suggested_safe,
+    _mt_suggested_safe,
+)
+check(
+    "ADIM 4a: an all-safe list produces NO separate operator block",
+    "--mask-term DEĞERLERİ" not in _mt_out_safe,
+    _mt_out_safe,
+)
+check(
+    "S3: a term containing a double quote is NOT embedded in the suggested command - "
+    "list2cmdline is an ARGV encoder, not a SHELL escaper, so unsafe terms go in a separate "
+    "block instead",
+    "--mask-term" not in _mt_suggested,
+    _mt_suggested,
+)
+check(
+    "S3: the unsafe terms are still shown to the operator, one per line, in a clearly "
+    "delimited block, with the instruction to pass them with their own shell's quoting",
+    "--mask-term DEĞERLERİ" in _mt_out
+    and 'Boşluklu "Ad" A.Ş.' in _mt_out
+    and "Eski Ünvan Ltd. Şti." in _mt_out
+    and "fail-closed" in _mt_out,
+    _mt_out,
+)
+check(
+    "ADIM 4a: the preview output shows the masked text, the token count, the class "
+    "distribution and the possible-over-masking flags - never the mapping",
+    "VGMASK_0001P adına" in _mt_out
+    and "masking_token_count=1" in _mt_out
+    and "masking_possible_over_masking=" in _mt_out
+    and "masking_policy_version=tr_pseudonymisation_v1" in _mt_out
+    and "MASKELİ BELGE METNİ" in _mt_out,
+    _mt_out,
+)
+check(
+    "N7: the class distribution is printed as a readable sorted 'P=1 T=2' string, not a raw "
+    "Python dict repr",
+    "masking_class_distribution=P=1 T=2" in _mt_out
+    and "{'P'" not in _mt_out and "{'T'" not in _mt_out,
+    [ln for ln in _mt_out.splitlines() if ln.startswith("masking_class_distribution")],
+)
+check(
+    "R1(iii): the squeeze-seed hint counter is shown in the preview with a plain Turkish note",
+    "masking_possible_squeeze_seed_match=4" in _mt_out
+    and "sıradan kelimelerin birleşimiyle" in _mt_out,
+    [ln for ln in _mt_out.splitlines() if ln.startswith("masking_possible_squeeze_seed_match")],
+)
+check(
+    "b2: the split-identifier hint counter is shown in the preview with a plain Turkish note",
+    "masking_possible_split_identifier=2" in _mt_out
+    and "satır sonu/boşlukla bölünmüş olabilir" in _mt_out,
+    [ln for ln in _mt_out.splitlines() if ln.startswith("masking_possible_split_identifier")],
+)
+check(
+    "S2: the mid-word over-masking counter reaches the operator's preview",
+    "party_name_midword_matches=3" in _mt_out,
+    [ln for ln in _mt_out.splitlines() if ln.startswith("masking_possible_over_masking")],
+)
+
+# ---- S3 matrix: shell metacharacters must NEVER be embedded ----
+# The reviewer's own probe proved a bare '>' term actually CREATED files
+# in their working directory. These checks are PURE STRING checks - no
+# shell is ever invoked and no file can be created.
+for _s3_term, _s3_safe, _s3_label in [
+    ("Ahmet", True, "plain ASCII word"),
+    ("Deneme Tekstil", True, "two words with a space"),
+    ("ABC-123_x.y", True, "dot, dash, underscore"),
+    ("Öztürk Gıda", True, "non-ASCII Turkish letters"),
+    ("A&B", False, "ampersand"),
+    ("Oz>Yon", False, "redirection"),
+    ("A|B", False, "pipe"),
+    ("A^B", False, "caret"),
+    ("%PATH%", False, "cmd.exe variable expansion"),
+    ("$env:PATH", False, "PowerShell variable"),
+    ('Bos "Ad"', False, "embedded double quotes"),
+    ("A'B", False, "single quote"),
+    ("A`B", False, "backtick"),
+    ("A;B", False, "semicolon"),
+    ("A(B)", False, "parentheses"),
+    (" leading", False, "leading whitespace"),
+]:
+    check(
+        f"S3 safety classifier: {_s3_label} -> {'SAFE' if _s3_safe else 'UNSAFE'}",
+        cli_mutate._mask_term_is_shell_safe(_s3_term) is _s3_safe,
+        repr(_s3_term),
+    )
+    _s3_part, _s3_block = cli_mutate._format_mask_terms_for_operator([_s3_term])
+    if _s3_safe:
+        check(
+            f"S3: a safe term IS embedded in the command ({_s3_label})",
+            _s3_term in _s3_part and _s3_block == "",
+            (_s3_part, _s3_block),
+        )
+        check(
+            f"S3: a safe term containing a space is double-quoted ({_s3_label})",
+            (" " not in _s3_term) or ('"%s"' % _s3_term in _s3_part),
+            _s3_part,
+        )
+    else:
+        check(
+            f"S3: an UNSAFE term is NEVER embedded in the command ({_s3_label})",
+            _s3_part == "" and _s3_term in _s3_block,
+            (_s3_part, _s3_block),
+        )
+check(
+    "S3: ONE unsafe term suppresses embedding for the WHOLE list (a partially embedded "
+    "list would silently change the digest)",
+    cli_mutate._format_mask_terms_for_operator(["Ahmet", "A&B"])[0] == "",
+)
+check(
+    "S3: no shell metacharacter can appear in the embedded part for any mixed list",
+    all(
+        ch not in cli_mutate._format_mask_terms_for_operator(["Ahmet", "A&B", "Oz>Yon"])[0]
+        for ch in "&|><^%$`;()'"
+    ),
+)
+_s3_all_safe_part, _s3_all_safe_block = cli_mutate._format_mask_terms_for_operator(
+    ["Ahmet", "Deneme Tekstil"],
+)
+check(
+    "S3 CONTROL: an all-safe list IS embedded and produces NO separate block",
+    _s3_all_safe_part == ' --mask-term Ahmet --mask-term "Deneme Tekstil"'
+    and _s3_all_safe_block == "",
+    _s3_all_safe_part,
+)
+check(
+    "S3: an empty term list embeds nothing and prints no block",
+    cli_mutate._format_mask_terms_for_operator([]) == ("", ""),
+)
+
+_mt_args_none = _mt_types.SimpleNamespace(
+    row_key="fact_extraction", case_id="case_0001", document="doc_1",
+    with_agent=True, allow_network=False, apply=False, actor_user_id=7,
+    mask_term=[], expected_input_digest=None,
+)
+with _mt_mock.patch.object(_mt_facade, "preview_generation", _mt_fake_preview):
+    _mt_out_none = cli_mutate._run_generation(
+        _mt_args_none, principal=object(), repository=object(), mutation_conn_factory=None,
+    )
+check(
+    "ADIM 4a: with no --mask-term given, the suggested apply command carries none either",
+    "--mask-term" not in _mt_out_none and _mt_captured.get("mask_terms") == (),
+    _mt_out_none,
+)
+
 code, _, err = run_cli_usage_only([
     "generation", "--case", "x", "--row-key", "legal_research", "--allow-network",
     "--actor-user-id", "1",

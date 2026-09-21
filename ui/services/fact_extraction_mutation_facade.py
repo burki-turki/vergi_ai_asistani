@@ -131,6 +131,10 @@ if str(_SRC_DIR) not in sys.path:
 
 from mutation_guard import MutationIntent, compute_idempotency_key  # noqa: E402
 import path_containment as _path_containment  # noqa: E402
+# PILOT READINESS ADIM 4a: yalnız politika sürümü sabiti, ek-terim
+# digest'i ve hata TABANI için import edilir. Maskelemenin KENDİSİ
+# engine'in içinde, prompt'un üretildiği TEK yerde yapılır.
+import llm_privacy_boundary as _privacy  # noqa: E402
 
 from . import authz as _authz
 from . import mutation_coordinator as _mutation_coordinator
@@ -164,7 +168,12 @@ TARGET_STATE = "generated"
 
 CHANNEL = "local_lawyer_fact_extraction_cli"
 
-_MANIFEST_VERSION = "row19c3ciii.fact_extraction.manifest.v1"
+# PILOT READINESS ADIM 4a: identity_payload ŞEKLİ 7 -> 9 anahtara
+# çıktığı için bu literal `.v1` -> `.v2` bump edilir (adapter'ın KENDİ
+# kopyası da AYNI turda bump edilir - ikisi BİREBİR aynı string olmak
+# ZORUNDADIR). `_SNAPSHOT_VERSION` BİLİNÇLİ OLARAK AYRI bir literaldir
+# ve DEĞİŞMEZ - birini bump etmek diğerini ima ETMEZ.
+_MANIFEST_VERSION = "row19c3ciii.fact_extraction.manifest.v2"
 
 _logger = logging.getLogger("vergi_ai.fact_extraction_mutation_facade")
 
@@ -235,6 +244,57 @@ class FactExtractionAuditBindingVerificationFailedError(ApprovalUiError):
             f"journal_id={journal_id}: fact extraction safe-replay audit-binding "
             f"verification failed (idempotency_key={idempotency_key!r}): {reason}"
         )
+
+
+class FactExtractionMaskingError(ApprovalUiError):
+    """PILOT READINESS ADIM 4a: GİDEN yol maskeleme reddi (boş tohum
+    listesi, token öneki çakışması, hayatta kalan desen, ASCII olmayan
+    rakam, sıfır genişlikli rakam dizisi, opak olmayan kimlik,
+    maskelenmiş metnin sınırı aşması, geçersiz `--mask-term`). Prompt
+    GÖNDERİLMEZ.
+
+    MESAJ SÖZLEŞMESİ: sabit bir ön ek + kaynak modülün exception SINIF
+    ADI. Sınıf adları derleme-zamanı literalleridir - hiçbir belge
+    metni, taraf adı, kimlik numarası, token ya da eşleşme tablosu bu
+    mesaja giremez. `str(error)` ASLA iletilmez."""
+
+
+class FactExtractionDeMaskingError(ApprovalUiError):
+    """PILOT READINESS ADIM 4a: DÖNÜŞ yolu reddi (model cevabında
+    bilinmeyen/bozuk/kesik/harf-değişmiş token, JSON anahtarında token,
+    geri çevirme sonrası artık token). Pending YAZILMAZ.
+
+    Aynı mesaj sözleşmesi geçerlidir."""
+
+
+class FactExtractionSourceTextUnavailableError(ApprovalUiError):
+    """PILOT READINESS ADIM 4a: maskeli ÖNİZLEME için gereken case/belge
+    girdisi okunamadı (çıkarılmış `.txt` yok, boş, ham sınırı aşıyor, ya
+    da case/document JSON'u okunamıyor).
+
+    Bu YENİ bir hata modudur ve bilinçli bir DAVRANIŞ DEĞİŞİKLİĞİDİR:
+    `preview_generation()` bu turdan ÖNCE belge metnini HİÇ yüklemiyordu
+    ve metin yokken manifest durumu `missing` ile BAŞARILI dönüyordu.
+    Bağlayıcı plan "preview maskeli metni gösterir" dediği için artık
+    metin ZORUNLUDUR. Çevrilmeseydi `load_text()`'in `FileNotFoundError`'ı
+    MUTLAK YOLU taşıyan bir traceback olarak konsola düşerdi."""
+
+
+def _translated_privacy_error(error):
+    """`llm_privacy_boundary` hatasını bu facade'in `ApprovalUiError`
+    ailesine çevirir - böylece `ui/cli_mutate.py` onu bilinen bir
+    domain hatası olarak tanır ve tek satırlık temiz bir `ERROR:`
+    yazar, tam traceback DEĞİL."""
+    label = type(error).__name__
+    if isinstance(error, _privacy.DeMaskingError):
+        return FactExtractionDeMaskingError(
+            "Model cevabı gizlilik sınırında reddedildi; pending YAZILMADI "
+            f"(kural: {label})."
+        )
+    return FactExtractionMaskingError(
+        "İstek gizlilik sınırında reddedildi; modele HİÇBİR ŞEY gönderilmedi "
+        f"(kural: {label})."
+    )
 
 
 class FactExtractionBuildSkippedInvariantError(Exception):
@@ -519,7 +579,23 @@ def _resolve_generation_provenance(module, llm_client):
     return "agent", module.DEFAULT_MODEL, engine_version, prompt_agent_version
 
 
-def _build_identity_payload(document_id, manifest, generation_mode, model_id, engine_version, prompt_agent_version):
+def _build_identity_payload(
+    document_id, manifest, generation_mode, model_id, engine_version, prompt_agent_version,
+    masking_policy_version, masking_extra_terms_digest,
+):
+    """PILOT READINESS ADIM 4a: 7 -> 9 anahtar.
+
+    `masking_policy_version` modül sabitinden ÇAĞRI ANINDA dinamik
+    okunur; `masking_extra_terms_digest` operatörün `--mask-term`
+    listesinin kanonik sha256'sıdır (case'ten türeyen tohumlar zaten
+    manifest'in `case`/`target_document` konteynerlerindeki dosya
+    hash'lerinin İÇİNDEDİR - yalnız operatör terimleri manifest
+    DIŞINDADIR, bu yüzden ayrı bir digest gerekir).
+
+    Sonuç: politika sürümü VEYA ek terim listesi değişince
+    `input_digest` -> `pre_revision` -> `idempotency_key` değişir, yani
+    YENİ ve BAĞIMSIZ bir deneme doğar (kalıcı bir conflict DEĞİL) -
+    Row 19A'nın stale-sonuç kuralı."""
     return {
         "manifest_version": _MANIFEST_VERSION,
         "document_id": document_id,
@@ -528,7 +604,37 @@ def _build_identity_payload(document_id, manifest, generation_mode, model_id, en
         "model_id": model_id,
         "engine_version": engine_version,
         "prompt_agent_version": prompt_agent_version,
+        "masking_policy_version": masking_policy_version,
+        "masking_extra_terms_digest": masking_extra_terms_digest,
     }
+
+
+def _normalise_mask_terms(mask_terms):
+    """`--mask-term` listesini DOĞRULAR ve sabit bir tuple'a çevirir.
+
+    HERHANGİ bir I/O'dan ÖNCE çağrılır (argüman-şekli katmanı)."""
+    if mask_terms is None:
+        return ()
+    if isinstance(mask_terms, (str, bytes)):
+        raise FactExtractionArgumentError(
+            "mask_terms bir dizi olmalıdır (tek bir string değil)."
+        )
+    try:
+        terms = tuple(mask_terms)
+    except TypeError as error:
+        raise FactExtractionArgumentError(
+            "mask_terms bir dizi olmalıdır."
+        ) from error
+    for term in terms:
+        if not isinstance(term, str) or not term.strip():
+            raise FactExtractionArgumentError(
+                "Her --mask-term boş olmayan bir metin olmalıdır."
+            )
+        if _privacy.PREFIX_RE.search(term):
+            raise FactExtractionArgumentError(
+                "Bir --mask-term maskeleme token önekini içeremez."
+            )
+    return terms
 
 
 def _canonical_identity_bytes(identity_payload) -> bytes:
@@ -709,11 +815,14 @@ def _default_conn_factory():
 
 def _check_argument_shapes(
     document_id, expected_input_digest=None, *, for_apply: bool, with_agent: bool, allow_network: bool = False,
+    mask_terms=(),
 ):
     if not _nonblank(document_id):
         raise FactExtractionArgumentError(
             "document_id boş olamaz."
         )
+
+    _normalise_mask_terms(mask_terms)
 
     if not with_agent:
         raise FactExtractionArgumentError(
@@ -746,15 +855,24 @@ def preview_generation(
     llm_client=None,
     principal,
     authz_repository=None,
+    mask_terms=(),
 ):
     """Salt-okunur preview. SIRA: dış 'read' authz HER filesystem
     probundan ÖNCE koşar. `llm_client` yalnız identity/provenance
     seçimini belirlemek için KULLANILIR - hiçbir metodu ÇAĞRILMAZ.
     `with_agent=False` (varsayılan) KOŞULSUZ reddedilir - bu ailede
-    yalnız `with_agent=True` geçerlidir."""
+    yalnız `with_agent=True` geçerlidir.
+
+    PILOT READINESS ADIM 4a: preview artık MASKELENMİŞ metni de
+    döndürür. Bu, daha önce saf-hash olan bu yola bir HAM DOSYA OKUMASI
+    ve YENİ fail-closed hata modları ekler (bilinçli, kapsam raporu
+    §7-4/F6). Model HÂLÂ ÇAĞRILMAZ; 'read' authz kontrolü DEĞİŞMEZ."""
     import importlib
 
-    _check_argument_shapes(document_id, for_apply=False, with_agent=with_agent)
+    mask_terms = _normalise_mask_terms(mask_terms)
+    _check_argument_shapes(
+        document_id, for_apply=False, with_agent=with_agent, mask_terms=mask_terms,
+    )
 
     module = importlib.import_module(FACT_EXTRACTION_ROW_KEY_TO_MODULE_NAME["fact_extraction"])
 
@@ -771,11 +889,37 @@ def preview_generation(
         generation_mode, model_id, engine_version, prompt_agent_version = _resolve_generation_provenance(
             module, llm_client,
         )
+        # N5 (savunma amaçlı): bu çağrı bugün `_normalise_mask_terms()`
+        # sayesinde ulaşılamaz bir hata yolu taşır, ama korumasız
+        # bırakılırsa TEORİK olarak ham bir traceback `ui/cli_mutate.py`'ye
+        # ulaşabilirdi. Sarmalanmıştır.
+        try:
+            masking_extra_terms_digest = _privacy.compute_extra_terms_digest(mask_terms)
+        except _privacy.LlmPrivacyBoundaryError as error:
+            raise _translated_privacy_error(error) from error
         identity_payload = _build_identity_payload(
             document_id, manifest, generation_mode, model_id, engine_version, prompt_agent_version,
+            _privacy.MASKING_POLICY_VERSION, masking_extra_terms_digest,
         )
         identity_bytes = _canonical_identity_bytes(identity_payload)
         input_digest = _compute_input_digest(identity_bytes)
+
+        text_path = module.get_extracted_text_path(resolved_case_id, document_id)
+        try:
+            masking_preview = module.build_masking_preview(
+                resolved_case_id, document_id, text_path, mask_terms=mask_terms,
+            )
+        except _privacy.LlmPrivacyBoundaryError as error:
+            raise _translated_privacy_error(error) from error
+        except (OSError, ValueError) as error:
+            # `load_case_context()`/`load_text()`'in ham hataları MUTLAK
+            # YOL taşır; sabit mesajlı bir domain hatasına çevrilir,
+            # `str(error)` ASLA iletilmez. (`json.JSONDecodeError`
+            # `ValueError`ın alt sınıfıdır, bu blok onu da kapsar.)
+            raise FactExtractionSourceTextUnavailableError(
+                "Maskeli önizleme için gereken belge metni/case girdisi okunamadı "
+                f"(kural: {type(error).__name__})."
+            ) from error
 
         return {
             "case_id": resolved_case_id,
@@ -788,6 +932,20 @@ def preview_generation(
             "prompt_agent_version": prompt_agent_version,
             "pending_exists": paths.pending_path.is_file(),
             "pending_sha256": sha256_file(paths.pending_path),
+            "masking_policy_version": _privacy.MASKING_POLICY_VERSION,
+            "masking_extra_terms_digest": masking_extra_terms_digest,
+            "mask_term_count": len(mask_terms),
+            # Maskelenmiş metin/context: avukat MODELE TAM OLARAK NE
+            # GİDECEĞİNİ görür. EŞLEŞME TABLOSU ASLA DÖNDÜRÜLMEZ.
+            "masked_document_text": masking_preview["masked_document_text"],
+            "masked_context_json": masking_preview["masked_context_json"],
+            "token_count": masking_preview["token_count"],
+            "class_distribution": masking_preview["class_distribution"],
+            "possible_over_masking": masking_preview["possible_over_masking"],
+            "possible_split_identifier": masking_preview["possible_split_identifier"],
+            "possible_squeeze_seed_match": masking_preview["possible_squeeze_seed_match"],
+            "original_text_chars": masking_preview["original_text_chars"],
+            "masked_text_chars": masking_preview["masked_text_chars"],
         }
     finally:
         try:
@@ -818,7 +976,18 @@ class FactExtractionApplyResult:
 def _audit_record_matches_base(
     record: dict, *, idempotency_key: str, resource_key: str, action_family: str,
     document_id: str, pending_sha256: str,
+    masking_policy_version: str, masking_extra_terms_digest: str,
 ) -> bool:
+    # PILOT READINESS ADIM 4a - İSTEĞE BAĞLI SERTLEŞTİRME (bu turda
+    # UYGULANDI): bu fonksiyon bugüne kadar HİÇBİR identity alanını
+    # bağlamıyordu. İki maskeleme alanı burada AYRICA bağlanır - bu,
+    # adapter'ın KENDİ bağımsız bağlamasının YERİNE GEÇMEZ, ona EK bir
+    # katmandır. Böylece maskeleme politikası/ek terimleri farklı bir
+    # audit kaydı, bir "safe replay" olarak KABUL EDİLEMEZ.
+    if record.get("masking_policy_version") != masking_policy_version:
+        return False
+    if record.get("masking_extra_terms_digest") != masking_extra_terms_digest:
+        return False
     if not _nonblank(record.get("mutation_idempotency_key")) or record.get("mutation_idempotency_key") != idempotency_key:
         return False
     if not _nonblank(record.get("mutation_resource_key")) or record.get("mutation_resource_key") != resource_key:
@@ -877,6 +1046,7 @@ def _verify_completed_replay_binding(
     paths: VerifiedFactExtractionOutputPaths, case_root_real: Path, *,
     document_id: str, action_family: str, journal_state: str, journal_id: int,
     idempotency_key: str, resource_key: str, observed_post_hash,
+    masking_policy_version: str, masking_extra_terms_digest: str,
 ):
     """Completed safe-replay corroboration - yalnız `completed`
     durumdaki bir satırı YENİDEN DOĞRULAR (sonuç zaten BİLİNİYOR)."""
@@ -914,6 +1084,8 @@ def _verify_completed_replay_binding(
         if _audit_record_matches_base(
             record, idempotency_key=idempotency_key, resource_key=resource_key,
             action_family=action_family, document_id=document_id, pending_sha256=current_pending_sha256,
+            masking_policy_version=masking_policy_version,
+            masking_extra_terms_digest=masking_extra_terms_digest,
         )
     ]
     if len(matches) != 1:
@@ -935,6 +1107,7 @@ def apply_generation(
     principal,
     authz_repository=None,
     conn_factory=None,
+    mask_terms=(),
 ) -> FactExtractionApplyResult:
     """SIRA (spec §G/§I): (1) argüman şekilleri (saf, I/O'suz); (2) DIŞ
     authorize_case_access('mutate'); (3) pre-lock manifest/identity +
@@ -950,8 +1123,10 @@ def apply_generation(
     replay'de tam corroboration; (11) maskelemeyen temizlik."""
     import importlib
 
+    mask_terms = _normalise_mask_terms(mask_terms)
     _check_argument_shapes(
         document_id, expected_input_digest, for_apply=True, with_agent=with_agent, allow_network=allow_network,
+        mask_terms=mask_terms,
     )
 
     module = importlib.import_module(FACT_EXTRACTION_ROW_KEY_TO_MODULE_NAME["fact_extraction"])
@@ -973,8 +1148,15 @@ def apply_generation(
         generation_mode, model_id, engine_version, prompt_agent_version = _resolve_generation_provenance(
             module, llm_client,
         )
+        masking_policy_version = _privacy.MASKING_POLICY_VERSION
+        # N5 (savunma amaçlı) - bkz. preview'daki aynı sarmalama.
+        try:
+            masking_extra_terms_digest = _privacy.compute_extra_terms_digest(mask_terms)
+        except _privacy.LlmPrivacyBoundaryError as error:
+            raise _translated_privacy_error(error) from error
         pre_identity_payload = _build_identity_payload(
             document_id, pre_manifest, generation_mode, model_id, engine_version, prompt_agent_version,
+            masking_policy_version, masking_extra_terms_digest,
         )
         pre_identity_bytes = _canonical_identity_bytes(pre_identity_payload)
         input_digest = _compute_input_digest(pre_identity_bytes)
@@ -1016,10 +1198,17 @@ def apply_generation(
             # aksi halde gerçek `call_llm()` production dalı (yalnız
             # `--with-agent --allow-network` ile buraya ulaşılır) tetiklenir.
             text_path = module.get_extracted_text_path(outer_resolved_case_id, document_id)
-            build_result = module.build_fact_extraction(
-                outer_resolved_case_id, document_id, text_path,
-                model=module.DEFAULT_MODEL, llm_client=llm_client,
-            )
+            try:
+                build_result = module.build_fact_extraction(
+                    outer_resolved_case_id, document_id, text_path,
+                    model=module.DEFAULT_MODEL, llm_client=llm_client,
+                    mask_terms=mask_terms,
+                )
+            except _privacy.LlmPrivacyBoundaryError as error:
+                # Bu nokta kilit DIŞINDA ve journal satırı OLUŞMADAN
+                # ÖNCEDİR - bir maskeleme/geri-çevirme reddi SIFIR
+                # journal satırı ve SIFIR filesystem mutasyonu bırakır.
+                raise _translated_privacy_error(error) from error
             extraction = build_result["extraction"]
             frozen_pending_bytes = _freeze_pending_bytes(extraction)
 
@@ -1049,8 +1238,17 @@ def apply_generation(
                 )
 
             ul_manifest = _build_manifest_containers(ul_case_root, document_id)
+            # Digest KİLİT ALTINDA, AYNI operatör girdisinden YENİDEN
+            # hesaplanır (pre-lock değeri kör biçimde taşınmaz);
+            # politika sürümü de modül sabitinden TAZE okunur.
+            try:
+                ul_masking_digest = _privacy.compute_extra_terms_digest(mask_terms)
+            except _privacy.LlmPrivacyBoundaryError as error:
+                raise _translated_privacy_error(error) from error
             ul_identity_payload = _build_identity_payload(
                 document_id, ul_manifest, generation_mode, model_id, engine_version, prompt_agent_version,
+                _privacy.MASKING_POLICY_VERSION,
+                ul_masking_digest,
             )
             ul_identity_bytes = _canonical_identity_bytes(ul_identity_payload)
 
@@ -1145,6 +1343,8 @@ def apply_generation(
                         idempotency_key=idempotency_key_for_audit,
                         resource_key=resource_key,
                         observed_post_hash=outcome.observed_post_hash,
+                        masking_policy_version=masking_policy_version,
+                        masking_extra_terms_digest=masking_extra_terms_digest,
                     )
                 except FactExtractionInputContainmentError as error:
                     raise FactExtractionAuditBindingVerificationFailedError(

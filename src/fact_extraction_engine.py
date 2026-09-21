@@ -118,6 +118,18 @@ from document_reference_resolver import (
 # (`fact_approval.py`'nin zaten kullandığı AYNI plain import deseni).
 import path_containment
 
+# PILOT READINESS ADIM 4a: LLM gizlilik sınırı (geri çevrilebilir takma
+# adlandırma). stdlib-only, hiçbir repo/`ui` modülü import etmeyen
+# paylaşılan primitive (`path_containment` ile AYNI plain-import deseni).
+#
+# MODÜL SEVİYESİ ad olarak bağlanır (yerel import DEĞİL) - böylece
+# izole testler bu attribute'u geçici olarak takas ederek "maskelemesiz
+# referans akışı"nı LOCKED üretim kodunda HİÇBİR opt-out bayrağı
+# açmadan kurabilir (Row 18B'nin zaten kabul ettiği "geçici olarak
+# değiştirilmiş modül attribute'ları" deseni). Üretimde maskeleme
+# agent yolunda ZORUNLUDUR - kapatan bir CLI/API bayrağı YOKTUR.
+import llm_privacy_boundary
+
 
 # ============================================================
 # VERSION
@@ -3494,7 +3506,15 @@ def build_fact_extraction(
     *,
     model=DEFAULT_MODEL,
     llm_client=None,
+    mask_terms=(),
 ):
+    """ADIM 4a: `mask_terms` additive, keyword-only, varsayılan boş -
+    operatörün `--mask-term` ile verdiği EK terimlerdir.
+
+    MASKELEME ZORUNLUDUR ve KAPATILAMAZ: bu ailede yalnız agent modu
+    vardır, bu yüzden her çağrı (üretim istemcisi VE enjekte edilmiş
+    test istemcisi dahil) maskelenmiş bir prompt gönderir. Bir opt-out
+    bayrağı YOKTUR."""
 
     (
         case_data,
@@ -3514,9 +3534,51 @@ def build_fact_extraction(
         document_data,
     )
 
-    prompt = build_user_prompt(
-        context,
-        document_text,
+    # ========================================================
+    # ADIM 4a - LLM GİZLİLİK SINIRI (giden yol)
+    #
+    # Prompt'un İKİ girdisi de (context + belge metni) AYNI haritayla
+    # maskelenir - yalnız metni maskelemek işe YARAMAZ, çünkü context
+    # `parties[].display_name`, `source_actor_label` ve
+    # `source_document_title` alanlarında gerçek adları taşır.
+    #
+    # `mask_prompt_inputs()` context'in DERİN KOPYASINI maskeler;
+    # aşağıda `build_extraction()`'a ORİJİNAL `context` verilir (maskeli
+    # context verilseydi `text_contains_party_name()` /
+    # `normalize_attribution()` idare atfını HATA ÜRETMEDEN sessizce
+    # düşürürdü).
+    # ========================================================
+
+    masking = llm_privacy_boundary.mask_prompt_inputs(
+        case_data=case_data,
+        document_data=document_data,
+        context=context,
+        document_text=document_text,
+        extra_terms=mask_terms,
+    )
+
+    prompt = (
+        build_user_prompt(
+            masking.masked_context,
+            masking.masked_text,
+        )
+        + masking.prompt_instruction_block
+    )
+
+    # Maskelenmiş metin ORİJİNALDEN UZUN olabilir (`VGMASK_0001E` kısa
+    # bir e-postanın yerini alır) ⇒ `load_text()` içindeki HAM metin
+    # kontrolüne EK, ikinci bir sınır kontrolü. Ham kontrol YERİNDE
+    # KALIR, taşınmaz.
+    llm_privacy_boundary.assert_masked_length_within(
+        masking.masked_text,
+        MAX_INPUT_CHARS,
+    )
+
+    # Giden prompt'ta hayatta kalan bilinen desen varsa HİÇBİR ŞEY
+    # GÖNDERİLMEZ (fail-closed).
+    llm_privacy_boundary.scan_outbound(
+        prompt,
+        masking,
     )
 
     print()
@@ -3580,6 +3642,18 @@ def build_fact_extraction(
         ),
     )
 
+    print(
+        "Maskeleme:",
+        llm_privacy_boundary.MASKING_POLICY_VERSION,
+    )
+
+    print(
+        "Token:",
+        masking.summary.get(
+            "token_count"
+        ),
+    )
+
     # ========================================================
     # LLM
     # ========================================================
@@ -3592,6 +3666,41 @@ def build_fact_extraction(
 
     raw_result = parse_llm_json(
         raw_text
+    )
+
+    # ========================================================
+    # ADIM 4a - LLM GİZLİLİK SINIRI (dönüş yolu)
+    #
+    # SIRA bağlayıcıdır: `parse_llm_json()` SONRASI, `build_extraction()`
+    # ÖNCESİ, ve AYRIŞTIRILMIŞ ağaç üzerinde. Ham string üzerinde
+    # yapılsaydı içinde `"` veya `\` olan bir ad JSON'u bozardı.
+    #
+    # `count_dropped_tokens()` REDDETMEZ, yalnız RAPORLAR: düşen bir
+    # token bir sızıntı değil, kalite kaybıdır (kapsam raporu §5 not b).
+    # Reddetmek, modelin alıntılamadığı her IBAN/telefon için dosyayı
+    # kalıcı olarak işlenemez kılardı.
+    # ========================================================
+
+    dropped = llm_privacy_boundary.count_dropped_tokens(
+        raw_result,
+        masking,
+    )
+
+    raw_result = llm_privacy_boundary.de_mask_tree(
+        raw_result,
+        masking,
+    )
+
+    llm_privacy_boundary.assert_no_tokens_remain(
+        raw_result,
+        masking,
+    )
+
+    print(
+        "Yanıtta görünmeyen token:",
+        dropped.get(
+            "dropped_token_count"
+        ),
     )
 
     # ========================================================
@@ -3631,6 +3740,142 @@ def build_fact_extraction(
             runtime[
                 "semantic_guard_records"
             ],
+
+        # ADIM 4a: YALNIZ SAYAÇLAR. `masking.mapping` bu sözlüğe,
+        # pending artefaktına, audit kaydına, log'a veya bir
+        # exception'a ASLA KONULMAZ - `masking` bu fonksiyonun
+        # frame'iyle birlikte düşer.
+        "masking_summary":
+            dict(
+                masking.summary,
+                dropped_token_count=dropped.get(
+                    "dropped_token_count"
+                ),
+                dropped_by_class=dropped.get(
+                    "dropped_by_class"
+                ),
+            ),
+    }
+
+
+# ============================================================
+# ADIM 4a - MASKELEME ÖNİZLEMESİ (salt-okunur, model ASLA çağrılmaz)
+#
+# `preview_generation()` bugüne kadar belge metnini HİÇ yüklemiyordu
+# (yalnız manifest hash'i). Bağlayıcı plan "preview maskeli metni
+# gösterir" dediği için bu fonksiyon preview'a `load_text()` +
+# `build_allowed_context()` + maskeleme çağrılarını sokar; preview
+# bu yüzden YENİ fail-closed hata modları kazanır (boş tohum,
+# collision, hayatta kalan desen, ASCII olmayan rakam, opak olmayan
+# kimlik). HARİTA ASLA döndürülmez.
+# ============================================================
+
+def build_masking_preview(
+    case_id,
+    document_id,
+    text_path,
+    *,
+    mask_terms=(),
+):
+
+    (
+        case_data,
+        document_data,
+        case_dir,
+    ) = load_case_context(
+        case_id,
+        document_id,
+    )
+
+    document_text = load_text(
+        text_path
+    )
+
+    context = build_allowed_context(
+        case_data,
+        document_data,
+    )
+
+    masking = llm_privacy_boundary.mask_prompt_inputs(
+        case_data=case_data,
+        document_data=document_data,
+        context=context,
+        document_text=document_text,
+        extra_terms=mask_terms,
+    )
+
+    prompt = (
+        build_user_prompt(
+            masking.masked_context,
+            masking.masked_text,
+        )
+        + masking.prompt_instruction_block
+    )
+
+    llm_privacy_boundary.assert_masked_length_within(
+        masking.masked_text,
+        MAX_INPUT_CHARS,
+    )
+
+    llm_privacy_boundary.scan_outbound(
+        prompt,
+        masking,
+    )
+
+    summary = masking.summary
+
+    return {
+        "masking_policy_version":
+            llm_privacy_boundary.MASKING_POLICY_VERSION,
+
+        "masked_document_text":
+            masking.masked_text,
+
+        "masked_context_json":
+            json.dumps(
+                masking.masked_context,
+                ensure_ascii=False,
+                indent=2,
+            ),
+
+        "token_count":
+            summary.get(
+                "token_count"
+            ),
+
+        "class_distribution":
+            summary.get(
+                "class_distribution"
+            ),
+
+        "possible_over_masking":
+            summary.get(
+                "possible_over_masking"
+            ),
+
+        # Karar b2: satır sonu/boşlukla bölünmüş olabilecek kimlik
+        # numarası SAYACI - bilgi amaçlıdır, ret ÜRETMEZ.
+        "possible_split_identifier":
+            summary.get(
+                "possible_split_identifier"
+            ),
+
+        # R1(iii): squeeze-only tohum isabeti SAYACI - bilgi amaçlıdır,
+        # ret ÜRETMEZ.
+        "possible_squeeze_seed_match":
+            summary.get(
+                "possible_squeeze_seed_match"
+            ),
+
+        "original_text_chars":
+            summary.get(
+                "original_text_chars"
+            ),
+
+        "masked_text_chars":
+            summary.get(
+                "masked_text_chars"
+            ),
     }
 
 
@@ -3845,6 +4090,13 @@ def write_pending(
                 "model_id": identity_payload.get("model_id"),
                 "engine_version": identity_payload.get("engine_version"),
                 "prompt_agent_version": identity_payload.get("prompt_agent_version"),
+                # ADIM 4a: TEK KAYNAK, geçirilen `identity_payload`'dır -
+                # motor bu iki değeri YENİDEN HESAPLAMAZ (aksi halde
+                # audit ile identity arasında sessiz bir sapma
+                # doğabilirdi; adapter ikisinin BİREBİR eşitliğini
+                # bağlar).
+                "masking_policy_version": identity_payload.get("masking_policy_version"),
+                "masking_extra_terms_digest": identity_payload.get("masking_extra_terms_digest"),
                 "identity_payload": identity_payload,
                 "first_write": first_write,
                 "history_backup_path": history_backup_path,
