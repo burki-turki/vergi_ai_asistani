@@ -743,6 +743,60 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   `PILOT READINESS STEP 4b RAW-DATA AGENT CLOSURE LOCK-READY — NO BLOCKING FINDINGS`
   (bkz. Pilot Readiness Adım 4b checkpoint özeti, §5 sonrası, "## 6.
   Cross-Cutting Backlog"dan hemen önce).
+- **Pilot Readiness Adım 4c — Kalan Outbound LLM Yollarının Kapatılması —
+  DONE / LOCKED.** Exact kapsam **1 YENİ + 9 DEĞİŞTİRİLMİŞ = 10 dosya**,
+  yerel commit `9a3b3b2` (push YAPILMADI). 4b'nin "fact_extraction dışında
+  ham-veri taşıyan dört ajan kapalı" kilidi kullanıcının bugünkü bar'ını
+  ("ham veri gitmiyor" DEĞİL, "fact_extraction dışında hiçbir outbound
+  yol teknik olarak çalışamaz") KARŞILAMIYORDU — bağımsız bir gap analizi
+  altı gerçek gap buldu: `case_law`/`risk_strategy`/`drafting` ajan modu
+  CLI'dan erişilebilir ve canlıydı; `python src/evaluation.py` bugün
+  FİİLEN gerçek bir Anthropic çağrısı tetikliyordu (T06); `python
+  src/rag.py` doğrudan çalıştırma yalnız ilgisiz bir `RagBundleNotPinnedError`
+  çökmesiyle tesadüfen kapalıydı. Bu alt-faz altısını da kapattı:
+  (1) `case_law`/`risk_strategy`/`drafting` için her iki facade'de
+  (`agent_generation_mutation_facade.py`,
+  `legal_research_case_law_mutation_facade.py`) AYRI, doğru gerekçeli
+  yeni `*_PILOT_POLICY_REFUSED_ROW_KEYS` kümeleri (4b'nin "ham metin"
+  kümeleri — üç ailenin prompt'u GERÇEKTEN ID/enum-only, bu doğru kaldı,
+  DOKUNULMADI) + `ui/cli_mutate.py`'de iki katmanlı (CLI usage-shape +
+  facade) refusal; deterministik mod AYNEN çalışıyor; (2) `src/rag.py`'nin
+  üç gerçek ağ-dokunan fonksiyonu (`rewrite_query`/`rerank_candidates`/
+  `generate_answer`) tek, KOŞULSUZ (env-değişkeni YOK) `_get_client()`
+  noktasına indirildi — `anthropic` import'undan ÖNCE reddediyor; modül-
+  seviyesi `client = Anthropic()` kaldırıldı; `__main__` artık
+  `RagBundleNotPinnedError`'a hiç ulaşmadan reddediyor — RAG Slice 2
+  aktive olduğunda bu yol KENDİLİĞİNDEN açılmayacak; (3) `src/evaluation.py`/
+  `src/evaluation_v6.py` her biri kendi bağımsız `__main__` kapanışını
+  aldı (T06 dahil gövdeleri DOKUNULMADI — asıl güvenlik `rag.py`'nin
+  gate'i, bu yalnız UX/exit-code netliği). Yeni test dosyası (50 kontrol)
+  gerçek, patch'lenmemiş `rag.answer_question()`'ı (mock DEĞİL) çağırıp
+  gate'in durdurduğunu, "RAG Slice 2 simülasyonu" pozitif kontrolüyle
+  `RagBundleNotPinnedError`'a bağımlı OLMADIĞINI, gerçek OS subprocess
+  kanıtlarıyla (normal VE poisoned-`anthropic` ortamda) üç script'in de
+  kapalı olduğunu kanıtlıyor. İlk bağımsız inceleme bir HIGH bulgu
+  buldu (F1: yeni test dosyasının kendi ağ-guard mekanizması resmî
+  sweep'in guard muhasebesiyle çakışıp `GUARD_INHERITANCE_MISMATCH`
+  üretiyordu — yalnız test dosyasının kendi içinde, dört LOCKED üretim
+  dosyasının hiçbirinde değil); dar, tek-dosyalık bir remediasyon ve
+  hedefli bir ikinci bağımsız inceleme F1'i kapattı. Bu session ayrıca
+  resmî `production-parity` (77/77 modül, 5890 passed, 0 failed) ve
+  `rag-dependency` (216 passed, 0 failed) kapılarını bu commit'e karşı
+  doğrudan çalıştırıp temiz sonuç aldı. Final verdict, exact olarak:
+  `PILOT READINESS STEP 4c LOCK-READY — F1 CLOSED, NO BLOCKING FINDINGS`
+  (bkz. checkpoint özeti, §5 sonrası, "## 6. Cross-Cutting Backlog"dan
+  hemen önce). **Dar, exact iddia** (abartılmaz): `rag-dependency`
+  profilinin modül listesi (`RAG_GATE_MODULES`) sabit/hardcoded 3
+  modülden oluşur (builder/reader/dependency_smoke) — yeni test dosyası
+  bu sabit listeye DAHİL DEĞİLDİR; dosyanın `anthropic`-kurulu ortamdaki
+  (root `.venv`) davranışı bunun yerine hem implementer hem iki bağımsız
+  inceleme tarafından TEKRARLANAN standalone koşularla (50/50 PASS)
+  doğrudan doğrulanmıştır. `rag.py`'ye DI seam BİLİNÇLİ olarak
+  EKLENMEDİ (kullanıcı kararı) — `evaluation.py`/`evaluation_v6.py`'nin
+  iç mantığı hâlâ fake client'a karşı test EDİLEMEZ; bu ayrı, gelecekteki
+  bir maddedir. `_get_client()`'in gate'i `anthropic`'i import etmeden
+  önce çalışır; `anthropic`'in kurulu olup olmaması/API key varlığı
+  ASLA bir güvenlik kontrolü sayılmaz.
 - **Pilot Readiness Adım 5 — Resmî Tatil Takvimi Registry'si +
   `calendar_complete` Türetimi — DONE / LOCKED.** Exact kapsam **5 YENİ +
   9 DEĞİŞTİRİLMİŞ = 14 dosya**, yerel commit `203c71a` (push YAPILMADI).
@@ -768,8 +822,9 @@ Agent kendi kararıyla sıralamayı değiştiremez.
 - **Pilot Readiness Adım 6 — Avukat Doğrulaması — ACTIVE / NEXT.** Avukat
   paketi (`avukat_dogrulama_paketi_DRAFT2`) repo dışında hazırdır ve
   avukata verilebilir — Adım 4a Remediation (satır-sonu tire maskeleme
-  açığının kapatılması), Adım 4b (ham-veri kapatma) ve Adım 5 (takvim
-  registry'si) kilitleriyle önkoşulları sağlanmıştır. Bu pointer
+  açığının kapatılması), Adım 4b (ham-veri kapatma), Adım 4c (kalan
+  outbound LLM yollarının kapatılması) ve Adım 5 (takvim registry'si)
+  kilitleriyle önkoşulları sağlanmıştır. Bu pointer
   KODLAMA/İMPLEMENTASYON YETKİSİ VERMEZ — Adım 6 avukatın SORU 3.1-3.8/
   5.1-5.4'ü yanıtlaması ve altın örnekleri doldurmasıdır (bir hukuk
   işidir, bir kod turu DEĞİL). Avukatın yazılı cevabı geldiğinde: takvim
@@ -8402,6 +8457,225 @@ türetmedi.
 **Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi
 yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
 hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Pilot Readiness Adım 4c — Kalan Outbound LLM Yollarının Kapatılması (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve pilot blocker** — Adım 4b'nin "dört ajan kapalı" kilidi,
+kullanıcının bugünkü, daha katı bar'ını KARŞILAMIYORDU. Kullanıcının
+kendi ifadesiyle: *"pilot bar'ımız 'ham veri gitmiyor' değil, fact
+extraction dışındaki outbound LLM yollarının teknik olarak
+çalışamaması."* Bir bağımsız gap analizi (`outbound_llm_gap_analysis_
+FINAL.md`) altı gerçek gap buldu: `case_law`/`risk_strategy`/`drafting`
+ajan modu koordinatöre entegre, CLI-erişilebilir ve CANLIYDI (prompt
+payload'ları ID/enum-only olsa BİLE — bu, "ham veri taşımıyor" iddiasını
+YALANLAMAZ, ama "teknik olarak çalışamaz" bar'ını KARŞILAMAZ);
+`python src/evaluation.py` bugün FİİLEN gerçek bir Anthropic çağrısı
+tetikliyordu (T06 test senaryosu, gerçek, patch'lenmemiş
+`rag.answer_question`'ı non-empty history ile çağırıyordu); `python
+src/rag.py` doğrudan çalıştırma yalnız ilgisiz bir
+`RagBundleNotPinnedError` çökmesiyle TESADÜFEN kapalıydı — RAG Slice 2
+aktive olduğunda bu yol KENDİLİĞİNDEN açılacaktı.
+
+**B. Exact kapsam** — Kullanıcı tarafından, salt-okunur bir scope
+draft'tan (`pilot_step4c_scope_DRAFT.md`) sonra onaylanmış tam dosya
+allowlist'i: **1 YENİ + 9 DEĞİŞTİRİLMİŞ = 10 dosya**, yerel commit
+`9a3b3b299c05288271f950a33a929c071bb7d5b6` (kısa: `9a3b3b2`, push
+YAPILMADI).
+
+Yeni (1):
+1. `ui/tests/test_rag_pilot_egress_gate_isolated.py`
+
+Değiştirilmiş — LOCKED üretim (4):
+2. `ui/services/agent_generation_mutation_facade.py`
+3. `ui/services/legal_research_case_law_mutation_facade.py`
+4. `ui/cli_mutate.py`
+5. `src/rag.py` (bu turda İLK KEZ açıldı — RAG Bundle Foundation ve
+   Adım 4b'nin K5 kararında AÇIKÇA dokunulmadan bırakılmıştı)
+
+Değiştirilmiş — RAG lineage, kendi Row'u yok (2):
+6. `src/evaluation.py`
+7. `src/evaluation_v6.py`
+
+Değiştirilmiş — test (3):
+8. `ui/tests/test_cli_mutate_isolated.py`
+9. `ui/tests/test_agent_generation_mutation_facade_isolated.py`
+10. `ui/tests/test_legal_research_case_law_mutation_facade_isolated.py`
+
+Sıfır migration, sıfır schema, sıfır production-data, sıfır web route,
+sıfır RAG Slice 2 implementasyonu, sıfır DRAFT-3 değişikliği. Kullanıcının
+açık "dokunma" listesi (`deadline`/`timeline`/`qa_agent`/`app.py`/web
+`ui/`) beşi de kaynaktan tek tek doğrulanıp dokunulmadığı kanıtlandı.
+
+**C. Tasarım — üç madde, tek invariant** — *"Pilot sırasında izin
+verilen tek outbound AI yolu: fact extraction → llm_privacy_boundary →
+maskelenmiş payload → provider. Bunun dışındaki bütün outbound LLM
+yolları fail-closed olmalı."* Tek, paylaşılan ilke: kod-seviyesinde
+KOŞULSUZ kapatma — hiçbir ortam-değişkenli "aç/kapa" anahtarı YOK
+(kullanıcının "RAG Slice 2 aktive edildiğinde bu yol kendiliğinden
+açılmamalı" şartı bunu doğrudan gerektirir).
+
+1. **`case_law`/`risk_strategy`/`drafting`** — her iki facade'de
+   (`agent_generation_mutation_facade.py`,
+   `legal_research_case_law_mutation_facade.py`) AYRI, yeni
+   `*_PILOT_POLICY_REFUSED_ROW_KEYS` kümeleri açıldı — Adım 4b'nin
+   `*_RAW_TEXT_REFUSED_ROW_KEYS` kümelerine EKLENMEDİ, çünkü o mesaj
+   "ham metin taşıyor" der ve bu üç aile için bu YANLIŞ olurdu (prompt'ları
+   GERÇEKTEN ID/enum-only — kaynaktan bağımsızca iki kez doğrulandı).
+   Yeni, DOĞRU gerekçeli exception sınıfları + mesaj fonksiyonları;
+   `_check_argument_shapes()`'e mevcut raw-text kontrolünün hemen
+   ardından, AYNI `with_agent AND llm_client is None` koşuluyla ikinci,
+   bağımsız bir kontrol (DI-seam test muafiyeti otomatik korunuyor).
+   `ui/cli_mutate.py`'de dört yeni lazy accessor + `_validate_generation_
+   args()`'ın iki dalına birer yeni kontrol + yardım metninin artık
+   YANLIŞ bir şey söylememesi (eskiden "risk_strategy/drafting/case_law
+   only - optional" diyordu). Deterministik mod (`--with-agent` OLMADAN)
+   HİÇ etkilenmedi. Adım 4b'nin mevcut üç ailelik (`issue_spotting`/
+   `evidence`/`argument`) raw-text kümesi VE mesajı bayt-bayt DOKUNULMADI.
+   Eski testlerdeki "case_law/risk_strategy/drafting NOT refused" diyen
+   bloklar SİLİNMEDİ — Row 19B'nin `client_secret` emsaliyle AYNI
+   disiplinle TERS ÇEVRİLDİ (artık "IS refused" doğruluyor).
+2. **`src/rag.py`** — üç gerçek ağ-dokunan fonksiyon (`rewrite_query`,
+   `rerank_candidates`, `generate_answer`) tek, paylaşılan bir
+   `_get_client()` noktasına indirildi. Bu fonksiyon KOŞULSUZDUR (gövdesinde
+   sıfır `os.environ`/`getenv` referansı — bağımsızca doğrulandı) ve
+   `RagPilotPolicyEgressRefusedError` fırlatır — `anthropic` importundan
+   ÖNCE. Modül-seviyesi `from anthropic import Anthropic` / `client =
+   Anthropic()` kaldırıldı (RAG Bundle Foundation'ın `src/ingest.py`/
+   `src/retriever.py`'de yaptığı AYNI import-hijyeni düzeltmesinin
+   devamı). `__main__` bloğunun EN BAŞINA, hiçbir `print()`'den önce, bir
+   ret eklendi — artık `RagBundleNotPinnedError`'a HİÇ ulaşmadan
+   reddediyor. **"RAG Slice 2 simülasyonu" pozitif kontrolü** (yeni test
+   dosyasında) retrieval'i BAŞARILI simüle ettikten SONRA bile gate'in
+   tetiklendiğini kanıtlıyor — kapanış artık tesadüfi DEĞİL, kasıtlı.
+   Repo genelinde `rag.client`/`rag_module.client`'a doğrudan erişen SIFIR
+   kod olduğu grep ile iki bağımsız turda doğrulandı — kabul edilen tek
+   residual risk, gelecekte biri doğrudan `rag.client`'a erişirse
+   `AttributeError` alması (bugün canlı değil).
+3. **`src/evaluation.py`/`src/evaluation_v6.py`** — `TEST_CASES`/
+   `run_test`/`execute_test_case`/T06'nın GÖVDESİ HİÇ DOKUNULMADI. Her
+   biri kendi, bağımsız `__main__`-seviyesi ret'ini aldı (sabit mesaj +
+   `SystemExit(2)`, `app.py`/sekiz engine `main()` ile AYNI desen).
+   `evaluation_v6.py`'nin KENDİ ret'i gerekliydi çünkü `run_all_tests()`
+   `base_evaluation.run_all_tests()`'i `evaluation.py`'nin `__main__`
+   guard'ından GEÇMEDEN doğrudan çağırıyor. Asıl güvenlik kontrolü
+   madde 2'nin `_get_client()` gate'idir — bu madde yalnız UX/exit-code
+   netliği sağlıyor (`run_all_tests()`'in kendisi hiçbir `SystemExit`
+   üretmediği için, gate OLMASAYDI script "18 test PASS + 1 hata" ile
+   exit code 0 verip yanıltıcı bir "başarı" görünümü bırakırdı).
+
+**D. Kullanıcının açık kararları** — DI seam `rag.py`'ye EKLENMEDİ
+(kullanıcı kararı — bu turun amacı RAG prompt/iş mantığını test etmek
+değil, pilot outbound sınırını mekanik olarak enforce etmek; gelecekte
+ayrı, küçük bir çalışma olabilir). `rag.py`'nin modül-seviyesi `client`
+global'inin kaldırılması KABUL edildi (repo genelinde doğrudan kullanım
+olmadığı doğrulandığı için). Ek invariant kullanıcı tarafından açıkça
+belirtildi: credential/API-key yokluğu güvenlik kontrolü SAYILMAZ —
+gap raporunun kendi ampirik testi de bunu doğrulamıştı (`Anthropic()`
+API key olmadan bile sessizce kuruluyor).
+
+**E. Yeni test dosyası** (`ui/tests/test_rag_pilot_egress_gate_isolated.py`,
+50 kontrol, üç bölüm) — Bölüm A: gerçek, patch'lenmemiş
+`rag.answer_question(question, history=<T06'nın aynı şekli>)` çağrısı
+(mock DEĞİL) `RagPilotPolicyEgressRefusedError` fırlattığını kanıtlıyor;
+"RAG Slice 2 simülasyonu"; poisoned-`anthropic`-on-`PYTHONPATH` import-
+sıra kanıtı (4b'nin `app.py` testindeki teknikle aynı). Bölüm B: üç
+script'in gerçek OS subprocess'lerle (normal VE poisoned-`anthropic`
+ortamda) exit code 2, boş stdout, sabit mesaj verdiğini kanıtlıyor;
+ağ/`.env` guard'ı mevcut `scripts/sweep_env_guard.py`'yi verbatim
+yeniden kullanıyor. Bölüm C: repo-geneli, mekanik bir tarama —
+`fact_extraction` dışında `--with-agent`'ı kabul eden sıfır aile
+kaldığını (agent_generation'ın 5 + legal_research_case_law'ın 2 +
+fact_extraction'ın kendisi = 8 ailelik evren) doğruluyor.
+
+**F. Dürüst kronoloji ve F1 bulgu/remediasyon zinciri** — (1) Salt-okunur
+gap analizi (bağımsız ajan) altı gap buldu. (2) Kullanıcı onayı üzerine
+salt-okunur scope draft. (3) Kullanıcı onayı (iki açık noktayı — DI seam
+ve `client` global kaldırma — kesin karara bağladı). (4) İmplementasyon
+(bağımsız bir ajan) — en riskli kısımda (`rag.py`'nin `client` global'i
+kaldırma) implementer bir inceliği ampirik olarak (varsaymadan)
+keşfetti: "RAG Slice 2 simülasyonu" senaryosunda exception'ın nereden
+geldiğini `traceback.extract_tb` ile izleyip, `rerank_candidates`'ın
+(önceden var olan, dokunulmayan) sessiz `except Exception: return
+candidates[:top_k]` fallback'inin gate exception'ını YUTTUĞUNU, gerçek
+propagasyonun `generate_answer`'dan geldiğini buldu ve testi buna göre
+tasarladı. (5) İlk bağımsız inceleme (implementasyondan AYRI oturum):
+kapanış TASARIMININ TAMAMINI (dört LOCKED dosya dahil) kaynaktan ve
+kendi bağımsız probe'larıyla (kendi traceback izleme scripti, kendi
+poisoned-`anthropic` stub'ı, kendi fresh disposable PostgreSQL kümesiyle
+tam 77-modül sweep) doğruladı — **F1 (HIGH, BLOCKING)** dışında hiçbir
+sorun bulmadı: yeni test dosyasının kendi ağ-guard mekanizması (Bölüm
+B), resmî sweep İÇİNDE çalıştığında sweep'in KENDİ guard muhasebesiyle
+çakışıp `GUARD_INHERITANCE_MISMATCH` (exit code 3) üretiyordu — üç ayrı
+bağımsız tekrarla (iki interpreter, PostgreSQL'li/PostgreSQL'siz)
+kanıtlandı, dört farklı mevcut subprocess-ağır test dosyasıyla negatif
+kontrolle bu dosyaya ÖZGÜ olduğu doğrulandı. Bu bulgu implementer
+tarafından YAKALANMAMIŞ/DISCLOSE EDİLMEMİŞTİ. (6) Dar, TEK dosyalık bir
+remediasyon (yalnız yeni test dosyası, dört LOCKED üretim dosyasının
+hiçbirine dokunulmadan): `_run_src_script_with_env_guard()` artık
+kendi process ortamında ZATEN miras alınmış bir guard olup olmadığını
+tespit ediyor — varsa mevcut, miras alınan ortamı (override'sız)
+kullanıyor (dosyanın diğer sekiz subprocess çağrısının ZATEN doğru
+yaptığı gibi) ve paylaşılan ledger'ı yalnız KENDİ çocuklarının PID'lerine
+göre filtreliyor; yoksa (standalone çalışıyorsa) önceki, kendi kendine
+yeterli özel-ledger davranışı DEĞİŞMEDEN korunuyor. (7) Hedefli, ikinci
+bir bağımsız inceleme (remediasyon oturumundan AYRI) F1'in GERÇEKTEN
+kapandığını — kendi fresh PostgreSQL kümesiyle hem izole `--select` hem
+tam 77-modül sweep'te `armed == expected`, `integrity.failures: []`,
+`runner_exit_code: 0` — ve standalone regresyonun (50/50) korunduğunu
+bağımsızca doğruladı. Final verdict: **LOCK-READY**.
+
+**G. Bu session'ın resmî test kapıları (commit `9a3b3b2`, çalışma ağacı
+temiz, ben koştum, fresh disposable PostgreSQL 16, migration 0001-0005)** —
+`production-parity` FULL: exit 0, **77/77 modül PASS, 5890 passed, 0
+failed, 8 counted skipped, 14 informational skipped**, guard positive
+controls 10/10, `integrity.failures: []` (F1'in GERÇEKTEN kapandığının
+resmî kapı üzerindeki kanıtı — `test_rag_pilot_egress_gate_isolated
+PASS passed=50 failed=0` dahil). `rag-dependency`: `RAG_GATE_PASS`,
+exit 0, 216 passed, 0 failed (3 sabit modül: builder/reader/dependency_
+smoke). Kapı öncesi/sonrası `git status --porcelain=v1
+--untracked-files=all` boş; PostgreSQL kümesi ve tüm temp dosyalar test
+sonunda tamamen kaldırıldı.
+
+**H. Kalan/AÇIK sınırlar (kapatılmış gösterilmez)** — `rag-dependency`
+profilinin `RAG_GATE_MODULES`'i sabit, hardcoded 3 modülden oluşur
+(dinamik keşif DEĞİL) — yeni test dosyası bu listeye DAHİL DEĞİLDİR;
+dosyanın `anthropic`-kurulu ortamdaki davranışı bunun yerine hem
+implementer hem iki bağımsız inceleme tarafından TEKRARLANAN standalone
+koşularla (root `.venv`, 50/50 PASS, üç ayrı turda) doğrudan
+doğrulanmıştır — bu bir kapsam boşluğu DEĞİL, scope draft'ın "rag-dependency
+otomatik kapsar" beklentisiyle runner'ın gerçek (sabit-liste) mimarisi
+arasındaki bir netleştirmedir. `rag.py`'ye DI seam EKLENMEDİ —
+`evaluation.py`/`evaluation_v6.py`'nin iç mantığı (prompt şablonu,
+citation mantığı) hâlâ fake client'a karşı test EDİLEMEZ; kullanıcı
+kararıyla bilinçli olarak bırakılan, ayrı bir gelecekteki madde.
+`rerank_candidates`'ın önceden var olan sessiz `except Exception`
+fallback'i bu turda DEĞİŞTİRİLMEDİ (davranışı aynı kalıyor, yalnız
+gate'in KENDİSİNE ulaştığı `RERANK_DEBUG` trace'iyle ayrıca
+kanıtlanıyor). `case_law`/`risk_strategy`/`drafting`'in deterministik
+generation yolu (`--with-agent` OLMADAN) HİÇ etkilenmedi ve devam
+ediyor. `qa_agent.py` bu turda da dokunulmadan, önceden bilinen dormant/
+erişilemez durumunu koruyor.
+
+**I. §9 / LOCKED-file gerekçesi** — Dört LOCKED üretim dosyası açıldı
+(`agent_generation_mutation_facade.py`, `legal_research_case_law_
+mutation_facade.py`, `ui/cli_mutate.py`, `src/rag.py`); sebep hepsinde
+**security** (kullanıcının açık pilot invariant'ı — fact_extraction
+dışında hiçbir outbound yolun teknik olarak çalışmaması). Değişiklikler
+katmasaldır: mevcut raw-text kümeleri/mesajları/davranışları,
+deterministik mod, DI-seam test muafiyeti, `evaluation.py`/`evaluation_
+v6.py`'nin TEST_CASES/run_test/execute_test_case/T06 gövdesi HİÇBİRİ
+DEĞİŞMEDİ. `src/rag.py` bu turda İLK KEZ açıldı (RAG Bundle Foundation
+ve Adım 4b'nin K5 kararında bilinçli olarak DOKUNULMADAN bırakılmıştı) —
+tek non-refusal davranış değişikliği (`client` global'in kaldırılması)
+kabul edilen, disclosed bir tavizdir (§D).
+
+`PILOT READINESS STEP 4c LOCK-READY — F1 CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
+işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ### Pilot Readiness Adım 5 — Resmî Tatil Takvimi Registry'si + `calendar_complete` Türetimi (DONE / LOCKED — checkpoint özeti)
 
