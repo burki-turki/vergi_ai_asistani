@@ -80,12 +80,16 @@
 # operator confirmation is `--expected-input-digest` (a content-only
 # hash of the live canonical case inputs, shown by a prior preview run).
 # `--anchor` is REQUIRED for `--row-key deadline` (both preview and
-# apply) and REJECTED entirely for `--row-key timeline`; `--holiday`/
-# `--calendar-complete`/`--judicial-recess-applicable` are deadline-
-# apply-only. There is deliberately NO `--ruleset`/`--provisions` flag -
-# the coordinated path always uses the facade's own production
-# DEFAULT_RULESET_PATH/DEFAULT_PROVISIONS_PATH constants, never an
-# operator-supplied arbitrary filesystem path.
+# apply) and REJECTED entirely for `--row-key timeline`;
+# `--judicial-recess-applicable` is deadline-apply-only. PILOT
+# READINESS ADIM 5: `--holiday`/`--calendar-complete` elle beyan
+# bayrakları TAMAMEN KALDIRILDI - resmi tatil takvimi artık YALNIZ
+# git-governed `data/holiday_calendar/holiday_calendar.json`
+# registry'sinden okunur. There is deliberately NO `--ruleset`/
+# `--provisions`/`--holiday-calendar` flag - the coordinated path
+# always uses the facade's own production DEFAULT_RULESET_PATH/
+# DEFAULT_PROVISIONS_PATH/DEFAULT_HOLIDAY_CALENDAR_PATH constants,
+# never an operator-supplied arbitrary filesystem path.
 #
 # ROW 19C-3c-iii ADDITIVE EXTENSION: the SAME `generation` namespace is
 # extended with a SIXTH `--row-key` value (`fact_extraction`), routed to
@@ -296,15 +300,14 @@ def _build_arg_parser():
         help="deadline-only: the canonical timeline anchor event_id (REQUIRED for --row-key "
         "deadline in BOTH preview and apply; REJECTED for every other row-key).",
     )
-    generation_parser.add_argument(
-        "--holiday", dest="holiday", action="append", default=[],
-        help="deadline-apply-only: an extra holiday date (repeatable); REJECTED for every other "
-        "row-key.",
-    )
-    generation_parser.add_argument(
-        "--calendar-complete", dest="calendar_complete", action="store_true", default=False,
-        help="deadline-apply-only; REJECTED for every other row-key.",
-    )
+    # PILOT READINESS ADIM 5: `--holiday`/`--calendar-complete` elle
+    # beyan bayrakları TAMAMEN KALDIRILDI (K4). Resmi tatil takvimi
+    # artık YALNIZ git-governed `data/holiday_calendar/
+    # holiday_calendar.json` registry'sinden okunur - `--ruleset`'in
+    # bulunmaması kararının aynı desenidir. Bu iki bayrağın herhangi
+    # biriyle çağrılan bir komut artık argparse'ın kendi "unrecognized
+    # arguments" reddine (exit 2) düşer, aşağıdaki aile-bazlı
+    # kontrollere hiç ulaşmadan.
     generation_parser.add_argument(
         "--judicial-recess-applicable", dest="judicial_recess_applicable",
         choices=["yes", "no", "unknown"], default="unknown",
@@ -663,12 +666,6 @@ def _validate_generation_args(args, *, stderr) -> int | None:
         if args.anchor_event_id is not None:
             stderr.write(f"error: --anchor is not accepted for --row-key {args.row_key}\n")
             return EXIT_USAGE_ERROR
-        if args.holiday:
-            stderr.write(f"error: --holiday is not accepted for --row-key {args.row_key}\n")
-            return EXIT_USAGE_ERROR
-        if args.calendar_complete:
-            stderr.write(f"error: --calendar-complete is not accepted for --row-key {args.row_key}\n")
-            return EXIT_USAGE_ERROR
         if args.judicial_recess_applicable != "unknown":
             stderr.write(
                 f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
@@ -701,12 +698,6 @@ def _validate_generation_args(args, *, stderr) -> int | None:
         if args.anchor_event_id is not None:
             stderr.write("error: --anchor is not accepted for --row-key timeline\n")
             return EXIT_USAGE_ERROR
-        if args.holiday:
-            stderr.write("error: --holiday is not accepted for --row-key timeline\n")
-            return EXIT_USAGE_ERROR
-        if args.calendar_complete:
-            stderr.write("error: --calendar-complete is not accepted for --row-key timeline\n")
-            return EXIT_USAGE_ERROR
         if args.judicial_recess_applicable != "unknown":
             stderr.write("error: --judicial-recess-applicable is not accepted for --row-key timeline\n")
             return EXIT_USAGE_ERROR
@@ -719,12 +710,6 @@ def _validate_generation_args(args, *, stderr) -> int | None:
     elif args.row_key in _fact_extraction_row_keys():
         if args.anchor_event_id is not None:
             stderr.write(f"error: --anchor is not accepted for --row-key {args.row_key}\n")
-            return EXIT_USAGE_ERROR
-        if args.holiday:
-            stderr.write(f"error: --holiday is not accepted for --row-key {args.row_key}\n")
-            return EXIT_USAGE_ERROR
-        if args.calendar_complete:
-            stderr.write(f"error: --calendar-complete is not accepted for --row-key {args.row_key}\n")
             return EXIT_USAGE_ERROR
         if args.judicial_recess_applicable != "unknown":
             stderr.write(
@@ -758,12 +743,6 @@ def _validate_generation_args(args, *, stderr) -> int | None:
             return EXIT_USAGE_ERROR
         if args.anchor_event_id is not None:
             stderr.write(f"error: --anchor is not accepted for --row-key {args.row_key}\n")
-            return EXIT_USAGE_ERROR
-        if args.holiday:
-            stderr.write(f"error: --holiday is not accepted for --row-key {args.row_key}\n")
-            return EXIT_USAGE_ERROR
-        if args.calendar_complete:
-            stderr.write(f"error: --calendar-complete is not accepted for --row-key {args.row_key}\n")
             return EXIT_USAGE_ERROR
         if args.judicial_recess_applicable != "unknown":
             stderr.write(
@@ -1368,8 +1347,6 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
     result = _generation_facade.apply_generation(
         args.row_key, args.case_id, args.expected_input_digest,
         anchor_event_id=anchor_event_id,
-        holiday_dates=args.holiday if args.row_key == "deadline" else None,
-        calendar_complete=args.calendar_complete if args.row_key == "deadline" else False,
         judicial_recess_applicable=(
             _parse_judicial_recess(args.judicial_recess_applicable) if args.row_key == "deadline" else None
         ),

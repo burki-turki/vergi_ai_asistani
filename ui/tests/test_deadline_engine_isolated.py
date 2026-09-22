@@ -37,6 +37,7 @@ if str(SRC_DIR) not in sys.path:
 import deadline_engine                              # noqa: E402
 import deadline_validator                            # noqa: E402
 import deadline_calculator                           # noqa: E402
+import holiday_calendar_validator                    # noqa: E402
 
 passed = 0
 failed = 0
@@ -337,6 +338,107 @@ try:
     )
     check(
         "post-write validator failure: no audit was written",
+        not deadline_engine.get_reviews_dir(CASE_ID).exists(),
+    )
+
+    # ============================================================
+    # 8) PILOT READINESS ADIM 5 - holiday_calendar_path test-injection
+    #    seam (`provisions_path`'in AYNI deseni) and the audit record's
+    #    additive holiday_calendar_sha256/holiday_calendar_version
+    #    fields.
+    # ============================================================
+
+    # 8a/8b) Default (production) calendar - audit fields match the
+    #        REAL production data/holiday_calendar/holiday_calendar.json
+    #        bytes/version (read-only, never written to).
+    case_dir_8a = _fresh_case_copy()
+    production_calendar_bytes = deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH.read_bytes()
+    production_calendar_sha256 = hashlib.sha256(production_calendar_bytes).hexdigest()
+    result_8a = deadline_engine.run_engine(
+        case_id=CASE_ID, anchor_event_id=ANCHOR_EVENT_ID,
+        ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
+        mutation_idempotency_key="idk_8a", mutation_resource_key=f"case:{CASE_ID}",
+        mutation_actor_ref="7", input_digest="d8a", generation_parameters_digest="g8a",
+    )
+    audit_record_8a = json.loads(Path(result_8a["audit_path"]).read_text(encoding="utf-8"))
+    check(
+        "8a: with the default (production) calendar, the audit record's holiday_calendar_sha256 "
+        "matches the REAL production data/holiday_calendar/holiday_calendar.json bytes",
+        audit_record_8a["holiday_calendar_sha256"] == production_calendar_sha256,
+        f"got {audit_record_8a.get('holiday_calendar_sha256')!r} expected {production_calendar_sha256!r}",
+    )
+    check(
+        "8b: the audit record's holiday_calendar_version matches the production calendar's own "
+        "calendar_version",
+        audit_record_8a["holiday_calendar_version"] == 1,
+        f"got {audit_record_8a.get('holiday_calendar_version')!r}",
+    )
+
+    # 8c/8d) holiday_calendar_path injection seam - a synthetic
+    #        calendar (calendar_version=7, distinct content) produces a
+    #        DIFFERENT audit holiday_calendar_sha256/version than the
+    #        default production calendar.
+    case_dir_8c = _fresh_case_copy()
+    synthetic_calendar_dir = Path(tempfile.mkdtemp(prefix="vergi_deadline_engine_iso_cal_"))
+    synthetic_calendar_path = synthetic_calendar_dir / "synthetic_holiday_calendar.json"
+    synthetic_calendar_doc = holiday_calendar_validator.create_valid_fixture()
+    synthetic_calendar_doc["calendar_version"] = 7
+    synthetic_calendar_path.write_text(
+        json.dumps(synthetic_calendar_doc, ensure_ascii=False), encoding="utf-8",
+    )
+    try:
+        result_8c = deadline_engine.run_engine(
+            case_id=CASE_ID, anchor_event_id=ANCHOR_EVENT_ID,
+            ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
+            holiday_calendar_path=synthetic_calendar_path,
+            mutation_idempotency_key="idk_8c", mutation_resource_key=f"case:{CASE_ID}",
+            mutation_actor_ref="7", input_digest="d8c", generation_parameters_digest="g8c",
+        )
+        audit_record_8c = json.loads(Path(result_8c["audit_path"]).read_text(encoding="utf-8"))
+        check(
+            "8c: injecting a distinct synthetic calendar (holiday_calendar_path) produces a "
+            "DIFFERENT audit holiday_calendar_sha256 than the default production calendar, and "
+            "matches the injected file's OWN bytes",
+            audit_record_8c["holiday_calendar_sha256"] != production_calendar_sha256
+            and audit_record_8c["holiday_calendar_sha256"]
+            == hashlib.sha256(synthetic_calendar_path.read_bytes()).hexdigest(),
+        )
+        check(
+            "8d: the injected synthetic calendar's calendar_version (7) is reflected in the audit "
+            "record",
+            audit_record_8c["holiday_calendar_version"] == 7,
+            f"got {audit_record_8c.get('holiday_calendar_version')!r}",
+        )
+    finally:
+        shutil.rmtree(synthetic_calendar_dir, ignore_errors=True)
+
+    # 8e/8f/8g) missing/invalid holiday_calendar_path -> fail-closed
+    #           BEFORE any pending/audit write (run_engine loads the
+    #           calendar for its OWN audit metadata before
+    #           build_deadline_engine_output() even runs).
+    case_dir_8e = _fresh_case_copy()
+    missing_calendar_dir = Path(tempfile.mkdtemp(prefix="vergi_deadline_engine_iso_cal_missing_"))
+    missing_calendar_path = missing_calendar_dir / "does_not_exist.json"
+    try:
+        expect_raises(
+            FileNotFoundError,
+            lambda: deadline_engine.run_engine(
+                case_id=CASE_ID, anchor_event_id=ANCHOR_EVENT_ID,
+                ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
+                holiday_calendar_path=missing_calendar_path,
+                mutation_idempotency_key="idk_8e", mutation_resource_key=f"case:{CASE_ID}",
+                mutation_actor_ref="7", input_digest="d8e", generation_parameters_digest="g8e",
+            ),
+            "8e: missing holiday_calendar_path -> FileNotFoundError, fail-closed",
+        )
+    finally:
+        shutil.rmtree(missing_calendar_dir, ignore_errors=True)
+    check(
+        "8f: missing holiday_calendar_path: NO pending file was left behind",
+        not deadline_engine.get_pending_path(CASE_ID).exists(),
+    )
+    check(
+        "8g: missing holiday_calendar_path: NO generation_reviews/ audit directory was created",
         not deadline_engine.get_reviews_dir(CASE_ID).exists(),
     )
 finally:

@@ -55,6 +55,8 @@ from datetime import datetime
 from pathlib import Path
 
 
+import deadline_calculator
+
 from deadline_calculator import (
     build_case_deadline_analysis,
     validate_analysis_object,
@@ -556,12 +558,24 @@ def build_deadline_engine_output(
     case_id,
     anchor_event_id,
     ruleset_path,
-    holiday_dates=None,
-    calendar_complete=False,
     judicial_recess_applicable=None,
     *,
     provisions_path=None,
+    holiday_calendar_path=None,
 ):
+    """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete` elle
+    beyan parametreleri TAMAMEN KALKTI. `holiday_calendar_path=None`
+    (test-injection seam'i, `provisions_path` ile AYNI desen) ->
+    `deadline_calculator.load_holiday_calendar()`'ın KENDİ, aynı
+    modül-içi `DEFAULT_HOLIDAY_CALENDAR_PATH` sabitine (bare-name
+    lookup) çözülür - monkeypatch her zaman `deadline_calculator.
+    DEFAULT_HOLIDAY_CALENDAR_PATH` üzerinden görünür kalır."""
+
+    holiday_calendar = (
+        deadline_calculator.load_holiday_calendar(
+            holiday_calendar_path
+        )
+    )
 
     analysis = (
         build_case_deadline_analysis(
@@ -574,17 +588,14 @@ def build_deadline_engine_output(
             ruleset_path=
                 ruleset_path,
 
-            holiday_dates=
-                holiday_dates,
-
-            calendar_complete=
-                calendar_complete,
-
             judicial_recess_applicable=
                 judicial_recess_applicable,
 
             provisions_path=
                 provisions_path,
+
+            holiday_calendar=
+                holiday_calendar,
         )
     )
 
@@ -598,12 +609,32 @@ def build_deadline_engine_output(
         f"deadline_{case_id}_v1"
     )
 
+    # PILOT READINESS ADIM 5 (§4-E) - analiz-düzeyi takvim revizyon
+    # etiketi. `build_case_deadline_analysis()`'in üretmiş olduğu
+    # önceki `notes`'un YERİNE geçer (bu davranış DEĞİŞMEDİ - engine
+    # zaten kendi sabit metnini yazıyordu) ve HER `calculation_state`
+    # için (calculated/needs_review/blocked_*) görünür kalır.
+
     analysis[
         "notes"
     ] = (
         "Deadline Engine V1 production candidate. "
         "Bu çıktı pending durumundadır ve human approval "
-        "olmadan canonical deadline repository'ye alınmaz."
+        "olmadan canonical deadline repository'ye alınmaz. "
+        "holiday_calendar="
+        + str(
+            holiday_calendar[
+                "calendar_id"
+            ]
+        )
+        + "@"
+        + str(
+            holiday_calendar[
+                "source_sha256"
+            ]
+        )[
+            :16
+        ]
     )
 
     validate_engine_output_semantics(
@@ -628,6 +659,8 @@ def write_pending(
     mutation_resource_key=None,
     mutation_actor_ref=None,
     pre_commit_callback=None,
+    holiday_calendar_sha256=None,
+    holiday_calendar_version=None,
 ):
 
     mutation_binding_provided = (
@@ -811,6 +844,8 @@ def write_pending(
                     .astimezone()
                     .isoformat()
                 ),
+                "holiday_calendar_sha256": holiday_calendar_sha256,
+                "holiday_calendar_version": holiday_calendar_version,
             }
 
             audit_path = _write_generation_audit_record_excl(
@@ -864,11 +899,10 @@ def run_engine(
     case_id,
     anchor_event_id,
     ruleset_path,
-    holiday_dates=None,
-    calendar_complete=False,
     judicial_recess_applicable=None,
     *,
     provisions_path=None,
+    holiday_calendar_path=None,
     input_digest=None,
     generation_parameters_digest=None,
     mutation_idempotency_key=None,
@@ -876,6 +910,9 @@ def run_engine(
     mutation_actor_ref=None,
     pre_commit_callback=None,
 ):
+    """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete` elle
+    beyan parametreleri TAMAMEN KALKTI, yerine `holiday_calendar_path`
+    (test-injection seam'i, `provisions_path` deseni) geçti."""
 
     print()
 
@@ -895,6 +932,20 @@ def run_engine(
     # BUILD
     # ========================================================
 
+    # `write_pending()`'in audit kaydına bağlayabilmesi için takvim
+    # metadata'sı (sha256/version) burada AYRICA yüklenir -
+    # `build_deadline_engine_output()`'ın KENDİ İÇİNDEKİ yüklemesinden
+    # bağımsız (o çağrı yalnız `analysis` döndürür, metadata değil).
+    # Küçük bir JSON dosyasının iki kez okunması - ruleset/provisions'ın
+    # bu modülün AŞAĞI akışında zaten birden çok kez okunmasıyla AYNI,
+    # var olan desen.
+
+    holiday_calendar_for_audit = (
+        deadline_calculator.load_holiday_calendar(
+            holiday_calendar_path
+        )
+    )
+
     analysis = (
         build_deadline_engine_output(
             case_id=
@@ -906,17 +957,14 @@ def run_engine(
             ruleset_path=
                 ruleset_path,
 
-            holiday_dates=
-                holiday_dates,
-
-            calendar_complete=
-                calendar_complete,
-
             judicial_recess_applicable=
                 judicial_recess_applicable,
 
             provisions_path=
                 provisions_path,
+
+            holiday_calendar_path=
+                holiday_calendar_path,
         )
     )
 
@@ -981,6 +1029,16 @@ def run_engine(
 
         pre_commit_callback=
             pre_commit_callback,
+
+        holiday_calendar_sha256=
+            holiday_calendar_for_audit[
+                "source_sha256"
+            ],
+
+        holiday_calendar_version=
+            holiday_calendar_for_audit[
+                "calendar_version"
+            ],
     )
 
     pending_path = write_result["pending_path"]

@@ -286,16 +286,21 @@ def make_principal_and_repo(case_id, *, assigned=True, role="lawyer"):
 ANCHOR_EVENT_ID = "timeline_event_003"
 
 
-def preview(row_key, case_id, *, anchor_event_id=None, principal, repo, ruleset_path=None, provisions_path=None):
+def preview(row_key, case_id, *, anchor_event_id=None, principal, repo, ruleset_path=None, provisions_path=None,
+            holiday_calendar_path=None):
     return gen.preview_generation(
         row_key, case_id, anchor_event_id=anchor_event_id, principal=principal, authz_repository=repo,
-        ruleset_path=ruleset_path, provisions_path=provisions_path,
+        ruleset_path=ruleset_path, provisions_path=provisions_path, holiday_calendar_path=holiday_calendar_path,
     )
 
 
-def apply(row_key, case_id, expected_input_digest, *, anchor_event_id=None, holiday_dates=None,
-          calendar_complete=False, judicial_recess_applicable=None, principal, repo, conn=None,
-          ruleset_path=None, provisions_path=None):
+def apply(row_key, case_id, expected_input_digest, *, anchor_event_id=None,
+          judicial_recess_applicable=None, principal, repo, conn=None,
+          ruleset_path=None, provisions_path=None, holiday_calendar_path=None):
+    """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete` kwarg'ları
+    TAMAMEN KALDIRILDI - `gen.apply_generation()` artık bu iki parametreyi
+    KABUL ETMEZ (K4). `holiday_calendar_path` yeni test-injection seam'i,
+    `ruleset_path`/`provisions_path` ile AYNI desen."""
     conn = conn if conn is not None else FakeJournalConn()
 
     def conn_factory():
@@ -303,10 +308,9 @@ def apply(row_key, case_id, expected_input_digest, *, anchor_event_id=None, holi
 
     result = gen.apply_generation(
         row_key, case_id, expected_input_digest,
-        anchor_event_id=anchor_event_id, holiday_dates=holiday_dates,
-        calendar_complete=calendar_complete, judicial_recess_applicable=judicial_recess_applicable,
+        anchor_event_id=anchor_event_id, judicial_recess_applicable=judicial_recess_applicable,
         principal=principal, authz_repository=repo, conn_factory=conn_factory,
-        ruleset_path=ruleset_path, provisions_path=provisions_path,
+        ruleset_path=ruleset_path, provisions_path=provisions_path, holiday_calendar_path=holiday_calendar_path,
     )
     return result, conn
 
@@ -328,8 +332,10 @@ def apply(row_key, case_id, expected_input_digest, *, anchor_event_id=None, holi
 _tmp_global_resources_dir = Path(tempfile.mkdtemp(prefix="vergi_gen_iso_globalres_"))
 _ruleset_path_k = _tmp_global_resources_dir / "ruleset.json"
 _provisions_path_k = _tmp_global_resources_dir / "provisions.json"
+_holiday_calendar_path_k = _tmp_global_resources_dir / "holiday_calendar.json"
 _REAL_RULESET_BYTES = deadline_engine.DEFAULT_RULESET_PATH.read_bytes()
 _REAL_PROVISIONS_BYTES = deadline_calculator.DEFAULT_PROVISIONS_PATH.read_bytes()
+_REAL_HOLIDAY_CALENDAR_BYTES = deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH.read_bytes()
 
 
 def _write_ruleset_revision(revision: int) -> None:
@@ -338,6 +344,18 @@ def _write_ruleset_revision(revision: int) -> None:
 
 def _write_provisions_revision(revision: int) -> None:
     _provisions_path_k.write_bytes(_REAL_PROVISIONS_BYTES + b"\n" * revision)
+
+
+def _write_holiday_calendar_revision(revision: int) -> None:
+    """PILOT READINESS ADIM 5 - `_write_ruleset_revision`/`_write_
+    provisions_revision` ile AYNI JSON-harmless trailing-whitespace
+    trick'i: REAL production `holiday_calendar.json` içeriğini (tüm
+    yıllar `verified:false`) bayt-bazında değiştirir ama parse edilen
+    JSON'u DEĞİŞTİRMEZ - `_read_and_validate_holiday_calendar_bytes()`
+    içindeki `holiday_calendar_validator.validate_holiday_calendar()`
+    çağrısı bu yüzden HER revizyonda GERÇEKTEN geçer (fixture bozuk
+    DEĞİLDİR, yalnız bayt-bazında farklıdır)."""
+    _holiday_calendar_path_k.write_bytes(_REAL_HOLIDAY_CALENDAR_BYTES + b"\n" * revision)
 
 
 ml.acquire_case_lock_session = _fake_acquire
@@ -360,16 +378,12 @@ try:
         lambda: preview("deadline", case_id_a, anchor_event_id=None, principal=principal_a, repo=repo_a),
         "A2: deadline preview WITHOUT anchor_event_id -> GenerationArgumentError",
     )
-    expect_raises(
-        gen.GenerationArgumentError,
-        lambda: apply("timeline", case_id_a, "digest", holiday_dates=["2026-01-01"], principal=principal_a, repo=repo_a),
-        "A3: timeline apply with holiday_dates -> GenerationArgumentError",
-    )
-    expect_raises(
-        gen.GenerationArgumentError,
-        lambda: apply("timeline", case_id_a, "digest", calendar_complete=True, principal=principal_a, repo=repo_a),
-        "A4: timeline apply with calendar_complete -> GenerationArgumentError",
-    )
+    # A3/A4 (timeline apply with holiday_dates/calendar_complete ->
+    # GenerationArgumentError) REMOVED - PILOT READINESS ADIM 5 (K4):
+    # `apply_generation()` no longer accepts either parameter AT ALL
+    # (a TypeError, not a GenerationArgumentError, would result from
+    # even attempting to pass them) - the scenario this used to prove
+    # is now structurally impossible rather than an I/O-free rejection.
     expect_raises(
         gen.GenerationArgumentError,
         lambda: apply("timeline", case_id_a, "digest", judicial_recess_applicable=True, principal=principal_a, repo=repo_a),
@@ -541,7 +555,10 @@ try:
     # ============================================================
     # H) IDEMPOTENCY CONFLICT - same case/anchor/content (same
     #    idempotency_key) but a DIFFERENT generation_parameters_digest
-    #    (different holiday_dates) -> IdempotencyConflictError.
+    #    (PILOT READINESS ADIM 5: `judicial_recess_applicable` is now
+    #    the ONLY remaining generation parameter - the S17 scenario
+    #    from the independent scope review's test plan) ->
+    #    IdempotencyConflictError.
     # ============================================================
     case_id_h, case_dir_h = make_generation_case()
     principal_h, repo_h = make_principal_and_repo(case_id_h)
@@ -555,10 +572,10 @@ try:
         mc.IdempotencyConflictError,
         lambda: apply(
             "deadline", case_id_h, preview_h["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
-            holiday_dates=["2026-12-31"], principal=principal_h, repo=repo_h, conn=conn_h,
+            judicial_recess_applicable=True, principal=principal_h, repo=repo_h, conn=conn_h,
         ),
-        "H1: same identity + DIFFERENT generation_parameters_digest (holiday_dates changed) -> "
-        "IdempotencyConflictError",
+        "H1: same identity + DIFFERENT generation_parameters_digest (judicial_recess_applicable "
+        "changed from None to True) -> IdempotencyConflictError",
     )
     check("H2: still exactly ONE journal row (the conflicting attempt created no new row)", len(conn_h.table) == 1)
 
@@ -577,11 +594,17 @@ try:
     def _flaky_read_global(path):
         _read_calls["n"] += 1
         real_bytes = _original_read_global(path)
-        # The 3rd call for the ruleset path happens inside
-        # pre_commit_callback (1st: pre-lock, 2nd: under-lock
-        # precondition, 3rd: final live re-check) - return DIFFERENT
-        # bytes only then, simulating a concurrent ruleset edit.
-        if _read_calls["n"] >= 5 and str(path).endswith("deadline_rules.json"):
+        # PILOT READINESS ADIM 5: holiday_calendar is now a THIRD global
+        # resource read at each of the three stages (pre-lock,
+        # under-lock precondition, final pre_commit live re-check), in
+        # the FIXED order ruleset -> provisions -> holiday_calendar at
+        # every stage (`apply_generation()`/`precondition_callback()`/
+        # `pre_commit_callback()`'in kaynak kodundaki gerçek sıra). So
+        # the ruleset-path read count sequence is 1 (pre-lock), 4
+        # (precondition), 7 (pre_commit) - NOT 1/3/5 as before this
+        # slice. `>= 7` is the tightest threshold that fires ONLY on
+        # the 3rd (pre_commit) ruleset read, never on the 1st or 2nd.
+        if _read_calls["n"] >= 7 and str(path).endswith("deadline_rules.json"):
             return real_bytes + b" "
         return real_bytes
 
@@ -604,6 +627,90 @@ try:
         "'reconciliation_required', never silently 'failed' or 'completed'",
         len(conn_i.table) == 1 and conn_i.table[0]["state"] == "reconciliation_required",
         f"got {conn_i.table!r}",
+    )
+
+    # I3/I4 - PILOT READINESS ADIM 5 (bağımsız inceleme öneri #5, S18/S19
+    # sibling senaryoları): holiday_calendar'a ÖZGÜ, ruleset/provisions'a
+    # DOKUNMADAN staleness tespiti - hem kilit BEKLENİRKEN (precondition
+    # race), hem YAZIM ÖNCESİ son canlı kontrolde (pre_commit stale).
+
+    # I3 - holiday_calendar content changes WHILE the case lock is being
+    #      waited for (via the on-acquire hook, mirroring scenario F's
+    #      case.json race and K6's ruleset race, but for the calendar
+    #      test-injection seam) -> PreconditionRaceDetectedError, zero
+    #      journal rows.
+    case_id_i3, case_dir_i3 = make_generation_case()
+    principal_i3, repo_i3 = make_principal_and_repo(case_id_i3)
+    _write_holiday_calendar_revision(1)
+    preview_i3 = preview(
+        "deadline", case_id_i3, anchor_event_id=ANCHOR_EVENT_ID, principal=principal_i3, repo=repo_i3,
+        holiday_calendar_path=_holiday_calendar_path_k,
+    )
+
+    def _mutate_holiday_calendar_mid_lock_wait(case_id):
+        if case_id != case_id_i3:
+            return
+        _write_holiday_calendar_revision(2)
+
+    _on_acquire_hooks.append(_mutate_holiday_calendar_mid_lock_wait)
+    conn_i3 = FakeJournalConn()
+    try:
+        expect_raises(
+            PreconditionRaceDetectedError,
+            lambda: apply(
+                "deadline", case_id_i3, preview_i3["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+                principal=principal_i3, repo=repo_i3, conn=conn_i3,
+                holiday_calendar_path=_holiday_calendar_path_k,
+            ),
+            "I3: the injected holiday_calendar file changes while waiting for the case lock -> "
+            "PreconditionRaceDetectedError (fail-closed, before any journal row)",
+        )
+    finally:
+        _on_acquire_hooks.remove(_mutate_holiday_calendar_mid_lock_wait)
+        _write_holiday_calendar_revision(1)  # restore for subsequent scenarios
+    check("I3b: zero journal rows were created for the mid-wait calendar race", len(conn_i3.table) == 0)
+
+    # I4 - holiday_calendar content changes between the under-lock
+    #      snapshot and the final pre_commit re-check (mirrors I1's
+    #      shape exactly, but targets holiday_calendar.json instead of
+    #      deadline_rules.json - the calendar-path read count sequence
+    #      is 3 (pre-lock), 6 (precondition), 9 (pre_commit), so `>= 9`
+    #      is the tightest threshold that fires ONLY on the 3rd read).
+    case_id_i4, case_dir_i4 = make_generation_case()
+    principal_i4, repo_i4 = make_principal_and_repo(case_id_i4)
+    preview_i4 = preview(
+        "deadline", case_id_i4, anchor_event_id=ANCHOR_EVENT_ID, principal=principal_i4, repo=repo_i4,
+        holiday_calendar_path=_holiday_calendar_path_k,
+    )
+    _read_calls_i4 = {"n": 0}
+
+    def _flaky_read_global_calendar(path):
+        _read_calls_i4["n"] += 1
+        real_bytes = _original_read_global(path)
+        if _read_calls_i4["n"] >= 9 and str(path).endswith("holiday_calendar.json"):
+            return real_bytes + b" "
+        return real_bytes
+
+    gen._read_global_resource_bytes = _flaky_read_global_calendar
+    conn_i4 = FakeJournalConn()
+    try:
+        expect_raises(
+            gen.GlobalResourceStaleError,
+            lambda: apply(
+                "deadline", case_id_i4, preview_i4["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+                principal=principal_i4, repo=repo_i4, conn=conn_i4,
+                holiday_calendar_path=_holiday_calendar_path_k,
+            ),
+            "I4: holiday_calendar content changes between capture and final pre-commit re-check -> "
+            "GlobalResourceStaleError",
+        )
+    finally:
+        gen._read_global_resource_bytes = _original_read_global
+    check(
+        "I4b: the writer boundary was already crossed - the journal row resolves to "
+        "'reconciliation_required', never silently 'failed' or 'completed'",
+        len(conn_i4.table) == 1 and conn_i4.table[0]["state"] == "reconciliation_required",
+        f"got {conn_i4.table!r}",
     )
 
     # ============================================================
@@ -780,11 +887,13 @@ try:
     )
 
     # K4 - SAME content (case/timeline/ruleset/provisions) + SAME anchor
-    # + DIFFERENT holiday/calendar/recess -> SAME idempotency_key (the
-    # content identity is unchanged), DIFFERENT request_fingerprint ->
-    # IdempotencyConflictError. This is the EXISTING scenario H's shape,
-    # repeated here with an EXPLICIT idempotency_key-equality proof (H
-    # itself only proved the exception type + row count).
+    # + DIFFERENT judicial_recess_applicable (PILOT READINESS ADIM 5:
+    # now the ONLY remaining generation parameter) -> SAME
+    # idempotency_key (the content identity is unchanged), DIFFERENT
+    # request_fingerprint -> IdempotencyConflictError. This is the
+    # EXISTING scenario H's shape, repeated here with an EXPLICIT
+    # idempotency_key-equality proof (H itself only proved the
+    # exception type + row count).
     case_id_k4, case_dir_k4 = make_generation_case()
     principal_k4, repo_k4 = make_principal_and_repo(case_id_k4)
     _write_ruleset_revision(1)
@@ -804,11 +913,11 @@ try:
         mc.IdempotencyConflictError,
         lambda: apply(
             "deadline", case_id_k4, preview_k4["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
-            holiday_dates=["2026-12-31"], principal=principal_k4, repo=repo_k4, conn=conn_k4,
+            judicial_recess_applicable=True, principal=principal_k4, repo=repo_k4, conn=conn_k4,
             ruleset_path=_ruleset_path_k, provisions_path=_provisions_path_k,
         ),
         "K4a: SAME content (case/timeline/ruleset/provisions) + SAME anchor + DIFFERENT "
-        "holiday_dates -> IdempotencyConflictError",
+        "judicial_recess_applicable -> IdempotencyConflictError",
     )
     check(
         "K4b: the conflicting attempt's error message references the SAME idempotency_key as the "
@@ -903,6 +1012,136 @@ try:
         "K6c: no deadline pending file was written for the mid-wait ruleset race",
         not deadline_engine.get_pending_path(case_id_k6).exists(),
     )
+
+    # K7 - PILOT READINESS ADIM 5 (K2/K3-shape, for the THIRD global
+    # resource): a holiday_calendar-only revision change (same case/
+    # timeline/ruleset/provisions) -> a genuinely NEW input_digest/
+    # pre_revision/idempotency_key; the second, content-revised
+    # generation completes successfully - NEVER an IdempotencyConflictError.
+    case_id_k7, case_dir_k7 = make_generation_case()
+    principal_k7, repo_k7 = make_principal_and_repo(case_id_k7)
+    _write_holiday_calendar_revision(1)
+    preview_k7a = preview(
+        "deadline", case_id_k7, anchor_event_id=ANCHOR_EVENT_ID, principal=principal_k7, repo=repo_k7,
+        holiday_calendar_path=_holiday_calendar_path_k,
+    )
+    conn_k7 = FakeJournalConn()
+    result_k7a, _ = apply(
+        "deadline", case_id_k7, preview_k7a["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+        principal=principal_k7, repo=repo_k7, conn=conn_k7,
+        holiday_calendar_path=_holiday_calendar_path_k,
+    )
+    _write_holiday_calendar_revision(2)  # holiday_calendar content changes; ruleset/provisions untouched
+    preview_k7b = preview(
+        "deadline", case_id_k7, anchor_event_id=ANCHOR_EVENT_ID, principal=principal_k7, repo=repo_k7,
+        holiday_calendar_path=_holiday_calendar_path_k,
+    )
+    check(
+        "K7a: a HOLIDAY_CALENDAR-only revision change (same case/timeline/ruleset/provisions) "
+        "produces a genuinely DIFFERENT input_digest",
+        preview_k7b["input_digest"] != preview_k7a["input_digest"],
+        f"got before={preview_k7a['input_digest']!r} after={preview_k7b['input_digest']!r}",
+    )
+    result_k7b, _ = apply(
+        "deadline", case_id_k7, preview_k7b["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+        principal=principal_k7, repo=repo_k7, conn=conn_k7,
+        holiday_calendar_path=_holiday_calendar_path_k,
+    )
+    check(
+        "K7b: the calendar-revised generation attempt completes successfully (replayed=False, a "
+        "SECOND, genuinely NEW journal row) - NEVER an IdempotencyConflictError",
+        result_k7b.replayed is False and len(conn_k7.table) == 2
+        and conn_k7.table[1]["state"] == "completed",
+        f"got {result_k7b!r} table={conn_k7.table!r}",
+    )
+    check(
+        "K7c: the two journal rows carry DIFFERENT idempotency_key values (holiday_calendar "
+        "revision changed the identity, not merely the fingerprint)",
+        conn_k7.table[0]["idempotency_key"] != conn_k7.table[1]["idempotency_key"],
+        f"got {conn_k7.table!r}",
+    )
+    _write_holiday_calendar_revision(1)  # restore a known state for subsequent scenarios
+
+    # ============================================================
+    # M) PILOT READINESS ADIM 5 (S22) - HOLIDAY CALENDAR FAIL-CLOSED:
+    #    a missing/corrupt/schema-invalid calendar file is rejected
+    #    BEFORE any journal row is created - the pre-lock validation
+    #    (`_read_and_validate_holiday_calendar_bytes`) never lets a bad
+    #    calendar cross the writer boundary into
+    #    `reconciliation_required`.
+    # ============================================================
+    case_id_m, case_dir_m = make_generation_case()
+    principal_m, repo_m = make_principal_and_repo(case_id_m)
+    _missing_calendar_dir = Path(tempfile.mkdtemp(prefix="vergi_gen_iso_missing_cal_"))
+    _missing_calendar_path = _missing_calendar_dir / "does_not_exist.json"
+    conn_m1 = FakeJournalConn()
+    try:
+        # NOTE: a genuinely MISSING file surfaces as the existing
+        # `GenerationInputContainmentError` (the SAME class/message
+        # `_read_global_resource_bytes()` already raises for a missing
+        # ruleset/provisions path - `_read_and_validate_holiday_
+        # calendar_bytes()` reuses it unchanged for existence, and only
+        # wraps PARSE/VALIDATION failures into the NEW `Generation
+        # HolidayCalendarInvalidError` below - bkz. M5/M7).
+        expect_raises(
+            gen.GenerationInputContainmentError,
+            lambda: preview(
+                "deadline", case_id_m, anchor_event_id=ANCHOR_EVENT_ID, principal=principal_m, repo=repo_m,
+                holiday_calendar_path=_missing_calendar_path,
+            ),
+            "M1: missing holiday_calendar_path on PREVIEW -> GenerationInputContainmentError "
+            "(same existence-check class as ruleset/provisions; fail-closed symmetry with apply)",
+        )
+        expect_raises(
+            gen.GenerationInputContainmentError,
+            lambda: apply(
+                "deadline", case_id_m, "0" * 64, anchor_event_id=ANCHOR_EVENT_ID,
+                principal=principal_m, repo=repo_m, conn=conn_m1,
+                holiday_calendar_path=_missing_calendar_path,
+            ),
+            "M2: missing holiday_calendar_path on APPLY -> GenerationInputContainmentError, "
+            "BEFORE any journal row (pre-lock, S22)",
+        )
+        check("M3: zero journal rows were created for the missing-calendar attempt", len(conn_m1.table) == 0)
+        check(
+            "M4: no deadline pending file was written for the missing-calendar attempt",
+            not deadline_engine.get_pending_path(case_id_m).exists(),
+        )
+
+        # Schema-invalid (but syntactically valid JSON) calendar - same
+        # fail-closed shape, different root cause.
+        _invalid_calendar_path = _missing_calendar_dir / "invalid_holiday_calendar.json"
+        _invalid_calendar_path.write_text(json.dumps({"not": "a valid calendar"}), encoding="utf-8")
+        conn_m2 = FakeJournalConn()
+        expect_raises(
+            gen.GenerationHolidayCalendarInvalidError,
+            lambda: apply(
+                "deadline", case_id_m, "0" * 64, anchor_event_id=ANCHOR_EVENT_ID,
+                principal=principal_m, repo=repo_m, conn=conn_m2,
+                holiday_calendar_path=_invalid_calendar_path,
+            ),
+            "M5: schema-invalid holiday_calendar_path on APPLY -> "
+            "GenerationHolidayCalendarInvalidError, BEFORE any journal row",
+        )
+        check("M6: zero journal rows were created for the schema-invalid-calendar attempt", len(conn_m2.table) == 0)
+
+        # Corrupt (not valid JSON at all) calendar - same fail-closed shape.
+        _corrupt_calendar_path = _missing_calendar_dir / "corrupt_holiday_calendar.json"
+        _corrupt_calendar_path.write_text("{ this is not json", encoding="utf-8")
+        conn_m3 = FakeJournalConn()
+        expect_raises(
+            gen.GenerationHolidayCalendarInvalidError,
+            lambda: apply(
+                "deadline", case_id_m, "0" * 64, anchor_event_id=ANCHOR_EVENT_ID,
+                principal=principal_m, repo=repo_m, conn=conn_m3,
+                holiday_calendar_path=_corrupt_calendar_path,
+            ),
+            "M7: corrupt (non-JSON) holiday_calendar_path on APPLY -> "
+            "GenerationHolidayCalendarInvalidError, BEFORE any journal row",
+        )
+        check("M8: zero journal rows were created for the corrupt-calendar attempt", len(conn_m3.table) == 0)
+    finally:
+        shutil.rmtree(_missing_calendar_dir, ignore_errors=True)
 
     # ============================================================
     # L) ROW 19C-3c-i MEDIUM authz-coverage remediation - the generation

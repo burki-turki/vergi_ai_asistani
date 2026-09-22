@@ -266,6 +266,8 @@ import fact_approval as _pg_fact_approval                                       
 import deadline_engine as _pg_deadline_engine                                   # noqa: E402,F401
 import deadline_approval as _pg_deadline_approval                               # noqa: E402,F401
 import deadline_validator as _pg_deadline_validator                             # noqa: E402,F401
+import deadline_calculator as _pg_deadline_calculator                           # noqa: E402,F401
+import holiday_calendar_validator as _pg_holiday_calendar_validator             # noqa: E402,F401
 from ui.services import promotion_mutation_facade as _pg_promotion_facade       # noqa: E402,F401
 from ui.services import generation_mutation_facade as _pg_generation_facade     # noqa: E402,F401
 import deadline_rule_selection_policy as _pg_deadline_rule_selection_policy     # noqa: E402,F401
@@ -300,6 +302,58 @@ for _m in _cases_dir_holders:
 # in `finally`, alongside every other redirected module).
 _original_deadline_rule_policy_data_dir = _pg_deadline_rule_selection_policy.DATA_DIR
 _pg_deadline_rule_selection_policy.DATA_DIR = _TMP_ROOT / "data"
+
+# PILOT READINESS ADIM 5 - `--calendar-complete` elle beyan bayrağı
+# TAMAMEN KALDIRILDI (K4); `generation.deadline` artık HER ZAMAN
+# `deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH`'ten resmi tatil
+# takvimini okur/doğrular. P10's calculated_deadline='2026-03-12'
+# kanıtını (`--calendar-complete` bağımlılığı kalkmış olarak) korumak
+# için, bu modülün TEK deadline-row-key kullanıcısı olan P10'un süresi
+# boyunca bu sabit, GERÇEK production dosyasına DEĞİL (Prensip 18 -
+# test fixture ile production canonical data KARIŞTIRILMAZ), tempdir-
+# izoleli, sentetik, 2026 için `verified:true`+`holidays: []` (sıfır
+# tatil - kaydırma OLMADAN) bir takvime yönlendirilir - testin zaten
+# `CASES_DIR`/`DATA_DIR` için kullandığı AYNI monkeypatch seam'i
+# (`deadline_calculator.py:58` `deadline_engine.py`'nin bare-name DEĞİL
+# dotted-attribute erişimiyle bu patch'i her zaman görür - bkz.
+# `deadline_engine.py`'nin `import deadline_calculator` satırı).
+# Restore edilir `finally`'de, diğer her redirect ile birlikte.
+_original_default_holiday_calendar_path = _pg_deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH
+_p10_synthetic_holiday_calendar_dir = _TMP_ROOT / "p10_holiday_calendar"
+_p10_synthetic_holiday_calendar_dir.mkdir(parents=True, exist_ok=True)
+_p10_synthetic_holiday_calendar_path = _p10_synthetic_holiday_calendar_dir / "holiday_calendar.json"
+_p10_synthetic_holiday_calendar_doc = {
+    "schema_version": 1,
+    "calendar_id": "tr_official_holiday_calendar_v1",
+    "calendar_version": 1,
+    "effective_from": "2026-01-01",
+    "jurisdiction": "TR",
+    "weekend_policy": {"non_working_weekdays": [5, 6], "notes": None},
+    "half_day_policy": "not_decided",
+    "years": [
+        {
+            "year": 2026,
+            "verified": True,
+            "verification_ref": "p10_test_only_synthetic_verification_ref",
+            "source_refs": [
+                {"source_kind": "test_fixture", "citation": "P10 test-only synthetic calendar - NOT a real legal source.", "url": None},
+            ],
+            "holidays": [],
+        },
+    ],
+    "governance": {"change_approval": "test-only", "verification_authority": "test-only", "notes": None},
+    "notes": "P10 test-only synthetic calendar (Prensip 18) - never written to the real data/ tree.",
+}
+_p10_synthetic_holiday_calendar_check = _pg_holiday_calendar_validator.validate_holiday_calendar(
+    calendar=_p10_synthetic_holiday_calendar_doc,
+)
+if not _p10_synthetic_holiday_calendar_check["valid"]:
+    raise AssertionError(
+        f"P10 synthetic holiday calendar fixture is itself invalid: {_p10_synthetic_holiday_calendar_check['errors']!r}"
+    )
+with open(_p10_synthetic_holiday_calendar_path, "w", encoding="utf-8") as _p10_cal_file:
+    json.dump(_p10_synthetic_holiday_calendar_doc, _p10_cal_file, ensure_ascii=False, indent=2)
+_pg_deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH = _p10_synthetic_holiday_calendar_path
 
 _real_data_before = snapshot_real_data_tree()
 
@@ -973,7 +1027,7 @@ try:
     code, out, err = run_cli([
         "generation", "--case", case_p10, "--row-key", "deadline", "--anchor", anchor_event_id_p10,
         "--actor-user-id", str(_ACTORS["lawyer"]), "--apply", "--expected-input-digest", digest_p10b,
-        "--calendar-complete", "--judicial-recess-applicable", "no",
+        "--judicial-recess-applicable", "no",
     ])
     check("P10e real generation.deadline apply (anchor unverified) exits 0", code == 0, f"out={out!r} err={err!r}")
     pending_deadline_p10 = json.loads(_pg_deadline_engine.get_pending_path(case_p10).read_bytes())
@@ -1031,7 +1085,7 @@ try:
     code, out, err = run_cli([
         "generation", "--case", case_p10, "--row-key", "deadline", "--anchor", anchor_event_id_p10,
         "--actor-user-id", str(_ACTORS["lawyer"]), "--apply", "--expected-input-digest", digest_p10d,
-        "--calendar-complete", "--judicial-recess-applicable", "no",
+        "--judicial-recess-applicable", "no",
     ])
     check("P10k real generation.deadline apply (anchor verified) exits 0", code == 0, f"out={out!r} err={err!r}")
     pending_deadline_p10_v2 = json.loads(_pg_deadline_engine.get_pending_path(case_p10).read_bytes())
@@ -1306,6 +1360,7 @@ finally:
     for _m, _orig in _original_cases_dirs:
         _m.CASES_DIR = _orig
     _pg_deadline_rule_selection_policy.DATA_DIR = _original_deadline_rule_policy_data_dir
+    _pg_deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH = _original_default_holiday_calendar_path
     try:
         shutil.rmtree(_TMP_ROOT)
     except OSError as cleanup_error:

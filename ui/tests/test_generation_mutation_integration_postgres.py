@@ -386,17 +386,22 @@ try:
     # ============================================================
     # G4 - FINGERPRINT CONFLICT via the real CLI: same case/anchor/
     #      content (same idempotency_key) but a DIFFERENT generation-
-    #      tuning parameter (--calendar-complete) -> a clean domain
-    #      error, zero new journal row.
+    #      tuning parameter. PILOT READINESS ADIM 5: `--calendar-
+    #      complete` no longer exists AT ALL (K4) -
+    #      `--judicial-recess-applicable` is now the ONLY remaining
+    #      generation-tuning CLI flag, so it is the one used here to
+    #      produce a genuinely DIFFERENT generation_parameters_digest
+    #      on the SAME content identity -> a clean domain error, zero
+    #      new journal row.
     # ============================================================
     code, out, err = run_cli([
         "generation", "--case", case_g1, "--row-key", "deadline", "--anchor", ANCHOR_EVENT_ID,
         "--actor-user-id", str(_ACTORS["lawyer"]), "--apply", "--expected-input-digest", digest_g1,
-        "--calendar-complete",
+        "--judicial-recess-applicable", "yes",
     ])
     check(
-        "G4a a conflicting --calendar-complete on the SAME identity -> a clean domain error "
-        "(exit 1), never a raw traceback",
+        "G4a a conflicting --judicial-recess-applicable on the SAME identity -> a clean domain "
+        "error (exit 1), never a raw traceback",
         code == 1 and "IdempotencyConflictError" in err,
         f"code={code} out={out!r} err={err!r}",
     )

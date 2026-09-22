@@ -87,6 +87,7 @@
 
 
 import argparse
+import hashlib
 import json
 import sys
 import tempfile
@@ -111,6 +112,10 @@ from deadline_legal_basis_resolver import (
 from deadline_validator import (
     load_canonical_timeline,
     validate_deadline_analysis,
+)
+
+from holiday_calendar_validator import (
+    validate_holiday_calendar,
 )
 
 
@@ -146,6 +151,23 @@ DEFAULT_RULESET_PATH = (
 DEFAULT_PROVISIONS_PATH = (
     DATA_DIR
     / "provisions.json"
+)
+
+# PILOT READINESS ADIM 5: bağımsız-inceleme §5.2 düzeltmesi - bu sabit
+# YALNIZ burada (`deadline_engine.py`'de DEĞİL) tanımlanır, çünkü
+# `deadline_engine.py` bu modülü import eder (`:58`) ve tersi dairesel
+# olurdu; `deadline_calculator.py`'nin KENDİ `main()`'i de (K6) bu
+# sabite doğrudan erişebilmelidir. `DEFAULT_PROVISIONS_PATH` ile AYNI
+# desen (tek tanım, `deadline_engine.py`/facade bunu HER ZAMAN
+# `deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH` üzerinden, dotted
+# attribute erişimiyle, çağrı anında okur - `from ... import ...` ile
+# by-value KOPYALANMAZ, aksi halde test monkeypatch'i (`deadline_
+# calculator.DEFAULT_HOLIDAY_CALENDAR_PATH = ...`) diğer modüllere
+# görünmez kalırdı).
+DEFAULT_HOLIDAY_CALENDAR_PATH = (
+    DATA_DIR
+    / "holiday_calendar"
+    / "holiday_calendar.json"
 )
 
 
@@ -327,6 +349,225 @@ def move_to_next_business_day(
 
 
 # ============================================================
+# HOLIDAY CALENDAR REGISTRY - PILOT READINESS ADIM 5.
+#
+# `calculate_rule_deadline()` artık elle beyan edilen `holiday_dates`/
+# `calendar_complete` yerine, BURADA türetilmiş bir `holiday_calendar`
+# yapısı (`{"holiday_dates": set(date), "covered_verified_years":
+# set(int)}`) alır. Bu ayrım BİLİNÇLİDİR (bağımsız inceleme §5.1):
+# türetme (bu fonksiyonlar) `final_deadline`'dan TAMAMEN BAĞIMSIZDIR -
+# yalnız `verified is True` olan yılların birleşimidir. Kapsam kontrolü
+# (`[anchor.year, final.year]` aralığının TAMAMEN kapsanıp
+# kapsanmadığı) `calculate_rule_deadline()`'ın KENDİ İÇİNDE, kaydırma
+# ÇALIŞTIKTAN SONRA yapılır - döngüsellik burada değil, orada çözülür.
+# ============================================================
+
+def derive_effective_holiday_calendar(
+    calendar_document,
+):
+    """Saf fonksiyon - zaten `validate_holiday_calendar(raise_on_error=
+    True)` ile doğrulanmış bir takvim belgesi bekler (doğrulamayı
+    KENDİSİ yapmaz). `covered_verified_years`, `verified is True` olan
+    HER yılın kendisidir (final.year'a bağlı DEĞİLDİR - bağımsız
+    inceleme §5.1'in döngüsellik çözümü). `holiday_dates`, o yılların
+    `full_day` tatilleri VE (`half_day_policy == 'counts_as_holiday'`
+    ise) `half_day` tatillerinin BİRLEŞİMİDİR."""
+
+    half_day_policy = calendar_document.get(
+        "half_day_policy"
+    )
+
+    covered_verified_years = set()
+
+    holiday_dates = set()
+
+    for year_entry in (
+        calendar_document.get(
+            "years"
+        )
+        or []
+    ):
+
+        if not isinstance(
+            year_entry,
+            dict,
+        ):
+
+            continue
+
+        if (
+            year_entry.get(
+                "verified"
+            )
+            is not True
+        ):
+
+            continue
+
+        year_value = year_entry.get(
+            "year"
+        )
+
+        covered_verified_years.add(
+            year_value
+        )
+
+        for holiday in (
+            year_entry.get(
+                "holidays"
+            )
+            or []
+        ):
+
+            if not isinstance(
+                holiday,
+                dict,
+            ):
+
+                continue
+
+            day_type = holiday.get(
+                "day_type"
+            )
+
+            counts_as_holiday = (
+                day_type
+                == "full_day"
+
+                or
+                (
+                    day_type
+                    == "half_day"
+                    and half_day_policy
+                    == "counts_as_holiday"
+                )
+            )
+
+            if not counts_as_holiday:
+
+                continue
+
+            parsed = parse_iso_date(
+                holiday.get(
+                    "date"
+                )
+            )
+
+            if parsed is not None:
+
+                holiday_dates.add(
+                    parsed
+                )
+
+    return {
+        "holiday_dates":
+            holiday_dates,
+
+        "covered_verified_years":
+            covered_verified_years,
+    }
+
+
+def load_holiday_calendar(
+    path=None,
+):
+    """Fail-closed yükleyici (`corpus_policy_validator.load_policy()` +
+    `validate_corpus_policy(raise_on_error=True)` deseni birebir):
+    ham baytları okur, `holiday_calendar_validator.validate_holiday_
+    calendar()` (`raise_on_error=True`) ile doğrular, SONRA türetir.
+    `path=None` -> bu modülün KENDİ `DEFAULT_HOLIDAY_CALENDAR_PATH`
+    sabitine (bare-name lookup - aynı modül içinde olduğu için test
+    monkeypatch'i `deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH`
+    üzerinden burada da görünür kalır). Dönüş: `derive_effective_
+    holiday_calendar()`'ın ürettiği iki küme + `calendar_id`/
+    `calendar_version`/`source_sha256` (audit/identity amaçlı, saf
+    hesaplama tarafından KULLANILMAZ)."""
+
+    effective_path = (
+        Path(
+            path
+        )
+        if path is not None
+        else DEFAULT_HOLIDAY_CALENDAR_PATH
+    )
+
+    if not effective_path.exists():
+
+        raise FileNotFoundError(
+            "Holiday calendar dosyası bulunamadı:\n"
+            f"{effective_path}"
+        )
+
+    raw_bytes = effective_path.read_bytes()
+
+    try:
+
+        document = json.loads(
+            raw_bytes.decode(
+                "utf-8"
+            )
+        )
+
+    except (
+        json.JSONDecodeError,
+        UnicodeDecodeError,
+    ) as error:
+
+        raise DeadlineCalculatorError(
+            "Holiday calendar dosyası geçerli JSON değil: "
+            f"{effective_path}"
+        ) from error
+
+    try:
+
+        validate_holiday_calendar(
+            calendar=
+                document,
+
+            raise_on_error=
+                True,
+        )
+
+    except Exception as error:
+
+        raise DeadlineCalculatorError(
+            "Holiday calendar doğrulanamadı: "
+            f"{effective_path}: {error}"
+        ) from error
+
+    derived = derive_effective_holiday_calendar(
+        document
+    )
+
+    return {
+        "holiday_dates":
+            derived[
+                "holiday_dates"
+            ],
+
+        "covered_verified_years":
+            derived[
+                "covered_verified_years"
+            ],
+
+        "calendar_id":
+            document.get(
+                "calendar_id"
+            ),
+
+        "calendar_version":
+            document.get(
+                "calendar_version"
+            ),
+
+        "source_sha256":
+            hashlib.sha256(
+                raw_bytes
+            ).hexdigest(),
+    }
+
+
+# ============================================================
 # JUDICIAL RECESS
 # ============================================================
 
@@ -436,10 +677,21 @@ def rule_has_iyuk_recess_basis(
 def calculate_rule_deadline(
     anchor_date,
     rule,
-    holiday_dates=None,
-    calendar_complete=False,
+    *,
+    holiday_calendar,
     judicial_recess_applicable=None,
 ):
+    """PILOT READINESS ADIM 5 (K4/C1): elle beyan edilen `holiday_dates`/
+    `calendar_complete` parametreleri TAMAMEN KALKTI - `holiday_calendar`
+    ZORUNLUDUR (keyword-only, default YOK - fail-closed-by-construction),
+    `deadline_calculator.load_holiday_calendar()`'ın türettiği
+    `{"holiday_dates": set(date), "covered_verified_years": set(int)}`
+    yapısını bekler. Bağımsız inceleme §5.1'in döngüsellik çözümü:
+    kapsam kontrolü (`[anchor.year, final.year]`'ın TAMAMEN
+    `covered_verified_years` içinde olması) kaydırma
+    (`move_to_next_business_day`) ÇALIŞTIKTAN SONRA yapılır - hiçbir
+    ara "calculated" durumu hiçbir çağırana SIZMAZ (fonksiyon dönmeden
+    ÖNCE karar verilir)."""
 
     anchor = parse_iso_date(
         anchor_date
@@ -832,8 +1084,26 @@ def calculate_rule_deadline(
 
     holiday_adjustment_applied = False
 
+    effective_holiday_calendar = (
+        holiday_calendar
+        if holiday_calendar is not None
+        else {
+            "holiday_dates": set(),
+            "covered_verified_years": set(),
+        }
+    )
+
     holidays = normalize_holiday_dates(
-        holiday_dates
+        effective_holiday_calendar.get(
+            "holiday_dates"
+        )
+    )
+
+    covered_verified_years = set(
+        effective_holiday_calendar.get(
+            "covered_verified_years"
+        )
+        or set()
     )
 
     if (
@@ -851,19 +1121,43 @@ def calculate_rule_deadline(
     ):
 
         # ----------------------------------------------------
-        # Bir tarihin resmi tatil OLMADIĞINI da bilmemiz gerekir.
-        #
-        # Bu yüzden complete calendar olmadan:
-        #
-        #   "hafta içi görünüyor, hesaplayalım"
-        #
-        # yaklaşımı kullanılmaz.
+        # PILOT READINESS ADIM 5 (bağımsız inceleme §5.1 - döngüsellik
+        # çözümü): SIRA KASITLI OLARAK DEĞİŞTİ. Kaydırma ÖNCE
+        # çalıştırılır (final_deadline burada belirlenir), kapsam
+        # kontrolü SONRA yapılır - çünkü "[anchor.year, final.year]
+        # aralığı tamamen doğrulanmış mı" sorusu final.year'ı
+        # GEREKTİRİR ve final.year yalnız kaydırma TAMAMLANDIKTAN
+        # SONRA bilinir. Bu, motor-seviyesi bir post-check (önce
+        # "calculated" döndürüp sonra "needs_review"a düşürmek)
+        # DEĞİLDİR - karar bu fonksiyon DÖNMEDEN ÖNCE, TEK bir yerde
+        # verilir; hiçbir ara "calculated" durumu hiçbir çağırana
+        # SIZMAZ (Prensip 9, fail-closed).
         # ----------------------------------------------------
 
-        if (
-            calendar_complete
-            is not True
-        ):
+        final_deadline = (
+            move_to_next_business_day(
+                provisional_deadline,
+                holidays,
+            )
+        )
+
+        provisional_holiday_adjustment_applied = (
+            final_deadline
+            != provisional_deadline
+        )
+
+        uncovered_years = sorted(
+            year
+            for year in range(
+                anchor.year,
+                final_deadline.year
+                + 1,
+            )
+            if year
+            not in covered_verified_years
+        )
+
+        if uncovered_years:
 
             return {
                 "calculation_state":
@@ -887,22 +1181,15 @@ def calculate_rule_deadline(
                 "reason":
                     (
                         "end_day_policy="
-                        "'next_business_day_if_holiday' "
-                        "ancak complete holiday calendar "
-                        "sağlanmadı."
+                        "'next_business_day_if_holiday' ancak "
+                        "şu yıl(lar) resmi tatil takviminde "
+                        "'verified' olarak işaretlenmemiş: "
+                        f"{uncovered_years}."
                     ),
             }
 
-        final_deadline = (
-            move_to_next_business_day(
-                provisional_deadline,
-                holidays,
-            )
-        )
-
         holiday_adjustment_applied = (
-            final_deadline
-            != provisional_deadline
+            provisional_holiday_adjustment_applied
         )
 
     else:
@@ -1151,10 +1438,9 @@ def build_deadline_record(
     anchor_event,
     selection,
     ruleset_path,
-    holiday_dates=None,
-    calendar_complete=False,
-    judicial_recess_applicable=None,
     *,
+    holiday_calendar,
+    judicial_recess_applicable=None,
     provisions_path=None,
 ):
 
@@ -1547,11 +1833,8 @@ def build_deadline_record(
             rule=
                 selected_rule,
 
-            holiday_dates=
-                holiday_dates,
-
-            calendar_complete=
-                calendar_complete,
+            holiday_calendar=
+                holiday_calendar,
 
             judicial_recess_applicable=
                 judicial_recess_applicable,
@@ -1612,6 +1895,44 @@ def build_deadline_record(
             "holiday_adjustment=applied"
         )
 
+    if (
+        isinstance(
+            holiday_calendar,
+            dict,
+        )
+        and holiday_calendar.get(
+            "calendar_id"
+        )
+        and holiday_calendar.get(
+            "source_sha256"
+        )
+    ):
+
+        # PILOT READINESS ADIM 5 (§4-E) - kayıt-düzeyi takvim revizyon
+        # etiketi. `calculation_state`'ten BAĞIMSIZ olarak eklenir (bu
+        # kaydın HANGİ takvim revizyonuna karşı hesaplandığı, sonuç
+        # `needs_review` olsa bile audit amaçlı görünür kalmalıdır).
+        # `holiday_calendar` yalnız `derive_effective_holiday_calendar()`
+        # çıktısıysa (self-test'lerdeki gibi) bu iki alan YOKTUR -
+        # etiket sessizce atlanır (yeni bir zorunluluk İCAT EDİLMEZ).
+
+        notes.append(
+            "holiday_calendar="
+            + str(
+                holiday_calendar[
+                    "calendar_id"
+                ]
+            )
+            + "@"
+            + str(
+                holiday_calendar[
+                    "source_sha256"
+                ]
+            )[
+                :16
+            ]
+        )
+
     base_record.update(
         {
             "calculation_state":
@@ -1643,12 +1964,28 @@ def build_case_deadline_analysis(
     case_id,
     anchor_event_id,
     ruleset_path=DEFAULT_RULESET_PATH,
-    holiday_dates=None,
-    calendar_complete=False,
     judicial_recess_applicable=None,
     *,
     provisions_path=None,
+    holiday_calendar=None,
+    holiday_calendar_path=None,
 ):
+    """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete`
+    parametreleri TAMAMEN KALKTI. `holiday_calendar` ZATEN türetilmiş
+    bir yapı olarak verilebilir (çağıran - ör. `deadline_engine.
+    run_engine()` - kendi audit metadata'sı için zaten yüklediyse,
+    dosyayı İKİNCİ KEZ yüklemeden yeniden kullanabilir); `None` ise
+    `holiday_calendar_path`'ten (`None` -> üretim `DEFAULT_HOLIDAY_
+    CALENDAR_PATH`) `load_holiday_calendar()` ile YÜKLENİR+DOĞRULANIR
+    (fail-closed - dosya eksik/bozuk/geçersizse burada raise eder)."""
+
+    effective_holiday_calendar = (
+        holiday_calendar
+        if holiday_calendar is not None
+        else load_holiday_calendar(
+            holiday_calendar_path
+        )
+    )
 
     anchor_event = (
         get_canonical_anchor_event(
@@ -1688,11 +2025,8 @@ def build_case_deadline_analysis(
                     ruleset_path
                 ),
 
-            holiday_dates=
-                holiday_dates,
-
-            calendar_complete=
-                calendar_complete,
+            holiday_calendar=
+                effective_holiday_calendar,
 
             judicial_recess_applicable=
                 judicial_recess_applicable,
@@ -1964,6 +2298,11 @@ def run_self_test():
     # 10.02 + 30 calendar days = 12.03
     # ========================================================
 
+    covered_2026_only = {
+        "holiday_dates": set(),
+        "covered_verified_years": {2026},
+    }
+
     result = (
         calculate_rule_deadline(
             anchor_date=
@@ -1972,11 +2311,8 @@ def run_self_test():
             rule=
                 rule,
 
-            holiday_dates=
-                [],
-
-            calendar_complete=
-                True,
+            holiday_calendar=
+                covered_2026_only,
 
             judicial_recess_applicable=
                 True,
@@ -1998,7 +2334,7 @@ def run_self_test():
     )
 
     print(
-        "T02 30-day next-day calculation:",
+        "T02 30-day next-day calculation (registry-derived holiday_calendar):",
         "PASS"
     )
 
@@ -2017,11 +2353,8 @@ def run_self_test():
             rule=
                 rule,
 
-            holiday_dates=
-                [],
-
-            calendar_complete=
-                True,
+            holiday_calendar=
+                covered_2026_only,
 
             judicial_recess_applicable=
                 True,
@@ -2048,7 +2381,7 @@ def run_self_test():
     )
 
     # ========================================================
-    # T04 EXPLICIT HOLIDAY ADJUSTMENT
+    # T04 EXPLICIT HOLIDAY ADJUSTMENT (registry-derived holiday_dates)
     #
     # Base = 12.03.2026
     # Synthetic holiday = 12.03
@@ -2063,12 +2396,18 @@ def run_self_test():
             rule=
                 rule,
 
-            holiday_dates=[
-                "2026-03-12"
-            ],
+            holiday_calendar={
+                "holiday_dates": {
+                    date(
+                        2026,
+                        3,
+                        12,
+                    ),
+                },
 
-            calendar_complete=
-                True,
+                "covered_verified_years":
+                    {2026},
+            },
 
             judicial_recess_applicable=
                 True,
@@ -2083,7 +2422,7 @@ def run_self_test():
     )
 
     print(
-        "T04 Explicit holiday adjustment:",
+        "T04 Explicit registry holiday adjustment:",
         "PASS"
     )
 
@@ -2102,11 +2441,8 @@ def run_self_test():
             rule=
                 rule,
 
-            holiday_dates=
-                [],
-
-            calendar_complete=
-                True,
+            holiday_calendar=
+                covered_2026_only,
 
             judicial_recess_applicable=
                 True,
@@ -2140,7 +2476,9 @@ def run_self_test():
     )
 
     # ========================================================
-    # T06 UNKNOWN RECESS APPLICABILITY FAIL-CLOSED
+    # T06 UNKNOWN RECESS APPLICABILITY FAIL-CLOSED - recess
+    # ambiguity is checked BEFORE the calendar-coverage gate, so an
+    # empty/uncovered calendar here does not change the outcome.
     # ========================================================
 
     result = (
@@ -2151,11 +2489,10 @@ def run_self_test():
             rule=
                 rule,
 
-            holiday_dates=
-                [],
-
-            calendar_complete=
-                True,
+            holiday_calendar={
+                "holiday_dates": set(),
+                "covered_verified_years": set(),
+            },
 
             judicial_recess_applicable=
                 None,
@@ -2182,7 +2519,11 @@ def run_self_test():
     )
 
     # ========================================================
-    # T07 INCOMPLETE HOLIDAY CALENDAR FAIL-CLOSED
+    # T07 UNCOVERED (NOT verified) CALENDAR YEAR FAIL-CLOSED - PILOT
+    # READINESS ADIM 5: this replaces the old elle-beyan
+    # `calendar_complete=False` scenario with the registry-derived
+    # equivalent (2026 genuinely present in `years[]` but not
+    # `verified: True` -> not in `covered_verified_years`).
     # ========================================================
 
     result = (
@@ -2193,11 +2534,10 @@ def run_self_test():
             rule=
                 rule,
 
-            holiday_dates=
-                [],
-
-            calendar_complete=
-                False,
+            holiday_calendar={
+                "holiday_dates": set(),
+                "covered_verified_years": set(),
+            },
 
             judicial_recess_applicable=
                 True,
@@ -2219,7 +2559,61 @@ def run_self_test():
     )
 
     print(
-        "T07 Incomplete calendar blocked:",
+        "T07 Uncovered (unverified) calendar year blocked:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07b COVERAGE CROSSING - a REAL holiday shift pushes the final
+    # date into a year that is NOT covered (§5.1 of the independent
+    # scope review): anchor 2026-12-01 (+30 -> 2026-12-31), 2026-12-31
+    # marked as a verified full_day holiday -> shift would land on
+    # 2027-01-01, but 2027 is NOT covered -> needs_review, NEVER a
+    # silently-shifted "calculated" result.
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-12-01",
+
+            rule=
+                rule,
+
+            holiday_calendar={
+                "holiday_dates": {
+                    date(
+                        2026,
+                        12,
+                        31,
+                    ),
+                },
+
+                "covered_verified_years":
+                    {2026},
+            },
+
+            judicial_recess_applicable=
+                False,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "needs_review"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        is None
+    )
+
+    print(
+        "T07b Holiday shift crossing into an uncovered year blocked:",
         "PASS"
     )
 
@@ -2454,7 +2848,7 @@ def run_self_test():
     )
 
     print(
-        " DEADLINE CALCULATOR V1: 11/11 PASS"
+        " DEADLINE CALCULATOR V1: 12/12 PASS"
     )
 
     print(
@@ -2521,21 +2915,6 @@ def main():
     )
 
     parser.add_argument(
-        "--holiday",
-        action="append",
-        default=[],
-        help=(
-            "Complete calendar içindeki resmi tatil "
-            "tarihi. Birden fazla kullanılabilir."
-        ),
-    )
-
-    parser.add_argument(
-        "--calendar-complete",
-        action="store_true",
-    )
-
-    parser.add_argument(
         "--judicial-recess-applicable",
         choices=[
             "yes",
@@ -2552,6 +2931,14 @@ def main():
         run_self_test()
 
         return
+
+    # PILOT READINESS ADIM 5 (K6): `--holiday`/`--calendar-complete`
+    # elle beyan bayrakları TAMAMEN KALDIRILDI - bu salt-okunur teşhis
+    # CLI'ı (bir mutasyon yolu DEĞİLDİR, `validate_analysis_object()`
+    # yalnız `tempfile.NamedTemporaryFile`'a yazar) artık ZORUNLU
+    # olarak üretim `DEFAULT_HOLIDAY_CALENDAR_PATH` registry'sini
+    # kullanır - `build_case_deadline_analysis()`'in kendi
+    # `holiday_calendar_path=None` varsayılanı bunu otomatik sağlar.
 
     judicial_recess_applicable = (
         parse_judicial_recess_arg(
@@ -2571,12 +2958,6 @@ def main():
                 Path(
                     args.ruleset_path
                 ),
-
-            holiday_dates=
-                args.holiday,
-
-            calendar_complete=
-                args.calendar_complete,
 
             judicial_recess_applicable=
                 judicial_recess_applicable,

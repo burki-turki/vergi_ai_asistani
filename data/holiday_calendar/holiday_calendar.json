@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "calendar_id": "tr_official_holiday_calendar_v1",
+  "calendar_version": 1,
+  "effective_from": "2026-09-22",
+  "jurisdiction": "TR",
+  "weekend_policy": {
+    "non_working_weekdays": [
+      5,
+      6
+    ],
+    "notes": "Cumartesi/Pazar kaydırması kod içinde sabittir (deadline_calculator.is_non_working_day) - bu alan yalnız belgeleyicidir, uygulayıcı değildir."
+  },
+  "half_day_policy": "not_decided",
+  "years": [
+    {
+      "year": 2024,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2025,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2026,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2027,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2028,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2029,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2030,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2031,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2032,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2033,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2034,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    },
+    {
+      "year": 2035,
+      "verified": false,
+      "verification_ref": null,
+      "source_refs": [],
+      "holidays": []
+    }
+  ],
+  "governance": {
+    "change_approval": "CLAUDE.md §8 onayı + incelenen commit + calendar_version artışı.",
+    "verification_authority": "Avukat doğrulaması (Pilot Readiness Adım 6) - bkz. avukat_dogrulama_paketi_DRAFT2.md SORU 3.1-3.8.",
+    "notes": null
+  },
+  "notes": "Pilot Readiness Adım 5 (registry yapısı) baseline. Bilerek HİÇBİR resmi tatil adı/tarihi İÇERMEZ - tüm yıllar verified=false, holidays boş. Tatil içeriği yalnız avukat doğrulamasından (Adım 6) sonra, ayrı bir commit ile eklenir. Bu yapıda iken next_business_day_if_holiday policy kullanan hiçbir kural calculated sonuç üretmez (needs_review) - bkz. deadline_calculator.py."
+}

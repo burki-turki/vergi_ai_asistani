@@ -360,20 +360,57 @@ check(
     code == cli_mutate.EXIT_USAGE_ERROR and "--anchor" in err,
 )
 
+# PILOT READINESS ADIM 5 (bağımsız inceleme §3.4): `--holiday`/
+# `--calendar-complete` argparse'tan TAMAMEN KALDIRILDI. Bu iki bayrak
+# artık HİÇBİR row-key için argparse tarafından TANINMAZ - eski
+# assertion'lar ("--holiday" in err) argparse'ın "unrecognized
+# arguments" reddiyle de tesadüfen geçmeye devam ederdi (tautolojiye
+# kayan bir kanıt zinciri olurdu); bu yüzden BİLİNÇLİ olarak
+# "unrecognized arguments" ifadesini DOĞRUDAN doğrulayacak şekilde
+# yeniden hedeflendi - artık aile-bazlı bir iş kuralı reddi DEĞİL,
+# argparse'ın kendi bilinmeyen-bayrak reddi test ediliyor.
 code, _, err = run_cli_usage_only([
     "generation", "--case", "x", "--row-key", "timeline", "--actor-user-id", "1", "--holiday", "2026-01-01",
 ])
 check(
-    "generation: --holiday with --row-key timeline -> exit 2, zero connections",
-    code == cli_mutate.EXIT_USAGE_ERROR and "--holiday" in err,
+    "generation: --holiday no longer exists AT ALL (any row-key) -> argparse 'unrecognized "
+    "arguments' exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and "--holiday" in err,
 )
 
 code, _, err = run_cli_usage_only([
     "generation", "--case", "x", "--row-key", "timeline", "--actor-user-id", "1", "--calendar-complete",
 ])
 check(
-    "generation: --calendar-complete with --row-key timeline -> exit 2, zero connections",
-    code == cli_mutate.EXIT_USAGE_ERROR and "--calendar-complete" in err,
+    "generation: --calendar-complete no longer exists AT ALL (any row-key) -> argparse "
+    "'unrecognized arguments' exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and "--calendar-complete" in err,
+)
+
+# POSITIVE-TO-NEGATIVE FLIP: before this slice, `--row-key deadline
+# --apply --holiday ...`/`--calendar-complete` were ACCEPTED (deadline
+# was the one row-key that used them). Proving the SAME flags are now
+# rejected even for `--row-key deadline` demonstrates the flag is
+# genuinely gone SYSTEM-WIDE, not merely re-routed to a different
+# rejection branch for the other five row-keys.
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline", "--anchor", "timeline_event_001",
+    "--actor-user-id", "1", "--apply", "--expected-input-digest", "h", "--holiday", "2026-01-01",
+])
+check(
+    "generation: --holiday with --row-key deadline (the ONE row-key that used to ACCEPT it) -> "
+    "argparse 'unrecognized arguments' exit 2, zero connections (system-wide removal proof)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and "--holiday" in err,
+)
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline", "--anchor", "timeline_event_001",
+    "--actor-user-id", "1", "--apply", "--expected-input-digest", "h", "--calendar-complete",
+])
+check(
+    "generation: --calendar-complete with --row-key deadline (the ONE row-key that used to "
+    "ACCEPT it) -> argparse 'unrecognized arguments' exit 2, zero connections (system-wide "
+    "removal proof)",
+    code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and "--calendar-complete" in err,
 )
 
 code, _, err = run_cli_usage_only([
@@ -482,9 +519,9 @@ code, _, err = run_cli_usage_only([
     "--with-agent", "--holiday", "2026-01-01", "--actor-user-id", "1",
 ])
 check(
-    "generation: --holiday is not accepted for --row-key fact_extraction -> exit 2, zero "
-    "connections",
-    code == cli_mutate.EXIT_USAGE_ERROR and "--holiday" in err,
+    "generation: --holiday no longer exists AT ALL (--row-key fact_extraction) -> argparse "
+    "'unrecognized arguments' exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and "--holiday" in err,
 )
 
 # --document is REJECTED for every OTHER row-key (agent-five, timeline,
@@ -569,8 +606,9 @@ code, _, err = run_cli_usage_only([
     "--actor-user-id", "1",
 ])
 check(
-    "generation: --holiday is not accepted for --row-key case_law -> exit 2, zero connections",
-    code == cli_mutate.EXIT_USAGE_ERROR and "--holiday" in err,
+    "generation: --holiday no longer exists AT ALL (--row-key case_law) -> argparse "
+    "'unrecognized arguments' exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and "--holiday" in err,
 )
 
 code, _, err = run_cli_usage_only([
@@ -578,9 +616,9 @@ code, _, err = run_cli_usage_only([
     "--actor-user-id", "1",
 ])
 check(
-    "generation: --calendar-complete is not accepted for --row-key legal_research -> exit 2, "
-    "zero connections",
-    code == cli_mutate.EXIT_USAGE_ERROR and "--calendar-complete" in err,
+    "generation: --calendar-complete no longer exists AT ALL (--row-key legal_research) -> "
+    "argparse 'unrecognized arguments' exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and "--calendar-complete" in err,
 )
 
 code, _, err = run_cli_usage_only([

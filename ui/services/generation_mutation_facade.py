@@ -27,12 +27,14 @@
 # scope kararının YERİNE GEÇEN, DÜZELTİLMİŞ kontrattır):
 #   - `pre_revision` = `input_digest`:
 #       * deadline için case.json + canonical timeline.json + (kilit
-#         altında yakalanan) ruleset + provisions ham baytlarının
-#         İÇERİK-ONLY hash'i (`_compute_deadline_input_digest`,
-#         `digest_version="row19c3ci.deadline.v2"`). Ruleset/provisions
-#         bu digest'e DAHİLDİR - case/timeline aynı kalsa bile ruleset
-#         veya provisions içeriği değiştiğinde `input_digest` (ve
-#         dolayısıyla `idempotency_key`) DEĞİŞİR; bu, kalıcı-UNIQUE
+#         altında yakalanan) ruleset + provisions + holiday_calendar ham
+#         baytlarının İÇERİK-ONLY hash'i (`_compute_deadline_input_
+#         digest`, `digest_version="row19c3ci.deadline.v3"` - PILOT
+#         READINESS ADIM 5'te `holiday_calendar` eklendiği için `v2`'den
+#         `v3`'e yükseltildi). Ruleset/provisions/holiday_calendar bu
+#         digest'e DAHİLDİR - case/timeline aynı kalsa bile bunlardan
+#         BİRİNİN içeriği değiştiğinde `input_digest` (ve dolayısıyla
+#         `idempotency_key`) DEĞİŞİR; bu, kalıcı-UNIQUE
 #         `idempotency_key`nin meşru bir yeniden-üretim denemesini
 #         yanlışlıkla kalıcı olarak bloke ETMEMESİNİ sağlar (bkz.
 #         REMEDIATION NOTU).
@@ -44,19 +46,23 @@
 #         operasyon slotlarıdır (yanlış bir kalıcı IdempotencyConflict
 #         üretilmez).
 #   - `secondary_input_hash` = `generation_parameters_digest`:
-#       * deadline için YALNIZ holiday_dates + calendar_complete +
-#         judicial_recess_applicable'ın deterministik hash'i
-#         (`_compute_deadline_generation_parameters_digest`,
-#         `digest_version="row19c3ci.deadline_params.v2"`) - ruleset/
-#         provisions ARTIK BU DİGEST'TE DEĞİLDİR (input_digest'e
-#         TAŞINDI, bkz. REMEDIATION NOTU).
+#       * deadline için YALNIZ `judicial_recess_applicable`'ın
+#         deterministik hash'i (`_compute_deadline_generation_
+#         parameters_digest`, `digest_version=
+#         "row19c3ci.deadline_params.v3"` - PILOT READINESS ADIM 5'te
+#         `holiday_dates`/`calendar_complete` TAMAMEN KALDIRILDIĞI için
+#         `v2`'den `v3`'e yükseltildi) - ruleset/provisions/
+#         holiday_calendar ARTIK BU DİGEST'TE DEĞİLDİR (input_digest'e
+#         TAŞINDI/EKLENDİ, bkz. REMEDIATION NOTU + "PILOT READINESS
+#         ADIM 5 EK NOTU").
 #       * timeline için HER ZAMAN `None` (timeline'ın böyle bir "tuning
 #         parametresi" kavramı yoktur).
-#   - Sonuç: aynı kimlik (aynı case/timeline/ruleset/provisions içeriği
-#     + aynı anchor) + farklı generation_parameters_digest (farklı
-#     holiday/calendar/recess) -> mevcut `IdempotencyConflictError`
-#     mekanizmasına düşer (Row 19C-2b'nin `secondary_input_hash`
-#     emsaliyle birebir aynı) - bu davranış DEĞİŞMEDİ.
+#   - Sonuç: aynı kimlik (aynı case/timeline/ruleset/provisions/
+#     holiday_calendar içeriği + aynı anchor) + farklı
+#     generation_parameters_digest (farklı judicial_recess_applicable)
+#     -> mevcut `IdempotencyConflictError` mekanizmasına düşer (Row
+#     19C-2b'nin `secondary_input_hash` emsaliyle birebir aynı) - bu
+#     davranış DEĞİŞMEDİ.
 #
 # REMEDIATION NOTU (bu turda düzeltilen HIGH kusur): ORİJİNAL
 # implementasyonda `input_digest` yalnız case.json+timeline.json'dan,
@@ -102,38 +108,59 @@
 #     onaylanan (ve bu turda düzeltilen) identity modelinin doğrudan ve
 #     BİLİNÇLİ bir sonucudur.
 #
+# PILOT READINESS ADIM 5 EK NOTU (bu turda eklendi - elle beyan edilen
+# `holiday_dates`/`calendar_complete` parametreleri TAMAMEN KALKTI):
+# resmi tatil takvimi artık `data/holiday_calendar/holiday_calendar.json`
+# git-governed registry'sinden okunur ve `input_digest`'in ÜÇÜNCÜ üyesi
+# olur - `digest_version` `row19c3ci.deadline.v2` -> `.v3`
+# (`_compute_deadline_input_digest`). `generation_parameters_digest`
+# artık YALNIZ `judicial_recess_applicable`'ı taşır - `digest_version`
+# `row19c3ci.deadline_params.v2` -> `.v3`
+# (`_compute_deadline_generation_parameters_digest`). Takvim, ruleset/
+# provisions ile AYNI GLOBAL KAYNAK SNAPSHOT protokolünün (aşağıda)
+# ÜÇÜNCÜ üyesidir - TEK fark: pre-lock okuması yalnız ham bayt DEĞİL,
+# AYRICA `holiday_calendar_validator.validate_holiday_calendar()` ile
+# TAM DOĞRULAMA da yapar (`GenerationHolidayCalendarInvalidError`,
+# fail-closed, HERHANGİ bir journal satırından ÖNCE) - bozuk/eksik/
+# şema-dışı bir takvimin yazar sınırını GEÇİP
+# `reconciliation_required`'a düşmesi ÖNLENİR (kilit-altı/writer
+# aşamalarında yalnız BAYT eşitliği yeniden kontrol edilir, ikinci bir
+# tam-doğrulama YAPILMAZ - herhangi bir içerik değişikliği zaten
+# composite digest karşılaştırmasıyla yakalanır).
+#
 # GLOBAL KAYNAK SNAPSHOT (yalnız deadline; Row 19A'nın onaylı RAG-bundle
-# "stale-sonuç kuralı"nın generation karşılığı):
-#   1. Pre-lock: ruleset/provisions ham baytları best-effort okunur
-#      (yalnız ön-gösterge; otoriter DEĞİLDİR).
+# "stale-sonuç kuralı"nın generation karşılığı; ÜÇ üye: ruleset,
+# provisions, holiday_calendar):
+#   1. Pre-lock: ruleset/provisions/holiday_calendar ham baytları
+#      okunur (ruleset/provisions için best-effort/yalnız ön-gösterge;
+#      holiday_calendar için AYRICA tam doğrulanır - yukarıdaki "PILOT
+#      READINESS ADIM 5 EK NOTU").
 #   2. Case kilidi alınır.
-#   3. `precondition_callback` (kilit ALTINDA): ruleset/provisions
-#      YENİDEN okunur - baytlar SADECE BELLEĞE (closure box) alınır,
-#      HİÇBİR dosya YAZILMAZ, VE (REMEDIATION - bkz. yukarıdaki
-#      "REMEDIATION NOTU") bu taze baytlar `ul_input_digest`'in
-#      hesaplanmasına DOĞRUDAN girer (artık yalnız ayrı bir
-#      `generation_parameters_digest` race-tespitinin girdisi
-#      DEĞİLLER). Composite snapshot (input_digest'i İÇEREN)
-#      pre-lock değeriyle karşılaştırılır (uyuşmazlık ->
-#      `PreconditionRaceDetectedError`/`StaleViewError`, SIFIR journal
-#      satırı) - ruleset/provisions kilit beklenirken değişirse bu TEK
-#      karşılaştırma zaten yakalar; ayrı bir `generation_parameters_
-#      digest` eşitlik kontrolüne artık GEREK YOKTUR (holiday_dates/
-#      calendar_complete/judicial_recess_applicable saf çağıran
-#      parametreleridir, dosyadan OKUNMAZ - kilit beklenirken
-#      değişebilecek bir durumları yoktur).
+#   3. `precondition_callback` (kilit ALTINDA): ruleset/provisions/
+#      holiday_calendar YENİDEN okunur - baytlar SADECE BELLEĞE
+#      (closure box) alınır, HİÇBİR dosya YAZILMAZ, VE (REMEDIATION -
+#      bkz. yukarıdaki "REMEDIATION NOTU") bu taze baytlar `ul_input_
+#      digest`'in hesaplanmasına DOĞRUDAN girer. Composite snapshot
+#      (input_digest'i İÇEREN) pre-lock değeriyle karşılaştırılır
+#      (uyuşmazlık -> `PreconditionRaceDetectedError`/`StaleViewError`,
+#      SIFIR journal satırı) - üç kaynaktan HERHANGİ biri kilit
+#      beklenirken değişirse bu TEK karşılaştırma zaten yakalar; ayrı
+#      bir `generation_parameters_digest` eşitlik kontrolüne artık
+#      GEREK YOKTUR (`judicial_recess_applicable` saf çağıran
+#      parametresidir, dosyadan OKUNMAZ - kilit beklenirken
+#      değişebilecek bir durumu yoktur).
 #   4. `_insert_prepared` / `_mark_executing` (mevcut coordinator,
 #      DEĞİŞTİRİLMEDİ).
 #   5. `writer_callback` (kilit ALTINDA, `executing` sonrası): YALNIZ
-#      BURADA yakalanan baytlar bir `TemporaryDirectory`'ye
-#      materialize edilir, katı biçimde yeniden hash'lenip yakalanan
-#      baytla EŞİTLENİR, `deadline_engine.run_engine()` bu temp
-#      path'lerle çağrılır; `run_engine()`'e geçen `pre_commit_
-#      callback` gerçek ÜRETİM ruleset/provisions dosyalarını BİR KEZ
-#      DAHA (atomic write'tan HEMEN önce) okuyup yakalanan baytla
-#      eşitler - farklıysa `GlobalResourceStaleError`, sıfır
-#      değişiklik. TemporaryDirectory `finally` içinde HER KOŞULDA
-#      temizlenir.
+#      BURADA yakalanan baytlar (ruleset/provisions/holiday_calendar,
+#      ÜÇÜ de) bir `TemporaryDirectory`'ye materialize edilir, katı
+#      biçimde yeniden hash'lenip yakalanan baytla EŞİTLENİR,
+#      `deadline_engine.run_engine()` bu temp path'lerle çağrılır;
+#      `run_engine()`'e geçen `pre_commit_callback` gerçek ÜRETİM
+#      ruleset/provisions/holiday_calendar dosyalarını BİR KEZ DAHA
+#      (atomic write'tan HEMEN önce) okuyup yakalanan baytla eşitler -
+#      farklıysa `GlobalResourceStaleError`, sıfır değişiklik.
+#      TemporaryDirectory `finally` içinde HER KOŞULDA temizlenir.
 #   6. Bu protokol LİNEARİZE EDİLEBİLİR OLARAK İDDİA EDİLMEZ - `pre_
 #      commit_callback`'in kendi kontrolü ile GERÇEK `os.replace()`
 #      arasında kalan dar pencere, Row 19A'nın T15 kararı uyarınca Row
@@ -282,9 +309,10 @@ def _nonblank(value) -> bool:
 
 class GenerationArgumentError(ApprovalUiError):
     """Kullanım-şekli/argüman sözleşmesi ihlali (timeline'da anchor/
-    holiday/calendar/recess verilmiş, deadline'da anchor eksik, boş
-    expected_input_digest, ...) - HERHANGİ bir DB/filesystem I/O'sundan
-    ÖNCE fırlatılır."""
+    judicial_recess_applicable verilmiş - PILOT READINESS ADIM 5'ten
+    sonra holiday_dates/calendar_complete parametreleri zaten mevcut
+    DEĞİL, deadline'da anchor eksik, boş expected_input_digest, ...) -
+    HERHANGİ bir DB/filesystem I/O'sundan ÖNCE fırlatılır."""
 
 
 class GenerationInputContainmentError(ApprovalUiError):
@@ -295,19 +323,33 @@ class GenerationInputContainmentError(ApprovalUiError):
     corroboration sırasında fırlatılır."""
 
 
+class GenerationHolidayCalendarInvalidError(ApprovalUiError):
+    """PILOT READINESS ADIM 5: `holiday_calendar_path`'te (ya da üretim
+    varsayılanında) işaret edilen resmi tatil takvimi dosyası GEÇERLİ
+    JSON değil, ya da `holiday_calendar_validator.validate_holiday_
+    calendar()` FAIL verdi (şema veya iş kuralı ihlali) - fail-closed,
+    HERHANGİ bir journal satırından ÖNCE (pre-lock aşamasında)
+    fırlatılır; writer sınırı hiçbir zaman GEÇİLMEZ, coordinator ASLA
+    `reconciliation_required` üretmez. NOT: dosyanın kendisi EKSİK/
+    normal-dosya-değil ise bu sınıf DEĞİL, mevcut `GenerationInput
+    ContainmentError` fırlatılır (`_read_global_resource_bytes()`'in
+    ruleset/provisions ile PAYLAŞTIĞI AYNI var/normal-dosya kontrolü) -
+    yalnız PARSE/DOĞRULAMA başarısızlığı bu yeni sınıfa girer."""
+
+
 class GenerationSnapshotMaterializationError(ApprovalUiError):
-    """Global kaynak (ruleset/provisions) snapshot'ının TemporaryDirectory'ye
-    materialize edilmesi sırasında yeniden-hash bütünlük kontrolü
-    başarısız - writer sınırı GEÇİLDİĞİ için coordinator bu istisnayı
-    reconciliation_required'a çevirir."""
+    """Global kaynak (ruleset/provisions/holiday_calendar) snapshot'ının
+    TemporaryDirectory'ye materialize edilmesi sırasında yeniden-hash
+    bütünlük kontrolü başarısız - writer sınırı GEÇİLDİĞİ için
+    coordinator bu istisnayı reconciliation_required'a çevirir."""
 
 
 class GlobalResourceStaleError(ApprovalUiError):
     """`pre_commit_callback`'in son canlı kontrolü: gerçek üretim
-    ruleset/provisions dosyaları, case kilidi altında yakalanan
-    baytlardan atomic write'a kadar olan sürede DEĞİŞTİ. Writer sınırı
-    GEÇİLDİĞİ için coordinator bu istisnayı reconciliation_required'a
-    çevirir - asla sessiz başarı."""
+    ruleset/provisions/holiday_calendar dosyalarından biri, case kilidi
+    altında yakalanan baytlardan atomic write'a kadar olan sürede
+    DEĞİŞTİ. Writer sınırı GEÇİLDİĞİ için coordinator bu istisnayı
+    reconciliation_required'a çevirir - asla sessiz başarı."""
 
 
 class GenerationResolvedCaseIdMismatchError(ApprovalUiError):
@@ -424,10 +466,11 @@ def _read_deadline_case_inputs(deadline_validator_module, case_root_real: Path, 
 
 
 def _read_global_resource_bytes(path: Path) -> bytes:
-    """`ruleset_path`/`provisions_path` her zaman PRODUCTION SABİTLERİ
-    (veya test-injection seam'i) - operatörden gelen keyfi bir path
-    DEĞİLDİR (CLI'da `--ruleset` YOKTUR - bkz. Row 19C-3c-i final
-    scope raporu). Bu yüzden burada bir kullanıcı-kontrollü segment
+    """`ruleset_path`/`provisions_path`/`holiday_calendar_path` her
+    zaman PRODUCTION SABİTLERİ (veya test-injection seam'i) -
+    operatörden gelen keyfi bir path DEĞİLDİR (CLI'da `--ruleset`/
+    `--holiday-calendar` YOKTUR - bkz. Row 19C-3c-i final scope
+    raporu). Bu yüzden burada bir kullanıcı-kontrollü segment
     containment doğrulaması söz konusu değildir; yalnız var/normal-dosya
     kontrolü yeterlidir."""
     path = Path(path)
@@ -438,24 +481,62 @@ def _read_global_resource_bytes(path: Path) -> bytes:
     return path.read_bytes()
 
 
+def _read_and_validate_holiday_calendar_bytes(path: Path) -> bytes:
+    """PILOT READINESS ADIM 5 (bağımsız inceleme trap #2) - takvim,
+    ruleset/provisions'tan FARKLI olarak, ham baytları OKUMANIN
+    ÖTESİNDE PRE-LOCK'ta TAM DOĞRULANIR: `_read_global_resource_bytes()`
+    ile aynı var/normal-dosya kontrolünü kullanır, SONRA JSON parse +
+    `holiday_calendar_validator.validate_holiday_calendar(raise_on_
+    error=True)` çalıştırır. Bozuk/eksik/şema-dışı bir takvimin,
+    yazar sınırı GEÇİLDİKTEN SONRA (`run_engine()`'in kendi
+    `load_holiday_calendar()` çağrısında) patlayıp coordinator'ı
+    `reconciliation_required`'a düşürmesi ÖNLENİR - fail-closed red
+    HERHANGİ bir journal satırından ÖNCE, pre-lock aşamasında olur.
+    Kilit-altı (precondition) ve materialize (writer) aşamalarında bu
+    fonksiyon TEKRAR ÇAĞRILMAZ - yalnız `_read_global_resource_bytes()`
+    ile ham bayt eşitliği yeniden kontrol edilir (herhangi bir içerik
+    değişikliği zaten composite digest karşılaştırmasıyla yakalanır)."""
+    raw_bytes = _read_global_resource_bytes(path)
+    try:
+        document = json.loads(raw_bytes.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        raise GenerationHolidayCalendarInvalidError(
+            f"Holiday calendar dosyası geçerli JSON değil: {path}"
+        ) from error
+    try:
+        import holiday_calendar_validator as _holiday_calendar_validator  # noqa: PLC0415 (lazy, sınırlı sys.path genişletmesi)
+
+        _holiday_calendar_validator.validate_holiday_calendar(document, raise_on_error=True)
+    except GenerationHolidayCalendarInvalidError:
+        raise
+    except Exception as error:
+        raise GenerationHolidayCalendarInvalidError(
+            f"Holiday calendar geçersiz: {path}: {error}"
+        ) from error
+    return raw_bytes
+
+
 def _compute_deadline_input_digest(
     case_json_bytes: bytes, timeline_json_bytes: bytes, ruleset_bytes: bytes, provisions_bytes: bytes,
+    holiday_calendar_bytes: bytes,
 ) -> str:
     """REMEDIATION (bkz. modül header'ının "REMEDIATION NOTU"):
-    ruleset/provisions ham baytları ARTIK bu digest'in (dolayısıyla
-    `pre_revision`/`idempotency_key`'in) bir PARÇASI - `digest_version`
-    bu yüzden `v1`'den `v2`'ye yükseltildi (eski formülle sessizce
-    karışmasın diye). `entry.pre_revision` reconciliation'da HER ZAMAN
-    journal'dan OPAK bir string olarak okunur - bu fonksiyon
-    reconciliation zamanında ASLA yeniden çağrılmaz (bkz. `generation_
-    mutation_adapters.py`'nin kendi header'ı, DEĞİŞMEDİ)."""
+    ruleset/provisions ham baytları `v1`'den `v2`'ye taşındı.
+    PILOT READINESS ADIM 5: `holiday_calendar_bytes` ÜÇÜNCÜ üye olarak
+    eklendi - `digest_version` bu yüzden `v2`'den `v3`'e yükseltildi
+    (eski formülle sessizce karışmasın diye). `entry.pre_revision`
+    reconciliation'da HER ZAMAN journal'dan OPAK bir string olarak
+    okunur - bu fonksiyon reconciliation zamanında ASLA yeniden
+    çağrılmaz (bkz. `generation_mutation_adapters.py`'nin kendi
+    header'ı, DEĞİŞMEDİ)."""
     payload = json.dumps(
         {
-            "digest_version": "row19c3ci.deadline.v2",
+            "digest_version": "row19c3ci.deadline.v3",
             "case_json_sha256": hashlib.sha256(case_json_bytes).hexdigest(),
             "timeline_json_sha256": hashlib.sha256(timeline_json_bytes).hexdigest(),
             "ruleset_snapshot_sha256": hashlib.sha256(ruleset_bytes).hexdigest(),
             "provisions_snapshot_sha256": hashlib.sha256(provisions_bytes).hexdigest(),
+            "holiday_calendar_snapshot_sha256": hashlib.sha256(holiday_calendar_bytes).hexdigest(),
         },
         sort_keys=True, separators=(",", ":"), ensure_ascii=True,
     ).encode("utf-8")
@@ -463,19 +544,18 @@ def _compute_deadline_input_digest(
 
 
 def _compute_deadline_generation_parameters_digest(
-    holiday_dates, calendar_complete, judicial_recess_applicable,
+    judicial_recess_applicable,
 ) -> str:
-    """REMEDIATION: ruleset/provisions ham baytları ARTIK bu digest'te
-    DEĞİLDİR (`_compute_deadline_input_digest`'e TAŞINDI) - bu fonksiyon
-    artık SAF olarak çağıranın kendi (dosyadan OKUNMAYAN) parametre
-    argümanlarının bir fonksiyonudur, hiçbir I/O gerektirmez.
-    `digest_version` bu yüzden `v1`'den `v2`'ye yükseltildi."""
-    normalized_holidays = sorted(set(holiday_dates or []))
+    """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete`
+    parametreleri TAMAMEN KALKTI (takvim artık `input_digest`'in bir
+    parçası - bkz. `_compute_deadline_input_digest`). Bu fonksiyon
+    artık SAF olarak çağıranın `judicial_recess_applicable`
+    argümanının (dosyadan OKUNMAYAN) bir fonksiyonudur, hiçbir I/O
+    gerektirmez. `digest_version` bu yüzden `v2`'den `v3`'e
+    yükseltildi."""
     payload = json.dumps(
         {
-            "digest_version": "row19c3ci.deadline_params.v2",
-            "holiday_dates": normalized_holidays,
-            "calendar_complete": bool(calendar_complete),
+            "digest_version": "row19c3ci.deadline_params.v3",
             "judicial_recess_applicable": judicial_recess_applicable,
         },
         sort_keys=True, separators=(",", ":"), ensure_ascii=True,
@@ -671,11 +751,11 @@ def _compute_generation_snapshot(input_digest: str, pending_path: Path) -> Gener
     artık mevcut olmayabilecek ORİJİNAL ruleset/provisions baytlarına
     ASLA dayanamaz (ve dayanmaz: `input_digest` reconciliation'da
     HERHANGİ bir dosyadan değil, doğrudan journal'ın kendi kayıtlı
-    değerinden okunur). `generation_parameters_digest` (holiday_dates/
-    calendar_complete/judicial_recess_applicable) BU FORMÜLE KASITLI
-    OLARAK DAHİL DEĞİLDİR - REMEDIATION SONRASI bu artık ayrı bir race-
-    tespiti de GEREKTİRMEZ (saf çağıran parametreleridir, dosyadan
-    okunmaz - bkz. `precondition_callback`'in kendi yorumu); yalnız
+    değerinden okunur). `generation_parameters_digest` (PILOT READINESS
+    ADIM 5 SONRASI yalnız `judicial_recess_applicable`) BU FORMÜLE
+    KASITLI OLARAK DAHİL DEĞİLDİR - REMEDIATION SONRASI bu artık ayrı
+    bir race-tespiti de GEREKTİRMEZ (saf çağıran parametresidir,
+    dosyadan okunmaz - bkz. `precondition_callback`'in kendi yorumu); yalnız
     `MutationIntent.secondary_input_hash` üzerinden `request_
     fingerprint`'e girmeye devam eder (aynı kimlik + farklı parametre ->
     mevcut `IdempotencyConflictError`)."""
@@ -854,13 +934,16 @@ def _default_conn_factory():
 def _check_argument_shapes(
     row_key: str,
     anchor_event_id,
-    holiday_dates,
-    calendar_complete,
     judicial_recess_applicable,
     expected_input_digest=None,
     *,
     for_apply: bool,
 ):
+    """PILOT READINESS ADIM 5 (bağımsız inceleme §5.3): `holiday_dates`/
+    `calendar_complete` parametreleri ve onların timeline-ret dalları
+    TAMAMEN KALDIRILDI (elle beyan yolu artık dosyadaki hiçbir kod
+    yolunda mevcut değil - bkz. `ui/cli_mutate.py`'nin argparse'ından
+    da kaldırılması)."""
     if row_key not in GENERATION_ROW_KEY_TO_MODULE_NAME:
         raise KeyError(f"row_key={row_key!r} is not a known generation family")
 
@@ -868,14 +951,6 @@ def _check_argument_shapes(
         if anchor_event_id is not None:
             raise GenerationArgumentError(
                 "timeline generation'ı anchor_event_id parametresi KABUL ETMEZ (I/O öncesi red)."
-            )
-        if holiday_dates is not None and len(holiday_dates) > 0:
-            raise GenerationArgumentError(
-                "timeline generation'ı holiday_dates parametresi KABUL ETMEZ (I/O öncesi red)."
-            )
-        if calendar_complete:
-            raise GenerationArgumentError(
-                "timeline generation'ı calendar_complete parametresi KABUL ETMEZ (I/O öncesi red)."
             )
         if judicial_recess_applicable is not None:
             raise GenerationArgumentError(
@@ -906,28 +981,37 @@ def preview_generation(
     authz_repository=None,
     ruleset_path=None,
     provisions_path=None,
+    holiday_calendar_path=None,
 ):
     """Salt-okunur preview. SIRA: dış 'read' authz HER filesystem
     probundan ÖNCE koşar. Deadline+timeline için case içeriğinden
     `input_digest` hesaplanır ve gösterilir - REMEDIATION (bkz. modül
     header'ının "REMEDIATION NOTU"): deadline için `input_digest` ARTIK
-    ruleset/provisions ham baytlarını da İÇERİR, bu yüzden preview de
-    bunları apply ile AYNI `effective_ruleset_path`/`effective_
-    provisions_path` çözümüyle okur (holiday/calendar/recess yine
-    BURADA gerekmez - bunlar yalnız apply anındaki generation_
-    parameters_digest'e girer, preview'ın işi DEĞİLDİR)."""
+    ruleset/provisions/holiday_calendar ham baytlarını da İÇERİR, bu
+    yüzden preview de bunları apply ile AYNI `effective_ruleset_path`/
+    `effective_provisions_path`/`effective_holiday_calendar_path`
+    çözümüyle okur (`judicial_recess_applicable` yine BURADA gerekmez -
+    yalnız apply anındaki generation_parameters_digest'e girer,
+    preview'ın işi DEĞİLDİR). Takvim, ruleset/provisions'tan FARKLI
+    olarak burada da TAM DOĞRULANIR (`_read_and_validate_holiday_
+    calendar_bytes` - bkz. o fonksiyonun docstring'i, S22 fail-closed
+    simetrisi)."""
     import importlib
 
-    _check_argument_shapes(row_key, anchor_event_id, None, False, None, for_apply=False)
+    _check_argument_shapes(row_key, anchor_event_id, None, for_apply=False)
     module = importlib.import_module(GENERATION_ROW_KEY_TO_MODULE_NAME[row_key])
 
     if row_key == "deadline":
+        deadline_calculator = importlib.import_module("deadline_calculator")
         effective_ruleset_path = Path(ruleset_path) if ruleset_path is not None else module.DEFAULT_RULESET_PATH
-        if provisions_path is not None:
-            effective_provisions_path = Path(provisions_path)
-        else:
-            deadline_calculator = importlib.import_module("deadline_calculator")
-            effective_provisions_path = deadline_calculator.DEFAULT_PROVISIONS_PATH
+        effective_provisions_path = (
+            Path(provisions_path) if provisions_path is not None
+            else deadline_calculator.DEFAULT_PROVISIONS_PATH
+        )
+        effective_holiday_calendar_path = (
+            Path(holiday_calendar_path) if holiday_calendar_path is not None
+            else deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH
+        )
 
     repository, close_repository = _resolve_authz_repository(authz_repository)
     try:
@@ -946,7 +1030,10 @@ def preview_generation(
             )
             ruleset_bytes = _read_global_resource_bytes(effective_ruleset_path)
             provisions_bytes = _read_global_resource_bytes(effective_provisions_path)
-            input_digest = _compute_deadline_input_digest(case_bytes, timeline_bytes, ruleset_bytes, provisions_bytes)
+            holiday_calendar_bytes = _read_and_validate_holiday_calendar_bytes(effective_holiday_calendar_path)
+            input_digest = _compute_deadline_input_digest(
+                case_bytes, timeline_bytes, ruleset_bytes, provisions_bytes, holiday_calendar_bytes,
+            )
             target_ref = module.get_target_ref(anchor_event_id)
         else:
             document_paths, facts_paths = _scan_timeline_verified_inputs(case_root_real, resolved_case_id)
@@ -995,48 +1082,52 @@ def apply_generation(
     expected_input_digest: str,
     *,
     anchor_event_id=None,
-    holiday_dates=None,
-    calendar_complete=False,
     judicial_recess_applicable=None,
     principal,
     authz_repository=None,
     conn_factory=None,
     ruleset_path=None,
     provisions_path=None,
+    holiday_calendar_path=None,
 ) -> GenerationApplyResult:
     """SIRA (Layer A/promotion facade'lerinin kanıtlanmış düzeninin
     generation karşılığı): (1) argüman şekilleri (saf, I/O'suz); (2) DIŞ
     authorize_case_access('mutate') - hiçbir journal/lock bağlantısı,
     hiçbir artefakt hash'i ondan önce; (3) writer dinamik kökünden
-    pre-lock containment + input_digest hesaplama + composite snapshot
-    + expected_input_digest karşılaştırması; (4) conn + case lock; (5)
-    run_mutation: İÇ otoriter authz -> journal gate -> idempotency ->
-    precondition (SIFIRDAN kilit-altı yeniden doğrulama; her red sıfır
-    journal satırı) -> writer (kilit-altı doğrulanmış girdi
-    NESNELERİYLE, deadline için TemporaryDirectory-materialize edilmiş
-    global kaynak snapshot'ıyla); (6) replay'de tam corroboration; (7)
-    maskelemeyen temizlik."""
+    pre-lock containment + TAM takvim doğrulaması (S22) + input_digest
+    hesaplama + composite snapshot + expected_input_digest
+    karşılaştırması; (4) conn + case lock; (5) run_mutation: İÇ otoriter
+    authz -> journal gate -> idempotency -> precondition (SIFIRDAN
+    kilit-altı yeniden doğrulama; her red sıfır journal satırı) ->
+    writer (kilit-altı doğrulanmış girdi NESNELERİYLE, deadline için
+    TemporaryDirectory-materialize edilmiş global kaynak snapshot'ıyla -
+    ruleset/provisions/holiday_calendar ÜÇÜ de); (6) replay'de tam
+    corroboration; (7) maskelemeyen temizlik. PILOT READINESS ADIM 5:
+    `holiday_dates`/`calendar_complete` parametreleri TAMAMEN KALKTI."""
     import importlib
 
     _check_argument_shapes(
-        row_key, anchor_event_id, holiday_dates, calendar_complete, judicial_recess_applicable,
+        row_key, anchor_event_id, judicial_recess_applicable,
         expected_input_digest, for_apply=True,
     )
     module = importlib.import_module(GENERATION_ROW_KEY_TO_MODULE_NAME[row_key])
     deadline_validator = importlib.import_module("deadline_validator") if row_key == "deadline" else None
 
-    effective_holiday_dates = list(holiday_dates or [])
-
     if row_key == "deadline":
+        deadline_calculator = importlib.import_module("deadline_calculator")
         effective_ruleset_path = Path(ruleset_path) if ruleset_path is not None else module.DEFAULT_RULESET_PATH
-        if provisions_path is not None:
-            effective_provisions_path = Path(provisions_path)
-        else:
-            deadline_calculator = importlib.import_module("deadline_calculator")
-            effective_provisions_path = deadline_calculator.DEFAULT_PROVISIONS_PATH
+        effective_provisions_path = (
+            Path(provisions_path) if provisions_path is not None
+            else deadline_calculator.DEFAULT_PROVISIONS_PATH
+        )
+        effective_holiday_calendar_path = (
+            Path(holiday_calendar_path) if holiday_calendar_path is not None
+            else deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH
+        )
     else:
         effective_ruleset_path = None
         effective_provisions_path = None
+        effective_holiday_calendar_path = None
 
     repository, close_repository = _resolve_authz_repository(authz_repository)
     try:
@@ -1056,14 +1147,20 @@ def apply_generation(
             )
             ruleset_bytes = _read_global_resource_bytes(effective_ruleset_path)
             provisions_bytes = _read_global_resource_bytes(effective_provisions_path)
+            holiday_calendar_bytes = _read_and_validate_holiday_calendar_bytes(
+                effective_holiday_calendar_path,
+            )
             # REMEDIATION - bkz. modül header'ının "REMEDIATION NOTU":
-            # ruleset/provisions ham baytları ARTIK input_digest'in bir
-            # parçası (idempotency identity buradan türer); generation_
-            # parameters_digest ARTIK yalnız holiday/calendar/recess'i
-            # taşır (dosyadan hiçbir şey OKUMAZ, saf bir fonksiyondur).
-            input_digest = _compute_deadline_input_digest(case_bytes, timeline_bytes, ruleset_bytes, provisions_bytes)
+            # ruleset/provisions/holiday_calendar ham baytları ARTIK
+            # input_digest'in bir parçası (idempotency identity buradan
+            # türer); generation_parameters_digest ARTIK yalnız
+            # judicial_recess_applicable'ı taşır (dosyadan hiçbir şey
+            # OKUMAZ, saf bir fonksiyondur).
+            input_digest = _compute_deadline_input_digest(
+                case_bytes, timeline_bytes, ruleset_bytes, provisions_bytes, holiday_calendar_bytes,
+            )
             generation_parameters_digest = _compute_deadline_generation_parameters_digest(
-                effective_holiday_dates, calendar_complete, judicial_recess_applicable,
+                judicial_recess_applicable,
             )
             target_ref = module.get_target_ref(anchor_event_id)
         else:
@@ -1115,9 +1212,14 @@ def apply_generation(
             # SIFIRDAN, kilit-altı taze türetim: kök attribute'u YENİDEN
             # okunur, girdi YENİDEN taranır/hash'lenir - kilit beklerken
             # değişen içerik/link swap burada yakalanır. Global kaynak
-            # (ruleset/provisions) baytları BURADA SADECE BELLEĞE alınır
-            # - HİÇBİR dosya YAZILMAZ (bkz. modül header'ı, "GLOBAL
-            # KAYNAK SNAPSHOT" adım 3).
+            # (ruleset/provisions/holiday_calendar) baytları BURADA
+            # SADECE BELLEĞE alınır - HİÇBİR dosya YAZILMAZ (bkz. modül
+            # header'ı, "GLOBAL KAYNAK SNAPSHOT" adım 3). holiday_
+            # calendar burada YALNIZ ham bayt olarak yeniden okunur
+            # (`_read_and_validate_holiday_calendar_bytes` DEĞİL,
+            # `_read_global_resource_bytes`) - içerik değişikliği zaten
+            # aşağıdaki composite digest karşılaştırmasıyla yakalanır,
+            # tam doğrulama yalnız pre-lock'ta (S22) gerekir.
             ul_case_root = _resolve_module_case_root_real(module, outer_resolved_case_id)
             ul_paths = _derive_verified_generation_paths(module, ul_case_root, outer_resolved_case_id)
             if ul_paths.identity != pre_paths.identity:
@@ -1134,23 +1236,26 @@ def apply_generation(
                 )
                 ul_ruleset_bytes = _read_global_resource_bytes(effective_ruleset_path)
                 ul_provisions_bytes = _read_global_resource_bytes(effective_provisions_path)
+                ul_holiday_calendar_bytes = _read_global_resource_bytes(effective_holiday_calendar_path)
                 under_lock_box["ruleset_bytes"] = ul_ruleset_bytes
                 under_lock_box["provisions_bytes"] = ul_provisions_bytes
+                under_lock_box["holiday_calendar_bytes"] = ul_holiday_calendar_bytes
 
                 # REMEDIATION (bkz. modül header'ının "REMEDIATION
-                # NOTU"): ruleset/provisions ham baytları ARTIK
-                # `ul_input_digest`'in kendisine girer - kilit beklenirken
-                # bunların DEĞİŞMESİ, aşağıdaki composite `pre_hash`
-                # karşılaştırmasında (`ul_snapshot.composite_digest !=
-                # pre_snapshot.composite_digest`) DOĞRUDAN yakalanır; ayrı
-                # bir `generation_parameters_digest` eşitlik kontrolüne
-                # ARTIK GEREK YOKTUR - holiday_dates/calendar_complete/
-                # judicial_recess_applicable bu çağrı içinde SABİT (yerel
-                # closure değişkeni, dosyadan OKUNMAZ), bu yüzden onların
+                # NOTU"): ruleset/provisions/holiday_calendar ham
+                # baytları ARTIK `ul_input_digest`'in kendisine girer -
+                # kilit beklenirken bunların DEĞİŞMESİ, aşağıdaki
+                # composite `pre_hash` karşılaştırmasında (`ul_snapshot.
+                # composite_digest != pre_snapshot.composite_digest`)
+                # DOĞRUDAN yakalanır; ayrı bir `generation_parameters_
+                # digest` eşitlik kontrolüne ARTIK GEREK YOKTUR -
+                # `judicial_recess_applicable` bu çağrı içinde SABİT
+                # (yerel closure değişkeni, dosyadan OKUNMAZ), bu yüzden
                 # kendi digest'i asla kilit-bekleme sırasında
                 # DEĞİŞEMEZ/RACE'e giremez.
                 ul_input_digest = _compute_deadline_input_digest(
                     ul_case_bytes, ul_timeline_bytes, ul_ruleset_bytes, ul_provisions_bytes,
+                    ul_holiday_calendar_bytes,
                 )
             else:
                 ul_document_paths, ul_facts_paths = _scan_timeline_verified_inputs(
@@ -1183,12 +1288,15 @@ def apply_generation(
                     temp_dir_path = Path(temp_dir)
                     temp_ruleset_path = temp_dir_path / "ruleset.json"
                     temp_provisions_path = temp_dir_path / "provisions.json"
+                    temp_holiday_calendar_path = temp_dir_path / "holiday_calendar.json"
 
                     captured_ruleset_bytes = under_lock_box["ruleset_bytes"]
                     captured_provisions_bytes = under_lock_box["provisions_bytes"]
+                    captured_holiday_calendar_bytes = under_lock_box["holiday_calendar_bytes"]
 
                     temp_ruleset_path.write_bytes(captured_ruleset_bytes)
                     temp_provisions_path.write_bytes(captured_provisions_bytes)
+                    temp_holiday_calendar_path.write_bytes(captured_holiday_calendar_bytes)
 
                     if hashlib.sha256(temp_ruleset_path.read_bytes()).hexdigest() != hashlib.sha256(captured_ruleset_bytes).hexdigest():
                         raise GenerationSnapshotMaterializationError(
@@ -1198,14 +1306,23 @@ def apply_generation(
                         raise GenerationSnapshotMaterializationError(
                             "Provisions snapshot materialization bütünlük kontrolünden geçemedi."
                         )
+                    if hashlib.sha256(temp_holiday_calendar_path.read_bytes()).hexdigest() != hashlib.sha256(captured_holiday_calendar_bytes).hexdigest():
+                        raise GenerationSnapshotMaterializationError(
+                            "Holiday calendar snapshot materialization bütünlük kontrolünden geçemedi."
+                        )
 
                     def pre_commit_callback() -> None:
                         live_ruleset_bytes = _read_global_resource_bytes(effective_ruleset_path)
                         live_provisions_bytes = _read_global_resource_bytes(effective_provisions_path)
-                        if live_ruleset_bytes != captured_ruleset_bytes or live_provisions_bytes != captured_provisions_bytes:
+                        live_holiday_calendar_bytes = _read_global_resource_bytes(effective_holiday_calendar_path)
+                        if (
+                            live_ruleset_bytes != captured_ruleset_bytes
+                            or live_provisions_bytes != captured_provisions_bytes
+                            or live_holiday_calendar_bytes != captured_holiday_calendar_bytes
+                        ):
                             raise GlobalResourceStaleError(
-                                "Ruleset/provisions dosyaları generation sırasında DEĞİŞTİ. "
-                                "İşlem iptal edildi."
+                                "Ruleset/provisions/holiday_calendar dosyalarından biri generation "
+                                "sırasında DEĞİŞTİ. İşlem iptal edildi."
                             )
 
                     with contextlib.redirect_stdout(stdout_capture):
@@ -1213,10 +1330,9 @@ def apply_generation(
                             case_id=outer_resolved_case_id,
                             anchor_event_id=anchor_event_id,
                             ruleset_path=temp_ruleset_path,
-                            holiday_dates=effective_holiday_dates,
-                            calendar_complete=calendar_complete,
                             judicial_recess_applicable=judicial_recess_applicable,
                             provisions_path=temp_provisions_path,
+                            holiday_calendar_path=temp_holiday_calendar_path,
                             input_digest=input_digest,
                             generation_parameters_digest=generation_parameters_digest,
                             mutation_idempotency_key=idempotency_key_for_audit,
