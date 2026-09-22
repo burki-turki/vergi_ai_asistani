@@ -698,6 +698,28 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   sağlayıcı veri-işleme şartları, avukatlık sırrı ve KVKK yurt dışı aktarım
   soruları KODLA KAPANMAZ (Adım 6'ya `EXTERNAL LEGAL VERIFICATION
   REQUIRED`).
+- **Pilot Readiness Adım 4a Remediation — Satır-Sonu Tire Maskeleme
+  Açığının Kapatılması — DONE / LOCKED.** Exact kapsam **0 YENİ + 2
+  DEĞİŞTİRİLMİŞ = 2 dosya** (`src/llm_privacy_boundary.py`, `ui/tests/
+  test_llm_privacy_boundary_isolated.py`), yerel commit `218c081` (push
+  YAPILMADI). Adım 4a'nın kendi §H madde 3'ünde disclose edilmiş, gerçek
+  ASCII tire ile satır-sonuna bölünmüş bir taraf adının üç koruma
+  katmanının HİÇBİRİNİ tetiklemeden tamamen maskesiz dış LLM'e gitmesi
+  açığı kapatıldı (§9 security/privacy — kullanıcı talebi); backstop +
+  ana maskeleyicinin ikisi de satır-sonu tire köprüsünü artık geçiyor;
+  `MASKING_POLICY_VERSION` v1→v3. Bir bağımsız incelemenin bulduğu Bulgu
+  F1 (fix'in kendisinin `possible_squeeze_seed_match` uyarı sayacını
+  ilgisiz bir senaryoda sessizce düşürmesi — yeni sızıntı DEĞİL, kayıp
+  sinyal) dar bir remediasyonla kapatıldı ve İKİNCİ, bağımsız bir
+  incelemede doğrulandı. Final verdict, exact olarak:
+  `PILOT READINESS STEP 4a LINE-WRAP HYPHEN REMEDIATION LOCK-READY — NO BLOCKING FINDINGS`
+  (bkz. checkpoint özeti, §5 sonrası, "## 6. Cross-Cutting Backlog"dan
+  hemen önce). Bu session ayrıca resmî `production-parity` (76/76 modül,
+  5789 passed, 0 failed) ve `rag-dependency` (216 passed, 0 failed)
+  kapılarını bu commit'e karşı doğrudan çalıştırıp temiz sonuç aldı.
+  Adım 4a'nın diğer tüm disclosed limitleri (pseudonymization sınırı,
+  bölünmüş TCKN/VKN, modelin token'ı yansıtıp yansıtmadığının
+  ölçülmemesi, Anthropic/KVKK soruları) DEĞİŞMEDEN AÇIK kalır.
 - **Pilot Readiness Adım 4b — Ham Veri Taşıyan Ajanların ve `app.py`'nin
   Mekanik Kapatılması — DONE / LOCKED.** Exact kapsam **0 YENİ + 7
   DEĞİŞTİRİLMİŞ = 7 dosya**, yerel commit `2097b9e` (push YAPILMADI):
@@ -745,7 +767,8 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   ÜRETMEZ.
 - **Pilot Readiness Adım 6 — Avukat Doğrulaması — ACTIVE / NEXT.** Avukat
   paketi (`avukat_dogrulama_paketi_DRAFT2`) repo dışında hazırdır ve
-  avukata verilebilir — Adım 4b (ham-veri kapatma) ve Adım 5 (takvim
+  avukata verilebilir — Adım 4a Remediation (satır-sonu tire maskeleme
+  açığının kapatılması), Adım 4b (ham-veri kapatma) ve Adım 5 (takvim
   registry'si) kilitleriyle önkoşulları sağlanmıştır. Bu pointer
   KODLAMA/İMPLEMENTASYON YETKİSİ VERMEZ — Adım 6 avukatın SORU 3.1-3.8/
   5.1-5.4'ü yanıtlaması ve altın örnekleri doldurmasıdır (bir hukuk
@@ -8070,6 +8093,144 @@ etmek için yapıldı (200.000 rastgele girdide 0 uyuşmazlık; yetkili GİB bel
 BULUNAMADI — tasarım VKN'yi sağlamaya bağımlı kılmaz).
 
 `PILOT READINESS STEP 4a LLM PRIVACY BOUNDARY LOCK-READY — NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi
+yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
+hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Pilot Readiness Adım 4a Remediation — Satır-Sonu Tire Maskeleme Açığının Kapatılması (DONE / LOCKED — checkpoint özeti)
+
+**A. Neden yeniden açıldığı (§9 — security/privacy ihlali)** — Yukarıdaki Adım
+4a checkpoint'i kendi §H madde 3'ünde şunu AÇIKÇA disclose etmişti: *"Satır
+sonu GERÇEK tire (`Ah-\nmet`) sayaç bile ateşlemez — tamamen sessizdir."* Bu,
+yalnız bir eksik uyarı sinyali DEĞİL, gerçek bir maskeleme AÇIĞIYDI: bir PDF'in
+satır kaydırmasıyla gerçek ASCII tireye bölünmüş bir taraf adı, üç koruma
+katmanının (ana maskeleyici, backstop, sayaç) HİÇBİRİNİ tetiklemeden,
+tamamen maskesiz biçimde dış LLM'e (Anthropic) gidiyordu. Kullanıcı, gerçek
+avukat müvekkil dosyası gönderilmeden ÖNCE bunun kapatılmasını AÇIKÇA istedi
+(bkz. kullanıcı talebi: *"maskelemedeki satır-sonu açığı kapanmalı"*). Bu §9
+"security/safety ihlali" gerekçesiyle LOCKED `src/llm_privacy_boundary.py`'nin
+dar biçimde yeniden açılmasını haklı kılan somut bir bulgudur.
+
+**B. Exact kapsam ve commit** — Kullanıcı tarafından onaylanmış, koşulsuz
+2-dosyalık allowlist: **0 YENİ + 2 DEĞİŞTİRİLMİŞ**; allowlist dışında hiçbir
+dosyaya dokunulmadı (commit öncesi `git status --porcelain=v1
+--untracked-files=all` ile ayrıca doğrulandı). Yerel commit
+`218c0813ba0419781cc79dc5c28bc04754e43377` (push YAPILMADI).
+
+| Dosya | Diff (`git diff --numstat` 6a4adf6→218c081) |
+|---|---|
+| `src/llm_privacy_boundary.py` | 227 ekleme, 22 silme |
+| `ui/tests/test_llm_privacy_boundary_isolated.py` | 489 ekleme, 0 silme |
+
+Sıfır migration, sıfır schema, sıfır production-data, sıfır bağımlılık (pin)
+değişikliği.
+
+**C. Fix — iki katmanlı (R4 turu)** — (1) Backstop `scan_fold()`, whitespace
+collapse'tan ÖNCE yeni bir `_LINE_WRAP_HYPHEN_RE =
+re.compile(r"[ \t]*-[ \t]*\r?\n[ \t]*")` deseniyle satır-sonu tire köprüsünü
+temizler — böylece tireyle bölünmüş bir tohum isim `SurvivingPatternError`
+fail-closed reddine hâlâ yakalanır. (2) Ana maskeleyici (`_find_flexible()`)
+YENİDEN yazıldı: artık kelime başına, dict-cache'li `_word_pattern(word)`
+regex'i (her harf `re.escape(ch)`, harfler arasında opsiyonel
+`_LINE_WRAP_BRIDGE_GROUP = r"(?:[ \t]*-[ \t]*\r?\n[ \t]*)?"` grubu) ile arama
+yapar — yani artık yalnız TESPİT değil, gerçek MASKELEME de tire köprüsünü
+geçer. Yanlış-pozitif koruması: 40 pozisyonluk ampirik bir tarama, sıfır
+yanlış-pozitif (tire kendi kendine bir kelime içinde meşru şekilde
+kullanılabilecek konumların hiçbiri yanlışlıkla köprülenmedi).
+
+**D. `MASKING_POLICY_VERSION` v1 → v3 (v2 ATLANDI)** — İlk uygulama v2 önerdi,
+ama implementer `ui/tests/test_reconciliation_isolated.py`'nin (3. dosya,
+2-dosyalık allowlist DIŞINDA, kendisi de LOCKED) ZATEN bağımsız olarak
+`"tr_pseudonymisation_v2"` literalini ilgisiz bir "farklı versiyon" test
+sabiti olarak hardcode ettiğini keşfetti — v2 seçilirse gerçek bir test
+çakışması/FAIL oluşuyordu. Üçüncü dosyayı allowlist'e eklemek yerine
+(kapsamı genişletmemek için) `"tr_pseudonymisation_v3"` seçildi (`git grep`
+ile çakışmasız olduğu doğrulandı). Bu sürüm `_build_identity_payload()`'ın
+9 anahtarından biri olduğu için (bkz. Adım 4a §C madde 8) `input_digest` →
+`pre_revision` → `idempotency_key` mutation-coordinator kimlik zincirine
+girer — yani düzeltme ÖNCESİ "sızdırmış" tamamlanmış bir mutasyon, düzeltme
+SONRASI safe-replay ile sessizce tekrar oynatılamaz (farklı identity, yeni
+deneme).
+
+**E. Bulgu F1 (birinci bağımsız incelemede tespit edildi) ve kapanışı** — R4'ün
+global, tohum-farkında-olmayan tire temizlemesi, bir tohum ADIN KENDİ gerçek
+iç tiresi (ör. "Ali-Mehmet") bir PDF satır-kaydırma noktasıyla ÇAKIŞTIĞINDA,
+operatöre görünen `possible_squeeze_seed_match` bilgilendirme sayacının
+sessizce sıfıra düşmesine neden oluyordu — maskeleme/red SONUCU DEĞİŞMEDİ
+(yeni bir sızıntı YOK), yalnız bir UYARI SİNYALİ kayboluyordu. Bu nedenle R4
+tek başına verdict **NOT LOCK-READY** aldı. Kapanış: `scan_fold()` özel
+`_scan_fold_impl(text, *, strip_line_wrap_hyphen)`'e refaktör edildi; yeni
+`_scan_fold_preserve_linewrap_hyphen()`/`_scan_squeeze_preserve_linewrap_hyphen()`
+R4-ÖNCESİ davranışı (tire temizlenmeden) birebir tekrarlar;
+`count_squeeze_only_seed_matches()` artık HER İKİ varyantla (OR mantığı)
+hesaplama yapıp sayaç kaybını geri getirir — hiçbir maskeleme/red kararını
+DEĞİŞTİRMEDEN. `MASKING_POLICY_VERSION` bu tur için TEKRAR BUMP EDİLMEDİ (bu
+sayaç `_build_identity_payload()`'ın 9 anahtarına ASLA GİRMEZ, doğrulandı).
+
+**F. Bağımsız inceleme zinciri (dürüst, ayrı ayrı)** — (1) Birinci bağımsız
+inceleme (yalnız R4): Bulgu F1 nedeniyle **NOT LOCK-READY**;
+`test_fact_extraction_mutation_integration_postgres.py`'yi (implementer zaman
+kısıtıyla atlamıştı) kendi disposable PostgreSQL'iyle çalıştırıp **58/58
+PASS** ile bağımsızca kapattı. (2) F1 remediasyonu uygulandı. (3) İkinci
+(final) bağımsız inceleme: `git show HEAD:...`-tabanlı, F1 implementer'ının
+kullandığı `git stash` yönteminden BİLİNÇLİ olarak FARKLI bir karşılaştırma
+yöntemiyle, sayaç değerlerinin (1 ve 3, iki test senaryosunda) R4-ÖNCESİ
+değerlerle BİREBİR eşleştiğini doğruladı; kendi AYRI, fresh disposable
+PostgreSQL 16.15 kümesiyle `test_fact_extraction_mutation_integration_
+postgres.py`'yi TEKRAR çalıştırıp **58/58 PASS, 0 FAIL, 0 SKIP** aldı. Final
+verdict: **LOCK-READY**.
+
+**G. Test kanıtı** — `ui/tests/test_llm_privacy_boundary_isolated.py`: 453
+(Adım 4a baseline) → 472 (R4: +19 "R4 — line-wrap hyphen bridging" kontrolü)
+→ **495** (F1 remediasyonu: +23 "F1 — squeeze-signal restoration" kontrolü).
+Sıfır silme (`git diff --numstat`: 489 ekleme, 0 silme) — hiçbir mevcut
+assertion zayıflatılmadı/kaldırılmadı.
+
+**H. Bu session'ın resmî test kapıları (commit `218c081`, çalışma ağacı
+temiz, ben koştum, fresh disposable PostgreSQL 16, migration 0001-0005)** —
+`production-parity` FULL: exit 0, **76/76 modül PASS, 5789 passed, 0 failed,
+8 counted skipped, 14 informational skipped** (`test_llm_privacy_boundary_
+isolated PASS passed=495 failed=0` dahil; 14 `*_postgres` modülünün hepsi
+gerçekten koştu, `test_fact_extraction_mutation_integration_postgres`
+58/58 dahil). `rag-dependency`: `RAG_GATE_PASS`, exit 0, 216 passed, 0
+failed. Kapı öncesi/sonrası `git status --porcelain=v1
+--untracked-files=all` boş; PostgreSQL kümesi ve tüm temp dosyalar test
+sonunda tamamen kaldırıldı.
+
+**I. Kalan/AÇIK sınırlar (kapatılmış gösterilmez)** — Adım 4a'nın §H
+listesindeki diğer TÜM maddeler (1, 2, 4-11) bu remediasyonla DEĞİŞMEDİ,
+AÇIK kalmaya devam eder — özellikle: bölünmüş TCKN/VKN hâlâ yalnız sayaçlanır
+(madde 2, b2); kelime-içi boşluk/sekme ile bölünmüş tohum hâlâ yalnız
+sayaçlanır, reddedilmez (madde 3'ün YUMUŞAK-tire/boşluk yarısı — bu tur
+YALNIZ gerçek ASCII tire ile bölünmüş isimleri kapsar, whitespace-only
+squeeze senaryosu farklı, önceden bilinen bir sınırdır); modelin token'ı
+aynen yansıtıp yansıtmadığı hâlâ ölçülmedi (madde 7, Adım 9'a bırakıldı);
+Anthropic veri-işleme/KVKK soruları hâlâ KODLA KAPANMAZ (madde 11, Adım 6).
+Bu remediasyon YALNIZ gerçek ASCII tire ile satır-sonu bölünmesi sınıfını
+kapatır — pseudonymization/anonymization sınırı (madde 1) ve diğer tüm
+disclosed limitler AYNEN geçerlidir.
+
+**J. §9 / LOCKED-file gerekçesi** — `src/llm_privacy_boundary.py` yalnız
+security/privacy gerekçesiyle (§A) dar biçimde açıldı; `SYSTEM_PROMPT`,
+`PROMPT_VERSION`, tohum listesi mantığı, fail-closed red tablosu ve diğer
+tüm Adım 4a tasarım kararları (Tasarım R, b2, U1-U3) DEĞİŞMEDİ — yalnız
+maskeleme/backstop'un satır-sonu tire köprüleme davranışı ve buna bağlı
+identity-version eklendi. `ui/tests/test_llm_privacy_boundary_isolated.py`
+yalnız additive kanıt aldı.
+
+**K. Süreç notları (gizlenmez)** — İmplementasyon ve F1 remediasyonu farklı
+turlarda yapıldı; ilk bağımsız inceleme R4'ü NOT LOCK-READY olarak reddetti,
+F1 remediasyonu sonrası ikinci bağımsız inceleme bilinçli olarak FARKLI bir
+doğrulama yöntemi (git stash yerine git show) kullanarak LOCK-READY verdi.
+Bu session, commit sonrası resmî `production-parity`/`rag-dependency`
+kapılarını doğrudan kendi çalıştırdı (yukarıya bkz. §H) — bu ikisi
+implementer/inceleyici turlarının PARÇASI DEĞİL, bu roadmap-lock'un kendi
+kanıtıdır.
+
+`PILOT READINESS STEP 4a LINE-WRAP HYPHEN REMEDIATION LOCK-READY — NO BLOCKING FINDINGS`
 
 **DONE / LOCKED**
 
