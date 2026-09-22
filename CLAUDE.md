@@ -722,35 +722,53 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   (bkz. Pilot Readiness Adım 4b checkpoint özeti, §5 sonrası, "## 6.
   Cross-Cutting Backlog"dan hemen önce).
 - **Pilot Readiness Adım 5 — Resmî Tatil Takvimi Registry'si +
-  `calendar_complete` Türetimi — ACTIVE / NEXT.** Bu pointer YALNIZ
-  **salt-okunur exact-scope/allowlist reconciliation** yetkisi verir;
-  implementasyon veya dosya değişikliği YETKİSİ VERMEZ (bağlayıcı tanım:
-  Pilot Readiness Priority Reconciliation §4 Adım 5 — git-governed, şemalı,
-  yıl-kapsamlı tatil takvimi artefaktı + validator; `deadline_engine`'in
-  `holiday_dates`/`calendar_complete`'i elle bayrak yerine kapsanan yıl
-  aralığından türetmesi; takvim içeriği bu adımda sentetik/yer tutucu,
-  `verified=false`; `deadline_engine.py`/`deadline_calculator.py` LOCKED Row
-  8 açılacaksa §9 gerekçesi). Not: Adım 6'nın (avukat doğrulaması) avukat
-  paketi taslağı repo dışında hazırlanmıştır (`avukat_dogrulama_paketi_DRAFT2`;
-  avukata verilebilir — Adım 4b kilidiyle önkoşulu sağlandı); avukatın yazılı
-  cevabı Adım 5'in takvim içeriğini (`verified=true`) ve Adım 7'yi besler.
-  Açıkça BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 5 kodlama/implementasyon; avukat
-  altın
-  adoption (Adım 8); sentetik concierge dry-run (Adım 9); ilk gerçek
-  concierge pilotu (Adım 10); Entra/P1 (Adım 11); hosting/Key Vault
-  (Adım 12); configurable external case root (post-pilot Adım 13c).
-  Eski "Row 19D External Activation / Adoption Gate" pointer'ının
-  kapsadığı maddelerin (gerçek Entra tenant/app registration, `acrs`
-  claims dış doğrulaması, Conditional Access/authentication-context
-  preflight'i, Key Vault custom GET-only role deployment/adoption,
-  Graph izinleri, loopback-only middleware ile `X-Forwarded-For`
-  yasağının hosting uyumluluğu) TAMAMI Entra/P1 (Pilot Readiness Adım
-  11) ve hosting/Key Vault (Adım 12)'ye ERTELENMİŞ olarak KALMAYA devam
-  eder — bu maddeler KAPANMAMIŞTIR (bkz. Row 19B OIDC Confidential-
-  Client Remediation checkpoint özeti). İlk pilot modeli concierge
-  olarak korunmaktadır. Corpus acquisition/population bu pointer
-  tarafından YETKİLENDİRİLMEZ. Yeni bir roadmap Row numarası İCAT
-  EDİLMEMİŞTİR; mevcut Pilot Readiness adım numaraları korunur.
+  `calendar_complete` Türetimi — DONE / LOCKED.** Exact kapsam **5 YENİ +
+  9 DEĞİŞTİRİLMİŞ = 14 dosya**, yerel commit `203c71a` (push YAPILMADI).
+  Elle `--holiday`/`--calendar-complete` bayrakları tamamen kaldırıldı;
+  yerine git-governed `data/holiday_calendar/holiday_calendar.json`
+  (2024–2035, TÜMÜ `verified:false`, sıfır tatil adı/tarihi — K3) +
+  şema + `src/holiday_calendar_validator.py` geldi. `deadline_calculator.py`
+  (LOCKED Row 8) tatil kaydırmasını ÖNCE, kapsanan-yıl kontrolünü SONRA
+  yapacak şekilde yeniden sıralandı (bağımsız incelemenin döngüsellik
+  bulgusu — kaydırma kapsanmayan bir yıla itiyorsa `needs_review`, hiçbir
+  ara "calculated" durum sızmaz); `deadline_engine.py` (LOCKED Row 8)
+  takvimi yükler/doğrular/audit'e bağlar; takvim baytları
+  `generation.deadline`'ın `input_digest`'ine girdi (v2→v3, Row 19C-3c-i
+  ruleset/provisions emsaliyle aynı sınıf); `generation_mutation_adapters.py`
+  DOKUNULMADI (K5). Final bağımsız verdict, exact olarak:
+  `ADIM 5 IMPLEMENTATION LOCK-READY` (bkz. Pilot Readiness Adım 5
+  checkpoint özeti, §5 sonrası, "## 6. Cross-Cutting Backlog"dan hemen
+  önce). **Dar, exact iddia** (abartılmaz): üretim `holiday_calendar.json`
+  hâlâ tamamen doğrulanmamıştır — avukat Adım 6'da en az bir yılı
+  onaylayıp `verified:true` yapana kadar, `next_business_day_if_holiday`
+  policy'li tek aktif kural HİÇBİR gerçek dosyada `calculated` bir tarih
+  ÜRETMEZ.
+- **Pilot Readiness Adım 6 — Avukat Doğrulaması — ACTIVE / NEXT.** Avukat
+  paketi (`avukat_dogrulama_paketi_DRAFT2`) repo dışında hazırdır ve
+  avukata verilebilir — Adım 4b (ham-veri kapatma) ve Adım 5 (takvim
+  registry'si) kilitleriyle önkoşulları sağlanmıştır. Bu pointer
+  KODLAMA/İMPLEMENTASYON YETKİSİ VERMEZ — Adım 6 avukatın SORU 3.1-3.8/
+  5.1-5.4'ü yanıtlaması ve altın örnekleri doldurmasıdır (bir hukuk
+  işidir, bir kod turu DEĞİL). Avukatın yazılı cevabı geldiğinde: takvim
+  içeriğinin (`data/holiday_calendar/holiday_calendar.json`'daki ilgili
+  yılların `verified:true`'ya çevrilmesi) ve deadline hardening'in
+  (Adım 7) AYRI, dar kapsamlı implementasyon turları izler. Açıkça
+  BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 7 deadline hardening; Adım 8 yerel
+  PostgreSQL/IAM adoption; Adım 9 sentetik concierge dry-run; Adım 10 ilk
+  gerçek concierge pilotu; Adım 11 Entra/P1; Adım 12 hosting/Key Vault;
+  configurable external case root (post-pilot Adım 13c). Eski "Row 19D
+  External Activation / Adoption Gate" pointer'ının kapsadığı maddelerin
+  (gerçek Entra tenant/app registration, `acrs` claims dış doğrulaması,
+  Conditional Access/authentication-context preflight'i, Key Vault
+  custom GET-only role deployment/adoption, Graph izinleri, loopback-only
+  middleware ile `X-Forwarded-For` yasağının hosting uyumluluğu) TAMAMI
+  Entra/P1 (Pilot Readiness Adım 11) ve hosting/Key Vault (Adım 12)'ye
+  ERTELENMİŞ olarak KALMAYA devam eder — bu maddeler KAPANMAMIŞTIR (bkz.
+  Row 19B OIDC Confidential-Client Remediation checkpoint özeti). İlk
+  pilot modeli concierge olarak korunmaktadır. Corpus acquisition/
+  population bu pointer tarafından YETKİLENDİRİLMEZ. Yeni bir roadmap
+  Row numarası İCAT EDİLMEMİŞTİR; mevcut Pilot Readiness adım numaraları
+  korunur.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -8223,6 +8241,246 @@ türetmedi.
 **Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi
 yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
 hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Pilot Readiness Adım 5 — Resmî Tatil Takvimi Registry'si + `calendar_complete` Türetimi (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve pilot blocker** — `calendar_complete`, denetlenmeyen bir
+elle-beyan boolean'ıydı: boş bir `--holiday` listesiyle bile `True`
+verilince sistem sessizce yalnız hafta sonu kaydırıp `calculated` diyordu
+(P2-F4). Kaydedilen deadline hangi takvimle hesaplandığını hiçbir yerde
+tutmuyordu. Bu slice elle beyanı kaldırıp git-governed bir registry'ye
+bağlar — Pilot Readiness Priority Reconciliation'ın sıralamasında
+**Adım 5**'tir.
+
+**B. Exact kapsam** — Kullanıcı tarafından, iki ayrı bağımsız salt-okunur
+inceleme turundan (kapsam + implementasyon) sonra onaylanmış tam dosya
+allowlist'i: **5 YENİ + 9 DEĞİŞTİRİLMİŞ = 14 dosya**, yerel commit
+`203c71a60f2bf3fb6d325d449eed6c1c950703a4` (push YAPILMADI).
+
+Yeni (5):
+1. `data/holiday_calendar.schema.json`
+2. `data/holiday_calendar/holiday_calendar.json`
+3. `src/holiday_calendar_validator.py`
+4. `ui/tests/test_holiday_calendar_validator_isolated.py`
+5. `ui/tests/test_deadline_calendar_derivation_isolated.py`
+
+Değiştirilmiş (9):
+6. `src/deadline_calculator.py` (**LOCKED Row 8**)
+7. `src/deadline_engine.py` (**LOCKED Row 8**)
+8. `ui/services/generation_mutation_facade.py`
+9. `ui/cli_mutate.py`
+10. `ui/tests/test_cli_mutate_isolated.py`
+11. `ui/tests/test_generation_mutation_facade_isolated.py`
+12. `ui/tests/test_deadline_engine_isolated.py`
+13. `ui/tests/test_generation_mutation_integration_postgres.py`
+14. `ui/tests/test_fact_verification_mutation_integration_postgres.py`
+
+Dosya #13 allowlist onayında "koşullu — dokunulmadan da kalabilir"
+işaretliydi; gerçek PostgreSQL'e karşı ilk koşuda dar, tek-senaryolu bir
+gerçek başarısızlık bulundu (`G4a`, kaldırılmış `--calendar-complete`
+bayrağını kullanıyordu) ve düzeltildi — dosya GERÇEKTEN değişti, bu
+dürüstçe kaydedilir (Row 19C-3c-iii'nin "allowlist'te ama genuinely
+untouched" emsalinin TERSİ). Sıfır migration, sıfır schema değişikliği
+(`data/case_deadline.schema.json` DOKUNULMADI — K2), sıfır web route,
+sıfır cloud/Entra değişikliği, sıfır `ui/services/generation_mutation_
+adapters.py` değişikliği (K5).
+
+**C. Tasarım kararı (K1–K9, kullanıcı tarafından, önerilen haliyle
+onaylandı)** — **K1 (b):** doğrulanmamış veya kapsam dışı bir yılla motor
+hesap yapmaz — `needs_review`, `calculated_deadline: null`. **K2 HAYIR:**
+makine-okunur `calculation_block_reason` alanı bu slice'a EKLENMEDİ —
+`needs_review` nedeni hâlâ yalnız serbest metin `notes`'tan okunur, LOCKED
+`case_deadline.schema.json` AÇILMADI. **K3 HAYIR:** üretim
+`holiday_calendar.json`'a HİÇBİR resmî tatil adı/tarihi yazılmadı — yalnız
+yapı (2024–2035, HEPSİ `verified:false`, `holidays:[]`, `source_refs:[]`);
+avukat paketinin "hiçbir tarih önerilmemiştir" taahhüdü korunur; sentetik
+test tatili (12 Mart 2026) YALNIZ test fixture'larında yaşar (Prensip 18).
+**K4 (C1):** `calculate_rule_deadline` imzası değişti; `holiday_dates`/
+`calendar_complete` parametreleri TAMAMEN kalktı, yerine keyword-only,
+default'suz `holiday_calendar` geldi — elle beyan yolunda geriye HİÇBİR
+bypass kalmadı. **K5 HAYIR:** `generation_mutation_adapters.py`
+dokunulmadı — `_audit_record_matches` yeni digest/audit alanlarını hiç
+tüketmediği için (yalnız `mutation_idempotency_key`/`mutation_resource_
+key`/`action_family`/`pending_sha256`/`outcome`), bir digest-formül
+değişikliği bu dosyayı fonksiyonel olarak etkilemez. **K6 EVET:**
+`src/deadline_calculator.py`'nin kendi `main()` CLI'ı da `--holiday`/
+`--calendar-complete`'ten temizlendi, üretim takvimini otomatik kullanır.
+**K7 HAYIR:** takvim yüklemesine path-containment eklenmedi — mevcut
+`_read_global_resource_bytes` ruleset/provisions ile AYNI (containment'sız)
+muameleyi görmeye devam eder; bu asimetri önceden var olan, kabul edilmiş
+bir backlog maddesidir, iki ayrı bağımsız inceleme bunun gerçek bir drift
+riski taşımadığını (üretim kod yolunun her yerde `calendar=` açıkça
+geçirdiğini) doğruladı. **K8 EVET:** yıl aralığı 2024–2035, yalnız yapı
+olarak. **K9:** 14 dosyalık allowlist onaylandı.
+
+**D. Döngüsellik düzeltmesi — implementasyonun en riskli parçası** —
+Bağımsız kapsam incelemesi bir döngüsellik buldu: önerilen "kapsanan yıl"
+formülü `final_deadline.year`'a (kaydırma SONRASI değer) bağımlıydı, ama
+mevcut kod kapıyı kaydırmadan ÖNCE çalıştırıyordu. Çözüm — kontrol akışı
+`src/deadline_calculator.py` İÇİNDE yeniden sıralandı: (1) `verified is
+True` tüm yılların birleşiminden `holiday_dates` önceden hesaplanır
+(final.year'dan bağımsız); (2) adli tatil kontrolü DEĞİŞMEDEN çalışır; (3)
+`move_to_next_business_day` ile kaydırma YAPILIR; (4) SONRA
+`range(anchor.year, final_deadline.year+1)`'in TAMAMEN kapsanan yıllar
+içinde olup olmadığı kontrol edilir — kapsanmıyorsa mevcut `needs_review`
+şekliyle döner, `calculated_deadline` ASLA sızmaz. Bu, motor-seviyesi bir
+post-check (REDDEDİLEN alternatif) DEĞİLDİR — karar `calculate_rule_
+deadline`'ın KENDİ İÇİNDE, fonksiyon dönmeden ÖNCE, TEK bir dönüş
+noktasında verilir. Bağımsız implementasyon incelemesi bunu (a) fonksiyonu
+satır satır okuyarak VE (b) implementasyonun kendi test dosyasına
+BAKMADAN ÖNCE kendi adversarial Python testlerini yazıp çalıştırarak
+doğruladı: kapsanan bir yıldan gerçek bir tatille kapsanmayan bir sonraki
+yıla kayan senaryo doğru şekilde `needs_review` verir, hiçbir yanlış
+`calculated` tarih sızmaz; adli tatil sırası bu reorder'dan etkilenmemiştir.
+
+**E. Sabit yerleşimi ve identity zinciri** — `DEFAULT_HOLIDAY_CALENDAR_
+PATH` YALNIZ `src/deadline_calculator.py`'de tanımlıdır (`DEFAULT_
+PROVISIONS_PATH` deseni — `deadline_calculator.py`, `deadline_engine.py`'yi
+import EDEMEZ, yön tersinedir); `deadline_engine.py` ona `deadline_
+calculator.DEFAULT_HOLIDAY_CALENDAR_PATH` üzerinden dotted-access ile
+erişir (by-value import DEĞİL — bu, test monkeypatch seam'inin etkili
+kalması için ZORUNLUDUR, bağımsız incelemede davranışsal olarak
+kanıtlandı). `_compute_deadline_input_digest` takvim baytlarını ÜÇÜNCÜ üye
+olarak alır (`digest_version` v2→v3); `_compute_deadline_generation_
+parameters_digest` artık YALNIZ `judicial_recess_applicable` taşır
+(v2→v3) — bu, Row 19C-3c-i'nin ruleset/provisions remediation'ıyla AYNI
+sınıftaki bir düzeltmedir (ham baytların yanlış digest'te kalıp meşru
+ikinci denemelerin kalıcı `IdempotencyConflictError`'a düşmesini önler).
+Takvim, ruleset/provisions ile AYNI beş aşamalı global-kaynak snapshot
+protokolüne (preview → pre-lock best-effort → kilit altında yeniden okuma
++ composite karşılaştırma → `TemporaryDirectory`'ye materialize + re-hash
+→ `os.replace()`'ten hemen önce son karşılaştırma) üçüncü üye olarak
+eklendi. `_check_argument_shapes` ve `apply_generation`'ın kendi imzası
+(facade içinde, allowlist #8) eski `holiday_dates`/`calendar_complete`
+parametrelerinden TEMİZLENDİ — aksi halde elle beyan yolu CLI'dan kalksa
+bile doğrudan Python çağrısıyla facade üzerinden hâlâ erişilebilir
+kalırdı.
+
+**F. Şema/validator** — `data/holiday_calendar.schema.json`: kök + 5
+alt-nesnede `additionalProperties:false`; yıllar 2024–2035,
+`verification_ref`/`source_refs` alanları taşır. `src/holiday_calendar_
+validator.py` (`corpus_policy_validator.py` deseni): `verified is True`
+⇒ en az 1 `source_refs` + boş-olmayan `verification_ref` ZORUNLU (identity
+kontrolü — `manifest_validator`'ın `anonymization_applied is True`
+emsali, presence/truthiness DEĞİL); `half_day_policy=="not_decided"` iken
+`verified:true` bir yılda `half_day` girdisi varsa ERROR; sıralama/
+tekillik kuralları (yıl VE tarih düzeyinde). `run_self_test()` fixture'ları
+`tempfile.TemporaryDirectory()`'ye yazılır, `data/` ağacına dokunmaz.
+
+**G. CLI temizliği** — `ui/cli_mutate.py`'de `--holiday`/`--calendar-
+complete` argparse'tan TAMAMEN kaldırıldı; 5 aile dalındaki iletim
+temizlendi. Bağımsız incelemede bizzat çalıştırılarak kanıtlandı: kaldırılan
+bayrağı kullanan bir komut `"unrecognized arguments"` ile exit 2 verir.
+
+**H. Dürüst kronoloji** — 1) Salt-okunur scope draft (Claude Opus 5). 2)
+Bağımsız salt-okunur kapsam incelemesi (Claude Sonnet 5, ayrı oturum,
+`advisor` bir kez): taslağın on dokuz `dosya:satır` identity-zinciri
+iddiasının TAMAMI dahil neredeyse tüm iddialar CONFIRMED; 2 kozmetik sayım
+hatası + 3 gerçek teknik netleştirme (döngüsellik reorder, sabit
+yerleşimi, facade'in iki ek dokunma noktası) bulundu — hepsi mevcut 14
+dosyanın İÇİNDE çözülebilir, dosya sayısı DEĞİŞMEDİ; verdict `READY FOR
+IMPLEMENTATION`. 3) Kullanıcı onayı. 4) İmplementasyon (bağımsız bir
+ajan): 14 dosyanın TAMAMI + 5 zorunlu netleştirmenin TAMAMI uygulandı;
+implementasyonun kendi öz-inceleme turu üç hata (uydurma `--stat` diff
+rakamları, yanlış interpreter atfı, üretim takvim dosyasının Türkçe
+metninin bash heredoc kaçış sorunlarından ASCII harf-çevirisiyle
+yazılmış olması) yakalayıp düzeltti — Write tool ile doğru Türkçe
+karakterlerle yeniden yazıldı, hedefli testlerle yeniden doğrulandı. 5)
+Bağımsız implementasyon incelemesi (Claude Sonnet 5, implementasyon
+oturumundan AYRI, `advisor` HİÇ çağrılmadı): en riskli bölüm (reorder
+mantığı) implementasyonun kendi testine bakılmadan ÖNCE yazılan
+adversarial testlerle doğrulandı; identity zinciri, K3/K5/K6/K7 kararları,
+CLI/facade temizliği, P10 uçtan-uca zinciri hepsi kaynaktan ve kendi taze/
+disposable bir PostgreSQL kümesiyle bağımsız doğrulandı; yalnız 2
+Low-severity kozmetik sayım sapması bulundu (implementasyon raporundaki
+iki dosyanın diff/satır sayısı birkaç birim yanlış — kod DEĞİL, yalnız
+rapor metni); **0 Critical/High/Medium, 0 blocker**. Final verdict:
+`ADIM 5 IMPLEMENTATION LOCK-READY`.
+
+**I. Test kanıtı — implementasyon ve iki bağımsız inceleme, AYRI
+etiketlerle**:
+
+- İmplementasyon: yerel izole testler **586 PASS**; gerçek disposable
+  PostgreSQL 16 (P10 zinciri dahil) **131 PASS**; tam sweep
+  (`--profile developer --allow-untracked`, `production-parity` henüz
+  commit öncesi untracked dosyaları yapısal olarak reddettiği için) **76/76
+  modül, 5747 passed, 0 failed, 8 counted skip, 14 informational skip**.
+- Bağımsız kapsam incelemesi: kendi salt-okunur kaynak doğrulaması,
+  test/PostgreSQL koşulmadı (yasaktı).
+- Bağımsız implementasyon incelemesi: kendi, implementer'ınkinden TAMAMEN
+  AYRI, taze disposable PostgreSQL 16 kümesiyle 7 izole modül + 2
+  PostgreSQL entegrasyon modülü + tam sweep BAĞIMSIZ olarak yeniden
+  koşuldu — **implementer'ın TÜM sayılarıyla birebir eşleşti** (76/76
+  modül, 5747 passed, 0 failed).
+- **Commit sonrası, resmî kapılar** (bu roadmap-lock turunda, ana oturum
+  tarafından, taze bir üçüncü disposable PostgreSQL 16 kümesiyle):
+  `--profile production-parity` **exit 0, 76/76 modül PASS, 5747 passed,
+  0 failed, 8 counted skip, 14 informational skip**, `git.clean=true`,
+  `git.head=203c71a...`, `git.tracked_test_count=76`,
+  `integrity.protected_manifest_ok=true`, `integrity.protected_path_diff=[]`,
+  `integrity.secret_scan.hits=[]`. `--profile rag-dependency` **exit 0
+  (RAG_GATE_PASS)**, 3 modül PASS (builder 122/0/1-informational, reader
+  21/0, dependency-smoke 73/0). Disposable PostgreSQL kümesi işlem
+  sonunda tamamen durduruldu ve silindi.
+
+**J. Bilinen sınırlar / backlog (dürüstçe kaydedilir)**:
+
+1. **K2 (`calculation_block_reason`) bu slice'a DAHİL EDİLMEDİ** —
+   "takvim kapsamıyor" ile "adli tatil bilinmiyor" ayrımı hâlâ yalnız
+   serbest metinden okunur; `case_view`/QA makine-okunur ayırt edemez.
+2. **K7 (path-containment) bilinçli olarak eklenmedi** — ruleset/
+   provisions/takvim üçü de aynı, containment'sız muameleyi görür;
+   bağımsız incelemede gerçek risk taşımadığı doğrulandı, ama asimetri
+   backlog'da kalır.
+3. **Avukat doğrulaması (Adım 6) bu slice'ın KAPSAMI DIŞINDADIR** —
+   üretim `holiday_calendar.json`'daki 12 yılın TAMAMI hâlâ
+   `verified:false`'tur; bu yapı DEĞİŞTİRİLMEDEN, `next_business_day_if_
+   holiday` policy'li HİÇBİR kural bugün gerçek bir dosyada `calculated`
+   sonuç ÜRETEMEZ — P10'un `calculated` kanıtı YALNIZ test-injection
+   seam'i üzerinden sentetik bir takvimle elde edilmiştir, ÜRETİM
+   takvimiyle DEĞİL.
+4. **İki ayrı module-level path sabiti** — `holiday_calendar_validator.
+   HOLIDAY_CALENDAR_PATH` ile `deadline_calculator.DEFAULT_HOLIDAY_
+   CALENDAR_PATH` aynı üretim dosyasına işaret eden İKİ AYRI sabittir
+   (`corpus_policy_validator`'ın tek-tanım deseninden bilinçli bir
+   sapma — §5.2/trap #3 gereği). Bağımsız incelemede hiçbir üretim kod
+   yolunun `holiday_calendar_validator`'ın kendi path sabitine bağımlı
+   OLMADIĞI (her üretim çağıranın `calendar=` açıkça geçirdiği)
+   doğrulandı — düşük risk, gelecekte tek-sabit'e konsolide edilebilir.
+5. `data/deadline_rules.json` (üst düzey, stale/duplicate kopya) bu
+   turda İNCELENMEDİ — `CLAUDE.md` §6 backlog'unda zaten kayıtlı.
+6. Sıra DEĞİŞMEZLİĞİ: bu slice adli tatil/hafta sonu kaydırma SIRASINI
+   DEĞİŞTİRMEDİ, yalnız takvim kapısının kendi konumunu (kaydırma
+   sonrası) düzeltti.
+7. Migration/şema DEĞİŞMEDİ. Production `data/cases/case_0001` (65
+   dosya) implementasyon, iki bağımsız inceleme VE resmî kapılar boyunca
+   bayt-değişmez kaldı.
+
+**K. §9 LOCKED-file gerekçesi** — `src/deadline_calculator.py` ve
+`src/deadline_engine.py` (Row 8): kullanıcı talebi (bağlayıcı Pilot
+Readiness tanımı §4 Adım 5) + downstream/güvenlik (denetlenmeyen elle
+beyanın P2-F4 riskini — fazladan tatil → geç tarih → hak kaybı — kapatma
+zorunluluğu) gerekçesiyle açıldı. `calculate_rule_deadline`'ın imzası ve
+kapı mantığı değişti; `calculation_state` enum'u ve adli tatil sırası
+DEĞİŞMEDİ; T02-T07 self-testleri registry-türevi hale getirildi, yeni
+T07b (coverage-crossing) eklendi, 12/12 PASS. Diğer LOCKED dosyalar
+(`data/case_deadline.schema.json`, `src/deadline_validator.py`,
+`src/deadline_approval.py`, `src/deadline_rule_selection_policy.py`,
+`src/deadline_rule_validator.py`, `src/path_containment.py`,
+`ui/reconciliation_operator.py`, `ui/main.py`, `db/migrations/**`)
+AÇILMADI. `ui/services/generation_mutation_facade.py`/`ui/cli_mutate.py`
+Row 19C-3c-i/3b lineage'ındadır ve her slice'ta additive olarak
+açılagelmiştir (19C-3b'den beri kabul edilen açılış sınıfı).
+
+**Final verdict**:
+
+`ADIM 5 IMPLEMENTATION LOCK-READY — NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
+işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 
