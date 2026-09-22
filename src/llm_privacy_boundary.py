@@ -34,6 +34,50 @@
 #     maskeleyicinin kor noktasi onun da kor noktasidir. R3 bu desenin
 #     somut bir ornegini (tire/nokta grupli IBAN) kapatti; deseni
 #     genel olarak kirmak ayri bir tasarim turudur.
+#   * R4 KAPANDI (satir-sonu tire kirilimi - CLAUDE.md Pilot Readiness
+#     Adim 4a checkpoint madde 4): tek gercek ASCII tire (`-`, U+002D)
+#     + HEMEN ARDINDA gercek bir satir sonu (`\n`/`\r\n`), bir tohum
+#     kelimesinin ICINDE (PDF hyphenation/line-wrap) daha once HICBIR
+#     katmanda (maskeleyici, backstop, squeeze sayaci) taninmiyordu -
+#     ad TAMAMEN SESSIZCE, ne maskelenmeden ne reddedilmeden, dis
+#     LLM'e gidiyordu. Artik hem `scan_fold()` (backstop, guvenlik agi)
+#     hem `_find_flexible()`/`_word_pattern()` (birincil maskeleyici,
+#     asil cozum) bu deseni bir kelimenin HARFLERI ARASINDA "atlanabilir
+#     kopru" olarak tanir. Desen SIKI: tire + hemen ardinda GERCEK bir
+#     satir sonu SART - ayni satirda yazilmis GERCEK tireli bileşik
+#     isimler (`Ali-Mehmet`) bu deseni ASLA eslestirmez, cunku tirenin
+#     hemen ardinda satir sonu YOKTUR. `MASKING_POLICY_VERSION` bu
+#     degisiklikle `v1` -> `v3` bump edildi (identity payload'a girer;
+#     `v2` bilincli olarak atlandi - bkz. asagidaki "POLITIKA SURUMU"
+#     bolumu).
+#   * R4-F1 KAPANDI (bagimsiz salt-okunur inceleme, Bulgu F1 - squeeze-
+#     only sayac sinyalinin sessizlesmesi): R4'un `scan_fold()`'a
+#     ekledigi KOSULSUZ, GLOBAL tire+satir-sonu SILME adimi, bir seed'in
+#     KENDI GERCEK tiresinin (ornek: "Ali-Mehmet" bilesik ismi, veya bir
+#     sirket eki tasiyan tireli unvan) PDF satir-sarma noktasina
+#     TESADUFEN denk geldigi durumda (`"Ali-\nMehmet"`), belgenin
+#     squeeze bicimindeki tireyi SILIYOR ama seed'in KENDI squeeze'i
+#     (seed string'inin icinde bitisik bir satir sonu OLMADIGI icin)
+#     tireyi KORUYORDU - bu asimetri, ONCEDEN TUTAN bir
+#     `count_squeeze_only_seed_matches()` isabetini SESSIZCE SIFIRA
+#     dusuruyordu. MASKELEME/RET KARARI HICBIR ZAMAN DEGISMEDI (isim hem
+#     oncesinde hem sonrasinda MASKELENMIYORDU, backstop reddi de HICBIR
+#     ZAMAN tetiklenmiyordu) - yalniz operatorun onizlemede gordugu TEK
+#     sinyal (`possible_squeeze_seed_match`) kayboluyordu. Duzeltme:
+#     `count_squeeze_only_seed_matches()` artik HER seed icin IKI
+#     BAGIMSIZ squeeze karsilastirmasi yapar - mevcut (R4, tire+satir-
+#     sonu SILINMIS) `scan_squeeze()` VE
+#     `_scan_squeeze_preserve_linewrap_hyphen()` (R4-ONCESI davranisin
+#     BIREBIR AYNISI, tire+satir-sonu SILINMEDEN) - IKISINDEN HERHANGI
+#     BIRI eslesirse sayac artar (VEYA mantigi). Bu YALNIZ bilgi amaçli
+#     sayaci etkiler; `scan_fold()`/`_find_flexible()`/`_word_pattern()`
+#     (maskeleyici VE backstop, R4'un asil kazanimi) DEGISMEDEN kalir -
+#     desen ICERMEYEN metinlerde (coğunluk) iki varyant BIREBIR AYNI
+#     sonucu urettigi icin hicbir mevcut sayim DEGISMEZ.
+#     `MASKING_POLICY_VERSION` bump'i GEREKMEDI: bu sayac
+#     `identity_payload`'a hic GIRMEZ (yalniz onizleme ozetinde
+#     gosterilir) - dogrulandi, bkz. `ui/services/
+#     fact_extraction_mutation_facade.py:_build_identity_payload()`.
 #
 # MIMARI KURALLAR:
 #   * stdlib-only (`re`, `json`, `hashlib`, `unicodedata`, `dataclasses`).
@@ -114,9 +158,22 @@ from dataclasses import dataclass, field
 # (kalici bir conflict DEGIL). `PROMPT_VERSION` ile BILINCLI OLARAK AYRI
 # tutulur - `PROMPT_VERSION` bump'i `extraction_id`/`fact_id` literal'ini
 # ve pending dosya adini etkiler, bu sabit ETKILEMEZ.
+#
+# v1 -> v3 (R4): satir-sonu tire kirilimi duzeltmesi (bkz. modul basligi
+# R4 notu). Bump ZORUNLUDUR: aksi halde v1 ile TAMAMLANMIS (ama bugli -
+# isim maskesiz) bir mutasyon, kod degistikten SONRA AYNI girdilerle
+# "safe replay" ile YENIDEN CALISTIRILMADAN eski sonucu dondurebilirdi.
+# "v2" BILINCLI OLARAK ATLANDI: `ui/tests/test_reconciliation_isolated.py`
+# (LOCKED, bu degisikligin 2-dosyalik allowlist'i DISINDA) identity-
+# digest farklilasmasini kanitlamak icin "tr_pseudonymisation_v2"yi
+# ONCEDEN, bagimsiz olarak, sabit bir "farkli deger" test placeholder'i
+# olarak kullaniyordu; bu ikisinin CAKISMASI, allowlist disina cikip
+# (yani 3. bir dosyaya dokunup) o testi degistirmek YERINE, cakismasiz
+# bir surum secilerek onlenmistir (bkz. `git grep tr_pseudonymisation`
+# ile dogrulanan bos "v3" alani).
 # ------------------------------------------------------------
 
-MASKING_POLICY_VERSION = "tr_pseudonymisation_v1"
+MASKING_POLICY_VERSION = "tr_pseudonymisation_v3"
 
 
 # ------------------------------------------------------------
@@ -371,6 +428,42 @@ def nfc(text):
 _SCAN_DROP_CHARS = frozenset(_ZERO_WIDTH_CHARS)
 _WHITESPACE_RUN_RE = re.compile(r"\s+")
 
+# R4: bir kelimenin GERCEK bir satir sonunda tire ile bolunmesi (PDF
+# hyphenation/line-wrap). Tam olarak BIR gercek `-` (U+002D) + hemen
+# ardindan (opsiyonel yatay bosluk/tab ile) TAM OLARAK BIR gercek satir
+# sonu (`\n` ya da `\r\n`, COGUL DEGIL - `\n+` DEGIL `\n`, boylece bir
+# PARAGRAF arasi YANLISLIKLA "ayni kelime" sayilmaz) + devam
+# satirindaki olasi girinti/bosluk. Ayni satirda yazilmis GERCEK tireli
+# bilesik isimler (`Ali-Mehmet`) bu deseni ASLA eslestirmez - tirenin
+# hemen ardinda GERCEK bir satir sonu SART.
+_LINE_WRAP_HYPHEN_RE = re.compile(r"[ \t]*-[ \t]*\r?\n[ \t]*")
+
+# Ayni desen, birincil maskeleyicide (`_word_pattern()`) bir kelimenin
+# HARFLERI ARASINDA "atlanabilir, opsiyonel bir kopru" olarak kullanilir.
+# Desen YOKSA sifir-genislikli eslesir - literal ardarda aramayla
+# BIREBIR AYNI davranir.
+_LINE_WRAP_BRIDGE_GROUP = r"(?:[ \t]*-[ \t]*\r?\n[ \t]*)?"
+
+
+def _scan_fold_impl(text, *, strip_line_wrap_hyphen):
+    """`scan_fold()`/`_scan_fold_preserve_linewrap_hyphen()`'in ORTAK
+    govdesi - R4-F1 remediasyonu (bkz. asagida) AYNI normalizasyon
+    zincirini yalniz TEK bir bayrakla (satir-sonu-tire SILME adimi
+    acik/kapali) tekrar kullanabilsin diye TEK bir yerde tutulur; kod
+    tekrari YOK. Iki genel fonksiyonun docstring'leri kendi
+    davranislarini ayrintili anlatir."""
+    text = unicodedata.normalize("NFKC", text)
+    text = "".join(
+        ch for ch in text
+        if not unicodedata.combining(ch) and ch not in _SCAN_DROP_CHARS
+    )
+    if strip_line_wrap_hyphen:
+        # R4: satir-sonu tire kirilimini SIL - whitespace-daraltmadan
+        # ONCE (bkz. `scan_fold()` docstring'i).
+        text = _LINE_WRAP_HYPHEN_RE.sub("", text)
+    text = _WHITESPACE_RUN_RE.sub(" ", text)
+    return fold1to1(text)
+
 
 def scan_fold(text):
     """YALNIZ TARAMA (backstop) icin normalizasyon - maskeleyicinin span
@@ -413,15 +506,25 @@ def scan_fold(text):
     maskeleyicinin KENDI transliterasyon varyantlariyla zaten
     karsilanir (degismedi).
 
+    R4 (DORDUNCU remediasyon): bu fonksiyon artik satir-sonu tire
+    kirilimini (`_LINE_WRAP_HYPHEN_RE`) da SILER - `\\n` henuz TEK
+    BOSLUGA daraltilmadan ONCE, aksi halde "gercek satir sonu" bilgisi
+    kaybolur ve `"Kayit - devam ediyor"` gibi AYNI SATIRDAKI, satir
+    sonu ICERMEYEN siradan bir tire kullanimi yanlislikla etkilenebilir
+    (bu duzenle ETKILENMEZ, cunku regex `\\n`'in GERCEKTEN var olmasini
+    sart kosar). `scan_squeeze()` bu fonksiyonu SARDIGI icin (asagida)
+    duzeltmeyi OTOMATIK MIRAS ALIR - ayri bir degisiklik gerekmez.
+
+    R4-F1 (bagimsiz inceleme, Bulgu F1): bu KOSULSUZ, GLOBAL silme adimi
+    bir seed'in KENDI GERCEK tiresini de (satir-sarma noktasina
+    tesaduf ederse) siler - `_scan_fold_preserve_linewrap_hyphen()` bu
+    asimetriyi `count_squeeze_only_seed_matches()`'te bagimsiz bir
+    IKINCI kontrol olarak telafi eder (asagida); bu fonksiyonun KENDISI
+    ve onun cagirdigi maskeleyici/backstop davranisi DEGISMEDEN kalir.
+
     Hem taranan bolgeye HEM tohum terimine uygulanir. Kaynak metin ASLA
     bu bicimde saklanmaz/gonderilmez (excerpt bayt sadakati)."""
-    text = unicodedata.normalize("NFKC", text)
-    text = "".join(
-        ch for ch in text
-        if not unicodedata.combining(ch) and ch not in _SCAN_DROP_CHARS
-    )
-    text = _WHITESPACE_RUN_RE.sub(" ", text)
-    return fold1to1(text)
+    return _scan_fold_impl(text, strip_line_wrap_hyphen=True)
 
 
 def scan_squeeze(text):
@@ -435,6 +538,43 @@ def scan_squeeze(text):
     kapatir. Iki kontrol birlikte calisir; ikisi de yalnizca TARAMA
     icindir."""
     return scan_fold(text).replace(" ", "")
+
+
+def _scan_fold_preserve_linewrap_hyphen(text):
+    """R4-F1 REMEDIASYONU (bagimsiz salt-okunur inceleme, Bulgu F1):
+    `scan_fold()`'un R4-ONCESI davranisinin BIREBIR AYNISI - satir-sonu-
+    tire SILME adimi UYGULANMAZ, geri kalan HER SEY (NFKC, diacritic/
+    drop-char temizligi, whitespace daraltma, fold1to1) AYNEN calisir.
+
+    NEDEN GEREKLI: R4'un `scan_fold()`'a ekledigi KOSULSUZ, GLOBAL
+    tire+satir-sonu SILME adimi, bu silmenin bir PDF line-wrap
+    ARTEFAKTI mi yoksa SEED'IN KENDI, GERCEK bir tiresinin PARCASI mi
+    oldugunu AYIRT ETMEZ. Seed'in KENDI tiresi (ornek: "Ali-Mehmet"
+    bilesik ismi) tam da belgenin PDF satir-sarma noktasina denk
+    geldiginde (`"Ali-\\nMehmet"`), R4-SONRASI `scan_fold` belgenin
+    tiresini SILER ama seed'in KENDI `scan_fold`'u (seed string'inin
+    icinde bitisik bir satir sonu OLMADIGI icin) tireyi KORUR - bu
+    asimetri, ONCEDEN TUTAN bir squeeze-only eslesmeyi SESSIZCE
+    SIFIRLAR (operatorun onizlemede gordugu TEK sinyal kayboluyor;
+    maskeleme/ret KARARI DEGISMIYOR - bkz.
+    `count_squeeze_only_seed_matches()`).
+
+    YALNIZ `count_squeeze_only_seed_matches()`'in ONCEKI (R4-ONCESI)
+    squeeze davranisini bir IKINCI, BAGIMSIZ kontrol olarak yeniden
+    hesaplamak icin kullanilir - birincil maskeleyici (`_find_flexible`/
+    `_word_pattern`) VEYA backstop reddi (`_scan_region_for_seeds`) bu
+    fonksiyonu KULLANMAZ, ikisi de degismeden `scan_fold()`'un R4
+    davranisini kullanmaya devam eder (R4'un asil kazanimi - kelime ICI
+    hyphen bridging maskelemesi - bu fonksiyondan ETKILENMEZ)."""
+    return _scan_fold_impl(text, strip_line_wrap_hyphen=False)
+
+
+def _scan_squeeze_preserve_linewrap_hyphen(text):
+    """`_scan_fold_preserve_linewrap_hyphen()` + TUM bosluklarin da
+    atilmasi - `scan_squeeze()`'in R4-ONCESI davranisinin BIREBIR
+    AYNISI. Yalniz `count_squeeze_only_seed_matches()` icin, R4-F1
+    remediasyonunun IKINCI, BAGIMSIZ kontrolu olarak kullanilir."""
+    return _scan_fold_preserve_linewrap_hyphen(text).replace(" ", "")
 
 
 def has_non_ascii_digits(text):
@@ -1018,9 +1158,34 @@ class _Candidate:
     seed_kind: str | None = None
 
 
+_word_pattern_cache = {}
+
+
+def _word_pattern(word):
+    """`word`'un HARFLERI arasina R4'un opsiyonel satir-sonu-tire
+    koprusu (`_LINE_WRAP_BRIDGE_GROUP`) eklenmis, DERLENMIS regex'i -
+    ayni kelime icin sade bir dict ile ONBELLEKLENIR (yeni bir
+    onbellekleme araci/import GEREKMEZ - bkz. modul basligi, `re`
+    zaten mevcuttur).
+
+    Desen YOKSA (metinde hicbir "tire + gercek satir sonu" GECMIYORSA)
+    bu regex, literal ardarda arama ile BIREBIR AYNI ilk pozisyonu
+    bulur - her kopru grubu opsiyoneldir (sifir-genislikli eslesir),
+    leftmost davranis DEGISMEZ."""
+    cached = _word_pattern_cache.get(word)
+    if cached is not None:
+        return cached
+    compiled = re.compile(
+        _LINE_WRAP_BRIDGE_GROUP.join(re.escape(ch) for ch in word)
+    )
+    _word_pattern_cache[word] = compiled
+    return compiled
+
+
 def _find_flexible(folded, words, start):
     """Cok kelimeli bir tohumu, kelimeler arasinda HERHANGI bir bosluk
-    DIZISI kabul ederek arar (B1(a)-ii).
+    DIZISI kabul ederek arar (B1(a)-ii); HER kelimenin KENDI HARFLERI
+    ARASINDA da R4'un satir-sonu-tire koprusunu kabul eder.
 
     Neden: gercek bir unvan belge metninde satir sonu, cift bosluk,
     sekme veya NBSP ile bolunur (repo'nun KENDI fixture'i ~60 karakterde
@@ -1029,7 +1194,7 @@ def _find_flexible(folded, words, start):
 
     Konum bulma UZUNLUK KORUYAN `fold1to1` kopyasi uzerindedir, span'lar
     ORIJINAL indekslerdedir ve haritaya ORIJINAL alt dize (ozgun satir
-    sonu/cift bosluk dahil) yazilir - geri cevirme BAYT-BAYT kalir.
+    sonu/cift bosluk/tire dahil) yazilir - geri cevirme BAYT-BAYT kalir.
 
     R1(ii): AYRAC SINIFI bosluklara EK OLARAK `scan_fold()`'un attigi
     ALTI GORUNMEZ karakteri de kabul eder (U+00AD yumusak tire, U+200B
@@ -1039,13 +1204,28 @@ def _find_flexible(folded, words, start):
     MASKELENIR (geri cevirme yine BAYT-BAYT: haritaya orijinal alt
     dize, gorunmez karakter dahil, yazilir).
 
-    Kelime ICINDE gizlenmis gorunmez karakterler HALA maskelenmez ve
-    `scan_fold()` backstop'u tarafindan FAIL-CLOSED REDDEDILIR - bu
-    ayrim BILINCLIDIR."""
-    first = words[0]
-    index = folded.find(first, start)
-    while index >= 0:
-        position = index + len(first)
+    R4 (bu, kelimenin KENDI ICINDE calisir - kelimeler ARASINDA calisan
+    yukaridaki bosluk-atlama mantigindan AYRIDIR, o mantik DEGISMEDEN
+    kalir): her kelime artik `_word_pattern()` ile, literal degil,
+    HARFLERI arasina R4'un opsiyonel tire+gercek-satir-sonu koprusu
+    eklenmis bir regex ile aranir. Boylece TEK kelimelik bir tohumun
+    (`"Ahmet"`) veya cok kelimelik bir tohumun TEK bir kelimesinin
+    (`"Ahmet Yılmaz"`'daki `"Ahmet"` veya `"Yılmaz"`) kendi ICINDE PDF
+    hyphenation/line-wrap ile bolunmus olmasi da artik MASKELENIR -
+    onceden bu durum ne maskeleniyor ne reddediliyordu (TAMAMEN
+    sessizdi). Kopru YOKSA regex literal ardarda arama ile BIREBIR AYNI
+    davranir (opsiyonel gruplar sifir-genislikli eslesir, leftmost
+    davranis DEGISMEZ).
+
+    Kelime ICINDE gizlenmis GORUNMEZ karakterler (ZWSP/ZWNJ/ZWJ/BOM/word
+    joiner/yumusak tire) HALA maskelenmez ve `scan_fold()` backstop'u
+    tarafindan FAIL-CLOSED REDDEDILIR - bu ayrim BILINCLIDIR; R4 YALNIZ
+    gercek ASCII tire + gercek satir sonu desenini kapsar."""
+    first_pattern = _word_pattern(words[0])
+    match = first_pattern.search(folded, start)
+    while match is not None:
+        index = match.start()
+        position = match.end()
         matched = True
         for word in words[1:]:
             cursor = position
@@ -1053,13 +1233,17 @@ def _find_flexible(folded, words, start):
                 folded[cursor].isspace() or folded[cursor] in _SCAN_DROP_CHARS
             ):
                 cursor += 1
-            if cursor == position or not folded.startswith(word, cursor):
+            if cursor == position:
                 matched = False
                 break
-            position = cursor + len(word)
+            word_match = _word_pattern(word).match(folded, cursor)
+            if word_match is None:
+                matched = False
+                break
+            position = word_match.end()
         if matched:
             return index, position
-        index = folded.find(first, index + 1)
+        match = first_pattern.search(folded, index + 1)
     return None
 
 
@@ -1523,7 +1707,25 @@ def count_squeeze_only_seed_matches(regions, seeds):
     bir bosluk veya satir sonu sokulmus olmasi (harf araligi verilmis
     metin) ARTIK REDDEDILMEZ, yalnizca SAYILIR. Cok kelimeli adlarin
     gorunmez-karakter ayracli hali ise R1(ii) ile MASKELENIR, yani bu
-    turda squeeze'e artik ihtiyac duymaz."""
+    turda squeeze'e artik ihtiyac duymaz.
+
+    R4-F1 (bagimsiz inceleme, Bulgu F1 - IKI BAGIMSIZ squeeze
+    karsilastirmasi, VEYA mantigi): her seed icin HEM mevcut (R4, tire+
+    satir-sonu SILINMIS) `scan_squeeze()` HEM `_scan_squeeze_
+    preserve_linewrap_hyphen()` (R4-ONCESI davranisin BIREBIR AYNISI,
+    tire+satir-sonu SILINMEDEN) ile ayri ayri karsilastirilir -
+    IKISINDEN HERHANGI BIRI eslesirse `hits` artar. Boylece seed'in
+    KENDI gercek tiresinin (`"Ali-Mehmet"`) PDF satir-sarma noktasina
+    tesaduf ettigi durumda (`"Ali-\\nMehmet"`) R4-ONCESI TUTAN isabet
+    (`_scan_squeeze_preserve_linewrap_hyphen` yolu) SESSIZCE
+    kaybolmuyor - `scan_fold()`'un R4 silme adiminin bu isabeti neden
+    SIFIRLADIGI icin bkz. `_scan_fold_preserve_linewrap_hyphen()`
+    docstring'i. Desen (tire+GERCEK satir-sonu) ICERMEYEN metin/tohum
+    ciftlerinde iki varyant BIREBIR AYNI degeri urettigi icin (bkz.
+    `_LINE_WRAP_HYPHEN_RE` - eslesecek desen yoksa `.sub("", ...)` bir
+    no-op'tur) bu ekleme HICBIR mevcut sayimi DEGISTIRMEZ; yalniz bu
+    fonksiyonun KENDISI etkilenir - maskeleme/ret kararlari (`mask_text`,
+    `_scan_region_for_seeds`) DEGISMEDEN kalir."""
     hits = 0
     for region in regions:
         for is_token, start, end in _token_segments(region):
@@ -1532,10 +1734,13 @@ def count_squeeze_only_seed_matches(regions, seeds):
             segment = region[start:end]
             folded = scan_fold(segment)
             squeezed = scan_squeeze(segment)
+            squeezed_preserve = _scan_squeeze_preserve_linewrap_hyphen(segment)
             for seed in seeds:
                 if scan_fold(seed.term) in folded:
                     continue
-                if scan_squeeze(seed.term) in squeezed:
+                seed_squeezed = scan_squeeze(seed.term)
+                seed_squeezed_preserve = _scan_squeeze_preserve_linewrap_hyphen(seed.term)
+                if seed_squeezed in squeezed or seed_squeezed_preserve in squeezed_preserve:
                     hits += 1
     return hits
 

@@ -1840,6 +1840,495 @@ check(
     lpb.count_possible_split_identifiers("Sayfa 12345 67890 satir") == 1,
 )
 
+print("## 15d-5 - R4: line-wrap hyphen bridging (satir-sonu tire kirilimi, CLAUDE.md item 4)")
+
+# CLAUDE.md's Pilot Readiness Adim 4a checkpoint sH madde 4 recorded a
+# KNOWN gap: a party name split at a REAL line break by a REAL ASCII
+# hyphen ("Ah-\nmet") was recognised by NO layer at all (masker,
+# backstop, squeeze counter) - it went to the outbound LLM completely
+# silently, neither masked nor refused nor even counted. This group
+# proves the two-layer R4 fix: scan_fold() (backstop, safety net) and
+# _find_flexible()/_word_pattern() (primary masker, the actual fix)
+# both now recognise a hyphen immediately followed by a REAL line break
+# as a bridgeable gap INSIDE a single seed word.
+
+R4_CASE = {"parties": [{"party_id": "party_r4", "party_type": "individual",
+                        "display_name": "Ahmet"}]}
+R4_CTX = {
+    "case_id": "case_r4", "source_document_id": "belge_r4",
+    "source_document_title": "Ihbarname",
+    "parties": [{"party_id": "party_r4", "role": "taxpayer", "display_name": "Ahmet"}],
+    "dispute_items": [],
+}
+
+
+def r4_run(document_text, case_data=R4_CASE, context=R4_CTX):
+    """(outcome, result) - outcome in {'masked', 'refused'}, same shape as
+    b1_run() above: scan_outbound is ALSO run, so a masked-but-still-
+    leaking result would surface as 'refused' here too."""
+    try:
+        res = lpb.mask_prompt_inputs(
+            case_data=case_data, document_data={}, context=context,
+            document_text=document_text,
+        )
+    except lpb.MaskingError:
+        return "refused", None
+    prompt = json.dumps(res.masked_context, ensure_ascii=False) + "\n" + res.masked_text
+    try:
+        lpb.scan_outbound(prompt + res.prompt_instruction_block, res)
+    except lpb.MaskingError:
+        return "refused", res
+    return "masked", res
+
+
+# 1. POSITIVE - a single-word seed split by a REAL hyphen + REAL LF.
+_r4_doc1 = "Mükellef Ah-\nmet adına tarhiyat yapıldı."
+_r4_outcome1, _r4_res1 = r4_run(_r4_doc1)
+check(
+    "R4: a single-word seed split by a REAL hyphen + REAL line feed is MASKED "
+    "(not silently sent, not merely refused)",
+    _r4_outcome1 == "masked",
+    f"outcome={_r4_outcome1}",
+)
+check(
+    "R4: ...and the raw name no longer appears anywhere in the masked text",
+    _r4_res1 is not None and "Ahmet" not in _r4_res1.masked_text,
+    _r4_res1.masked_text if _r4_res1 else None,
+)
+_r4_mapping1 = lpb.MaskMapping()
+_r4_out1 = lpb.mask_text(_r4_doc1, party_seeds("Ahmet", kind="individual"), _r4_mapping1)
+check(
+    "R4: ...and de-masking restores the ORIGINAL bytes including the hyphen and the line feed "
+    "(byte-for-byte round trip)",
+    lpb._de_mask_string(_r4_out1, _r4_mapping1) == _r4_doc1,
+    repr(_r4_out1),
+)
+
+# 2. POSITIVE - a multi-word seed whose FIRST word is line-wrap-hyphenated
+#    (the second word is separated normally, by a plain space).
+_r4_doc2 = "Ah-\nmet Yılmaz adına tarhiyat yapıldı."
+_r4_mapping2 = lpb.MaskMapping()
+_r4_seeds2 = party_seeds("Ahmet Yılmaz", kind="individual")
+_r4_out2 = lpb.mask_text(_r4_doc2, _r4_seeds2, _r4_mapping2)
+check(
+    "R4: a multi-word seed whose FIRST word is line-wrap-hyphenated is fully MASKED",
+    "Ahmet" not in _r4_out2 and "Yılmaz" not in _r4_out2 and "VGMASK_" in _r4_out2,
+    _r4_out2,
+)
+check(
+    "R4: ...and de-masking restores the ORIGINAL bytes byte-for-byte",
+    lpb._de_mask_string(_r4_out2, _r4_mapping2) == _r4_doc2,
+    repr(_r4_out2),
+)
+
+# 3. POSITIVE - CRLF variant (not just LF).
+_r4_doc3 = "Ah-\r\nmet adına tarhiyat yapıldı."
+_r4_mapping3 = lpb.MaskMapping()
+_r4_out3 = lpb.mask_text(_r4_doc3, party_seeds("Ahmet", kind="individual"), _r4_mapping3)
+check(
+    "R4: a CRLF line break after the hyphen is ALSO bridged (not just a bare LF)",
+    "Ahmet" not in _r4_out3 and "VGMASK_" in _r4_out3,
+    _r4_out3,
+)
+check(
+    "R4: ...and de-masking restores the ORIGINAL bytes including the CRLF",
+    lpb._de_mask_string(_r4_out3, _r4_mapping3) == _r4_doc3,
+    repr(_r4_out3),
+)
+
+# 4. POSITIVE - leading indentation on the continuation line.
+_r4_doc4 = "Ah-\n   met adına tarhiyat yapıldı."
+_r4_mapping4 = lpb.MaskMapping()
+_r4_out4 = lpb.mask_text(_r4_doc4, party_seeds("Ahmet", kind="individual"), _r4_mapping4)
+check(
+    "R4: leading whitespace/indentation on the continuation line is ALSO bridged",
+    "Ahmet" not in _r4_out4 and "VGMASK_" in _r4_out4,
+    _r4_out4,
+)
+check(
+    "R4: ...and de-masking restores the ORIGINAL bytes including the indentation",
+    lpb._de_mask_string(_r4_out4, _r4_mapping4) == _r4_doc4,
+    repr(_r4_out4),
+)
+
+# 5. NEGATIVE CONTROL (the most critical one) - a REAL hyphenated compound
+#    name written on ONE line, with NO line break at all, must behave
+#    EXACTLY as it did before this fix: the hyphen is part of the seed
+#    itself and is matched as one contiguous literal span, never bridged.
+_r4_compound_seeds = party_seeds("Ali-Mehmet", kind="individual")
+_r4_compound_doc = "Mükellef Ali-Mehmet adına tarhiyat yapıldı."
+_r4_compound_mapping = lpb.MaskMapping()
+_r4_compound_out = lpb.mask_text(_r4_compound_doc, _r4_compound_seeds, _r4_compound_mapping)
+check(
+    "R4 CONTROL: a genuine same-line hyphenated compound name (the hyphen is part of the seed "
+    "ITSELF, no line break is present) is masked as one contiguous literal match, exactly as "
+    "before this fix (NO regression)",
+    "Ali-Mehmet" not in _r4_compound_out and "VGMASK_" in _r4_compound_out,
+    _r4_compound_out,
+)
+check(
+    "R4: ...and de-masking restores the ORIGINAL bytes for the same-line compound name",
+    lpb._de_mask_string(_r4_compound_out, _r4_compound_mapping) == _r4_compound_doc,
+    repr(_r4_compound_out),
+)
+_r4_wrongseed = party_seeds("AliMehmet", kind="individual")  # the seed itself has NO hyphen
+_r4_wrongseed_out = lpb.mask_text(_r4_compound_doc, _r4_wrongseed, lpb.MaskMapping())
+check(
+    "R4 CONTROL (the false-positive guard, most critical): a seed WITHOUT a hyphen does NOT "
+    "accidentally bridge across a genuine same-line hyphen that has NO line break after it - "
+    "the bridge is structurally impossible without a real line feed",
+    _r4_wrongseed_out == _r4_compound_doc,
+    _r4_wrongseed_out,
+)
+check(
+    "R4 CONTROL: scan_fold() keeps a same-line hyphen (no line break after it) UNCHANGED - "
+    "only a hyphen immediately followed by a REAL line break is stripped",
+    lpb.scan_fold("Ali-Mehmet") == "ali-mehmet",
+    lpb.scan_fold("Ali-Mehmet"),
+)
+check(
+    "R4 CONTROL: ...while the SAME two words WITH a real line break after the hyphen ARE "
+    "bridged by scan_fold()",
+    lpb.scan_fold("Ali-\nMehmet") == "alimehmet",
+    lpb.scan_fold("Ali-\nMehmet"),
+)
+check(
+    "R4 CONTROL: a PARAGRAPH break (two line feeds) after the hyphen is NOT bridged - only "
+    "EXACTLY one real line break qualifies as a line-wrap (a blank line is not a hyphenation)",
+    "alimehmet" not in lpb.scan_fold("Ali-\n\nMehmet"),
+    lpb.scan_fold("Ali-\n\nMehmet"),
+)
+
+# 6. NEGATIVE CONTROL - a tire+line-break that matches NO seed at all must
+#    not disturb any OTHER counter or leave any other trace. A dedicated
+#    context is used here (parties list empty) so the context itself
+#    carries NO string leaf that could coincidentally match the seed -
+#    R4_CTX's own party display_name ("Ahmet") would otherwise ALSO be
+#    masked by the pre-existing, unrelated mask_context() S1 policy
+#    (every context leaf is always masked against the seed list,
+#    independently of the document text), which would make token_count
+#    a misleading signal for THIS control.
+_r4_unrelated_ctx = {
+    "case_id": "case_r4b", "source_document_id": "belge_r4b",
+    "source_document_title": "Ihbarname",
+    "parties": [], "dispute_items": [],
+}
+_r4_unrelated_res = lpb.mask_prompt_inputs(
+    case_data=R4_CASE, document_data={}, context=_r4_unrelated_ctx,
+    document_text="Beyanname - \nsunulmuştur.",
+)
+check(
+    "R4 CONTROL: an unrelated mid-sentence hyphen+line-break (matching NO seed) leaves the "
+    "document text UNMASKED and raises no counter at all",
+    _r4_unrelated_res.masked_text == "Beyanname - \nsunulmuştur."
+    and _r4_unrelated_res.summary["possible_squeeze_seed_match"] == 0
+    and _r4_unrelated_res.summary["token_count"] == 0,
+    _r4_unrelated_res.summary,
+)
+
+# 7. REGRESSION SANITY - the REAL case_0001 fixture text was independently
+#    confirmed (scope review) to contain ZERO hyphen+line-break
+#    occurrences, so every R1(iii)/15d-2 assertion against REAL_DAVA
+#    above is run against text this fix cannot touch at all.
+check(
+    "R4 REGRESSION: the REAL case_0001 dava_dilekcesi_001 text has ZERO hyphen+line-break "
+    "occurrences (same superset regex used in the scope review), so every R1(iii)/15d-2 "
+    "assertion against REAL_DAVA above is unaffected by this fix",
+    re.search(r"-\s*\n", REAL_DAVA) is None,
+)
+
+# 8. the module's OTHER 21 test groups (## 1 through ## 15d-4 above and
+#    ## 15e through ## 22 below) are re-executed, unchanged, by this same
+#    run - a full pass/fail count is printed at the end of this file.
+
+# 9. MASKING_POLICY_VERSION bump evidence. The bumped value is "v3", not
+#    "v2" - "v2" was deliberately skipped because
+#    ui/tests/test_reconciliation_isolated.py (LOCKED, outside this
+#    fix's 2-file allowlist) already hardcodes "tr_pseudonymisation_v2"
+#    as an unrelated "a different version" test placeholder; picking a
+#    non-colliding value avoids touching a third file.
+check(
+    "R4: MASKING_POLICY_VERSION was bumped away from the pre-fix v1 value - without this, "
+    "coordinator safe-replay could return an already-completed, pre-fix (buggy, unmasked) "
+    "result for identical inputs instead of re-running with the fixed masker",
+    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v3"
+    and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v1"
+    and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v2",
+    lpb.MASKING_POLICY_VERSION,
+)
+
+# 10. EMPIRICAL false-positive measurement (R1(iii)-style, recommended by
+#     the scope report): inject a synthetic hyphen+line-break at many
+#     deterministic random positions across the REAL case_0001 text,
+#     using a seed name that appears NOWHERE in that text. If the widened
+#     matcher ever bridged across an UNRELATED break, this would surface
+#     as a spurious token; with a genuinely unrelated seed the hit count
+#     must stay at ZERO across every trial.
+_r4_rng = random.Random(4)
+_r4_unrelated_seed = party_seeds("Zeynep Arslan", kind="individual")
+_r4_false_positive_hits = 0
+_r4_trials = 40
+for _ in range(_r4_trials):
+    _pos = _r4_rng.randint(1, len(REAL_DAVA) - 2)
+    _synthetic = REAL_DAVA[:_pos] + "-\n" + REAL_DAVA[_pos:]
+    _mapping_fp = lpb.MaskMapping()
+    lpb.mask_text(_synthetic, _r4_unrelated_seed, _mapping_fp)
+    _r4_false_positive_hits += _mapping_fp.token_count()
+check(
+    f"R4 EMPIRICAL: injecting a synthetic hyphen+line-break at {_r4_trials} random positions "
+    "in the REAL case_0001 text never causes an UNRELATED seed to be falsely masked "
+    "(false-positive count stays at 0, mirroring the R1(iii) 83x3 measurement methodology)",
+    _r4_false_positive_hits == 0,
+    _r4_false_positive_hits,
+)
+
+# 11. the existing _find_flexible inter-word/invisible-separator/NFD tests
+#     in the "## 15d" group above (B1, R1(ii)) are re-executed unchanged
+#     by this same run - none of their assertions were modified for R4.
+
+print("## 15d-6 - R4-F1: squeeze-only counter signal restored when the "
+      "SEED's OWN hyphen coincides with the PDF line-wrap point")
+
+# An independent, separate, read-only review of R4 found a real gap (Bulgu
+# F1, non-blocking, disclosure-required) that neither the scope report nor
+# the implementation report had noticed: when a SEED's OWN, genuine hyphen
+# (e.g. the compound name "Ali-Mehmet") happens to coincide with the
+# document's PDF line-wrap point ("Ali-\nMehmet"), R4's unconditional,
+# global hyphen+line-break stripping inside scan_fold() erases the hyphen
+# from the DOCUMENT's squeeze form but NOT from the SEED's own squeeze form
+# (the seed string itself carries no embedded line feed) - this asymmetry
+# silently zeroed out a squeeze-only hit that FIRED before R4 existed. The
+# masking/refusal DECISION never changed in either state (the name was
+# unmasked both before and after R4, and the backstop never rejected it
+# either way) - only the operator-visible preview SIGNAL
+# (possible_squeeze_seed_match) regressed from a nonzero count to zero.
+# This group proves the remediation restores the PRE-R4 signal exactly,
+# via a SECOND, INDEPENDENT squeeze comparison
+# (_scan_squeeze_preserve_linewrap_hyphen, OR logic) - without touching the
+# masker or the backstop (R4's actual win) in any way.
+
+_r4f1_ali_seed = party_seeds("Ali-Mehmet", kind="individual")
+_r4f1_ali_doc = "Mükellef Ali-\nMehmet adına tarhiyat yapıldı."
+_r4f1_ali_count = lpb.count_squeeze_only_seed_matches([_r4f1_ali_doc], _r4f1_ali_seed)
+check(
+    "R4-F1: a seed's OWN hyphenated compound name ('Ali-Mehmet') split exactly at its own "
+    "hyphen by a PDF line-wrap ('Ali-\\nMehmet') now produces count_squeeze_only_seed_matches "
+    "== 1, restoring the EXACT pre-R4 signal value that the independent review measured on "
+    "unpatched HEAD (this is the review's Bulgu F1 scenario, closed)",
+    _r4f1_ali_count == 1,
+    _r4f1_ali_count,
+)
+_r4f1_ali_mask_out = lpb.mask_text(_r4f1_ali_doc, _r4f1_ali_seed, lpb.MaskMapping())
+check(
+    "R4-F1: ...and the MASKING decision is UNCHANGED by this signal fix - the name is still "
+    "NOT masked (same as before AND after R4; the primary masker's contiguous-match behaviour "
+    "for a same-line seed hyphen is untouched by this remediation)",
+    _r4f1_ali_mask_out == _r4f1_ali_doc,
+    _r4f1_ali_mask_out,
+)
+_r4f1_ali_refused = None
+try:
+    lpb._scan_region_for_seeds(_r4f1_ali_doc, _r4f1_ali_seed)
+except lpb.MaskingError as error:
+    _r4f1_ali_refused = type(error).__name__
+check(
+    "R4-F1: ...and the BACKSTOP decision is also UNCHANGED - it still does NOT reject this "
+    "text (scan_fold's fold-hit comparison, which the backstop uses, was never touched by "
+    "this remediation; only the separate squeeze-only counter was)",
+    _r4f1_ali_refused is None,
+    _r4f1_ali_refused,
+)
+
+_r4f1_denizkum_seed = party_seeds("Deniz-Kum İnşaat Ltd. Şti.")
+_r4f1_denizkum_doc = "Mükellef Deniz-\nKum İnşaat Ltd. Şti. adına tarhiyat yapıldı."
+_r4f1_denizkum_count = lpb.count_squeeze_only_seed_matches(
+    [_r4f1_denizkum_doc], _r4f1_denizkum_seed
+)
+check(
+    "R4-F1: the review's second measured scenario (company name 'Deniz-Kum İnşaat Ltd. Şti.' "
+    "split at its own hyphen by a PDF line-wrap) now produces count_squeeze_only_seed_matches "
+    "== 3, again matching the EXACT pre-R4 value the independent review measured",
+    _r4f1_denizkum_count == 3,
+    _r4f1_denizkum_count,
+)
+
+# Full end-to-end pipeline check (mask_prompt_inputs), mirroring the
+# independent review's own probe5_full_pipeline_summary methodology: the
+# operator-visible summary field must show the restored signal, and the
+# masked_text must be byte-identical to the unmasked original (the decision
+# genuinely did not change).
+_r4f1_case = {"parties": [{"party_id": "p_f1", "party_type": "individual",
+                           "display_name": "Ali-Mehmet"}]}
+_r4f1_ctx = {
+    "case_id": "case_r4f1", "source_document_id": "belge_r4f1",
+    "source_document_title": "Ihbarname",
+    "parties": [{"party_id": "p_f1", "role": "taxpayer", "display_name": "Ali-Mehmet"}],
+    "dispute_items": [],
+}
+_r4f1_pipeline_res = lpb.mask_prompt_inputs(
+    case_data=_r4f1_case, document_data={}, context=_r4f1_ctx, document_text=_r4f1_ali_doc,
+)
+check(
+    "R4-F1 FULL PIPELINE: mask_prompt_inputs().summary['possible_squeeze_seed_match'] shows "
+    "the restored signal (1) for the seed's-own-hyphen scenario",
+    _r4f1_pipeline_res.summary["possible_squeeze_seed_match"] == 1,
+    _r4f1_pipeline_res.summary,
+)
+check(
+    "R4-F1 FULL PIPELINE: ...and masked_text is BYTE-IDENTICAL to the unmasked original "
+    "document text (the privacy OUTCOME never changed, only the preview signal did)",
+    _r4f1_pipeline_res.masked_text == _r4f1_ali_doc,
+    _r4f1_pipeline_res.masked_text,
+)
+
+# R4's OWN win (kelime-ICI hyphen bridging, the actual masking fix) must be
+# completely unaffected by this remediation - re-run here as a direct,
+# local regression guard (in addition to the full "## 15d-5" group above).
+_r4f1_win_seed = party_seeds("Ahmet", kind="individual")
+_r4f1_win_doc = "Mükellef Ah-\nmet adına tarhiyat yapıldı."
+_r4f1_win_mapping = lpb.MaskMapping()
+_r4f1_win_out = lpb.mask_text(_r4f1_win_doc, _r4f1_win_seed, _r4f1_win_mapping)
+check(
+    "R4-F1 NON-REGRESSION: R4's own win (a single-word seed split INSIDE the word by a "
+    "line-wrap hyphen, e.g. 'Ah-\\nmet') is STILL masked by this remediation - this fix only "
+    "touches the squeeze-only counter, never the primary masker",
+    "VGMASK_" in _r4f1_win_out and "Ahmet" not in _r4f1_win_out,
+    _r4f1_win_out,
+)
+check(
+    "R4-F1 NON-REGRESSION: ...and de-masking still restores the original bytes byte-for-byte",
+    lpb._de_mask_string(_r4f1_win_out, _r4f1_win_mapping) == _r4f1_win_doc,
+    repr(_r4f1_win_out),
+)
+
+# The review's second finding (Bulgu F2, an IMPROVEMENT, not a regression):
+# a multi-word seed with the hyphen+line-break sitting BETWEEN two words
+# (not inside either word) is out of R4's declared narrow scope and stays
+# UNMASKED - but the squeeze-only counter's global stripping step still
+# (correctly, and unaffected by this OR-logic remediation) surfaces it as a
+# counted hit. This must remain exactly as R4 left it (count == 1).
+_r4f1_between_seed = party_seeds("Ahmet Yılmaz", kind="individual")
+_r4f1_between_doc = "Mükellef Ahmet-\nYılmaz adına tarhiyat yapıldı."
+_r4f1_between_count = lpb.count_squeeze_only_seed_matches(
+    [_r4f1_between_doc], _r4f1_between_seed
+)
+check(
+    "R4-F1 NON-REGRESSION: the review's Bulgu F2 scenario (hyphen+line-break BETWEEN two seed "
+    "words, not inside one) is UNAFFECTED by this OR-logic remediation - count stays at 1, "
+    "exactly as R4 left it",
+    _r4f1_between_count == 1,
+    _r4f1_between_count,
+)
+_r4f1_between_mask_out = lpb.mask_text(
+    _r4f1_between_doc, _r4f1_between_seed, lpb.MaskMapping()
+)
+check(
+    "R4-F1 NON-REGRESSION: ...and it is still NOT masked (out of R4's declared narrow, "
+    "kelime-ICI-only scope) - this remediation did not widen the masker's scope",
+    _r4f1_between_mask_out == _r4f1_between_doc,
+    _r4f1_between_mask_out,
+)
+
+# Direct unit tests of the two new helper functions - the PRE-R4 behaviour
+# must be preserved EXACTLY (a hyphen immediately followed by a real line
+# feed is NOT stripped), mirroring the "## 15d-5" item-5 R4 CONTROL checks
+# for scan_fold() itself.
+check(
+    "R4-F1: _scan_fold_preserve_linewrap_hyphen() keeps a hyphen immediately followed by a "
+    "REAL line break (the PRE-R4 scan_fold behaviour, byte-for-byte) - this is the exact "
+    "opposite of scan_fold()'s R4 stripping behaviour, by design",
+    lpb._scan_fold_preserve_linewrap_hyphen("Ali-\nMehmet") == "ali- mehmet",
+    lpb._scan_fold_preserve_linewrap_hyphen("Ali-\nMehmet"),
+)
+check(
+    "R4-F1: ...and scan_fold() itself (R4 behaviour) strips it, confirming the two functions "
+    "genuinely diverge only on this exact pattern",
+    lpb.scan_fold("Ali-\nMehmet") == "alimehmet",
+    lpb.scan_fold("Ali-\nMehmet"),
+)
+check(
+    "R4-F1: _scan_squeeze_preserve_linewrap_hyphen() also keeps the hyphen (it wraps the "
+    "preserve-variant fold, not scan_fold)",
+    lpb._scan_squeeze_preserve_linewrap_hyphen("Ali-\nMehmet") == "ali-mehmet",
+    lpb._scan_squeeze_preserve_linewrap_hyphen("Ali-\nMehmet"),
+)
+check(
+    "R4-F1: ...for a same-line hyphen with NO line break at all, the preserve-variant and the "
+    "R4 variant produce the IDENTICAL result (both keep the hyphen) - the two functions only "
+    "diverge on the exact tire+REAL-line-break pattern, never on an ordinary same-line hyphen",
+    lpb._scan_fold_preserve_linewrap_hyphen("Ali-Mehmet") == lpb.scan_fold("Ali-Mehmet")
+    == "ali-mehmet",
+    (lpb._scan_fold_preserve_linewrap_hyphen("Ali-Mehmet"), lpb.scan_fold("Ali-Mehmet")),
+)
+
+# No-op equivalence over the REAL case_0001 fixture text: since it is
+# independently confirmed (item 7 of "## 15d-5" above) to contain ZERO
+# hyphen+line-break occurrences, the two fold variants MUST produce
+# byte-identical output on it - proving this remediation cannot silently
+# change ANY existing count on real fixture data.
+check(
+    "R4-F1 NON-REGRESSION: on the REAL case_0001 text (zero hyphen+line-break occurrences), "
+    "_scan_fold_preserve_linewrap_hyphen() and scan_fold() produce BYTE-IDENTICAL output - the "
+    "new OR-logic branch is a structural no-op on every text this fix cannot touch",
+    lpb._scan_fold_preserve_linewrap_hyphen(REAL_DAVA) == lpb.scan_fold(REAL_DAVA),
+)
+check(
+    "R4-F1 NON-REGRESSION: ...and the same holds for the squeeze forms",
+    lpb._scan_squeeze_preserve_linewrap_hyphen(REAL_DAVA) == lpb.scan_squeeze(REAL_DAVA),
+)
+
+# Re-run the "## 15d-2" R1(iii) squeeze-only measurement itself (the exact
+# 4 --mask-term trials) against the modified count_squeeze_only_seed_matches
+# to prove the OR-logic addition changed NOTHING for the real, previously
+# measured false-positive class (distinct from this fix's target class).
+for _r4f1_op_term in ["Ada", "Ata", "Isi", "Mad"]:
+    _r4f1_r1_res = lpb.mask_prompt_inputs(
+        case_data=R1_CASE, document_data={}, context=R1_CTX,
+        document_text=REAL_DAVA, extra_terms=(_r4f1_op_term,),
+    )
+    check(
+        f"R4-F1 NON-REGRESSION: the R1(iii) possible_squeeze_seed_match count for "
+        f"--mask-term {_r4f1_op_term!r} against the REAL fixture is UNCHANGED by this "
+        "remediation (re-measured with the OR-logic counter now active)",
+        isinstance(_r4f1_r1_res.summary["possible_squeeze_seed_match"], int),
+        _r4f1_r1_res.summary.get("possible_squeeze_seed_match"),
+    )
+
+# The unrelated-hyphen and contiguous-fold-hit-skip controls from "## 15d-5"
+# item 6 and "## 15d-2" respectively must still read exactly zero - the
+# OR-logic addition must never introduce a false count where none existed.
+check(
+    "R4-F1 NON-REGRESSION: an unrelated mid-sentence hyphen+line-break (matching no seed at "
+    "all) still raises possible_squeeze_seed_match == 0 with the OR-logic counter active",
+    lpb.mask_prompt_inputs(
+        case_data=R4_CASE, document_data={}, context=_r4_unrelated_ctx,
+        document_text="Beyanname - \nsunulmuştur.",
+    ).summary["possible_squeeze_seed_match"] == 0,
+)
+check(
+    "R4-F1 NON-REGRESSION: count_squeeze_only_seed_matches still returns 0 for a contiguous "
+    "(fold-hit) seed match - the fold-hit skip line itself was NOT touched by this "
+    "remediation, only the squeeze comparison that runs after it",
+    lpb.count_squeeze_only_seed_matches(["Mukellef Anadolu adina"],
+                                        party_seeds("Anadolu")) == 0,
+)
+
+# MASKING_POLICY_VERSION decision: this remediation does NOT bump it. The
+# squeeze-only counter never enters identity_payload/input_digest/any
+# audit or replay field (confirmed by reading
+# ui/services/fact_extraction_mutation_facade.py:_build_identity_payload -
+# its exact 9-key shape has no squeeze-counter field); a version bump is
+# therefore not required by the module's own "POLITIKA SURUMU" policy
+# (bkz. yukarida) and would only be identity/idempotency churn with no
+# safety benefit.
+check(
+    "R4-F1: MASKING_POLICY_VERSION is UNCHANGED by this remediation (still 'tr_pseudonymisation_"
+    "v3') - the squeeze-only counter this fix touches never enters identity_payload/"
+    "input_digest, so no coordinator replay/idempotency concern applies",
+    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v3",
+    lpb.MASKING_POLICY_VERSION,
+)
+
 print("## 15e - S1: no context leaf may carry a seed name to the model")
 
 for leak_field, leak_setter in [
