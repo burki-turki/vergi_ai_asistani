@@ -100,6 +100,19 @@
 # arasındaki dar pencereyi ATOMİK OLARAK KAPATTIĞINI İDDİA ETMEZ -
 # Row 19A'nın T15 kararı uyarınca bu, Row 19D (OS ACL / service
 # identity) borcu olarak AÇIKÇA KALIR.
+#
+# PILOT READINESS ADIM 4c - AYRI, İKİNCİ bir kapalı küme:
+# `LEGAL_RESEARCH_CASE_LAW_PILOT_POLICY_REFUSED_ROW_KEYS = {"case_law"}`.
+# `case_law` Adım 4b'nin `LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_
+# KEYS` kümesinde DEĞİLDİR (prompt'ı ID/enum-only'dir, ham case metni
+# taşımaz - bu iddia DEĞİŞMEDİ), ama pilot bar'ı ("fact_extraction
+# DIŞINDAKİ bütün AI yolları pilotta fail-closed olmalı") veri
+# hassasiyetinden BAĞIMSIZ, koşulsuz bir kapatma gerektirir. Bu yüzden
+# AYRI bir küme + AYRI, DOĞRU gerekçeli bir mesaj fonksiyonu kullanılır
+# (mevcut `raw_text_egress_refusal_message()`'ın YANLIŞ bir gerekçeyle
+# - "ham metin taşır" - genişletilmesi YERİNE): `LEGAL_RESEARCH_CASE_
+# LAW_RAW_TEXT_REFUSED_ROW_KEYS` DOKUNULMADAN kalır, `_check_argument_
+# shapes()` İKİNCİ, bağımsız bir kontrol kazanır.
 # ============================================================
 
 from __future__ import annotations
@@ -175,6 +188,24 @@ _AGENT_VERSION_ATTR_BY_ROW_KEY = {
 
 LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS = frozenset({
     "legal_research",
+})
+
+# ----------------------------------------------------------------
+# PILOT READINESS ADIM 4c - PİLOT POLİTİKASI, HAM METİNDEN BAĞIMSIZ.
+#
+# `case_law` ajanının prompt'u ID/enum-only'dur (ham case metni
+# TAŞIMAZ - bu iddia yukarıdaki kümenin gerekçesiyle çelişmez). Ama
+# kullanıcının pilot bar'ı bunu YETERSİZ SAYAR: "Bunun dışındaki bütün
+# AI yolları pilotta fail-closed olmalı" - veri hassasiyetinden
+# BAĞIMSIZ, TEKNİK olarak inoperable olma şartı. Bu yüzden `case_law`
+# AYRI bir kümede, AYRI ve DOĞRU bir gerekçeyle kapatılır - yukarıdaki
+# `LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS`'e EKLENMEZ (bu, o
+# kümenin SABİT mesajını - "ham fact cümlesi taşır" - `case_law` için
+# YANLIŞ biçimde göstermiş olurdu).
+# ----------------------------------------------------------------
+
+LEGAL_RESEARCH_CASE_LAW_PILOT_POLICY_REFUSED_ROW_KEYS = frozenset({
+    "case_law",
 })
 
 _MANIFEST_VERSION_BY_ROW_KEY = {
@@ -279,6 +310,17 @@ class LegalResearchCaseLawRawTextEgressRefusedError(LegalResearchCaseLawArgument
     fırlatılır ve `ui.cli_mutate`'in mevcut, DEĞİŞTİRİLMEMİŞ
     `_is_known_domain_error` tanıma mekanizması bunu tek satırlık temiz
     bir hata olarak basar. `case_law` bu reddin DIŞINDADIR."""
+
+
+class LegalResearchCaseLawPilotPolicyEgressRefusedError(LegalResearchCaseLawArgumentError):
+    """PILOT READINESS ADIM 4c: ID/enum-only prompt taşıyan `case_law`
+    ailesi için ÜRETİM istemcisiyle agent modu istendi - pilot
+    politikası veri hassasiyetinden BAĞIMSIZ olarak bunu reddeder.
+    `LegalResearchCaseLawArgumentError` alt sınıfıdır (dolayısıyla
+    `ApprovalUiError`), yani HERHANGİ bir DB/filesystem I/O'sundan ÖNCE
+    fırlatılır ve `ui.cli_mutate`'in mevcut, DEĞİŞTİRİLMEMİŞ
+    `_is_known_domain_error` tanıma mekanizması bunu tek satırlık temiz
+    bir hata olarak basar."""
 
 
 class LegalResearchCaseLawInputContainmentError(ApprovalUiError):
@@ -774,6 +816,23 @@ def raw_text_egress_refusal_message(row_key: str) -> str:
     )
 
 
+def pilot_policy_egress_refusal_message(row_key: str) -> str:
+    """PILOT READINESS ADIM 4c: SABİT ret metni (tek otorite - facade
+    burada fırlatır, `ui.cli_mutate` kendi usage-shape katmanında AYNI
+    fonksiyonu çağırır; iki katman farklı metinlere kayamaz). Hiçbir
+    path/exception/case verisi yansıtmaz. `raw_text_egress_refusal_
+    message()`'dan BİLİNÇLİ olarak AYRI ve FARKLI metindir - `case_law`
+    için ham metin taşıdığı İDDİA EDİLMEZ (bu iddia YANLIŞ olurdu),
+    gerekçe yalnız pilot politikasıdır."""
+    return (
+        f"HATA: --row-key {row_key} için agent modu KAPALIDIR (Pilot Readiness Adım 4c): "
+        "bu ailenin prompt'u yalnız ID/enum-only içerik taşısa da (ham case metni TAŞIMAZ), "
+        "pilot süresince fact_extraction DIŞINDA hiçbir outbound AI yolu açık tutulmaz. "
+        "--with-agent bu ailede preview'da da apply'da da kabul edilmez; deterministik mod "
+        "(--with-agent OLMADAN) çalışmaya devam eder."
+    )
+
+
 def _check_argument_shapes(
     row_key: str,
     expected_input_digest=None,
@@ -782,11 +841,12 @@ def _check_argument_shapes(
     with_agent: bool = False,
     llm_client=None,
 ):
-    """PILOT READINESS ADIM 4b additive genişletme: `with_agent`/
+    """PILOT READINESS ADIM 4b/4c additive genişletme: `with_agent`/
     `llm_client` keyword-only VE defaultlu - mevcut her çağıran
-    (kwarg'sız) davranış olarak BYTE-DEĞİŞMEZ kalır. Ret kontrolü
+    (kwarg'sız) davranış olarak BYTE-DEĞİŞMEZ kalır. Ret kontrolleri
     bilinmeyen-row_key `KeyError`'ından SONRA gelir ve AİLE BAZLIDIR:
-    `case_law` bu facade'i paylaşır ama ASLA reddedilmez."""
+    `case_law` bu facade'i paylaşır ama HER İKİ kümede de ASLA
+    (`legal_research`) VEYA YALNIZ ikinci kümede (`case_law`) yer alır."""
     if row_key not in LEGAL_RESEARCH_CASE_LAW_ROW_KEY_TO_MODULE_NAME:
         raise KeyError(f"row_key={row_key!r} is not a known legal-research/case-law family")
 
@@ -799,6 +859,17 @@ def _check_argument_shapes(
     ):
         raise LegalResearchCaseLawRawTextEgressRefusedError(
             raw_text_egress_refusal_message(row_key)
+        )
+
+    # PILOT READINESS ADIM 4c: İKİNCİ, bağımsız kontrol - AYNI
+    # `llm_client is None` muafiyeti, AYRI küme, AYRI mesaj/exception.
+    if (
+        row_key in LEGAL_RESEARCH_CASE_LAW_PILOT_POLICY_REFUSED_ROW_KEYS
+        and with_agent
+        and llm_client is None
+    ):
+        raise LegalResearchCaseLawPilotPolicyEgressRefusedError(
+            pilot_policy_egress_refusal_message(row_key)
         )
 
     if for_apply and (

@@ -681,26 +681,105 @@ except Exception as error:  # noqa: BLE001
         False, f"{type(error).__name__}: {error}",
     )
 
-# --- case_law REGRESSION: the whole point of the per-family split. ---
-try:
-    fac._check_argument_shapes("case_law", for_apply=False, with_agent=True, llm_client=None)
-    fac._check_argument_shapes(
-        "case_law", "somedigest", for_apply=True, with_agent=True, llm_client=None,
+# ============================================================
+# PILOT READINESS ADIM 4c - PILOT-POLICY EGRESS REFUSAL for `case_law`
+# (facade layer), a SEPARATE, additional gate from Adım 4b's raw-text
+# one above (CLAUDE.md's own characterization of case_law's prompt as
+# ID/enum-only is UNCHANGED and NOT contradicted here). The "case_law
+# REGRESSION" block that used to stand HERE, proving case_law was
+# deliberately NOT refused, is INVERTED (same discipline as CLAUDE.md's
+# Row 19B `"sends no client_secret"` -> real `client_secret_post`
+# assertion precedent - the assertion is not deleted, it is turned to
+# point the other way, with the reason recorded): case_law is now ALSO
+# refused, for a SEPARATE reason (pilot policy, not raw text), with a
+# SEPARATE exception class and message. `legal_research`'s Adım 4b
+# raw-text refusal above is completely UNTOUCHED.
+# ============================================================
+
+check(
+    "LEGAL_RESEARCH_CASE_LAW_PILOT_POLICY_REFUSED_ROW_KEYS is EXACTLY {'case_law'} - a SEPARATE "
+    "set from LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS, which is UNCHANGED above",
+    fac.LEGAL_RESEARCH_CASE_LAW_PILOT_POLICY_REFUSED_ROW_KEYS == frozenset({"case_law"}),
+    f"got: {sorted(fac.LEGAL_RESEARCH_CASE_LAW_PILOT_POLICY_REFUSED_ROW_KEYS)}",
+)
+check(
+    "the two refused sets (raw-text/Adım 4b and pilot-policy/Adım 4c) are pairwise DISJOINT and "
+    "their UNION is EXACTLY the full two-family legal_research_case_law universe - zero open "
+    "families remain",
+    fac.LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS.isdisjoint(
+        fac.LEGAL_RESEARCH_CASE_LAW_PILOT_POLICY_REFUSED_ROW_KEYS
     )
+    and (
+        fac.LEGAL_RESEARCH_CASE_LAW_RAW_TEXT_REFUSED_ROW_KEYS
+        | fac.LEGAL_RESEARCH_CASE_LAW_PILOT_POLICY_REFUSED_ROW_KEYS
+    ) == set(fac.LEGAL_RESEARCH_CASE_LAW_ROW_KEY_TO_MODULE_NAME),
+)
+check(
+    "LegalResearchCaseLawPilotPolicyEgressRefusedError subclasses LegalResearchCaseLawArgumentError "
+    "(and thus ApprovalUiError) - ui.cli_mutate's UNCHANGED _is_known_domain_error prints it as "
+    "one clean line, never a traceback",
+    issubclass(
+        fac.LegalResearchCaseLawPilotPolicyEgressRefusedError, fac.LegalResearchCaseLawArgumentError,
+    )
+    and issubclass(fac.LegalResearchCaseLawPilotPolicyEgressRefusedError, _common_lrcl.ApprovalUiError),
+)
+
+expect_raises(
+    fac.LegalResearchCaseLawPilotPolicyEgressRefusedError,
+    lambda: fac._check_argument_shapes(
+        "case_law", for_apply=False, with_agent=True, llm_client=None,
+    ),
+    "_check_argument_shapes(case_law, PREVIEW, with_agent=True, production client) is REFUSED by "
+    "the pilot-policy gate",
+)
+expect_raises(
+    fac.LegalResearchCaseLawPilotPolicyEgressRefusedError,
+    lambda: fac._check_argument_shapes(
+        "case_law", "somedigest", for_apply=True, with_agent=True, llm_client=None,
+    ),
+    "_check_argument_shapes(case_law, APPLY, with_agent=True, production client) is REFUSED by "
+    "the pilot-policy gate",
+)
+
+_msg_4c = fac.pilot_policy_egress_refusal_message("case_law")
+check(
+    "case_law: the fixed pilot-policy refusal message names the family AND --with-agent, is a "
+    "DIFFERENT message from raw_text_egress_refusal_message (does not falsely claim case_law "
+    "carries raw text), and leaks no filesystem path / case data",
+    "case_law" in _msg_4c and "--with-agent" in _msg_4c and "Adım 4c" in _msg_4c
+    and _msg_4c != fac.raw_text_egress_refusal_message("case_law")
+    and "ham fact cümlesi" not in _msg_4c
+    and "C:" not in _msg_4c and "\\" not in _msg_4c
+    and "data/" not in _msg_4c and "case_" not in _msg_4c.replace("case_law", "")
+    and str(REPO_ROOT) not in _msg_4c,
+    f"message={_msg_4c!r}",
+)
+
+try:
     fac._check_argument_shapes(
         "case_law", for_apply=False, with_agent=True, llm_client=_FakeLLMClient(),
     )
-    fac._check_argument_shapes("case_law", for_apply=False, with_agent=False, llm_client=None)
     check(
-        "case_law: with_agent=True + PRODUCTION client is NOT refused on preview OR apply "
-        "(PERMANENT per-family regression proof - case_law shares this facade with the refused "
-        "legal_research family and must stay byte-identical in behaviour)",
+        "case_law: an INJECTED test client is NOT refused by the pilot-policy gate either - the "
+        "DI seam (which never reaches an external model) is preserved",
         True,
     )
 except Exception as error:  # noqa: BLE001
     check(
-        "case_law: with_agent=True + PRODUCTION client is NOT refused on preview OR apply "
-        "(PERMANENT per-family regression proof)",
+        "case_law: an INJECTED test client is NOT refused by the pilot-policy gate either - the "
+        "DI seam (which never reaches an external model) is preserved",
+        False, f"{type(error).__name__}: {error}",
+    )
+
+try:
+    fac._check_argument_shapes("case_law", for_apply=False, with_agent=False, llm_client=None)
+    fac._check_argument_shapes(
+        "case_law", "somedigest", for_apply=True, with_agent=False, llm_client=None,
+    )
+    check("case_law: DETERMINISTIC mode (with_agent=False) is completely unaffected", True)
+except Exception as error:  # noqa: BLE001
+    check(
+        "case_law: DETERMINISTIC mode (with_agent=False) is completely unaffected",
         False, f"{type(error).__name__}: {error}",
     )
 
@@ -769,27 +848,66 @@ for _for_apply, _call in [
         f"unexpected import_module calls: {_import_calls_lrcl_4b}",
     )
 
-try:
-    fac.apply_generation(
-        "case_law", CASE_ID, "somedigest", with_agent=True, allow_network=True, llm_client=None,
+# PILOT READINESS ADIM 4c: the SAME ordering proof, for case_law's
+# pilot-policy refusal (a SEPARATE exception type from legal_research's
+# raw-text one above) - preview/apply is refused BEFORE any engine-
+# module import or authz repository access.
+for _for_apply_4c, _call_4c in [
+    (False, lambda: fac.preview_generation(
+        "case_law", CASE_ID, with_agent=True, llm_client=None,
         principal=_DummyPrincipal4b(), authz_repository=_ExplodingAuthzRepository4b(),
-    )
-    check("apply_generation(case_law) reaches the authz layer (not refused)", False,
-          "no exception at all")
-except fac.LegalResearchCaseLawRawTextEgressRefusedError as error:
-    check("apply_generation(case_law) reaches the authz layer (not refused)", False,
-          f"wrongly refused: {error}")
-except AssertionError as error:
+    )),
+    (True, lambda: fac.apply_generation(
+        "case_law", CASE_ID, "somedigest", with_agent=True, allow_network=True,
+        llm_client=None, principal=_DummyPrincipal4b(),
+        authz_repository=_ExplodingAuthzRepository4b(),
+        conn_factory=lambda: (_ for _ in ()).throw(
+            AssertionError("a mutation connection was opened - refusal must fire first")
+        ),
+    )),
+]:
+    _label_4c = "apply_generation" if _for_apply_4c else "preview_generation"
+    _import_calls_lrcl_4b.clear()
+    with mock.patch.object(importlib, "import_module", _recording_import_module_4b):
+        expect_raises(
+            fac.LegalResearchCaseLawPilotPolicyEgressRefusedError, _call_4c,
+            f"{_label_4c}(case_law, with_agent=True, production client) is REFUSED by the "
+            "pilot-policy gate",
+        )
     check(
-        "apply_generation(case_law) with_agent=True + --allow-network + production client gets "
-        "PAST the argument-shape layer and reaches the authz repository - the Adım 4b refusal is "
-        "strictly family-scoped even inside this SHARED facade",
-        "authz repository was touched" in str(error),
-        f"unexpected AssertionError: {error}",
+        f"{_label_4c}(case_law): ZERO engine-module imports, ZERO authz repository access and "
+        "ZERO mutation connection before the pilot-policy refusal",
+        _import_calls_lrcl_4b == [],
+        f"unexpected import_module calls: {_import_calls_lrcl_4b}",
     )
-except Exception as error:  # noqa: BLE001
-    check("apply_generation(case_law) reaches the authz layer (not refused)", False,
-          f"unexpected {type(error).__name__}: {error}")
+
+# GLOBAL REGRESSION PROOF: after BOTH refused sets, NO row_key in the
+# whole two-family universe remains open - apply_generation(row_key)
+# for every family reaches EITHER refusal, never the authz layer.
+for _row_key_4c in sorted(fac.LEGAL_RESEARCH_CASE_LAW_ROW_KEY_TO_MODULE_NAME):
+    try:
+        fac.apply_generation(
+            _row_key_4c, CASE_ID, "somedigest", with_agent=True, allow_network=True,
+            llm_client=None, principal=_DummyPrincipal4b(),
+            authz_repository=_ExplodingAuthzRepository4b(),
+        )
+        check(
+            f"apply_generation({_row_key_4c}) with_agent=True + production client is REFUSED "
+            "(GLOBAL PILOT INVARIANT: zero open legal_research_case_law families remain)",
+            False, "no exception at all - this family is WRONGLY still open",
+        )
+    except (fac.LegalResearchCaseLawRawTextEgressRefusedError, fac.LegalResearchCaseLawPilotPolicyEgressRefusedError):
+        check(
+            f"apply_generation({_row_key_4c}) with_agent=True + production client is REFUSED "
+            "(GLOBAL PILOT INVARIANT: zero open legal_research_case_law families remain)",
+            True,
+        )
+    except Exception as error:  # noqa: BLE001
+        check(
+            f"apply_generation({_row_key_4c}) with_agent=True + production client is REFUSED "
+            "(GLOBAL PILOT INVARIANT: zero open legal_research_case_law families remain)",
+            False, f"unexpected {type(error).__name__}: {error}",
+        )
 
 
 print(f"--- test_legal_research_case_law_mutation_facade_isolated: {passed} passed, {failed} failed ---")

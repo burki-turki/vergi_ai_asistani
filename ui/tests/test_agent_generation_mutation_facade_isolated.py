@@ -420,21 +420,100 @@ for _refused in sorted(agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS):
             False, f"{type(error).__name__}: {error}",
         )
 
-for _open_family in ["risk_strategy", "drafting"]:
+# ============================================================
+# PILOT READINESS ADIM 4c - PILOT-POLICY EGRESS REFUSAL (facade layer),
+# a SEPARATE, additional gate for the TWO families whose prompt is
+# ID/enum-only (`risk_strategy`/`drafting` - CLAUDE.md's own
+# characterization of these two families as NOT carrying raw case text
+# is UNCHANGED and NOT contradicted here). The `for _open_family in
+# ["risk_strategy", "drafting"]:` positive-control block that used to
+# stand HERE is INVERTED (same discipline as CLAUDE.md's Row 19B
+# `"sends no client_secret"` -> real `client_secret_post` assertion
+# precedent - the assertion is not deleted, it is turned to point the
+# other way, with the reason recorded): these two families are now
+# ALSO refused, for a SEPARATE reason (pilot policy, not raw text),
+# with a SEPARATE exception class and message.
+# ============================================================
+
+check(
+    "AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS is EXACTLY {'risk_strategy', 'drafting'} - a "
+    "SEPARATE set from AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS, which is UNCHANGED above",
+    agf.AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS == frozenset({"risk_strategy", "drafting"}),
+    f"got: {sorted(agf.AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS)}",
+)
+check(
+    "the two refused sets (raw-text/Adım 4b and pilot-policy/Adım 4c) are pairwise DISJOINT and "
+    "their UNION is EXACTLY the full five-family agent_generation universe - zero open families "
+    "remain",
+    agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS.isdisjoint(
+        agf.AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS
+    )
+    and (
+        agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS
+        | agf.AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS
+    ) == set(agf.AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME),
+)
+check(
+    "AgentGenerationPilotPolicyEgressRefusedError subclasses AgentGenerationArgumentError (and "
+    "thus ApprovalUiError) - so ui.cli_mutate's UNCHANGED _is_known_domain_error prints it as one "
+    "clean line, never a traceback",
+    issubclass(agf.AgentGenerationPilotPolicyEgressRefusedError, agf.AgentGenerationArgumentError)
+    and issubclass(agf.AgentGenerationPilotPolicyEgressRefusedError, _common.ApprovalUiError),
+)
+
+for _pilot_refused in sorted(agf.AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS):
+    expect_raises(
+        agf.AgentGenerationPilotPolicyEgressRefusedError,
+        lambda rk=_pilot_refused: agf._check_argument_shapes(
+            rk, for_apply=False, with_agent=True, llm_client=None,
+        ),
+        f"_check_argument_shapes({_pilot_refused}, PREVIEW, with_agent=True, production client) "
+        "is REFUSED by the pilot-policy gate",
+    )
+    expect_raises(
+        agf.AgentGenerationPilotPolicyEgressRefusedError,
+        lambda rk=_pilot_refused: agf._check_argument_shapes(
+            rk, "somedigest", for_apply=True, with_agent=True, llm_client=None,
+        ),
+        f"_check_argument_shapes({_pilot_refused}, APPLY, with_agent=True, production client) is "
+        "REFUSED by the pilot-policy gate",
+    )
+    _pilot_msg = agf.pilot_policy_egress_refusal_message(_pilot_refused)
+    check(
+        f"{_pilot_refused}: the fixed pilot-policy refusal message names the family AND "
+        "--with-agent, is a DIFFERENT message from raw_text_egress_refusal_message (does not "
+        "falsely claim this family carries raw text), and leaks no filesystem path / case data",
+        _pilot_refused in _pilot_msg and "--with-agent" in _pilot_msg and "Adım 4c" in _pilot_msg
+        and _pilot_msg != agf.raw_text_egress_refusal_message(_pilot_refused)
+        and "ham fact cümlesi" not in _pilot_msg
+        and "C:" not in _pilot_msg and "\\" not in _pilot_msg
+        and "data/" not in _pilot_msg and "case_" not in _pilot_msg and str(REPO_ROOT) not in _pilot_msg,
+        f"message={_pilot_msg!r}",
+    )
     try:
-        agf._check_argument_shapes(_open_family, for_apply=False, with_agent=True, llm_client=None)
         agf._check_argument_shapes(
-            _open_family, "somedigest", for_apply=True, with_agent=True, llm_client=None,
+            _pilot_refused, for_apply=False, with_agent=True, llm_client=_FakeLLMClient(),
         )
         check(
-            f"{_open_family}: with_agent=True + PRODUCTION client is NOT refused (deliberately "
-            "still open - this family's prompt carries no raw case text)",
+            f"{_pilot_refused}: an INJECTED test client is NOT refused by the pilot-policy gate "
+            "either - the DI seam that never reaches an external model is preserved",
             True,
         )
     except Exception as error:  # noqa: BLE001
         check(
-            f"{_open_family}: with_agent=True + PRODUCTION client is NOT refused (deliberately "
-            "still open - this family's prompt carries no raw case text)",
+            f"{_pilot_refused}: an INJECTED test client is NOT refused by the pilot-policy gate "
+            "either - the DI seam that never reaches an external model is preserved",
+            False, f"{type(error).__name__}: {error}",
+        )
+    try:
+        agf._check_argument_shapes(_pilot_refused, for_apply=False, with_agent=False, llm_client=None)
+        agf._check_argument_shapes(
+            _pilot_refused, "somedigest", for_apply=True, with_agent=False, llm_client=None,
+        )
+        check(f"{_pilot_refused}: DETERMINISTIC mode (with_agent=False) is completely unaffected", True)
+    except Exception as error:  # noqa: BLE001
+        check(
+            f"{_pilot_refused}: DETERMINISTIC mode (with_agent=False) is completely unaffected",
             False, f"{type(error).__name__}: {error}",
         )
 
@@ -514,32 +593,77 @@ for _refused in sorted(agf.AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS):
         f"unexpected import_module calls: {_import_calls_4b}",
     )
 
-# The same apply path for a family that is NOT refused must get PAST the
-# argument-shape layer and reach the authz repository (proving the
-# refusal above is genuinely family-scoped, not a blanket rejection).
-for _open_family in ["risk_strategy", "drafting"]:
+# PILOT READINESS ADIM 4c: the SAME ordering proof, for the pilot-policy
+# refused set - preview/apply is refused BEFORE any engine-module
+# import or authz repository access, exactly like the raw-text set
+# above (a SEPARATE loop, a SEPARATE exception type).
+for _pilot_refused in sorted(agf.AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS):
+    _import_calls_4b.clear()
+    with mock.patch.object(importlib, "import_module", _recording_import_module):
+        expect_raises(
+            agf.AgentGenerationPilotPolicyEgressRefusedError,
+            lambda rk=_pilot_refused: agf.preview_generation(
+                rk, CASE_ID, with_agent=True, llm_client=None,
+                principal=_DummyPrincipal(), authz_repository=_ExplodingAuthzRepository(),
+            ),
+            f"preview_generation({_pilot_refused}, with_agent=True, production client) is "
+            "REFUSED by the pilot-policy gate",
+        )
+    check(
+        f"preview_generation({_pilot_refused}): ZERO engine-module imports and ZERO authz "
+        "repository access before the pilot-policy refusal",
+        _import_calls_4b == [],
+        f"unexpected import_module calls: {_import_calls_4b}",
+    )
+
+    _import_calls_4b.clear()
+    with mock.patch.object(importlib, "import_module", _recording_import_module):
+        expect_raises(
+            agf.AgentGenerationPilotPolicyEgressRefusedError,
+            lambda rk=_pilot_refused: agf.apply_generation(
+                rk, CASE_ID, "somedigest", with_agent=True, allow_network=True, llm_client=None,
+                principal=_DummyPrincipal(), authz_repository=_ExplodingAuthzRepository(),
+                conn_factory=lambda: (_ for _ in ()).throw(
+                    AssertionError("a mutation connection was opened - refusal must fire first")
+                ),
+            ),
+            f"apply_generation({_pilot_refused}, with_agent=True, --allow-network equivalent, "
+            "production client) is REFUSED by the pilot-policy gate",
+        )
+    check(
+        f"apply_generation({_pilot_refused}): ZERO engine-module imports, ZERO authz repository "
+        "access and ZERO mutation connection before the pilot-policy refusal",
+        _import_calls_4b == [],
+        f"unexpected import_module calls: {_import_calls_4b}",
+    )
+
+# GLOBAL REGRESSION PROOF: after BOTH refused sets, NO row_key in the
+# whole five-family universe remains open - apply_generation(row_key)
+# for every family reaches EITHER refusal, never the authz layer.
+for _row_key in sorted(agf.AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME):
     try:
         agf.apply_generation(
-            _open_family, CASE_ID, "somedigest", with_agent=True, allow_network=True,
+            _row_key, CASE_ID, "somedigest", with_agent=True, allow_network=True,
             llm_client=None, principal=_DummyPrincipal(),
             authz_repository=_ExplodingAuthzRepository(),
         )
-        check(f"apply_generation({_open_family}) reaches the authz layer (not refused)", False,
-              "no exception at all")
-    except agf.AgentGenerationRawTextEgressRefusedError as error:
-        check(f"apply_generation({_open_family}) reaches the authz layer (not refused)", False,
-              f"wrongly refused: {error}")
-    except AssertionError as error:
         check(
-            f"apply_generation({_open_family}) with_agent=True + production client gets PAST the "
-            "argument-shape layer and reaches the authz repository - the Adım 4b refusal is "
-            "strictly family-scoped",
-            "authz repository was touched" in str(error),
-            f"unexpected AssertionError: {error}",
+            f"apply_generation({_row_key}) with_agent=True + production client is REFUSED "
+            "(GLOBAL PILOT INVARIANT: zero open agent_generation families remain)",
+            False, "no exception at all - this family is WRONGLY still open",
+        )
+    except (agf.AgentGenerationRawTextEgressRefusedError, agf.AgentGenerationPilotPolicyEgressRefusedError):
+        check(
+            f"apply_generation({_row_key}) with_agent=True + production client is REFUSED "
+            "(GLOBAL PILOT INVARIANT: zero open agent_generation families remain)",
+            True,
         )
     except Exception as error:  # noqa: BLE001
-        check(f"apply_generation({_open_family}) reaches the authz layer (not refused)", False,
-              f"unexpected {type(error).__name__}: {error}")
+        check(
+            f"apply_generation({_row_key}) with_agent=True + production client is REFUSED "
+            "(GLOBAL PILOT INVARIANT: zero open agent_generation families remain)",
+            False, f"unexpected {type(error).__name__}: {error}",
+        )
 
 
 print(f"--- test_agent_generation_mutation_facade_isolated: {passed} passed, {failed} failed ---")

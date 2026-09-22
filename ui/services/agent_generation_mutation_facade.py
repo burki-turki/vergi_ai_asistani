@@ -104,6 +104,19 @@
 # arasındaki dar pencereyi ATOMİK OLARAK KAPATTIĞINI İDDİA ETMEZ -
 # Row 19A'nın T15 kararı uyarınca bu, Row 19D (OS ACL / service
 # identity) borcu olarak AÇIKÇA KALIR.
+#
+# PILOT READINESS ADIM 4c - AYRI, İKİNCİ bir kapalı küme:
+# `AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS`. `risk_strategy` ve
+# `drafting` Adım 4b'nin `AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS`
+# kümesinde DEĞİLDİR (prompt'ları ID/enum-only'dir, ham case metni
+# taşımaz - bu iddia DEĞİŞMEDİ), ama pilot bar'ı ("fact_extraction
+# DIŞINDAKİ bütün AI yolları pilotta fail-closed olmalı") veri
+# hassasiyetinden BAĞIMSIZ, koşulsuz bir kapatma gerektirir. Bu yüzden
+# AYRI bir küme + AYRI, DOĞRU gerekçeli bir mesaj fonksiyonu kullanılır
+# (mevcut `raw_text_egress_refusal_message()`'ın YANLIŞ bir gerekçeyle
+# - "ham metin taşır" - genişletilmesi YERİNE): `AGENT_GENERATION_RAW_
+# TEXT_REFUSED_ROW_KEYS` DOKUNULMADAN kalır, `_check_argument_shapes()`
+# İKİNCİ, bağımsız bir kontrol kazanır.
 # ============================================================
 
 from __future__ import annotations
@@ -207,6 +220,25 @@ AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS = frozenset({
     "argument",
 })
 
+# ----------------------------------------------------------------
+# PILOT READINESS ADIM 4c - PİLOT POLİTİKASI, HAM METİNDEN BAĞIMSIZ.
+#
+# `risk_strategy` ve `drafting`'in prompt'u ID/enum-only'dur (ham case
+# metni TAŞIMAZ - bu iddia yukarıdaki kümenin gerekçesiyle çelişmez).
+# Ama kullanıcının pilot bar'ı bunu YETERSİZ SAYAR: "Bunun dışındaki
+# bütün AI yolları pilotta fail-closed olmalı" - veri hassasiyetinden
+# BAĞIMSIZ, TEKNİK olarak inoperable olma şartı. Bu yüzden bu iki aile
+# AYRI bir kümede, AYRI ve DOĞRU bir gerekçeyle kapatılır - yukarıdaki
+# `AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS`'e EKLENMEZ (bu, o kümenin
+# SABİT mesajını - "ham fact cümlesi taşır" - bu iki aile için YANLIŞ
+# biçimde göstermiş olurdu).
+# ----------------------------------------------------------------
+
+AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS = frozenset({
+    "risk_strategy",
+    "drafting",
+})
+
 _ACTION_FAMILY_PREFIX = "generation."
 
 _CASE_RESOURCE_KEY_PREFIX = "case:"
@@ -261,6 +293,17 @@ class AgentGenerationRawTextEgressRefusedError(AgentGenerationArgumentError):
     filesystem I/O'sundan ÖNCE fırlatılır ve `ui.cli_mutate`'in mevcut,
     DEĞİŞTİRİLMEMİŞ `_is_known_domain_error` tanıma mekanizması bunu
     tek satırlık temiz bir hata olarak basar."""
+
+
+class AgentGenerationPilotPolicyEgressRefusedError(AgentGenerationArgumentError):
+    """PILOT READINESS ADIM 4c: ID/enum-only prompt taşıyan bir aile
+    (`risk_strategy`/`drafting`) için ÜRETİM istemcisiyle agent modu
+    istendi - pilot politikası veri hassasiyetinden BAĞIMSIZ olarak bunu
+    reddeder. `AgentGenerationArgumentError` alt sınıfıdır (dolayısıyla
+    `ApprovalUiError`), yani HERHANGİ bir DB/filesystem I/O'sundan ÖNCE
+    fırlatılır ve `ui.cli_mutate`'in mevcut, DEĞİŞTİRİLMEMİŞ
+    `_is_known_domain_error` tanıma mekanizması bunu tek satırlık temiz
+    bir hata olarak basar."""
 
 
 class AgentGenerationInputContainmentError(ApprovalUiError):
@@ -863,6 +906,23 @@ def raw_text_egress_refusal_message(row_key: str) -> str:
     )
 
 
+def pilot_policy_egress_refusal_message(row_key: str) -> str:
+    """PILOT READINESS ADIM 4c: SABİT ret metni (tek otorite - facade
+    burada fırlatır, `ui.cli_mutate` kendi usage-shape katmanında AYNI
+    fonksiyonu çağırır; iki katman farklı metinlere kayamaz). Hiçbir
+    path/exception/case verisi yansıtmaz. `raw_text_egress_refusal_
+    message()`'dan BİLİNÇLİ olarak AYRI ve FARKLI metindir - bu ailenin
+    ham metin taşıdığı İDDİA EDİLMEZ (bu iddia bu aile için YANLIŞ
+    olurdu), gerekçe yalnız pilot politikasıdır."""
+    return (
+        f"HATA: --row-key {row_key} için agent modu KAPALIDIR (Pilot Readiness Adım 4c): "
+        "bu ailenin prompt'u yalnız ID/enum-only içerik taşısa da (ham case metni TAŞIMAZ), "
+        "pilot süresince fact_extraction DIŞINDA hiçbir outbound AI yolu açık tutulmaz. "
+        "--with-agent bu ailede preview'da da apply'da da kabul edilmez; deterministik mod "
+        "(--with-agent OLMADAN) çalışmaya devam eder."
+    )
+
+
 def _check_argument_shapes(
     row_key: str,
     expected_input_digest=None,
@@ -871,11 +931,13 @@ def _check_argument_shapes(
     with_agent: bool = False,
     llm_client=None,
 ):
-    """PILOT READINESS ADIM 4b additive genişletme: `with_agent`/
+    """PILOT READINESS ADIM 4b/4c additive genişletme: `with_agent`/
     `llm_client` keyword-only VE defaultlu - mevcut her çağıran
-    (kwarg'sız) davranış olarak BYTE-DEĞİŞMEZ kalır. Ret kontrolü
+    (kwarg'sız) davranış olarak BYTE-DEĞİŞMEZ kalır. Ret kontrolleri
     bilinmeyen-row_key `KeyError`'ından SONRA gelir (aksi hâlde
-    bilinmeyen bir row_key için exception TÜRÜ değişirdi)."""
+    bilinmeyen bir row_key için exception TÜRÜ değişirdi). İki kontrol
+    BAĞIMSIZDIR - AYRI kümeler, AYRI mesajlar, AYRI exception sınıfları;
+    hiçbir row_key her iki kümede birden OLAMAZ (izole testte kanıtlı)."""
     if row_key not in AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME:
         raise KeyError(f"row_key={row_key!r} is not a known agent-generation family")
 
@@ -885,6 +947,13 @@ def _check_argument_shapes(
     # hiçbir zaman ulaşmaz.
     if row_key in AGENT_GENERATION_RAW_TEXT_REFUSED_ROW_KEYS and with_agent and llm_client is None:
         raise AgentGenerationRawTextEgressRefusedError(raw_text_egress_refusal_message(row_key))
+
+    # PILOT READINESS ADIM 4c: İKİNCİ, bağımsız kontrol - AYNI
+    # `llm_client is None` muafiyeti, AYRI küme, AYRI mesaj/exception.
+    if row_key in AGENT_GENERATION_PILOT_POLICY_REFUSED_ROW_KEYS and with_agent and llm_client is None:
+        raise AgentGenerationPilotPolicyEgressRefusedError(
+            pilot_policy_egress_refusal_message(row_key)
+        )
 
     if for_apply and (
         not isinstance(expected_input_digest, str) or not expected_input_digest.strip()

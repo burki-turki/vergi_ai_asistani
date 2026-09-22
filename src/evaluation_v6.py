@@ -1489,5 +1489,31 @@ def run_all_tests():
 # MAIN
 # ============================================================
 
+# PILOT READINESS ADIM 4c - KAPALI EGRESS GİRİŞ NOKTASI (Katman 2 -
+# UX/tutarlılık; asıl mekanizma `src/rag.py`'nin KENDİ `_get_client()`
+# choke point'idir). Bu dosyanın KENDİ, `evaluation.py`'nin `__main__`
+# bloğundan BAĞIMSIZ bir reddi GEREKİR: `run_all_tests()` (yukarıda, bu
+# modülün KENDİ fonksiyonu) `base_evaluation.run_all_tests()`'i
+# DOĞRUDAN çağırır - `evaluation.py`'yi bir SCRIPT olarak DEĞİL, bir
+# MODÜL olarak import eder, bu yüzden `evaluation.py`'nin kendi
+# `__main__` reddi `python src/evaluation_v6.py` çalıştırıldığında HİÇ
+# TETİKLENMEZ. Bu ret olmadan T06 bu dosya üzerinden de TEKRAR
+# tetiklenirdi. HİÇBİR print()'ten/`run_all_tests()`'ten ÖNCE koşulsuz
+# reddeder; gerçek OS exit code'u tam olarak 2'dir.
+PILOT_POLICY_EGRESS_REFUSAL_MESSAGE = (
+    "HATA: Bu doğrudan test-çalıştırma giriş noktası artık DEVRE DIŞIDIR "
+    "(Pilot Readiness Adım 4c).\n"
+    "base_evaluation.run_all_tests() üzerinden T06 gerçek, maskesiz bir outbound Anthropic "
+    "çağrısı tetikliyordu. Pilot süresince fact_extraction DIŞINDA hiçbir outbound AI yolu "
+    "açık tutulmaz - src/rag.py'nin kendi _get_client() gate'i bu çağrıyı zaten reddeder; bu "
+    "script T01-T24'ü BOŞUNA çalıştırmamak için burada da reddeder."
+)
+
+
 if __name__ == "__main__":
+    import sys as _sys
+
+    print(PILOT_POLICY_EGRESS_REFUSAL_MESSAGE, file=_sys.stderr)
+    raise SystemExit(2)
+
     run_all_tests()

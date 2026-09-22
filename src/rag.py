@@ -50,8 +50,6 @@
 import json
 import re
 
-from anthropic import Anthropic
-
 
 # ============================================================
 # IMPORT COMPATIBILITY
@@ -105,7 +103,58 @@ RERANK_TOP_K = 3
 
 RERANK_DEBUG = False
 
-client = Anthropic()
+
+# ============================================================
+# PILOT READINESS ADIM 4c - OUTBOUND EGRESS POLICY GATE.
+#
+# Bu modül eskiden modül seviyesinde koşulsuz bir `anthropic.Anthropic()`
+# istemcisi kuruyordu (`from anthropic import Anthropic` + `client =
+# Anthropic()`, ikisi de import anında, API key olmasa dahi sessizce
+# başarıyla tamamlanıyordu). Kullanıcının pilot bar'ı ("fact_extraction
+# DIŞINDAKİ bütün AI yolları pilotta fail-closed olmalı") gereği üç
+# gerçek ağ-dokunan fonksiyon (`rewrite_query`, `rerank_candidates`,
+# `generate_answer`) artık TEK, paylaşılan bir choke point - `_get_
+# client()` - üzerinden istemciye erişir. Bu fonksiyon KOŞULSUZ (ortam
+# değişkenine BAKMADAN) reddeder; yalnız gelecekteki, AYRI, incelenmiş
+# bir kod turu bu reddi kaldırabilir (repo emsali: `src/ingest.py`/
+# `src/evaluation.py`/`src/evaluation_v6.py`'nin kendi sabit `main()`/
+# `__main__` reddi - RAG Global-Resource Bundle Foundation turunda
+# `src/ingest.py`/`src/retriever.py`'ye uygulanan AYNI import-anı-yan-
+# etkisi-kaldırma disiplini).
+#
+# `anthropic` paketinin KENDİSİ de artık modül seviyesinde import
+# EDİLMEZ - yalnız bu reddin GEÇTİĞİ (bugün hiçbir zaman) varsayımsal bir
+# gelecekte, `_get_client()`'in KENDİ gövdesi içinde LAZY olarak import
+# edilecektir. Somut, ölçülebilir sonuç: `import rag` artık `anthropic`
+# kurulu OLMAYAN bir ortamda (ör. `vergi_ui_runtime`) dahi
+# `ModuleNotFoundError` FIRLATMADAN başarıyla tamamlanır.
+# ============================================================
+
+
+class RagPilotPolicyEgressRefusedError(Exception):
+    """PILOT READINESS ADIM 4c: `src/rag.py`'nin gerçek ağa dokunan HER
+    yolu (`rewrite_query`/`rerank_candidates`/`generate_answer`, hangi
+    çağırandan geldiğinden BAĞIMSIZ) bu istisnayla koşulsuz reddedilir.
+    `Exception`'dan türer - bu modül bir `ui.services` modülü DEĞİLDİR,
+    dolayısıyla `ApprovalUiError` ailesine GİRMEZ."""
+
+
+PILOT_POLICY_EGRESS_REFUSAL_MESSAGE = (
+    "HATA: src/rag.py üzerinden outbound LLM çağrısı artık DEVRE DIŞIDIR "
+    "(Pilot Readiness Adım 4c).\n"
+    "Pilot süresince yalnız fact_extraction ailesi (mevcut maskeleme sınırı üzerinden) dış "
+    "modele erişebilir; bu modülün rewrite_query/rerank_candidates/generate_answer "
+    "fonksiyonlarının HİÇBİRİ, retrieval'ın başarılı olup olmadığından BAĞIMSIZ olarak, "
+    "çağrılamaz."
+)
+
+
+def _get_client():
+    """`rewrite_query`/`rerank_candidates`/`generate_answer`'ın TEK,
+    paylaşılan istemci choke point'i. Kontrol KOŞULSUZDUR - hiçbir ortam
+    değişkenine bakmaz - ve `anthropic` import'undan/gerçek client
+    kurulumundan KESİNLİKLE ÖNCE gelir."""
+    raise RagPilotPolicyEgressRefusedError(PILOT_POLICY_EGRESS_REFUSAL_MESSAGE)
 
 
 # ============================================================
@@ -248,7 +297,7 @@ Son kullanıcı sorusu:
 Arama sorgusu:
 """
 
-    response = client.messages.create(
+    response = _get_client().messages.create(
         model=CLAUDE_MODEL,
         max_tokens=300,
         messages=[
@@ -1111,7 +1160,7 @@ En fazla {top_k} aday yaz.
 """
 
     try:
-        response = client.messages.create(
+        response = _get_client().messages.create(
             model=
                 CLAUDE_MODEL,
 
@@ -2589,7 +2638,7 @@ Ardından hukuki açıklamayı yap.
 """
 
     response = (
-        client.messages.create(
+        _get_client().messages.create(
             model=
                 CLAUDE_MODEL,
 
@@ -3069,6 +3118,15 @@ def answer_question(
 # ============================================================
 
 if __name__ == "__main__":
+    import sys as _sys
+
+    # PILOT READINESS ADIM 4c: doğrudan çalıştırma artık, `RagBundleNot
+    # PinnedError`'a (ilgisiz, ayrı bir fail-closed guard) HİÇ ULAŞMADAN,
+    # HİÇBİR print()'ten ÖNCE koşulsuz reddedilir - bu ret `_get_client()`
+    # ile AYNI mesajı paylaşır (tek doğruluk kaynağı, iki tüketici).
+    print(PILOT_POLICY_EGRESS_REFUSAL_MESSAGE, file=_sys.stderr)
+    raise SystemExit(2)
+
     print(
         "\n======================================"
     )

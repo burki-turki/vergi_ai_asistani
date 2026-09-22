@@ -1802,28 +1802,133 @@ for _family in _STEP4B_REFUSED_FAMILIES:
         ]),
     )
 
-# --- POSITIVE CONTROLS: the families that are deliberately NOT refused.
-# `case_law` is the critical one - it shares BOTH the CLI branch and the
-# facade with the refused `legal_research`, so this is the permanent
-# per-family regression proof at the CLI layer.
-for _open_family in ["case_law", "risk_strategy", "drafting"]:
+# ============================================================
+# PILOT READINESS ADIM 4c - PILOT-POLICY EGRESS REFUSAL at the CLI
+# usage-shape layer, for the THREE families whose prompt carries only
+# ID/enum-only content (case_law/risk_strategy/drafting - CLAUDE.md's
+# own characterization of these three families as NOT carrying raw
+# case text is UNCHANGED and NOT contradicted here). Adım 4b's
+# "the families that are deliberately NOT refused" positive-control
+# loop that used to stand HERE is INVERTED (same discipline as
+# CLAUDE.md's Row 19B `"sends no client_secret"` -> real
+# `client_secret_post` assertion precedent: the assertion is NOT
+# deleted, it is turned to point the other way, with the reason
+# recorded) - these three families are now ALSO refused, for a
+# SEPARATE, DIFFERENT reason (pilot policy, not raw text), with a
+# SEPARATE, DIFFERENT fixed message. Adım 4b's own three-family
+# raw-text closure above (issue_spotting/evidence/argument/
+# legal_research) is completely UNTOUCHED by this block.
+# ============================================================
+
+_STEP4C_PILOT_POLICY_REFUSED_FAMILIES = ["case_law", "risk_strategy", "drafting"]
+
+_STEP4C_REFUSAL_MESSAGE_TEMPLATE = (
+    "HATA: --row-key {row_key} için agent modu KAPALIDIR (Pilot Readiness Adım 4c): "
+    "bu ailenin prompt'u yalnız ID/enum-only içerik taşısa da (ham case metni TAŞIMAZ), "
+    "pilot süresince fact_extraction DIŞINDA hiçbir outbound AI yolu açık tutulmaz. "
+    "--with-agent bu ailede preview'da da apply'da da kabul edilmez; deterministik mod "
+    "(--with-agent OLMADAN) çalışmaya devam eder."
+)
+
+_data_snapshot_before_step4c = _snapshot_data_tree()
+
+for _family in _STEP4C_PILOT_POLICY_REFUSED_FAMILIES:
+    _expected_msg = _STEP4C_REFUSAL_MESSAGE_TEMPLATE.format(row_key=_family)
+
+    # (a) PREVIEW with --with-agent alone.
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1", "--with-agent",
+    ])
     check(
-        f"ADIM 4b: --row-key {_open_family} --with-agent is NOT refused - usage-shape passes and "
-        "reaches the connection layer (per-family scoping; case_law shares its CLI branch AND "
-        "facade with the refused legal_research)",
-        _usage_shape_passed_to_connection([
-            "generation", "--case", "x", "--row-key", _open_family, "--actor-user-id", "1",
-            "--with-agent",
-        ]),
+        f"ADIM 4c: generation --row-key {_family} --with-agent (PREVIEW) -> exit 2, zero "
+        "connections",
+        code == cli_mutate.EXIT_USAGE_ERROR,
+        f"code={code!r} stderr={err!r}",
     )
     check(
-        f"ADIM 4b: --row-key {_open_family} --with-agent --allow-network --apply is NOT refused - "
-        "usage-shape passes and reaches the connection layer",
+        f"ADIM 4c: {_family} PREVIEW refusal stderr is EXACTLY the facade's fixed pilot-policy "
+        "message (a DIFFERENT message from Adım 4b's raw-text one), stdout empty, no traceback",
+        err == _expected_msg + "\n" and out == "" and "Traceback" not in err,
+        f"stderr={err!r} stdout={out!r}",
+    )
+
+    # (b) APPLY with --with-agent alone.
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        "--with-agent", "--apply", "--expected-input-digest", "h",
+    ])
+    check(
+        f"ADIM 4c: generation --row-key {_family} --with-agent --apply WITHOUT --allow-network -> "
+        "exit 2, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and err == _expected_msg + "\n" and out == "",
+        f"code={code!r} stderr={err!r} stdout={out!r}",
+    )
+
+    # (c) APPLY with the full --with-agent --allow-network combination.
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        "--with-agent", "--allow-network", "--apply", "--expected-input-digest", "h",
+    ])
+    check(
+        f"ADIM 4c: generation --row-key {_family} --with-agent --allow-network --apply -> exit 2, "
+        "zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and err == _expected_msg + "\n" and out == "",
+        f"code={code!r} stderr={err!r} stdout={out!r}",
+    )
+
+    # (d) PREVIEW with --with-agent --allow-network.
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        "--with-agent", "--allow-network",
+    ])
+    check(
+        f"ADIM 4c: generation --row-key {_family} --with-agent --allow-network (PREVIEW) -> exit "
+        "2, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and err == _expected_msg + "\n" and out == "",
+        f"code={code!r} stderr={err!r} stdout={out!r}",
+    )
+
+    # (e) --allow-network ALONE keeps its OLD, unchanged message (the
+    #     Adım 4c check is deliberately placed BEFORE that rule but is
+    #     gated on --with-agent, so this path is byte-identical to
+    #     before).
+    code, out, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
+        "--allow-network",
+    ])
+    check(
+        f"ADIM 4c: {_family} --allow-network ALONE still yields the OLD '--allow-network requires "
+        "--with-agent' message, NOT either refusal (pre-existing behaviour preserved)",
+        code == cli_mutate.EXIT_USAGE_ERROR
+        and err == "error: --allow-network requires --with-agent\n",
+        f"code={code!r} stderr={err!r}",
+    )
+
+    # (f) DETERMINISTIC mode (no --with-agent) is untouched.
+    check(
+        f"ADIM 4c: {_family} WITHOUT --with-agent (deterministic preview) still passes usage-shape "
+        "and reaches the connection layer - deterministic generation is completely unaffected",
         _usage_shape_passed_to_connection([
-            "generation", "--case", "x", "--row-key", _open_family, "--actor-user-id", "1",
-            "--with-agent", "--allow-network", "--apply", "--expected-input-digest", "h",
+            "generation", "--case", "x", "--row-key", _family, "--actor-user-id", "1",
         ]),
     )
+
+_data_snapshot_after_step4c = _snapshot_data_tree()
+check(
+    "ADIM 4c: the whole CLI pilot-policy refusal block left the REAL data/ tree byte-for-byte "
+    "UNCHANGED",
+    _data_snapshot_before_step4c == _data_snapshot_after_step4c,
+    f"changed/added/removed keys: "
+    f"{sorted(set(_data_snapshot_before_step4c) ^ set(_data_snapshot_after_step4c))}",
+)
+
+check(
+    "ADIM 4c: Adım 4b's raw-text refused set and Adım 4c's pilot-policy refused set are "
+    "pairwise disjoint at the CLI's OWN lazy-accessor layer (mirrors the facades' own "
+    "disjointness invariant, tested independently in test_agent_generation_mutation_facade_"
+    "isolated.py / test_legal_research_case_law_mutation_facade_isolated.py)",
+    set(_STEP4B_REFUSED_FAMILIES).isdisjoint(set(_STEP4C_PILOT_POLICY_REFUSED_FAMILIES)),
+)
 
 check(
     "ADIM 4b: --row-key fact_extraction --document d --with-agent is NOT refused - that family "
@@ -1862,9 +1967,11 @@ for _flagless_family, _extra in [("timeline", []), ("deadline", ["--anchor", "ti
 
 _data_snapshot_after_step4b = _snapshot_data_tree()
 check(
-    "ADIM 4b: the whole CLI refusal/positive-control block left the REAL data/ tree byte-for-byte "
-    "UNCHANGED (zero pending, zero generation audit, zero journal row could have been written - "
-    "every refusal fires before any connection is even opened)",
+    "ADIM 4b/4c: the whole combined CLI refusal block (Adım 4b's raw-text refusals, Adım 4c's "
+    "pilot-policy refusals nested inside it, and the fact_extraction/deadline/timeline regression "
+    "checks) left the REAL data/ tree byte-for-byte UNCHANGED (zero pending, zero generation "
+    "audit, zero journal row could have been written - every refusal fires before any connection "
+    "is even opened)",
     _data_snapshot_before_step4b == _data_snapshot_after_step4b,
     f"changed/added/removed keys: "
     f"{sorted(set(_data_snapshot_before_step4b) ^ set(_data_snapshot_after_step4b))}",

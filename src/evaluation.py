@@ -3016,5 +3016,33 @@ def run_all_tests():
 # MAIN
 # ============================================================
 
+# PILOT READINESS ADIM 4c - KAPALI EGRESS GİRİŞ NOKTASI (Katman 2 -
+# UX/tutarlılık; asıl mekanizma `src/rag.py`'nin KENDİ `_get_client()`
+# choke point'idir, hangi çağırandan geldiğinden bağımsız - bkz. o
+# dosyanın modül başlığı). Bu dosyanın T06 test case'i ("Takip sorusu
+# history ile çözülmeli") gerçek, patch'lenmemiş `rag_module.answer_
+# question(...)`'ı çağırıyordu ve doğrudan `python src/evaluation.py`
+# çalıştırıldığında GERÇEK, maskesiz, ağsız kapısı olmayan bir outbound
+# Anthropic çağrısı tetikliyordu. `run_test()`'in kendi bare `except
+# Exception` + devam-et deseni nedeniyle Katman 1 TEK BAŞINA bu
+# script'i "temiz" bir exit(0) ile bitirirdi (T06 hatasız devredilir,
+# T01-T19'un kalanı çalışırdı) - yanıltıcı bir başarı görünümü. Bu ret
+# HİÇBİR print()'ten/`run_all_tests()`'ten ÖNCE koşulsuz reddeder;
+# gerçek OS exit code'u tam olarak 2'dir.
+PILOT_POLICY_EGRESS_REFUSAL_MESSAGE = (
+    "HATA: Bu doğrudan test-çalıştırma giriş noktası artık DEVRE DIŞIDIR "
+    "(Pilot Readiness Adım 4c).\n"
+    "T06 gerçek, maskesiz bir outbound Anthropic çağrısı tetikliyordu (rag.answer_question "
+    "üzerinden). Pilot süresince fact_extraction DIŞINDA hiçbir outbound AI yolu açık "
+    "tutulmaz - src/rag.py'nin kendi _get_client() gate'i bu çağrıyı zaten reddeder; bu "
+    "script T01-T19'u BOŞUNA çalıştırmamak için burada da reddeder."
+)
+
+
 if __name__ == "__main__":
+    import sys as _sys
+
+    print(PILOT_POLICY_EGRESS_REFUSAL_MESSAGE, file=_sys.stderr)
+    raise SystemExit(2)
+
     run_all_tests()
