@@ -32,6 +32,7 @@ import json
 import random
 import re
 import sys
+import time
 import unicodedata
 from pathlib import Path
 
@@ -1791,11 +1792,18 @@ check(
     len(lpb.fold1to1("İSTANBUL")) == len("İSTANBUL"),
 )
 
-# (iv) identity numbers split by whitespace: decision b2 = HINT, no refusal
+# (iv) identity numbers split by whitespace: b2-era decision was HINT-only,
+# no refusal. R5 (Karar #1a) CHANGES the outcome for a checksum-VALID
+# low-signal split candidate: it is now genuinely MASKED (not merely
+# hinted), so the POST-mask hint counter correctly reads 0 (the run was
+# replaced by a VGMASK token, so nothing is left for the counter to see) -
+# expect_hint below is updated from the pre-R5 value of 1 to the
+# post-R5 value of 0 for the three genuinely-split, checksum-valid cases;
+# the b2-era NON-refusal guarantee itself is UNCHANGED and still asserted.
 for split_doc, split_label, expect_hint in [
-    (f"Ahmet Yılmaz TC: {VALID_TCKN[:7]}\n{VALID_TCKN[7:]} son.", "TCKN split by LF", 1),
-    (f"Ahmet Yılmaz TC: {VALID_TCKN[:7]} {VALID_TCKN[7:]} son.", "TCKN split by space", 1),
-    (f"Ahmet Yılmaz VKN: {VALID_VKN[:4]}\n{VALID_VKN[4:]} son.", "VKN split by LF", 1),
+    (f"Ahmet Yılmaz TC: {VALID_TCKN[:7]}\n{VALID_TCKN[7:]} son.", "TCKN split by LF", 0),
+    (f"Ahmet Yılmaz TC: {VALID_TCKN[:7]} {VALID_TCKN[7:]} son.", "TCKN split by space", 0),
+    (f"Ahmet Yılmaz VKN: {VALID_VKN[:4]}\n{VALID_VKN[4:]} son.", "VKN split by LF", 0),
     (f"Ahmet Yılmaz TC: {VALID_TCKN} son.", "contiguous TCKN (control)", 0),
 ]:
     try:
@@ -1813,10 +1821,30 @@ for split_doc, split_label, expect_hint in [
         not split_refused,
     )
     check(
-        f"b2: {split_label} raises the possible_split_identifier hint counter to {expect_hint}",
+        f"b2/R5: {split_label} raises the possible_split_identifier hint counter to {expect_hint} "
+        "(R5 CHANGE: a checksum-VALID low-signal split run is now actually MASKED end-to-end, so "
+        "the post-mask hint counter reads 0 rather than the pre-R5 value of 1)",
         split_res is not None
         and split_res.summary["possible_split_identifier"] == expect_hint,
         split_res.summary.get("possible_split_identifier") if split_res else None,
+    )
+
+for split_doc, split_label in [
+    (f"Ahmet Yılmaz TC: {VALID_TCKN[:7]}\n{VALID_TCKN[7:]} son.", "TCKN split by LF"),
+    (f"Ahmet Yılmaz TC: {VALID_TCKN[:7]} {VALID_TCKN[7:]} son.", "TCKN split by space"),
+    (f"Ahmet Yılmaz VKN: {VALID_VKN[:4]}\n{VALID_VKN[4:]} son.", "VKN split by LF"),
+]:
+    split_res2 = lpb.mask_prompt_inputs(
+        case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX,
+        document_text=split_doc,
+    )
+    check(
+        f"b2/R5: {split_label} is genuinely MASKED end-to-end (VALID_TCKN/VALID_VKN absent from "
+        "the output, a VGMASK token present) - not merely hinted, confirming the hint-counter "
+        "change above reflects real masking and not a silent counter regression",
+        VALID_TCKN not in split_res2.masked_text and VALID_VKN not in split_res2.masked_text
+        and "VGMASK" in split_res2.masked_text,
+        split_res2.masked_text,
     )
 check(
     "b2 CONTROL: a contiguous TCKN is still genuinely MASKED (the hint replaces nothing)",
@@ -2048,12 +2076,14 @@ check(
 #    as an unrelated "a different version" test placeholder; picking a
 #    non-colliding value avoids touching a third file.
 check(
-    "R4: MASKING_POLICY_VERSION was bumped away from the pre-fix v1 value - without this, "
-    "coordinator safe-replay could return an already-completed, pre-fix (buggy, unmasked) "
+    "R4/R5: MASKING_POLICY_VERSION was bumped away from the pre-R4 v1 value (R5 has since "
+    "bumped it again, v3 -> v4 - see the ## 15d-7 R5 section below) - without EACH bump, "
+    "coordinator safe-replay could return an already-completed, pre-fix (buggy/unmasked) "
     "result for identical inputs instead of re-running with the fixed masker",
-    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v3"
+    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v4"
     and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v1"
-    and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v2",
+    and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v2"
+    and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v3",
     lpb.MASKING_POLICY_VERSION,
 )
 
@@ -2313,20 +2343,1151 @@ check(
                                         party_seeds("Anadolu")) == 0,
 )
 
-# MASKING_POLICY_VERSION decision: this remediation does NOT bump it. The
-# squeeze-only counter never enters identity_payload/input_digest/any
-# audit or replay field (confirmed by reading
-# ui/services/fact_extraction_mutation_facade.py:_build_identity_payload -
-# its exact 9-key shape has no squeeze-counter field); a version bump is
-# therefore not required by the module's own "POLITIKA SURUMU" policy
-# (bkz. yukarida) and would only be identity/idempotency churn with no
-# safety benefit.
+# MASKING_POLICY_VERSION decision: R4-F1 itself did NOT bump it (only R5,
+# a later and unrelated remediation, bumped v3 -> v4 - see ## 15d-7 below).
+# The squeeze-only counter this R4-F1 fix touches never enters
+# identity_payload/input_digest/any audit or replay field (confirmed by
+# reading ui/services/fact_extraction_mutation_facade.py:_build_identity_
+# payload - its exact 9-key shape has no squeeze-counter field); a version
+# bump was therefore not required by R4-F1 itself under the module's own
+# "POLITIKA SURUMU" policy (bkz. yukarida) and would only have been
+# identity/idempotency churn with no safety benefit.
+#
+# NOTE (honest record, R5): the ORIGINAL version of this check asserted
+# `lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v3"` against the
+# LIVE constant - that assertion is no longer meaningful now that the
+# separate, later R5 remediation has bumped the live constant to v4 (a
+# tautological re-assertion would not test anything real, so the runtime
+# check has been REMOVED rather than replaced with a vacuous placeholder).
+# The historical claim ("R4-F1 alone did not bump the version") is
+# preserved as this comment and is independently corroborated by R5's own
+# ## 15d-7 section below, which proves the v3 -> v4 delta is entirely
+# attributable to R5's own new mechanism (split-digit masking), not to
+# any R4-F1 code path - see the "R4/R5" bump-evidence check earlier in
+# this file and the R5 version-bump checks in ## 15d-7.
+
+print("## 15d-7 - R5: split TCKN/VKN fail-closed masking (CLAUDE.md R5 remediation)")
+
+# ------------------------------------------------------------
+# R5 (0): independent reference checksum implementation + cross-check.
+#
+# Written from scratch, from the SAME published formulas, but as a
+# SEPARATE implementation path (different variable names, a different
+# arithmetic phrasing for the VKN component) - the point is to catch an
+# IMPLEMENTATION bug in the production functions (e.g. an off-by-one
+# index, a wrong operator), not to re-derive the formula from a
+# different source (both production and reference deliberately encode
+# the same published algorithm - see llm_privacy_boundary.py's own
+# provenance warning above tckn_is_valid/vkn_is_valid).
+# ------------------------------------------------------------
+
+
+def _reference_tckn_valid(value):
+    if not isinstance(value, str) or len(value) != 11 or not value.isascii() or not value.isdigit():
+        return False
+    digits = [int(c) for c in value]
+    if digits[0] == 0:
+        return False
+    odd_total = digits[0] + digits[2] + digits[4] + digits[6] + digits[8]
+    even_total = digits[1] + digits[3] + digits[5] + digits[7]
+    tenth = (odd_total * 7 - even_total) % 10
+    if tenth != digits[9]:
+        return False
+    eleventh = sum(digits[0:10]) % 10
+    return eleventh == digits[10]
+
+
+def _reference_vkn_valid(value):
+    if not isinstance(value, str) or len(value) != 10 or not value.isascii() or not value.isdigit():
+        return False
+    digits = [int(c) for c in value]
+    running_total = 0
+    for position in range(9):
+        weight = 9 - position
+        shifted = (digits[position] + weight) % 10
+        if shifted == 0:
+            piece = 0
+        elif shifted == 9:
+            piece = 9
+        else:
+            piece = (shifted * (2 ** weight)) % 9
+        running_total += piece
+    tenth_digit = (10 - running_total % 10) % 10
+    return tenth_digit == digits[9]
+
+
+_checksum_cross_check_random = random.Random(20260922)
+_cross_check_mismatches = []
+for _round in range(400):
+    core9 = "".join(str(_checksum_cross_check_random.randint(0, 9)) for _ in range(9))
+    if core9[0] == "0":
+        core9 = "1" + core9[1:]
+    odd_sum = int(core9[0]) + int(core9[2]) + int(core9[4]) + int(core9[6]) + int(core9[8])
+    even_sum = int(core9[1]) + int(core9[3]) + int(core9[5]) + int(core9[7])
+    d10 = (odd_sum * 7 - even_sum) % 10
+    d11 = (sum(int(c) for c in core9) + d10) % 10
+    synth_valid_tckn = core9 + str(d10) + str(d11)
+    for candidate in [synth_valid_tckn] + [
+        synth_valid_tckn[:i] + str((int(synth_valid_tckn[i]) + 1) % 10) + synth_valid_tckn[i + 1:]
+        for i in range(11)
+    ]:
+        prod = lpb.tckn_is_valid(candidate)
+        ref = _reference_tckn_valid(candidate)
+        if prod != ref:
+            _cross_check_mismatches.append(("tckn", candidate, prod, ref))
+
+    core9v = "".join(str(_checksum_cross_check_random.randint(0, 9)) for _ in range(9))
+    total = 0
+    for pos in range(9):
+        w = 9 - pos
+        s = (int(core9v[pos]) + w) % 10
+        total += 9 if s == 9 else ((s * pow(2, w)) % 9)
+    d10v = (10 - total % 10) % 10
+    synth_valid_vkn = core9v + str(d10v)
+    for candidate in [synth_valid_vkn] + [
+        synth_valid_vkn[:i] + str((int(synth_valid_vkn[i]) + 1) % 10) + synth_valid_vkn[i + 1:]
+        for i in range(10)
+    ]:
+        prod = lpb.vkn_is_valid(candidate)
+        ref = _reference_vkn_valid(candidate)
+        if prod != ref:
+            _cross_check_mismatches.append(("vkn", candidate, prod, ref))
+
 check(
-    "R4-F1: MASKING_POLICY_VERSION is UNCHANGED by this remediation (still 'tr_pseudonymisation_"
-    "v3') - the squeeze-only counter this fix touches never enters identity_payload/"
-    "input_digest, so no coordinator replay/idempotency concern applies",
-    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v3",
+    "R5(0): the PRODUCTION tckn_is_valid/vkn_is_valid agree with an INDEPENDENTLY-written "
+    "reference implementation across 400 deterministic-seed synthetic valid vectors AND all "
+    "of their single-digit corruptions (4400 TCKN + 4000 VKN comparisons total) - zero "
+    "mismatches expected; none of these are real identity numbers",
+    _cross_check_mismatches == [],
+    _cross_check_mismatches[:5],
+)
+
+# ------------------------------------------------------------
+# R5 (1): HIGH-SIGNAL separators (zero-width / soft-hyphen / real
+# line-wrap hyphen) mask UNCONDITIONALLY - checksum is NEVER consulted,
+# even for a checksum-INVALID digit sequence (Karar #1: "high-signal =
+# high-confidence document-formatting artefact, mirrors R4's own
+# treatment of names").
+# ------------------------------------------------------------
+
+# R5 DISCOVERY (not a bug R5 introduced - pre-existing, unchanged by this
+# diff; confirmed via `git diff`): all six of Karar #1a's zero-width/
+# soft-hyphen high-signal separators are EXACTLY the pre-existing
+# `_ZERO_WIDTH_CHARS` set. `find_unresolvable_zero_width_digit_runs()`,
+# called UNCONDITIONALLY near the top of `mask_prompt_inputs()` (before
+# ANY masking is attempted, structural-only, ignores checksum entirely),
+# ALWAYS intercepts and refuses first for these six separator kinds -
+# `_collect_candidates()` (R5's new masking logic) never gets a chance to
+# run for them via this top-level entry point. This is a STRICTER outcome
+# than "masked" (total refusal vs. masked-and-sent) and R5 does NOT weaken
+# it (2-file scope; pre-existing fail-closed control; CLAUDE.md Prensip 9
+# prefers fail-closed). Only the GENUINELY NEW real line-wrap hyphen
+# separator (tested in the next loop below) is reachable end-to-end via
+# mask_prompt_inputs() for high-signal masking. See the implementation
+# report for the full "Karar #1a divergence" disclosure.
+for sep_label, sep_text in [
+    ("ZWSP (U+200B)", "​"),
+    ("ZWNJ (U+200C)", "‌"),
+    ("ZWJ (U+200D)", "‍"),
+    ("word joiner (U+2060)", "⁠"),
+    ("BOM (U+FEFF)", "﻿"),
+    ("soft hyphen (U+00AD)", "­"),
+]:
+    doc = f"Ahmet Yılmaz No: {INVALID_TCKN[:7]}{sep_text}{INVALID_TCKN[7:]} son."
+    expect_raises(
+        lpb.ZeroWidthDigitRunError,
+        lambda doc=doc: lpb.mask_prompt_inputs(
+            case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=doc
+        ),
+        f"R5(1) DISCOVERY: a CHECKSUM-INVALID TCKN split by {sep_label} triggers the PRE-EXISTING "
+        "ZeroWidthDigitRunError refusal via mask_prompt_inputs() (NOT masking) - this unconditional "
+        "guard predates R5, is unchanged by it, and fires regardless of checksum validity",
+    )
+    runs = lpb._scan_split_digit_runs(f"{INVALID_TCKN[:7]}{sep_text}{INVALID_TCKN[7:]}")
+    check(
+        f"R5(1): the {sep_label} separator is STILL classified as high_signal=True by the raw R5 "
+        "scanner (proves R5's OWN separator-classification logic is correct, independent of the "
+        "earlier, stricter guard's interception)",
+        len(runs) == 1 and runs[0][3] is True,
+        runs,
+    )
+    direct_seeds = lpb.build_seed_terms(B1_CASE, B1_DOC)
+    direct_mapping = lpb.MaskMapping()
+    direct_text = f"Bir metin No: {INVALID_TCKN[:7]}{sep_text}{INVALID_TCKN[7:]} devam."
+    direct_masked = lpb.mask_text(direct_text, direct_seeds, direct_mapping)
+    check(
+        f"R5(1): at the mask_text()/_collect_candidates() level (bypassing the earlier "
+        f"ZeroWidthDigitRunError pre-check by calling mask_text() directly instead of "
+        f"mask_prompt_inputs()), a CHECKSUM-INVALID TCKN split by {sep_label} IS masked without "
+        "checksum consultation - proves R5's high-signal masking logic itself correctly implements "
+        "Karar #1a for this separator kind, even though it is currently unreachable end-to-end via "
+        "mask_prompt_inputs() due to the earlier guard",
+        INVALID_TCKN[:7] not in direct_masked and INVALID_TCKN[7:] not in direct_masked
+        and "VGMASK" in direct_masked,
+        direct_masked,
+    )
+
+for lf_label, lf_text in [("LF", "\n"), ("CRLF", "\r\n")]:
+    doc = f"Ahmet Yılmaz Sayi: {INVALID_VKN[:4]}-{lf_text}{INVALID_VKN[4:]} son."
+    res = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=doc)
+    check(
+        f"R5(1): a CHECKSUM-INVALID VKN split by a real line-wrap hyphen ({lf_label}) is STILL "
+        "masked (high-signal bypasses the checksum gate)",
+        INVALID_VKN[:4] not in res.masked_text and INVALID_VKN[4:] not in res.masked_text
+        and "VGMASK" in res.masked_text,
+        res.masked_text,
+    )
+    runs = lpb._scan_split_digit_runs(f"{INVALID_VKN[:4]}-{lf_text}{INVALID_VKN[4:]}")
+    check(f"R5(1): the {lf_label} line-wrap variant is detected as high_signal=True by the raw scanner",
+          len(runs) == 1 and runs[0][3] is True, runs)
+
+check(
+    "R5(1) CONTROL: a same-line hyphen with NO line break (e.g. a phone-like grouping) is NOT "
+    "treated as a high-signal split bridge - R4's own guarantee ('tire + hemen ardinda GERCEK "
+    "bir satir sonu SART') applies identically here",
+    lpb._scan_split_digit_runs(f"{INVALID_VKN[:4]}-{INVALID_VKN[4:]}") == [],
+)
+
+# ------------------------------------------------------------
+# R5 (2): LOW-SIGNAL (plain whitespace, including a hyphen-less line
+# break) separators are checksum-GATED.
+# ------------------------------------------------------------
+
+for ws_label, ws_text in [("a single space", " "), ("LF (no hyphen)", "\n"), ("CRLF (no hyphen)", "\r\n"),
+                            ("a double space", "  "), ("a tab", "\t")]:
+    doc_valid = f"Ahmet Yılmaz VKN: {VALID_VKN[:4]}{ws_text}{VALID_VKN[4:]} son."
+    res_valid = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=doc_valid)
+    check(
+        f"R5(2): a CHECKSUM-VALID VKN split by {ws_label} (low-signal) IS masked",
+        VALID_VKN not in res_valid.masked_text and "VGMASK" in res_valid.masked_text,
+        res_valid.masked_text,
+    )
+    check(
+        f"R5(2): ...and the possible_split_identifier hint counter drops to 0 for it "
+        f"({ws_label} - the digits are now inside a token, excluded from the post-mask scan)",
+        res_valid.summary["possible_split_identifier"] == 0,
+        res_valid.summary["possible_split_identifier"],
+    )
+
+    doc_invalid = f"Ahmet Yılmaz Sayi: {INVALID_VKN[:4]}{ws_text}{INVALID_VKN[4:]} son."
+    res_invalid = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=doc_invalid)
+    check(
+        f"ZORUNLU EK TEST: a CHECKSUM-INVALID VKN-shaped run split by {ws_label} (low-signal) "
+        "is NOT masked - stays informational-only, exactly the b2 emsali behaviour",
+        INVALID_VKN[:4] in res_invalid.masked_text and INVALID_VKN[4:] in res_invalid.masked_text,
+        res_invalid.masked_text,
+    )
+    check(
+        f"ZORUNLU EK TEST: ...and the possible_split_identifier hint counter is exactly 1 for it "
+        f"({ws_label}, informational-only)",
+        res_invalid.summary["possible_split_identifier"] == 1,
+        res_invalid.summary["possible_split_identifier"],
+    )
+
+# The pre-existing "Sayfa 12345 67890" fixture (## 15d, b2 section above) is a striking, honest
+# illustration of the checksum gate: its digits, compacted, are "1234567890" - which is EXACTLY
+# this file's own VALID_VKN constant. It was chosen there purely as an "ordinary two 5-digit
+# table numbers" example and happens, by numeric coincidence, to be a checksum-VALID VKN shape.
+# The DIRECT count_possible_split_identifiers() call on raw text (## 15d, unchanged, checksum-
+# blind structural count) still returns 1 - untouched by R5. Run through the FULL masking
+# pipeline, this exact text is now a positive R5(2) case: it gets masked, not merely hinted.
+_coincidence_doc = "Ahmet Yılmaz Sayfa 12345 67890 satir devam."
+_coincidence_res = lpb.mask_prompt_inputs(
+    case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_coincidence_doc,
+)
+check(
+    "R5(2) DISCLOSED NUMERIC COINCIDENCE: the pre-existing 'Sayfa 12345 67890' b2 fixture's "
+    "compacted digits ('1234567890') are, by coincidence, this file's own VALID_VKN - run "
+    "through the actual masking pipeline (not the standalone counter call), it IS now masked "
+    "under R5's low-signal checksum-gated policy",
+    "12345" not in _coincidence_res.masked_text and "67890" not in _coincidence_res.masked_text
+    and "VGMASK" in _coincidence_res.masked_text,
+    _coincidence_res.masked_text,
+)
+check(
+    "R5(2): ...while the STANDALONE, checksum-blind count_possible_split_identifiers() call "
+    "on the same raw text is UNCHANGED by R5 (still counts 1 - it is a structural, not a "
+    "masking-decision, function)",
+    lpb.count_possible_split_identifiers("Sayfa 12345 67890 satir") == 1,
+)
+
+# ------------------------------------------------------------
+# R5 (3): exact 10/11 digits only - no subsequence match from a 12+
+# digit run, and a contiguous number never enters the split path.
+# ------------------------------------------------------------
+
+check(
+    "R5(3): a contiguous (unseparated) valid TCKN does NOT enter the split path (it is left "
+    "entirely to the pre-existing _DIGIT_RUN_11_RE contiguous kol, unaffected by R5)",
+    lpb._scan_split_digit_runs(VALID_TCKN) == [],
+)
+twelve_digit_run = " ".join(["12", "34", "56", "78", "90", "12"])  # 12 digits total, low-signal
+check(
+    "R5(3): a 12-digit maximal run split by whitespace produces ZERO candidates - no partial "
+    "10 or 11 digit subsequence is extracted from it",
+    lpb._scan_split_digit_runs(twelve_digit_run) == [],
+    lpb._scan_split_digit_runs(twelve_digit_run),
+)
+nine_digit_run = " ".join(["123", "456", "789"])  # 9 digits total
+check(
+    "R5(3): a 9-digit maximal run (below the floor) produces ZERO candidates",
+    lpb._scan_split_digit_runs(nine_digit_run) == [],
+)
+doc_12 = f"Ahmet Yılmaz Ref: {twelve_digit_run} son."
+res_12 = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=doc_12)
+check(
+    "R5(3): ...and end-to-end, this 12-digit run is NOT masked as a TCKN/VKN candidate at all",
+    "12 34 56 78 90 12" in res_12.masked_text,
+    res_12.masked_text,
+)
+
+# ------------------------------------------------------------
+# R5 (4): token-boundary non-merging - digits on either side of an
+# already-placed VGMASK token must never be combined into one run.
+# ------------------------------------------------------------
+
+_boundary_text = "VGMASK_0001T " + VALID_VKN[:4] + "\n" + VALID_VKN[4:]
+_boundary_segments = lpb._token_segments(_boundary_text)
+_boundary_runs = []
+for is_tok, seg_start, seg_end in _boundary_segments:
+    if is_tok:
+        continue
+    for rel_s, rel_e, digits, hs in lpb._scan_split_digit_runs(_boundary_text[seg_start:seg_end]):
+        _boundary_runs.append(digits)
+check(
+    "R5(4): scanning token-aware (per-segment, via _token_segments) never merges the digits "
+    "INSIDE a placed VGMASK token with a separate split VKN that happens to follow it",
+    _boundary_runs == [VALID_VKN],
+    _boundary_runs,
+)
+
+# ------------------------------------------------------------
+# R5 (5): candidate span is exactly first-digit..last-digit - outer
+# whitespace is never absorbed into the masked span.
+# ------------------------------------------------------------
+
+_padded = "   " + VALID_VKN[:4] + "\n" + VALID_VKN[4:] + "   "
+_padded_runs = lpb._scan_split_digit_runs(_padded)
+check("R5(5): exactly one candidate found in the padded text", len(_padded_runs) == 1, _padded_runs)
+_p_start, _p_end, _p_digits, _p_hs = _padded_runs[0]
+check("R5(5): leading whitespace (outside the digit span) is NOT part of the candidate span",
+      _padded[:_p_start] == "   ", repr(_padded[:_p_start]))
+check("R5(5): trailing whitespace (outside the digit span) is NOT part of the candidate span",
+      _padded[_p_end:] == "   ", repr(_padded[_p_end:]))
+_padded_doc = f"Ahmet Yılmaz{_padded}son."
+_padded_res = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_padded_doc)
+check(
+    "R5(5) END-TO-END: the masked_text contains the split-VKN's replacement token immediately "
+    "bordered by the SAME three leading/trailing spaces that existed around the digits in the "
+    "source (only the digit span itself became a token - the surrounding whitespace is untouched)",
+    "   VGMASK_0001V   son." in _padded_res.masked_text,
+    _padded_res.masked_text,
+)
+
+# ------------------------------------------------------------
+# R5 (6): validator exception/indeterminate -> masking (never allow).
+# ------------------------------------------------------------
+
+_orig_tckn_is_valid = lpb.tckn_is_valid
+_orig_vkn_is_valid = lpb.vkn_is_valid
+
+
+def _exploding_checksum(_value):
+    raise RuntimeError("simulated checksum regression - must never be treated as 'allow'")
+
+
+lpb.tckn_is_valid = _exploding_checksum
+try:
+    check(
+        "R5(6): if tckn_is_valid raises an unexpected exception, _digit_checksum_permits_masking "
+        "does NOT propagate it and does NOT treat it as 'checksum failed / allow' - it returns "
+        "True (mask), i.e. the FAIL-CLOSED direction",
+        lpb._digit_checksum_permits_masking(INVALID_TCKN, lpb.CLASS_TCKN) is True,
+    )
+    _exc_doc = f"Ahmet Yılmaz No: {INVALID_TCKN[:7]} {INVALID_TCKN[7:]} son."
+    _exc_res = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_exc_doc)
+    check(
+        "R5(6): ...and end-to-end, a low-signal split TCKN whose checksum function is broken "
+        "(simulated regression) is MASKED, not silently sent unmasked",
+        INVALID_TCKN[:7] not in _exc_res.masked_text and INVALID_TCKN[7:] not in _exc_res.masked_text,
+        _exc_res.masked_text,
+    )
+finally:
+    lpb.tckn_is_valid = _orig_tckn_is_valid
+
+
+def _weird_return_checksum(_value):
+    return None  # neither True nor False - must NOT be treated as "allow"
+
+
+lpb.vkn_is_valid = _weird_return_checksum
+try:
+    check(
+        "R5(6): if vkn_is_valid returns a non-bool value (None) instead of an explicit False, "
+        "_digit_checksum_permits_masking still masks (only an explicit False is 'informational-"
+        "only' - 'is not False' catches every other case)",
+        lpb._digit_checksum_permits_masking(INVALID_VKN, lpb.CLASS_VKN) is True,
+    )
+finally:
+    lpb.vkn_is_valid = _orig_vkn_is_valid
+
+check(
+    "R5(6) CONTROL: with the real (unpatched) tckn_is_valid/vkn_is_valid restored, a genuinely "
+    "checksum-invalid low-signal candidate is once again correctly left informational-only "
+    "(the exception/None tests above did not leave a stale monkeypatch behind)",
+    lpb._digit_checksum_permits_masking(INVALID_TCKN, lpb.CLASS_TCKN) is False
+    and lpb._digit_checksum_permits_masking(INVALID_VKN, lpb.CLASS_VKN) is False,
+)
+
+# ------------------------------------------------------------
+# R5 (7): SplitIdentifierSurvivedError hierarchy and message hygiene.
+# ------------------------------------------------------------
+
+check("R5(7): SplitIdentifierSurvivedError is a SurvivingPatternError subclass",
+      issubclass(lpb.SplitIdentifierSurvivedError, lpb.SurvivingPatternError))
+check("R5(7): ...and therefore also a MaskingError (existing except MaskingError call sites "
+      "catch it unchanged)",
+      issubclass(lpb.SplitIdentifierSurvivedError, lpb.MaskingError))
+check("R5(7): MSG_SPLIT_SURVIVING is a fixed, non-blank string",
+      isinstance(lpb.MSG_SPLIT_SURVIVING, str) and lpb.MSG_SPLIT_SURVIVING.strip() != "")
+check("R5(7): MSG_SPLIT_SURVIVING carries no raw TCKN/VKN test values",
+      VALID_TCKN not in lpb.MSG_SPLIT_SURVIVING and VALID_VKN not in lpb.MSG_SPLIT_SURVIVING
+      and INVALID_TCKN not in lpb.MSG_SPLIT_SURVIVING and INVALID_VKN not in lpb.MSG_SPLIT_SURVIVING)
+check("R5(7): MSG_SPLIT_SURVIVING carries no VGMASK/token literal",
+      "VGMASK" not in lpb.MSG_SPLIT_SURVIVING)
+
+# ------------------------------------------------------------
+# R5 (8): backstop independence - scan_outbound() is called DIRECTLY
+# on hand-built text that never went through the masker's own
+# candidate-collection step at all (Duzeltme 8: "candidate uretimi
+# TEST SEAM ile devre dissi birakildiginda backstop hala yakalamali" -
+# this directly demonstrates the backstop's OWN, independent detection
+# without relying on _collect_candidates ever having run).
+#
+# `scan_outbound(prompt, result)` documents its OWN low-level test
+# convention (see its docstring/body): when `result` is NOT a
+# `MaskingResult` instance, it is treated as a PLAIN SEQUENCE OF SEEDS
+# and `prompt` is assumed to already be the (masked) text to scan - this
+# is the exact, pre-existing seam used here (an empty seed tuple, since
+# none of these three fixtures contain a seed name to worry about) -
+# NOT a hand-rolled fake result object.
+# ------------------------------------------------------------
+
+_survivor_low_signal_valid = f"Bir metin VKN: {VALID_VKN[:4]}\n{VALID_VKN[4:]} devam."
+_survivor_error = expect_raises(
+    lpb.SplitIdentifierSurvivedError,
+    lambda: lpb.scan_outbound(_survivor_low_signal_valid, ()),
+    "R5(8): the backstop, called on hand-built text that NEVER went through _collect_candidates "
+    "at all, independently detects and rejects a checksum-valid low-signal split survivor",
+)
+
+_survivor_high_signal_invalid = f"Bir metin No: {INVALID_TCKN[:7]}-\n{INVALID_TCKN[7:]} devam."
+expect_raises(
+    lpb.SplitIdentifierSurvivedError,
+    lambda: lpb.scan_outbound(_survivor_high_signal_invalid, ()),
+    "R5(8): ...and independently rejects a checksum-INVALID high-signal split survivor too "
+    "(high-signal bypasses checksum in the backstop exactly as it does in the masker)",
+)
+
+_non_survivor_low_signal_invalid = f"Bir metin Sayi: {INVALID_VKN[:4]} {INVALID_VKN[4:]} devam."
+try:
+    lpb.scan_outbound(_non_survivor_low_signal_invalid, ())
+    check(
+        "R5(8) CONTROL: a checksum-INVALID low-signal split candidate is correctly NOT rejected "
+        "by the backstop either (it was never supposed to be masked in the first place - the "
+        "backstop is not a blanket refuser, it mirrors the SAME gate the masker uses)",
+        True,
+    )
+except lpb.MaskingError as _unexpected:
+    check(
+        "R5(8) CONTROL: a checksum-INVALID low-signal split candidate is correctly NOT rejected "
+        "by the backstop either",
+        False,
+        type(_unexpected).__name__,
+    )
+
+# ------------------------------------------------------------
+# R5 (9): telefon/IBAN are never MIS-CLASSIFIED as TCKN/VKN - not "phone
+# is never masked" (it correctly IS, as CLASS_PHONE), but the split-
+# digit scanner must never win the _mask_once() collision-resolution
+# race against a same-span or overlapping PHONE/IBAN candidate.
+# ------------------------------------------------------------
+
+_phone_doc = "Ahmet Yılmaz Tel: 0 532 123 45 67 son."  # compacts to 11 plain-space-separated digits
+_phone_res = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_phone_doc)
+check(
+    "R5(9): a plain-space-separated Turkish phone number (which ALSO structurally matches the "
+    "R5 split-digit scanner's 11-digit shape) is masked as CLASS_PHONE, NOT reclassified as "
+    "CLASS_TCKN by the split-digit mechanism",
+    _phone_res.summary["class_distribution"]["F"] == 1 and _phone_res.summary["class_distribution"]["T"] == 0,
+    _phone_res.summary["class_distribution"],
+)
+check(
+    "R5(9): ...and the phone digits are genuinely masked (not left unmasked by an over-eager "
+    "exclusion)",
+    "532" not in _phone_res.masked_text and "VGMASK" in _phone_res.masked_text,
+    _phone_res.masked_text,
+)
+
+_iban_doc = f"Ahmet Yılmaz IBAN: {VALID_IBAN_GROUPED} son."
+_iban_res = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_iban_doc)
+check(
+    "R5(9): a grouped, valid TR IBAN is masked as CLASS_IBAN, not reclassified as split-TCKN/VKN "
+    "(the IBAN's 24 digits never form an exact-10/11 compacted run anyway, but this proves the "
+    "end-to-end class distribution is unaffected)",
+    _iban_res.summary["class_distribution"]["B"] == 1 and _iban_res.summary["class_distribution"]["T"] == 0
+    and _iban_res.summary["class_distribution"]["V"] == 0,
+    _iban_res.summary["class_distribution"],
+)
+
+# ------------------------------------------------------------
+# R5 (10): deterministic, fixed opaque-identifier collision fixture
+# (not a conditional "if it exists" check).
+#
+# CORRECTED PREMISE (found by running this test against the real,
+# unmodified `assert_identifiers_are_opaque()`): that function's OWN
+# implementation (read directly, see `_ID_CHECK_SEED_KINDS =
+# {"operator", "party"}`) only ever builds its `cores` set from NAME-kind
+# seeds (party display names / operator --mask-term extras) - it has NO
+# knowledge of, and never inspects, TCKN/VKN digit sequences at all.
+# `case_id`/`party_id`/other opaque identifier fields are therefore
+# STRUCTURALLY NOT scanned for a raw TCKN/VKN digit collision by this or
+# any other function in this module - this is PRE-EXISTING behaviour
+# (identifier-opacity checking and split-digit masking are two
+# unrelated mechanisms), not something R5 introduced, weakened, or is
+# in scope to fix (case_id/party_id values are assigned upstream by the
+# case-management system, not extracted from document text; validating
+# THEIR own numbering scheme is a different system layer entirely,
+# outside this 2-file scope). The fixed, deterministic fixture below
+# now HONESTLY documents this discovered, disclosed, OUT-OF-SCOPE gap
+# instead of asserting a protection that does not exist.
+# ------------------------------------------------------------
+
+_opaque_case = {"parties": [{"party_id": "party_x", "party_type": "individual",
+                              "display_name": "Deneme Kisi"}]}
+_opaque_ctx = {
+    "case_id": "case_" + VALID_VKN,  # DELIBERATE, FIXED collision: a real checksum-valid
+                                       # low-signal split candidate's digits are embedded in
+                                       # case_id verbatim
+    "source_document_id": "belge_opaque", "source_document_title": "Ihbarname",
+    "source_document_type": "ihbarname", "source_actor_label": "Vergi Dairesi",
+    "parties": [{"party_id": "party_x", "role": "taxpayer", "display_name": "Deneme Kisi"}],
+    "dispute_items": [],
+}
+_opaque_refused = False
+_opaque_result = None
+try:
+    _opaque_result = lpb.mask_prompt_inputs(
+        case_data=_opaque_case, document_data={}, context=_opaque_ctx,
+        document_text=f"Deneme Kisi VKN: {VALID_VKN[:4]}\n{VALID_VKN[4:]} son.",
+    )
+except lpb.MaskingError:
+    _opaque_refused = True
+check(
+    "R5(10) DISCLOSED GAP (fixed deterministic fixture, not conditional): a case_id built "
+    "(deliberately, verbatim) to contain the exact digit sequence of a checksum-valid split VKN "
+    "candidate is NOT rejected by assert_identifiers_are_opaque() - that function only checks "
+    "NAME-kind seeds (party/operator), never TCKN/VKN digit sequences; case_id opacity against a "
+    "raw identifier number is a pre-existing, out-of-R5-scope gap, honestly documented here rather "
+    "than silently assumed away",
+    not _opaque_refused,
+)
+check(
+    "R5(10) DISCLOSED GAP: ...and consequently the raw case_id (carrying the VKN digits verbatim) "
+    "IS present, unmasked, in the returned masked_context - `case_id` is a load-bearing, "
+    "never-masked field by design (D5/S1), so this is expected system behaviour, not a masking "
+    "regression - it documents WHY case_id/party_id values must never be derived from raw "
+    "document identity numbers upstream",
+    _opaque_result is not None
+    and json.dumps(_opaque_result.masked_context).find(VALID_VKN) != -1,
+)
+
+# ------------------------------------------------------------
+# R5 (11): negative controls for amount-shaped text.
+# ------------------------------------------------------------
+
+check(
+    "R5(11) Negatif A: a dot/comma-grouped Turkish amount NEVER enters the split-digit run at "
+    "all (dots/commas are not separators - unchanged b2/F4 rule)",
+    lpb._scan_split_digit_runs("Tutar: 12.345.678,90 TL") == [],
+)
+_amount_doc = "Ahmet Yılmaz Tutar 1 234 567 890 TL devam."
+_amount_res = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_amount_doc)
+check(
+    "R5(11) Negatif B: a whitespace-grouped Turkish amount (compacts to '1234567890', which IS "
+    "structurally a low-signal 10-digit run) is genuinely checksum-tested and found VALID here "
+    "(same numeric coincidence as the 'Sayfa 12345 67890' fixture above) - documented, not hidden",
+    lpb.vkn_is_valid("1234567890") is True,
+)
+_amount_doc_invalid_shape = "Ahmet Yılmaz Tutar 5 432 167 890 TL devam."
+_amount_res_invalid = lpb.mask_prompt_inputs(
+    case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_amount_doc_invalid_shape,
+)
+check(
+    "R5(11) Negatif B (genuine checksum-invalid amount): a DIFFERENT whitespace-grouped amount "
+    "whose compacted 10 digits FAIL the VKN checksum is correctly left unmasked end-to-end",
+    "432" in _amount_res_invalid.masked_text and "167" in _amount_res_invalid.masked_text,
+    _amount_res_invalid.masked_text,
+)
+
+# ------------------------------------------------------------
+# R5 (12): count_possible_split_identifiers() semantic-change record.
+# The shared linear scanner now recognises the REAL line-wrap-hyphen
+# separator class too - this WIDENS what the informational counter
+# reports (previously that class was invisible to it entirely).
+# ------------------------------------------------------------
+
+check(
+    "R5(12) SEMANTIC CHANGE (widened): a real line-wrap-hyphen split 10/11-digit sequence is "
+    "now COUNTED by the standalone count_possible_split_identifiers() - before R5 this class "
+    "was entirely invisible to this counter (only the masking/backstop paths recognised it, "
+    "and even those did not exist before R5)",
+    lpb.count_possible_split_identifiers(f"{VALID_TCKN[:7]}-\n{VALID_TCKN[7:]}") == 1,
+)
+check(
+    "R5(12) SEMANTIC CHANGE: ...same for CRLF",
+    lpb.count_possible_split_identifiers(f"{VALID_TCKN[:7]}-\r\n{VALID_TCKN[7:]}") == 1,
+)
+check(
+    "R5(12) UNCHANGED (pre-existing b2 cases regressed against the widened scanner): plain "
+    "whitespace/zero-width/soft-hyphen splits are counted exactly as before R5",
+    lpb.count_possible_split_identifiers("Sayfa 12345 67890 satir") == 1
+    and lpb.count_possible_split_identifiers(f"{VALID_VKN[:4]}​{VALID_VKN[4:]}") == 1
+    and lpb.count_possible_split_identifiers("Tutar 12.345.678,90 TL") == 0
+    and lpb.count_possible_split_identifiers("No 20260210000123456") == 0,
+)
+check(
+    "R5(12): count_possible_split_identifiers_outside_tokens propagates the SAME widened "
+    "behaviour token-aware, through the shared scanner - no separate change needed",
+    lpb.count_possible_split_identifiers_outside_tokens(f"{VALID_TCKN[:7]}-\n{VALID_TCKN[7:]}") == 1,
+)
+
+# ------------------------------------------------------------
+# R5 (13): MASKING_POLICY_VERSION v4 bump.
+# ------------------------------------------------------------
+
+check("R5(13): MASKING_POLICY_VERSION was bumped v3 -> v4",
+      lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v4"
+      and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v3",
+      lpb.MASKING_POLICY_VERSION)
+
+_repo_root_for_grep = REPO_ROOT
+_v4_collisions = []
+for _py_file in _repo_root_for_grep.rglob("*.py"):
+    if ".venv" in _py_file.parts or "vergi_ui_runtime" in str(_py_file):
+        continue
+    try:
+        _content = _py_file.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        continue
+    if "tr_pseudonymisation_v4" in _content and _py_file.resolve() not in (
+        (REPO_ROOT / "src" / "llm_privacy_boundary.py").resolve(),
+        (REPO_ROOT / "ui" / "tests" / "test_llm_privacy_boundary_isolated.py").resolve(),
+    ):
+        _v4_collisions.append(str(_py_file))
+check(
+    "R5(13): repo-wide check - 'tr_pseudonymisation_v4' appears in NO file outside this "
+    "remediation's own 2-file scope (mirrors the R4 v1->v3 collision-avoidance precedent, "
+    "confirming no third file needs to change for this bump)",
+    _v4_collisions == [],
+    _v4_collisions,
+)
+
+# ------------------------------------------------------------
+# R5 (14): linearity / ReDoS-safety evidence.
+#
+# _scan_split_digit_runs()/_match_line_wrap_hyphen_linear() are
+# implemented as a hand-rolled, backtracking-free character scan (NOT
+# a regex with overlapping alternation) specifically to make ReDoS
+# structurally impossible - see the module header R5 note. The tests
+# below give EMPIRICAL, discriminating evidence of linear scaling
+# (Duzeltme 11: "tercihen adim sinirlaması, veya genis timeout testi").
+# ------------------------------------------------------------
+
+
+def _adversarial_near_miss_hyphen_text(repeats):
+    # many near-miss hyphen sequences: long whitespace runs on both
+    # sides of a '-' that never reaches a real line break - forces the
+    # linear hyphen matcher to walk to the end of each whitespace run
+    # before giving up, repeatedly.
+    return "1 " + (" " * 40 + "-" + " " * 40 + "x") * repeats
+
+
+_timing_samples = []
+for _n in (1000, 2000, 4000, 8000):
+    _text = _adversarial_near_miss_hyphen_text(_n)
+    _t0 = time.perf_counter()
+    lpb._scan_split_digit_runs(_text)
+    _timing_samples.append((len(_text), time.perf_counter() - _t0))
+
+_ratios = [dt / max(length, 1) for length, dt in _timing_samples]
+_max_ratio = max(_ratios)
+_min_ratio = min(_ratios)
+check(
+    "R5(14) LINEARITY EVIDENCE: scanning an adversarial near-miss-hyphen text (repeated long "
+    "whitespace runs that almost, but never, match the line-wrap-hyphen pattern) shows a "
+    "roughly CONSTANT time-per-character ratio across a 8x input-size increase (max/min ratio "
+    "bounded, NOT exploding as would be expected under quadratic/exponential backtracking)",
+    _max_ratio < _min_ratio * 6,
+    _ratios,
+)
+
+_giant_whitespace_text = "1" + (" " * 500_000) + "2"
+_t0 = time.perf_counter()
+_giant_result = lpb._scan_split_digit_runs(_giant_whitespace_text)
+_giant_elapsed = time.perf_counter() - _t0
+check(
+    "R5(14) BOUNDED-TIME EVIDENCE: scanning a single 500,002-character text consisting of two "
+    "digits separated by half a million plain spaces completes within a generous 5-second "
+    "timeout (catastrophic/quadratic backtracking on this input would take vastly longer) - "
+    "the result is correctly EMPTY (2 digits total, below the 10/11 floor)",
+    _giant_elapsed < 5.0 and _giant_result == [],
+    (_giant_elapsed, _giant_result),
+)
+
+print(f"(R5 linearity timing samples, informational only: {_timing_samples})")
+
+# ------------------------------------------------------------
+# R5 (15): MIXED-KIND separator remediation (CLAUDE.md "R5 KARARI VE
+# ZORUNLU SON REMEDİASYON" - Karar A + mandatory mixed-kind fix).
+#
+# KARAR A (confirmed, NOT re-litigated here): the pre-existing
+# `find_unresolvable_zero_width_digit_runs()`/`ZeroWidthDigitRunError`
+# guard (unchanged by R5, predates it - see the R5(1) DISCOVERY section
+# above) is KEPT as-is. Its unconditional, checksum-independent
+# refusal of a PURE zero-width-char-split 10/11-digit run, before any
+# masking is attempted, counts as R5's "mask-or-refuse-before-outbound"
+# contract for that specific (pure, single-kind) case.
+#
+# MANDATORY FIX (this section): that guard's own regex
+# (`_ZERO_WIDTH_DIGIT_RUN_RE = [0-9<zero-width>]+`) breaks at a plain
+# whitespace character, so it does NOT fire for a MIXED-KIND split (a
+# zero-width/soft-hyphen/line-wrap-hyphen atom immediately followed by
+# a plain-whitespace atom, or vice versa, with no digit or other
+# character between them). R5's OWN separator matcher, before this
+# fix, had the SAME single-atom limitation (`_match_split_separator`
+# matched exactly one atom kind and gave up at the first differently-
+# kinded character) - so a mixed-kind candidate could previously
+# escape BOTH mechanisms entirely: neither refused nor masked. This
+# section proves the fix: `_match_split_separator()` now combines an
+# arbitrary run of CONSECUTIVE, POSSIBLY-DIFFERENT-KIND atoms into one
+# block, and the block is high-signal if ANY atom within it is
+# high-signal (Karar #1a: "bir adayin ic ayraclarindan EN AZ BIRI
+# yuksek-sinyalli ise adayin TAMAMI yuksek-sinyalli kabul edilir").
+# ------------------------------------------------------------
+
+# --- (a) TCKN/VKN, mixed high+low atom combinations, checksum-INVALID
+# and checksum-VALID alike - high-signal bypasses checksum regardless
+# of how many atoms, or which kinds, make up the separator block.
+#
+# BAĞIMSIZ İNCELEME REMEDİASYONU (bu blok tamamen yeniden yazıldı): the
+# ORIGINAL version of this loop asserted `expect_absent not in
+# res.masked_text` where `expect_absent` was the FULL, CONTIGUOUS
+# TCKN/VKN string - but that contiguous string was NEVER present in the
+# split (separator-containing) input text to begin with, so its
+# "absence" after masking was TRUE REGARDLESS of whether masking
+# actually worked (a vacuous/false-pass check). It also asserted merely
+# `"VGMASK" in res.masked_text`, which is trivially satisfied by the
+# UNRELATED "Ahmet Yılmaz" party-name token, independent of whether the
+# split-digit candidate was masked at all. Fixed: each case now names
+# its own EXACT raw split span (WITH its separator, verbatim as it
+# appears in the un-masked input - a non-vacuous absence check, since
+# this exact string genuinely IS present before masking) and its
+# expected token class ("T"=TCKN, "V"=VKN); the assertion requires the
+# exact span's absence AND class_distribution[expected_class] == 1 AND
+# possible_split_identifier == 0 - three independent, non-vacuous
+# signals. The party name "Ahmet Yılmaz" is also removed from the
+# fixture text entirely, eliminating the irrelevant P-token noise. ---
+
+for label, doc, exact_raw_split_span, expected_class in [
+    (
+        "TCKN, checksum-INVALID, ZWSP then plain space",
+        f"Belge No: {INVALID_TCKN[:7]}​ {INVALID_TCKN[7:]} son.",
+        f"{INVALID_TCKN[:7]}​ {INVALID_TCKN[7:]}",
+        "T",
+    ),
+    (
+        "TCKN, checksum-VALID, ZWSP then plain space",
+        f"Belge No: {VALID_TCKN[:7]}​ {VALID_TCKN[7:]} son.",
+        f"{VALID_TCKN[:7]}​ {VALID_TCKN[7:]}",
+        "T",
+    ),
+    (
+        "VKN, checksum-INVALID, ZWSP then plain space",
+        f"Belge VKN: {INVALID_VKN[:4]}​ {INVALID_VKN[4:]} son.",
+        f"{INVALID_VKN[:4]}​ {INVALID_VKN[4:]}",
+        "V",
+    ),
+    (
+        "VKN, checksum-VALID, ZWSP then plain space",
+        f"Belge VKN: {VALID_VKN[:4]}​ {VALID_VKN[4:]} son.",
+        f"{VALID_VKN[:4]}​ {VALID_VKN[4:]}",
+        "V",
+    ),
+    (
+        "VKN, checksum-INVALID, soft-hyphen then plain space",
+        f"Belge VKN: {INVALID_VKN[:4]}­ {INVALID_VKN[4:]} son.",
+        f"{INVALID_VKN[:4]}­ {INVALID_VKN[4:]}",
+        "V",
+    ),
+    (
+        "VKN, checksum-VALID, plain space then soft-hyphen (reverse order)",
+        f"Belge VKN: {VALID_VKN[:4]} ­{VALID_VKN[4:]} son.",
+        f"{VALID_VKN[:4]} ­{VALID_VKN[4:]}",
+        "V",
+    ),
+    (
+        "VKN, checksum-INVALID, plain space, ZWSP, plain space (high-signal in the MIDDLE)",
+        f"Belge VKN: {INVALID_VKN[:4]} ​ {INVALID_VKN[4:]} son.",
+        f"{INVALID_VKN[:4]} ​ {INVALID_VKN[4:]}",
+        "V",
+    ),
+    (
+        "TCKN, checksum-INVALID, real line-wrap-hyphen (CRLF) then an EXTRA bare LF "
+        "(high-signal atom FIRST, low-signal atom SECOND)",
+        f"Belge No: {INVALID_TCKN[:7]}-\r\n\n{INVALID_TCKN[7:]} son.",
+        f"{INVALID_TCKN[:7]}-\r\n\n{INVALID_TCKN[7:]}",
+        "T",
+    ),
+    (
+        "TCKN, checksum-INVALID, a bare LF then a real line-wrap-hyphen (LF) "
+        "(low-signal atom FIRST, high-signal atom LAST)",
+        f"Belge No: {INVALID_TCKN[:7]}\n-\n{INVALID_TCKN[7:]} son.",
+        f"{INVALID_TCKN[:7]}\n-\n{INVALID_TCKN[7:]}",
+        "T",
+    ),
+]:
+    assert exact_raw_split_span in doc, (label, "fixture sanity: span must be present pre-mask")
+    res = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=doc)
+    check(
+        f"R5(15): {label} - the mixed-kind separator block is classified high-signal (at least "
+        "one atom is high-signal) and the candidate IS masked end-to-end via mask_prompt_inputs() "
+        "(exact raw span genuinely absent post-mask, exactly one token of the expected class "
+        f"placed, and the possible_split_identifier hint counter reads 0), checksum never "
+        "consulted",
+        exact_raw_split_span not in res.masked_text
+        and res.summary["class_distribution"].get(expected_class, 0) == 1
+        and res.summary["possible_split_identifier"] == 0,
+        (res.masked_text, res.summary["class_distribution"], res.summary["possible_split_identifier"]),
+    )
+    runs = lpb._scan_split_digit_runs(exact_raw_split_span)
+    check(
+        f"R5(15): {label} - the raw scanner classifies this candidate as high_signal=True",
+        len(runs) == 1 and runs[0][3] is True,
+        runs,
+    )
+
+# --- (b) DISCLOSED ASYMMETRY (Karar A's direct consequence, not a
+# defect): a PURE zero-width split still hits the earlier, stricter,
+# pre-existing guard (total refusal); the SAME digits split with an
+# ADDITIONAL plain-whitespace atom mixed in reach R5's own masking
+# logic instead (end-to-end success). Both are fail-closed and both
+# satisfy "maskelenmeli veya reddedilmeli" (item 4), but which of the
+# two outcomes occurs depends on whether a plain-whitespace atom is
+# present anywhere in the separator block - this is disclosed here,
+# not hidden. ---
+
+_pure_zw_doc = f"Belge No: {INVALID_TCKN[:7]}​{INVALID_TCKN[7:]} son."
+expect_raises(
+    lpb.ZeroWidthDigitRunError,
+    lambda: lpb.mask_prompt_inputs(
+        case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_pure_zw_doc
+    ),
+    "R5(15) DISCLOSED ASYMMETRY (1/2): a PURE zero-width split (no plain-whitespace atom mixed "
+    "in) still triggers the pre-existing, Karar-A-preserved ZeroWidthDigitRunError TOTAL REFUSAL "
+    "via mask_prompt_inputs() - unchanged from R5(1)",
+)
+# BAĞIMSIZ İNCELEME REMEDİASYONU: the ORIGINAL assertion here (`INVALID_TCKN
+# not in masked_text and "VGMASK" in masked_text`) was vacuous for the SAME
+# reason as (a) above - fixed identically: exact raw span absence +
+# class_distribution["T"] == 1 + possible_split_identifier == 0.
+_mixed_zw_span = f"{INVALID_TCKN[:7]}​ {INVALID_TCKN[7:]}"
+_mixed_zw_doc = f"Belge No: {_mixed_zw_span} son."
+assert _mixed_zw_span in _mixed_zw_doc
+_mixed_zw_res = lpb.mask_prompt_inputs(
+    case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_mixed_zw_doc
+)
+check(
+    "R5(15) DISCLOSED ASYMMETRY (2/2): the SAME digits, split with an ADDITIONAL plain space "
+    "immediately after the SAME zero-width character, do NOT trigger the pre-existing guard "
+    "(its single-kind regex breaks at the space) and instead reach R5's own mixed-kind masking "
+    "logic, succeeding end-to-end (exact raw span genuinely absent post-mask, exactly one T-class "
+    "token placed, hint counter reads 0) - a disclosed, documented consequence of Karar A, not a "
+    "regression",
+    _mixed_zw_span not in _mixed_zw_res.masked_text
+    and _mixed_zw_res.summary["class_distribution"].get("T", 0) == 1
+    and _mixed_zw_res.summary["possible_split_identifier"] == 0,
+    (_mixed_zw_res.masked_text, _mixed_zw_res.summary["class_distribution"],
+     _mixed_zw_res.summary["possible_split_identifier"]),
+)
+
+# --- NEGATIVE TEST-SEAM (bağımsız inceleme, madde 3): proves the FIXED
+# assertion pattern in (a)/(b) above is NOT itself vacuous - i.e. it
+# would genuinely FAIL if split-candidate generation were ever missed
+# during mask_prompt_inputs(), even in the presence of an UNRELATED,
+# genuinely-masked party-name token (the exact confound the original,
+# buggy assertion silently relied on). `_scan_split_digit_runs` is
+# monkeypatched (module-global, resolved at call time by
+# `_collect_candidates()` - production code is NOT touched) to
+# unconditionally return no candidates, simulating "the split-digit
+# detector missed this case"; a fixture that DOES include a seed name
+# (so a real, unrelated VGMASK P-token is genuinely present) plus a
+# mixed-kind split TCKN is then run through the exact same
+# corrected-assertion expression used in (a)/(b), and that expression
+# must evaluate to False. The real function is restored in `finally`
+# unconditionally, whether the assertion body raises or not. ---
+
+_neg_seam_real_scan = lpb._scan_split_digit_runs
+
+
+def _neg_seam_disabled_scan(_text):
+    return []
+
+
+_neg_seam_span = f"{INVALID_TCKN[:7]}​ {INVALID_TCKN[7:]}"
+_neg_seam_doc = f"Ahmet Yılmaz Belge No: {_neg_seam_span} son."
+assert _neg_seam_span in _neg_seam_doc
+lpb._scan_split_digit_runs = _neg_seam_disabled_scan
+try:
+    _neg_seam_res = lpb.mask_prompt_inputs(
+        case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_neg_seam_doc
+    )
+    _neg_seam_corrected_assertion_result = (
+        _neg_seam_span not in _neg_seam_res.masked_text
+        and _neg_seam_res.summary["class_distribution"].get("T", 0) == 1
+        and _neg_seam_res.summary["possible_split_identifier"] == 0
+    )
+    _neg_seam_party_token_present = "VGMASK" in _neg_seam_res.masked_text
+finally:
+    lpb._scan_split_digit_runs = _neg_seam_real_scan
+
+check(
+    "R5(15) NEGATIVE TEST-SEAM: with split-candidate generation MONKEYPATCHED OFF (simulating a "
+    "future regression that misses a mixed-kind candidate during mask_prompt_inputs()), the "
+    "party-name seed 'Ahmet Yılmaz' IS still genuinely masked (an unrelated VGMASK_...P token IS "
+    "present) - this confirms the negative scenario is realistic, not accidentally vacuous itself",
+    _neg_seam_party_token_present is True,
+)
+check(
+    "R5(15) NEGATIVE TEST-SEAM: ...and DESPITE that unrelated party-name token being present, the "
+    "CORRECTED assertion pattern from (a)/(b) correctly evaluates to False (would FAIL, not "
+    "falsely PASS) - proving the fix in (a)/(b) is genuinely non-vacuous and would catch a real "
+    "regression, unlike the original buggy pattern this replaces",
+    _neg_seam_corrected_assertion_result is False,
+)
+check(
+    "R5(15) NEGATIVE TEST-SEAM: _scan_split_digit_runs was correctly restored to the real "
+    "production function after the monkeypatch",
+    lpb._scan_split_digit_runs is _neg_seam_real_scan,
+)
+
+# --- (c) mixed survivor through the backstop specifically: if
+# _collect_candidates() were ever to miss a mixed-kind candidate (a
+# future regression), scan_outbound()'s independent backstop must
+# catch it with SplitIdentifierSurvivedError - NOT the unrelated,
+# pre-existing ZeroWidthDigitRunError (that guard only fires on PURE
+# zero-width runs, and this text is deliberately mixed-kind so it must
+# NOT trip it). ---
+
+_mixed_survivor_text = f"Bir metin VKN: {INVALID_VKN[:4]}​ {INVALID_VKN[4:]} devam."
+expect_raises(
+    lpb.SplitIdentifierSurvivedError,
+    lambda: lpb.scan_outbound(_mixed_survivor_text, ()),
+    "R5(15): a mixed-kind (ZWSP then space) high-signal split survivor, scanned DIRECTLY via "
+    "scan_outbound() (bypassing _collect_candidates entirely, per the R5(8) low-level seam), is "
+    "independently caught as SplitIdentifierSurvivedError - the exact exception type matters here "
+    "(expect_raises fails on ANY other exception, including ZeroWidthDigitRunError)",
+)
+
+# --- (d) 12+ digit maximal-run negative test, mixed-kind variant: the
+# exact-10/11 floor/ceiling is NOT bypassed just because the separator
+# is mixed-kind. This is DISCLOSED, not silently accepted: a 12-digit
+# sequence split by a mixed-kind separator goes out UNMASKED end-to-end
+# (matches the existing, approved constraint #7 behaviour for the
+# single-kind case - the contiguous 12-digit case is a separate,
+# unrelated matter handled by _DIGIT_RUN_11_RE's own fixed-length
+# pattern, which never matches 12 digits either). ---
+
+_twelve_digit_mixed = "123456​ 789012"
+check(
+    "R5(15) FLOOR/CEILING PRESERVED: a 12-digit run split by a mixed-kind (ZWSP+space) separator "
+    "produces ZERO candidates at the raw scanner level - no 10/11-digit subsequence is extracted",
+    lpb._scan_split_digit_runs(_twelve_digit_mixed) == [],
+    lpb._scan_split_digit_runs(_twelve_digit_mixed),
+)
+_twelve_digit_doc = f"Bir metin No: {_twelve_digit_mixed} son."
+_twelve_digit_res = lpb.mask_prompt_inputs(
+    case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_twelve_digit_doc
+)
+check(
+    "R5(15) DISCLOSED: ...and end-to-end, mask_prompt_inputs() correctly leaves this 12-digit "
+    "mixed-kind run COMPLETELY UNMASKED (not a candidate at all, per constraint #7) - the raw "
+    "12 digits ARE present, unmasked, in the outbound text; this is the approved, disclosed "
+    "trade-off (a below/above-floor run is never partially masked)",
+    _twelve_digit_mixed in _twelve_digit_res.masked_text,
+    _twelve_digit_res.masked_text,
+)
+check(
+    "R5(15) DISCLOSED: ...and scan_outbound() correctly does NOT reject this same 12-digit "
+    "mixed-kind run either (it was never a maskable candidate in the first place - the backstop "
+    "mirrors the same floor/ceiling the masker uses, exactly as R5(8)'s CONTROL already "
+    "established for the single-kind case)",
+    lpb.scan_outbound(_twelve_digit_res.masked_text, _twelve_digit_res) is None,
+)
+
+# --- (e) VGMASK token-boundary negative test, mixed-kind variant
+# (follows the EXACT R5(4) pattern: a hand-built already-placed token
+# literal + token-aware per-segment scanning - not a full mask_text()
+# pipeline call, to isolate this from unrelated name-masking noise). A
+# placed token's OWN digits must never merge, across the token
+# boundary, with a SEPARATE mixed-kind split candidate that follows
+# it. ---
+
+_mixed_boundary_text = "VGMASK_0001T " + VALID_VKN[:4] + "​ " + VALID_VKN[4:]
+_mixed_boundary_runs = []
+for _is_tok, _seg_start, _seg_end in lpb._token_segments(_mixed_boundary_text):
+    if _is_tok:
+        continue
+    for _rel_s, _rel_e, _digits, _hs in lpb._scan_split_digit_runs(
+        _mixed_boundary_text[_seg_start:_seg_end]
+    ):
+        _mixed_boundary_runs.append((_digits, _hs))
+check(
+    "R5(15): scanning token-aware (per-segment, via _token_segments) never merges the digits "
+    "INSIDE an already-placed VGMASK token with a SEPARATE mixed-kind (ZWSP+space) split VKN "
+    "that follows it - exactly one candidate found (the split VKN), correctly high_signal=True",
+    _mixed_boundary_runs == [(VALID_VKN, True)],
+    _mixed_boundary_runs,
+)
+
+# --- (f) identity/idempotency: MASKING_POLICY_VERSION stays at v4 (this
+# fix completes the SAME, still-uncommitted R5 change set - HEAD has not
+# moved and no production mutation ever ran against intermediate v4
+# bytes, so a v4 -> v5 bump is not required for THIS remediation; if
+# that premise is ever found to be false, the bump is a one-line,
+# separately-approved change) + the repo-wide uniqueness guarantee from
+# R5(13) still holds after this fix + masking is fully deterministic
+# (same input -> byte-identical output), the property the mutation-
+# coordinator's identity_payload/idempotency chain structurally depends
+# on. ---
+
+check(
+    "R5(15) IDENTITY: MASKING_POLICY_VERSION is still exactly 'tr_pseudonymisation_v4' after the "
+    "mixed-kind fix (NOT bumped again - see the module header R5 KARAR A note for the premise)",
+    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v4",
     lpb.MASKING_POLICY_VERSION,
+)
+_v4_collisions_after_fix = []
+for _py_file in sorted(REPO_ROOT.rglob("*.py")):
+    _resolved = _py_file.resolve()
+    if any(part in (".venv", "vergi_ui_runtime", "__pycache__") for part in _resolved.parts):
+        continue
+    try:
+        _content = _py_file.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        continue
+    if "tr_pseudonymisation_v4" in _content and _resolved not in (
+        REPO_ROOT / "src" / "llm_privacy_boundary.py",
+        REPO_ROOT / "ui" / "tests" / "test_llm_privacy_boundary_isolated.py",
+    ):
+        _v4_collisions_after_fix.append(str(_py_file))
+check(
+    "R5(15) IDENTITY: the repo-wide 'tr_pseudonymisation_v4' uniqueness guarantee (R5(13)) still "
+    "holds after the mixed-kind fix - zero collisions outside the 2-file scope",
+    _v4_collisions_after_fix == [],
+    _v4_collisions_after_fix,
+)
+_idem_doc = f"Ahmet Yılmaz VKN: {VALID_VKN[:4]}​ {VALID_VKN[4:]} son."
+_idem_res_1 = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_idem_doc)
+_idem_res_2 = lpb.mask_prompt_inputs(case_data=B1_CASE, document_data=B1_DOC, context=B1_CTX, document_text=_idem_doc)
+check(
+    "R5(15) IDEMPOTENCY: masking the SAME mixed-kind input TWICE (two independent "
+    "mask_prompt_inputs() calls, fresh mapping each time) produces BYTE-IDENTICAL masked_text - "
+    "the determinism property the mutation-coordinator's input_digest/idempotency chain relies on",
+    _idem_res_1.masked_text == _idem_res_2.masked_text,
+    (_idem_res_1.masked_text, _idem_res_2.masked_text),
+)
+check(
+    "R5(15) IDEMPOTENCY: ...and the summary dicts (including possible_split_identifier and "
+    "class_distribution) are identical across both runs too",
+    _idem_res_1.summary == _idem_res_2.summary,
+    (_idem_res_1.summary, _idem_res_2.summary),
+)
+
+# --- (g) counter semantics: count_possible_split_identifiers() now
+# counts a mixed-kind candidate too (widened a THIRD time - first to
+# include real line-wrap-hyphen (R5(12)), now to include mixed-kind
+# combinations of any of the recognised atom kinds). ---
+
+check(
+    "R5(15) COUNTER WIDENED (third time): count_possible_split_identifiers() now counts a "
+    "mixed-kind (ZWSP+space) 10/11-digit candidate - before this fix it counted ZERO for this "
+    "exact text (the old single-atom matcher never reached a full 10/11-digit candidate across "
+    "a mixed-kind boundary)",
+    lpb.count_possible_split_identifiers(f"{INVALID_VKN[:4]}​ {INVALID_VKN[4:]}") == 1,
+)
+check(
+    "R5(15) COUNTER WIDENED: ...and count_possible_split_identifiers_outside_tokens propagates "
+    "the same widened behaviour, token-aware, through the shared scanner",
+    lpb.count_possible_split_identifiers_outside_tokens(
+        f"{INVALID_VKN[:4]}​ {INVALID_VKN[4:]}"
+    ) == 1,
+)
+check(
+    "R5(15) COUNTER: the 12-digit mixed-kind run from (d) is correctly NOT counted (still below/"
+    "above the exact 10/11 floor even after the mixed-kind widening)",
+    lpb.count_possible_split_identifiers(_twelve_digit_mixed) == 0,
+)
+
+# --- (h) MANDATORY linear step-count evidence (not just wall-clock
+# timing): monkeypatch _match_separator_atom with a counting wrapper -
+# _match_split_separator() resolves the name through the module
+# global at call time, so the patch is observed by the combining loop
+# without touching production code. Assert total calls stay bounded by
+# C * len(text) with a generous, EMPIRICALLY-VERIFIED-SAFE C=4 (actual
+# measured ratios across an 8x size increase for all three shapes below
+# were a PERFECTLY CONSTANT 1.0, 0.1667, and 0.0385 respectively - C=4
+# leaves a wide, deliberate safety margin, not a tight fit). ---
+
+_real_match_separator_atom = lpb._match_separator_atom
+
+
+def _step_count_shapes():
+    return {
+        "alternating ZWSP+space pairs between single digits": lambda n: "9" + ("​ 9" * n),
+        "near-miss hyphen blocks after each digit": lambda n: ("9" + " " * 5 + "-" + " " * 5) * n + "9",
+        "digit + k plain spaces + non-digit, repeated": lambda n: ("9" + " " * 50 + "x") * n,
+    }
+
+
+for _shape_label, _shape_gen in _step_count_shapes().items():
+    _step_ratios = []
+    for _n in (500, 1000, 2000, 4000):
+        _shape_text = _shape_gen(_n)
+        _call_count = [0]
+
+        def _counting_atom(text, pos, _real=_real_match_separator_atom, _counter=_call_count):
+            _counter[0] += 1
+            return _real(text, pos)
+
+        lpb._match_separator_atom = _counting_atom
+        try:
+            lpb._scan_split_digit_runs(_shape_text)
+        finally:
+            lpb._match_separator_atom = _real_match_separator_atom
+        _step_ratios.append(_call_count[0] / len(_shape_text))
+    check(
+        f"R5(15) MANDATORY LINEAR STEP-COUNT EVIDENCE: '{_shape_label}' - total "
+        "_match_separator_atom() call count stays bounded by C=4 * len(text) across an 8x "
+        "input-size increase (500/1000/2000/4000 repeats) - NOT growing super-linearly",
+        all(ratio <= 4.0 for ratio in _step_ratios),
+        _step_ratios,
+    )
+
+check(
+    "R5(15): _match_separator_atom was correctly restored to the real production function after "
+    "every monkeypatch above (no stale patch leaks into any later section)",
+    lpb._match_separator_atom is _real_match_separator_atom,
 )
 
 print("## 15e - S1: no context leaf may carry a seed name to the model")

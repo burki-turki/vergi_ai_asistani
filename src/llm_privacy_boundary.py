@@ -78,6 +78,68 @@
 #     `identity_payload`'a hic GIRMEZ (yalniz onizleme ozetinde
 #     gosterilir) - dogrulandi, bkz. `ui/services/
 #     fact_extraction_mutation_facade.py:_build_identity_payload()`.
+#   * R5 KAPANDI (satir-sonu/bosluk/gorunmez-karakterle BOLUNMUS
+#     TCKN/VKN - CLAUDE.md Pilot Readiness R5 remediasyonu, kullanicinin
+#     "Karar #1a" onayi): daha once `count_possible_split_identifiers()`
+#     boyle bir deseni yalniz BILGI AMACLI sayiyordu, ne maskeliyor ne
+#     reddediyordu (b2 karari) - ve bu sayac bile GERCEK ASCII tire +
+#     satir sonu (R4'un isimler icin kapattigi TAM sinif) deseninI HIC
+#     GORMUYORDU. R5, HIBRIT bir politika ile bu acigi kapatir:
+#     (a) YUKSEK-SINYAL ayrac (zero-width/soft-hyphen/gercek
+#     line-wrap-hyphen) iceren bir aday checksum ARANMADAN, salt
+#     uzunluga (10/11 hane) bakilarak maskelenir - R4'un isimler icin
+#     kullandigi AYNI "dusuk gurultu, yuksek sinyal" mantigi;
+#     (b) YALNIZ duz whitespace ayracli (tiresiz satir sonu DAHIL)
+#     bir aday, `tckn_is_valid`/`vkn_is_valid` KESIN `True` donerse
+#     maskelenir - GECMEZSE (KESIN `False`) veya BELIRSIZSE (istisna/
+#     beklenmeyen deger) b2'nin informational-only davranisi KORUNUR,
+#     ama belirsizlik ASLA "checksum'i atla, sessizce gonder" (fail-
+#     open) anlamina GELMEZ: `_digit_checksum_permits_masking()`
+#     yalniz ACIK bir `False`'u izin (maskeleme) sayar, her sey
+#     (istisna dahil) maskeleme yonune duser. Tarama REGEX DEGIL,
+#     backtracking ICERMEYEN, dogrusal-zamanli bir karakter tarayicidir
+#     (`_scan_split_digit_runs()`) - orten ayrac alternatifli bir
+#     regex'in tasiyacagi ReDoS riskinden yapisal olarak bagisiktir.
+#     Maskeleyici (`_collect_candidates`) VE backstop (`scan_outbound`)
+#     AYNI dusuk-seviye tarayiciyi ve AYNI checksum-kapisini, birbirinden
+#     BAGIMSIZ cagri noktalarindan kullanir (dijit siniflarinda
+#     maskeleyici/backstop'un AYNI regex'i paylasmasi - yukaridaki
+#     N4 notu - onceden de boyleydi, B1'in isim-ozgu kok nedeni burada
+#     GECERLI DEGIL). `MASKING_POLICY_VERSION` bu degisiklikle
+#     `v3` -> `v4` bump edildi (identity payload'a girer).
+#   * R5 KARAR A + KARISIK-TUR (mixed-kind) DUZELTMESI (aynı R5 turu
+#     icinde, kullanicinin "R5 KARARI VE ZORUNLU SON REMEDIASYON"
+#     onayi): (i) PRE-EXISTING (R5'ten ONCE var olan, bu diff'te
+#     DEGISTIRILMEYEN) `find_unresolvable_zero_width_digit_runs()` /
+#     `ZeroWidthDigitRunError` guard'i KORUNUR - alti zero-width/
+#     yumusak-tire karakterinin (Karar #1a'nin listesi) `mask_prompt_
+#     inputs()` uzerinden TOPYEKUN reddedilmesi (maskeleme denenmeden)
+#     R5 bakimindan "mask-or-refuse-before-outbound" olarak KABUL
+#     EDILIR - bu guard GEVSETILMEDI/KALDIRILMADI. (ii) Bu guard'in
+#     kendisi SALT-TEK-TUR bir regex oldugundan (`[0-9<zero-width>]+`,
+#     duz whitespace'te KIRILIR), bir zero-width karakter ile duz
+#     whitespace'i ARDISIK KARISTIRAN bir bolunme (ornegin bir ZWSP'nin
+#     hemen ardindan bir bosluk) bu guard'i TETIKLEMEZ VE R5'in KENDI
+#     ONCEKI tarayicisi da (`_match_split_separator()`, o zaman TEK bir
+#     ayrac ATOMU eslestiriyordu) byle bir karisimi TEK bir aday olarak
+#     TANIMIYORDU - net sonuc: boyle bir aday ne reddediliyor ne
+#     maskeleniyordu, SESSIZCE disariya sizabiliyordu. Bu, Karar #1a'nin
+#     "bir adayin herhangi bir ic ayraci yuksek-sinyalliyse adayin
+#     TAMAMI yuksek-sinyal sayilir" kuralinin FiILEN ihlaliydi.
+#     `_match_split_separator()` bu yuzden bir ATOM-BIRLESTIRME
+#     dongusune donusturuldu (yeni `_match_separator_atom()` tek-atom
+#     eslesmesini AYNEN korur, `_match_split_separator()` ARDISIK,
+#     FARKLI turden birden fazla atomu TEK bir blok olarak birlestirip
+#     bloktaki HERHANGI bir atom yuksek-sinyalliyse TUM blogu
+#     yuksek-sinyal SAYAR - OR mantigi). Dogrusallik KORUNUR (her atom
+#     en az bir karakter ilerler, backtracking YOK). `MASKING_POLICY_
+#     VERSION` `v4`'TE KALDI (bump edilmedi) - bu duzeltme AYNI,
+#     HENUZ COMMIT/LOCK EDILMEMIS R5 degisim kumesinin (HEAD hala
+#     `v4` bump'indan ONCEki commit'te) TAMAMLANMASIDIR; ara-durum `v4`
+#     baytlarina karsi hicbir production mutasyonu calismadi (kanit:
+#     implementasyon raporu). Eger ileride bu varsayim yanlis cikarsa
+#     `v4` -> `v5` bump'i AYRI bir onay bekleyen, tek satirlik bir
+#     degisikliktir.
 #
 # MIMARI KURALLAR:
 #   * stdlib-only (`re`, `json`, `hashlib`, `unicodedata`, `dataclasses`).
@@ -171,9 +233,18 @@ from dataclasses import dataclass, field
 # (yani 3. bir dosyaya dokunup) o testi degistirmek YERINE, cakismasiz
 # bir surum secilerek onlenmistir (bkz. `git grep tr_pseudonymisation`
 # ile dogrulanan bos "v3" alani).
+#
+# v3 -> v4 (R5): bolunmus TCKN/VKN fail-closed maskeleme/reddetme
+# (bkz. modul basligi R5 notu). Bump ZORUNLUDUR: ayni gerekce - v3 ile
+# TAMAMLANMIS bir mutasyon (bolunmus bir kimlik numarasi maskesiz
+# gitmis olabilir) kod degistikten SONRA "safe replay" ile sessizce
+# eski sonucu DONDURMEMELI, YENI ve BAGIMSIZ bir deneme URETMELI.
+# Repo-geneli `git grep tr_pseudonymisation_v4` ile CAKISMASIZ oldugu
+# implementasyon oncesi DOGRULANMISTIR (yalniz bu iki dosyada
+# "tr_pseudonymisation_v3" geciyordu, v2'nin aksine bir cakisma YOK).
 # ------------------------------------------------------------
 
-MASKING_POLICY_VERSION = "tr_pseudonymisation_v3"
+MASKING_POLICY_VERSION = "tr_pseudonymisation_v4"
 
 
 # ------------------------------------------------------------
@@ -261,6 +332,16 @@ class SurvivingPatternError(MaskingError):
     pass
 
 
+class SplitIdentifierSurvivedError(SurvivingPatternError):
+    """R5: satir sonu/bosluk/gorunmez karakterle bolunmus bir TCKN/VKN
+    adayi maskeleme SONRASI token-haric metinde hala tespit edildi.
+    `SurvivingPatternError`'in alt sinifidir - mevcut
+    `except SurvivingPatternError`/`except MaskingError` cagri
+    noktalari degismeden yakalamaya devam eder. Sabit mesaji
+    (`MSG_SPLIT_SURVIVING`) hicbir ham rakam/kimlik ICERMEZ."""
+    pass
+
+
 class NonAsciiDigitError(MaskingError):
     pass
 
@@ -323,6 +404,11 @@ MSG_SURVIVING_NORMALISED = (
     "Maskeleme reddedildi: bir taraf adi, gorunmez karakter veya birlesik "
     "olmayan Unicode bicimi nedeniyle maskelenemeden giden metinde hayatta "
     "kaldi. Belge metnini NFC/temiz bicime getirin."
+)
+MSG_SPLIT_SURVIVING = (
+    "Maskeleme reddedildi: satir sonu/bosluk/gorunmez karakterle bolunmus "
+    "bilinen bir kimlik numarasi deseni maskelenmeden giden metinde "
+    "hayatta kaldi."
 )
 MSG_NON_ASCII_DIGIT = (
     "Maskeleme reddedildi: kaynak icerik ASCII olmayan rakam karakteri "
@@ -592,40 +678,223 @@ _ZERO_WIDTH_DIGIT_RUN_RE = re.compile(
 
 
 _SPLIT_SEPARATOR_CHARS = _ZERO_WIDTH_CHARS + "­"
-_SPLIT_DIGIT_RUN_RE = re.compile(
-    "[0-9](?:[0-9\\s" + _SPLIT_SEPARATOR_CHARS + "]*[0-9])?"
-)
+
+# ------------------------------------------------------------
+# R5: BOLUNMUS (split) TCKN/VKN TARAYICISI - dogrusal, regex-siz,
+# backtracking ICERMEYEN. Bkz. modul basligi R5 notu icin tasarim
+# gerekcesi (hibrit yuksek/dusuk-sinyal politikasi, ReDoS analizi).
+# ------------------------------------------------------------
+
+_ASCII_DIGITS = frozenset("0123456789")
+
+_SEP_KIND_HIGH = "high"
+_SEP_KIND_LOW = "low"
+
+
+def _match_line_wrap_hyphen_linear(text, pos):
+    """`_LINE_WRAP_HYPHEN_RE`'nin (R4) AYNI deseninin - opsiyonel yatay
+    bosluk + GERCEK '-' + opsiyonel yatay bosluk + GERCEK `\\r?\\n` +
+    opsiyonel yatay bosluk - REGEX KULLANMADAN, saf karakter-indeksleme
+    ile uygulanmis hali. `_LINE_WRAP_HYPHEN_RE`'yi DEGISTIRMEZ/YENIDEN
+    YAZMAZ (R4'un isim maskeleyici/backstop yolu o regex'i AYNEN
+    kullanmaya devam eder) - yalniz R5'in dogrusal tarayicisi icin AYNI
+    deseni, regex motoruna/backtracking'e HICBIR BAGIMLILIK olmadan
+    tanir. Eslesirse yeni pozisyonu (int) doner; eslesmezse `None`.
+
+    HER `while` dongusu TEK YONDE ilerler - geri izleme (backtracking)
+    YOKTUR, bu yuzden ReDoS bu fonksiyon icin YAPISAL olarak
+    IMKANSIZDIR (uzun bir bosluk/tab dizisi bile TEK GECISTE, O(dizi
+    uzunlugu) surede islenir)."""
+    n = len(text)
+    j = pos
+    while j < n and text[j] in " \t":
+        j += 1
+    if j >= n or text[j] != "-":
+        return None
+    j += 1
+    while j < n and text[j] in " \t":
+        j += 1
+    if j < n and text[j] == "\r":
+        j += 1
+    if j >= n or text[j] != "\n":
+        return None
+    j += 1
+    while j < n and text[j] in " \t":
+        j += 1
+    return j
+
+
+def _match_separator_atom(text, pos):
+    """Pozisyon `pos`'ta TEK BIR ayrac ATOMU BASLIYOR mu? Basliyorsa
+    `(yeni_pozisyon, sinyal_turu)` doner; baslamiyorsa `None`. Bir "atom"
+    KENDI turunden bir ayracin maksimal calismasidir - gercek
+    line-wrap-hyphen deseninin TAMAMI (kendi ic opsiyonel bosluklariyla
+    birlikte TEK atom), VEYA ardisik zero-width/yumusak-tire
+    karakterlerinin TAMAMI, VEYA ardisik duz whitespace'in TAMAMI. Bu
+    fonksiyon TEK BASINA karisik-turlu (mixed-kind) bir ayrac blogunu
+    TANIMAZ - bu, cagiranin (`_match_split_separator`) sorumlulugudur.
+
+    SIRALAMA: once (yuksek-sinyal) gercek line-wrap-hyphen denenir -
+    basarisiz olursa (tire yok VEYA tire var ama satir sonuna
+    varmiyor) zero-width/yumusak-tire (yuksek-sinyal) veya duz
+    whitespace (dusuk-sinyal) dallarina DUSULUR. HER dal `pos`'u EN AZ
+    BIR ILERI tasir (sonsuz donguye asla girmez) ve backtracking
+    ICERMEZ."""
+    n = len(text)
+    if pos >= n:
+        return None
+    hyphen_end = _match_line_wrap_hyphen_linear(text, pos)
+    if hyphen_end is not None and hyphen_end > pos:
+        return hyphen_end, _SEP_KIND_HIGH
+    ch = text[pos]
+    if ch in _ZERO_WIDTH_CHARS:
+        end = pos + 1
+        while end < n and text[end] in _ZERO_WIDTH_CHARS:
+            end += 1
+        return end, _SEP_KIND_HIGH
+    if ch.isspace():
+        end = pos + 1
+        while end < n and text[end].isspace():
+            end += 1
+        return end, _SEP_KIND_LOW
+    return None
+
+
+def _match_split_separator(text, pos):
+    """Pozisyon `pos`'ta bir ayrac BLOGU BASLIYOR mu? Basliyorsa
+    `(yeni_pozisyon, sinyal_turu)` doner; baslamiyorsa `None`.
+
+    R5 KARISIK-TUR (mixed-kind) DUZELTMESI: bir blok, ARDISIK, FARKLI
+    TURLERDEN (zero-width/yumusak-tire, duz whitespace, gercek
+    line-wrap-hyphen) BIRDEN FAZLA atomun BIRLESIMI olabilir - aralarinda
+    rakam veya baska bir karakter YOKSA. Karar #1a: "bir adayin ic
+    ayraclarindan EN AZ BIRI yuksek-sinyalli ise adayin TAMAMI
+    yuksek-sinyalli kabul edilir" - bu yuzden blok, kapsadigi atomlardan
+    HERHANGI BIRI yuksek-sinyalliyse yuksek-sinyalli SAYILIR (OR), hepsi
+    dusuk-sinyalliyse dusuk-sinyalli kalir. Ornek: rakam + ZWSP + duz
+    bosluk + rakam -> ZWSP atomu yuksek-sinyal, bosluk atomu dusuk-sinyal,
+    blogun TAMAMI yuksek-sinyal.
+
+    Dogrusallik KORUNUR: dongu her turda `_match_separator_atom()`
+    araciligiyla EN AZ BIR karakter ilerler (atom'un kendi sozlesmesi
+    geregi) - toplam ilerleme metnin uzunlugunu ASLA asamaz, backtracking
+    YOKTUR."""
+    n = len(text)
+    end = pos
+    block_high_signal = False
+    matched_any = False
+    while True:
+        atom = _match_separator_atom(text, end)
+        if atom is None:
+            break
+        atom_end, atom_kind = atom
+        if atom_end <= end:
+            # Guvenlik agi: bir atom HER ZAMAN ileri ilerlemek ZORUNDADIR
+            # (`_match_separator_atom`'un kendi sozlesmesi geregi bu asla
+            # gerceklesmemeli) - yine de sonsuz donguyu yapisal olarak
+            # imkansiz kilmak icin acikca durduruluyor.
+            break
+        matched_any = True
+        end = atom_end
+        if atom_kind == _SEP_KIND_HIGH:
+            block_high_signal = True
+    if not matched_any:
+        return None
+    return end, (_SEP_KIND_HIGH if block_high_signal else _SEP_KIND_LOW)
+
+
+def _scan_split_digit_runs(text):
+    """DOGRUSAL, tek-gecisli tarayici - O(len(text)), backtracking
+    YOK. `(start, end, digits, high_signal)` uclulerinin listesini
+    doner:
+
+      * `start`/`end` TAM ILK/SON RAKAM konumundadir - span disindaki
+        bosluk candidate'a DAHIL EDILMEZ (span'in disindaki
+        bas/son whitespace HER ZAMAN KORUNUR);
+      * span icinde EN AZ BIR ayrac karakteri OLMAK ZORUNDADIR -
+        kesintisiz bir dizi ASLA candidate SAYILMAZ (mevcut
+        `_DIGIT_RUN_11_RE`/`_DIGIT_RUN_10_RE` kolu bunu zaten kapsar,
+        bu tarayici o kola HICBIR ZAMAN MUDAHALE ETMEZ);
+      * sikistirildiginda (yalniz `_ASCII_DIGITS` uyeligi sayilarak -
+        `.isdigit()` KULLANILMAZ, Unicode superscript/tam genislikli
+        rakamlar bu yuzden HARICI TUTULUR) TAM 10 VEYA TAM 11 haneye
+        ulasir - 12+ (veya <=9) haneli bir run'dan ALT-DIZI
+        eslestirilmez, run'in TAMAMI atlanir (HICBIR candidate
+        uretilmez);
+      * her run, taranan TUM uzunlugu ne olursa olsun, TEK SEFERDE
+        islenir - `i` HER ZAMAN en az bir run'in sonuna kadar ilerler,
+        boylece 12+ haneli reddedilen bir run'da bile O(n^2) riski
+        DOGMAZ (toplam calisma suresi metnin TOPLAM uzunluguyla
+        SINIRLIDIR).
+
+    `high_signal`, run'in ayraclarindan EN AZ BIRININ yuksek-sinyal
+    (zero-width/soft-hyphen/gercek-line-wrap-hyphen) olup OLMADIGINI
+    gosterir (R5 Karar #1a: "adayin ic ayraclarindan EN AZ BIRI
+    yuksek-sinyalli ise adayin TAMAMI yuksek-sinyalli kabul edilir").
+
+    Cagiran (`_collect_candidates`/`scan_outbound`) bu fonksiyonu HER
+    ZAMAN token-haric TEK bir segment uzerinde cagirir - token
+    sinirindan GECEREK run birlestirilmez (mevcut `_token_segments()`
+    segmentasyonu zaten token'lari DISLAR, bu fonksiyon kendi basina
+    token-farkindaligi TASIMAZ/gerektirmez)."""
+    candidates = []
+    n = len(text)
+    i = 0
+    while i < n:
+        if text[i] not in _ASCII_DIGITS:
+            i += 1
+            continue
+        run_start = i
+        digits = [text[i]]
+        last_digit_end = i + 1
+        j = i + 1
+        high_signal = False
+        while True:
+            if j < n and text[j] in _ASCII_DIGITS:
+                digits.append(text[j])
+                j += 1
+                last_digit_end = j
+                continue
+            sep = _match_split_separator(text, j)
+            if sep is None:
+                break
+            sep_end, sep_kind = sep
+            if sep_end >= n or text[sep_end] not in _ASCII_DIGITS:
+                # ayrac adayi bir SONRAKI RAKAMA VARMIYOR - run burada
+                # KESIN olarak biter, bu ayrac/kuyruk span'a HIC GIRMEZ.
+                break
+            high_signal = high_signal or (sep_kind == _SEP_KIND_HIGH)
+            j = sep_end
+        digit_count = len(digits)
+        has_separator = (last_digit_end - run_start) != digit_count
+        if has_separator and digit_count in (10, 11):
+            candidates.append(
+                (run_start, last_digit_end, "".join(digits), high_signal)
+            )
+        i = max(last_digit_end, run_start + 1)
+    return candidates
 
 
 def count_possible_split_identifiers(text):
-    """BILGI AMACLI SAYAC (kapsam karari b2) - HICBIR RET URETMEZ.
+    """R5 (davranis IKI KEZ GENISLEDI - once yalniz bosluk/zero-width/
+    yumusak tire sayiliyordu, sonra GERCEK line-wrap-hyphen eklendi,
+    ARDINDAN bu ayrac turlerinin KARISIK (mixed-kind) ardisik
+    kombinasyonlari da sayilmaya baslandi - bkz. modul basligi R5 notu):
+    bosluk / satir sonu / sifir genislikli karakter / yumusak tire /
+    GERCEK line-wrap-hyphen ile, TEK bir turden VEYA bu turlerin ARDISIK
+    KARISIMINDAN (ornegin bir zero-width karakterin hemen ardindan duz
+    bir bosluk) ayrilmis, sikistirildiginda TAM 10 veya 11 haneye ulasan
+    TUM aday sayisini doner - checksum'DAN BAGIMSIZ, saf YAPISAL bir
+    sayimdir (bu fonksiyonun KENDISI hicbir maskeleme/ret KARARI VERMEZ;
+    maskeleme/ret karari `_collect_candidates()`/`scan_outbound()`
+    icinde, HER adayin kendi checksum/yuksek-sinyal durumuna gore AYRICA
+    verilir - karisik bir blokta TEK BIR atom bile yuksek-sinyalliyse
+    TUM aday yuksek-sinyalli sayilir, bkz. `_match_split_separator()`).
 
-    Yalnizca bosluk / satir sonu / sifir genislikli karakter / yumusak
-    tire ile ayrilmis, sikistirildiginda TAM 10 veya 11 haneye ulasan
-    MASKELENMEMIS rakam dizilerini sayar.
-
-    NEDEN RET DEGIL (sahibin karari b2): rakamlari bosluk boyunca
-    birlestiren bir TARAMA, siradan tablo/binlik sayilarinda HAKSIZ RET
-    uretir (`"Sayfa 12345 67890"`, `"Tutar 1 234 567 890 TL"` - ampirik
-    olarak olculdu) ve operator bunu DUZELTEMEZ. Bunun yerine avukat
-    onizlemede bir uyari gorur ve maskeli metni kendisi kontrol eder;
-    apply zaten onizleme digest'ini gerektirir.
-
-    `.` ve `,` AYRAC OLARAK SAYILMAZ - Turkce bir tutar (`12.345.678,90`)
-    sikistirilirsa VKN sagalamasindan GECEN `1234567890` olur (kapsam
-    F4). Bu yuzden ayraclar yalnizca bosluk sinifiyla sinirlidir.
-
-    ACIK KALAN SINIR: satir sonuyla bolunmus bir TCKN/VKN bu turda
-    MASKELENMEZ - yalnizca sayilir ve onizlemede gosterilir."""
-    hits = 0
-    for match in _SPLIT_DIGIT_RUN_RE.finditer(text):
-        span = match.group(0)
-        if not any(ch in _SPLIT_SEPARATOR_CHARS or ch.isspace() for ch in span):
-            continue
-        digits = "".join(ch for ch in span if ch.isascii() and ch.isdecimal())
-        if len(digits) in (10, 11):
-            hits += 1
-    return hits
+    b2 emsalinden DEVRALINAN, DEGISMEYEN kural: `.` ve `,` AYRAC
+    OLARAK SAYILMAZ - Turkce bir tutar (`12.345.678,90`) sikistirilirsa
+    VKN sagalamasindan GECEN `1234567890` olabilir (kapsam F4)."""
+    return len(_scan_split_digit_runs(text))
 
 
 def count_possible_split_identifiers_outside_tokens(text):
@@ -698,6 +967,30 @@ def vkn_is_valid(value):
             component = (tmp * pow(2, 9 - index)) % 9
         total += component
     return (10 - total % 10) % 10 == digits[9]
+
+
+def _digit_checksum_permits_masking(digits, token_class):
+    """R5 Karar #1: DUSUK-sinyal (yalniz duz whitespace ayracli, hic
+    yuksek-sinyal ayrac ICERMEYEN) bir split aday icin checksum
+    kapisi. Sonuc KATI FAIL-CLOSED yorumlanir: YALNIZ ACIK, KESIN bir
+    `False` donusu "informational-only, maskeleme" (b2 emsali)
+    anlamina GELIR; HER SEY DIGERI (True, beklenmeyen istisna,
+    beklenmeyen donus tipi) MASKELEME yonune DUSER - "belirsizlik
+    ASLA allow uretmesin" kullanici karari boylece uygulanir.
+
+    `tckn_is_valid`/`vkn_is_valid` bugun ASLA istisna FIRLATMAZ (saf,
+    yalniz `bool` doner) - buradaki `except` blogu YALNIZ gelecekteki
+    bir regresyona karsi fail-closed bir tasiyicidir; bugun PRATIKTE
+    tetiklenmez (bu dal, gercek fonksiyonlari DEGISTIRMEDEN, yalniz
+    bir test-seam ile SIMULE edilerek dogrudan test edilir)."""
+    try:
+        if token_class == CLASS_TCKN:
+            result = tckn_is_valid(digits)
+        else:
+            result = vkn_is_valid(digits)
+    except Exception:  # noqa: BLE001 - kasitli genis yakalama, fail-closed
+        return True
+    return result is not False
 
 
 _IBAN_LETTER_VALUES = {chr(ord("A") + i): str(10 + i) for i in range(26)}
@@ -1250,7 +1543,19 @@ def _find_flexible(folded, words, start):
 def _collect_candidates(segment, base, seeds):
     """Bir TOKEN OLMAYAN segment icindeki tum aday span'lar.
 
-    Konum bulma katlanmis metinde, deger cikarma ORIJINAL metinde."""
+    Konum bulma katlanmis metinde, deger cikarma ORIJINAL metinde.
+
+    R5: bolunmus TCKN/VKN adaylari (`_scan_split_digit_runs()`) diger
+    TUM siniflardan (isim/e-posta/telefon/kesintisiz-TCKN-VKN/IBAN)
+    SONRA toplanir ve onlarin span'lariyla ORTUSEN bir bolunmus aday
+    HIC EKLENMEZ (bkz. asagida) - bu, `_mask_once()`'in `-uzunluk`
+    ONCELIKLI siralamasinin, ayracli (dolayisiyla genellikle DAHA UZUN)
+    bir bolunmus TCKN/VKN span'ini, AYNI baslangicta daha kisa bir
+    telefon/IBAN candidate'inin ONUNE gecirebilecegi somut riski
+    (ornegin `"0 532 123 45 67"` hem `_PHONE_RE` hem bolunmus-11-hane
+    olarak eslesir) YAPISAL olarak kapatir - `_CLASS_PRIORITY`
+    sayisal siralamasi TEK BASINA bunu garanti ETMEZ (yalniz AYNI
+    start VE AYNI uzunluktaki adaylar arasinda devreye girer)."""
     candidates = []
     folded = fold1to1(segment)
 
@@ -1301,6 +1606,30 @@ def _collect_candidates(segment, base, seeds):
                 length=len(raw),
                 token_class=CLASS_IBAN,
                 value=raw,
+            )
+        )
+
+    # R5: bolunmus TCKN/VKN - yukaridaki TUM diger siniflar toplandiktan
+    # SONRA, onlarin span'lariyla cakismayan bolgelerde taranir (bkz.
+    # fonksiyon docstring'i icin gerekce).
+    occupied = [(c.start, c.start + c.length) for c in candidates]
+    for rel_start, rel_end, digits, high_signal in _scan_split_digit_runs(segment):
+        abs_start = base + rel_start
+        abs_end = base + rel_end
+        if any(
+            abs_start < occ_end and occ_start < abs_end
+            for occ_start, occ_end in occupied
+        ):
+            continue
+        token_class = CLASS_TCKN if len(digits) == 11 else CLASS_VKN
+        if not (high_signal or _digit_checksum_permits_masking(digits, token_class)):
+            continue
+        candidates.append(
+            _Candidate(
+                start=abs_start,
+                length=abs_end - abs_start,
+                token_class=token_class,
+                value=segment[rel_start:rel_end],
             )
         )
 
@@ -1813,6 +2142,17 @@ def scan_outbound(prompt, result):
         for match in _IBAN_RE.finditer(segment):
             if tr_iban_is_valid(match.group(0)):
                 raise SurvivingPatternError(MSG_SURVIVING)
+
+        # R5: bolunmus TCKN/VKN backstop - `_collect_candidates()`'in
+        # kendi maskeleme kapisiyla (yuksek-sinyal VEYA checksum-gecerli
+        # dusuk-sinyal) AYNI, ama TAMAMEN BAGIMSIZ bir cagri noktasindan
+        # calisir. Maskeleyicinin candidate-toplama adimi bir SEBEPTEN
+        # (ornegin gelecekteki bir regresyon) bir maskelenebilir adayi
+        # KACIRIRSA, bu kontrol onu token-haric son metinde YAKALAR.
+        for rel_start, rel_end, digits, high_signal in _scan_split_digit_runs(segment):
+            token_class = CLASS_TCKN if len(digits) == 11 else CLASS_VKN
+            if high_signal or _digit_checksum_permits_masking(digits, token_class):
+                raise SplitIdentifierSurvivedError(MSG_SPLIT_SURVIVING)
 
     if isinstance(result, MaskingResult):
         seeds = result.seeds
