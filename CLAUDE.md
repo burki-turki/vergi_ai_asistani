@@ -720,6 +720,52 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   Adım 4a'nın diğer tüm disclosed limitleri (pseudonymization sınırı,
   bölünmüş TCKN/VKN, modelin token'ı yansıtıp yansıtmadığının
   ölçülmemesi, Anthropic/KVKK soruları) DEĞİŞMEDEN AÇIK kalır.
+- **Pilot Readiness Adım 4a Remediation 2 — Bölünmüş TCKN/VKN Fail-Closed Maskeleme (R5) —
+  DONE / LOCKED.** Exact kapsam **0 YENİ + 2 DEĞİŞTİRİLMİŞ = 2 dosya**
+  (`src/llm_privacy_boundary.py`, `ui/tests/test_llm_privacy_boundary_isolated.py`), yerel
+  commit `1aa709c` (push YAPILMADI). Adım 4a Remediation'ın kendi §I'sinde "DEĞİŞMEDEN AÇIK
+  kalır" olarak bırakılan bölünmüş TCKN/VKN açığının bir kısmı bu turla KAPANMIŞTIR — dar,
+  exact tanım: b2 kararıyla zaten bilinçli olarak informational-only bırakılmış
+  whitespace/checksum-geçersiz adaylar, R5'in kapattığı blocker DEĞİLDİ; bunlar bilinçli
+  olarak kabul edilmiş bir residual limitation olarak AÇIK KALMAYA devam eder (bu adayların
+  risksiz olduğu veya kişisel veri içermediği İDDİA EDİLMEZ). R5'in gerçekten kapattığı
+  blocker daha dardı: belirli GERÇEK line-wrap-hyphen ve (ikinci turda ortaya çıkan)
+  karışık-türlü (mixed-kind) biçimlerin üç koruma katmanının (maskeleyici, backstop, sayaç)
+  HİÇBİRİNE hiç görünmeden, tamamen maskesiz biçimde dış LLM'e gidebilmesiydi.
+
+  Hibrit yüksek/düşük-sinyal politikası (Karar #1a): R5 tarayıcısına
+  (`_scan_split_digit_runs`) ulaşan, zero-width/soft-hyphen veya gerçek line-wrap-hyphen
+  ayraçlı, exact 10/11 haneli adaylar checksum aranmadan maskelenir. Düz whitespace ayraçlı
+  bir aday için üç KESİN sonuç vardır: `tckn_is_valid`/`vkn_is_valid` AÇIK `False` dönerse
+  aday informational-only kalır ve MASKELENMEZ; AÇIK `True` dönerse maskelenir; bir istisna
+  fırlatırsa veya beklenmeyen (non-boolean) bir değer dönerse fail-closed olarak yine
+  MASKELENİR (`_digit_checksum_permits_masking()` — belirsizlik ASLA "checksum'ı atla"
+  anlamına gelmez).
+
+  **Karar A** (kullanıcı kararı): pre-existing `ZeroWidthDigitRunError` guard'ı (R5'ten ÖNCE
+  var, bu remediasyonda DEĞİŞMEDİ) KORUNDU. Saf zero-width bölünmeler R5 tarayıcısına HİÇ
+  ULAŞMADAN, bu guard tarafından `mask_prompt_inputs()`'in en başında TOPYEKÜN reddedilir —
+  yani "bütün yüksek-sinyalli adaylar maskelenir" gibi mutlak bir iddia YANLIŞTIR; saf
+  zero-width adaylar MASKELENMEZ, REDDEDİLİR. Bu ret, R5'in "mask-or-refuse-before-outbound"
+  sözleşmesini karşılar. Karışık-türlü (bir zero-width karakterin hemen ardından düz boşluk
+  gibi) bölünmeler ise bu guard'ı tetiklemez ve R5 tarayıcısına ulaşır — bunlar için
+  `_match_split_separator()` ardışık, farklı türden ayraç atomlarını TEK blok halinde
+  birleştirip HERHANGİ biri yüksek-sinyalliyse TÜM bloğu yüksek-sinyal sayacak şekilde
+  yeniden yazıldı (`_match_separator_atom()` eski tek-atom mantığını AYNEN korur).
+
+  Final bağımsız yeniden inceleme verdict'i: **PASS — LOCK-READY** (bir önceki turun
+  vacuous-assertion bulgusu kapatıldıktan sonra). Final kapılar (commit'ten ÖNCE, sonradan
+  `1aa709c` commit'ine byte-identical olarak alınan working-tree baytlarında çalıştırıldı —
+  ayrıntı için bkz. tam checkpoint bölümü §I): odaklı **619/619 PASS**; resmî
+  `production-parity` **77/77 modül PASS** (guard positive controls 10/10); resmî
+  `rag-dependency` **3/3, RAG_GATE_PASS**.
+
+  (bkz. checkpoint özeti, §5 sonrası, "## 6. Cross-Cutting Backlog"dan hemen önce). **Dar,
+  exact iddia** (abartılmaz): Adım 4a'nın diğer tüm disclosed limitleri (pseudonymization
+  sınırı — bu takma adlandırmadır ANONİMLEŞTİRME DEĞİLDİR, tohumda olmayan/farklı yazılmış
+  isimler hayatta kalır; ÜÇ VEYA DAHA FAZLA farklı ayraç türünü aynı blokta birleştiren
+  senaryolar AYRICA regresyon testiyle KANITLANMADI; modelin token'ı yansıtıp
+  yansıtmadığının ölçülmemesi; Anthropic/KVKK soruları) DEĞİŞMEDEN AÇIK kalır.
 - **Pilot Readiness Adım 4b — Ham Veri Taşıyan Ajanların ve `app.py`'nin
   Mekanik Kapatılması — DONE / LOCKED.** Exact kapsam **0 YENİ + 7
   DEĞİŞTİRİLMİŞ = 7 dosya**, yerel commit `2097b9e` (push YAPILMADI):
@@ -8292,6 +8338,276 @@ kanıtıdır.
 **Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi
 yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
 hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Pilot Readiness Adım 4a Remediation 2 — Bölünmüş TCKN/VKN Fail-Closed Maskeleme (R5) (DONE / LOCKED — checkpoint özeti)
+
+**A. Neden yeniden açıldığı (§9 — security/privacy ihlali)** — Yukarıdaki Adım 4a
+Remediation checkpoint'i kendi §I'sinde şunu AÇIKÇA disclose etmişti: *"bölünmüş TCKN/VKN
+hâlâ yalnız sayaçlanır"* (b2 kararı — maskelenmez, reddedilmez, yalnız bilgi amaçlı sayılır)
+ve bu sayaç bile gerçek line-wrap-hyphen desenini hiç görmüyordu.
+
+b2'nin kendisi — checksum-geçersiz düz-whitespace ayraçlı adayların informational-only
+bırakılması — R5'in kapattığı blocker DEĞİLDİR; bu, bilinçli olarak kabul edilmiş bir
+residual limitation olarak AÇIK KALMAYA devam eder. Bu adayların risksiz olduğu veya kişisel
+veri içermediği İDDİA EDİLMEZ — yalnız, R5'in bu remediasyon turunda ele aldığı, dar tanımlı
+blocker'ın DIŞINDA kaldığı belirtilir.
+
+R5'in gerçekten kapattığı, dar tanımlı blocker şuydu: belirli GERÇEK line-wrap-hyphen
+bölünmeleri, üç koruma katmanının (ana maskeleyici, backstop, sayaç) HİÇBİRİNİ tetiklemeden,
+tamamen maskesiz biçimde dış LLM'e (Anthropic) gidebiliyordu — bu sayaç tarafından bile
+GÖRÜLEMİYORDU, yani "bilinip kabul edilmiş" değil, gerçekten TESPİT EDİLEMEYEN bir kör
+noktaydı. Kullanıcı, gerçek avukat müvekkil dosyası gönderilmeden ÖNCE bunun kapatılmasını
+AÇIKÇA istedi. Bu §9 "security/safety ihlali" gerekçesiyle LOCKED
+`src/llm_privacy_boundary.py`'nin dar biçimde yeniden açılmasını haklı kılan somut bir
+bulgudur.
+
+**B. Exact kapsam ve commit** — Kullanıcı tarafından, çok turlu bir plan-onayı sürecinden
+(exact scope draft → revize plan → final onay [Karar #1a + 11 bağlayıcı şart + 10 zorunlu ek
+test] → implementasyon) sonra onaylanmış, koşulsuz 2-dosyalık allowlist: **0 YENİ + 2
+DEĞİŞTİRİLMİŞ**; allowlist dışında hiçbir dosyaya dokunulmadı (commit öncesi
+`git status --porcelain=v1 --untracked-files=all` ile ayrıca doğrulandı, adım adım
+onaylanmış bir 10-maddelik commit prosedürüyle). Yerel commit
+`1aa709c3824889fd3d0184b551aeb4174038873d` (parent
+`7b7ead6c99355be3926e63e320688b857780b5c6`, push YAPILMADI).
+
+| Dosya | Diff (`git diff --numstat` 7b7ead6→1aa709c) |
+|---|---|
+| `src/llm_privacy_boundary.py` | 370 ekleme, 30 silme |
+| `ui/tests/test_llm_privacy_boundary_isolated.py` | 1182 ekleme, 21 silme |
+
+Sıfır migration, sıfır schema, sıfır production-data, sıfır bağımlılık (pin) değişikliği.
+Tek bir yerel commit; ara adımların (ilk implementasyon, Karar A + mixed-kind düzeltmesi,
+vacuous-assertion remediasyonu) HİÇBİRİ ayrı olarak commit edilmedi — HEPSİ tek commit'te
+birleşti.
+
+**C. Hibrit yüksek/düşük-sinyal tasarımı (Karar #1a) — çelişkisiz politika** — Karar #1a'nın
+bağlayıcı metni: *"Bir adayın iç ayraçlarından EN AZ BİRİ yüksek-sinyalli ise adayın TAMAMI
+yüksek-sinyalli kabul edilmelidir."* Yüksek-sinyal ayraçlar:
+U+200B/U+200C/U+200D/U+2060/U+FEFF (zero-width), U+00AD (soft-hyphen), ve gerçek
+line-wrap-hyphen (opsiyonel yatay boşluk + `-` + opsiyonel yatay boşluk + `\r?\n` +
+opsiyonel yatay boşluk). R5 tarayıcısına (`_scan_split_digit_runs`) ULAŞAN yüksek-sinyalli
+exact 10/11 haneli adaylar checksum ARANMADAN maskelenir.
+
+Düz whitespace ayraçlı (tiresiz satır sonu DAHİL) bir aday için üç KESİN, birbirini dışlayan
+sonuç vardır — hiçbir belirsizlik/gri alan YOKTUR:
+
+1. `tckn_is_valid`/`vkn_is_valid` AÇIK bir `False` dönerse: aday informational-only kalır,
+   MASKELENMEZ (b2'nin orijinal davranışı korunur).
+2. AÇIK bir `True` dönerse: aday MASKELENİR.
+3. Validator bir istisna fırlatırsa VEYA beklenmeyen (non-boolean) bir değer dönerse:
+   fail-closed olarak yine MASKELENİR — belirsizlik ASLA "checksum'ı atla, sessizce gönder"
+   (fail-open) anlamına GELMEZ.
+
+Bu üçlü ayrım `_digit_checksum_permits_masking()` içinde `try/except Exception: return True`
++ `return result is not False` ile uygulanır — yalnız AÇIK bir `False` "izin verme"
+(maskeleme yapma) sayılır, her başka durum (istisna dahil) maskeleme yönüne düşer.
+
+**D. Doğrusal, regex-siz tarayıcı** — `_scan_split_digit_runs`, `_match_split_separator()`,
+`_match_separator_atom()`, `_match_line_wrap_hyphen_linear()` tamamen backtracking-siz,
+karakter-indeksleme tabanlı bir tarayıcıdır — örten ayraç alternatifli bir regex'in
+taşıyacağı ReDoS riskinden yapısal olarak bağışıktır. ASCII `0-9` DIŞI hiçbir karakter dijit
+sayılmaz (`isdigit()` KULLANILMAZ); candidate span ilk rakamdan son rakama kadardır (dış
+whitespace maskelenmez); her candidate için en az bir iç ayraç ZORUNLUDUR; tarama
+token-hariç her segmentte ayrı yürür (VGMASK sınırları asla geçilmez); maximal run yalnız
+EXACT 10/11 hane ise candidate üretir (12+ haneli run'dan alt-dizi ÇIKARILMAZ).
+
+Doğrusallık İKİ bağımsız kanıtla doğrulandı: (1) doubling-input-size zaman-oranı testi (8x
+boyut artışında max/min oran sınırlı kaldı); (2) ZORUNLU, `_match_separator_atom()`'u sayan
+bir monkeypatch wrapper'la elde edilen adım-sayısı kanıtı — üç adversarial şekilde
+(`ZWSP+boşluk` alternatifleri, near-miss tire blokları, uzun boşluk + rakam-olmayan karakter
+tekrarları) `calls/len(text)` oranı TAM SABİT kaldı (ölçülen: 1.0000/0.1667/0.0385), `C=4`
+sınırı geniş bir güvenlik payıyla sağlandı.
+
+**E. Karar A ve karışık-tür (mixed-kind) ayraç düzeltmesi — maskeleme/ret ayrımı kesin** —
+**Karar A** (kullanıcı kararı, ilk bağımsız incelemenin "üretim kodu doğru" bulgusundan
+sonra): PRE-EXISTING (R5'ten ÖNCE var olan, `git diff` ile bu diff'te SIFIR satır
+değişikliği gösterdiği doğrulanan)
+`find_unresolvable_zero_width_digit_runs()`/`ZeroWidthDigitRunError` guard'ı KORUNDU.
+
+Bu noktada İKİ AYRI mekanizma vardır ve bunlar birbirine KARIŞTIRILMAMALIDIR:
+
+- **Saf zero-width bölünmeler**: `mask_prompt_inputs()`'in en başında,
+  `_collect_candidates()`/R5 tarayıcısı HİÇ ÇAĞRILMADAN, pre-existing
+  `ZeroWidthDigitRunError` guard'ı tarafından TOPYEKÜN REDDEDİLİR. Bunlar R5'in yeni
+  maskeleme mantığına hiçbir zaman ULAŞMAZ — bu yüzden "maskelenir" DENEMEZ, "reddedilir"
+  denir.
+- **R5 tarayıcısına GERÇEKTEN ulaşan yüksek-sinyalli adaylar** (gerçek line-wrap-hyphen,
+  VEYA bir zero-width karakterin pre-existing guard'ın regex'ini kıran bir düz boşlukla
+  KARIŞTIĞI mixed-kind bölünmeler): bunlar checksum aranmadan MASKELENİR.
+
+Bu ikisinin FARKLI, ayrı sonuçlar olduğu — "bütün yüksek-sinyalli adaylar maskelenir" gibi
+mutlak, tek bir iddiayla ÖZETLENEMEYECEĞİ — açıkça kayda geçirilir. Ret, R5'in
+"mask-or-refuse-before-outbound" sözleşmesini karşılar; guard GEVŞETİLMEDİ.
+
+Ancak bu guard'ın kendi regex'i (`[0-9<zero-width>]+`) düz whitespace'te KIRILDIĞI için, bir
+zero-width karakterin hemen ardından düz boşluk gelen KARIŞIK-TÜRLÜ bir bölünme NE bu guard
+NE R5'in İLK tarayıcısı (o zaman tek-atom eşleştirici) tarafından yakalanabiliyordu — böyle
+bir kimlik numarası sessizce, hiçbir işaret bırakmadan dışarı sızabilirdi (Karar #1a'nın "EN
+AZ BİRİ yüksek-sinyalliyse TAMAMI yüksek-sinyal" kuralının FİİLEN ihlali, VE §A'da
+tanımlanan asıl kör-nokta sınıfının bir uzantısı).
+
+Zorunlu düzeltme: `_match_split_separator()`, ardışık, FARKLI türden birden fazla ayraç
+ATOMUNU (aralarında rakam yoksa) TEK blok halinde birleştiren bir döngüye dönüştürüldü —
+blok, kapsadığı atomlardan HERHANGİ biri yüksek-sinyalliyse yüksek-sinyal SAYILIR (OR
+mantığı); eski tek-atom mantığı `_match_separator_atom()` olarak İSİM DEĞİŞTİRİLEREK AYNEN
+korundu. `MASKING_POLICY_VERSION` bu turda TEKRAR BUMP EDİLMEDİ (`v4`'te kaldı) — gerekçe:
+bu düzeltme AYNI, henüz commit edilmemiş R5 değişim kümesinin tamamlanmasıdır, HEAD hiç
+değişmedi ve ara-durum `v4` baytlarına karşı hiçbir production mutasyonu çalışmadı.
+
+**F. Disclosed asymmetry (Karar A'nın doğrudan sonucu, kusur DEĞİL)** — Aynı rakamların SAF
+zero-width bölünmesi (ör. yalnız ZWSP) hâlâ `ZeroWidthDigitRunError` ile TOPYEKÜN
+reddedilir; AYNI rakamların bir zero-width karakter + ek bir düz boşluk ile KARIŞIK
+bölünmesi ise pre-existing guard'ı tetiklemeyip R5'in kendi mixed-kind maskeleme mantığına
+ulaşır ve MASKELENEREK başarıyla sonuçlanır. İkisi de fail-closed'dır ve "maskelenmeli veya
+reddedilmeli" gereksinimini karşılar, ama hangi separator-türü karışımının kullanıldığına
+bağlı olarak SONUÇ (ret vs. maskeleme) değişir — bu AÇIKÇA test edilmiş ve belgelenmiştir,
+gizlenmemiştir.
+
+**G. Bulgu — vacuous-assertion (bağımsız yeniden incelemede tespit edildi) ve kapanışı** —
+İkinci turun (Karar A + mixed-kind düzeltmesi) kendi yeni testleri, R5(15)(a) ve R5(15)(b)
+bölümlerinde, YALANCI-PASS (vacuous) assertion'lar içeriyordu:
+`expect_absent not in res.masked_text` kontrolü, `expect_absent`'ın (TAM, BİTİŞİK TCKN/VKN
+dizisi) maskeleme ÖNCESİNDE BİLE girdide HİÇ BULUNMADIĞI (girdi ayraçla BÖLÜNMÜŞ rakamlar
+içeriyordu) gerçeğinden dolayı, maskeleme GERÇEKTEN çalışsın ya da çalışmasın HER ZAMAN
+doğruydu — bu oturumda `INVALID_TCKN in doc` sorgusunun maskeleme öncesi bile `False`
+döndüğü çalıştırılarak DOĞRULANDI. Ayrıca `"VGMASK" in res.masked_text` kontrolü,
+fixture'daki İLGİSİZ "Ahmet Yılmaz" taraf adının kendi P-sınıfı token'ına maskelenmesinden
+dolayı, split-digit adayı HİÇ maskelenmese bile doğru olabiliyordu.
+
+Kapanış (ÜÇÜNCÜ, test-only tur — `src/llm_privacy_boundary.py`'ye HİÇ DOKUNULMADAN): her
+vaka artık `exact_raw_split_span` (ayracıyla birlikte, maskeleme ÖNCESİ girdide GERÇEKTEN
+mevcut olduğu bir `assert` ile doğrulanan tam span) +
+`res.summary["class_distribution"][expected_class] == 1` +
+`res.summary["possible_split_identifier"] == 0` üç bağımsız sinyalini BİRLİKTE talep ediyor;
+"Ahmet Yılmaz" fixture'lardan TAMAMEN çıkarıldı. Ayrıca YENİ bir NEGATİF test-seam eklendi:
+`_scan_split_digit_runs`, `_collect_candidates()`'in modül-global çözümlemesi üzerinden
+monkeypatch edilerek KOŞULSUZ boş liste döndürecek şekilde devre dışı bırakıldı (üretim kodu
+DOKUNULMADAN, `finally` ile KOŞULSUZ restore edilerek); kasıtlı olarak "Ahmet Yılmaz" İÇEREN
+bir fixture ile, düzeltilmiş assertion kalıbının bu "candidate üretimi kaçırıldı"
+senaryosunda GERÇEKTEN `False` döndüğü (ilgisiz bir VGMASK P-token'ı GERÇEKTEN mevcutken
+bile) kanıtlandı — testin kendisinin artık non-vacuous olduğunun kanıtı.
+
+**H. Bağımsız inceleme zinciri (dürüst, ayrı ayrı — bu session'ın kendi görünürlüğü sınırlı
+belirtilerek)** — Bu conversation İÇİNDE "bağımsız inceleme" bulguları HER SEFERİNDE
+kullanıcının kendi mesajları ARACILIĞIYLA relay edildi — implementer session bir ayrı
+inceleyici agent'ın ham transkriptini DOĞRUDAN GÖRMEDİ, yalnız kullanıcının sentezlediği,
+kesin teknik bulgular içeren talimatları aldı. Üç ayrı verdict mesajı: (1) Karar A onayı +
+zorunlu mixed-kind remediasyon talimatı; (2) "INDEPENDENT R5 RE-REVIEW VERDICT: NOT
+LOCK-READY" — R5(15)(a)/(b)'nin vacuous-assertion bulgusunun PRECISE kod-kalıbı
+referanslarıyla belirtildiği; (3) "R5 COMMIT ACCEPTED... Bağımsız yeniden inceleme sonucu:
+PASS — LOCK-READY". Implementer session HER turda kendi bağımsız doğrulamasını da EKLEDİ —
+vacuous-assertion iddiasını `INVALID_TCKN in doc` sorgusunu GERÇEKTEN çalıştırarak,
+mixed-kind düzeltmesini pre-fix tek-atom davranışını simüle edip düzeltilmiş assertion'ın
+GERÇEKTEN `False` döndüğünü göstererek, ve diff'in byte-faithful uygulanabilirliğini geçici
+bir `git worktree`'de GERÇEKTEN forward/reverse-apply ederek.
+
+**I. Test kanıtı — zamanlama dürüstçe belirtilerek (yalnız fiilen çalıştırılmış sonuçlar)**
+— Resmî kapılar commit'TEN ÖNCE çalıştırıldı; sonradan commit
+`1aa709c3824889fd3d0184b551aeb4174038873d`'ye BYTE-IDENTICAL olarak alınan final
+working-tree baytlarında koştu. Kapılar çalışırken çalışma ağacı TEMİZ DEĞİLDİ — yalnız iki
+onaylı dosya (`src/llm_privacy_boundary.py`,
+`ui/tests/test_llm_privacy_boundary_isolated.py`) modified durumdaydı, başka hiçbir dosya
+değişmemişti. Commit SONRASINDA kapılar TEKRAR ÇALIŞTIRILMADI. Buna rağmen, commit'teki iki
+dosyanın SHA-256 değerleri, kapıların çalıştırıldığı final baytlarla AYNIDIR — bu, commit
+öncesi son adım olarak SHA-256'ların yeniden hesaplanıp beklenen değerlerle
+karşılaştırılmasıyla (commit prosedürünün kendi 3. adımı) doğrudan doğrulanmıştır; gate
+koşusu ile commit arasında dosyalar HİÇ değişmemiştir.
+
+Bu session içinde gözlemlenen check-sayısı ilerlemesi: **580** (ilk tam koşu, ilk
+implementasyon sonrası) → **616** (Karar A + mixed-kind düzeltmesi + R5(15) bölümü
+eklendikten sonra) → **619** (vacuous-assertion remediasyonu + negatif test-seam eklendikten
+sonra, FİNAL). Final odaklı koşu: `exit=0`, **619 passed, 0 failed**, stderr TAMAMEN BOŞ.
+
+Resmî kapılar (final working-tree baytları, sonradan `1aa709c` commit'ine byte-identical,
+fresh disposable PostgreSQL 16, migration 0001-0005): `production-parity` FULL: exit 0,
+**77/77 modül PASS** (`test_llm_privacy_boundary_isolated PASS passed=619 failed=0` dahil),
+guard positive controls **10/10**, sıfır beklenmeyen FAIL. `rag-dependency`:
+`RAG_GATE_PASS`, exit 0, **3/3 modül PASS** (1 informational skip, R5'ten TAMAMEN bağımsız,
+önceden bilinen Windows self-referenced symlink maddesi, K.1). Kapı öncesi/sonrası
+`git status --porcelain=v1 --untracked-files=all` yalnız bu 2 dosyayı gösterdi; PostgreSQL
+kümeleri (bu turda İKİ ayrı disposable küme kullanıldı — Karar A/mixed-kind turu ve final
+vacuous-fix turu için AYRI AYRI) ve tüm temp dosyalar test sonunda tamamen kaldırıldı.
+
+**J. Diff bütünlüğü ve SHA-256 zaman çizelgesi (byte-faithful doğrulama)** —
+`src/llm_privacy_boundary.py`'nin SHA-256'sı R5 boyunca SABİT KALMADI — İLK implementasyon
+turunda (`927220676907af8df72c44ef592da1b0e6db85618e7def238ff045505483a3f4` →
+`15b17d2337d22b44a569285dfc86cd34b3be52c486b0488324e725025ed95d98`) ve ardından Karar A +
+mixed-kind düzeltmesi turunda (`15b17d23...` →
+`aa03ba5ee8684eb1420c31c6899b4ef0fc71ecea6cdb5e1d8debd96e75a19118`) İKİ KEZ değişti. Yalnız
+ÜÇÜNCÜ, final vacuous-assertion/test-only remediasyon turu boyunca (bu turda
+`src/llm_privacy_boundary.py`'ye hiç dokunulmadığı için) BYTE-IDENTICAL kaldı — commit'teki
+nihai değer `aa03ba5e...`'dir. `ui/tests/test_llm_privacy_boundary_isolated.py`'nin
+SHA-256'sı ise HER ÜÇ turda da değişti (her tur test dosyasına yeni/düzeltilmiş içerik
+ekledi), commit'teki nihai değer
+`f99655e03b8b35c3069d0d4f0dab594b261da6b3994e2339a6227a159fd07458`'tir.
+
+Commit öncesi son doğrulama: diff, PowerShell `Out-File` KULLANILMADAN (Unicode/encoding
+bozulma riski nedeniyle), bash `>` redirection ile ham `git diff` çıktısı olarak üretildi
+(UTF-8, Türkçe karakterler bozulmadan doğrulandı). `git worktree add --detach <temp> HEAD`
+ile TAMAMEN AYRI, temiz bir checkout oluşturulup diff bu worktree'ye GERÇEKTEN uygulandı
+(`git apply --check` DEĞİL, gerçek `git apply`); sonuç dosyalarının SHA-256'sı hem
+HEAD-worktree'deki hem mevcut çalışma ağacındaki dosyalarla BİREBİR eşleşti; ayrıca
+`git apply --check --reverse` ana çalışma ağacına karşı da başarılı oldu. Geçici worktree
+`git worktree remove --force` ile temizlendi.
+
+**K. §9 / LOCKED-file gerekçesi** — `src/llm_privacy_boundary.py` yalnız security/privacy
+gerekçesiyle (§A) dar biçimde açıldı; `SYSTEM_PROMPT`, `PROMPT_VERSION`, tohum listesi
+mantığı, R4'ün isim maskeleme mekanizması, fail-closed red tablosu ve diğer tüm Adım 4a/Adım
+4a Remediation tasarım kararları DEĞİŞMEDİ — yalnız bölünmüş TCKN/VKN'ye özgü yeni tarayıcı,
+yeni istisna sınıfı (`SplitIdentifierSurvivedError(SurvivingPatternError)`, sabit mesajı
+`MSG_SPLIT_SURVIVING` hiçbir ham rakam içermez), checksum-kapı fonksiyonu ve buna bağlı
+identity-version (`v3`→`v4`) eklendi. `ui/tests/test_llm_privacy_boundary_isolated.py` bu üç
+tur boyunca yalnız additive/düzeltici kanıt aldı — hiçbir mevcut assertion
+zayıflatılmadı/kaldırılmadı (b2 emsalinin `expect_hint` değerleri GERÇEK davranış
+değişikliğini yansıtacak şekilde 1→0 düzeltildi, bu gevşetme DEĞİL, doğruluk düzeltmesidir).
+
+**L. Süreç notları (gizlenmez) — üretim bulguları ile test-yazımı hataları AYRI
+sınıflandırılır** — İmplementasyon, çok turlu bir plan-onayı süreciyle (exact scope draft →
+revize plan → final onay) başladı.
+
+İmplementasyon sırasında BİR gerçek ÜRETİM-MANTIĞI TASARIM BULGUSU ortaya çıktı ve proaktif
+olarak tasarımla kapatıldı: `_PHONE_RE`'nin plain-space-separated Türk telefon numaralarını
+(11 hane) desteklemesi, yeni split-digit adaylarla `_mask_once()`'in
+`(start, -length, priority)` collision-resolution sıralamasında ÇAKIŞABİLECEĞİ ve bir
+telefon numarasının yanlışlıkla TCKN olarak sınıflandırılabileceği riskiydi — bu,
+`_collect_candidates()`'te split-digit adaylarının zaten-toplanmış diğer sınıflarla
+(parti/e-posta/telefon/IBAN) ÇAKIŞAN span'lerinin ELENMESİYLE tasarım aşamasında kapatıldı.
+
+BUNDAN AYRI, bu session'ın KENDİ test yazımı sırasında ÜÇ DEĞİŞİK test-seam/test-yazımı
+KULLANIM HATASI bulunup düzeltildi — bunların HİÇBİRİ üretim mantığında bir kusur DEĞİLDİR,
+üçü de yalnız test dosyasının KENDİ inşasındaki hatalardır:
+
+1. R5(1)'in ilk sürümü, altı zero-width ayracın `mask_prompt_inputs()` üzerinden başarıyla
+   maskeleneceğini YANLIŞ varsaymıştı — gerçekte pre-existing `ZeroWidthDigitRunError`
+   guard'ı bunları daha ERKEN yakalıyordu (bkz. §E). Test beklentisi düzeltildi.
+2. R5(8)'in `_FakeMaskingResultForBackstop` sınıfı, `scan_outbound()`'un KENDİ dokümante
+   ettiği düşük-seviye çağrı sözleşmesini ("result bir `MaskingResult` değilse düz bir tohum
+   dizisidir") YANLIŞ kullanmıştı — özel bir fake nesne inşa etmişti, ama
+   `scan_outbound()`'un `isinstance(result, MaskingResult)` False dalı `tuple(result)`
+   çağırıyordu ve bu fake nesne iterable değildi. Bu `scan_outbound()`'un ÜRETİM
+   davranışında bir kusur DEĞİLDİR — fonksiyon tam dokümante edildiği gibi çalıştı; test onu
+   YANLIŞ çağırmıştı. Bu, bir üretim-mantığı bulgusu OLARAK SINIFLANDIRILMAZ — salt bir
+   test-yazımı/test-seam kullanım hatasıdır. Düzeltme: özel sınıf kaldırıldı,
+   `scan_outbound(masked_text, ())` — fonksiyonun kendi dokümante ettiği düşük-seviye seam'i
+   kullanıldı.
+3. R5(10)'un opak-kimlik test önermesi YANLIŞTI: `assert_identifiers_are_opaque()`'in gerçek
+   implementasyonu okunduğunda, bu fonksiyonun YALNIZ isim-tabanlı seed'leri kontrol ettiği,
+   TCKN/VKN rakam dizilerinden TAMAMEN HABERSIZ olduğu görüldü — yine ÜRETİM kodunda bir
+   kusur DEĞİL, testin YANLIŞ bir varsayımıydı. Test artık bu gerçek, pre-existing, R5'in
+   kapsamı DIŞINDAKİ boşluğu dürüstçe belgeliyor.
+
+Karar A + mixed-kind remediasyonu ve vacuous-assertion remediasyonu AYRI, kullanıcı
+tarafından relay edilen bağımsız inceleme turlarının SONUCUNDA yapıldı (bkz. §H). Tüm üç tur
+TEK bir, unamended, yerel commit'te (`1aa709c`) birleşti — hiçbir ara commit YOKTUR. Gerçek
+kişiye ait TCKN/VKN HİÇBİR turda kullanılmadı.
+
+`PILOT READINESS STEP 4a SPLIT TCKN/VKN REMEDIATION (R5) LOCK-READY — VACUOUS-ASSERTION FINDING CLOSED, NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi yalnız
+`CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir; hiçbir
+kaynak/migration/test/production dosyasına dokunmaz.
 
 ### Pilot Readiness Adım 4b — Ham Veri Taşıyan Ajanların ve `app.py`'nin Mekanik Kapatılması (DONE / LOCKED — checkpoint özeti)
 
