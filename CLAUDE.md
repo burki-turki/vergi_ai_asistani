@@ -866,33 +866,79 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   policy'li tek aktif kural HİÇBİR gerçek dosyada `calculated` bir tarih
   ÜRETMEZ.
 - **Pilot Readiness Adım 6 — Avukat Doğrulaması — ACTIVE / NEXT.** Avukat
-  paketi (`avukat_dogrulama_paketi_DRAFT2`) repo dışında hazırdır ve
-  avukata verilebilir — Adım 4a Remediation (satır-sonu tire maskeleme
-  açığının kapatılması), Adım 4b (ham-veri kapatma), Adım 4c (kalan
-  outbound LLM yollarının kapatılması) ve Adım 5 (takvim registry'si)
-  kilitleriyle önkoşulları sağlanmıştır. Bu pointer
-  KODLAMA/İMPLEMENTASYON YETKİSİ VERMEZ — Adım 6 avukatın SORU 3.1-3.8/
-  5.1-5.4'ü yanıtlaması ve altın örnekleri doldurmasıdır (bir hukuk
-  işidir, bir kod turu DEĞİL). Avukatın yazılı cevabı geldiğinde: takvim
-  içeriğinin (`data/holiday_calendar/holiday_calendar.json`'daki ilgili
-  yılların `verified:true`'ya çevrilmesi) ve deadline hardening'in
-  (Adım 7) AYRI, dar kapsamlı implementasyon turları izler. Açıkça
-  BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 7 deadline hardening; Adım 8 yerel
+  paketi (`avukat_dogrulama_paketi_DRAFT2`) repo dışında hazırdır ve avukata
+  verilebilir — Adım 4a Remediation (satır-sonu tire maskeleme açığının
+  kapatılması), Adım 4b (ham-veri kapatma), Adım 4c (kalan outbound LLM
+  yollarının kapatılması) ve Adım 5 (takvim registry'si) kilitleriyle
+  önkoşulları sağlanmıştır. Bu pointer KODLAMA/İMPLEMENTASYON YETKİSİ VERMEZ —
+  Adım 6 avukatın SORU 3.1-3.8/5.1-5.4'ü yanıtlaması ve altın örnekleri
+  doldurmasıdır (bir hukuk işidir, bir kod turu DEĞİL). Avukat doğrulamasının
+  mali tatil alt-bölümüne ilişkin yazılı cevap alınmış ve bu cevap
+  doğrultusunda Adım 7'nin mali tatil alt-kapsamı ayrı, dar bir implementasyon
+  turuyla DONE/LOCKED olmuştur (bkz. aşağıdaki Pilot Readiness Adım 7 — Mali
+  Tatil pointer ve checkpoint özeti). Adım 6'nın kalan soruları/altın
+  örnekleri, takvim içeriğinin
+  (`data/holiday_calendar/holiday_calendar.json`'daki ilgili yılların
+  `verified:true`'ya çevrilmesi) doğrulaması ve Adım 7'nin mali tatil
+  dışındaki kalan deadline hardening alt-kapsamları ayrıca tamamlanmış veya
+  yetkilendirilmiş DEĞİLDİR — bu nedenle Adım 6'nın genel statüsü ACTIVE /
+  NEXT olarak kalır. Açıkça BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 8 yerel
   PostgreSQL/IAM adoption; Adım 9 sentetik concierge dry-run; Adım 10 ilk
   gerçek concierge pilotu; Adım 11 Entra/P1; Adım 12 hosting/Key Vault;
   configurable external case root (post-pilot Adım 13c). Eski "Row 19D
   External Activation / Adoption Gate" pointer'ının kapsadığı maddelerin
   (gerçek Entra tenant/app registration, `acrs` claims dış doğrulaması,
-  Conditional Access/authentication-context preflight'i, Key Vault
-  custom GET-only role deployment/adoption, Graph izinleri, loopback-only
-  middleware ile `X-Forwarded-For` yasağının hosting uyumluluğu) TAMAMI
-  Entra/P1 (Pilot Readiness Adım 11) ve hosting/Key Vault (Adım 12)'ye
-  ERTELENMİŞ olarak KALMAYA devam eder — bu maddeler KAPANMAMIŞTIR (bkz.
-  Row 19B OIDC Confidential-Client Remediation checkpoint özeti). İlk
-  pilot modeli concierge olarak korunmaktadır. Corpus acquisition/
-  population bu pointer tarafından YETKİLENDİRİLMEZ. Yeni bir roadmap
-  Row numarası İCAT EDİLMEMİŞTİR; mevcut Pilot Readiness adım numaraları
-  korunur.
+  Conditional Access/authentication-context preflight'i, Key Vault custom
+  GET-only role deployment/adoption, Graph izinleri, loopback-only middleware
+  ile `X-Forwarded-For` yasağının hosting uyumluluğu) TAMAMI Entra/P1 (Pilot
+  Readiness Adım 11) ve hosting/Key Vault (Adım 12)'ye ERTELENMİŞ olarak
+  KALMAYA devam eder — bu maddeler KAPANMAMIŞTIR (bkz. Row 19B OIDC
+  Confidential-Client Remediation checkpoint özeti). İlk pilot modeli
+  concierge olarak korunmaktadır. Corpus acquisition/population bu pointer
+  tarafından YETKİLENDİRİLMEZ. Yeni bir roadmap Row numarası İCAT
+  EDİLMEMİŞTİR; mevcut Pilot Readiness adım numaraları korunur.
+- **Pilot Readiness Adım 7 — Mali Tatil (5604 sayılı Kanun) Deadline Handling
+  — DONE / LOCKED.** 5604 sayılı Malî Tatil İhdas Edilmesi Hakkında Kanun
+  m.1'in 1, 3, 5, 6 ve 7. fıkralarının, LOCKED Row 8
+  `src/deadline_calculator.py` dosyasına deterministik bir duraklama/devam
+  mekanizması, fiilî tebligatın süreye etkisi ve fail-closed ayrımlar olarak
+  entegrasyonudur. Exact kapsam **1 YENİ + 5 DEĞİŞTİRİLMİŞ = 6 dosya**
+  (`data/deadline_rules/deadline_rules.json`, `data/documents.json`,
+  `data/provisions.json`, `src/deadline_calculator.py`,
+  `ui/tests/test_deadline_calculator_mali_tatil_isolated.py` [YENİ],
+  `ui/tests/test_deadline_calendar_derivation_isolated.py`); sıfır migration,
+  sıfır şema değişikliği. 5604 m.1/3'teki "vergiyle ilgili işlemlere ilişkin
+  dava açma süreleri" hükmünün İYUK m.7'deki genel vergi mahkemesi dava açma
+  süresine uygulanabilirliğini doğrulayan avukat görüşü, kullanıcı tarafından
+  doğrulanmış ve repo dışında saklanan haricî hukuk kanıtıdır — bu LOCK'un
+  kendisi bu görüşü ÜRETMEZ, yalnız onun ışığında yapılan mühendislik
+  kararlarını kayda geçirir. Implementasyon commit'i
+  `ce3cb01c131728d3f26ce9af464b58161b46cdc5` ("Implement verified mali tatil
+  deadline handling"); gerçek disposable PostgreSQL 16 + resmî
+  `scripts/run_ui_tests.py --profile production-parity` koşucusuyla commit'li
+  baytlar üzerinde doğrulandı: 78/78 modül PASS, 6074 passed/0 failed/8
+  counted skip/14 informational skip, guard positive controls 10/10
+  (`armed_count: 212 = expected_armed: 212`), migration 0001-0005 başarılı, 14
+  PostgreSQL modülü gerçek loopback PostgreSQL ile PASS, protected
+  manifest/secret scan temiz, residue yok (bkz. checkpoint özeti, §5 sonrası,
+  "## 6. Cross-Cutting Backlog"dan hemen önce). Commit-öncesi bir koşuda
+  `test_fact_verification_mutation_facade_isolated` modülünde
+  `PermissionError: [WinError 5]` biçiminde tek seferlik bir Windows
+  dosya-kilidi olayı gözlemlenmiştir; bu olay mali tatil kapsamı dışındaki,
+  değiştirilmemiş bir modülde gözlenmiş, sonraki bağımsız ve commit-sonrası
+  koşumlarda tekrar üretilememiş ve mali tatil implementasyonuna
+  atfedilememiştir — runner/environment olayı olarak kayda geçirilmiştir.
+  **Dar, exact iddia** (abartılmaz): bu LOCK yalnız mali tatil mekanizmasını
+  kapsar — `data/holiday_calendar/holiday_calendar.json` içindeki 2024-2035
+  yılları hâlâ `verified:false`'tur (gerçek dosyalar bu nedenle
+  `needs_review`'a düşebilir); 27.01.2016 öncesi mali tatil hükümlerinin
+  temporal modellemesi YOKTUR; `stopping_event_status` bu kapsamın DIŞINDADIR
+  ve ayrı bir çalışma olarak açık kalır; gelecekte mali tatil ref'i taşıyıp
+  İYUK adli tatil ref'lerini TAŞIMAYAN yeni bir deadline rule eklenirse
+  grace-floor/recess birleşimi yeniden doğrulanmalıdır (mevcut üretim
+  kuralında bu durum erişilemezdir); bu LOCK pilotun genel hazır olduğunu,
+  tatil takviminin doğrulandığını veya uygulamanın production-ready olduğunu
+  İDDİA ETMEZ.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -9232,6 +9278,249 @@ açılagelmiştir (19C-3b'den beri kabul edilen açılış sınıfı).
 **Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
 gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
 işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Pilot Readiness Adım 7 — Mali Tatil (5604 sayılı Kanun) Deadline Handling (DONE / LOCKED — checkpoint özeti)
+
+**A. Exact kapsam ve commit** — Kullanıcı tarafından, çok turlu bir
+salt-okunur/dar-remediasyon sürecinden sonra onaylanmış tam dosya allowlist'i:
+**1 YENİ + 5 DEĞİŞTİRİLMİŞ = 6 dosya**.
+
+Yeni (1):
+
+1. `ui/tests/test_deadline_calculator_mali_tatil_isolated.py`
+
+Değiştirilmiş (5):
+
+2. `data/deadline_rules/deadline_rules.json`
+3. `data/documents.json`
+4. `data/provisions.json`
+5. `src/deadline_calculator.py` (**LOCKED Row 8**)
+6. `ui/tests/test_deadline_calendar_derivation_isolated.py`
+
+Sıfır migration, sıfır şema değişikliği, sıfır web/CLI yüzeyi, sıfır
+`holiday_calendar` içerik değişikliği, sıfır `stopping_event_status`
+implementasyonu. Yerel commit `ce3cb01c131728d3f26ce9af464b58161b46cdc5`
+("Implement verified mali tatil deadline handling", 6 dosya, 4088 ekleme, 1270
+silme) — **push YAPILMADI**.
+
+**B. Hukuki dayanak ve avukat teyidi (haricî kanıt)** — 5604 sayılı Malî Tatil
+İhdas Edilmesi Hakkında Kanun m.1, `data/documents.json` içine (`kanun_5604`)
+ve `data/provisions.json` içine (`kanun_5604_m1`,
+`verification_state: verified`) mevzuat.gov.tr konsolide metninden doğrudan
+doğrulanarak eklendi; `data/deadline_rules/deadline_rules.json` dosyasındaki
+`iyuk_tax_court_general_lawsuit_filing` kuralının `legal_basis_refs` alanına
+`KANUN_5604_m1` yedinci referans olarak eklendi (toplam 7 ref). 5604
+m.1/3'teki "vergiyle ilgili işlemlere ilişkin dava açma süreleri" hükmünün
+İYUK m.7'deki genel vergi mahkemesi dava açma süresine uygulanabilirliği,
+kaynağın (kanun metni) kendisinin kanıtladığı bir şey DEĞİLDİR (Prensip 3) —
+bu, avukatın yazılı, kullanıcı tarafından doğrulanmış görüşüne dayanır; bu
+görüş **repo dışında, haricî kanıt olarak saklanmaktadır** ve bu LOCK'un
+kendisi tarafından ÜRETİLMEMİŞTİR, yalnız onun ışığında alınan mühendislik
+kararı (`deadline_rules.json` içindeki `legal_basis_refs` bağlantısı) kayda
+geçirilmiştir. `data/provisions.json` içindeki `kanun_2577_m8_f3` ve
+`kanun_2577_m61_f1` kayıtları AYRICA doğrulandı (salt-okunur audit,
+DEĞİŞTİRİLMEDİ) — İYUK m.8/3 uzatma TETİKLEYİCİSİ, m.61 dönem VE çalışmaya ara
+vermeyen mahkeme İSTİSNASI olarak doğru şekilde ayrı referanslardır; bu ikisi
+arasında bir kapsam karışıklığı YOKTUR.
+
+**C. Üretim mantığı ve mekanizma** — LOCKED Row 8 `src/deadline_calculator.py`
+dosyasına eklenen, exact 12 madde:
+
+1. **5604 m.1/3 duraklama/devam mekanizması** —
+   `apply_mali_tatil_pause_resume()` fonksiyonu, 5604 m.1/3'teki "vergiyle
+   ilgili işlemlere ilişkin dava açma süreleri" hükmü kapsamındaki süreyi her
+   yıl 1-20 Temmuz (20'si dahil, Haziran'ın son gününün tatil günü olması
+   halinde ilk iş gününü takip eden günden başlayan fıkra-1 edge case dahil)
+   mali tatil boyunca durdurur; süre mali tatilin bitiminden itibaren tekrar
+   işlemeye başlar.
+2. **Fiilen mali tatil İÇİNDE gerçekleşen tebligat** — fıkra 5 kapsamındaki
+   özel süre başlangıcı, ilk sayılan gün mali tatilin bitimini izleyen 21
+   Temmuz olacak şekilde hesaplanır (Test B: anchor `2026-07-10` → final
+   `2026-09-07`).
+3. **Hesaplayıcı tebligatın hukuka uygunluğuna karar VERMEZ** — canonical
+   timeline'da ayrıca doğrulanmış fiilî tebliğ tarihi girdi olarak alınır;
+   idarenin neden mali tatilde tebligat yaptığı veya tebligatın usule uygun
+   olup olmadığı DEĞERLENDİRİLMEZ.
+4. **5604 m.1/5 Kanun lafzı vs 1 Sıra No.lu Genel Tebliğ §7 idari yorumu
+   ayrımı** — `data/provisions.json` içindeki `kanun_5604_m1` kaydının
+   `ev_5604_m1_original_statute` evidence notu, kanunun m.1/5 lafzının farklı
+   okumalara elverişli olduğunu, ANCAK 1 Sıra No.lu Mali Tatil Uygulaması
+   Hakkında Genel Tebliğ'in 7. bölümündeki idari yoruma göre vergi ve ceza
+   ihbarnamelerinin mali tatil süresince mükelleflere BİLDİRİLMEDİĞİNİ açıkça
+   kaydeder; önceki taslaktaki ters çerçeveleme final remediasyon turunda
+   düzeltilmiştir. Kanunun doğrulanmış statute_text alıntısı ("HARİÇ" ibaresi
+   dahil) hiç değiştirilmedi.
+5. **5604 m.1/6 güncel beş günlük taban** — 6661 sayılı Kanunun 18 inci
+   maddesiyle "yedi gün"den "beş gün"e indirilen asgari süre
+   (`MALI_TATIL_GRACE_PERIOD_DAYS = 5`); m.1/2'nin KENDİ "yedi gün" ibaresi
+   2007'den bu yana DEĞİŞMEMİŞTİR — yalnız fıkra 6 değişti, fıkra 2 DEĞİL
+   (önceki bir yorum yanlışlığı bu turda düzeltildi).
+6. **Çalışmaya ara vermeyen mahkemede (`judicial_recess_applicable=False`)
+   fail-closed `needs_review`** — sonuç YALNIZ m.1/6'nın beş günlük asgari
+   süresiyle belirleniyorsa (`grace_floor_applied=True`) VE
+   `judicial_recess_applicable is False` ise, `calculate_rule_deadline()`
+   fonksiyonu artık `needs_review` döner (`reason` alanı içinde sabit
+   `mali_tatil_grace_floor_unconfirmed_without_recess` literali) — avukat
+   görüşündeki ihtiyat nedeniyle, çalışmaya ara vermeyen mahkemelerde nihai
+   sonucu yalnız bu mekanizma belirliyorsa otomatik kesin tarih üretilmez
+   (Test D: anchor `2026-06-01`, `judicial_recess_applicable=False` →
+   `needs_review`, `mali_tatil_applied=True`, `calculated_deadline=None`).
+   `judicial_recess_applicable=None` durumu mevcut, bu turdan önceki
+   davranışla AYNI şekilde `needs_review` verir (Test E).
+7. **5604 m.1/7 vergi/idare istisnaları** — `MALI_TATIL_EXCLUDED_TAX_TYPES`
+   (özel tüketim vergisi/ötv, banka ve sigorta muameleleri vergisi/bsmv, özel
+   iletişim vergisi/öiv, şans oyunları vergisi — 6661 sayılı Kanunla eklenen
+   dört tür) ve `MALI_TATIL_EXCLUDED_AUTHORITY_KEYWORDS` (gümrük, belediye, il
+   özel idaresi — 2007'den beri fıkrada mevcut, 2016'da EKLENMEMİŞ), dar ve
+   doğrulanmış bir `MALI_TATIL_INCLUDED_TAX_TYPES` allowlist'ine (KDV,
+   kurumlar/gelir/damga/veraset-intikal/motorlu taşıtlar vergisi, vergi
+   ziyaı/usulsüzlük/özel usulsüzlük cezası) karşı deterministik olarak kontrol
+   edilir; tanınmayan bir tax_type fail-closed `needs_review` döner. "Gecikme
+   faizi"/"gecikme zammı" BİLİNÇLİ olarak allowlist'te DEĞİLDİR — bağımsız
+   inceleme remediasyonu, m.1/2-b metninde yalnız "gecikme faizlerinin ödeme
+   süresi"nin ismen geçtiğini ("gecikme zammı" bu fıkrada YOKTUR) ve bu ödeme
+   süresinin fıkra 3'ün duraklama/devam mekanizmasından FARKLI olduğunu tespit
+   etti; avukat teyidi olmadan bir varsayım İCAT EDİLMEDİ, iki negatif test
+   eklendi.
+8. **Mali tatil m.1/7 istisnası altında bile İYUK m.8/3 adli tatil uzatmasının
+   BAĞIMSIZ çalışabilmesi** — `mali_tatil_applied=False` VE
+   `judicial_recess_applied=True` AYNI kayıtta COEXIST edebilir (Test C:
+   anchor `2026-06-25`, ÖTV, `judicial_recess_applicable=True` →
+   `mali_tatil_applied=False`, `judicial_recess_applied=True`, final
+   `2026-09-07`); mali tatilden istisna olmak adli tatil uzatmasını ETKİLEMEZ.
+9. **İYUK m.8/3 = uzatma tetikleyicisi, m.61 = dönem + mahkeme istisnası** —
+   bu turda salt-okunur audit ile doğrulandı (bkz. B); `deadline_rules.json`
+   ve `data/provisions.json` içinde bu ayrımı bozan HİÇBİR değişiklik
+   yapılmadı.
+10. **Türkçe Unicode normalizasyonu ve fail-closed sınıflandırma** — yeni, dar
+   `_normalize_mali_tatil_text()` fonksiyonu ("İ" harfinin Python `casefold()`
+   çağrısında "i"+U+0307'ye dönüşüp alias eşleşmesini sessizce kırdığı,
+   bağımsız incelemede bulunan bir Unicode fail-open riskini kapatır);
+   tanınmayan/belirsiz bir tax_type veya issuing_authority HER ZAMAN
+   `needs_review`'a düşer, sessiz tahmin YAPILMAZ; paylaşılan
+   `normalize_string()` fonksiyonu DEĞİŞTİRİLMEDİ — düzeltme yalnız mali
+   tatilin kendi, yeni fonksiyonuna sınırlıdır.
+11. **Avukatın yazılı m.1/3 teyidi** — kullanıcı tarafından doğrulanmış, repo
+   dışında saklanan haricî hukuk kanıtıdır (bkz. B).
+12. **Commit ve test kanıtları** — bkz. D ve E.
+
+**D. Dürüst kronoloji (aşamalar birleştirilmeden)** — (1) İlk hukuki
+doğrulama, `legal_basis_refs` eklenmesi ve iki-katmanlı fıkra-7 scope kontrolü
+tasarımı; `stopping_event_status` bilinçli olarak bu turun DIŞINDA bırakıldı.
+(2)-(3) Resmî, değiştirilmemiş
+`scripts/run_ui_tests.py --profile production-parity` koşucusu gerçek
+disposable PostgreSQL ile ayrı ayrı çalıştırıldı; ilk tam koşuda
+`ui/tests/test_deadline_calendar_derivation_isolated.py` dosyasının S10/S12
+senaryoları GERÇEK bir regresyon olarak FAIL etti (anchor `2026-06-25` artık
+`case_tax_context` olmadan mali tatil penceresini kesiyordu). (4) Zorunlu,
+salt-okunur bir caller audit (her production/test çağıranın context erişimini
+sınıflandıran) yapıldı; audit hiçbir production caller'ın context erişimden
+yoksun olmadığını doğruladı; dar bir test düzeltmesi (yalnız S10/S12'nin
+anchor'ı `2026-07-21`'e kaydırıldı, `case_tax_context` İCAT EDİLMEDİ)
+uygulandı. (5) Bağımsız bir inceleme "NOT READY — REMEDIATION REQUIRED" verdi:
+Unicode fail-open bulgusu (bkz. C.10), eksik bir mali-tatil+adli-tatil
+birleşik testi, yanıltıcı bir provenance cümlesi ve "gecikme faizi"/"gecikme
+zammı"nın avukat teyidi olmadan allowlist'e alınmış olması (bkz. C.7) — dar
+bir remediasyon turuyla kapatıldı. (6) Ayrı bir "FINAL LEGAL ALIGNMENT AUDIT"
+turunda, taze bir hukuk görüşü ışığında beş karar uygulandı: m.8/3 vs m.61
+audit'inin DEĞİŞİKLİK GEREKTİRMEDİĞİ doğrulandı (bkz. B); üç LOW not (m.1/2
+"yedi gün" yanlış yorumu, "gecikme zammı"nın m.1/2-b'ye yanlış atfı, bayat
+T07m/T07n referansı) düzeltildi; genuine bir üretim mantığı değişikliği
+eklendi (bkz. C.6, grace-floor-without-recess → `needs_review`); Test A-F
+eklendi (bkz. E). (7) Ayrı, dar bir "FINAL LEGAL WORDING CORRECTION" turunda,
+avukatın 1 Sıra No.lu Genel Tebliğ §7'ye dayanan netleştirmesi ışığında
+`data/provisions.json` içindeki fıkra-5 notu düzeltildi (bkz. C.4) —
+`src/deadline_calculator.py` DOKUNULMADI, hiçbir test literal olarak eski
+yanlış cümleyi beklemediğinden STOP koşulu OLUŞMADI. (8) Kullanıcı onayıyla
+tek, amendsiz commit oluşturuldu (`ce3cb01c131728d3f26ce9af464b58161b46cdc5`),
+commit sonrası resmî production-parity commit'li baytlar üzerinde TEKRAR
+çalıştırıldı.
+
+**E. Test kanıtı — dürüst zaman ayrımıyla (yalnız fiilen çalıştırılmış
+sonuçlar)**:
+
+- `deadline_calculator.py --self-test`: **27/27 PASS**
+- `ui/tests/test_deadline_calculator_mali_tatil_isolated.py`: **60/60 PASS** —
+  Test A-F (bkz. C.1-C.9) dahil, gerçek `case_0001` kopyası üzerinden
+  `build_deadline_record()` uçtan-uca zinciriyle
+- `ui/tests/test_deadline_calendar_derivation_isolated.py`: **38/38 PASS**
+- `ui/tests/test_deadline_engine_isolated.py`: **33/33 PASS**
+- `provision_repository.py --self-test`: **7/7 PASS**
+- `provision_manifest_validator.py --self-test`: **GEÇERLİ** (8 provision
+  version, 0 hata, 7 pre-existing/ilgisiz uyarı — `ingest.enabled=False`)
+- `deadline_legal_basis_resolver.py --self-test`: **15/15 PASS**
+  (`KANUN_5604_m1` dahil 7 ref, hepsi `resolved_verified`/`activation=True`)
+
+**Commit-öncesi son doğrulama koşusu** (fresh disposable PostgreSQL 16,
+migration 0001-0005): **78/78 modül PASS, 6074 passed, 0 failed, 8 counted
+skip, 14 informational skip**, guard 10/10
+(`armed_count: 212 = expected_armed: 212`). Bu koşuda
+`test_fact_verification_mutation_facade_isolated` modülü, ayrı, önceki bir
+denemede bir kez `CRASH_MID_RUN` durumu verdi
+(`PermissionError: [WinError 5]`, Windows'a özgü geçici bir dosya-kilidi
+olayı, `os.replace()` çağrısı sırasında) — kalıntı bırakmadı (`data/cases/`
+yalnız `case_0001`), aynı modül bir önceki VE sonraki tüm koşularda
+(`149/149`) temiz PASS etti. Bu olay mali tatil kapsamı dışındaki,
+değiştirilmemiş bir modülde gözlenmiş; sonraki bağımsız ve commit-sonrası
+koşumlarda tekrar üretilememiş ve mali tatil implementasyonuna
+atfedilememiştir. Runner/environment olayı olarak kayda geçirilmiştir; hiçbir
+dosyada otomatik düzeltme/amend YAPILMADI.
+
+**Commit-sonrası resmî `production-parity` koşusu** (üçüncü, tamamen taze
+disposable PostgreSQL 16 kümesi, `ce3cb01c131728d3f26ce9af464b58161b46cdc5`
+commit'li baytlar üzerinde):
+
+- `runner_exit_code: 0`, `state: completed`, `SWEEP FULL`
+- `git.head: ce3cb01c131728d3f26ce9af464b58161b46cdc5`, `git.clean: true`
+- **78/78 modül PASS** (`modules_non_pass: 0`)
+- **6074 passed, 0 failed, 8 counted skip, 14 informational skip**
+- `test_fact_verification_mutation_facade_isolated`: **149/149 PASS** (bir
+  önceki WinError 5 olayı TEKRARLANMADI)
+- 14 `*_postgres` modülünün TAMAMI gerçek, loopback-only PostgreSQL ile PASS
+- Guard: `armed_count: 212 = expected_armed: 212`, `net_blocked_count: 0`,
+  `env_open_blocked_count: 0`, positive controls **10/10**
+- `postgres.migrations_ok: true`, `migrations_missing: []`,
+  `server_addr_loopback: true`
+- `integrity.protected_manifest_ok: true`, `protected_path_diff: []`,
+  `secret_scan.hits: []`, tüm residue alanları boş
+- `refusals: []`, `warnings: []`, `tmp_dir_removed: true`
+
+Raporlanan disposable PostgreSQL kümeleri ve geçici çıktı dizinleri koşumlar
+sonunda temizlenmiştir; gerçek `data/` ağacı (özellikle `case_0001`, 65 dosya)
+test/koşum boyunca DEĞİŞMEDİ.
+
+**F. Kalan/AÇIK sınırlar (kapatılmış gösterilmez)**:
+
+1. `data/holiday_calendar/holiday_calendar.json` içindeki 2024-2035 yıllarının
+   TAMAMI hâlâ `verified:false`'tur — gerçek dosyalar bu nedenle
+   `needs_review`'a düşebilir; bu LOCK takvim içeriğini DOĞRULAMAZ (bkz. Pilot
+   Readiness Adım 5 checkpoint özeti).
+2. 27.01.2016 (6661 sayılı Kanunun yürürlüğe girdiği tarih) öncesi mali tatil
+   hükümlerinin (fıkra 6'nın eski "yedi gün"ü, fıkra 7'nin eski, dört türü
+   kapsamayan hali) temporal modellemesi YOKTUR — Deadline Calculator V1
+   yalnız GÜNCEL, yürürlükteki metni kullanır.
+3. `stopping_event_status` bu turun kapsamında DEĞİLDİR ve ayrı, gelecekteki
+   bir çalışma olarak açık kalır.
+4. Gelecekte mali tatil ref'i (`KANUN_5604_m1`) taşıyıp İYUK adli tatil
+   ref'lerini (`IYUK_2577_m8_3`/`IYUK_2577_m61_1`) TAŞIMAYAN yeni bir deadline
+   rule eklenirse, grace-floor/recess birleşimi (bkz. C.6) yeniden
+   doğrulanmalıdır — mevcut, tek üretim kuralında
+   (`iyuk_tax_court_general_lawsuit_filing`, yedi ref'in TAMAMINI taşıyor) bu
+   durum yapısal olarak erişilemezdir.
+5. **Bu LOCK, pilotun genel hazır olduğunu, tatil takviminin doğrulandığını
+   veya uygulamanın production-ready olduğunu İDDİA ETMEZ** — yalnız mali
+   tatil (5604 sayılı Kanun) mekanizmasının kendisini, avukat teyidiyle
+   birlikte, kapsar.
+
+**Final verdict**:
+
+`MALİ TATİL DEADLINE HANDLING LOCK-READY — NO BLOCKING FINDINGS`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi
+yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
+hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 
