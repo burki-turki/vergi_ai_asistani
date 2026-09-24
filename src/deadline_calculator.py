@@ -91,6 +91,7 @@ import hashlib
 import json
 import sys
 import tempfile
+import unicodedata
 
 from datetime import (
     date,
@@ -111,6 +112,7 @@ from deadline_legal_basis_resolver import (
 
 from deadline_validator import (
     load_canonical_timeline,
+    load_case,
     validate_deadline_analysis,
 )
 
@@ -181,6 +183,98 @@ IYUK_RECESS_TRIGGER_REF = (
 
 IYUK_RECESS_PERIOD_REF = (
     "IYUK_2577_m61_1"
+)
+
+
+# ============================================================
+# PILOT READINESS ADIM 7 - MALİ TATİL (5604 sayılı Kanun m.1)
+#
+# `MALI_TATIL_TRIGGER_REF` bir kuralın `legal_basis_refs` listesinde
+# bulunup bulunmadığı KOŞULSUZ olarak kontrol edilir
+# (`rule_has_mali_tatil_basis()` - `rule_has_iyuk_recess_basis()`
+# ile AYNI, saf containment deseni). Ayrı bir operatör-beyanlı
+# parametre YOKTUR (kullanıcı kararı) - mekanizma tamamen kuralın
+# KENDİSİNİN bu referansı taşıyıp taşımadığına ve somut case'in
+# 5604 m.1/7 istisna kapsamına girip girmediğine bağlıdır.
+# ============================================================
+
+MALI_TATIL_TRIGGER_REF = (
+    "KANUN_5604_m1"
+)
+
+MALI_TATIL_GRACE_PERIOD_DAYS = 5
+
+# 5604 m.1/7 (6661 sayılı Kanun m.18 ile güncellenmiş kapsam):
+# özel tüketim vergisi, banka ve sigorta muameleleri vergisi, özel
+# iletişim vergisi, şans oyunları vergisi - TAMAMEN kanunun kendi
+# ADINDAN istisna edilmiştir, tarh/tahsil eden idareden BAĞIMSIZDIR.
+# Değerler küçük harfle yazılmıştır; karşılaştırma HER ZAMAN
+# `_normalize_mali_tatil_text()` üzerinden yapılır (bkz. aşağıda) -
+# bu sabitlerin KENDİSİ "İ" harfi içermediğinden literal halleri zaten
+# değişmeden kalır, ama karşılaştırma tarafı (gelen case verisi) "İ"
+# içerebileceğinden normalizasyon HER İKİ tarafa da uygulanır.
+MALI_TATIL_EXCLUDED_TAX_TYPES = frozenset(
+    {
+        "özel tüketim vergisi",
+        "ötv",
+        "banka ve sigorta muameleleri vergisi",
+        "bsmv",
+        "özel iletişim vergisi",
+        "öiv",
+        "şans oyunları vergisi",
+    }
+)
+
+# Dar, doğrulanmış "bilinen dahil" listesi - VUK'a tabi, 5604 m.1/7
+# tarafından istisna edilmemiş, vergi mahkemesi davalarında sık
+# görülen vergi/ceza türleri. Bu listede OLMAYAN bir tax_type
+# "unrecognized" sayılır (sessiz tahmin YOK, fail-closed).
+#
+# BAĞIMSIZ İNCELEME REMEDİASYONU (hukuk görüşü ışığında düzeltildi):
+# "gecikme faizi"/"gecikme zammı" BİLİNÇLİ olarak bu listede DEĞİLDİR.
+# 5604 m.1/2-b METNİNDE yalnız "GECİKME FAİZLERİNİN ödeme süresi"
+# ismen geçer ("gecikme zammı" bu fıkrada İSİMEN YOKTUR - metne dayalı
+# bir varsayım İCAT EDİLMEMİŞTİR). m.1/2-b'nin ödeme süresi fıkra 3'ün
+# pause/resume mekanizmasından FARKLI, yalnız son-gün kontrolü + YEDİ
+# gün uzatma mekanizmasıdır (m.1/2'nin "yedi gün" ibaresi 2007'den bu
+# yana DEĞİŞMEMİŞTİR - yalnız fıkra 6'nın asgari süresi 6661 sayılı
+# Kanunla "yedi gün"den "beş gün"e indirilmiştir, fıkra 2 DEĞİL).
+# Deadline Calculator V1 yalnız dava açma süresi (fıkra 3) hesaplar.
+# Avukatın yazılı teyidi olmadan "gecikme faizi"nin fıkra 3 mekanizmasına
+# tabi olup olmadığına, veya "gecikme zammı"nın 5604 kapsamına hiç girip
+# girmediğine dair bir varsayım YAPILMAZ - tax_type bunlardan biriyse
+# sonuç fail-closed needs_review'dır (bkz. ui/tests/test_deadline_
+# calculator_mali_tatil_isolated.py, "2c) INDEPENDENT REVIEW
+# REMEDIATION - gecikme" bölümü).
+MALI_TATIL_INCLUDED_TAX_TYPES = frozenset(
+    {
+        "katma değer vergisi",
+        "kdv",
+        "kurumlar vergisi",
+        "gelir vergisi",
+        "damga vergisi",
+        "veraset ve intikal vergisi",
+        "motorlu taşıtlar vergisi",
+        "mtv",
+        "vergi ziyaı cezası",
+        "usulsüzlük cezası",
+        "özel usulsüzlük cezası",
+    }
+)
+
+# 5604 m.1/7'nin idare-temelli istisnası (gümrük idareleri, il özel
+# idareleri, belediyeler tarafından tarh/tahsil edilen vergi, resim
+# ve harçlar) - tax_type adından BAĞIMSIZ, `issuing_authority` serbest
+# metninde bu anahtar kelimelerden biri geçerse KESİN istisna sayılır.
+# Bu, `case_tax_context`'te issuing_authority MEVCUTSA çalışan, saf
+# EK bir dışlama sinyalidir - eksik veya tanınmayan issuing_authority
+# TEK BAŞINA needs_review TETİKLEMEZ (yalnız tax_type sınıflandırması
+# tetikler).
+MALI_TATIL_EXCLUDED_AUTHORITY_KEYWORDS = (
+    "gümrük",
+    "belediye",
+    "il özel idaresi",
+    "il özel idare",
 )
 
 
@@ -671,6 +765,577 @@ def rule_has_iyuk_recess_basis(
 
 
 # ============================================================
+# MALİ TATİL (5604 sayılı Kanun m.1) - PILOT READINESS ADIM 7
+# ============================================================
+
+def rule_has_mali_tatil_basis(
+    rule,
+):
+
+    refs = rule.get(
+        "legal_basis_refs",
+        []
+    )
+
+    if not isinstance(
+        refs,
+        list,
+    ):
+
+        return False
+
+    return (
+        MALI_TATIL_TRIGGER_REF
+        in refs
+    )
+
+
+def _normalize_mali_tatil_text(
+    value,
+):
+    """BAĞIMSIZ İNCELEME REMEDİASYONU (Unicode fail-open düzeltmesi).
+
+    Bu, YALNIZ mali tatil tax_type/issuing_authority eşleştirmesi için
+    kullanılan DAR bir normalizasyondur - `deadline_rule_selection_
+    policy.normalize_string()` (repo genelinde BAŞKA tüketicileri olan
+    paylaşılan fonksiyon - kural SEÇİMİNİN kendi tax_type filtresi gibi)
+    BİLİNÇLİ olarak DEĞİŞTİRİLMEMİŞTİR ve BURADA KULLANILMAMIŞTIR.
+
+    SORUN: Python'un standart `str.casefold()`'u Türkçe büyük "İ"yi
+    (U+0130) TEK bir küçük "i" harfine DEĞİL, "i" (U+0069) + COMBINING
+    DOT ABOVE (U+0307) İKİLİSİNE katlar (Unicode SpecialCasing.txt'nin
+    tanımladığı, dile-duyarsız "full casefold" davranışı). Bu, plain
+    `.casefold()` ile normalize edilmiş "İl Özel İdaresi" gibi bir
+    metnin, aynı kelimenin düz-"i" ile yazılmış alias/keyword'üne
+    (`"il özel idaresi"`) ASLA eşleşmemesine yol açar - sessiz bir
+    fail-open riski (istisna KAÇIRILABİLİR).
+
+    ÇÖZÜM: Unicode NFC normalizasyonu + casefold, ardından SADECE bu
+    ikili diziyi ("i\\u0307") kanonik düz "i"ye eşitleyen DAR bir
+    `.replace()`. BAŞKA HİÇBİR combining mark silinmez - ö/ü/ş/ç/ğ gibi
+    Türkçe karakterler ASCII'ye dönüştürülMEZ, yalnız bu TEK, belgelenmiş
+    İ-katlama dizisi düzeltilir.
+
+    DAR GARANTİ (mutlak/genel idempotence İDDİA EDİLMEZ): NFC ve
+    `.casefold()` HER İKİSİ de Unicode standardının kendi tanımı gereği
+    tek başlarına idempotenttir (NFC(NFC(x))=NFC(x),
+    casefold(casefold(x))=casefold(x)); bu fonksiyonun kendi çıktısını
+    (yalnız "İ"nin (U+0130) katlanmasından kaynaklanan "i\\u0307"
+    dizileri - EMPİRİK olarak doğrulanan TEK bilinen kaynak - temizlenmiş
+    metin) tekrar bu fonksiyona vermek güvenlidir ve aynı sonucu üretir.
+    Bu, Unicode'da "İ" DIŞINDA HİÇBİR codepoint'in casefold altında
+    "i\\u0307" üretemeyeceğinin KAPSAMLI/BAĞIMSIZ bir kanıtı DEĞİLDİR -
+    yalnız BU fonksiyonun kendi, tek geçişlik davranışının kararlı
+    olduğu iddia edilir."""
+
+    if value is None:
+
+        return None
+
+    text = str(
+        value
+    ).strip()
+
+    if not text:
+
+        return None
+
+    text = unicodedata.normalize(
+        "NFC",
+        text,
+    ).casefold()
+
+    text = text.replace(
+        "i̇",
+        "i",
+    )
+
+    return (
+        text
+        if text
+        else None
+    )
+
+
+def get_case_issuing_authorities(
+    case_data,
+):
+    """`administrativeAction[*].issuing_authority` serbest metin
+    alanlarını toplar, `_normalize_mali_tatil_text()` ile normalize
+    eder (BAĞIMSIZ İNCELEME REMEDİASYONU - önceden genel `normalize_
+    string()` kullanıyordu, Unicode "İ" fail-open riski taşıyordu; bkz.
+    `_normalize_mali_tatil_text()` docstring'i). Bu fonksiyon
+    `deadline_rule_selection_policy.py`'ye DEĞİL bu modüle aittir -
+    rule SELECTION'ın applicability filtresi issuing_authority'yi
+    kullanmaz, yalnız mali tatil m.1/7 istisna kontrolü kullanır."""
+
+    result = set()
+
+    for action in case_data.get(
+        "administrative_actions",
+        [],
+    ):
+
+        if not isinstance(
+            action,
+            dict,
+        ):
+
+            continue
+
+        normalized = _normalize_mali_tatil_text(
+            action.get(
+                "issuing_authority"
+            )
+        )
+
+        if normalized:
+
+            result.add(
+                normalized
+            )
+
+    return result
+
+
+def get_case_tax_types_for_mali_tatil(
+    case_data,
+):
+    """BAĞIMSIZ İNCELEME REMEDİASYONU: `deadline_rule_selection_
+    policy.get_case_tax_types()`'i (repo genelinde kural SEÇİMİ için de
+    kullanılan, paylaşılan fonksiyon - genel `normalize_string()`
+    kullanır, DEĞİŞTİRİLMEMİŞTİR) YENİDEN KULLANMAZ. Bunun yerine
+    `dispute_items[*].tax_type`'ı HAM olarak okur ve yalnız
+    `_normalize_mali_tatil_text()` (İ-güvenli, dar normalizasyon)
+    uygular - bu, mali tatil sınıflandırmasının paylaşılan fonksiyonun
+    Unicode fail-open riskinden TAMAMEN bağımsız kalmasını sağlar."""
+
+    result = set()
+
+    for item in case_data.get(
+        "dispute_items",
+        [],
+    ):
+
+        if not isinstance(
+            item,
+            dict,
+        ):
+
+            continue
+
+        normalized = _normalize_mali_tatil_text(
+            item.get(
+                "tax_type"
+            )
+        )
+
+        if normalized:
+
+            result.add(
+                normalized
+            )
+
+    return result
+
+
+def classify_mali_tatil_tax_type(
+    tax_types,
+):
+    """Dönüş: (sınıf, eşleşen_deger). sınıf ∈ {"excluded", "included",
+    "mixed", "unrecognized"}. Serbest metinden sessiz tahmin YAPILMAZ -
+    dar, doğrulanmış iki alias kümesine (`MALI_TATIL_EXCLUDED_TAX_
+    TYPES`/`MALI_TATIL_INCLUDED_TAX_TYPES`) karşı EXACT eşleşme
+    aranır. Boş girdi veya bilinmeyen HERHANGİ bir tax_type
+    "unrecognized" sayılır (öncelikli kontrol - fail-closed).
+    Hem excluded hem included eşleşmesi varsa (case birden fazla
+    dispute_item'a sahipse ve bunlar karışıksa) "mixed" döner -
+    hangi somut dispute'un bu anchor'a ait olduğu belirsiz olduğundan
+    tek bir kesin karar VERİLEMEZ.
+
+    BAĞIMSIZ İNCELEME REMEDİASYONU: hem gelen değerler hem de alias
+    kümelerinin KENDİSİ `_normalize_mali_tatil_text()`'ten geçirilir -
+    girdi ÖNCEDEN normalize edilmiş olsa bile (idempotent) veya HİÇ
+    normalize edilmemiş ham bir değer olsa bile (ör. büyük "İ" içeren
+    bir tax_type) aynı, doğru sonucu üretir."""
+
+    excluded_alias = {
+        _normalize_mali_tatil_text(value)
+        for value in MALI_TATIL_EXCLUDED_TAX_TYPES
+    }
+
+    included_alias = {
+        _normalize_mali_tatil_text(value)
+        for value in MALI_TATIL_INCLUDED_TAX_TYPES
+    }
+
+    normalized = {
+        _normalize_mali_tatil_text(value)
+        for value in (
+            tax_types
+            or set()
+        )
+        if _normalize_mali_tatil_text(
+            value
+        )
+    }
+
+    if not normalized:
+
+        return (
+            "unrecognized",
+            None,
+        )
+
+    excluded_matches = (
+        normalized
+        & excluded_alias
+    )
+
+    included_matches = (
+        normalized
+        & included_alias
+    )
+
+    unrecognized_matches = (
+        normalized
+        - excluded_alias
+        - included_alias
+    )
+
+    if unrecognized_matches:
+
+        return (
+            "unrecognized",
+            sorted(
+                unrecognized_matches
+            )[0],
+        )
+
+    if (
+        excluded_matches
+        and included_matches
+    ):
+
+        return (
+            "mixed",
+            None,
+        )
+
+    if excluded_matches:
+
+        return (
+            "excluded",
+            sorted(
+                excluded_matches
+            )[0],
+        )
+
+    return (
+        "included",
+        None,
+    )
+
+
+def classify_mali_tatil_authority(
+    issuing_authorities,
+):
+    """Dönüş: (sınıf, eşleşen_anahtar_kelime). sınıf ∈ {"excluded",
+    "not_excluded"}. Bu kontrol PURE EK bir dışlama sinyalidir -
+    issuing_authority eksik veya tanınmayan bir metinse "not_excluded"
+    döner (BLOKE ETMEZ); yalnız gümrük/belediye/il özel idaresi
+    anahtar kelimelerinden biri AÇIKÇA geçerse "excluded" döner.
+
+    BAĞIMSIZ İNCELEME REMEDİASYONU: hem gelen değerler hem de anahtar
+    kelimelerin KENDİSİ `_normalize_mali_tatil_text()`'ten geçirilir -
+    "Ankara İl Özel İdaresi" (büyük "İ") artık "il özel idaresi"
+    anahtar kelimesiyle DOĞRU eşleşir (önceden plain `.casefold()`'un
+    "İ"yi "i"+COMBINING DOT ABOVE'a katlaması nedeniyle SESSİZCE
+    KAÇIRILIYORDU - bkz. `_normalize_mali_tatil_text()` docstring'i)."""
+
+    excluded_keywords = {
+        _normalize_mali_tatil_text(keyword)
+        for keyword in MALI_TATIL_EXCLUDED_AUTHORITY_KEYWORDS
+    }
+
+    normalized = {
+        _normalize_mali_tatil_text(value)
+        for value in (
+            issuing_authorities
+            or set()
+        )
+        if _normalize_mali_tatil_text(
+            value
+        )
+    }
+
+    for authority in sorted(
+        normalized
+    ):
+
+        for keyword in sorted(
+            excluded_keywords
+        ):
+
+            if (
+                keyword
+                in authority
+            ):
+
+                return (
+                    "excluded",
+                    keyword,
+                )
+
+    return (
+        "not_excluded",
+        None,
+    )
+
+
+def mali_tatil_window_for_year(
+    year,
+    holiday_dates,
+):
+    """5604 m.1/1: mali tatil normalde 1-20 Temmuz (20'si dahil).
+    Haziran'ın son gününün tatil günü (hafta sonu VEYA resmî tatil)
+    olması halinde başlangıç, temmuz ayının ilk iş gününü TAKİP EDEN
+    güne kayar - bitiş tarihi (20 Temmuz) DEĞİŞMEZ."""
+
+    end = date(
+        year,
+        7,
+        20,
+    )
+
+    june_30 = date(
+        year,
+        6,
+        30,
+    )
+
+    if is_non_working_day(
+        june_30,
+        holiday_dates,
+    ):
+
+        first_business_day_july = (
+            move_to_next_business_day(
+                date(
+                    year,
+                    7,
+                    1,
+                ),
+                holiday_dates,
+            )
+        )
+
+        start = (
+            first_business_day_july
+            + timedelta(
+                days=1
+            )
+        )
+
+    else:
+
+        start = date(
+            year,
+            7,
+            1,
+        )
+
+    return (
+        start,
+        end,
+    )
+
+
+def is_within_mali_tatil(
+    target_date,
+    holiday_dates,
+):
+
+    start, end = (
+        mali_tatil_window_for_year(
+            target_date.year,
+            holiday_dates,
+        )
+    )
+
+    return (
+        start
+        <= target_date
+        <= end
+    )
+
+
+def is_mali_tatil_relevant(
+    anchor,
+    duration_value,
+    holiday_dates,
+):
+    """Ucuz ön-kontrol: [anchor+1, anchor+duration_value] (naif, mali
+    tatilsiz sayım penceresi) HERHANGİ bir yılın mali tatil aralığına
+    dokunuyor mu? Dokunmuyorsa mali tatil TAMAMEN moot'tur - tax_type/
+    issuing_authority sınıflandırması hiç ÇALIŞTIRILMAZ (davranış bu
+    fonksiyonun EKLENMESİNDEN ÖNCEki ile bayt-bayt aynı kalır)."""
+
+    naive_end = (
+        anchor
+        + timedelta(
+            days=duration_value
+        )
+    )
+
+    window_first_day = (
+        anchor
+        + timedelta(
+            days=1
+        )
+    )
+
+    for year in range(
+        anchor.year,
+        naive_end.year
+        + 1,
+    ):
+
+        start, end = (
+            mali_tatil_window_for_year(
+                year,
+                holiday_dates,
+            )
+        )
+
+        if (
+            start
+            <= naive_end
+            and end
+            >= window_first_day
+        ):
+
+            return True
+
+    return False
+
+
+def apply_mali_tatil_pause_resume(
+    anchor,
+    duration_value,
+    holiday_dates,
+):
+    """5604 m.1/3 (pause/resume) + m.1/6 (asgari beş günlük süre,
+    6661 sayılı Kanun m.18 ile güncellenmiş). Gün gün sayar; mali
+    tatile denk gelen HER gün sayıma dahil EDİLMEZ (atlanır). Sayım
+    tamamlandıktan sonra, eğer sayım herhangi bir mali tatili
+    GERÇEKTEN geçtiyse ve ham sonuç o mali tatilin bitimini izleyen
+    ilk 5 gün içine denk geliyorsa, sonuç mali tatilin bitimini
+    izleyen 5. güne (dahil) sabitlenir.
+
+    Dönüş: (resumed_date, grace_floor_applied). `grace_floor_applied`
+    - HUKUK GÖRÜŞÜ REMEDİASYONU (Pilot Readiness Adım 7 final tur) -
+    m.1/6'nın asgari-süre kuralının HAM sonucu GERÇEKTEN değiştirip
+    değiştirmediğini çağırana bildirir. `calculate_rule_deadline()`
+    bunu, `judicial_recess_applicable=False` iken nihai tarihin YALNIZ
+    bu asgari-süre mekanizmasına dayanmasını (adli tatil tarafından
+    AYRICA teyit/uzatma olmadan) engellemek için kullanır - avukatın
+    dava açma süreleri bakımından bu mekanizmaya ihtiyatla yaklaşılması
+    yönündeki görüşü gereği."""
+
+    remaining = duration_value
+
+    current = anchor
+
+    mali_tatil_end_crossed = None
+
+    safety_counter = 0
+
+    while (
+        remaining
+        > 0
+    ):
+
+        safety_counter += 1
+
+        if (
+            safety_counter
+            > 730
+        ):
+
+            raise DeadlineCalculatorError(
+                "Mali tatil pause/resume 730 gün "
+                "içinde tamamlanamadı."
+            )
+
+        current = (
+            current
+            + timedelta(
+                days=1
+            )
+        )
+
+        if is_within_mali_tatil(
+            current,
+            holiday_dates,
+        ):
+
+            _, year_end = (
+                mali_tatil_window_for_year(
+                    current.year,
+                    holiday_dates,
+                )
+            )
+
+            mali_tatil_end_crossed = (
+                year_end
+            )
+
+            continue
+
+        remaining -= 1
+
+    resumed = current
+
+    grace_floor_applied = False
+
+    if (
+        mali_tatil_end_crossed
+        is not None
+    ):
+
+        grace_start = (
+            mali_tatil_end_crossed
+            + timedelta(
+                days=1
+            )
+        )
+
+        grace_floor = (
+            mali_tatil_end_crossed
+            + timedelta(
+                days=
+                    MALI_TATIL_GRACE_PERIOD_DAYS
+            )
+        )
+
+        if (
+            grace_start
+            <= resumed
+            <= grace_floor
+        ):
+
+            resumed = grace_floor
+
+            grace_floor_applied = True
+
+    return (
+        resumed,
+        grace_floor_applied,
+    )
+
+
+# ============================================================
 # CORE ARITHMETIC
 # ============================================================
 
@@ -680,6 +1345,7 @@ def calculate_rule_deadline(
     *,
     holiday_calendar,
     judicial_recess_applicable=None,
+    case_tax_context=None,
 ):
     """PILOT READINESS ADIM 5 (K4/C1): elle beyan edilen `holiday_dates`/
     `calendar_complete` parametreleri TAMAMEN KALKTI - `holiday_calendar`
@@ -691,7 +1357,18 @@ def calculate_rule_deadline(
     `covered_verified_years` içinde olması) kaydırma
     (`move_to_next_business_day`) ÇALIŞTIKTAN SONRA yapılır - hiçbir
     ara "calculated" durumu hiçbir çağırana SIZMAZ (fonksiyon dönmeden
-    ÖNCE karar verilir)."""
+    ÖNCE karar verilir).
+
+    PILOT READINESS ADIM 7: `case_tax_context` (opsiyonel,
+    `{"tax_types": set(str), "issuing_authorities": set(str)}` -
+    HER İKİSİ de ideal olarak `_normalize_mali_tatil_text()` ile
+    normalize edilmiş olmalıdır, ama `classify_mali_tatil_tax_type()`/
+    `classify_mali_tatil_authority()` girdiyi HER DURUMDA yeniden
+    normalize eder - bağımsız inceleme remediasyonu, idempotent ve
+    savunmacı) yalnız kural `rule_has_mali_tatil_basis()` İSE ve sayım
+    penceresi GERÇEKTEN mali tatile dokunuyorsa tüketilir; aksi halde
+    tamamen moot'tur ve davranış bu parametrenin EKLENMESİNDEN ÖNCEki
+    ile bayt-bayt aynı kalır."""
 
     anchor = parse_iso_date(
         anchor_date
@@ -1011,6 +1688,232 @@ def calculate_rule_deadline(
 
     judicial_recess_applied = False
 
+    mali_tatil_applied = False
+
+    mali_tatil_exclusion_reason = None
+
+    # PILOT READINESS ADIM 7 (§7.1): `holidays`/`covered_verified_
+    # years` burada, mali tatil bölümünden ÖNCE hesaplanır (m.1/1'in
+    # başlangıç-kayması edge case'i için gerekir); aşağıdaki END DAY
+    # POLICY bölümü bu AYNI değişkenleri yeniden kullanır, ikinci kez
+    # HESAPLAMAZ.
+
+    effective_holiday_calendar = (
+        holiday_calendar
+        if holiday_calendar is not None
+        else {
+            "holiday_dates": set(),
+            "covered_verified_years": set(),
+        }
+    )
+
+    holidays = normalize_holiday_dates(
+        effective_holiday_calendar.get(
+            "holiday_dates"
+        )
+    )
+
+    covered_verified_years = set(
+        effective_holiday_calendar.get(
+            "covered_verified_years"
+        )
+        or set()
+    )
+
+    # ========================================================
+    # MALİ TATİL (5604 sayılı Kanun m.1) - PILOT READINESS ADIM 7
+    # ========================================================
+
+    if rule_has_mali_tatil_basis(
+        rule
+    ):
+
+        if is_mali_tatil_relevant(
+            anchor,
+            duration_value,
+            holidays,
+        ):
+
+            tax_class, tax_match = (
+                classify_mali_tatil_tax_type(
+                    (
+                        case_tax_context
+                        or {}
+                    ).get(
+                        "tax_types"
+                    )
+                )
+            )
+
+            authority_class, authority_match = (
+                classify_mali_tatil_authority(
+                    (
+                        case_tax_context
+                        or {}
+                    ).get(
+                        "issuing_authorities"
+                    )
+                )
+            )
+
+            if (
+                authority_class
+                == "excluded"
+            ):
+
+                mali_tatil_exclusion_reason = (
+                    "issuing_authority_excluded:"
+                    f"{authority_match}"
+                )
+
+            elif (
+                tax_class
+                == "excluded"
+            ):
+
+                mali_tatil_exclusion_reason = (
+                    "tax_type_excluded:"
+                    f"{tax_match}"
+                )
+
+            elif tax_class in (
+                "unrecognized",
+                "mixed",
+            ):
+
+                return {
+                    "calculation_state":
+                        "needs_review",
+
+                    "calculated_deadline":
+                        None,
+
+                    "base_deadline":
+                        base_deadline.isoformat(),
+
+                    "judicial_recess_applied":
+                        False,
+
+                    "holiday_adjustment_applied":
+                        False,
+
+                    "mali_tatil_applied":
+                        False,
+
+                    "mali_tatil_exclusion_reason":
+                        None,
+
+                    "reason":
+                        (
+                            "Base deadline mali tatile denk "
+                            "gelen bir sayım penceresi "
+                            "içeriyor ancak case vergi türü "
+                            "5604 m.1/7 istisnası bakımından "
+                            "güvenilir şekilde "
+                            "sınıflandırılamadı "
+                            f"(tax_classification={tax_class})."
+                        ),
+                }
+
+            else:
+
+                # tax_class == "included" ve issuing_authority
+                # istisna kapsamında değil -> mali tatil UYGULANIR.
+
+                provisional_deadline, grace_floor_applied = (
+                    apply_mali_tatil_pause_resume(
+                        anchor,
+                        duration_value,
+                        holidays,
+                    )
+                )
+
+                mali_tatil_applied = True
+
+                # ================================================
+                # HUKUK GÖRÜŞÜ REMEDİASYONU (Pilot Readiness Adım 7
+                # final tur): m.1/6'nın asgari 5 günlük süresi
+                # (6661 sayılı Kanunla güncellenmiş) HAM sonucu
+                # GERÇEKTEN değiştirdiyse (`grace_floor_applied`) VE
+                # judicial_recess_applicable AÇIKÇA False ise, nihai
+                # tarihin YALNIZ bu asgari-süre mekanizmasına
+                # dayanmasına İZİN VERİLMEZ - avukatın dava açma
+                # süreleri (çalışmaya ara vermeyen mahkemeler dahil)
+                # bakımından bu mekanizmaya ihtiyatla yaklaşılması
+                # gerektiği yönündeki görüşü gereği, fail-closed
+                # needs_review döner. `judicial_recess_applicable`
+                # True veya None ise BU KONTROL ÇALIŞMAZ - True
+                # durumunda adli tatil zaten bağımsız olarak nihai
+                # tarihi daha ileri taşıyabilir (aşağıdaki İYUK
+                # JUDICIAL RECESS bölümü); None durumunda ZATEN
+                # mevcut resess-ambiguity kontrolü devreye girer
+                # (floor'un ürettiği tarih HER ZAMAN İYUK çalışmaya
+                # ara verme aralığının içindedir, bu yüzden None her
+                # durumda o bölümde needs_review'a düşer - burada
+                # AYRICA ele almaya gerek yoktur).
+                # ================================================
+
+                if (
+                    grace_floor_applied
+                    and judicial_recess_applicable
+                    is False
+                ):
+
+                    return {
+                        "calculation_state":
+                            "needs_review",
+
+                        "calculated_deadline":
+                            None,
+
+                        "base_deadline":
+                            base_deadline.isoformat(),
+
+                        "provisional_deadline":
+                            provisional_deadline.isoformat(),
+
+                        "judicial_recess_applied":
+                            False,
+
+                        "holiday_adjustment_applied":
+                            False,
+
+                        "mali_tatil_applied":
+                            True,
+
+                        "mali_tatil_exclusion_reason":
+                            None,
+
+                        "reason":
+                            (
+                                "5604 m.1/6 asgari beş günlük süre "
+                                "kuralı (6661 sayılı Kanunla "
+                                "güncellenmiş) nihai tarihi TEK "
+                                "BAŞINA belirliyor ve "
+                                "judicial_recess_applicable=False "
+                                "olarak beyan edilmiş (adli tatil "
+                                "tarafından ayrıca teyit/uzatma "
+                                "yok). Avukat teyidi olmadan dava "
+                                "açma süreleri bakımından bu "
+                                "mekanizmaya dayanarak kesin tarih "
+                                "üretilmiyor - "
+                                "reason_code=mali_tatil_grace_"
+                                "floor_unconfirmed_without_recess."
+                            ),
+                    }
+
+        else:
+
+            mali_tatil_exclusion_reason = (
+                "window_not_relevant"
+            )
+
+    else:
+
+        mali_tatil_exclusion_reason = (
+            "rule_lacks_legal_basis"
+        )
+
     # ========================================================
     # IYUK JUDICIAL RECESS
     # ========================================================
@@ -1050,6 +1953,12 @@ def calculate_rule_deadline(
                 "holiday_adjustment_applied":
                     False,
 
+                "mali_tatil_applied":
+                    mali_tatil_applied,
+
+                "mali_tatil_exclusion_reason":
+                    mali_tatil_exclusion_reason,
+
                 "reason":
                     (
                         "Base deadline İYUK çalışmaya ara "
@@ -1084,27 +1993,10 @@ def calculate_rule_deadline(
 
     holiday_adjustment_applied = False
 
-    effective_holiday_calendar = (
-        holiday_calendar
-        if holiday_calendar is not None
-        else {
-            "holiday_dates": set(),
-            "covered_verified_years": set(),
-        }
-    )
-
-    holidays = normalize_holiday_dates(
-        effective_holiday_calendar.get(
-            "holiday_dates"
-        )
-    )
-
-    covered_verified_years = set(
-        effective_holiday_calendar.get(
-            "covered_verified_years"
-        )
-        or set()
-    )
+    # `effective_holiday_calendar`/`holidays`/`covered_verified_years`
+    # PILOT READINESS ADIM 7 ile MALİ TATİL bölümünden önceye taşındı
+    # (m.1/1'in başlangıç-kayması edge case'i için gerekiyordu) - burada
+    # AYNI değişkenler yeniden kullanılır, ikinci kez hesaplanmaz.
 
     if (
         end_day_policy
@@ -1178,6 +2070,12 @@ def calculate_rule_deadline(
                 "holiday_adjustment_applied":
                     False,
 
+                "mali_tatil_applied":
+                    mali_tatil_applied,
+
+                "mali_tatil_exclusion_reason":
+                    mali_tatil_exclusion_reason,
+
                 "reason":
                     (
                         "end_day_policy="
@@ -1213,6 +2111,12 @@ def calculate_rule_deadline(
             "holiday_adjustment_applied":
                 False,
 
+            "mali_tatil_applied":
+                mali_tatil_applied,
+
+            "mali_tatil_exclusion_reason":
+                mali_tatil_exclusion_reason,
+
             "reason":
                 (
                     "Desteklenmeyen end_day_policy: "
@@ -1242,6 +2146,12 @@ def calculate_rule_deadline(
 
         "holiday_adjustment_applied":
             holiday_adjustment_applied,
+
+        "mali_tatil_applied":
+            mali_tatil_applied,
+
+        "mali_tatil_exclusion_reason":
+            mali_tatil_exclusion_reason,
 
         "reason":
             "Deterministik deadline hesabı tamamlandı.",
@@ -1822,6 +2732,38 @@ def build_deadline_record(
         return base_record
 
     # ========================================================
+    # PILOT READINESS ADIM 7 - MALİ TATİL CASE TAX CONTEXT
+    #
+    # Yalnız kural `rule_has_mali_tatil_basis()` İSE case.json
+    # yüklenir (`deadline_validator.load_case()` - `deadline_rule_
+    # selection_policy.select_for_case_event()`'in ZATEN kullandığı
+    # AYNI, self-contained fonksiyon); aksi halde gereksiz I/O YOK,
+    # davranış bu bölümün EKLENMESİNDEN ÖNCEki ile bayt-bayt aynı.
+    # ========================================================
+
+    case_tax_context = None
+
+    if rule_has_mali_tatil_basis(
+        selected_rule
+    ):
+
+        case_data, _ = load_case(
+            case_id
+        )
+
+        case_tax_context = {
+            "tax_types":
+                get_case_tax_types_for_mali_tatil(
+                    case_data
+                ),
+
+            "issuing_authorities":
+                get_case_issuing_authorities(
+                    case_data
+                ),
+        }
+
+    # ========================================================
     # CALCULATE
     # ========================================================
 
@@ -1838,6 +2780,9 @@ def build_deadline_record(
 
             judicial_recess_applicable=
                 judicial_recess_applicable,
+
+            case_tax_context=
+                case_tax_context,
         )
     )
 
@@ -1893,6 +2838,39 @@ def build_deadline_record(
 
         notes.append(
             "holiday_adjustment=applied"
+        )
+
+    if calculation.get(
+        "mali_tatil_applied"
+    ):
+
+        notes.append(
+            "mali_tatil_adjustment=applied"
+        )
+
+    elif (
+        calculation.get(
+            "mali_tatil_exclusion_reason"
+        )
+        not in (
+            None,
+            "window_not_relevant",
+            "rule_lacks_legal_basis",
+        )
+    ):
+
+        # Yalnız ANLAMLI (aktif bir 5604 m.1/7 istisna kararı verilmiş)
+        # durumlar notes'a yansıtılır; "window_not_relevant"/"rule_
+        # lacks_legal_basis" rutin/varsayılan durumlardır - `calculation`
+        # dict'inin KENDİSİNDE (yapısal, sorgulanabilir alanda) HER ZAMAN
+        # mevcuttur, insan-okunur notes string'i gereksiz yere
+        # kalabalıklaştırılmaz.
+
+        notes.append(
+            "mali_tatil="
+            + calculation[
+                "mali_tatil_exclusion_reason"
+            ]
         )
 
     if (
@@ -2284,7 +3262,7 @@ def run_self_test():
                 []
             )
         )
-        == 6
+        == 7
     )
 
     print(
@@ -2429,14 +3407,22 @@ def run_self_test():
     # ========================================================
     # T05 JUDICIAL RECESS
     #
-    # 25.06 + 30 = 25.07
+    # PILOT READINESS ADIM 7: anchor kasıtlı olarak mali tatil (1-20
+    # Temmuz) bitiminden SONRAya ("2026-07-21") taşındı - bu test
+    # yalnız İYUK adli tatilini İZOLE test eder; anchor+30 sayım
+    # penceresi (22 Temmuz - 20 Ağustos) mali tatile HİÇ dokunmaz
+    # (`is_mali_tatil_relevant()` False döner), bu yüzden
+    # `case_tax_context` GEREKMEZ. Mali tatil pause/resume'un KENDİSİ
+    # T07c+ testlerinde ayrıca test edilir.
+    #
+    # 21.07 + 30 = 20.08.2026
     # Judicial recess -> 07.09
     # ========================================================
 
     result = (
         calculate_rule_deadline(
             anchor_date=
-                "2026-06-25",
+                "2026-07-21",
 
             rule=
                 rule,
@@ -2453,7 +3439,14 @@ def run_self_test():
         result[
             "base_deadline"
         ]
-        == "2026-07-25"
+        == "2026-08-20"
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is False
     )
 
     assert (
@@ -2479,12 +3472,14 @@ def run_self_test():
     # T06 UNKNOWN RECESS APPLICABILITY FAIL-CLOSED - recess
     # ambiguity is checked BEFORE the calendar-coverage gate, so an
     # empty/uncovered calendar here does not change the outcome.
+    # PILOT READINESS ADIM 7: anchor T05 ile AYNI gerekçeyle
+    # "2026-07-21"e taşındı (mali tatilden izole).
     # ========================================================
 
     result = (
         calculate_rule_deadline(
             anchor_date=
-                "2026-06-25",
+                "2026-07-21",
 
             rule=
                 rule,
@@ -2618,6 +3613,900 @@ def run_self_test():
     )
 
     # ========================================================
+    # T07c MALİ TATİL PAUSE/RESUME - PILOT READINESS ADIM 7
+    #
+    # 15.06.2026 + 30 gün, 1-20 Temmuz (dahil) sayılmaz:
+    # 16-30 Haziran = 15 gün, 21 Temmuz'dan itibaren 15 gün daha
+    # -> 04.08.2026. Recess kasıtlı olarak False (mali tatilin KENDİ
+    # etkisini adli tatilden izole test etmek için); 04.08.2026 hafta
+    # içi olduğundan holiday_adjustment_applied=False.
+    # ========================================================
+
+    kdv_tax_context = {
+        "tax_types": {
+            "kdv"
+        },
+
+        "issuing_authorities":
+            set(),
+    }
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-15",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                False,
+
+            case_tax_context=
+                kdv_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "calculated"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        == "2026-08-04"
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is True
+    )
+
+    print(
+        "T07c Mali tatil pause/resume:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07d MALİ TATİL m.1/6 ASGARİ BEŞ GÜNLÜK SÜRE (6661 sayılı
+    # Kanun m.18) - HUKUK GÖRÜŞÜ REMEDİASYONU (Pilot Readiness Adım 7
+    # final tur): ham resume tarihi mali tatilin bitimini izleyen ilk
+    # 5 gün (21-25 Temmuz) içine denk geliyorsa VE
+    # judicial_recess_applicable=False ise (adli tatil tarafından
+    # AYRICA teyit/uzatma YOKSA), nihai tarih YALNIZ bu asgari-süre
+    # mekanizmasına dayanarak ÜRETİLMEZ - avukatın dava açma süreleri
+    # bakımından bu mekanizmaya ihtiyatla yaklaşılması gerektiği
+    # yönündeki görüşü gereği fail-closed needs_review döner (ÖNCEKİ
+    # davranış - sessizce 27.07.2026'ya calculated - artık YANLIŞTIR
+    # ve bu turda düzeltilmiştir).
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-01",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                False,
+
+            case_tax_context=
+                kdv_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "needs_review"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        is None
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is True
+    )
+
+    assert (
+        "mali_tatil_grace_floor_unconfirmed_without_recess"
+        in result[
+            "reason"
+        ]
+    )
+
+    print(
+        "T07d Mali tatil m.1/6 five-day grace floor WITHOUT "
+        "judicial recess confirmation is fail-closed needs_review:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07d2 SAME grace-floor scenario, but judicial_recess_
+    # applicable=True this time - the floor is NOT the sole
+    # determinant anymore (recess independently extends further to
+    # the fixed 7 Eylül), so this DOES reach calculated. Proves the
+    # T07d fail-closed check is narrowly scoped to recess=False only.
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-01",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                True,
+
+            case_tax_context=
+                kdv_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "calculated"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        == "2026-09-07"
+    )
+
+    assert (
+        result[
+            "judicial_recess_applied"
+        ]
+        is True
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is True
+    )
+
+    print(
+        "T07d2 Same grace-floor scenario WITH judicial recess "
+        "confirmation reaches calculated (recess independently "
+        "extends further):",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07d3 HUKUK GÖRÜŞÜ TEST B - mali tatil İÇİNDE fiilî tebliğ
+    # (anchor 10 Temmuz, 1-20 Temmuz aralığının içinde) + kapsam içi
+    # vergi + judicial_recess_applicable=True: fıkra 5 gereği ilk
+    # sayılan gün 21 Temmuz'dur (mali tatil bitimini izleyen gün);
+    # sonuç adli tatil aralığına denk geldiğinden adli tatil final
+    # tarihi 7 Eylül'e taşır.
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-07-10",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                True,
+
+            case_tax_context=
+                kdv_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "calculated"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        == "2026-09-07"
+    )
+
+    assert (
+        result[
+            "judicial_recess_applied"
+        ]
+        is True
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is True
+    )
+
+    print(
+        "T07d3 Actual tebliğ inside mali tatil (fıkra 5) + judicial "
+        "recess confirmed -> final 7 Eylül:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07d4 HUKUK GÖRÜŞÜ TEST C - m.1/7 kapsam dışı vergi (ÖTV) +
+    # judicial_recess_applicable=True: mali_tatil_applied=False VE
+    # judicial_recess_applied=True AYNI kayıtta bir arada mümkündür -
+    # mali tatil m.1/7 kapsamı dışında olduğu için hiç uygulanmaz,
+    # ama İYUK m.8/3 adli tatili BAĞIMSIZ olarak yine uygulanabilir.
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-25",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                True,
+
+            case_tax_context={
+                "tax_types": {
+                    "ötv"
+                },
+
+                "issuing_authorities":
+                    set(),
+            },
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "calculated"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        == "2026-09-07"
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is False
+    )
+
+    assert (
+        result[
+            "judicial_recess_applied"
+        ]
+        is True
+    )
+
+    print(
+        "T07d4 mali_tatil_applied=False and judicial_recess_applied="
+        "True coexist in the same record (m.1/7-excluded tax type, "
+        "İYUK m.8/3 recess independently applies):",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07d6 HUKUK GÖRÜŞÜ TEST E - adli tatil uygulanabilirliği
+    # bilinmiyor (None) VE mali tatil sonucu adli tatil aralığına
+    # denk geliyor -> needs_review (mevcut recess-ambiguity kontrolü,
+    # DEĞİŞTİRİLMEDİ, yalnız mali-tatil-birleşik senaryoda AYRICA
+    # kanıtlanıyor).
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-25",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                None,
+
+            case_tax_context=
+                kdv_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "needs_review"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        is None
+    )
+
+    print(
+        "T07d6 Unknown judicial recess applicability with a mali-"
+        "tatil-relevant result -> needs_review:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07d8 HUKUK GÖRÜŞÜ TEST F - İYUK m.8/2 kapsamında recess-
+    # extended 7 Eylül'ün kendisi resmî tatile/hafta sonuna denk
+    # gelirse izleyen ilk çalışma gününe (8 Eylül) kayar - mevcut
+    # end_day_policy altyapısı, mali tatil + adli tatil BİRLEŞİK
+    # sonucunun ÜZERİNE de değişmeden uygulanmaya devam eder.
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-25",
+
+            rule=
+                rule,
+
+            holiday_calendar={
+                "holiday_dates": {
+                    date(
+                        2026,
+                        9,
+                        7,
+                    ),
+                },
+
+                "covered_verified_years":
+                    {2026},
+            },
+
+            judicial_recess_applicable=
+                True,
+
+            case_tax_context=
+                kdv_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        == "2026-09-08"
+    )
+
+    assert (
+        result[
+            "holiday_adjustment_applied"
+        ]
+        is True
+    )
+
+    print(
+        "T07d8 7 Eylül itself marked as a holiday, on the combined "
+        "mali tatil + adli tatil path, shifts forward to 8 Eylül:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07e MALİ TATİL m.1/1 BAŞLANGIÇ KAYMASI - 2029'da 30 Haziran
+    # Cumartesi'dir; mali tatil normal 1 Temmuz yerine 3 Temmuz'da
+    # başlar (20 Temmuz'da biter, bitiş DEĞİŞMEZ).
+    # ========================================================
+
+    covered_2029_2030 = {
+        "holiday_dates": set(),
+        "covered_verified_years":
+            {
+                2029,
+                2030,
+            },
+    }
+
+    assert (
+        mali_tatil_window_for_year(
+            2029,
+            set(),
+        )
+        == (
+            date(
+                2029,
+                7,
+                3,
+            ),
+            date(
+                2029,
+                7,
+                20,
+            ),
+        )
+    )
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2029-06-25",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2029_2030,
+
+            judicial_recess_applicable=
+                False,
+
+            case_tax_context=
+                kdv_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "calculated"
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is True
+    )
+
+    print(
+        "T07e Mali tatil m.1/1 start-date shift (2029 - 30 June "
+        "is a Saturday):",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07f MALİ TATİL m.1/7 - VERGİ TÜRÜNE GÖRE İSTİSNA (ÖTV) - mali
+    # tatil UYGULANMAZ, naif takvim-günü hesabı (mali tatilsiz)
+    # DEĞİŞMEDEN kullanılır.
+    # ========================================================
+
+    otv_tax_context = {
+        "tax_types": {
+            "ötv"
+        },
+
+        "issuing_authorities":
+            set(),
+    }
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-15",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                False,
+
+            case_tax_context=
+                otv_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "calculated"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        == "2026-07-15"
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is False
+    )
+
+    assert (
+        result[
+            "mali_tatil_exclusion_reason"
+        ]
+        == "tax_type_excluded:ötv"
+    )
+
+    print(
+        "T07f Mali tatil m.1/7 tax-type exclusion (ÖTV):",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07g MALİ TATİL m.1/7 - İDAREYE GÖRE İSTİSNA (gümrük) -
+    # tax_type dahil-listede olsa BİLE issuing_authority istisnası
+    # ÖNCELİKLİDİR.
+    # ========================================================
+
+    gumruk_tax_context = {
+        "tax_types": {
+            "kdv"
+        },
+
+        "issuing_authorities": {
+            "istanbul gümrük ve dış "
+            "ticaret bölge müdürlüğü"
+        },
+    }
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-15",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                False,
+
+            case_tax_context=
+                gumruk_tax_context,
+        )
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is False
+    )
+
+    assert (
+        result[
+            "mali_tatil_exclusion_reason"
+        ]
+        == "issuing_authority_excluded:gümrük"
+    )
+
+    print(
+        "T07g Mali tatil m.1/7 authority exclusion (gümrük):",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07h MALİ TATİL BİLİNMEYEN VERGİ TÜRÜ FAIL-CLOSED - sessiz
+    # tahmin YOK; needs_review.
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-15",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                False,
+
+            case_tax_context={
+                "tax_types": {
+                    "bilinmeyen vergi türü xyz"
+                },
+
+                "issuing_authorities":
+                    set(),
+            },
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "needs_review"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        is None
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is False
+    )
+
+    print(
+        "T07h Mali tatil unrecognized tax_type fail-closed:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07i MALİ TATİL case_tax_context HİÇ VERİLMEMİŞ (None) -
+    # AYNI şekilde fail-closed needs_review (mevcut değil = tanınmıyor
+    # sayılır, otomatik "included" VARSAYILMAZ).
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-15",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                False,
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "needs_review"
+    )
+
+    print(
+        "T07i Mali tatil missing case_tax_context fail-closed:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07j MALİ TATİL KARIŞIK (MIXED) VERGİ TÜRÜ FAIL-CLOSED - aynı
+    # case'te hem istisna (ÖTV) hem dahil (KDV) tax_type varsa, hangi
+    # dispute'un bu anchor'a ait olduğu belirsizdir -> needs_review.
+    # ========================================================
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-15",
+
+            rule=
+                rule,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                False,
+
+            case_tax_context={
+                "tax_types": {
+                    "kdv",
+                    "ötv",
+                },
+
+                "issuing_authorities":
+                    set(),
+            },
+        )
+    )
+
+    assert (
+        result[
+            "calculation_state"
+        ]
+        == "needs_review"
+    )
+
+    print(
+        "T07j Mali tatil mixed tax_type fail-closed:",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07k MALİ TATİL SIZMAMASI - ref'i TAŞIMAYAN bir kural, sayım
+    # penceresi mali tatile denk gelse BİLE, davranış bu özelliğin
+    # EKLENMESİNDEN ÖNCEki ile bayt-bayt AYNI kalır (eski T05 senaryosu
+    # - anchor 25.06, ham 25.07, adli tatil -> 07.09).
+    # ========================================================
+
+    rule_without_mali_tatil_ref = dict(
+        rule
+    )
+
+    rule_without_mali_tatil_ref[
+        "legal_basis_refs"
+    ] = [
+        ref
+        for ref in rule.get(
+            "legal_basis_refs",
+            []
+        )
+        if ref
+        != MALI_TATIL_TRIGGER_REF
+    ]
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-25",
+
+            rule=
+                rule_without_mali_tatil_ref,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                True,
+        )
+    )
+
+    assert (
+        result[
+            "base_deadline"
+        ]
+        == "2026-07-25"
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        == "2026-09-07"
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is False
+    )
+
+    assert (
+        result[
+            "mali_tatil_exclusion_reason"
+        ]
+        == "rule_lacks_legal_basis"
+    )
+
+    print(
+        "T07k Mali tatil non-leakage (rule without the ref):",
+        "PASS"
+    )
+
+    # ========================================================
+    # T07l MALİ TATİL SIZMAMASI - BİLİNMEYEN (5604'ün GERÇEK ref'i
+    # OLMAYAN) bir ref taşıyan kural da AYNI şekilde sızıntısız kalır.
+    # ========================================================
+
+    rule_with_unknown_ref = dict(
+        rule
+    )
+
+    rule_with_unknown_ref[
+        "legal_basis_refs"
+    ] = [
+        (
+            ref
+            if ref
+            != MALI_TATIL_TRIGGER_REF
+            else "KANUN_9999_m1"
+        )
+        for ref in rule.get(
+            "legal_basis_refs",
+            []
+        )
+    ]
+
+    result = (
+        calculate_rule_deadline(
+            anchor_date=
+                "2026-06-25",
+
+            rule=
+                rule_with_unknown_ref,
+
+            holiday_calendar=
+                covered_2026_only,
+
+            judicial_recess_applicable=
+                True,
+        )
+    )
+
+    assert (
+        result[
+            "calculated_deadline"
+        ]
+        == "2026-09-07"
+    )
+
+    assert (
+        result[
+            "mali_tatil_applied"
+        ]
+        is False
+    )
+
+    assert (
+        result[
+            "mali_tatil_exclusion_reason"
+        ]
+        == "rule_lacks_legal_basis"
+    )
+
+    print(
+        "T07l Mali tatil non-leakage (rule with an unrelated ref):",
+        "PASS"
+    )
+
+    # ========================================================
     # T08 HISTORICAL LEGAL BASIS
     # ========================================================
 
@@ -2649,7 +4538,7 @@ def run_self_test():
         ].get(
             "legal_basis_count"
         )
-        == 6
+        == 7
     )
 
     print(
@@ -2848,7 +4737,7 @@ def run_self_test():
     )
 
     print(
-        " DEADLINE CALCULATOR V1: 12/12 PASS"
+        " DEADLINE CALCULATOR V1: 27/27 PASS"
     )
 
     print(

@@ -147,6 +147,48 @@
         "ocr_required": false
       },
       "notes": "2577 sayılı İdari Yargılama Usulü Kanunu. Deadline Engine V1 için m.7/1, m.7/2-b, m.8/1 ve m.8/2 provision kayıtları canonical Legal Knowledge Engine'e eklenmiştir. Fiziksel PDF ingest işlemi ayrı adımda yapılacaktır."
+    },
+    {
+      "document_id": "kanun_5604",
+      "file_name": "5604.pdf",
+      "active": true,
+      "belge_turu": "Kanun",
+      "title": "Malî Tatil İhdas Edilmesi Hakkında Kanun",
+      "short_title": "5604 sayılı Mali Tatil Kanunu",
+      "kanun_no": "5604",
+      "document_number": "5604",
+      "kaynak_kurum": "T.C. Cumhurbaşkanlığı Mevzuat Bilgi Sistemi",
+      "official_source": true,
+      "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.5604.pdf",
+      "resmi_gazete_tarihi": "2007-03-28",
+      "resmi_gazete_sayisi": "26476",
+      "yayin_tarihi": "2007-03-28",
+      "yururluk_tarihi": "2007-03-28",
+      "gecerlilik_baslangici": "2007-03-28",
+      "gecerlilik_sonu": null,
+      "mulga_tarihi": null,
+      "status": "active",
+      "version": "1",
+      "previous_version": null,
+      "next_version": null,
+      "supersedes": null,
+      "superseded_by": null,
+      "jurisdiction": "TR",
+      "language": "tr",
+      "tags": [
+        "mali_tatil",
+        "sureler",
+        "vergi_usul",
+        "dava_acma_suresi"
+      ],
+      "relations": [],
+      "ingest": {
+        "enabled": false,
+        "parser": "legal_pdf",
+        "chunk_strategy": "legal_hierarchy",
+        "ocr_required": false
+      },
+      "notes": "5604 sayılı Malî Tatil İhdas Edilmesi Hakkında Kanun. Deadline Calculator V1 (Pilot Readiness Adım 7 - mali tatil pause/resume mekanizması) için m.1 provision kaydı canonical Legal Knowledge Engine'e eklenmiştir. 14/1/2016 tarihli ve 6661 sayılı Kanun m.18 ile m.1/6, m.1/7 ve m.1/8 fıkraları değiştirilmiştir; kaynak URL güncel konsolide metne (değişiklikler dahil) işaret eder. Fiziksel PDF ingest işlemi bu turun kapsamı dışındadır (ingest.enabled=false)."
     }
   ]
 }

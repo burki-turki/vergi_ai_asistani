@@ -333,14 +333,26 @@ def test_coverage_crossing_multi_year_chain_all_must_be_covered():
 
 
 def test_s10_judicial_recess_extension_unaffected():
+    # PILOT READINESS ADIM 7: anchor "2026-06-25"ten "2026-07-21"e
+    # taşındı - üretim kuralı artık mali tatil (5604 sayılı Kanun m.1)
+    # referansını da taşıdığından, eski anchor'ın sayım penceresi
+    # (26.06-25.07) mali tatile (1-20 Temmuz) dokunuyordu; bu test
+    # `case_tax_context` vermediğinden bu artık fail-closed
+    # needs_review üretirdi. Yeni anchor (21 Temmuz, mali tatilin
+    # BİTİMİNDEN SONRA) sayım penceresini (22 Temmuz-20 Ağustos)
+    # mali tatilden TAMAMEN izole eder - bu test yalnız İYUK adli
+    # tatilini test etmeye devam eder, `deadline_calculator.py`'nin
+    # kendi self-test'indeki T05 ile AYNI gerekçe/desen (ampirik
+    # olarak doğrulandı: calculated_deadline SONUCU DEĞİŞMEDİ, yalnız
+    # base_deadline - naif 30 günlük hesabın kendisi - değişti).
     result = dc.calculate_rule_deadline(
-        anchor_date="2026-06-25", rule=RULE,
+        anchor_date="2026-07-21", rule=RULE,
         holiday_calendar=_calendar(covered_verified_years={2026}),
         judicial_recess_applicable=True,
     )
     check(
-        "S10: judicial recess extension (base 2026-07-25 -> 2026-09-07) unaffected by this slice",
-        result["base_deadline"] == "2026-07-25" and result["calculated_deadline"] == "2026-09-07"
+        "S10: judicial recess extension (base 2026-08-20 -> 2026-09-07) unaffected by this slice",
+        result["base_deadline"] == "2026-08-20" and result["calculated_deadline"] == "2026-09-07"
         and result["judicial_recess_applied"] is True,
         result,
     )
@@ -367,8 +379,11 @@ def test_s11_recess_ambiguity_precedes_calendar_gate():
 def test_s12_recess_extension_date_itself_a_holiday():
     # 7 Eylül'ün kendisi tatil ise, ilk sonraki iş gününe (8 Eylül,
     # Salı) kaydırılmalı - kaydırma EN SONDA çalışır.
+    # PILOT READINESS ADIM 7: anchor S10 ile AYNI gerekçeyle
+    # "2026-07-21"e taşındı (mali tatilden izole - bkz. S10'un yorumu).
+    # calculated_deadline SONUCU DEĞİŞMEDİ (ampirik doğrulandı).
     result = dc.calculate_rule_deadline(
-        anchor_date="2026-06-25", rule=RULE,
+        anchor_date="2026-07-21", rule=RULE,
         holiday_calendar=_calendar(holiday_dates={date(2026, 9, 7)}, covered_verified_years={2026}),
         judicial_recess_applicable=True,
     )

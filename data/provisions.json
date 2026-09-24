@@ -507,6 +507,64 @@
       "subject_periods": [],
       "relations": [],
       "notes": "İYUK m.61/1 current provision version. Deadline Calculator'ın m.8/3 kapsamındaki çalışmaya ara verme düzeltmesinde kullanılacak canonical dönem ve istisna dayanağıdır."
+    },
+    {
+      "provision_id": "kanun_5604_m1",
+      "provision_version_id": "kanun_5604_m1_v1",
+      "document_id": "kanun_5604",
+      "enabled": true,
+      "verification_state": "verified",
+      "locator": {
+        "madde": "1",
+        "fikra": null,
+        "bent": null
+      },
+      "formal": {
+        "verified": true,
+        "status": "active",
+        "valid_from": "2007-03-28",
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": [
+          {
+            "evidence_id": "ev_5604_m1_original_statute",
+            "kind": "statute_text",
+            "source_document_id": null,
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.5604.pdf",
+            "citation": "5604 sayılı Malî Tatil İhdas Edilmesi Hakkında Kanun m.1; Kabul Tarihi 15/3/2007, Yayımlandığı Resmî Gazete Tarih 28/3/2007 Sayı 26476",
+            "verified": true,
+            "notes": "Madde 1 fıkra (1) [mali tatil dönemi: her yıl 1-20 Temmuz (20'si dahil); Haziran'ın son gününün tatil günü olması halinde mali tatil temmuz ayının ilk iş gününü takip eden günden başlar], fıkra (3) [Vergi Usul Kanunu hükümlerine göre belirli sürelerde yapılması gereken muhasebe kayıt süreleri, bildirim süreleri ve vergiyle ilgili işlemlere ilişkin dava açma süreleri malî tatil süresince işlemez; belirtilen süreler malî tatilin bitiminden itibaren tekrar işlemeye başlar - pause/resume mekanizması] ve fıkra (5) [tatil süresince, vergi ve ceza ihbarnameleri İLE mahsup taleplerine yönelik olanlar HARİÇ, bilgi isteme talepleri mükelleflere, vergi ve ceza sorumlularına bildirilmez] kanunun ilk yayımlandığı 2007 metninden bu yana değişmemiştir; Deadline Calculator bu üç fıkrayı doğrudan kullanır. HUKUKİ NETLİK (avukat teyidi, Pilot Readiness Adım 7 final remediasyonu — düzeltilmiş): 5604 sayılı Kanunun 1/5 hükmünün lafzı farklı okumalara elverişli olmakla birlikte, 1 Sıra No.lu Mali Tatil Uygulaması Hakkında Genel Tebliğ'in 7. bölümündeki idari yoruma göre vergi ve ceza ihbarnameleri mali tatil süresince mükelleflere bildirilmez. Bununla birlikte mali tatil içinde fiilen gerçekleşen bir tebligatta ilgili süre mali tatil süresince işlemez ve tatil sonrasında işlemeye başlar. Deadline Calculator, tebligatın hukuka uygunluğunu veya idarenin neden mali tatilde tebligat yaptığını değerlendirmez ve tebliğ zamanı hakkında hiçbir varsayım üretmez; yalnız canonical timeline anchor event'in kendi, ayrıca doğrulanmış fiilî tebliğ tarihine bakar ve bu tarih gerçekten 1-20 Temmuz aralığına denk geliyorsa fıkra 5'in pause/resume sonucunu (ilk sayılan gün 21 Temmuz olacak şekilde) hesaplar."
+          },
+          {
+            "evidence_id": "ev_5604_m1_amending_6661",
+            "kind": "amending_law",
+            "source_document_id": null,
+            "source_url": "https://www.resmigazete.gov.tr/eskiler/2016/01/20160127.htm",
+            "citation": "14/1/2016 tarihli ve 6661 sayılı Askerlik Kanunu ve Bazı Kanunlarda Değişiklik Yapılmasına Dair Kanun m.18; Yayımlandığı Resmî Gazete Tarih 27/1/2016 Sayı 29606",
+            "verified": true,
+            "notes": "6661 sayılı Kanunun 18 inci maddesi: (a) m.1/6'daki 'yedi gün'/'yedinci günün' ibarelerini 'beş gün'/'beşinci günün' olarak değiştirmiştir (mali tatilin bitimini izleyen ilk 5 gün içinde biten süreler, mali tatilin bitimini izleyen 5. günün mesai saati bitiminde sona ermiş sayılır - Deadline Calculator'ın kullandığı asgari süre kuralı); (b) m.1/7'nin BAŞINA dört yeni vergi türünü (özel tüketim vergisi, banka ve sigorta muameleleri vergisi, özel iletişim vergisi, şans oyunları vergisi) EKLEMİŞTİR - fıkranın orijinal, 2007 tarihli ilk metninde YALNIZ 'gümrük idareleri, il özel idareleri ve belediyeler tarafından tarh ve/veya tahsil edilen vergi, resim ve harçlar' istisnası vardı; il özel idareleri ve belediyeler 2016 değişikliğiyle EKLENMEMİŞTİR, 2007'den beri fıkrada ZATEN mevcuttular - yalnız 'Gümrük idareleri' ibaresi dört yeni vergi türünü de kapsayacak şekilde genişletilmiştir (kaynak: mevzuat.gov.tr konsolide metninin kendi 2 numaralı dipnotu: '\"Gümrük idareleri\" ibaresi \"Özel tüketim vergisi, banka ve sigorta muameleleri vergisi, özel iletişim vergisi, şans oyunları vergisi ile gümrük idareleri\" şeklinde değiştirilmiştir'). DÜRÜST SINIR: 6661 sayılı Kanunun kendi orijinal Resmî Gazete PDF'i (20160127-1.pdf) bu doğrulama sırasında taranmış görüntü formatında olduğu için makine tarafından okunamamıştır; bu maddenin içeriği (a) mevzuat.gov.tr'nin resmî, doğrudan fetch edilip okunmuş konsolide metnindeki dipnotlarından (bkz. aşağıdaki consolidated_legislation kaydı) VE (b) bağımsız bir ikincil kaynaktan (KPMG Vergi bülteni, https://kpmgvergi.com/yayinlar/mali-bultenler/vergi/6661-sayili-kanunla-mali-tatil-uygulamasinda-degisiklikler-yapildi/414) çapraz doğrulanmıştır - ikisi de birebir aynı ibare değişikliğini, madde numarasını ve tarihi teyit etmektedir."
+          },
+          {
+            "evidence_id": "ev_5604_m1_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": null,
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.5604.pdf",
+            "citation": "5604 sayılı Kanun m.1 - Mevzuat Bilgi Sistemi güncel konsolide metni (6661 sayılı Kanun m.18 değişiklikleri dahil)",
+            "verified": true,
+            "notes": "Mevzuat Bilgi Sistemi güncel konsolide metin, doğrulama sırasında doğrudan fetch edilip tam metin olarak okunmuştur. Fıkra 6 (beş günlük asgari süre) ve fıkra 7 (istisna kapsamı) için CURRENT/amended metin bu kaynaktan alınmıştır."
+          }
+        ]
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": "M.1/7 istisnası (özel tüketim vergisi, banka ve sigorta muameleleri vergisi, özel iletişim vergisi, şans oyunları vergisi ile gümrük idareleri, il özel idareleri ve belediyeler tarafından tarh ve/veya tahsil edilen vergi, resim ve harçlar) somut olayda Deadline Calculator tarafından case.json'daki dispute_item.tax_type ve administrativeAction.issuing_authority alanlarına karşı, dar ve doğrulanmış bir alias eşlemesiyle deterministik olarak kontrol edilir; eşleşme belirsizse mali tatil uygulanmadan needs_review döner (Prensip 9, fail-closed)."
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "HUKUKİ DOĞRULAMA KAPSAMI (Prensip 3 gereği açıkça ayrılmıştır): bu kaydın doğruladığı şey, 5604 sayılı Kanun m.1'in GÜNCEL, YÜRÜRLÜKTE olan metnidir (resmî mevzuat.gov.tr konsolide kaynağından, doğrudan fetch edilip okunmuştur). M.1/3'ün (VUK'a tabi dava açma sürelerinin mali tatilde durup sonra devam etmesi) İYUK m.7 genel vergi mahkemesi dava açma süresi kuralına UYGULANABİLİRLİĞİ ise bu kaydın kendisinin kanıtladığı bir şey DEĞİLDİR - bu, avukatın yazılı teyidine (bkz. proje checkpoint, Pilot Readiness Adım 7) ve deadline_rules.json'daki legal_basis_refs bağlantısını kuran mühendislik kararına dayanır. Kaynağın söylediği (kanun metni) ile doğrulanmış hukuki gerçek (bu metnin somut kurala uygulanabilirliği) aynı şey değildir."
     }
   ]
 }

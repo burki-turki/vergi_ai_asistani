@@ -26,7 +26,8 @@
         "IYUK_2577_m8_1",
         "IYUK_2577_m8_2",
         "IYUK_2577_m8_3",
-        "IYUK_2577_m61_1"
+        "IYUK_2577_m61_1",
+        "KANUN_5604_m1"
       ],
       "duration": {
         "value": 30,
@@ -41,7 +42,7 @@
       "effective_to": null,
       "priority": 100,
       "requires_human_review": true,
-      "notes": "İYUK m.7/1, m.7/2-b, m.8 ve m.61/1 esas alınarak oluşturulmuş genel vergi mahkemesi dava açma süresi kuralıdır. Hukuki dayanaklar Legal Knowledge Engine üzerinden canonical ve verified provision version'lara bağlanmıştır. Özel kanunda farklı süre bulunması, somut anchor event'in doğrulama durumu ve çalışmaya ara verme uygulanabilirliği ayrıca deterministik policy katmanları tarafından değerlendirilmelidir."
+      "notes": "İYUK m.7/1, m.7/2-b, m.8, m.61/1 ve 5604 sayılı Kanun m.1 (mali tatil) esas alınarak oluşturulmuş genel vergi mahkemesi dava açma süresi kuralıdır. Hukuki dayanaklar Legal Knowledge Engine üzerinden canonical ve verified provision version'lara bağlanmıştır. Özel kanunda farklı süre bulunması, somut anchor event'in doğrulama durumu, çalışmaya ara verme uygulanabilirliği ve mali tatil m.1/7 istisna kapsamı (case tax_type/issuing_authority verisi belirsizse mali tatil uygulanmadan needs_review) ayrıca deterministik policy katmanları tarafından değerlendirilmelidir."
     }
   ],
   "notes": "Vergi AI Deadline Rule Registry V1. Hukuki dayanağı Legal Knowledge Engine üzerinden canonical olarak çözümlenmeyen kurallar draft ve calculation_enabled=false tutulur."
