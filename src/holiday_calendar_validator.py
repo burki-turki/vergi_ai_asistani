@@ -68,6 +68,7 @@ import json
 import sys
 import tempfile
 
+from datetime import date, timedelta
 from pathlib import Path
 
 from jsonschema import (
@@ -80,7 +81,7 @@ from jsonschema import (
 # VERSION
 # ============================================================
 
-HOLIDAY_CALENDAR_VALIDATOR_VERSION = "1"
+HOLIDAY_CALENDAR_VALIDATOR_VERSION = "2"
 
 
 # ============================================================
@@ -436,6 +437,657 @@ def validate_half_day_policy_consistency(calendar):
 
 
 # ============================================================
+# CANONICAL OBSERVANCE REGISTRY - PHASE A (REV4.1 kanit kapanisi).
+#
+# Bu registry, `observances[]` modelinin TEK anlamsal dogruluk
+# kaynagidir - `data/holiday_calendar.schema.json`'daki
+# `observance_id` enum'u yalniz SEKIL (hangi 17 deger gecerli)
+# doğrular; bir observance_id'nin KENDI kind/day_type/
+# legal_basis_ref/family/sequence_position'i JSON Schema'nin
+# ifade edemedigi bir cross-field kuraldir (bu dosyanin kendi
+# header yorumunun zaten belirttigi ilke), bu yuzden burada,
+# Python seviyesinde, TEK bir yerde tutulur.
+#
+# REV4.1 tasarım paketindeki `canonical_registry.py`'nin (bagimsiz
+# incelemeden LOCK-READY gecmis) FIXED_REGISTRY + RELIGIOUS_REGISTRY
+# sozluklerinin production'a tasinmis halidir - degerler BIREBIR
+# aynidir, yalniz bu dosyanin kendi konvansiyonuna (module-level
+# sabit + fonksiyonlar) tasinmistir. Ayri bir dosya/registry
+# ACILMAMISTIR - tek tuketici bu modul oldugu icin (Phase B'de bir
+# "builder" script'i YOKTUR, veri elle/avukat onayiyla girilir).
+# ============================================================
+
+CANONICAL_OBSERVANCE_REGISTRY = {
+
+    # --- 8 sabit (gunes takvimi) ulusal gozlem ---
+    "yilbasi": {
+        "kind": "national", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+        "fixed_month_day": "01-01", "family": None, "sequence_position": None,
+    },
+    "ulusal_egemenlik_cocuk_bayrami": {
+        "kind": "national", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+        "fixed_month_day": "04-23", "family": None, "sequence_position": None,
+    },
+    "emek_dayanisma_gunu": {
+        "kind": "national", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+        "fixed_month_day": "05-01", "family": None, "sequence_position": None,
+    },
+    "ataturk_anma_genclik_spor_bayrami": {
+        "kind": "national", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+        "fixed_month_day": "05-19", "family": None, "sequence_position": None,
+    },
+    "demokrasi_milli_birlik_gunu": {
+        "kind": "national", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+        "fixed_month_day": "07-15", "family": None, "sequence_position": None,
+    },
+    "zafer_bayrami": {
+        "kind": "national", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+        "fixed_month_day": "08-30", "family": None, "sequence_position": None,
+    },
+    "cumhuriyet_bayrami_arefe": {
+        "kind": "national", "day_type": "half_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.1",
+        "fixed_month_day": "10-28", "family": None, "sequence_position": None,
+    },
+    "cumhuriyet_bayrami": {
+        "kind": "national", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.1",
+        "fixed_month_day": "10-29", "family": None, "sequence_position": None,
+    },
+
+    # --- 9 dini (kamer takvimi) gozlem, iki aile ---
+    "ramazan_bayrami_arefe": {
+        "kind": "religious", "day_type": "half_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+        "fixed_month_day": None, "family": "ramazan", "sequence_position": 0,
+    },
+    "ramazan_bayrami_gun1": {
+        "kind": "religious", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+        "fixed_month_day": None, "family": "ramazan", "sequence_position": 1,
+    },
+    "ramazan_bayrami_gun2": {
+        "kind": "religious", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+        "fixed_month_day": None, "family": "ramazan", "sequence_position": 2,
+    },
+    "ramazan_bayrami_gun3": {
+        "kind": "religious", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+        "fixed_month_day": None, "family": "ramazan", "sequence_position": 3,
+    },
+    "kurban_bayrami_arefe": {
+        "kind": "religious", "day_type": "half_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+        "fixed_month_day": None, "family": "kurban", "sequence_position": 0,
+    },
+    "kurban_bayrami_gun1": {
+        "kind": "religious", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+        "fixed_month_day": None, "family": "kurban", "sequence_position": 1,
+    },
+    "kurban_bayrami_gun2": {
+        "kind": "religious", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+        "fixed_month_day": None, "family": "kurban", "sequence_position": 2,
+    },
+    "kurban_bayrami_gun3": {
+        "kind": "religious", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+        "fixed_month_day": None, "family": "kurban", "sequence_position": 3,
+    },
+    "kurban_bayrami_gun4": {
+        "kind": "religious", "day_type": "full_day",
+        "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+        "fixed_month_day": None, "family": "kurban", "sequence_position": 4,
+    },
+}
+
+assert len(CANONICAL_OBSERVANCE_REGISTRY) == 17
+
+CANONICAL_OBSERVANCE_FAMILY_IDS = {
+    "ramazan": sorted(
+        (oid for oid, reg in CANONICAL_OBSERVANCE_REGISTRY.items() if reg["family"] == "ramazan"),
+        key=lambda oid: CANONICAL_OBSERVANCE_REGISTRY[oid]["sequence_position"],
+    ),
+    "kurban": sorted(
+        (oid for oid, reg in CANONICAL_OBSERVANCE_REGISTRY.items() if reg["family"] == "kurban"),
+        key=lambda oid: CANONICAL_OBSERVANCE_REGISTRY[oid]["sequence_position"],
+    ),
+}
+
+
+# ============================================================
+# REV4.1 EXACT RELIGIOUS BLOCK-COUNT CONTRACT - F1 REMEDIATION
+# (Phase A bağımsız incelemesi, C.14 / çok-bloklu tamlık).
+#
+# Kaynak: REV4.1 tasarım paketi `canonical_registry.py`
+# `EXPECTED_BLOCK_COUNT` (bağımsız incelemeden LOCK-READY geçmiş,
+# paketin kendi astronomik kaynak gözlemlerine karşı doğrulanmış).
+# Değerler BİREBİR taşınmıştır: 2024-2035 destek yıllarında Ramazan
+# Bayramı normalde 1 blok, 2033'te 2 blok; Kurban Bayramı her yıl
+# 1 blok. Bu tablo YALNIZ destek yılları için tanımlıdır - aralık
+# DIŞINDAKİ, `verified:true` olup observances[] kullanan bir yıl
+# için sessiz tahmin YAPILMAZ; `validate_verified_year_observance_
+# completeness` fail-closed hata üretir. Tabloyu genişletmek avukat
+# doğrulamalı girdi gerektirir (Pilot Readiness Adım 6).
+# ============================================================
+
+REV41_BLOCK_COUNT_SUPPORTED_YEARS = (
+    2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035,
+)
+
+REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT = {
+    "ramazan": {
+        2024: 1, 2025: 1, 2026: 1, 2027: 1, 2028: 1, 2029: 1,
+        2030: 1, 2031: 1, 2032: 1, 2033: 2, 2034: 1, 2035: 1,
+    },
+    "kurban": {
+        2024: 1, 2025: 1, 2026: 1, 2027: 1, 2028: 1, 2029: 1,
+        2030: 1, 2031: 1, 2032: 1, 2033: 1, 2034: 1, 2035: 1,
+    },
+}
+
+assert len(REV41_BLOCK_COUNT_SUPPORTED_YEARS) == 12
+assert set(REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT) == set(CANONICAL_OBSERVANCE_FAMILY_IDS)
+assert all(
+    tuple(sorted(table)) == REV41_BLOCK_COUNT_SUPPORTED_YEARS
+    for table in REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT.values()
+)
+assert REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT["ramazan"][2033] == 2
+
+
+# ============================================================
+# OBSERVANCE REGISTRY CROSS-CHECK + DERIVED-FIELD CONSISTENCY -
+# PHASE A (REV4.1 kanit kapanisi). Koşulsuz: bir yılın verified
+# durumundan bağımsız olarak, var olan HERHANGİ bir observances[]
+# girdisi her zaman kayıt/registry/block_index/derivation
+# disiplinine uymak ZORUNDADIR (yarım-doğru veri, çalışma-halinde
+# olsa bile, HİÇBİR ZAMAN kabul edilmez - `validate_year_ordering_
+# and_uniqueness` / `validate_holiday_ordering_and_year_match` ile
+# AYNI, bu dosyanın zaten var olan koşulsuz-kontrol desenidir).
+# ============================================================
+
+def validate_observance_registry_consistency(calendar):
+
+    errors = []
+
+    for year_entry in calendar.get("years") or []:
+
+        if not isinstance(year_entry, dict):
+
+            continue
+
+        year = year_entry.get("year")
+
+        block_members = {}  # (family, block_index) -> {sequence_position: [(date, oid), ...]}
+
+        # F1 REMEDIATION (Phase A bağımsız incelemesi, C.14 cross-entry
+        # duplicate fail-open): yıl-içi occurrence sayaçları. Ulusal
+        # anahtar = observance_id (yılda TAM 1 kez); dinî anahtar =
+        # (family, block_index, observance_id) (aynı blok içinde TAM 1
+        # kez - aynı id'nin FARKLI block_index değerlerinde bulunması
+        # meşrudur, ör. 2033'ün iki Ramazan bloğu). KOŞULSUZ: bir
+        # cross-entry duplicate yapısal kusurdur, yıl verified:false
+        # olsa bile reddedilir. Hiçbir sözlük last-wins ÜZERİNE YAZMAZ.
+
+        national_occurrences = {}  # observance_id -> [date, ...]
+
+        religious_occurrences = {}  # (family, block_index, observance_id) -> [date, ...]
+
+        for holiday in year_entry.get("holidays") or []:
+
+            if not isinstance(holiday, dict):
+
+                continue
+
+            date_value = holiday.get("date")
+
+            observances = holiday.get("observances")
+
+            if not observances:
+
+                continue
+
+            oid_list = [o.get("observance_id") for o in observances if isinstance(o, dict)]
+
+            if len(oid_list) != len(set(oid_list)):
+
+                errors.append(
+                    f"years[year={year}].holidays[date={date_value}]: "
+                    f"duplicate observance_id within same entry ({oid_list})"
+                )
+
+            for observance in observances:
+
+                if not isinstance(observance, dict):
+
+                    continue
+
+                oid = observance.get("observance_id")
+
+                reg = CANONICAL_OBSERVANCE_REGISTRY.get(oid)
+
+                if reg is None:
+
+                    # schema enum zaten reddeder - burada yalnizca
+                    # defense-in-depth (fail-fast bloğu atlanmışsa).
+                    errors.append(
+                        f"years[year={year}].holidays[date={date_value}]: "
+                        f"unknown observance_id {oid!r}"
+                    )
+                    continue
+
+                if observance.get("kind") != reg["kind"]:
+
+                    errors.append(
+                        f"years[year={year}].holidays[date={date_value}]/{oid}: "
+                        f"kind={observance.get('kind')!r} != registry expected {reg['kind']!r}"
+                    )
+
+                if observance.get("day_type") != reg["day_type"]:
+
+                    errors.append(
+                        f"years[year={year}].holidays[date={date_value}]/{oid}: "
+                        f"day_type={observance.get('day_type')!r} != registry expected {reg['day_type']!r}"
+                    )
+
+                if observance.get("legal_basis_ref") != reg["legal_basis_ref"]:
+
+                    errors.append(
+                        f"years[year={year}].holidays[date={date_value}]/{oid}: "
+                        f"legal_basis_ref={observance.get('legal_basis_ref')!r} != registry expected"
+                    )
+
+                block_index = observance.get("block_index")
+
+                if reg["family"] is None:
+
+                    national_occurrences.setdefault(oid, []).append(date_value)
+
+                    if block_index is not None:
+
+                        errors.append(
+                            f"years[year={year}].holidays[date={date_value}]/{oid}: "
+                            f"block_index must be null for a national observance, got {block_index!r}"
+                        )
+
+                else:
+
+                    is_positive_int = (
+                        isinstance(block_index, int)
+                        and not isinstance(block_index, bool)
+                        and block_index >= 1
+                    )
+
+                    if not is_positive_int:
+
+                        errors.append(
+                            f"years[year={year}].holidays[date={date_value}]/{oid}: "
+                            f"block_index must be a positive integer for a religious observance, "
+                            f"got {block_index!r}"
+                        )
+
+                    else:
+
+                        key = (reg["family"], block_index)
+
+                        block_members.setdefault(key, {}).setdefault(
+                            reg["sequence_position"], []
+                        ).append((date_value, oid))
+
+                        religious_occurrences.setdefault(
+                            (reg["family"], block_index, oid), []
+                        ).append(date_value)
+
+            # --- top-level day_type / kind derivation consistency ---
+            # `name` KASITLI OLARAK burada DENETLENMEZ - production'da
+            # `name` avukat tarafından girilen, insan-okur bir Turkce
+            # tatil adıdır (ör. "Kurban Bayramı 4. Gün"), REV4.1'in
+            # proposal-generator'ının kendi ic-kullanim observance_id
+            # join stringiyle (`"kurban_bayrami_gun4 + ..."`) BİREBİR
+            # eşleşmesi ZORUNLU DEĞİLDİR - bu bilinçli bir Phase A
+            # gevşetmesidir (bkz. entegrasyon raporu Bölüm E).
+            #
+            # `day_type`/`kind` İSE mekanik olarak türetilmiş KALMAK
+            # ZORUNDADIR: `derive_effective_holiday_calendar()`
+            # (src/deadline_calculator.py) VE bu dosyanın KENDİ
+            # `validate_half_day_policy_consistency()`'si HÂLÂ düz
+            # (flat) `day_type` alanını okur - bu iki tüketicinin doğru
+            # çalışması için üst-seviye alan HER ZAMAN observances[]
+            # birleşimiyle (full_day kazanır) tutarlı KALMALIDIR.
+
+            observance_day_types = {
+                o.get("day_type") for o in observances if isinstance(o, dict)
+            }
+
+            derived_day_type = (
+                "full_day" if "full_day" in observance_day_types else "half_day"
+            )
+
+            if holiday.get("day_type") != derived_day_type:
+
+                errors.append(
+                    f"years[year={year}].holidays[date={date_value}]: "
+                    f"top-level day_type={holiday.get('day_type')!r} inconsistent with "
+                    f"observances[] merge (derived={derived_day_type!r})"
+                )
+
+            observance_kinds = {
+                o.get("kind") for o in observances if isinstance(o, dict)
+            }
+
+            derived_kind = "national" if "national" in observance_kinds else "religious"
+
+            if holiday.get("kind") != derived_kind:
+
+                errors.append(
+                    f"years[year={year}].holidays[date={date_value}]: "
+                    f"top-level kind={holiday.get('kind')!r} inconsistent with "
+                    f"observances[] merge (derived={derived_kind!r})"
+                )
+
+        # --- F1 REMEDIATION: cross-entry duplicate observance identities ---
+        # Deterministik: aile/observance_id sırasına göre, tarih listesi
+        # sıralı. Ulusal: yılda tam 1 kez. Dinî: (family, block_index)
+        # başına tam 1 kez. Bu, aşağıdaki completeness kontrolünün
+        # ">1 occurrence" durumunu YENİDEN raporlamadığı TEK yerdir
+        # (iki fonksiyon örtüşmeyen sorumluluklar taşır).
+
+        for oid, dates in sorted(national_occurrences.items()):
+
+            if len(dates) > 1:
+
+                errors.append(
+                    f"years[year={year}]: national observance {oid!r} occurs {len(dates)} times "
+                    f"across entries (dates {sorted(dates, key=str)}) - must occur exactly once per year"
+                )
+
+        for (family, block_index, oid), dates in sorted(religious_occurrences.items()):
+
+            if len(dates) > 1:
+
+                errors.append(
+                    f"years[year={year}]: {family} block {block_index}: religious observance {oid!r} "
+                    f"occurs {len(dates)} times across entries (dates {sorted(dates, key=str)}) "
+                    "- must occur exactly once per block"
+                )
+
+        # --- block_index contiguity per (family, block_index) within this year ---
+        # Koşulsuz genel kural: HANGİ block_index'ler kullanılıyorsa,
+        # o küme her aile için 1..N (N = kullanılan farklı blok sayısı)
+        # boşluksuz olmak ZORUNDADIR. Belirli bir yıl için "tam olarak
+        # kaç blok olmalı" sorusu bu koşulsuz kontrolün işi DEĞİLDİR -
+        # o, yalnız verified yıllar için, REV4.1'in doğrulanmış exact
+        # block-count sözleşmesiyle (`REV41_EXPECTED_RELIGIOUS_BLOCK_
+        # COUNT`) `validate_verified_year_observance_completeness`
+        # içinde uygulanır (F1 remediasyonu).
+
+        block_indices_by_family = {}
+
+        for (family, block_index) in block_members.keys():
+
+            block_indices_by_family.setdefault(family, set()).add(block_index)
+
+        for family, indices in block_indices_by_family.items():
+
+            sorted_indices = sorted(indices)
+
+            if sorted_indices != list(range(1, len(sorted_indices) + 1)):
+
+                errors.append(
+                    f"years[year={year}]: {family} block_index values not a contiguous "
+                    f"1..N sequence: {sorted_indices}"
+                )
+
+        # --- within each block: present members must be in exact,
+        #     1-day-apart sequence_position order (missing members are
+        #     a COMPLETENESS concern, handled separately and only for
+        #     verified years by validate_verified_year_observance_
+        #     completeness - a partial, in-progress block is not
+        #     itself an ordering error as long as what IS present is
+        #     correctly ordered). ---
+
+        for (family, block_index), positions in block_members.items():
+
+            # F1 REMEDIATION: birden fazla üyeli (duplicate) pozisyonlar
+            # yukarıda zaten cross-entry duplicate olarak raporlandı;
+            # ardışık-gün kontrolü yalnız TEK üyeli komşu pozisyonlar
+            # arasında yapılır - bir duplicate, bloğun geri kalanının
+            # kontrolünü ASLA bastırmaz.
+
+            ordered_present = sorted(
+                (position, members[0])
+                for position, members in positions.items()
+                if len(members) == 1
+            )
+
+            for i in range(1, len(ordered_present)):
+
+                prev_pos, (prev_date, prev_oid) = ordered_present[i - 1]
+
+                cur_pos, (cur_date, cur_oid) = ordered_present[i]
+
+                if prev_pos + 1 != cur_pos:
+
+                    continue  # a gap - a completeness concern, not an ordering error here
+
+                try:
+
+                    delta = (
+                        date.fromisoformat(cur_date) - date.fromisoformat(prev_date)
+                    ).days
+
+                except (TypeError, ValueError):
+
+                    continue  # malformed date - already reported by validate_schema
+
+                if delta != 1:
+
+                    errors.append(
+                        f"years[year={year}]: {family} block {block_index}: {cur_oid} "
+                        f"({cur_date}) is {delta} day(s) after {prev_oid} ({prev_date}) "
+                        "- expected exactly 1 day after, in sequence_position order"
+                    )
+
+    return errors
+
+
+# ============================================================
+# VERIFIED YEAR OBSERVANCE COMPLETENESS - PHASE A (REV4.1 kanit
+# kapanisi). GATED: yalnız `verified is True` OLAN VE observances[]
+# modelini EN AZ BİR holiday girdisinde kullanan yıllar için çalışır
+# (`validate_verified_year_provenance` ile AYNI "yalnız verified"
+# gate deseni). Saf-legacy (observances[] hiç kullanmayan) verified
+# bir yıl bu kontrolün KAPSAMI DIŞINDADIR - mevcut legacy structural
+# kontroller (year/date ordering, source_ref_index, vb.) onu zaten
+# kapsar; bu yeni kontrol yalnız observances[] modelini BENİMSEMİŞ
+# yıllara EK bir tamlık şartı getirir.
+#
+# F1 REMEDIATION (Phase A bağımsız incelemesi, çok-bloklu tamlık
+# fail-open): eski `seen_oids[oid]` last-wins sözlüğü KALDIRILDI - o
+# sözlük iki bloklu bir yılda (ör. 2033 Ramazan) blok 2'nin blok 1'in
+# eksiğini MASKELEMESİNE yol açıyordu. Artık her sabit gözlem için
+# occurrence LİSTESİ, her (family, block_index) için sequence_position
+# -> occurrence LİSTESİ tutulur; tamlık HER blok için AYRI AYRI
+# değerlendirilir. Sorumluluk ayrımı: ">1 occurrence" (duplicate)
+# `validate_observance_registry_consistency` tarafından KOŞULSUZ
+# raporlanır ve burada YENİDEN raporlanmaz; bu fonksiyon eksik (0)
+# üyeyi, her occurrence'ın doğru ay-gününü, aile başına en az bir tam
+# blok şartını ve REV4.1'in exact block-count sözleşmesini
+# (`REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT`, yalnız 2024-2035; aralık
+# dışı verified yıl fail-closed hata) uygular.
+# ============================================================
+
+def validate_verified_year_observance_completeness(calendar):
+
+    errors = []
+
+    for year_entry in calendar.get("years") or []:
+
+        if not isinstance(year_entry, dict):
+
+            continue
+
+        if year_entry.get("verified") is not True:
+
+            continue
+
+        year = year_entry.get("year")
+
+        holidays = year_entry.get("holidays") or []
+
+        uses_observances = any(
+            isinstance(h, dict) and h.get("observances")
+            for h in holidays
+        )
+
+        if not uses_observances:
+
+            continue
+
+        fixed_occurrences = {}  # observance_id -> [date, ...]
+
+        block_positions = {}  # (family, block_index) -> {sequence_position: [date, ...]}
+
+        for holiday in holidays:
+
+            if not isinstance(holiday, dict):
+
+                continue
+
+            date_value = holiday.get("date")
+
+            for observance in holiday.get("observances") or []:
+
+                if not isinstance(observance, dict):
+
+                    continue
+
+                oid = observance.get("observance_id")
+
+                reg = CANONICAL_OBSERVANCE_REGISTRY.get(oid)
+
+                if reg is None:
+
+                    continue  # unknown id - registry-consistency (and schema) report it
+
+                if reg["family"] is None:
+
+                    fixed_occurrences.setdefault(oid, []).append(date_value)
+
+                    continue
+
+                block_index = observance.get("block_index")
+
+                is_positive_int = (
+                    isinstance(block_index, int)
+                    and not isinstance(block_index, bool)
+                    and block_index >= 1
+                )
+
+                if not is_positive_int:
+
+                    continue  # malformed block_index - registry-consistency reports it
+
+                block_positions.setdefault(
+                    (reg["family"], block_index), {}
+                ).setdefault(reg["sequence_position"], []).append(date_value)
+
+        # --- 8 fixed: present (0 -> missing) and EVERY occurrence at the
+        #     correct month-day. ">1 occurrence" is registry-consistency's
+        #     responsibility and is NOT re-reported here. ---
+
+        for oid, reg in CANONICAL_OBSERVANCE_REGISTRY.items():
+
+            if reg["family"] is not None:
+
+                continue
+
+            occurrences = fixed_occurrences.get(oid) or []
+
+            if not occurrences:
+
+                errors.append(
+                    f"years[year={year}] (verified): missing fixed observance {oid!r}"
+                )
+                continue
+
+            expected_date = f"{year}-{reg['fixed_month_day']}"
+
+            for actual_date in occurrences:
+
+                if actual_date != expected_date:
+
+                    errors.append(
+                        f"years[year={year}] (verified): {oid!r} expected at {expected_date}, "
+                        f"found at {actual_date!r}"
+                    )
+
+        # --- REV4.1 exact block-count contract: defined ONLY for the
+        #     supported years; a verified observances[]-using year outside
+        #     the contract is refused (no silent guess). ---
+
+        year_in_contract = year in REV41_BLOCK_COUNT_SUPPORTED_YEARS
+
+        if not year_in_contract:
+
+            errors.append(
+                f"years[year={year}] (verified): no exact religious block-count contract for "
+                f"year {year!r} (REV4.1 contract covers "
+                f"{REV41_BLOCK_COUNT_SUPPORTED_YEARS[0]}-{REV41_BLOCK_COUNT_SUPPORTED_YEARS[-1]} only) "
+                "- refusing to guess; extend the contract with lawyer-verified input"
+            )
+
+        # --- religious: per-block completeness (EVERY block, each
+        #     canonical member present - a complete block can never mask
+        #     an incomplete sibling), then exact block count per family ---
+
+        for family, family_ids in CANONICAL_OBSERVANCE_FAMILY_IDS.items():
+
+            block_indices = sorted(
+                block_index
+                for (block_family, block_index) in block_positions.keys()
+                if block_family == family
+            )
+
+            for block_index in block_indices:
+
+                positions = block_positions[(family, block_index)]
+
+                for oid in family_ids:
+
+                    reg = CANONICAL_OBSERVANCE_REGISTRY[oid]
+
+                    if not positions.get(reg["sequence_position"]):
+
+                        errors.append(
+                            f"years[year={year}] (verified): {family} block {block_index} "
+                            f"is missing {oid!r} (sequence_position {reg['sequence_position']})"
+                        )
+
+            if year_in_contract:
+
+                expected_count = REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT[family][year]
+
+                if len(block_indices) != expected_count:
+
+                    errors.append(
+                        f"years[year={year}] (verified): {family} expected exactly "
+                        f"{expected_count} block(s) per REV4.1 contract, found "
+                        f"{len(block_indices)} {block_indices}"
+                    )
+
+    return errors
+
+
+# ============================================================
 # MAIN VALIDATION
 # ============================================================
 
@@ -469,6 +1121,10 @@ def validate_holiday_calendar(calendar=None, raise_on_error=False):
         errors.extend(validate_verified_year_provenance(calendar))
 
         errors.extend(validate_half_day_policy_consistency(calendar))
+
+        errors.extend(validate_observance_registry_consistency(calendar))
+
+        errors.extend(validate_verified_year_observance_completeness(calendar))
 
     errors = list(dict.fromkeys(errors))
 
@@ -984,6 +1640,589 @@ def run_self_test():
     print("T22 raise_on_error=True raises HolidayCalendarValidationError: PASS")
 
     # ========================================================
+    # PHASE A (REV4.1 kanit kapanisi) - observances[] / canonical
+    # registry / verified-year completeness self-testleri.
+    # ========================================================
+
+    def _obs(oid, block_index=None):
+
+        reg = CANONICAL_OBSERVANCE_REGISTRY[oid]
+
+        return {
+            "observance_id": oid,
+            "kind": reg["kind"],
+            "day_type": reg["day_type"],
+            "legal_basis_ref": reg["legal_basis_ref"],
+            "block_index": block_index,
+        }
+
+    def _derive_top_level(observances):
+
+        day_types = {o["day_type"] for o in observances}
+
+        kinds = {o["kind"] for o in observances}
+
+        return (
+            "full_day" if "full_day" in day_types else "half_day",
+            "national" if "national" in kinds else "religious",
+        )
+
+    def _holiday_entry(date_value, name, observances, source_ref_index=0):
+
+        day_type, kind = _derive_top_level(observances)
+
+        return {
+            "date": date_value,
+            "name": name,
+            "kind": kind,
+            "day_type": day_type,
+            "source_ref_index": source_ref_index,
+            "notes": None,
+            "observances": observances,
+        }
+
+    def _complete_2026_holidays():
+
+        return [
+            _holiday_entry("2026-01-01", "Yılbaşı", [_obs("yilbasi")]),
+            _holiday_entry("2026-03-19", "Ramazan Bayramı Arefesi", [_obs("ramazan_bayrami_arefe", 1)]),
+            _holiday_entry("2026-03-20", "Ramazan Bayramı 1. Gün", [_obs("ramazan_bayrami_gun1", 1)]),
+            _holiday_entry("2026-03-21", "Ramazan Bayramı 2. Gün", [_obs("ramazan_bayrami_gun2", 1)]),
+            _holiday_entry("2026-03-22", "Ramazan Bayramı 3. Gün", [_obs("ramazan_bayrami_gun3", 1)]),
+            _holiday_entry("2026-04-23", "Ulusal Egemenlik ve Çocuk Bayramı", [_obs("ulusal_egemenlik_cocuk_bayrami")]),
+            _holiday_entry("2026-05-01", "Emek ve Dayanışma Günü", [_obs("emek_dayanisma_gunu")]),
+            _holiday_entry("2026-05-19", "Atatürk'ü Anma Gençlik ve Spor Bayramı", [_obs("ataturk_anma_genclik_spor_bayrami")]),
+            _holiday_entry("2026-05-26", "Kurban Bayramı Arefesi", [_obs("kurban_bayrami_arefe", 1)]),
+            _holiday_entry("2026-05-27", "Kurban Bayramı 1. Gün", [_obs("kurban_bayrami_gun1", 1)]),
+            _holiday_entry("2026-05-28", "Kurban Bayramı 2. Gün", [_obs("kurban_bayrami_gun2", 1)]),
+            _holiday_entry("2026-05-29", "Kurban Bayramı 3. Gün", [_obs("kurban_bayrami_gun3", 1)]),
+            _holiday_entry("2026-05-30", "Kurban Bayramı 4. Gün", [_obs("kurban_bayrami_gun4", 1)]),
+            _holiday_entry("2026-07-15", "Demokrasi ve Milli Birlik Günü", [_obs("demokrasi_milli_birlik_gunu")]),
+            _holiday_entry("2026-08-30", "Zafer Bayramı", [_obs("zafer_bayrami")]),
+            _holiday_entry("2026-10-28", "Cumhuriyet Bayramı Arefesi", [_obs("cumhuriyet_bayrami_arefe")]),
+            _holiday_entry("2026-10-29", "Cumhuriyet Bayramı", [_obs("cumhuriyet_bayrami")]),
+        ]
+
+    def _observance_calendar(verified, holidays, half_day_policy="needs_review_if_deadline_day"):
+
+        calendar = create_valid_fixture()
+
+        calendar["half_day_policy"] = half_day_policy
+
+        calendar["years"] = [
+            {
+                "year": 2026,
+                "verified": verified,
+                "verification_ref": ("phase_a_fixture_verification_ref_2026" if verified else None),
+                "source_refs": [
+                    {"source_kind": "fixture", "citation": "Phase A fixture citation.", "url": None}
+                ],
+                "holidays": holidays,
+            },
+        ]
+
+        return calendar
+
+    # T23 POSITIVE CONTROL: fully correct, COMPLETE 2026 observances[]
+    # fixture, unverified - registry/ordering checks must ALL pass, no
+    # completeness requirement fires (year not verified).
+
+    complete_holidays = _complete_2026_holidays()
+
+    good_calendar = _observance_calendar(verified=False, holidays=complete_holidays)
+
+    result = validate_holiday_calendar(calendar=good_calendar)
+
+    if not result["valid"]:
+
+        for error in result["errors"]:
+
+            print("-", error)
+
+    assert result["valid"] is True
+
+    print("T23 Complete, correct observances[] fixture (unverified year): PASS")
+
+    # T24 POSITIVE CONTROL: SAME complete fixture, verified=True - full
+    # completeness check must ALSO pass (all 17 present, correct blocks).
+
+    verified_good_calendar = _observance_calendar(verified=True, holidays=complete_holidays)
+
+    result = validate_holiday_calendar(calendar=verified_good_calendar)
+
+    if not result["valid"]:
+
+        for error in result["errors"]:
+
+            print("-", error)
+
+    assert result["valid"] is True
+
+    print("T24 Complete, correct observances[] fixture (verified year): PASS")
+
+    # T25 wrong kind on an observance REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    broken_holidays[0]["observances"][0]["kind"] = "religious"
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T25 Wrong observance kind (registry cross-check) blocked: PASS")
+
+    # T26 wrong day_type on an observance REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    broken_holidays[1]["observances"][0]["day_type"] = "full_day"
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T26 Wrong observance day_type (registry cross-check) blocked: PASS")
+
+    # T27 wrong legal_basis_ref on an observance REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    broken_holidays[0]["observances"][0]["legal_basis_ref"] = "uydurma referans"
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T27 Wrong observance legal_basis_ref (registry cross-check) blocked: PASS")
+
+    # T28 national observance with non-null block_index REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    broken_holidays[0]["observances"][0]["block_index"] = 1
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T28 National observance with non-null block_index blocked: PASS")
+
+    # T29 religious observance with block_index=None REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    broken_holidays[1]["observances"][0]["block_index"] = None
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T29 Religious observance with block_index=null blocked: PASS")
+
+    # T30 block_index contiguity gap (1 -> 3, skipping 2) REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    for holiday in broken_holidays:
+
+        for observance in holiday["observances"]:
+
+            if observance["observance_id"].startswith("ramazan_bayrami"):
+
+                observance["block_index"] = 3
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T30 block_index contiguity gap (1->3) blocked: PASS")
+
+    # T31 block sequence day-gap (gun2 moved 2 days later) REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    for holiday in broken_holidays:
+
+        if holiday["date"] == "2026-03-21":
+
+            holiday["date"] = "2026-03-23"
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T31 Block sequence day-gap (not exactly 1 day apart) blocked: PASS")
+
+    # T32 top-level day_type inconsistent with observances[] REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    broken_holidays[1]["day_type"] = "full_day"  # arefe entry, actually half_day
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T32 Top-level day_type inconsistent with observances[] blocked: PASS")
+
+    # T33 top-level kind inconsistent with observances[] REJECTED
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    broken_holidays[1]["kind"] = "national"  # ramazan arefe, actually religious
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T33 Top-level kind inconsistent with observances[] blocked: PASS")
+
+    # T34 verified year: missing fixed observance (yilbasi entry removed) REJECTED
+
+    incomplete_holidays = [h for h in complete_holidays if h["date"] != "2026-01-01"]
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(True, incomplete_holidays))
+
+    assert result["valid"] is False
+
+    print("T34 Verified year missing a fixed observance blocked: PASS")
+
+    # T35 verified year: incomplete religious block (kurban gun4 removed) REJECTED
+
+    incomplete_holidays = [h for h in complete_holidays if h["date"] != "2026-05-30"]
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(True, incomplete_holidays))
+
+    assert result["valid"] is False
+
+    print("T35 Verified year with incomplete religious block blocked: PASS")
+
+    # T36 UNVERIFIED year with a partial (in-progress) religious block is
+    # FINE - completeness is not required until verified=True (only
+    # registry/ordering checks apply, and the partial block's PRESENT
+    # members are still correctly sequenced).
+
+    partial_holidays = [h for h in complete_holidays if h["date"] != "2026-05-30"]
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, partial_holidays))
+
+    if not result["valid"]:
+
+        for error in result["errors"]:
+
+            print("-", error)
+
+    assert result["valid"] is True
+
+    print("T36 Unverified year with in-progress partial religious block allowed: PASS")
+
+    # T37 half_day_policy == "needs_review_if_deadline_day" (NEW 4th enum
+    # value): half_day entries in a verified year are ALLOWED (mirrors
+    # T15b's "counts_as_holiday" positive control, for the new value).
+
+    result = validate_holiday_calendar(
+        calendar=_observance_calendar(True, complete_holidays, half_day_policy="needs_review_if_deadline_day")
+    )
+
+    if not result["valid"]:
+
+        for error in result["errors"]:
+
+            print("-", error)
+
+    assert result["valid"] is True
+
+    print("T37 half_day entries under half_day_policy='needs_review_if_deadline_day' (verified year) allowed: PASS")
+
+    # T38 schema-level: unknown observance_id value REJECTED (enum, root
+    # additionalProperties:false chain already covers unknown NESTED
+    # fields - this checks the observance_id ENUM specifically).
+
+    broken_holidays = copy.deepcopy(complete_holidays)
+
+    broken_holidays[0]["observances"][0]["observance_id"] = "uydurma_gozlem"
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, broken_holidays))
+
+    assert result["valid"] is False
+
+    print("T38 Unknown observance_id (schema enum) blocked: PASS")
+
+    # ========================================================
+    # F1 REMEDIATION (Phase A bağımsız incelemesi, C.14) -
+    # cross-entry duplicate + çok-bloklu tamlık + REV4.1 exact
+    # block-count sözleşmesi. Her negatif test SPESİFİK hata
+    # mesajını pinler; pozitif kontroller (T42/T43/T50) aynı
+    # helper'ların geçerli fixture ürettiğini kanıtlar - negatifler
+    # bu yüzden vacuous DEĞİLDİR.
+    # ========================================================
+
+    def _has_error(result, fragment):
+
+        return any(fragment in error for error in result["errors"])
+
+    def _synthetic_complete_holidays(year, ramazan_block_starts=("02-10",), kurban_block_starts=("06-10",)):
+        """Tam bir observances[] yılı: 8 sabit gözlem DOĞRU ay-günde;
+        dinî bloklar SENTETİK, sabit tarihlerle çakışmayan başlangıç
+        günlerinden itibaren ardışık günlerde. Test fixture'ıdır -
+        gerçek tatil verisi DEĞİLDİR (Prensip 18)."""
+
+        holidays = []
+
+        for oid, reg in CANONICAL_OBSERVANCE_REGISTRY.items():
+
+            if reg["family"] is None:
+
+                holidays.append(_holiday_entry(f"{year}-{reg['fixed_month_day']}", oid, [_obs(oid)]))
+
+        for family, starts in (("ramazan", ramazan_block_starts), ("kurban", kurban_block_starts)):
+
+            for block_index, start in enumerate(starts, start=1):
+
+                start_date = date.fromisoformat(f"{year}-{start}")
+
+                for oid in CANONICAL_OBSERVANCE_FAMILY_IDS[family]:
+
+                    offset = CANONICAL_OBSERVANCE_REGISTRY[oid]["sequence_position"]
+
+                    holidays.append(
+                        _holiday_entry(
+                            (start_date + timedelta(days=offset)).isoformat(),
+                            f"{oid} b{block_index}",
+                            [_obs(oid, block_index)],
+                        )
+                    )
+
+        holidays.sort(key=lambda h: h["date"])
+
+        return holidays
+
+    def _observance_calendar_for_year(year, verified, holidays, half_day_policy="needs_review_if_deadline_day"):
+
+        calendar = create_valid_fixture()
+
+        calendar["half_day_policy"] = half_day_policy
+
+        calendar["years"] = [
+            {
+                "year": year,
+                "verified": verified,
+                "verification_ref": (f"phase_a_fixture_verification_ref_{year}" if verified else None),
+                "source_refs": [
+                    {"source_kind": "fixture", "citation": "Phase A fixture citation.", "url": None}
+                ],
+                "holidays": holidays,
+            },
+        ]
+
+        return calendar
+
+    # T39 cross-entry duplicate NATIONAL observance, UNVERIFIED year ->
+    # REJECTED (koşulsuz: verified olmasa da yapısal kusur).
+
+    dup_national = copy.deepcopy(complete_holidays)
+
+    dup_national.append(_holiday_entry("2026-03-03", "hayalet Zafer Bayramı", [_obs("zafer_bayrami")]))
+
+    dup_national.sort(key=lambda h: h["date"])
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, dup_national))
+
+    assert result["valid"] is False
+
+    assert _has_error(result, "national observance 'zafer_bayrami' occurs 2 times across entries")
+
+    assert _has_error(result, "['2026-03-03', '2026-08-30']")
+
+    print("T39 Cross-entry duplicate national observance (unverified year) blocked: PASS")
+
+    # T40 same fixture, VERIFIED year -> REJECTED; the ">1" message is
+    # emitted EXACTLY once (registry-consistency owns it; completeness
+    # reports only the wrong month-day of the phantom occurrence).
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(True, dup_national))
+
+    assert result["valid"] is False
+
+    assert sum("occurs 2 times across entries" in error for error in result["errors"]) == 1
+
+    assert _has_error(result, "'zafer_bayrami' expected at 2026-08-30, found at '2026-03-03'")
+
+    print("T40 Cross-entry duplicate national observance (verified year) blocked, reported once: PASS")
+
+    # T41 cross-entry duplicate RELIGIOUS member in the SAME block
+    # (kurban_bayrami_gun4 block 1 at 2026-05-20 AND 2026-05-30) -> REJECTED.
+
+    dup_religious = copy.deepcopy(complete_holidays)
+
+    dup_religious.append(_holiday_entry("2026-05-20", "hayalet K4", [_obs("kurban_bayrami_gun4", 1)]))
+
+    dup_religious.sort(key=lambda h: h["date"])
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, dup_religious))
+
+    assert result["valid"] is False
+
+    assert _has_error(
+        result,
+        "kurban block 1: religious observance 'kurban_bayrami_gun4' occurs 2 times across entries",
+    )
+
+    print("T41 Cross-entry duplicate religious member within one block blocked: PASS")
+
+    # T42 POSITIVE CONTROL for the synthetic helper: verified 2026, one
+    # ramazan + one kurban block -> valid (so T45-T48 negatives are not
+    # vacuous).
+
+    result = validate_holiday_calendar(calendar=_observance_calendar_for_year(2026, True, _synthetic_complete_holidays(2026)))
+
+    if not result["valid"]:
+
+        for error in result["errors"]:
+
+            print("-", error)
+
+    assert result["valid"] is True
+
+    print("T42 Synthetic complete 2026 (1 ramazan + 1 kurban block, verified) accepted: PASS")
+
+    # T43 POSITIVE: 2033 with TWO complete ramazan blocks (block_index 1
+    # and 2; same observance_ids in different blocks are LEGITIMATE) ->
+    # valid under the REV4.1 contract (2033 ramazan == 2).
+
+    holidays_2033 = _synthetic_complete_holidays(2033, ramazan_block_starts=("02-10", "12-10"))
+
+    result = validate_holiday_calendar(calendar=_observance_calendar_for_year(2033, True, holidays_2033))
+
+    if not result["valid"]:
+
+        for error in result["errors"]:
+
+            print("-", error)
+
+    assert result["valid"] is True
+
+    print("T43 2033 with two complete ramazan blocks (same ids, different block_index) accepted: PASS")
+
+    # T44 2033: block 1 missing gun3, block 2 complete -> REJECTED (block 2
+    # can no longer mask block 1).
+
+    incomplete_2033 = [h for h in holidays_2033 if h["date"] != "2033-02-13"]
+
+    result = validate_holiday_calendar(calendar=_observance_calendar_for_year(2033, True, incomplete_2033))
+
+    assert result["valid"] is False
+
+    assert _has_error(result, "ramazan block 1 is missing 'ramazan_bayrami_gun3' (sequence_position 3)")
+
+    print("T44 Two-block year with block 1 incomplete and block 2 complete blocked: PASS")
+
+    # T45 verified 2026 with ZERO ramazan blocks -> REJECTED.
+
+    result = validate_holiday_calendar(
+        calendar=_observance_calendar_for_year(2026, True, _synthetic_complete_holidays(2026, ramazan_block_starts=()))
+    )
+
+    assert result["valid"] is False
+
+    assert _has_error(result, "ramazan expected exactly 1 block(s) per REV4.1 contract, found 0 []")
+
+    print("T45 Verified year with no ramazan block blocked: PASS")
+
+    # T46 verified 2026 with ZERO kurban blocks -> REJECTED.
+
+    result = validate_holiday_calendar(
+        calendar=_observance_calendar_for_year(2026, True, _synthetic_complete_holidays(2026, kurban_block_starts=()))
+    )
+
+    assert result["valid"] is False
+
+    assert _has_error(result, "kurban expected exactly 1 block(s) per REV4.1 contract, found 0 []")
+
+    print("T46 Verified year with no kurban block blocked: PASS")
+
+    # T47 2033 with only ONE ramazan block -> REJECTED (contract says 2).
+
+    result = validate_holiday_calendar(
+        calendar=_observance_calendar_for_year(2033, True, _synthetic_complete_holidays(2033))
+    )
+
+    assert result["valid"] is False
+
+    assert _has_error(result, "ramazan expected exactly 2 block(s) per REV4.1 contract, found 1 [1]")
+
+    print("T47 2033 with a single ramazan block blocked: PASS")
+
+    # T48 2026 with TWO ramazan blocks -> REJECTED (contract says 1).
+
+    result = validate_holiday_calendar(
+        calendar=_observance_calendar_for_year(2026, True, _synthetic_complete_holidays(2026, ramazan_block_starts=("02-10", "12-10")))
+    )
+
+    assert result["valid"] is False
+
+    assert _has_error(result, "ramazan expected exactly 1 block(s) per REV4.1 contract, found 2 [1, 2]")
+
+    print("T48 2026 with two ramazan blocks blocked: PASS")
+
+    # T49 verified 2036 (outside the 2024-2035 contract), otherwise
+    # complete -> REJECTED fail-closed (no silent guess).
+
+    result = validate_holiday_calendar(
+        calendar=_observance_calendar_for_year(2036, True, _synthetic_complete_holidays(2036))
+    )
+
+    assert result["valid"] is False
+
+    assert _has_error(result, "no exact religious block-count contract for year 2036")
+
+    print("T49 Verified observances[] year outside the REV4.1 contract range refused: PASS")
+
+    # T50 UNVERIFIED 2036, same data -> ACCEPTED (contract gate is
+    # verified-only; in-progress data outside the range is not blocked).
+
+    result = validate_holiday_calendar(
+        calendar=_observance_calendar_for_year(2036, False, _synthetic_complete_holidays(2036))
+    )
+
+    if not result["valid"]:
+
+        for error in result["errors"]:
+
+            print("-", error)
+
+    assert result["valid"] is True
+
+    print("T50 Unverified observances[] year outside the contract range accepted: PASS")
+
+    # T51 a duplicate at one sequence_position does NOT suppress the
+    # adjacency check elsewhere in the same block: duplicate gun4 (pos 4)
+    # AND gun2 (pos 2) moved 5 days late -> BOTH errors reported.
+
+    dup_plus_gap = copy.deepcopy(complete_holidays)
+
+    dup_plus_gap.append(_holiday_entry("2026-05-20", "hayalet K4", [_obs("kurban_bayrami_gun4", 1)]))
+
+    for holiday in dup_plus_gap:
+
+        if holiday["date"] == "2026-05-28":
+
+            holiday["date"] = "2026-06-02"
+
+    dup_plus_gap.sort(key=lambda h: h["date"])
+
+    result = validate_holiday_calendar(calendar=_observance_calendar(False, dup_plus_gap))
+
+    assert result["valid"] is False
+
+    assert _has_error(result, "kurban block 1: religious observance 'kurban_bayrami_gun4' occurs 2 times")
+
+    assert _has_error(result, "kurban block 1: kurban_bayrami_gun2 (2026-06-02) is 6 day(s) after kurban_bayrami_gun1 (2026-05-27)")
+
+    print("T51 Duplicate member does not suppress the block adjacency check: PASS")
+
+    # ========================================================
     # SUMMARY
     # ========================================================
 
@@ -993,7 +2232,7 @@ def run_self_test():
     print("Verified year count:", real_result["verified_year_count"])
     print()
     print("======================================")
-    print(" HOLIDAY CALENDAR VALIDATOR V1: 26/26 PASS")
+    print(" HOLIDAY CALENDAR VALIDATOR V2: 55/55 PASS")
     print("======================================")
 
 

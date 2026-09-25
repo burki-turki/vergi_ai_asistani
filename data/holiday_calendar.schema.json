@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "holiday_calendar.schema.json",
 
-  "title": "Vergi AI Official Holiday Calendar Schema V1",
+  "title": "Vergi AI Official Holiday Calendar Schema V2",
 
   "type": "object",
   "additionalProperties": false,
@@ -63,7 +63,8 @@
       "enum": [
         "not_decided",
         "counts_as_holiday",
-        "counts_as_working_day"
+        "counts_as_working_day",
+        "needs_review_if_deadline_day"
       ]
     },
 
@@ -202,6 +203,71 @@
         },
         "notes": {
           "type": ["string", "null"]
+        },
+        "observances": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/observance"
+          }
+        }
+      }
+    },
+
+    "observance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observance_id",
+        "kind",
+        "day_type",
+        "legal_basis_ref",
+        "block_index"
+      ],
+      "properties": {
+        "observance_id": {
+          "type": "string",
+          "enum": [
+            "yilbasi",
+            "ulusal_egemenlik_cocuk_bayrami",
+            "emek_dayanisma_gunu",
+            "ataturk_anma_genclik_spor_bayrami",
+            "demokrasi_milli_birlik_gunu",
+            "zafer_bayrami",
+            "cumhuriyet_bayrami_arefe",
+            "cumhuriyet_bayrami",
+            "ramazan_bayrami_arefe",
+            "ramazan_bayrami_gun1",
+            "ramazan_bayrami_gun2",
+            "ramazan_bayrami_gun3",
+            "kurban_bayrami_arefe",
+            "kurban_bayrami_gun1",
+            "kurban_bayrami_gun2",
+            "kurban_bayrami_gun3",
+            "kurban_bayrami_gun4"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "national",
+            "religious"
+          ]
+        },
+        "day_type": {
+          "type": "string",
+          "enum": [
+            "full_day",
+            "half_day"
+          ]
+        },
+        "legal_basis_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "block_index": {
+          "type": ["integer", "null"],
+          "minimum": 1
         }
       }
     }

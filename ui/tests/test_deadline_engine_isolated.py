@@ -354,6 +354,7 @@ try:
     case_dir_8a = _fresh_case_copy()
     production_calendar_bytes = deadline_calculator.DEFAULT_HOLIDAY_CALENDAR_PATH.read_bytes()
     production_calendar_sha256 = hashlib.sha256(production_calendar_bytes).hexdigest()
+    production_calendar_version = json.loads(production_calendar_bytes.decode("utf-8"))["calendar_version"]
     result_8a = deadline_engine.run_engine(
         case_id=CASE_ID, anchor_event_id=ANCHOR_EVENT_ID,
         ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
@@ -370,8 +371,8 @@ try:
     check(
         "8b: the audit record's holiday_calendar_version matches the production calendar's own "
         "calendar_version",
-        audit_record_8a["holiday_calendar_version"] == 1,
-        f"got {audit_record_8a.get('holiday_calendar_version')!r}",
+        audit_record_8a["holiday_calendar_version"] == production_calendar_version,
+        f"got {audit_record_8a.get('holiday_calendar_version')!r} expected {production_calendar_version!r}",
     )
 
     # 8c/8d) holiday_calendar_path injection seam - a synthetic

@@ -504,6 +504,85 @@ def test_derive_malformed_date_skipped_not_crashed():
     )
 
 
+def test_derive_half_day_only_dates_empty_under_existing_three_policies():
+    for policy in ("not_decided", "counts_as_holiday", "counts_as_working_day"):
+        document = {
+            "half_day_policy": policy,
+            "years": [
+                {"year": 2026, "verified": True, "holidays": [
+                    {"date": "2026-10-28", "day_type": "half_day"},
+                ]},
+            ],
+        }
+        derived = dc.derive_effective_holiday_calendar(document)
+        check(
+            f"derive: half_day_only_dates stays empty under half_day_policy={policy!r} "
+            "(byte/semantic-unchanged proof)",
+            derived["half_day_only_dates"] == set(),
+            derived,
+        )
+
+
+def test_derive_half_day_only_dates_populated_under_needs_review_policy():
+    document = {
+        "half_day_policy": "needs_review_if_deadline_day",
+        "years": [
+            {"year": 2026, "verified": True, "holidays": [
+                {"date": "2026-10-28", "day_type": "half_day"},
+            ]},
+        ],
+    }
+    derived = dc.derive_effective_holiday_calendar(document)
+    check(
+        "derive: half_day_only_dates populated under half_day_policy='needs_review_if_deadline_day'",
+        derived["half_day_only_dates"] == {date(2026, 10, 28)},
+        derived,
+    )
+
+
+def test_derive_observances_full_day_wins_merge_excludes_half_day_only():
+    document = {
+        "half_day_policy": "needs_review_if_deadline_day",
+        "years": [
+            {"year": 2029, "verified": True, "holidays": [
+                {
+                    "date": "2029-04-23", "day_type": "full_day",
+                    "observances": [
+                        {"observance_id": "kurban_bayrami_arefe", "day_type": "half_day"},
+                        {"observance_id": "ulusal_egemenlik_cocuk_bayrami", "day_type": "full_day"},
+                    ],
+                },
+            ]},
+        ],
+    }
+    derived = dc.derive_effective_holiday_calendar(document)
+    check(
+        "derive: observances[] full_day+half_day collision merges to full_day "
+        "(full_day wins) -> holiday_dates, NOT half_day_only_dates",
+        date(2029, 4, 23) in derived["holiday_dates"]
+        and date(2029, 4, 23) not in derived["half_day_only_dates"],
+        derived,
+    )
+
+
+def test_s15_needs_review_if_deadline_day_genuine_half_day_final_needs_review():
+    holiday_calendar = _calendar(covered_verified_years={2026})
+    holiday_calendar["half_day_only_dates"] = {date(2026, 10, 28)}
+    result = dc.calculate_rule_deadline(
+        anchor_date="2026-09-28", rule=RULE,
+        holiday_calendar=holiday_calendar,
+        judicial_recess_applicable=True,
+    )
+    check(
+        "S15: needs_review_if_deadline_day - genuine half-day-only final date -> needs_review, "
+        "fixed reason holiday_calendar_half_day_deadline_requires_review",
+        result["calculation_state"] == "needs_review"
+        and result["calculated_deadline"] is None
+        and result["reason"] == "holiday_calendar_half_day_deadline_requires_review",
+        result,
+    )
+
+
 # ================================================================
 # load_holiday_calendar() - integration of load+validate+derive
 # ================================================================
@@ -599,6 +678,10 @@ def run_self_test():
     test_holiday_calendar_none_defaults_to_fail_closed_empty()
 
     test_derive_excludes_unverified_years()
+    test_derive_half_day_only_dates_empty_under_existing_three_policies()
+    test_derive_half_day_only_dates_populated_under_needs_review_policy()
+    test_derive_observances_full_day_wins_merge_excludes_half_day_only()
+    test_s15_needs_review_if_deadline_day_genuine_half_day_final_needs_review()
     test_derive_full_day_always_counts_half_day_policy_independent()
     test_derive_empty_years_produces_empty_sets()
     test_derive_malformed_date_skipped_not_crashed()

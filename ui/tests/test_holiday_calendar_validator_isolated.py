@@ -17,6 +17,7 @@ import hashlib
 import json
 import sys
 import tempfile
+from datetime import date, timedelta
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -24,6 +25,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+import deadline_calculator as dc          # noqa: E402  (D.11 only: load_holiday_calendar gate)
 import holiday_calendar_validator as hcv  # noqa: E402
 
 passed = 0
@@ -368,6 +370,344 @@ def test_half_day_in_unverified_year_under_not_decided_policy_allowed():
 
 
 # ================================================================
+# PHASE A (REV4.1 kanıt kapanışı) - observances[] / canonical
+# registry / verified-year completeness / yeni half_day_policy
+# değeri. Bu testler, ui/tests katmanının BAĞIMSIZ perspektifinden
+# temsili bir kapsamdır - src/holiday_calendar_validator.py'nin
+# KENDİ run_self_test()'indeki T23-T51 setinin birebir tekrarı
+# DEĞİLDİR.
+#
+# F2 REMEDIATION (Phase A bağımsız incelemesi): bu dosyanın önceki
+# üç negatif observance testi VACUOUS idi - `create_valid_fixture()`
+# yılı `verified:true` olduğu için tek bir observance eklenmesi
+# tamlık kontrolünü tetikliyor ve fixture mutasyondan bağımsız
+# olarak geçersiz oluyordu (registry kontrolü devre dışı bırakılsa
+# bile testler PASS kalıyordu). Artık her test: (1) UNVERIFIED,
+# yapısal olarak geçerli, tek girdili minimal bir baseline'ın
+# `errors == []` verdiğini, (2) YALNIZ hedef alan mutasyona
+# uğratıldığında SPESİFİK hata mesajının üretildiğini, (3) hedef
+# validator (`validate_observance_registry_consistency`) devre dışı
+# bırakılınca mutasyonlu fixture'ın KABUL edildiğini (yani testin
+# gerçekten o kontrole dayandığını - başka bir hata onu ayakta
+# tutmuyor), (4) mutasyon geri alınınca geçerliliğin döndüğünü
+# doğrular. Unverified baseline, `half_day_policy=not_decided` +
+# half_day confound'unu da yapısal olarak ortadan kaldırır; politika
+# ayrıca açıkça `needs_review_if_deadline_day` yapılır.
+# ================================================================
+
+
+def _observance(observance_id, kind, day_type, legal_basis_ref, block_index=None):
+    return {
+        "observance_id": observance_id,
+        "kind": kind,
+        "day_type": day_type,
+        "legal_basis_ref": legal_basis_ref,
+        "block_index": block_index,
+    }
+
+
+def _registry_observance(observance_id, block_index=None):
+    reg = hcv.CANONICAL_OBSERVANCE_REGISTRY[observance_id]
+    return _observance(observance_id, reg["kind"], reg["day_type"], reg["legal_basis_ref"], block_index)
+
+
+def _holiday_entry(date_value, name, observances, source_ref_index=0):
+    day_types = {o["day_type"] for o in observances}
+    kinds = {o["kind"] for o in observances}
+    return {
+        "date": date_value,
+        "name": name,
+        "kind": "national" if "national" in kinds else "religious",
+        "day_type": "full_day" if "full_day" in day_types else "half_day",
+        "source_ref_index": source_ref_index,
+        "notes": None,
+        "observances": observances,
+    }
+
+
+def _minimal_unverified_observance_fixture(entry, half_day_policy="needs_review_if_deadline_day"):
+    """F2: yapısal olarak GEÇERLİ, UNVERIFIED, tek girdili observances[]
+    fixture'ı. Unverified olduğu için verified-kapılı tamlık ve
+    half_day_policy kontrolleri tetiklenmez -> baseline 0 hata; yalnız
+    koşulsuz registry/derivation kontrolleri canlıdır."""
+    fixture = copy.deepcopy(hcv.create_valid_fixture())
+    fixture["half_day_policy"] = half_day_policy
+    fixture["years"][0]["verified"] = False
+    fixture["years"][0]["verification_ref"] = None
+    fixture["years"][0]["holidays"] = [entry]
+    return fixture
+
+
+def _synthetic_full_observance_year(year, ramazan_block_starts=("02-10",), kurban_block_starts=("06-10",),
+                                    verified=True):
+    """Tam bir observances[] yılı: 8 sabit gözlem DOĞRU ay-günde; dinî
+    bloklar SENTETİK, sabit tarihlerle çakışmayan başlangıçlardan
+    ardışık günlerde. Test fixture'ıdır - gerçek tatil verisi DEĞİLDİR
+    (Prensip 18); production takvime hiçbir tarih yazılmaz."""
+    holidays = []
+    for oid, reg in hcv.CANONICAL_OBSERVANCE_REGISTRY.items():
+        if reg["family"] is None:
+            holidays.append(_holiday_entry(f"{year}-{reg['fixed_month_day']}", oid, [_registry_observance(oid)]))
+    for family, starts in (("ramazan", ramazan_block_starts), ("kurban", kurban_block_starts)):
+        for block_index, start in enumerate(starts, start=1):
+            start_date = date.fromisoformat(f"{year}-{start}")
+            for oid in hcv.CANONICAL_OBSERVANCE_FAMILY_IDS[family]:
+                offset = hcv.CANONICAL_OBSERVANCE_REGISTRY[oid]["sequence_position"]
+                holidays.append(_holiday_entry((start_date + timedelta(days=offset)).isoformat(),
+                                               f"{oid} b{block_index}", [_registry_observance(oid, block_index)]))
+    holidays.sort(key=lambda h: h["date"])
+    return {
+        "year": year,
+        "verified": verified,
+        "verification_ref": (f"fixture_verification_ref_{year}" if verified else None),
+        "source_refs": [{"source_kind": "fixture", "citation": f"Fixture citation {year}.", "url": None}],
+        "holidays": holidays,
+    }
+
+
+def _calendar_with_years(year_entries, half_day_policy="needs_review_if_deadline_day"):
+    fixture = copy.deepcopy(hcv.create_valid_fixture())
+    fixture["half_day_policy"] = half_day_policy
+    fixture["years"] = year_entries
+    return fixture
+
+
+def _errors_containing(result, fragment):
+    return [error for error in result["errors"] if fragment in error]
+
+
+def _with_registry_check_neutered(fn):
+    """D.12 mutation seam: `validate_observance_registry_consistency`
+    devre dışı; `finally` ile KOŞULSUZ geri yüklenir."""
+    original = hcv.validate_observance_registry_consistency
+    try:
+        hcv.validate_observance_registry_consistency = lambda calendar: []
+        return fn()
+    finally:
+        hcv.validate_observance_registry_consistency = original
+
+
+def _non_vacuous_registry_negative(label, baseline, mutate, expected_fragment):
+    """F2 ortak deseni: baseline 0 hata -> tek mutasyon -> spesifik hata ->
+    registry kontrolü devre dışıyken KABUL (teeth kanıtı) -> revert PASS."""
+    base_result = hcv.validate_holiday_calendar(calendar=baseline)
+    check(f"{label}: unmutated baseline is fully valid (errors == [])",
+          base_result["valid"] is True and base_result["errors"] == [], base_result["errors"])
+    mutated = copy.deepcopy(baseline)
+    mutate(mutated)
+    result = hcv.validate_holiday_calendar(calendar=mutated)
+    check(f"{label}: mutation rejected with the specific registry/derivation message",
+          result["valid"] is False and len(_errors_containing(result, expected_fragment)) == 1,
+          result["errors"])
+    neutered = _with_registry_check_neutered(lambda: hcv.validate_holiday_calendar(calendar=mutated))
+    check(f"{label}: NON-VACUOUS - with validate_observance_registry_consistency neutered the mutated "
+          "fixture is ACCEPTED (no unrelated error would keep this test passing)",
+          neutered["valid"] is True and neutered["errors"] == [], neutered["errors"])
+    reverted_result = hcv.validate_holiday_calendar(calendar=baseline)
+    check(f"{label}: reverting the mutation restores validity",
+          reverted_result["valid"] is True and reverted_result["errors"] == [], reverted_result["errors"])
+
+
+def test_observance_registry_cross_check_rejects_wrong_kind():
+    baseline = _minimal_unverified_observance_fixture(
+        _holiday_entry("2026-01-01", "Yılbaşı", [_registry_observance("yilbasi")]))
+
+    def mutate(fixture):
+        fixture["years"][0]["holidays"][0]["observances"][0]["kind"] = "religious"
+
+    _non_vacuous_registry_negative(
+        "F2 wrong observance kind", baseline, mutate,
+        "yilbasi: kind='religious' != registry expected 'national'")
+
+
+def test_observance_block_index_null_required_for_national_rejected():
+    baseline = _minimal_unverified_observance_fixture(
+        _holiday_entry("2026-01-01", "Yılbaşı", [_registry_observance("yilbasi")]))
+
+    def mutate(fixture):
+        fixture["years"][0]["holidays"][0]["observances"][0]["block_index"] = 1
+
+    _non_vacuous_registry_negative(
+        "F2 national block_index must be null", baseline, mutate,
+        "yilbasi: block_index must be null for a national observance, got 1")
+
+
+def test_top_level_day_type_inconsistent_with_observances_rejected():
+    baseline = _minimal_unverified_observance_fixture(
+        _holiday_entry("2026-10-28", "Cumhuriyet Bayramı Arefesi",
+                       [_registry_observance("cumhuriyet_bayrami_arefe")]))
+
+    def mutate(fixture):
+        fixture["years"][0]["holidays"][0]["day_type"] = "full_day"  # inconsistent - actual is half_day
+
+    _non_vacuous_registry_negative(
+        "F2 top-level day_type inconsistent with observances[]", baseline, mutate,
+        "top-level day_type='full_day' inconsistent with observances[] merge (derived='half_day')")
+
+
+# ================================================================
+# F1 REMEDIATION REGRESSIONS (D.1-D.11) - cross-entry duplicate,
+# multi-block completeness, REV4.1 exact block-count contract, and
+# the deadline load gate. Positive controls first so the negatives
+# below cannot pass for an unrelated reason.
+# ================================================================
+
+
+def test_f1_synthetic_full_year_positive_controls():
+    result_2026 = hcv.validate_holiday_calendar(calendar=_calendar_with_years([_synthetic_full_observance_year(2026)]))
+    check("F1 positive control: synthetic complete verified 2026 (1 ramazan + 1 kurban block) is valid",
+          result_2026["valid"] is True and result_2026["errors"] == [], result_2026["errors"])
+    result_2033 = hcv.validate_holiday_calendar(calendar=_calendar_with_years(
+        [_synthetic_full_observance_year(2033, ramazan_block_starts=("02-10", "12-10"))]))
+    check("D.5/D.9/D.3: verified 2033 with TWO complete ramazan blocks (same observance_ids in different "
+          "block_index) is valid",
+          result_2033["valid"] is True and result_2033["errors"] == [], result_2033["errors"])
+
+
+def test_f1_national_cross_entry_duplicate_rejected():
+    year_entry = _synthetic_full_observance_year(2026)
+    year_entry["holidays"].append(_holiday_entry("2026-03-03", "hayalet Zafer Bayramı",
+                                                 [_registry_observance("zafer_bayrami")]))
+    year_entry["holidays"].sort(key=lambda h: h["date"])
+    fragment = "national observance 'zafer_bayrami' occurs 2 times across entries (dates ['2026-03-03', '2026-08-30'])"
+    verified_result = hcv.validate_holiday_calendar(calendar=_calendar_with_years([year_entry]))
+    check("D.1: verified 2026 with zafer_bayrami at 2026-08-30 AND phantom 2026-03-03 rejected with the "
+          "cross-entry duplicate message (reported exactly once)",
+          verified_result["valid"] is False and len(_errors_containing(verified_result, fragment)) == 1,
+          verified_result["errors"])
+    check("D.1: completeness additionally flags the phantom occurrence's wrong month-day",
+          len(_errors_containing(verified_result, "'zafer_bayrami' expected at 2026-08-30, found at '2026-03-03'")) == 1,
+          verified_result["errors"])
+    unverified_entry = copy.deepcopy(year_entry)
+    unverified_entry["verified"] = False
+    unverified_entry["verification_ref"] = None
+    unverified_result = hcv.validate_holiday_calendar(calendar=_calendar_with_years([unverified_entry]))
+    check("D.1: the SAME duplicate is rejected in an UNVERIFIED year too (structural, unconditional)",
+          unverified_result["valid"] is False and len(_errors_containing(unverified_result, fragment)) == 1,
+          unverified_result["errors"])
+
+
+def test_f1_religious_same_block_cross_entry_duplicate_rejected():
+    year_entry = _synthetic_full_observance_year(2026)  # kurban block 1: 06-10..06-14
+    year_entry["holidays"].append(_holiday_entry("2026-06-20", "hayalet Kurban 4. Gün",
+                                                 [_registry_observance("kurban_bayrami_gun4", 1)]))
+    year_entry["holidays"].sort(key=lambda h: h["date"])
+    result = hcv.validate_holiday_calendar(calendar=_calendar_with_years([year_entry]))
+    fragment = ("kurban block 1: religious observance 'kurban_bayrami_gun4' occurs 2 times across entries "
+                "(dates ['2026-06-14', '2026-06-20'])")
+    check("D.2: kurban_bayrami_gun4 twice within block 1 (two dates) rejected with the per-block duplicate message",
+          result["valid"] is False and len(_errors_containing(result, fragment)) == 1, result["errors"])
+
+
+def test_f1_two_block_year_incomplete_block_not_masked():
+    year_entry = _synthetic_full_observance_year(2033, ramazan_block_starts=("02-10", "12-10"))
+    year_entry["holidays"] = [h for h in year_entry["holidays"] if h["date"] != "2033-02-13"]  # drop block-1 gun3
+    result = hcv.validate_holiday_calendar(calendar=_calendar_with_years([year_entry]))
+    check("D.4: 2033 ramazan block 1 missing gun3 while block 2 is complete -> rejected (block 2 does not mask block 1)",
+          result["valid"] is False
+          and len(_errors_containing(result, "ramazan block 1 is missing 'ramazan_bayrami_gun3' (sequence_position 3)")) == 1,
+          result["errors"])
+    check("D.4: the complete block 2 itself produces no missing-member error",
+          _errors_containing(result, "ramazan block 2 is missing") == [], result["errors"])
+
+
+def test_f1_missing_whole_family_rejected():
+    no_ramazan = hcv.validate_holiday_calendar(calendar=_calendar_with_years(
+        [_synthetic_full_observance_year(2026, ramazan_block_starts=())]))
+    check("D.6: verified 2026 with NO ramazan block rejected (contract: exactly 1)",
+          no_ramazan["valid"] is False
+          and len(_errors_containing(no_ramazan, "ramazan expected exactly 1 block(s) per REV4.1 contract, found 0 []")) == 1,
+          no_ramazan["errors"])
+    no_kurban = hcv.validate_holiday_calendar(calendar=_calendar_with_years(
+        [_synthetic_full_observance_year(2026, kurban_block_starts=())]))
+    check("D.7: verified 2026 with NO kurban block rejected (contract: exactly 1)",
+          no_kurban["valid"] is False
+          and len(_errors_containing(no_kurban, "kurban expected exactly 1 block(s) per REV4.1 contract, found 0 []")) == 1,
+          no_kurban["errors"])
+
+
+def test_f1_exact_block_count_contract():
+    one_block_2033 = hcv.validate_holiday_calendar(calendar=_calendar_with_years(
+        [_synthetic_full_observance_year(2033)]))
+    check("D.8: 2033 with only ONE ramazan block rejected (contract: exactly 2)",
+          one_block_2033["valid"] is False
+          and len(_errors_containing(one_block_2033, "ramazan expected exactly 2 block(s) per REV4.1 contract, found 1 [1]")) == 1,
+          one_block_2033["errors"])
+    two_blocks_2026 = hcv.validate_holiday_calendar(calendar=_calendar_with_years(
+        [_synthetic_full_observance_year(2026, ramazan_block_starts=("02-10", "12-10"))]))
+    check("D.10: 2026 with TWO ramazan blocks rejected (contract: exactly 1)",
+          two_blocks_2026["valid"] is False
+          and len(_errors_containing(two_blocks_2026, "ramazan expected exactly 1 block(s) per REV4.1 contract, found 2 [1, 2]")) == 1,
+          two_blocks_2026["errors"])
+    check("contract table: exactly 12 supported years 2024-2035, ramazan 2033 == 2, every other cell == 1",
+          hcv.REV41_BLOCK_COUNT_SUPPORTED_YEARS == tuple(range(2024, 2036))
+          and hcv.REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT["ramazan"][2033] == 2
+          and all(v == 1 for y, v in hcv.REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT["ramazan"].items() if y != 2033)
+          and all(v == 1 for v in hcv.REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT["kurban"].values()))
+
+
+def test_f1_year_outside_contract_range_fail_closed():
+    verified_2036 = hcv.validate_holiday_calendar(calendar=_calendar_with_years(
+        [_synthetic_full_observance_year(2036)]))
+    check("verified observances[] year 2036 (outside 2024-2035) refused fail-closed - no silent block-count guess",
+          verified_2036["valid"] is False
+          and len(_errors_containing(verified_2036, "no exact religious block-count contract for year 2036")) == 1,
+          verified_2036["errors"])
+    unverified_2036 = hcv.validate_holiday_calendar(calendar=_calendar_with_years(
+        [_synthetic_full_observance_year(2036, verified=False)]))
+    check("UNVERIFIED observances[] year 2036 accepted (the contract gate is verified-only)",
+          unverified_2036["valid"] is True and unverified_2036["errors"] == [], unverified_2036["errors"])
+
+
+def test_f1_phantom_duplicate_never_reaches_deadline_holiday_dates():
+    """D.11: the phantom duplicate is rejected by the validator, so
+    deadline_calculator.load_holiday_calendar() (validate-then-derive)
+    raises and holiday_dates is never derived from it."""
+    clean_entry = _synthetic_full_observance_year(2026)
+    phantom_entry = copy.deepcopy(clean_entry)
+    phantom_entry["holidays"].append(_holiday_entry("2026-03-03", "hayalet Zafer Bayramı",
+                                                    [_registry_observance("zafer_bayrami")]))
+    phantom_entry["holidays"].sort(key=lambda h: h["date"])
+    with tempfile.TemporaryDirectory() as tmp:
+        clean_path = Path(tmp) / "clean_calendar.json"
+        phantom_path = Path(tmp) / "phantom_calendar.json"
+        clean_path.write_text(json.dumps(_calendar_with_years([clean_entry]), ensure_ascii=False, indent=2) + "\n",
+                              encoding="utf-8")
+        phantom_path.write_text(json.dumps(_calendar_with_years([phantom_entry]), ensure_ascii=False, indent=2) + "\n",
+                                encoding="utf-8")
+        loaded_clean = dc.load_holiday_calendar(clean_path)
+        check("D.11 positive control: the clean synthetic calendar loads through deadline_calculator and derives "
+              "2026-08-30 into holiday_dates",
+              date(2026, 8, 30) in loaded_clean["holiday_dates"] and date(2026, 3, 3) not in loaded_clean["holiday_dates"]
+              and loaded_clean["covered_verified_years"] == {2026})
+        raised = None
+        try:
+            dc.load_holiday_calendar(phantom_path)
+        except dc.DeadlineCalculatorError as error:
+            raised = error
+        except Exception as error:  # noqa: BLE001 - report the unexpected type as a failure
+            check("D.11: phantom calendar raises DeadlineCalculatorError (not another type)", False,
+                  f"unexpected {type(error).__name__}: {error!r}")
+            return
+        check("D.11: phantom-duplicate calendar is REFUSED by deadline_calculator.load_holiday_calendar()",
+              raised is not None)
+        check("D.11: the refusal carries the cross-entry duplicate message (not merely a schema error)",
+              raised is not None and "national observance 'zafer_bayrami' occurs 2 times across entries" in str(raised),
+              str(raised)[:300] if raised is not None else "no exception")
+
+
+def test_half_day_under_needs_review_if_deadline_day_policy_allowed():
+    fixture = copy.deepcopy(hcv.create_valid_fixture())
+    fixture["half_day_policy"] = "needs_review_if_deadline_day"
+    fixture["years"][0]["holidays"][0]["day_type"] = "half_day"
+    result = hcv.validate_holiday_calendar(calendar=fixture)
+    check(
+        "half_day entry in a verified year under half_day_policy='needs_review_if_deadline_day' allowed",
+        result["valid"] is True, result["errors"],
+    )
+
+
+# ================================================================
 # DISK LOAD / MISSING FILE / raise_on_error
 # ================================================================
 
@@ -527,6 +867,20 @@ def run_self_test():
     test_half_day_under_not_decided_policy_in_verified_year_rejected()
     test_half_day_under_counts_as_holiday_policy_allowed()
     test_half_day_in_unverified_year_under_not_decided_policy_allowed()
+
+    test_observance_registry_cross_check_rejects_wrong_kind()
+    test_observance_block_index_null_required_for_national_rejected()
+    test_top_level_day_type_inconsistent_with_observances_rejected()
+    test_half_day_under_needs_review_if_deadline_day_policy_allowed()
+
+    test_f1_synthetic_full_year_positive_controls()
+    test_f1_national_cross_entry_duplicate_rejected()
+    test_f1_religious_same_block_cross_entry_duplicate_rejected()
+    test_f1_two_block_year_incomplete_block_not_masked()
+    test_f1_missing_whole_family_rejected()
+    test_f1_exact_block_count_contract()
+    test_f1_year_outside_contract_range_fail_closed()
+    test_f1_phantom_duplicate_never_reaches_deadline_holiday_dates()
 
     test_disk_loaded_fixture_validates()
     test_missing_calendar_file_fails_closed()

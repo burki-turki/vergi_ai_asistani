@@ -465,7 +465,20 @@ def derive_effective_holiday_calendar(
     HER yılın kendisidir (final.year'a bağlı DEĞİLDİR - bağımsız
     inceleme §5.1'in döngüsellik çözümü). `holiday_dates`, o yılların
     `full_day` tatilleri VE (`half_day_policy == 'counts_as_holiday'`
-    ise) `half_day` tatillerinin BİRLEŞİMİDİR."""
+    ise) `half_day` tatillerinin BİRLEŞİMİDİR.
+
+    PHASE A (REV4.1 kanıt kapanışı, additive): dönüş artık ÜÇÜNCÜ bir
+    küme - `half_day_only_dates` - taşır: yalnız `half_day_policy ==
+    'needs_review_if_deadline_day'` iken, ve yalnız GERÇEKTEN sadece
+    half_day kalan (full_day'e hiç dönüşmeyen) tarihler için doldurulur
+    - diğer üç politika değerinde bu küme HER ZAMAN boş kalır (davranış
+    byte/semantic olarak değişmez). Her `holiday` girdisinin EFEKTİF
+    `day_type`'ı artık observances[]-farkındadır: `observances` alanı
+    doluysa (Phase B'den önce production'da HİÇBİR zaman dolu
+    DEĞİLDİR) `full_day` varsa `full_day`, yoksa `half_day` olarak
+    türetilir (REV4.1'in "full_day kazanır" collision-merge kuralı);
+    `observances` yoksa (bugünkü TEK gerçek durum) düz `day_type`
+    alanı KULLANILIR - davranış bugün bayt-bayt aynı kalır."""
 
     half_day_policy = calendar_document.get(
         "half_day_policy"
@@ -474,6 +487,8 @@ def derive_effective_holiday_calendar(
     covered_verified_years = set()
 
     holiday_dates = set()
+
+    half_day_only_dates = set()
 
     for year_entry in (
         calendar_document.get(
@@ -520,26 +535,42 @@ def derive_effective_holiday_calendar(
 
                 continue
 
-            day_type = holiday.get(
-                "day_type"
+            observances = holiday.get(
+                "observances"
             )
 
+            if observances:
+
+                observance_day_types = {
+                    observance.get("day_type")
+                    for observance in observances
+                    if isinstance(observance, dict)
+                }
+
+                effective_day_type = (
+                    "full_day"
+                    if "full_day" in observance_day_types
+                    else "half_day"
+                )
+
+            else:
+
+                effective_day_type = holiday.get(
+                    "day_type"
+                )
+
             counts_as_holiday = (
-                day_type
+                effective_day_type
                 == "full_day"
 
                 or
                 (
-                    day_type
+                    effective_day_type
                     == "half_day"
                     and half_day_policy
                     == "counts_as_holiday"
                 )
             )
-
-            if not counts_as_holiday:
-
-                continue
 
             parsed = parse_iso_date(
                 holiday.get(
@@ -547,11 +578,26 @@ def derive_effective_holiday_calendar(
                 )
             )
 
-            if parsed is not None:
+            if counts_as_holiday:
 
-                holiday_dates.add(
-                    parsed
-                )
+                if parsed is not None:
+
+                    holiday_dates.add(
+                        parsed
+                    )
+
+            elif (
+                effective_day_type
+                == "half_day"
+                and half_day_policy
+                == "needs_review_if_deadline_day"
+            ):
+
+                if parsed is not None:
+
+                    half_day_only_dates.add(
+                        parsed
+                    )
 
     return {
         "holiday_dates":
@@ -559,6 +605,9 @@ def derive_effective_holiday_calendar(
 
         "covered_verified_years":
             covered_verified_years,
+
+        "half_day_only_dates":
+            half_day_only_dates,
     }
 
 
@@ -642,6 +691,11 @@ def load_holiday_calendar(
         "covered_verified_years":
             derived[
                 "covered_verified_years"
+            ],
+
+        "half_day_only_dates":
+            derived[
+                "half_day_only_dates"
             ],
 
         "calendar_id":
@@ -1704,6 +1758,7 @@ def calculate_rule_deadline(
         else {
             "holiday_dates": set(),
             "covered_verified_years": set(),
+            "half_day_only_dates": set(),
         }
     )
 
@@ -1716,6 +1771,13 @@ def calculate_rule_deadline(
     covered_verified_years = set(
         effective_holiday_calendar.get(
             "covered_verified_years"
+        )
+        or set()
+    )
+
+    half_day_only_dates = normalize_holiday_dates(
+        effective_holiday_calendar.get(
+            "half_day_only_dates"
         )
         or set()
     )
@@ -2084,6 +2146,53 @@ def calculate_rule_deadline(
                         "'verified' olarak işaretlenmemiş: "
                         f"{uncovered_years}."
                     ),
+            }
+
+        # PILOT READINESS ADIM 5 PHASE A (REV4.1 kanıt kapanışı):
+        # half_day_policy == "needs_review_if_deadline_day" iken,
+        # final_deadline GERÇEKTEN yalnız-half-day bir tarihe denk
+        # gelirse fail-closed needs_review döner. full_day (veya
+        # full_day+half_day collision - "full_day kazanır" kuralı)
+        # tarihleri zaten YUKARIDA holiday_dates'e girip kaydırılmış
+        # olduğundan final_deadline ORADA asla kalmaz - bu blok yalnız
+        # GERÇEKTEN yalnız-half-day kalan tarihler için tetiklenir.
+        # Diğer üç half_day_policy değerinde half_day_only_dates HER
+        # ZAMAN boştur (derive_effective_holiday_calendar'ın kendi
+        # kuralı) - bu yüzden bu blok o üç politikada davranışı
+        # byte/semantic olarak DEĞİŞTİRMEZ. Yalnız
+        # end_day_policy=='next_business_day_if_holiday' dalına
+        # sınırlıdır - bugün aktif TEK deadline_rule bu değeri
+        # kullanıyor (data/deadline_rules/deadline_rules.json).
+
+        if final_deadline in half_day_only_dates:
+
+            return {
+                "calculation_state":
+                    "needs_review",
+
+                "calculated_deadline":
+                    None,
+
+                "base_deadline":
+                    base_deadline.isoformat(),
+
+                "provisional_deadline":
+                    provisional_deadline.isoformat(),
+
+                "judicial_recess_applied":
+                    judicial_recess_applied,
+
+                "holiday_adjustment_applied":
+                    False,
+
+                "mali_tatil_applied":
+                    mali_tatil_applied,
+
+                "mali_tatil_exclusion_reason":
+                    mali_tatil_exclusion_reason,
+
+                "reason":
+                    "holiday_calendar_half_day_deadline_requires_review",
             }
 
         holiday_adjustment_applied = (

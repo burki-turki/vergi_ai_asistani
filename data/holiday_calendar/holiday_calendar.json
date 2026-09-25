@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "calendar_id": "tr_official_holiday_calendar_v1",
-  "calendar_version": 1,
+  "calendar_version": 2,
   "effective_from": "2026-09-22",
   "jurisdiction": "TR",
   "weekend_policy": {
