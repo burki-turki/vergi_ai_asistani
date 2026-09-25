@@ -939,6 +939,51 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   kuralında bu durum erişilemezdir); bu LOCK pilotun genel hazır olduğunu,
   tatil takviminin doğrulandığını veya uygulamanın production-ready olduğunu
   İDDİA ETMEZ.
+- **Holiday Calendar Schema V2 — Phase A Technical Plumbing — DONE /
+  LOCKED.** Yalnız teknik tesisat; veri popülasyonu DEĞİL. Exact kapsam
+  **0 YENİ + 7 DEĞİŞTİRİLMİŞ = 7 dosya**, yerel commit
+  `1366e8e40d7923c304f4a818caa65b211764b593` (parent
+  `d2e66fe6b75bb95fa3fe3f00ffe3dbc241f99023`; push YAPILMADI):
+  `data/holiday_calendar.schema.json` (title V1→V2; `schema_version`
+  const 1 DEĞİŞMEDİ; `half_day_policy` top-level kaldı, mevcut üç değer
+  `not_decided`/`counts_as_holiday`/`counts_as_working_day` korunup
+  dördüncü additive değer `needs_review_if_deadline_day` eklendi;
+  `holiday_entry`'ye opsiyonel, additive `observances[]` — legacy flat
+  kayıt uyumluluğu korunur; `observance_id` enum'u 17 canonical değer),
+  `data/holiday_calendar/holiday_calendar.json` (YALNIZ
+  `calendar_version` 1→2 — başka hiçbir içerik değişikliği; şema
+  `calendar_version`'ı `integer, minimum 1` olarak bırakır, 2'ye
+  PİNLEMEZ), `src/holiday_calendar_validator.py`
+  (`HOLIDAY_CALENDAR_VALIDATOR_VERSION` `"1"`→`"2"`; 17 kayıtlı canonical
+  observance registry'si ve registry doğrulamaları; ulusal duplicate
+  anahtarı yıl-içi `observance_id`, dinî duplicate anahtarı
+  `(family, block_index, observance_id)`; çok bloklu yıllarda her blok
+  bağımsız doğrulanır; 2024–2035 exact dinî blok-sayısı sözleşmesi —
+  Ramazan 2033=2, diğer Ramazan ve Kurban blokları=1; sözleşme dışı
+  `verified:true` + `observances[]` yıl sessiz tahmin yerine fail-closed
+  reddedilir), LOCKED Row 8 `src/deadline_calculator.py` (full-day +
+  half-day çakışmasında full-day üstün gelir;
+  `needs_review_if_deadline_day` yalnız final gün GERÇEKTEN
+  yalnız-half-day olduğunda fail-closed `needs_review` üretir — `reason`
+  = `holiday_calendar_half_day_deadline_requires_review`; diğer üç
+  politikada davranış DEĞİŞMEDİ; deadline dalında sıfır silme) ve üç
+  test dosyası (yalnız additive/tutarlılık kanıtı). Bağımsız final
+  re-review verdict'i, exact olarak:
+  `PHASE A READY FOR COMMIT AUTHORIZATION`
+  (bkz. Holiday Calendar Schema V2 — Phase A Technical Plumbing
+  checkpoint özeti, §5 sonrası, "## 6. Cross-Cutting Backlog"dan hemen
+  önce). **Dar, exact iddia** (abartılmaz): üretim takvimi HÂLÂ
+  TARİHSİZDİR — 12 yıl (2024–2035), her yılda `holidays: []` ve
+  `source_refs: []`, 0 `verified:true`, tüm `verification_ref` değerleri
+  `null`, hiçbir yerde `observances` anahtarı yok, üretim
+  `half_day_policy` hâlâ `not_decided` (dördüncü politika şema ve
+  hesaplayıcı düzeyinde MEVCUT, üretimde BENİMSENMEMİŞ). Hiçbir resmî
+  tatil tarihi eklenmedi; hiçbir yıl `verified:true` yapılmadı; hiçbir
+  `verification_ref` alınmadı; avukat doğrulaması (Adım 6) TAMAMLANMADI
+  ve Adım 6 ACTIVE / NEXT olarak KALIR; pilotun genel olarak
+  production-ready olduğu İDDİA EDİLMEZ. **Phase B (veri popülasyonu):
+  NOT STARTED / NOT AUTHORIZED / BLOCKED ON REAL LAWYER verification_ref**
+  — bu pointer Phase B için hiçbir kodlama/veri yetkisi VERMEZ.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -9521,6 +9566,324 @@ test/koşum boyunca DEĞİŞMEDİ.
 **Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu gibi
 yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock işlemidir;
 hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Holiday Calendar Schema V2 — Phase A Technical Plumbing (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve dar kapsam** — Pilot Readiness Adım 5, git-governed,
+tarihsiz bir resmî tatil takvimi registry'si ve `calendar_complete`
+türetimini kilitlemişti; Adım 6 (avukat doğrulaması) hâlâ ACTIVE /
+NEXT'tir. Avukatın doğrulanmış tarihleri gerçekten girebilmesi için
+takvimin, her tatil gününü kayıtlı bir canonical gözleme
+(`observance_id`) bağlayan, yarım günü açık bir politikaya göre ele
+alan ve doğrulanmış bir yılın tamlığını makine düzeyinde denetleyen
+bir yapıya ihtiyacı vardı. Phase A yalnız bu **teknik tesisatı**
+kurar: şema, registry, validator ve LOCKED Row 8 hesaplayıcı tarafı.
+Phase A **hiçbir resmî tatil tarihi eklemez, hiçbir yılı
+`verified:true` yapmaz, hiçbir `verification_ref` almaz ve avukat
+doğrulamasını tamamlamaz.** Bu bölüm YALNIZ "Holiday Calendar Schema
+V2 — Phase A Technical Plumbing" alt kapsamını DONE / LOCKED olarak
+kaydeder; 2024–2035 resmî tatil tarihlerinin üretime eklenmesi,
+`holiday_calendar` veri popülasyonu, herhangi bir yılın
+`verified:true` yapılması, `verification_ref` alınması, avukat
+doğrulamasının tamamlanması, Phase B ve pilotun genel olarak
+production-ready olması BU BÖLÜMDE DONE / LOCKED DEĞİLDİR. Adım 5
+checkpoint'inin §F'si şemanın V1 (`calendar_version` 1) durumunu
+tanımlar ve kendi commit'i için tarihsel olarak doğru kalır —
+DEĞİŞTİRİLMEDİ.
+
+**B. Exact kapsam ve commit** — Kullanıcı tarafından, bağımsız final
+re-review'ün `PHASE A READY FOR COMMIT AUTHORIZATION` verdict'inden
+sonra açıkça yetkilendirilen tek commit: **0 YENİ + 7 DEĞİŞTİRİLMİŞ =
+7 dosya**; `git show --numstat`: 1872 ekleme, 20 silme (şema 68/2,
+registry 1/1, hesaplayıcı 122/13, validator 1241/2, derivation testi
+83/0, engine testi 3/2, validator testi 354/0). Yerel commit
+`1366e8e40d7923c304f4a818caa65b211764b593`, parent
+`d2e66fe6b75bb95fa3fe3f00ffe3dbc241f99023`, subject
+`Implement holiday calendar schema v2 phase A plumbing` (body/trailer
+YOK; push YAPILMADI). Commit öncesi preflight, staged 7 blob'un
+SHA-256'larını yetki listesiyle bayt-bayt eşleştirdi; commit sonrası
+`HEAD:<path>`
+blob'larının AYNI SHA-256'ları taşıdığı doğrulandı (hiçbir hook dosya
+yeniden yazmadı); 7 blob da LF'dir (0 CR). Üretim verisinde YALNIZ
+registry'nin `calendar_version` değeri değişti (tek satır);
+`data/cases/**`, `data/documents.json`, `data/provisions.json`,
+`data/deadline_rules/deadline_rules.json`, `data/corpus_policy/**`
+DEĞİŞMEDİ. Sıfır migration, sıfır web/CLI yüzeyi, sıfır bağımlılık
+değişikliği; `ui/services/generation_mutation_facade.py`,
+`ui/services/generation_mutation_adapters.py`, `ui/cli_mutate.py`,
+`src/deadline_engine.py`, `data/case_deadline.schema.json` ve
+`data/deadline_rules/deadline_rules.json` bu commit'te DOKUNULMADI.
+
+| Dosya | Durum | SHA-256 (commit blob, LF) |
+|---|---|---|
+| `data/holiday_calendar.schema.json` | DEĞİŞTİRİLMİŞ (Adım 5 LOCKED) | `d62b3e7574b0f1b33eb998e7bb0d4579fc490f466df29cb50ddbfd4a1a463117` |
+| `data/holiday_calendar/holiday_calendar.json` | DEĞİŞTİRİLMİŞ (Adım 5 LOCKED; yalnız `calendar_version` 1→2) | `26741d7aa36d54d2a88f6d49fc166d14c6a94246857c96fc9b59c4db68220004` |
+| `src/deadline_calculator.py` | DEĞİŞTİRİLMİŞ (**LOCKED Row 8**) | `ee03abefc74cb4227981f7c3017e1c6f9d0cc5e8e9a9ffcf67a526f355631385` |
+| `src/holiday_calendar_validator.py` | DEĞİŞTİRİLMİŞ (Adım 5 LOCKED) | `0dc271c24313421e6c7d9456e04d024f50d9ff9f31ca46cdda661f0b5323a32a` |
+| `ui/tests/test_deadline_calendar_derivation_isolated.py` | DEĞİŞTİRİLMİŞ (yalnız additive kanıt, 0 silme) | `b48c86d384a6897aa94a97e74fdc2c94e7bce338fe3030379c45d215f537bd93` |
+| `ui/tests/test_holiday_calendar_validator_isolated.py` | DEĞİŞTİRİLMİŞ (yalnız additive kanıt, 0 silme) | `d740b94318bde3a3b952479c9e2dc4231351b153740c43c79eb1068b76e73e18` |
+| `ui/tests/test_deadline_engine_isolated.py` | DEĞİŞTİRİLMİŞ (8b tutarlılık: sabit `1` yerine üretim dosyasından okunan `calendar_version`) | `0965195bfbd98d49443bf33d0e34d3e336eee0a7b31168219eb8b04c97f4e269` |
+
+**C. Şema sözleşmesi (`data/holiday_calendar.schema.json`)** — Title
+`"...Schema V1"` → `"...Schema V2"` (kozmetik); `schema_version` `const`
+**1** DEĞİŞMEDİ; `calendar_id` `const "tr_official_holiday_calendar_v1"`
+DEĞİŞMEDİ (bu bir kimlik literalidir, §H madde 4'teki kozmetik "V1"
+başlık metinlerinden AYRIDIR). `calendar_version` şemada
+`integer, minimum: 1` olarak kalır — şema 2'ye PİNLEMEZ; 1→2 artışı
+üretim registry'sinin DEĞERİNDEDİR (§D). `half_day_policy` **top-level**
+kaldı; eski üç değer `not_decided`, `counts_as_holiday`,
+`counts_as_working_day` korundu; dördüncü, additive değer
+`needs_review_if_deadline_day` eklendi (şema diff'inde görünen tek
+"silinen" enum satırı, üçüncü değere sondaki virgülün eklenmesinden
+ibarettir — üç eski değerin tamamı yerinde). `holiday_entry`'nin
+zorunlu alanları (`date`, `name`, `kind`, `day_type`,
+`source_ref_index`, `notes`) DEĞİŞMEDİ; **opsiyonel, additive
+`observances[]`** (`minItems: 1`, her üye `$defs.observance`) eklendi —
+`observances[]` taşımayan legacy flat kayıt şemada geçerli kalır.
+`$defs.observance`: `observance_id` (kapalı enum, **17** değer:
+`yilbasi`, `ulusal_egemenlik_cocuk_bayrami`, `emek_dayanisma_gunu`,
+`ataturk_anma_genclik_spor_bayrami`, `demokrasi_milli_birlik_gunu`,
+`zafer_bayrami`, `cumhuriyet_bayrami_arefe`, `cumhuriyet_bayrami`,
+`ramazan_bayrami_arefe`, `ramazan_bayrami_gun1`..`gun3`,
+`kurban_bayrami_arefe`, `kurban_bayrami_gun1`..`gun4`), `kind`
+(`national`/`religious`), `day_type` (`full_day`/`half_day`),
+`legal_basis_ref` (boş olmayan string), `block_index` (`integer ≥ 1`
+veya `null`) — beşi de zorunlu; `additionalProperties: false`.
+
+**D. Üretim registry'si (`data/holiday_calendar/holiday_calendar.json`)
+— hâlâ tarihsiz** — Commit'teki TEK içerik değişikliği
+`calendar_version` `1` → `2`'dir (tek satır). Commit'li baytlar
+üzerinden doğrulanan güncel durum: 12 yıl (2024–2035); her yılda
+`holidays: []` ve `source_refs: []`; `verified:true` sayısı **0** (12
+yılın tamamı `false`); tüm `verification_ref` değerleri `null`; hiçbir
+yerde `observances` anahtarı YOK; üretim `half_day_policy` hâlâ
+`not_decided` — yani dördüncü politika şema ve hesaplayıcı düzeyinde
+MEVCUT ama üretimde BENİMSENMEMİŞTİR ve Adım 5'in "`not_decided` iken
+`verified:true` bir yılda `half_day` girdisi ERROR" kapısı AYNEN
+yürürlüktedir. `calendar_version` artışı, takvim ham baytlarının
+`generation.deadline` `input_digest`'ine (Adım 5, `digest_version`
+`row19c3ci.deadline.v3`) girmesi nedeniyle tasarım gereği yeni
+deadline generation identity'leri üretir (bkz. §H madde 6).
+
+**E. Validator sözleşmesi (`src/holiday_calendar_validator.py`)** —
+`HOLIDAY_CALENDAR_VALIDATOR_VERSION` `"1"` → `"2"`; dosyanın iki
+silinen satırı bu literal ile eski `V1: 26/26 PASS` self-test
+banner'ıdır (yerine `V2: 55/55 PASS`). **Canonical observance
+registry**: `CANONICAL_OBSERVANCE_REGISTRY` tam **17** kayıt
+(`assert len(...) == 17` modül yükünde), her kayıt aile/kind/
+day_type/sequence_position taşır;
+`validate_observance_registry_consistency()` bilinmeyen
+`observance_id`'yi, aynı girdi içindeki tekrar eden `observance_id`'yi,
+ulusal gözlemde `null` olmayan `block_index`'i ve dinî gözlemde pozitif
+tam sayı olmayan `block_index`'i reddeder. **Duplicate anahtarları**:
+ulusal gözlem yıl içinde TAM 1 kez (anahtar `observance_id`); dinî
+gözlem anahtarı `(family, block_index, observance_id)` — aynı id'nin
+FARKLI `block_index`'lerde bulunması meşrudur (2033'ün iki Ramazan
+bloğu). **Çok bloklu yıllar**: her `(family, block_index)` bloğu
+bağımsız doğrulanır (blok içi bitişiklik ve blok-başına tamlık);
+kaynak yorumları, Phase A bağımsız incelemesinin bulduğu bir F1
+remediation'ını kaydeder — eski last-wins `seen_oids` sözlüğü, iki
+bloklu bir yılda ikinci bloğun birinci bloğun eksiğini MASKELEMESİNE
+yol açıyordu (çok-bloklu tamlık fail-open); occurrence listeleri ile
+blok-başına ayrı değerlendirmeye geçilerek kapatıldı (bkz. §G). **Exact
+dinî
+blok-sayısı sözleşmesi** (`REV41_EXPECTED_RELIGIOUS_BLOCK_COUNT`,
+`REV41_BLOCK_COUNT_SUPPORTED_YEARS` = 2024..2035, 12 yıl, modül-yükü
+assert'leriyle): Ramazan 2033 = **2** blok, diğer tüm Ramazan yılları
+= 1, Kurban her yıl = 1.
+`validate_verified_year_observance_completeness()` yalnız
+`verified is True` OLAN VE `observances[]` modelini en az bir girdide
+kullanan yıllar için çalışır; destek aralığı DIŞINDA `verified:true` +
+`observances[]` bir yıl **sessiz tahmin yerine fail-closed reddedilir**
+("refusing to guess; extend the contract with lawyer-verified input").
+Saf-legacy (`observances[]`'sız) `verified:true` yıl bu tamlık
+kapısının KAPSAMI DIŞINDADIR — mevcut legacy structural kontroller
+onu kapsamaya devam eder (bkz. §H madde 3). Kaynak yorumlarına göre
+blok-sayısı tablosunun değerleri, bağımsız incelemeden geçmiş bir
+"REV4.1 tasarım paketi"nden birebir taşınmıştır; o paket bu
+repository'de DEĞİLDİR ve bu checkpoint onun içeriğini
+doğrulamaz/üretmez — yalnız kaynak kodun kendi atfını kaydeder.
+
+**F. Hesaplayıcı davranışı (`src/deadline_calculator.py`, LOCKED Row
+8)** — `derive_effective_holiday_calendar()`: bir girdi `observances[]`
+taşıyorsa efektif `day_type`, gözlemlerin `day_type` kümesinde
+`full_day` VARSA `full_day`, yoksa `half_day` olarak türetilir
+(**full-day + half-day çakışmasında full-day üstün gelir**);
+`observances[]` yoksa legacy flat `day_type` okunur (uyumluluk).
+`full_day` (ve `counts_as_holiday` altındaki `half_day`) tarihleri
+eskisi gibi `holiday_dates`'e girer; YALNIZ
+`half_day_policy == "needs_review_if_deadline_day"` iken ve YALNIZ
+gerçekten yalnız-half-day kalan tarihler yeni, ayrı `half_day_only_dates`
+kümesine girer; diğer üç politikada bu küme HER ZAMAN boştur.
+`calculate_rule_deadline()`: adli tatil/hafta sonu/tatil kaydırması ve
+Adım 5'in takvim-kapsam kapısı DEĞİŞMEDEN çalıştıktan sonra,
+`final_deadline` `half_day_only_dates` içindeyse **fail-closed
+`needs_review`** (`calculated_deadline: null`,
+`holiday_adjustment_applied: false`,
+`reason: holiday_calendar_half_day_deadline_requires_review`) döner;
+`full_day` tarihleri zaten kaydırıldığı için bu dal yalnız gerçekten
+yalnız-half-day final günlerde tetiklenir ve yalnız
+`end_day_policy == next_business_day_if_holiday` dalına sınırlıdır
+(bugün aktif tek kural). Commit diff'inde `calculate_rule_deadline` ve
+`load_holiday_calendar` hunk'ları saf EKLEMEDİR (sıfır silme); silinen
+13 satırın tamamı (11 içerikli + 2 boş)
+`derive_effective_holiday_calendar`'ın iki hunk'ına — flat `day_type`
+okumasının observance-farkındalı yeniden düzenlenmesine — aittir.
+`calculation_state` sözlüğü, mali tatil (Adım 7) mantığı ve
+`DEFAULT_HOLIDAY_CALENDAR_PATH` sabiti DEĞİŞMEDİ.
+`load_holiday_calendar()` audit alanı olarak takvimin
+`calendar_version`'ını taşımaya devam eder;
+`ui/tests/test_deadline_engine_isolated.py`'nin 8b kontrolü, sabit `1`
+literali yerine üretim dosyasından okunan `calendar_version` değerini
+karşılaştırır — bir tutarlılık kontrolüdür, güçlendirilmiş veya
+gevşetilmiş bir assertion DEĞİLDİR.
+
+**G. Test ve inceleme kanıtı — attribution açık** — Bu roadmap-lock
+taslağı turunda HİÇBİR test çalıştırılmadı ve HİÇBİR commit
+oluşturulmadı. Aşağıdaki test sayıları, verdict'ler ve F1/F2
+inceleme-remediasyon kaydı, kullanıcı tarafından sağlanan uygulama ve
+bağımsız inceleme raporlarına dayanır; REV2 bunları attribution ile
+kaydeder, bu taslak turunun doğrudan gözlemi olarak SUNMAZ. Testler
+exact staged blob'lar üzerinde koşmuştur; commit blob'larının o staged
+blob'larla SHA-256 düzeyinde birebir eşleştiği, önceki commit turunda
+mekanik olarak doğrulanmıştır (bkz. §B) — kanıt bu nedenle commit'li
+baytlara aittir. Commit sonrası yeni bir `production-parity` koşusu
+kullanıcı kararıyla İSTENMEMİŞTİR: exact staged blob == commit blob
+kanıtı ve bağımsız re-review koşumu yeterli kabul edilmiştir.
+
+**Bağımsız inceleme ve remediasyon (gizlenmez)** — İlk bağımsız
+inceleme verdict'i, exact olarak: `PHASE A NOT READY — STOP`. İki
+Medium bulgu: **F1 (Medium)** — validator, cross-entry duplicate ve
+çok-bloklu yıl tamlığında last-wins sözlükler nedeniyle fail-open
+davranıyordu; somut risk: aynı ulusal `observance_id`'nin hayalet bir
+tarihte tekrar edilmesi kabul edilebiliyor ve bu tarih `holiday_dates`
+akışına girerek bir deadline'ı yanlış biçimde ileri kaydırabiliyordu;
+çok-bloklu risk: tam bir ikinci blok, eksik birinci bloğu
+maskeleyebiliyordu. **F2 (Medium)** — üç UI negatif testi, verified
+fixture'ın ilgisiz completeness hataları nedeniyle vacuous biçimde
+PASS ediyordu; hedeflenen registry mutasyonunu gerçekten
+kanıtlamıyordu. Dar remediasyon YALNIZ iki dosyada yapıldı:
+`src/holiday_calendar_validator.py` ve
+`ui/tests/test_holiday_calendar_validator_isolated.py`. **F1
+kapanışı**: occurrence-list yapısı, yıl-içi ulusal duplicate kontrolü,
+dinî `(family, block_index, observance_id)` kontrolü, blok-başına
+bağımsız tamlık ve exact block-count sözleşmesi ile. **F2 kapanışı**:
+baseline 0 hata → tek mutasyon → spesifik hata → hedef validator
+etkisizleştirilince testin FAIL olması → revert ile yeniden geçerli
+düzeniyle. Remediasyon sonrası ayrı, bağımsız final re-review
+verdict'i, exact olarak: `PHASE A READY FOR COMMIT AUTHORIZATION`.
+
+Hedefli testler:
+
+- `holiday_calendar_validator.py --self-test`: **55/55**
+- `test_holiday_calendar_validator_isolated`: **79/79**
+- `deadline_calculator.py --self-test`: **27/27**
+- `test_deadline_calendar_derivation_isolated`: **44/44**
+- `test_deadline_calculator_mali_tatil_isolated` (commit DIŞI,
+  regresyon): **60/60**
+- `test_deadline_engine_isolated`: **33/33**
+
+Bağımsız final re-review verdict'i, exact olarak:
+`PHASE A READY FOR COMMIT AUTHORIZATION`
+
+Resmî `production-parity` (gerçek disposable PostgreSQL, migration
+0001–0005): exit 0, `completed` / `SWEEP FULL`, **78/78 modül PASS**,
+**6111 passed, 0 failed, 8 counted skip, 14 informational skip**,
+guard `armed 212 = expected 212`, positive controls 10/10, protected
+manifest temiz, secret scan 0 isabet, residue/refusal/warning yok.
+
+**H. Residual sınırlar (kapatılmış gösterilmez)**
+
+1. Üretim takvimi hâlâ BOŞ ve `verified` DEĞİLDİR (bkz. §D);
+   `next_business_day_if_holiday` policy'li tek aktif kural, avukat en
+   az bir yılı doğrulayıp `verified:true` yapana kadar hiçbir gerçek
+   dosyada `calculated` tarih ÜRETMEZ (Adım 5 sınırı AYNEN geçerli).
+2. Phase B, gerçek avukat `verification_ref`'i olmadan BAŞLAYAMAZ:
+   **NOT STARTED / NOT AUTHORIZED / BLOCKED ON REAL LAWYER verification_ref**.
+3. Saf legacy `verified:true` bir yıl `observances[]` taşımıyorsa yeni
+   tamlık kapısı UYGULANMAZ — kaynakta belgelenmiş, bilinçli uyumluluk
+   sınırıdır; legacy structural kontroller devam eder.
+4. Validator içindeki bazı "V1" metinleri (modül başlığı, hata-mesajı
+   öneki, `main()` banner'ları, self-test fixture `notes` metni,
+   argparse `description`) kozmetik Low kaydıdır; davranışsal
+   sürüm `HOLIDAY_CALENDAR_VALIDATOR_VERSION = "2"`dir ve self-test
+   başarı banner'ı zaten `V2: 55/55 PASS` der. `calendar_id`
+   const'ındaki `_v1` kimlik literalidir, bu maddenin KAPSAMINDA
+   DEĞİLDİR.
+5. Aynı kayıt içi duplicate `observance_id` hata metninde ifade
+   tekrarı bulunabilir; fail-closed davranışı ETKİLEMEYEN Low kaydıdır.
+6. `calendar_version` değişikliği, takvim baytları `input_digest`'e
+   girdiği için deadline generation identity'lerini tasarım gereği
+   değiştirir (yeni, bağımsız deneme) — kalıcı `IdempotencyConflict`
+   DEĞİLDİR (Row 19C-3c-i / Adım 5 ruleset-provisions-takvim emsaliyle
+   aynı sınıf).
+7. `.gitattributes` yalnız `*.json`/`*.json.pending` için `eol=lf`
+   zorlar; genel `*.py text eol=lf` kuralı YOKTUR. Bu nedenle Windows
+   working-tree'de CRLF artefaktı oluşabilir (bu tur,
+   `src/deadline_calculator.py`'nin working-tree kopyasında 5064 CR
+   baytı gözlemledi; `core.autocrlf=true` altında `git status`
+   temizdir). Commit blob'larının 7'si de LF'dir (0 CR — commit öncesi
+   ve sonrası ayrı ayrı doğrulandı). Ayrı bir backlog konusudur; bu
+   turda `.gitattributes` DEĞİŞTİRİLMEDİ.
+
+**I. Kapsam dışı / başlamamış** — Bu checkpoint aşağıdakilerin
+HİÇBİRİNE dosya-yazma, veri girişi veya implementasyon yetkisi VERMEZ:
+Phase B (2024–2035 resmî tatil tarihlerinin/gözlemlerinin üretime
+girişi, `source_refs`, herhangi bir yılın `verified:true` yapılması,
+`verification_ref`); üretim `half_day_policy`'nin `not_decided`'dan
+başka bir değere alınması (avukat kararı); Adım 6'nın kalan
+soruları/altın örnekleri; Adım 7'nin mali tatil dışındaki kalan alt
+kapsamları; Adım 8–13; `.gitattributes` EOL politikası; Row 19D; push.
+
+**J. §9 LOCKED-file gerekçesi** — `src/deadline_calculator.py` (LOCKED
+Row 8; Adım 5 ve Adım 7'de de dar biçimde açılmıştı): kullanıcı talebi
+(Phase A onayı) + downstream uyumluluk (şema v2'nin additive
+`observances[]`/dördüncü politikasının hesaplayıcı tarafından
+tüketilmesi zorunludur, aksi halde şema ile hesap birbirinden kopar) +
+fail-closed güvenlik (yalnız-yarım-günlük bir final gün otomatik kesin
+tarih üretmemeli). Değişiklik additive'dir (deadline dalında sıfır
+silme); diğer üç politika, adli tatil/mali tatil sırası, takvim-kapsam
+kapısı ve `calculation_state` sözlüğü DEĞİŞMEDİ.
+`data/holiday_calendar.schema.json`,
+`data/holiday_calendar/holiday_calendar.json`,
+`src/holiday_calendar_validator.py` (Adım 5 LOCKED): Phase A'nın
+doğrudan nesneleridir; şema değişikliği additive (üç eski politika ve
+legacy flat kayıt korunur), üretim registry'sinde yalnız sürüm değeri
+değişir, validator yalnız yeni model için EK kontroller kazanır. Üç
+test dosyası yalnız additive/tutarlılık kanıtı aldı; hiçbir mevcut
+assertion gevşetilmedi. Bunların DIŞINDA hiçbir LOCKED dosya bu
+commit'te açılmadı.
+
+**K. Sayaçlar** — `ui/tests/test_*.py` modülü **78 → 78** (değişmedi);
+production Python (tracked `*.py` − `ui/tests/**`) **157 → 157**
+(değişmedi; Phase A yeni dosya eklemedi); migration **5 → 5**; merged
+reconciliation routing key (50), logical mutation family (38), CLI
+subcommand (6) — önceki checkpoint'ten aktarılır ve bu commit hiçbir
+facade/registry/CLI/migration dosyasına dokunmadığı için yapısal olarak
+DEĞİŞEMEZ; `data/holiday_calendar/holiday_calendar.json`
+`calendar_version` **1 → 2**; `HOLIDAY_CALENDAR_VALIDATOR_VERSION`
+`"1"` → `"2"`; şema title V1 → V2; `schema_version` const **1 → 1**.
+
+**L. Süreç notu (gizlenmez)** — Bu roadmap-lock taslağı turu hiçbir
+test çalıştırmadı ve hiçbir commit oluşturmadı. REV2, kullanıcı
+tarafından sağlanan F1/F2 uygulama ve bağımsız inceleme sonuçlarını
+attribution ile kaydeder; bunları bu taslak turunun doğrudan gözlemi
+olarak sunmaz. §E'deki REV4.1 atfı commit'li kaynak kodun kendi
+yorumundan alınmıştır. Commit, önceki commit turunda kullanıcının açık
+yetkisi ve hash-doğrulamalı preflight sonrasında, body/trailer
+eklenmeden oluşturulmuştur.
+
+**Bağımsız final re-review verdict'i (exact)**:
+
+`PHASE A READY FOR COMMIT AUTHORIZATION`
+
+**DONE / LOCKED** — yalnız "Holiday Calendar Schema V2 — Phase A
+Technical Plumbing" alt kapsamı için. **Phase B:
+NOT STARTED / NOT AUTHORIZED / BLOCKED ON REAL LAWYER verification_ref.**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
+işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
 
 ## 6. Cross-Cutting Backlog
 
