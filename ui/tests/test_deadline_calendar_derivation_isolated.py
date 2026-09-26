@@ -210,6 +210,7 @@ def test_s8_half_day_under_counts_as_working_day_not_counted_as_holiday():
         "governance": {"change_approval": "s8", "verification_authority": "s8", "notes": None},
         "notes": None,
     }
+    hcv.attach_fixture_verification(document, seed="s8")  # ADIM 6: verified yıl kayda bağlanır
     schema_check = hcv.validate_holiday_calendar(calendar=document)
     check("S8 fixture precondition: schema-valid", schema_check["valid"] is True, schema_check["errors"])
     derived = dc.derive_effective_holiday_calendar(document)
@@ -230,24 +231,114 @@ def test_s8_half_day_under_counts_as_working_day_not_counted_as_holiday():
     )
 
 
-def test_s9_production_placeholder_calendar_every_scenario_needs_review():
-    loaded = dc.load_holiday_calendar()  # real, committed production calendar
+def test_s9_production_calendar_full_coverage_calculated():
+    # PILOT READINESS ADIM 6: üretim takvimi artık 2024-2035 için imzalı
+    # avukat doğrulamasıyla (HC-LAWYER-VERIFY-v1) verified=true - Adım 5'in
+    # "her senaryo needs_review" placeholder davranışı TERSİNE döndü. Her
+    # beklenen tarih elle doğrulandı (hafta içi, tatil değil); mali tatil
+    # penceresine (1-20 Temmuz) veya adli tatile dokunan anchor'lar bilinçli
+    # olarak SEÇİLMEDİ - bu test yalnız takvim kapısını izole eder.
+    loaded = dc.load_holiday_calendar()  # real, committed production calendar (read-only)
     check(
-        "S9 precondition: the real production calendar has ZERO verified years (K3 - bilerek "
-        "hiçbir resmi tatil tarihi önerilmemiştir)",
-        len(loaded["covered_verified_years"]) == 0,
+        "S9 precondition: the real production calendar covers 2024-2035 (12 lawyer-verified years)",
+        loaded["covered_verified_years"] == set(range(2024, 2036)),
         loaded["covered_verified_years"],
     )
-    for anchor in ("2026-02-10", "2027-06-01", "2024-01-01", "2035-12-01"):
+    expected = {
+        "2026-02-10": "2026-03-12",  # Thursday, no holiday
+        "2024-01-01": "2024-01-31",  # Wednesday, no holiday (anchor itself Yılbaşı - anchor day is not counted)
+        "2035-12-01": "2035-12-31",  # Monday, no holiday
+        "2026-12-20": "2027-01-19",  # crosses into 2027 - both years covered
+    }
+    for anchor, expected_deadline in expected.items():
         result = dc.calculate_rule_deadline(
             anchor_date=anchor, rule=RULE, holiday_calendar=loaded, judicial_recess_applicable=True,
         )
         check(
-            f"S9: production placeholder calendar (all verified=false) -> needs_review for "
+            f"S9: production calendar (lawyer-verified 2024-2035) -> calculated {expected_deadline} for "
             f"anchor={anchor}",
-            result["calculation_state"] == "needs_review" and result["calculated_deadline"] is None,
+            result["calculation_state"] == "calculated" and result["calculated_deadline"] == expected_deadline,
             result,
         )
+
+
+def test_s16_production_half_day_only_final_day_needs_review():
+    # Lawyer's policy needs_review_if_deadline_day is LIVE: 2026-09-28 + 30 =
+    # 2026-10-28 (Cumhuriyet Bayramı arefesi, yalnız yarım gün) -> fail-closed
+    # needs_review with the fixed reason literal, never a silent date.
+    loaded = dc.load_holiday_calendar()
+    result = dc.calculate_rule_deadline(
+        anchor_date="2026-09-28", rule=RULE, holiday_calendar=loaded, judicial_recess_applicable=True,
+    )
+    check(
+        "S16: production calendar - final day 2026-10-28 is half-day-only -> needs_review, reason "
+        "holiday_calendar_half_day_deadline_requires_review, calculated_deadline=None",
+        result["calculation_state"] == "needs_review" and result["calculated_deadline"] is None
+        and result["reason"] == "holiday_calendar_half_day_deadline_requires_review",
+        result,
+    )
+
+
+def test_s17_production_collision_dates_full_day_wins_and_shift():
+    # 2027-05-19 = Kurban Bayramı 4. Gün / Atatürk'ü Anma (full+full collision) ->
+    # shifted to 2027-05-20 (Thursday). 2029-04-23 = Ulusal Egemenlik (full) /
+    # Kurban arefesi (half) -> full day wins; then Kurban 1-4 (24-27 Nisan,
+    # Tue-Fri) + weekend -> 2029-04-30 (Monday).
+    loaded = dc.load_holiday_calendar()
+    result = dc.calculate_rule_deadline(
+        anchor_date="2027-04-19", rule=RULE, holiday_calendar=loaded, judicial_recess_applicable=True,
+    )
+    check(
+        "S17a: production calendar - base 2027-05-19 (full+full collision) -> calculated 2027-05-20, "
+        "holiday_adjustment_applied=True",
+        result["calculation_state"] == "calculated" and result["calculated_deadline"] == "2027-05-20"
+        and result["holiday_adjustment_applied"] is True,
+        result,
+    )
+    result = dc.calculate_rule_deadline(
+        anchor_date="2029-03-24", rule=RULE, holiday_calendar=loaded, judicial_recess_applicable=True,
+    )
+    check(
+        "S17b: production calendar - base 2029-04-23 (full+half collision, full wins) -> shifted "
+        "across Kurban 1-4 and the weekend -> calculated 2029-04-30 (never needs_review for the "
+        "half-day arefe on a collision date)",
+        result["calculation_state"] == "calculated" and result["calculated_deadline"] == "2029-04-30",
+        result,
+    )
+
+
+def test_s18_production_full_day_holiday_shifts():
+    loaded = dc.load_holiday_calendar()
+    result = dc.calculate_rule_deadline(
+        anchor_date="2026-03-24", rule=RULE, holiday_calendar=loaded, judicial_recess_applicable=True,
+    )
+    check(
+        "S18a: production calendar - base 2026-04-23 (Ulusal Egemenlik, Thursday) -> calculated 2026-04-24",
+        result["calculation_state"] == "calculated" and result["calculated_deadline"] == "2026-04-24",
+        result,
+    )
+    result = dc.calculate_rule_deadline(
+        anchor_date="2026-04-27", rule=RULE, holiday_calendar=loaded, judicial_recess_applicable=True,
+    )
+    check(
+        "S18b: production calendar - base 2026-05-27 (Kurban 1. Gün) -> Kurban 2/3 (Thu/Fri), Kurban 4 + "
+        "weekend (Sat/Sun) -> calculated 2026-06-01 (Monday)",
+        result["calculation_state"] == "calculated" and result["calculated_deadline"] == "2026-06-01",
+        result,
+    )
+
+
+def test_s19_production_cross_year_shift_both_years_verified():
+    loaded = dc.load_holiday_calendar()
+    result = dc.calculate_rule_deadline(
+        anchor_date="2033-12-02", rule=RULE, holiday_calendar=loaded, judicial_recess_applicable=True,
+    )
+    check(
+        "S19: production calendar - base 2034-01-01 (Sunday + Yılbaşı) -> calculated 2034-01-02 "
+        "(2033 AND 2034 both lawyer-verified; shift may cross the year boundary)",
+        result["calculation_state"] == "calculated" and result["calculated_deadline"] == "2034-01-02",
+        result,
+    )
 
 
 # ================================================================
@@ -664,7 +755,11 @@ def run_self_test():
     test_s6_anchor_near_year_boundary_both_years_covered()
     test_s7_half_day_under_not_decided_policy_rejected_by_validator()
     test_s8_half_day_under_counts_as_working_day_not_counted_as_holiday()
-    test_s9_production_placeholder_calendar_every_scenario_needs_review()
+    test_s9_production_calendar_full_coverage_calculated()
+    test_s16_production_half_day_only_final_day_needs_review()
+    test_s17_production_collision_dates_full_day_wins_and_shift()
+    test_s18_production_full_day_holiday_shifts()
+    test_s19_production_cross_year_shift_both_years_verified()
 
     test_coverage_crossing_shift_into_uncovered_year_needs_review()
     test_coverage_crossing_shift_into_covered_year_calculated()

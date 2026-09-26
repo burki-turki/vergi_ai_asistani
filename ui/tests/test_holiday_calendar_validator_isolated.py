@@ -9,6 +9,10 @@
 # konvansiyonuyla (`test_corpus_policy_validator_isolated.py` deseni),
 # tempdir-izoleli olarak dener; hiçbir gerçek data/ ağacına yazmaz.
 #
+# PILOT READINESS ADIM 6: avukat doğrulama kaydı (verifications[],
+# HC-LAWYER-VERIFY-v1) bağlama kanıtı - üretim takvimi salt-okunur
+# pinlenir; imzalı UDF repoda YOKTUR ve bu testler onu okumaz.
+#
 # Run: python -m ui.tests.test_holiday_calendar_validator_isolated
 # ============================================================
 
@@ -92,10 +96,15 @@ def test_real_committed_calendar_validates_cleanly():
         result["year_count"],
     )
     check(
-        "real committed holiday_calendar.json: verified_year_count == 0 (PILOT READINESS ADIM 5 "
-        "K3 - bilerek hiçbir resmi tatil tarihi önerilmemiştir, hepsi avukata bırakılmıştır)",
-        result["verified_year_count"] == 0,
+        "real committed holiday_calendar.json: verified_year_count == 12 (PILOT READINESS ADIM 6 - "
+        "2024-2035 imzalı avukat doğrulamasıyla (HC-LAWYER-VERIFY-v1) verified=true)",
+        result["verified_year_count"] == 12,
         result["verified_year_count"],
+    )
+    check(
+        "real committed holiday_calendar.json: exactly ONE verification record and no warnings",
+        result["verification_record_count"] == 1 and result["warnings"] == [],
+        (result["verification_record_count"], result["warnings"]),
     )
 
 
@@ -341,6 +350,7 @@ def test_half_day_under_counts_as_holiday_policy_allowed():
     fixture = copy.deepcopy(hcv.create_valid_fixture())
     fixture["half_day_policy"] = "counts_as_holiday"
     fixture["years"][0]["holidays"][0]["day_type"] = "half_day"
+    hcv.refresh_fixture_verification(fixture)  # ADIM 6: içerik/politika değişti -> simüle yeniden doğrulama
     result = hcv.validate_holiday_calendar(calendar=fixture)
     check("half_day entry in a verified year under half_day_policy='counts_as_holiday' allowed", result["valid"] is True, result["errors"])
 
@@ -435,6 +445,10 @@ def _minimal_unverified_observance_fixture(entry, half_day_policy="needs_review_
     fixture["years"][0]["verified"] = False
     fixture["years"][0]["verification_ref"] = None
     fixture["years"][0]["holidays"] = [entry]
+    # ADIM 6: unverified-only baseline taşımaz - create_valid_fixture()'ın
+    # 2026'ya bağlı kaydı burada dangling kalır (stale digest -> strict
+    # rule fires); attach() verified yıl yokken verifications=[] yazar.
+    hcv.attach_fixture_verification(fixture, seed="f2_unverified_baseline")
     return fixture
 
 
@@ -469,6 +483,11 @@ def _calendar_with_years(year_entries, half_day_policy="needs_review_if_deadline
     fixture = copy.deepcopy(hcv.create_valid_fixture())
     fixture["half_day_policy"] = half_day_policy
     fixture["years"] = year_entries
+    # ADIM 6: verified yıllar sentetik bir doğrulama kaydına bağlanır (kayıt
+    # yoksa verified yıl fail-closed reddedilir); mutasyonlar bu çağrıdan ÖNCE
+    # yapıldığından digest o içeriği mühürler - negatif testler yalnız kendi
+    # hedefledikleri kuralla FAIL eder.
+    hcv.attach_fixture_verification(fixture, seed="calendar_with_years")
     return fixture
 
 
@@ -700,6 +719,7 @@ def test_half_day_under_needs_review_if_deadline_day_policy_allowed():
     fixture = copy.deepcopy(hcv.create_valid_fixture())
     fixture["half_day_policy"] = "needs_review_if_deadline_day"
     fixture["years"][0]["holidays"][0]["day_type"] = "half_day"
+    hcv.refresh_fixture_verification(fixture)  # ADIM 6: içerik değişti -> simüle yeniden doğrulama
     result = hcv.validate_holiday_calendar(calendar=fixture)
     check(
         "half_day entry in a verified year under half_day_policy='needs_review_if_deadline_day' allowed",
@@ -791,7 +811,38 @@ def test_independent_hand_written_golden_fixture_validates():
             "change_approval": "golden", "verification_authority": "golden", "notes": None,
         },
         "notes": None,
+        "verifications": [
+            {
+                "verification_ref": "HC-LAWYER-VERIFY-v1-2030-2030-abcdef0123456789",
+                "document_version": "HC-LAWYER-VERIFY-v1",
+                "signed_artifact": {
+                    "filename": "golden.udf", "format": "udf",
+                    "sha256": "abcdef0123456789" * 4, "size_bytes": 7,
+                    "signature_method": "guvenli_elektronik_imza",
+                    "signature_timestamp": "2030-06-15T10:00:00+03:00",
+                    "signature_timestamp_source": "uyap_screen_operator_observation",
+                    "signature_count_observed": 1,
+                    "hash_computed_at": "2030-06-15T07:00:00Z",
+                    "stored_in_repository": False,
+                },
+                "lawyer": {"full_name": "Golden Lawyer", "bar": "Golden Bar", "bar_registration_no": "1"},
+                "review_date": "2030-06-15",
+                "scope": {
+                    "year_from": 2030, "year_to": 2030, "accepted_years": [2030],
+                    "year_decisions": {"2030": "KABUL"}, "conflict_decision": "KABUL",
+                    "half_day_policy_decision": "counts_as_working_day",
+                    "final_decision": "KABUL", "corrections": [],
+                },
+                "referenced_source_artifacts": [],
+                "verified_content_digest": "0" * 64,
+                "notes": "golden - hand-written record",
+            },
+        ],
     }
+    golden["years"][0]["verification_ref"] = "HC-LAWYER-VERIFY-v1-2030-2030-abcdef0123456789"
+    golden["verifications"][0]["verified_content_digest"] = hcv.compute_verified_content_digest(
+        golden, "HC-LAWYER-VERIFY-v1-2030-2030-abcdef0123456789"
+    )
     result = hcv.validate_holiday_calendar(calendar=golden)
     check(
         "independent, hand-written golden fixture (not derived from create_valid_fixture()) "
@@ -812,6 +863,216 @@ def test_golden_fixture_and_create_valid_fixture_are_genuinely_different_objects
         golden_years.isdisjoint(fixture_years),
         f"golden={golden_years!r} fixture={fixture_years!r}",
     )
+
+
+
+# ================================================================
+# PILOT READINESS ADIM 6 - LAWYER VERIFICATION BINDING (HC-LAWYER-
+# VERIFY-v1). Üretim takvimi yalnız SALT-OKUNUR doğrulanır; her
+# mutasyon deep-copy üzerinde, tempdir-izoleli yapılır. İmzalı UDF
+# repoda YOKTUR - bu testler onu okumaz; fiziksel hash kontrolü
+# sentetik tempdir dosyalarıyla kanıtlanır.
+# ================================================================
+
+PRODUCTION_VERIFICATION_REF = "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95"
+PRODUCTION_SIGNED_ARTIFACT_SHA256 = "fb79b85fcf114c951f3f08a03a437e867430ecbf6cca0f477d77b9df6fd364e2"
+PRODUCTION_REFERENCED_ARTIFACT_SHA256 = {
+    "source_observations": "7a8cae872190e5c31205d9766766c2c21c48b4e69ce820c8139ac364230bbc5c",
+    "normalized_proposal": "a351f548d9b94225dafcec93581344958d8a6eee9c7eb623090799bf9f9e7f60",
+    "canonical_registry": "95db93ac5bed743a1bcf3587771669f85061571166d4c17a61f8a12dd81b0a64",
+}
+
+
+def test_production_calendar_lawyer_verification_binding():
+    calendar = hcv.load_calendar()
+    records = calendar.get("verifications") or []
+    check("production: exactly one lawyer verification record", len(records) == 1, len(records))
+    record = records[0]
+    check("production: verification_ref is the signed-artifact-bound ref",
+          record["verification_ref"] == PRODUCTION_VERIFICATION_REF, record["verification_ref"])
+    check("production: signed_artifact.sha256 == expected SHA-256 of sonn_avukat_onay.udf",
+          record["signed_artifact"]["sha256"] == PRODUCTION_SIGNED_ARTIFACT_SHA256)
+    check("production: ref suffix == sha256[:16] (structural binding)",
+          PRODUCTION_VERIFICATION_REF.endswith(PRODUCTION_SIGNED_ARTIFACT_SHA256[:16]))
+    check("production: signed artifact filename/size/format/signature metadata as delivered",
+          record["signed_artifact"]["filename"] == "sonn_avukat_onay.udf"
+          and record["signed_artifact"]["size_bytes"] == 9182
+          and record["signed_artifact"]["format"] == "udf"
+          and record["signed_artifact"]["signature_count_observed"] == 1
+          and record["signed_artifact"]["signature_timestamp"] == "2026-09-26T22:07:21+03:00"
+          and record["signed_artifact"]["stored_in_repository"] is False,
+          record["signed_artifact"])
+    scope = record["scope"]
+    check("production: scope 2024-2035, all 12 years KABUL, conflict KABUL, final KABUL",
+          (scope["year_from"], scope["year_to"]) == (2024, 2035)
+          and scope["accepted_years"] == list(range(2024, 2036))
+          and all(scope["year_decisions"].get(str(y)) == "KABUL" for y in range(2024, 2036))
+          and scope["conflict_decision"] == "KABUL" and scope["final_decision"] == "KABUL"
+          and scope["corrections"] == [], scope)
+    check("production: lawyer's half-day decision == needs_review_if_deadline_day == calendar policy",
+          scope["half_day_policy_decision"] == "needs_review_if_deadline_day"
+          and calendar["half_day_policy"] == "needs_review_if_deadline_day")
+    check("production: all 12 years verified=true and bound to the single ref",
+          all(y["verified"] is True and y["verification_ref"] == PRODUCTION_VERIFICATION_REF
+              for y in calendar["years"]) and len(calendar["years"]) == 12)
+    total_dates = sum(len(y["holidays"]) for y in calendar["years"])
+    total_obs = sum(len(h["observances"]) for y in calendar["years"] for h in y["holidays"])
+    collisions = sum(1 for y in calendar["years"] for h in y["holidays"] if len(h["observances"]) > 1)
+    check("production: 205 dates / 208 observances / 3 collisions (as the signed document states)",
+          (total_dates, total_obs, collisions) == (205, 208, 3), (total_dates, total_obs, collisions))
+    check("production: every holiday entry carries observances[] (no legacy flat entry)",
+          all("observances" in h for y in calendar["years"] for h in y["holidays"]))
+    check("production: referenced source artifacts (CSV / proposal / registry) carry the signed document's SHA-256s",
+          {a["role"]: a["sha256"] for a in record["referenced_source_artifacts"]} == PRODUCTION_REFERENCED_ARTIFACT_SHA256)
+    check("production: verified_content_digest recomputes identically (content == what the lawyer verified)",
+          hcv.compute_verified_content_digest(calendar, PRODUCTION_VERIFICATION_REF) == record["verified_content_digest"])
+    check("production: calendar_version == 3 (Phase B population bump)", calendar["calendar_version"] == 3)
+    result = hcv.validate_holiday_calendar(calendar=calendar)
+    check("production: validates with zero errors/warnings under V3 rules", result["valid"] is True and result["warnings"] == [], result)
+    check("production: no physical artifact check is performed unless a path is supplied (documented limit)",
+          result["signed_artifact_checks"] == [])
+    check("production: no certificate material anywhere in the calendar file",
+          "sign.sgn" not in json.dumps(calendar, ensure_ascii=False) and "BEGIN CERTIFICATE" not in json.dumps(calendar))
+
+
+def test_production_calendar_tamper_invalidates_lawyer_verification():
+    base = hcv.load_calendar()
+    tampered = copy.deepcopy(base)
+    tampered["years"][2]["holidays"][0]["name"] = "Tampered after signature"
+    result = hcv.validate_holiday_calendar(calendar=tampered)
+    check("production tamper (name): rejected with digest mismatch",
+          result["valid"] is False and len(_errors_containing(result, "verified_content_digest mismatch")) == 1,
+          result["errors"])
+    tampered = copy.deepcopy(base)
+    entry = tampered["years"][0]["holidays"][0]
+    entry["date"] = "2024-01-02"  # shift a verified date by one day
+    result = hcv.validate_holiday_calendar(calendar=tampered)
+    check("production tamper (date shift): rejected (digest mismatch + completeness)",
+          result["valid"] is False and len(_errors_containing(result, "verified_content_digest mismatch")) == 1,
+          result["errors"])
+    tampered = copy.deepcopy(base)
+    tampered["verifications"] = []
+    result = hcv.validate_holiday_calendar(calendar=tampered)
+    check("production without its record: every verified year rejected (12 binding errors)",
+          result["valid"] is False and len(_errors_containing(result, "hiçbir kayda çözülmüyor")) == 12,
+          result["errors"][:3])
+    tampered = copy.deepcopy(base)
+    tampered["half_day_policy"] = "counts_as_working_day"
+    result = hcv.validate_holiday_calendar(calendar=tampered)
+    check("production policy flipped away from the lawyer's decision: rejected",
+          result["valid"] is False and len(_errors_containing(result, "avukatın karar verdiği politikadan sapma")) == 12,
+          result["errors"][:2])
+    tampered = copy.deepcopy(base)
+    tampered["verifications"][0]["scope"]["accepted_years"] = list(range(2024, 2035))  # drop 2035
+    tampered["verifications"][0]["scope"]["year_decisions"].pop("2035")
+    result = hcv.validate_holiday_calendar(calendar=tampered)
+    check("production: a verified year outside the record's accepted scope is rejected (2035)",
+          result["valid"] is False and len(_errors_containing(result, "years[year=2035]")) >= 1, result["errors"])
+    tampered = copy.deepcopy(base)
+    sha = tampered["verifications"][0]["signed_artifact"]["sha256"]
+    tampered["verifications"][0]["signed_artifact"]["sha256"] = "0" + sha[1:]
+    result = hcv.validate_holiday_calendar(calendar=tampered)
+    check("production: record sha256 not matching the ref suffix is rejected",
+          result["valid"] is False and len(_errors_containing(result, "!= signed_artifact.sha256[:16]")) == 1,
+          result["errors"])
+
+
+def test_verification_record_scope_and_decision_rules():
+    fixture = copy.deepcopy(hcv.create_valid_fixture())
+    ref = fixture["years"][0]["verification_ref"]
+    check("fixture ref matches the HC-LAWYER-VERIFY-v1 pattern", hcv.VERIFICATION_REF_PATTERN.match(ref) is not None, ref)
+    for decision in ("RED", "DUZELTMEYLE_KABUL"):
+        broken = copy.deepcopy(fixture)
+        broken["verifications"][0]["scope"]["final_decision"] = decision
+        result = hcv.validate_holiday_calendar(calendar=broken)
+        check(f"final_decision={decision} makes the bound year unusable (rejected)",
+              result["valid"] is False and len(_errors_containing(result, "kullanılabilir değil")) == 1, result["errors"])
+    partial = copy.deepcopy(fixture)
+    partial["verifications"][0]["scope"]["final_decision"] = "KISMEN_KABUL"
+    result = hcv.validate_holiday_calendar(calendar=partial)
+    check("final_decision=KISMEN_KABUL with the year explicitly accepted is usable", result["valid"] is True, result["errors"])
+    broken = copy.deepcopy(fixture)
+    broken["verifications"][0]["scope"]["year_decisions"]["2026"] = "DUZELTME"
+    result = hcv.validate_holiday_calendar(calendar=broken)
+    check("year_decisions[2026]=DUZELTME rejected (record-level AND year-level rule)",
+          result["valid"] is False and len(_errors_containing(result, "(KABUL gerekir)")) == 1
+          and len(_errors_containing(result, "(KABUL required)")) == 1, result["errors"])
+    broken = copy.deepcopy(fixture)
+    broken["verifications"][0]["scope"]["year_to"] = 2027
+    result = hcv.validate_holiday_calendar(calendar=broken)
+    check("scope.year_to not matching the ref's year range rejected",
+          result["valid"] is False and len(_errors_containing(result, "ref year range")) == 1, result["errors"])
+    broken = copy.deepcopy(fixture)
+    broken["verifications"].append(copy.deepcopy(broken["verifications"][0]))
+    result = hcv.validate_holiday_calendar(calendar=broken)
+    check("duplicate verification_ref rejected", result["valid"] is False and len(_errors_containing(result, "duplicate verification_ref")) == 1)
+    broken = copy.deepcopy(fixture)
+    broken["years"][0]["verification_ref"] = "not-a-conformant-ref"
+    result = hcv.validate_holiday_calendar(calendar=broken)
+    check("verified year with a non-conformant ref (no record) rejected fail-closed",
+          result["valid"] is False and len(_errors_containing(result, "hiçbir kayda çözülmüyor")) == 1, result["errors"])
+    broken = copy.deepcopy(fixture)
+    broken["verifications"][0]["verification_ref"] = "not-a-conformant-ref"
+    broken["years"][0]["verification_ref"] = "not-a-conformant-ref"
+    result = hcv.validate_holiday_calendar(calendar=broken)
+    check("record whose ref violates the schema pattern rejected at schema level", result["valid"] is False)
+    extra = copy.deepcopy(fixture)
+    extra["verifications"].append(hcv.make_fixture_verification_record([2028], seed="unreferenced"))
+    extra["verifications"][1]["verified_content_digest"] = hcv.compute_verified_content_digest(extra, extra["verifications"][1]["verification_ref"])
+    result = hcv.validate_holiday_calendar(calendar=extra)
+    check("an unreferenced (dangling) record is a WARNING, not an error",
+          result["valid"] is True and any("no verified year references this record" in w for w in result["warnings"]),
+          (result["errors"], result["warnings"]))
+
+
+def test_signed_artifact_physical_check_is_tempdir_isolated():
+    with tempfile.TemporaryDirectory() as tmp:
+        artifact_bytes = b"synthetic signed artifact bytes - NOT the real UDF\n"
+        sha = hashlib.sha256(artifact_bytes).hexdigest()
+        fixture = copy.deepcopy(hcv.create_valid_fixture())
+        record = fixture["verifications"][0]
+        ref = "HC-LAWYER-VERIFY-v1-2026-2026-" + sha[:16]
+        record["verification_ref"] = ref
+        record["signed_artifact"]["sha256"] = sha
+        record["signed_artifact"]["size_bytes"] = len(artifact_bytes)
+        fixture["years"][0]["verification_ref"] = ref
+        hcv.refresh_fixture_verification(fixture)
+        good = Path(tmp) / "good.udf"
+        good.write_bytes(artifact_bytes)
+        tampered = Path(tmp) / "tampered.udf"
+        tampered.write_bytes(artifact_bytes[:-1] + b"?")
+        same_size_tamper = hcv.verify_signed_artifact(record, tampered)
+        check("physical check: same-size byte tamper -> SHA-256 mismatch, ok=False",
+              same_size_tamper["ok"] is False and same_size_tamper["computed_size_bytes"] == len(artifact_bytes)
+              and any("SHA-256 mismatch" in e for e in same_size_tamper["errors"]), same_size_tamper)
+        ok = hcv.verify_signed_artifact(record, good)
+        check("physical check: genuine bytes -> ok=True, computed == expected", ok["ok"] is True and ok["computed_sha256"] == sha)
+        check("physical check: missing file -> ok=False (fail-closed, no exception)",
+              hcv.verify_signed_artifact(record, Path(tmp) / "nope.udf")["ok"] is False)
+        result = hcv.validate_holiday_calendar(calendar=fixture, signed_artifact_paths={ref: good})
+        check("validate(signed_artifact_paths=good) -> valid with one ok check",
+              result["valid"] is True and [c["ok"] for c in result["signed_artifact_checks"]] == [True], result["errors"])
+        result = hcv.validate_holiday_calendar(calendar=fixture, signed_artifact_paths={ref: tampered})
+        check("validate(signed_artifact_paths=tampered) -> INVALID (physical mismatch is an error)",
+              result["valid"] is False and len(_errors_containing(result, "SHA-256 mismatch")) == 1, result["errors"])
+        result = hcv.validate_holiday_calendar(calendar=fixture, signed_artifact_paths={"HC-LAWYER-VERIFY-v1-2026-2026-0000000000000000": good})
+        check("validate(signed_artifact_paths=unknown ref) -> INVALID", result["valid"] is False and len(_errors_containing(result, "unknown verification_ref")) == 1)
+
+
+def test_production_calendar_loads_into_deadline_calculator_with_full_coverage():
+    loaded = dc.load_holiday_calendar()  # real, committed production calendar (read-only)
+    check("deadline_calculator: covered_verified_years == 2024..2035", loaded["covered_verified_years"] == set(range(2024, 2036)), loaded["covered_verified_years"])
+    check("deadline_calculator: 170 full-day holiday dates, 35 half-day-only dates derived",
+          (len(loaded["holiday_dates"]), len(loaded["half_day_only_dates"])) == (170, 35),
+          (len(loaded["holiday_dates"]), len(loaded["half_day_only_dates"])))
+    check("deadline_calculator: collision 2027-05-19 / 2029-04-23 / 2033-01-01 -> full day wins (holiday_dates, not half-day-only)",
+          all(d in loaded["holiday_dates"] and d not in loaded["half_day_only_dates"]
+              for d in (date(2027, 5, 19), date(2029, 4, 23), date(2033, 1, 1))))
+    check("deadline_calculator: 28 Ekim arefe (2026-10-28) is half-day-only under the lawyer's policy",
+          date(2026, 10, 28) in loaded["half_day_only_dates"] and date(2026, 10, 28) not in loaded["holiday_dates"])
+    check("deadline_calculator: 2033 December Ramazan block present (2033-12-23 full day)", date(2033, 12, 23) in loaded["holiday_dates"])
+    check("deadline_calculator: calendar_version 3 and a 64-hex source_sha256 are reported for audit",
+          loaded["calendar_version"] == 3 and len(loaded["source_sha256"]) == 64)
 
 
 # ================================================================
@@ -889,6 +1150,12 @@ def run_self_test():
 
     test_independent_hand_written_golden_fixture_validates()
     test_golden_fixture_and_create_valid_fixture_are_genuinely_different_objects()
+
+    test_production_calendar_lawyer_verification_binding()
+    test_production_calendar_tamper_invalidates_lawyer_verification()
+    test_verification_record_scope_and_decision_rules()
+    test_signed_artifact_physical_check_is_tempdir_isolated()
+    test_production_calendar_loads_into_deadline_calculator_with_full_coverage()
 
     test_module_self_test_does_not_touch_real_data_tree()
 

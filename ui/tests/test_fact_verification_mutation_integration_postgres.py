@@ -344,6 +344,12 @@ _p10_synthetic_holiday_calendar_doc = {
     "governance": {"change_approval": "test-only", "verification_authority": "test-only", "notes": None},
     "notes": "P10 test-only synthetic calendar (Prensip 18) - never written to the real data/ tree.",
 }
+# PILOT READINESS ADIM 6: verified=true bir yıl artık takvimin kendi verifications[]
+# dizisindeki bir avukat doğrulama kaydına çözülmek ZORUNDADIR (fail-closed);
+# bu sentetik fixture yine sentetik (Prensip 18) bir kayda bağlanır.
+_pg_holiday_calendar_validator.attach_fixture_verification(
+    _p10_synthetic_holiday_calendar_doc, seed="p10_test_only_synthetic"
+)
 _p10_synthetic_holiday_calendar_check = _pg_holiday_calendar_validator.validate_holiday_calendar(
     calendar=_p10_synthetic_holiday_calendar_doc,
 )

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "calendar_id": "tr_official_holiday_calendar_v1",
-  "calendar_version": 2,
+  "calendar_version": 3,
   "effective_from": "2026-09-22",
   "jurisdiction": "TR",
   "weekend_policy": {
@@ -11,97 +11,3829 @@
     ],
     "notes": "Cumartesi/Pazar kaydırması kod içinde sabittir (deadline_calculator.is_non_working_day) - bu alan yalnız belgeleyicidir, uygulayıcı değildir."
   },
-  "half_day_policy": "not_decided",
+  "half_day_policy": "needs_review_if_deadline_day",
   "years": [
     {
       "year": 2024,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2024 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=156"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2024-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2024-04-09",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-04-10",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-04-11",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-04-12",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2024-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2024-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2024-06-15",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-06-16",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-06-17",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-06-18",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-06-19",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2024-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2024-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2024-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2024-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2025,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2025 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=157"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2025-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2025-03-29",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-03-30",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-03-31",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-04-01",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2025-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2025-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2025-06-05",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-06-06",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-06-07",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-06-08",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-06-09",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2025-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2025-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2025-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2025-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2026,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2026 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=158"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2026-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2026-03-19",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-03-20",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-03-21",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-03-22",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2026-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2026-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2026-05-26",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-05-27",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-05-28",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-05-29",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-05-30",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2026-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2026-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2026-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2026-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2027,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2027 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=159"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2027-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2027-03-08",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2027-03-09",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2027-03-10",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2027-03-11",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2027-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2027-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2027-05-15",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2027-05-16",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2027-05-17",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2027-05-18",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2027-05-19",
+          "name": "Kurban Bayramı 4. Gün / Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": "Çakışma: aynı tarihte birden fazla gözlem; etkili gün türü tam gün (imzalı avukat doğrulama eki §4, çakışma kararı KABUL).",
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            },
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2027-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2027-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2027-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2027-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2028,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2028 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=193"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2028-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2028-02-25",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-02-26",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-02-27",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-02-28",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2028-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2028-05-04",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-05-05",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-05-06",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-05-07",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-05-08",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2028-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2028-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2028-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2028-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2028-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2029,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2029 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=194"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2029-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2029-02-13",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-02-14",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-02-15",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-02-16",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı / Kurban Bayramı Arefesi",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": "Çakışma: aynı tarihte birden fazla gözlem; etkili gün türü tam gün (imzalı avukat doğrulama eki §4, çakışma kararı KABUL).",
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            },
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-04-24",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-04-25",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-04-26",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-04-27",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2029-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2029-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2029-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2029-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2029-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2029-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2030,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2030 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=195"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2030-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2030-02-03",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-02-04",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-02-05",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-02-06",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-04-12",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-04-13",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-04-14",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-04-15",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-04-16",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2030-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2030-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2030-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2030-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2030-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2030-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2030-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2031,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2031 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=196"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2031-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2031-01-23",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-01-24",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-01-25",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-01-26",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-04-01",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-04-02",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-04-03",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-04-04",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-04-05",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2031-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2031-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2031-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2031-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2031-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2031-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2031-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2032,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2032 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=197"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2032-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2032-01-13",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-01-14",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-01-15",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-01-16",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-03-21",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-03-22",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-03-23",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-03-24",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-03-25",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2032-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2032-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2032-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2032-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2032-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2032-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2032-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2033,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2033 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=198"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2033-01-01",
+          "name": "Yılbaşı / Ramazan Bayramı Arefesi",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": "Çakışma: aynı tarihte birden fazla gözlem; etkili gün türü tam gün (imzalı avukat doğrulama eki §4, çakışma kararı KABUL).",
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            },
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-01-02",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-01-03",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-01-04",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-03-10",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-03-11",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-03-12",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-03-13",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-03-14",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2033-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2033-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2033-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2033-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2033-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2033-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2033-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2033-12-22",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 2
+            }
+          ]
+        },
+        {
+          "date": "2033-12-23",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 2
+            }
+          ]
+        },
+        {
+          "date": "2033-12-24",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 2
+            }
+          ]
+        },
+        {
+          "date": "2033-12-25",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 2
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2034,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2034 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=199"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2034-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2034-02-28",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2034-03-01",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2034-03-02",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2034-03-03",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2034-03-04",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2034-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2034-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2034-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2034-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2034-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2034-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2034-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2034-12-11",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2034-12-12",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2034-12-13",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2034-12-14",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        }
+      ]
     },
     {
       "year": 2035,
-      "verified": false,
-      "verification_ref": null,
-      "source_refs": [],
-      "holidays": []
+      "verified": true,
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "source_refs": [
+        {
+          "source_kind": "official_religious_calendar",
+          "citation": "Diyanet İşleri Başkanlığı - 2035 yılı dinî günler ve resmî tatil günleri listesi (erişim: 2026-09-24; imzalı avukat doğrulama eki Ek A, yıllık kaynak özeti)",
+          "url": "https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=200"
+        },
+        {
+          "source_kind": "statute",
+          "citation": "2429 sayılı Ulusal Bayram ve Genel Tatiller Hakkında Kanun m.1-2 (Mevzuat Bilgi Sistemi konsolide metni)",
+          "url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2429.pdf"
+        }
+      ],
+      "holidays": [
+        {
+          "date": "2035-01-01",
+          "name": "Yılbaşı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "yilbasi",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2035-02-17",
+          "name": "Kurban Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2035-02-18",
+          "name": "Kurban Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2035-02-19",
+          "name": "Kurban Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2035-02-20",
+          "name": "Kurban Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2035-02-21",
+          "name": "Kurban Bayramı 4. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "kurban_bayrami_gun4",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.2",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2035-04-23",
+          "name": "Ulusal Egemenlik ve Çocuk Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ulusal_egemenlik_cocuk_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2035-05-01",
+          "name": "Emek ve Dayanışma Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "emek_dayanisma_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2035-05-19",
+          "name": "Atatürk'ü Anma Gençlik ve Spor Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ataturk_anma_genclik_spor_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.2",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2035-07-15",
+          "name": "Demokrasi ve Milli Birlik Günü",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "demokrasi_milli_birlik_gunu",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/C",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2035-08-30",
+          "name": "Zafer Bayramı",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "zafer_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/A.3",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2035-10-28",
+          "name": "Cumhuriyet Bayramı (yarım gün)",
+          "kind": "national",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami_arefe",
+              "kind": "national",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2035-10-29",
+          "name": "Cumhuriyet Bayramı (tam gün)",
+          "kind": "national",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "cumhuriyet_bayrami",
+              "kind": "national",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.1",
+              "block_index": null
+            }
+          ]
+        },
+        {
+          "date": "2035-11-30",
+          "name": "Ramazan Bayramı Arefesi",
+          "kind": "religious",
+          "day_type": "half_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_arefe",
+              "kind": "religious",
+              "day_type": "half_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2035-12-01",
+          "name": "Ramazan Bayramı 1. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun1",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2035-12-02",
+          "name": "Ramazan Bayramı 2. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun2",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        },
+        {
+          "date": "2035-12-03",
+          "name": "Ramazan Bayramı 3. Gün",
+          "kind": "religious",
+          "day_type": "full_day",
+          "source_ref_index": 0,
+          "notes": null,
+          "observances": [
+            {
+              "observance_id": "ramazan_bayrami_gun3",
+              "kind": "religious",
+              "day_type": "full_day",
+              "legal_basis_ref": "2429 sayılı Kanun m.2/B.1",
+              "block_index": 1
+            }
+          ]
+        }
+      ]
     }
   ],
   "governance": {
     "change_approval": "CLAUDE.md §8 onayı + incelenen commit + calendar_version artışı.",
-    "verification_authority": "Avukat doğrulaması (Pilot Readiness Adım 6) - bkz. avukat_dogrulama_paketi_DRAFT2.md SORU 3.1-3.8.",
+    "verification_authority": "Avukat doğrulaması (Pilot Readiness Adım 6) - imzalı HC-LAWYER-VERIFY-v1 belgesi; kayıt: verifications[] (verification_ref, imzalı dosya SHA-256'ına yapısal bağlı). Doğrulanmış yıl içeriği verified_content_digest ile mühürlüdür; içerik değişikliği yeniden avukat doğrulaması gerektirir.",
     "notes": null
   },
-  "notes": "Pilot Readiness Adım 5 (registry yapısı) baseline. Bilerek HİÇBİR resmi tatil adı/tarihi İÇERMEZ - tüm yıllar verified=false, holidays boş. Tatil içeriği yalnız avukat doğrulamasından (Adım 6) sonra, ayrı bir commit ile eklenir. Bu yapıda iken next_business_day_if_holiday policy kullanan hiçbir kural calculated sonuç üretmez (needs_review) - bkz. deadline_calculator.py."
+  "notes": "Pilot Readiness Adım 6 (Phase B veri popülasyonu): 2024-2035 resmî tatil tarihleri, imzalı avukat doğrulama ekinde (HC-LAWYER-VERIFY-v1, 26.09.2026) SHA-256 ile atıf yapılan REV4.1 normalize teklif dosyasından (205 tarih, 208 gözlem, 3 çakışma) birebir aktarılmıştır; her satır imzalı belgenin kendi yıl tablolarıyla programatik olarak karşılaştırılmıştır. Tüm yıllar verified=true ve tek verification_ref'e bağlıdır. half_day_policy=needs_review_if_deadline_day: son gün yalnız yarım güne denk gelirse kesin tarih üretilmez (needs_review). Tam gün + yarım gün çakışmasında tam gün üstün gelir.",
+  "verifications": [
+    {
+      "verification_ref": "HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95",
+      "document_version": "HC-LAWYER-VERIFY-v1",
+      "signed_artifact": {
+        "filename": "sonn_avukat_onay.udf",
+        "format": "udf",
+        "sha256": "fb79b85fcf114c951f3f08a03a437e867430ecbf6cca0f477d77b9df6fd364e2",
+        "size_bytes": 9182,
+        "signature_method": "guvenli_elektronik_imza",
+        "signature_timestamp": "2026-09-26T22:07:21+03:00",
+        "signature_timestamp_source": "uyap_screen_operator_observation",
+        "signature_count_observed": 1,
+        "hash_computed_at": "2026-09-26T19:51:12Z",
+        "stored_in_repository": false
+      },
+      "lawyer": {
+        "full_name": "Yasin Fazıl Akyürek",
+        "bar": "İstanbul 1 No.lu Baro",
+        "bar_registration_no": "41288"
+      },
+      "review_date": "2026-09-26",
+      "scope": {
+        "year_from": 2024,
+        "year_to": 2035,
+        "accepted_years": [
+          2024,
+          2025,
+          2026,
+          2027,
+          2028,
+          2029,
+          2030,
+          2031,
+          2032,
+          2033,
+          2034,
+          2035
+        ],
+        "year_decisions": {
+          "2024": "KABUL",
+          "2025": "KABUL",
+          "2026": "KABUL",
+          "2027": "KABUL",
+          "2028": "KABUL",
+          "2029": "KABUL",
+          "2030": "KABUL",
+          "2031": "KABUL",
+          "2032": "KABUL",
+          "2033": "KABUL",
+          "2034": "KABUL",
+          "2035": "KABUL"
+        },
+        "conflict_decision": "KABUL",
+        "half_day_policy_decision": "needs_review_if_deadline_day",
+        "final_decision": "KABUL",
+        "corrections": []
+      },
+      "referenced_source_artifacts": [
+        {
+          "role": "source_observations",
+          "filename": "holiday_calendar_2024_2035_source_observations.csv",
+          "sha256": "7a8cae872190e5c31205d9766766c2c21c48b4e69ce820c8139ac364230bbc5c",
+          "description": "Kaynak gözlem dosyası - 208 satır (imzalı belge §2)"
+        },
+        {
+          "role": "normalized_proposal",
+          "filename": "holiday_calendar_2024_2035_normalized_proposal_REV4_1.json",
+          "sha256": "a351f548d9b94225dafcec93581344958d8a6eee9c7eb623090799bf9f9e7f60",
+          "description": "Normalize teklif dosyası - 205 tarih, 3 çakışma (imzalı belge §2)"
+        },
+        {
+          "role": "canonical_registry",
+          "filename": "canonical_registry.py",
+          "sha256": "95db93ac5bed743a1bcf3587771669f85061571166d4c17a61f8a12dd81b0a64",
+          "description": "Canonical registry - 17 gözlem kimliği (imzalı belge §2)"
+        }
+      ],
+      "verified_content_digest": "8037d69ababf7507bb3954276f930efff86174c9c3d45d13c715e97e6edc96cb",
+      "notes": "Avukat doğrulama eki HC-LAWYER-VERIFY-v1 (inceleme ve e-imza tarihi 26.09.2026): 2024-2035 yıl tablolarının tamamı KABUL (düzeltme YOK), çakışma kararı KABUL, yarım gün politikası needs_review_if_deadline_day (önerilen) KABUL, nihai karar KABUL, kabul edilen yıllar 2024-2035. İmzalı UDF repo DIŞINDA saklanır; yalnız SHA-256/boyut/dosya adı kaydedilir, sertifika içeriği hiçbir yere yazılmaz. verification_ref = 'HC-LAWYER-VERIFY-v1-2024-2035-' + sha256[:16]. Bu kayıt yalnız imzalı belgenin kaynak ve takvim kapsamına ilişkindir; yazılımın genel olarak hukuken doğru, hatasız veya kullanıma hazır olduğu anlamına gelmez (belgenin kendi §5 sınırı)."
+    }
+  ]
 }
