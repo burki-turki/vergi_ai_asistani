@@ -643,6 +643,8 @@ for _mt_row_key, _mt_extra, _mt_label in [
     ("timeline", [], "timeline branch"),
     ("legal_research", [], "legal_research/case_law branch"),
     ("case_law", [], "legal_research/case_law branch (second row-key)"),
+    ("qa", [], "PHASE B qa/case_view branch"),
+    ("case_view", [], "PHASE B qa/case_view branch (second row-key)"),
     ("deadline", ["--anchor", "timeline_event_001"], "deadline else-branch"),
 ]:
     code, out, err = run_cli_usage_only(
@@ -694,6 +696,104 @@ check(
     and "--expected-input-digest" in err and "--mask-term" not in err,
     f"code={code} err={err!r}",
 )
+
+# ============================================================
+# PHASE B (Commit A) - `generation --row-key qa` / `--row-key case_view`
+# usage-shape grammar. These are the first OFFICIAL Row 16/17 pending
+# publishers and they are DETERMINISTIC-ONLY: every deadline-only /
+# fact_extraction-only flag is rejected exactly like the timeline branch,
+# AND --with-agent / --allow-network are REJECTED unconditionally
+# (preview AND apply) with the facade's OWN fixed message - the pilot
+# `--with-agent` universe (8 families, test_rag_pilot_egress_gate_
+# isolated) is NOT widened by this slice. Every rejection: exit 2, ZERO
+# connections (the exploding factories prove no authz/DB access).
+# ============================================================
+from ui.services import qa_case_view_generation_mutation_facade as _qcvf  # noqa: E402
+
+check(
+    "PHASE B: the qa/case_view facade exposes EXACTLY {'qa', 'case_view'} as row-keys",
+    set(_qcvf.QA_CASE_VIEW_GENERATION_ROW_KEY_TO_MODULE_NAME) == {"qa", "case_view"},
+    f"got {sorted(_qcvf.QA_CASE_VIEW_GENERATION_ROW_KEY_TO_MODULE_NAME)}",
+)
+check(
+    "PHASE B: neither qa nor case_view appears in ANY of the three --with-agent-capable "
+    "facades' row-key namespaces (egress universe NOT widened)",
+    not (
+        {"qa", "case_view"}
+        & (
+            set(cli_mutate._agent_generation_row_keys())
+            | set(cli_mutate._fact_extraction_row_keys())
+            | set(cli_mutate._legal_research_case_law_row_keys())
+        )
+    ),
+)
+
+for _pb_row_key in ("qa", "case_view"):
+    _pb_base = ["generation", "--case", "x", "--row-key", _pb_row_key, "--actor-user-id", "1"]
+
+    code, out, err = run_cli_usage_only(_pb_base + ["--with-agent"])
+    check(
+        f"PHASE B: --with-agent with --row-key {_pb_row_key} (preview) -> exit 2, the facade's OWN "
+        "fixed refusal text, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR
+        and err.strip() == _qcvf.agent_mode_refusal_message(_pb_row_key) and out == "",
+        f"code={code} out={out!r} err={err!r}",
+    )
+    code, out, err = run_cli_usage_only(
+        _pb_base + ["--with-agent", "--allow-network", "--apply", "--expected-input-digest", "d"]
+    )
+    check(
+        f"PHASE B: --with-agent --allow-network with --row-key {_pb_row_key} (apply) -> exit 2, "
+        "same fixed refusal text, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR
+        and err.strip() == _qcvf.agent_mode_refusal_message(_pb_row_key) and out == "",
+        f"code={code} out={out!r} err={err!r}",
+    )
+    code, out, err = run_cli_usage_only(_pb_base + ["--allow-network"])
+    check(
+        f"PHASE B: --allow-network ALONE with --row-key {_pb_row_key} -> exit 2, same fixed "
+        "refusal text (no 'requires --with-agent' hint - there is no agent mode to require), "
+        "zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR
+        and err.strip() == _qcvf.agent_mode_refusal_message(_pb_row_key) and out == "",
+        f"code={code} out={out!r} err={err!r}",
+    )
+    code, out, err = run_cli_usage_only(_pb_base + ["--document", "d"])
+    check(
+        f"PHASE B: --document is not accepted for --row-key {_pb_row_key} -> exit 2, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err and out == "",
+        f"code={code} err={err!r}",
+    )
+    code, out, err = run_cli_usage_only(_pb_base + ["--anchor", "timeline_event_001"])
+    check(
+        f"PHASE B: --anchor is not accepted for --row-key {_pb_row_key} -> exit 2, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and "--anchor" in err and out == "",
+        f"code={code} err={err!r}",
+    )
+    code, out, err = run_cli_usage_only(_pb_base + ["--judicial-recess-applicable", "yes"])
+    check(
+        f"PHASE B: non-default --judicial-recess-applicable is not accepted for --row-key "
+        f"{_pb_row_key} -> exit 2, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and "--judicial-recess-applicable" in err and out == "",
+        f"code={code} err={err!r}",
+    )
+    code, out, err = run_cli_usage_only(_pb_base + ["--apply"])
+    check(
+        f"PHASE B CONTROL: a flag-clean --row-key {_pb_row_key} --apply passes EVERY family guard "
+        "and is stopped only by the LATER --expected-input-digest rule (zero connections) - the "
+        "new branch is narrow, not a blanket refusal, and never falls through into the deadline "
+        "'requires --anchor' rule",
+        code == cli_mutate.EXIT_USAGE_ERROR
+        and "--expected-input-digest" in err and "--anchor" not in err and out == "",
+        f"code={code} err={err!r}",
+    )
+    code, out, err = run_cli_usage_only(_pb_base + ["--expected-input-digest", "d"])
+    check(
+        f"PHASE B: --expected-input-digest without --apply for --row-key {_pb_row_key} -> exit 2, "
+        "zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and "--expected-input-digest" in err and out == "",
+        f"code={code} err={err!r}",
+    )
 
 _generation_actions = {}
 for _sub_action in cli_mutate._build_arg_parser()._subparsers._group_actions[0].choices[

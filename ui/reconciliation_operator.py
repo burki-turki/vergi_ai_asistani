@@ -258,8 +258,12 @@ def _default_registry_factory() -> mr.MutationAdapterRegistry:
     the other four is extended) PLUS the FACT VERIFICATION WORKFLOW's
     single, fact-level, CLI-only `verification.fact` family
     (`fact_verification_mutation_adapters.register_into()`, a SIXTH,
-    SEPARATE facade/adapter pair) -
-    10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 + 2 + 1 = 50 routing keys, all
+    SEPARATE facade/adapter pair) PLUS PHASE B (Commit A)'s two
+    case-scoped, deterministic-only `generation.qa`/`generation.case_view`
+    families (`qa_case_view_generation_mutation_adapters.register_into()`,
+    a SEVENTH, SEPARATE facade/adapter pair - the first OFFICIAL Row 16/17
+    pending publishers; none of the other six pairs is extended) -
+    10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 + 2 + 1 + 2 = 52 routing keys, all
     folded onto the SAME registry rather than building separate ones -
     so a human operator can reconcile ANY journal row this project
     produces, regardless of family, through this ONE CLI. NEVER called by
@@ -276,6 +280,7 @@ def _default_registry_factory() -> mr.MutationAdapterRegistry:
     from ui.services import legal_research_case_law_mutation_adapters  # lazy import - see module docstring
     from ui.services import rag_bundle_mutation_adapters  # lazy import - see module docstring
     from ui.services import fact_verification_mutation_adapters  # lazy import - see module docstring
+    from ui.services import qa_case_view_generation_mutation_adapters  # lazy import - see module docstring
 
     registry = mutation_approval_adapters.build_production_registry()
     registry = review_mutation_adapters.register_into(registry)
@@ -286,7 +291,8 @@ def _default_registry_factory() -> mr.MutationAdapterRegistry:
     registry = fact_extraction_mutation_adapters.register_into(registry)
     registry = legal_research_case_law_mutation_adapters.register_into(registry)
     registry = rag_bundle_mutation_adapters.register_into(registry)
-    return fact_verification_mutation_adapters.register_into(registry)
+    registry = fact_verification_mutation_adapters.register_into(registry)
+    return qa_case_view_generation_mutation_adapters.register_into(registry)
 
 
 def _format_outcome_line(outcome: mr.ReconciliationOutcome) -> str:

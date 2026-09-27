@@ -15,6 +15,13 @@
 # bu yalnız GÖRÜNTÜLEME/hata-toleransı için gereklidir, PROMOSYON
 # için değil. Layer A yalnız generation_status='completed' olan bir
 # case_view'i canonical'a kabul eder.
+#
+# PHASE B (Commit A, kullanıcı kararı seçenek b): yeni approval
+# audit kayıtlarındaki `source_pending_path`/`canonical_path`/
+# `previous_canonical_backup` alanları repo-göreli POSIX canonical
+# locator olarak yazılır (bkz. write_approval_audit). Tarihsel
+# audit kayıtları DEĞİŞTİRİLMEZ; dosya işlemleri gerçek Path
+# nesneleriyle yapılmaya devam eder.
 # ============================================================
 
 import hashlib
@@ -29,6 +36,7 @@ from pathlib import Path
 from orchestrator_validator import validate_case_view
 from orchestrator_discovery import CASES_DIR
 from orchestrator_policy import ORCHESTRATOR_SOURCE_REGISTRY
+from qa_discovery import canonical_locator_under
 
 
 ORCHESTRATOR_APPROVAL_VERSION = "1"
@@ -253,6 +261,29 @@ def write_approval_audit(
 
     audit_path = reviews_dir / ("case_view_" + case_id + "_v1_" + timestamp + ".approval.json")
 
+    # PHASE B (seçenek b): üç yol alanı repo-göreli POSIX canonical
+    # locator olarak yazılır (`data/cases/<case_id>/case_view/<ad>`); çapa
+    # bu modülün KENDİ `get_view_dir(case_id)` dizinidir (gerçek-yol
+    # containment `qa_discovery.canonical_locator_under`) - bkz.
+    # qa_approval.write_approval_audit'teki aynı notun tamamı.
+    audit_family_anchor = get_view_dir(case_id)
+
+    source_pending_locator = canonical_locator_under(
+        pending_path, anchor_root=audit_family_anchor, logical_prefix_parts=(case_id, "case_view"),
+    )
+
+    canonical_locator = canonical_locator_under(
+        canonical_path, anchor_root=audit_family_anchor, logical_prefix_parts=(case_id, "case_view"),
+    )
+
+    previous_backup_locator = (
+        canonical_locator_under(
+            previous_canonical_backup, anchor_root=audit_family_anchor,
+            logical_prefix_parts=(case_id, "case_view"),
+        )
+        if previous_canonical_backup else None
+    )
+
     audit = {
         "audit_type": "case_view_approval",
         "approval_version": ORCHESTRATOR_APPROVAL_VERSION,
@@ -275,12 +306,12 @@ def write_approval_audit(
         "mutation_resource_key": mutation_resource_key,
         "case_id": case_id,
         "case_view_id": view.get("case_view_id"),
-        "source_pending_path": str(pending_path),
-        "canonical_path": str(canonical_path),
+        "source_pending_path": source_pending_locator,
+        "canonical_path": canonical_locator,
         "pending_sha256": pending_sha256,
         "canonical_sha256": canonical_sha256,
         "content_identical": pending_sha256 == canonical_sha256,
-        "previous_canonical_backup": str(previous_canonical_backup) if previous_canonical_backup else None,
+        "previous_canonical_backup": previous_backup_locator,
         "generation_status": view.get("generation_status"),
         "issue_panel_count": len(view.get("issue_panel", [])),
         "open_items_count": len(view.get("open_items_panel", [])),

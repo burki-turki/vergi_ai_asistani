@@ -11,6 +11,14 @@
 # KOYMAZ - içinde GERÇEK 'failed' bulgular olan bir QA raporu
 # GEÇERLİ ve PROMOTE EDİLEBİLİR kalır (qa_validator bunu ayrı
 # doğrular).
+#
+# PHASE B (Commit A, kullanıcı kararı seçenek b): yeni approval
+# audit kayıtlarındaki `source_pending_path`/`canonical_path`/
+# `previous_canonical_backup` alanları repo-göreli POSIX canonical
+# locator olarak yazılır (bkz. write_approval_audit). Tarihsel
+# audit kayıtları yeniden yazılmaz; `run_approve()`'un yazım/
+# rollback/replay davranışı ve `_audit_binding_matches` alanları
+# (idempotency/resource/pending_sha256/canonical_sha256) DEĞİŞMEZ.
 # ============================================================
 
 import hashlib
@@ -23,7 +31,7 @@ from datetime import datetime
 from pathlib import Path
 
 from qa_validator import validate_qa_analysis
-from qa_discovery import CASES_DIR, read_artifact_bytes
+from qa_discovery import CASES_DIR, read_artifact_bytes, canonical_locator_under
 from qa_policy import sha256_of_bytes
 
 
@@ -307,6 +315,33 @@ def write_approval_audit(
 
     audit_path = reviews_dir / ("qa_" + case_id + "_v1_" + timestamp + ".approval.json")
 
+    # PHASE B (seçenek b): audit'teki üç yol alanı MUTLAK yol DEĞİL,
+    # repo-göreli POSIX canonical locator'dır (`data/cases/<case_id>/qa/
+    # <ad>`). Çapa, bu modülün KENDİ `get_qa_dir(case_id)` dizinidir
+    # (gerçek-yol containment `qa_discovery.canonical_locator_under`):
+    # üretim getter'ıyla bu, `CASES_DIR`-göreli metinle birebir aynıdır;
+    # bir self-test aile dizinini geçici bir dizine yönlendirdiğinde ise
+    # audit canonical MANTIKSAL konumu kaydeder, fiziksel geçici yolu
+    # değil - worktree/kullanıcı dizini mutlak yolu audit'e HİÇ girmez.
+    # Gerçek dosya işlemleri (backup/atomic copy) çözülmüş mutlak Path
+    # üzerinde yürümeye devam eder. Tarihsel audit kayıtları DEĞİŞMEZ.
+    audit_family_anchor = get_qa_dir(case_id)
+
+    source_pending_locator = canonical_locator_under(
+        pending_path, anchor_root=audit_family_anchor, logical_prefix_parts=(case_id, "qa"),
+    )
+
+    canonical_locator = canonical_locator_under(
+        canonical_path, anchor_root=audit_family_anchor, logical_prefix_parts=(case_id, "qa"),
+    )
+
+    previous_backup_locator = (
+        canonical_locator_under(
+            previous_canonical_backup, anchor_root=audit_family_anchor, logical_prefix_parts=(case_id, "qa"),
+        )
+        if previous_canonical_backup else None
+    )
+
     audit = {
         "audit_type": "qa_analysis_approval",
         "approval_version": QA_APPROVAL_VERSION,
@@ -329,12 +364,12 @@ def write_approval_audit(
         "mutation_resource_key": mutation_resource_key,
         "case_id": case_id,
         "qa_analysis_id": analysis.get("qa_analysis_id"),
-        "source_pending_path": str(pending_path),
-        "canonical_path": str(canonical_path),
+        "source_pending_path": source_pending_locator,
+        "canonical_path": canonical_locator,
         "pending_sha256": pending_sha256,
         "canonical_sha256": canonical_sha256,
         "content_identical": pending_sha256 == canonical_sha256,
-        "previous_canonical_backup": str(previous_canonical_backup) if previous_canonical_backup else None,
+        "previous_canonical_backup": previous_backup_locator,
         "qa_coverage_count": len(analysis.get("qa_coverage", [])),
         "qa_check_results_count": len(analysis.get("qa_check_results", [])),
         "qa_agent_suggestions_count": len(analysis.get("qa_agent_suggestions", [])),

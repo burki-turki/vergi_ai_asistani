@@ -8,13 +8,132 @@
 # ============================================================
 
 import json
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 
+import path_containment
 from qa_policy import sha256_of, sha256_of_bytes
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 CASES_DIR = DATA_DIR / "cases"
+
+# ============================================================
+# PHASE B - TAŞINABİLİR QA LOCATOR SÖZLEŞMESİ
+#
+# Row 16'nın `artifact_locator.path` alanı bu tura kadar `str(Path)`
+# (mutlak, işletim sistemine ve checkout konumuna bağlı) idi. Yeni
+# canonical biçim: repo köküne göre POSIX bağıl yol, sabit canonical
+# yerleşim öneki ile - ör. "data/cases/case_0001/timeline/timeline.json".
+#
+# - Taban, ÇAĞRI ANINDA okunan modül-global `CASES_DIR`'dir (by-value
+#   kopya veya default argüman DEĞİL) - mevcut test seam'i
+#   (`qa_discovery.CASES_DIR = <tmp>/data/cases`) aynen çalışır ve
+#   farklı worktree/kullanıcı dizinlerinde AYNI metin üretilir.
+# - Mutlak yol, sürücü harfi, UNC, "..", symlink/junction kaçışı ve
+#   case kökü altında KURULMAMIŞ her yol fail-closed `QaLocatorError`
+#   ile reddedilir - sessiz fallback veya basename tahmini YOKTUR.
+# - Var olmayan (absent) artefaktlar da locator alır: var olan önek
+#   segmentleri containment ile doğrulanır, eksik kuyruk yalnız yapısal
+#   olarak doğrulanır (`path_containment.resolve_for_create`).
+# - `None` `None` kalır (şema `path: ["string","null"]`).
+# ============================================================
+
+QA_LOCATOR_PREFIX = "data/cases"
+
+
+class QaLocatorError(ValueError):
+    """Fail-closed: artefakt yolu canonical locator olarak ifade edilemez."""
+
+
+def canonical_locator_under(path, *, anchor_root, logical_prefix_parts=()):
+    """Genel, fail-closed locator üreticisi (TEK implementasyon):
+
+    `path`, `anchor_root` altında LEKSİK olarak kurulmuş olmalıdır
+    (`PurePath.relative_to`); göreli segmentlerin her biri
+    `path_containment.validate_segment` ile denetlenir; var olan önek
+    segmentleri `path_containment.resolve_for_create` ile gerçek-yol
+    olarak `anchor_root` içinde doğrulanır (eksik kuyruk yalnız yapısal).
+    Metin, canonical repo yerleşiminden kurulur:
+
+        QA_LOCATOR_PREFIX / <logical_prefix_parts...> / <göreli segmentler>
+
+    - `anchor_root = CASES_DIR`, `logical_prefix_parts=()` -> Row 16 QA
+      `artifact_locator.path` (`qa_artifact_locator`).
+    - `anchor_root = <aile dizini>`, `logical_prefix_parts=(case_id, "qa")`
+      -> Layer A approval audit yol alanları (`qa_approval`/
+      `orchestrator_approval`, Phase B seçenek (b)). Aile-dizini
+      çapası, üretim getter'ıyla `CASES_DIR`-göreli metinle BİREBİR
+      aynı sonucu verir; bir test aile dizinini geçici bir dizine
+      yönlendirdiğinde ise audit fiziksel geçici yolu DEĞİL canonical
+      mantıksal konumu kaydeder (geçici/mutlak yol audit'e HİÇ girmez).
+
+    Mantıksal metin istenen segmentlerden kurulur - güvenli bir iç
+    alias/junction'ın KENDİ adı korunur, hedef adına dönüştürülmez (Row
+    19C-3a Slice 1 sözleşmesi). Sessiz fallback/basename tahmini YOK.
+    """
+
+    if path is None:
+
+        return None
+
+    try:
+
+        relative = PurePath(path).relative_to(PurePath(anchor_root))
+
+    except (ValueError, TypeError) as error:
+
+        raise QaLocatorError("Locator çapa kökü altında değil.") from error
+
+    parts = relative.parts
+
+    if not parts:
+
+        raise QaLocatorError("Locator çapa kökünün kendisi olamaz.")
+
+    prefix_parts = tuple(logical_prefix_parts)
+
+    try:
+
+        for segment in prefix_parts:
+
+            path_containment.validate_segment(segment)
+
+        for segment in parts:
+
+            path_containment.validate_segment(segment)
+
+        # Containment yetkisi yalnız buradadır: var olan her önek segmenti
+        # gerçek-yol olarak çapa kökü içinde doğrulanır, eksik kuyruk yapısal
+        # olarak denetlenir.
+        path_containment.resolve_for_create(anchor_root, *parts)
+
+    except path_containment.PathContainmentError as error:
+
+        raise QaLocatorError("Locator çapa kökü dışında veya güvensiz.") from error
+
+    except (OSError, ValueError) as error:
+
+        raise QaLocatorError("Locator çapa kökü altında doğrulanamadı.") from error
+
+    text = "/".join((QA_LOCATOR_PREFIX,) + prefix_parts + parts)
+
+    if "\\" in text or ":" in text or text.startswith("/") or PureWindowsPath(text).anchor or PurePosixPath(text).anchor:
+
+        raise QaLocatorError("Locator metni bozuk.")
+
+    if any(part in ("", ".", "..") for part in text.split("/")):
+
+        raise QaLocatorError("Locator metni nokta/boş segment içeriyor.")
+
+    return text
+
+
+def qa_artifact_locator(path):
+    """Row 16 `artifact_locator.path`: çağrı anında okunan modül-global
+    `CASES_DIR` çapasıyla `canonical_locator_under` - bkz. yukarıdaki
+    sözleşme bloğu."""
+
+    return canonical_locator_under(path, anchor_root=CASES_DIR, logical_prefix_parts=())
 
 
 def get_case_dir(case_id):

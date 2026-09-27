@@ -335,6 +335,12 @@ PRODUCTION_REGISTRY = _rag_bundle_adapters.register_into(PRODUCTION_REGISTRY)
 # `_default_registry_factory()`'s own updated order exactly.
 from ui.services import fact_verification_mutation_adapters as _fact_verification_adapters  # noqa: E402
 PRODUCTION_REGISTRY = _fact_verification_adapters.register_into(PRODUCTION_REGISTRY)
+# PHASE B (Commit A): the ELEVENTH merge source (two case-scoped,
+# deterministic-only `generation.qa`/`generation.case_view` families -
+# a SEVENTH, SEPARATE facade/adapter pair from every prior one),
+# mirroring `_default_registry_factory()`'s own updated order exactly.
+from ui.services import qa_case_view_generation_mutation_adapters as _qa_case_view_generation_adapters  # noqa: E402
+PRODUCTION_REGISTRY = _qa_case_view_generation_adapters.register_into(PRODUCTION_REGISTRY)
 
 check(
     "FACT VERIFICATION WORKFLOW: the REAL merged production registry covers 10 "
@@ -343,10 +349,11 @@ check(
     "issue_spotting/evidence/argument/risk_strategy/drafting generation) + 1 (document-scoped "
     "agent-gated fact_extraction generation) + 2 (case-scoped deterministic+agent legal_research/"
     "case_law generation) + 2 (global rag_bundle.build/rag_bundle.activate) + 1 (fact-level "
-    "verification.fact) = 50 routing keys - the number of LOGICAL Layer B review_kinds is still "
+    "verification.fact) + 2 (Phase B deterministic-only qa/case_view generation) = 52 routing "
+    "keys - the number of LOGICAL Layer B review_kinds is still "
     "12, unchanged; 24 is a channel-separated ADAPTER ROUTING-KEY count, not a doubling of "
     "logical families",
-    len(PRODUCTION_REGISTRY.known_action_families()) == 50,
+    len(PRODUCTION_REGISTRY.known_action_families()) == 52,
     f"got {sorted(PRODUCTION_REGISTRY.known_action_families())}",
 )
 check(

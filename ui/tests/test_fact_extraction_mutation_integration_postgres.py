@@ -598,11 +598,11 @@ try:
     # ============================================================
     merged_registry_b7 = op._default_registry_factory()
     check(
-        "B7 merged reconciliation registry has exactly 50 routing keys "
+        "B7 merged reconciliation registry has exactly 52 routing keys "
         "(10 approval + 24 review + 1 drafting_request + 2 promotion + 2 deterministic-generation "
         "+ 5 agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation "
-        "+ 2 rag-bundle-build/activate + 1 fact-verification)",
-        len(merged_registry_b7.known_action_families()) == 50,
+        "+ 2 rag-bundle-build/activate + 1 fact-verification + 2 Phase B qa/case_view generation)",
+        len(merged_registry_b7.known_action_families()) == 52,
         f"got {len(merged_registry_b7.known_action_families())}",
     )
     check(

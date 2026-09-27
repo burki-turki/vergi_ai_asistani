@@ -557,17 +557,19 @@ check(
     f"got {sorted(_promotion_families)}",
 )
 check(
-    "ROW 19C-3c-i/3c-ii/3c-iii/3c-iv SLICE 1: the merged registry contains exactly the 10 "
-    "'generation.*' families (generation.deadline + generation.timeline, deterministic, PLUS "
+    "ROW 19C-3c-i/3c-ii/3c-iii/3c-iv SLICE 1 + PHASE B: the merged registry contains exactly the "
+    "12 'generation.*' families (generation.deadline + generation.timeline, deterministic, PLUS "
     "generation.issue_spotting + generation.evidence + generation.argument + "
     "generation.risk_strategy + generation.drafting, agent-gated, PLUS generation.fact_extraction, "
     "document-scoped agent-gated, PLUS generation.legal_research + generation.case_law, "
-    "case-scoped deterministic+agent (retrieval/discovery deferred) - FOUR SEPARATE facade/"
-    "adapter pairs, one merged namespace)",
+    "case-scoped deterministic+agent (retrieval/discovery deferred), PLUS generation.qa + "
+    "generation.case_view, deterministic-only Row 16/17 official pending publishers - FIVE "
+    "SEPARATE facade/adapter pairs, one merged namespace)",
     _generation_families == {
         "generation.deadline", "generation.timeline", "generation.issue_spotting", "generation.evidence",
         "generation.argument", "generation.risk_strategy", "generation.drafting",
         "generation.fact_extraction", "generation.legal_research", "generation.case_law",
+        "generation.qa", "generation.case_view",
     },
     f"got {sorted(_generation_families)}",
 )
@@ -578,14 +580,31 @@ check(
     f"got {sorted(_rag_bundle_families)}",
 )
 check(
-    "FACT VERIFICATION WORKFLOW: the merged registry's total size is exactly "
-    "10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 + 2 + 1 = 50 (no overlap, no family lost, no family "
-    "duplicated) - this is a ROUTING-KEY count, distinct from the 38 LOGICAL action families "
+    "FACT VERIFICATION WORKFLOW + PHASE B: the merged registry's total size is exactly "
+    "10 + 24 + 1 + 2 + 2 + 5 + 1 + 2 + 2 + 1 + 2 = 52 (no overlap, no family lost, no family "
+    "duplicated) - this is a ROUTING-KEY count, distinct from the 40 LOGICAL action families "
     "(10 approval + 12 review + 1 drafting_request + 2 promotion + 2 deterministic-generation + "
     "5 agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation + "
-    "2 rag-bundle-build/activate + 1 fact-verification); the 'approval.*' bucket itself stays "
-    "exactly 10",
-    len(_real_families) == 50, f"got {len(_real_families)}",
+    "2 rag-bundle-build/activate + 1 fact-verification + 2 qa/case_view-generation); the "
+    "'approval.*' bucket itself stays exactly 10",
+    len(_real_families) == 52, f"got {len(_real_families)}",
+)
+check(
+    "PHASE B: generation.qa and generation.case_view each resolve to a real "
+    "QaCaseViewGenerationReconciliationAdapter - a FIFTH, SEPARATE generation adapter class, "
+    "distinct from the deterministic deadline/timeline, agent-gated, fact-extraction and "
+    "legal-research/case-law adapter classes (two distinct instances, one per row_key)",
+    _real_registry.get("generation.qa") is not None
+    and _real_registry.get("generation.case_view") is not None
+    and _real_registry.get("generation.qa") is not _real_registry.get("generation.case_view")
+    and type(_real_registry.get("generation.qa")).__name__ == "QaCaseViewGenerationReconciliationAdapter"
+    and type(_real_registry.get("generation.case_view")).__name__ == "QaCaseViewGenerationReconciliationAdapter"
+    and type(_real_registry.get("generation.qa")).__name__ not in {
+        type(_real_registry.get("generation.deadline")).__name__,
+        type(_real_registry.get("generation.argument")).__name__,
+        type(_real_registry.get("generation.fact_extraction")).__name__,
+        type(_real_registry.get("generation.case_law")).__name__,
+    },
 )
 check(
     "FACT VERIFICATION WORKFLOW: the merged registry contains the new 'verification.fact' "

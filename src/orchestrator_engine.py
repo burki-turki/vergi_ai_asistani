@@ -1,18 +1,35 @@
 # ============================================================
 # VERGİ AI - ORCHESTRATOR ENGINE V1 (Row 17)
 #
-# Row 1-16'nın canonical çıktılarını OKUYUP (asla YAZMADAN,
-# asla PENDING dosya okumadan) tek bir case_view.json'a
-# birleştirir. Bu modül:
+# Row 1-16'nın canonical çıktılarını OKUYUP (asla PENDING dosya
+# okumadan) tek bir case_view.json'a birleştirir. `build_case_view()`
+# SAF ve YAN ETKİSİZDİR - hiçbir dosya yazmaz (T09 bunu ayrıca
+# kanıtlar). Bu modül:
 #   - YENİ hiçbir fact/deadline/mevzuat/olasılık İCAT ETMEZ,
 #   - hiçbir upstream kaydı FİLTRELEMEZ/YENİDEN YORUMLAMAZ,
 #   - yalnız var olan ID referanslarını issue etrafında
 #     YENİDEN GRUPLAR (Prensip 1/2/7).
+#
+# PHASE B: bu modüldeki TEK yazım yüzeyi, yalnız mutation coordinator
+# üzerinden (`ui.services.qa_case_view_generation_mutation_facade`,
+# `python -m ui.cli_mutate generation --row-key case_view`) çağrılan
+# `write_pending()`'dir - YALNIZ `.pending` üretir, canonical
+# `case_view.json`'a ASLA yazmaz, otomatik onay YAPMAZ (onay Layer A:
+# `orchestrator_approval.run_approve` / `ui.cli_mutate approval`).
+# Eski "asla YAZMADAN" başlık iddiası bu koordine writer ile revize
+# edilmiştir; `build_case_view()` değişmeden saf kalır.
 # ============================================================
 
 import datetime
+import hashlib
+import json
+import os
+import shutil
+from pathlib import Path
 
-from orchestrator_discovery import load_all_source_scopes
+import path_containment
+from qa_discovery import canonical_locator_under
+from orchestrator_discovery import load_all_source_scopes, CASES_DIR
 from orchestrator_policy import (
     ORCHESTRATOR_SOURCE_REGISTRY,
     ORCHESTRATOR_OPTIONAL_SOURCES,
@@ -47,6 +64,61 @@ def _list_field(data, field):
     value = data.get(field) if isinstance(data, dict) else None
 
     return value if isinstance(value, list) else []
+
+
+# ============================================================
+# PHASE B - RESMİ PENDING PUBLISHER YÜZEYİ (generation.case_view)
+#
+# Row 19A'nın "QA/Orchestrator pending-generation publisher'ları YOK"
+# boşluğunu kapatan coordinator-route'lu writer yüzeyi (Row 19C-3c-ii
+# `issue_spotting_engine.write_pending()` emsalinin birebir deseni).
+# Pending dosya adı `orchestrator_approval.get_pending_path()` ile
+# BİREBİR aynıdır (`case_view_<case_id>_v1.json.pending`) - parity izole
+# testle sabitlenir. `history_backup_path` MUTLAK yol DEĞİL, repo-göreli
+# canonical locator'dır (kullanıcı kararı, Phase B Commit A, madde 4).
+# ============================================================
+
+GENERATION_ACTION_FAMILY = "generation.case_view"
+
+GENERATION_AUDIT_SCHEMA_VERSION = "1"
+
+GENERATION_CHANNEL = "local_lawyer_generation_cli"
+
+
+class OrchestratorEngineError(Exception):
+    pass
+
+
+def get_view_dir(case_id):
+
+    return CASES_DIR / case_id / "case_view"
+
+
+def get_pending_path(case_id):
+
+    return get_view_dir(case_id) / f"case_view_{case_id}_v1.json.pending"
+
+
+def get_canonical_path(case_id):
+
+    return get_view_dir(case_id) / "case_view.json"
+
+
+def get_history_dir(case_id):
+
+    return get_view_dir(case_id) / "history"
+
+
+def get_reviews_dir(case_id):
+
+    return get_view_dir(case_id) / "generation_reviews"
+
+
+def get_target_ref():
+    """Case-view generation case-scopludur - tek case için tek operasyon
+    slotu (`issue_spotting_engine.get_target_ref()` ile aynı desen)."""
+
+    return "case_view.pending"
 
 
 def build_case_view(case_id):
@@ -676,6 +748,302 @@ def build_case_view(case_id):
 
 
 # ============================================================
+# PHASE B - WRITER (yalnız pending; canonical'a ASLA yazılmaz)
+# ============================================================
+
+def atomic_write_json(path, data):
+    """LF-only, fsync'li, `os.replace` ile atomik pending yazımı -
+    commit'li Row 17 serileştirmesiyle (`json.dumps(ensure_ascii=False,
+    indent=2)` + tek `\\n`) BAYT-BAYT aynı tarif."""
+
+    path = Path(path)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    temp_path = path.parent / (path.name + ".tmp")
+
+    with open(temp_path, "w", encoding="utf-8", newline="\n") as file:
+
+        json.dump(data, file, ensure_ascii=False, indent=2)
+
+        file.write("\n")
+
+        file.flush()
+
+        os.fsync(file.fileno())
+
+    os.replace(temp_path, path)
+
+
+def preserve_previous_pending(case_id, pending_path, *, history_dir=None):
+    """Mevcut pending SESSİZCE ezilmez: `history/case_view_pending_before_
+    engine_<ts>.json.pending` olarak taşınır ve generation audit'inde
+    `first_write=False` + `history_backup_path`/`history_backup_sha256`
+    ile kayda geçer."""
+
+    pending_path = Path(pending_path)
+
+    if not pending_path.exists():
+
+        return None
+
+    if history_dir is None:
+
+        history_dir = get_history_dir(case_id)
+
+    history_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
+
+    # Aynı saniye içindeki iki yazım aynı ada çözülmesin: mevcut bir
+    # history yedeği ASLA ezilmez - sayısal sonekle boş ad aranır (audit
+    # yazıcısıyla aynı disiplin); aday ad containment ile doğrulanır.
+    base = "case_view_pending_before_engine_" + timestamp
+
+    suffix = 0
+
+    while True:
+
+        name = base + (".json.pending" if suffix == 0 else f"_{suffix}.json.pending")
+
+        path_containment.validate_segment(name)
+
+        history_path = path_containment.resolve_for_create(history_dir, name)
+
+        if not os.path.lexists(history_path):
+            break
+
+        suffix += 1
+
+        if suffix > 1000:
+            raise OrchestratorEngineError("History yedeği dosya adı için 1000 denemede boş ad bulunamadı.")
+
+    shutil.move(str(pending_path), str(history_path))
+
+    return history_path
+
+
+def _canonical_json_bytes(data):
+
+    text = json.dumps(data, ensure_ascii=False, indent=2)
+
+    return text.replace("\n", os.linesep).encode("utf-8")
+
+
+def _write_generation_audit_record_excl(reviews_dir, audit_record):
+    """Zaman damgalı taban ad + `O_CREAT|O_EXCL` + sayısal sonek; eşleşme
+    HER ZAMAN içerikten, addan asla."""
+
+    reviews_dir = Path(reviews_dir)
+
+    reviews_dir.mkdir(parents=True, exist_ok=True)
+
+    stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    base = f"case_view_{stamp}"
+
+    suffix = 0
+
+    while True:
+
+        if suffix == 0:
+            name = f"{base}.generation_audit.json"
+        else:
+            name = f"{base}_{suffix}.generation_audit.json"
+
+        path_containment.validate_segment(name)
+
+        candidate = path_containment.resolve_for_create(reviews_dir, name)
+
+        try:
+            fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            suffix += 1
+            if suffix > 1000:
+                raise RuntimeError("Generation audit dosya adı için 1000 denemede boş ad bulunamadı.")
+            continue
+
+        with os.fdopen(fd, "wb") as file:
+            file.write(_canonical_json_bytes(audit_record))
+
+        return candidate
+
+
+def write_pending(
+    case_id,
+    view,
+    *,
+    verified_paths=None,
+    input_digest=None,
+    identity_payload=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
+):
+    """PHASE B: Row 19C-3c-ii `write_pending()` emsali (bkz. qa_engine.
+    write_pending docstring'i - aynı sözleşme). Ek fail-closed kural:
+    yalnız `generation_status == "completed"` bir case_view pending'e
+    yazılır ('failed' Layer A tarafından zaten reddedilir - burada
+    yazım bile yapılmaz). Canonical `case_view.json` ASLA yazılmaz."""
+
+    mutation_binding_provided = mutation_idempotency_key is not None
+
+    if mutation_binding_provided:
+
+        if (
+            input_digest is None
+            or identity_payload is None
+            or mutation_resource_key is None
+            or mutation_actor_ref is None
+        ):
+
+            raise OrchestratorEngineError(
+                "mutation_idempotency_key verildiğinde input_digest/identity_payload/"
+                "mutation_resource_key/mutation_actor_ref de verilmelidir (kısmi "
+                "mutation-binding kabul edilmez)."
+            )
+
+    if not isinstance(view, dict) or view.get("generation_status") != "completed":
+
+        raise OrchestratorEngineError(
+            "Yalnız generation_status='completed' bir case_view pending'e yazılabilir "
+            "(fail-closed; eksik zorunlu kaynak varken pending üretilmez)."
+        )
+
+    if verified_paths is not None:
+
+        view_dir = verified_paths.family_root
+        pending_path = verified_paths.pending_path
+        history_dir_used = verified_paths.history_dir
+        reviews_dir = verified_paths.reviews_dir
+
+    else:
+
+        view_dir = get_view_dir(case_id)
+        pending_path = get_pending_path(case_id)
+        history_dir_used = get_history_dir(case_id)
+        reviews_dir = get_reviews_dir(case_id)
+
+    view_dir.mkdir(parents=True, exist_ok=True)
+
+    canonical_path = view_dir / "case_view.json"
+
+    canonical_exists_before = canonical_path.exists()
+
+    canonical_sha_before = (
+        hashlib.sha256(canonical_path.read_bytes()).hexdigest() if canonical_exists_before else None
+    )
+
+    previous_pending_history = preserve_previous_pending(
+        case_id=case_id, pending_path=pending_path, history_dir=history_dir_used,
+    )
+
+    try:
+
+        atomic_write_json(pending_path, view)
+
+        # POST-WRITE VALIDATOR - fonksiyon-içi import: `orchestrator_
+        # validator` modül başında `orchestrator_engine`'i import eder.
+        import orchestrator_validator
+
+        validation = orchestrator_validator.validate_case_view(
+            pending_path, expected_case_id=case_id, raise_on_error=True,
+        )
+
+        if validation.get("valid") is not True:
+
+            raise OrchestratorEngineError("Post-write Orchestrator Validator valid=False.")
+
+        pending_raw_bytes = pending_path.read_bytes()
+
+        pending_sha256 = hashlib.sha256(pending_raw_bytes).hexdigest()
+
+        written = json.loads(pending_raw_bytes.decode("utf-8"))
+
+        if written.get("generation_status") != "completed":
+
+            raise OrchestratorEngineError("Yazılan case_view generation_status != 'completed'.")
+
+        canonical_exists_after = canonical_path.exists()
+
+        canonical_sha_after = (
+            hashlib.sha256(canonical_path.read_bytes()).hexdigest() if canonical_exists_after else None
+        )
+
+        if canonical_exists_before != canonical_exists_after or canonical_sha_before != canonical_sha_after:
+
+            raise OrchestratorEngineError("Orchestrator Engine canonical case_view.json durumunu değiştirdi.")
+
+        audit_path = None
+
+        first_write = previous_pending_history is None
+
+        if mutation_binding_provided:
+
+            history_backup_path = None
+
+            history_backup_sha256 = None
+
+            if not first_write:
+
+                history_backup_path = canonical_locator_under(
+                    previous_pending_history,
+                    anchor_root=history_dir_used,
+                    logical_prefix_parts=(case_id, "case_view", "history"),
+                )
+
+                history_backup_sha256 = hashlib.sha256(previous_pending_history.read_bytes()).hexdigest()
+
+            audit_record = {
+                "schema_version": GENERATION_AUDIT_SCHEMA_VERSION,
+                "case_id": case_id,
+                "target_ref": get_target_ref(),
+                "target_state": "generated",
+                "action_family": GENERATION_ACTION_FAMILY,
+                "channel": GENERATION_CHANNEL,
+                "mutation_actor_ref": mutation_actor_ref,
+                "mutation_idempotency_key": mutation_idempotency_key,
+                "mutation_resource_key": mutation_resource_key,
+                "input_digest": input_digest,
+                "generation_parameters_digest": None,
+                "generation_mode": identity_payload.get("generation_mode"),
+                "model_id": identity_payload.get("model_id"),
+                "prompt_agent_version": identity_payload.get("prompt_agent_version"),
+                "identity_payload": identity_payload,
+                "first_write": first_write,
+                "history_backup_path": history_backup_path,
+                "history_backup_sha256": history_backup_sha256,
+                "pending_sha256": pending_sha256,
+                "generated_at": written.get("generated_at"),
+                "outcome": "generated",
+                "written_at": datetime.datetime.now().astimezone().isoformat(),
+            }
+
+            audit_path = _write_generation_audit_record_excl(reviews_dir=reviews_dir, audit_record=audit_record)
+
+        return {
+            "pending_path": pending_path,
+            "validation": validation,
+            "previous_pending_history": previous_pending_history,
+            "pending_sha256": pending_sha256,
+            "audit_path": audit_path,
+            "first_write": first_write,
+        }
+
+    except Exception:
+
+        if pending_path.exists():
+
+            pending_path.unlink()
+
+        if previous_pending_history is not None and previous_pending_history.exists():
+
+            shutil.move(str(previous_pending_history), str(pending_path))
+
+        raise
+
+
+# ============================================================
 # SELF TEST
 # ============================================================
 
@@ -873,4 +1241,12 @@ if __name__ == "__main__":
 
     else:
 
-        print("orchestrator_engine.py - bkz. --self-test.")
+        # PHASE B: bu dosyanın doğrudan CLI üretim yolu YOKTUR ve
+        # AÇILMAMIŞTIR. Resmî pending üretimi yalnız koordine yoldan:
+        #   python -m ui.cli_mutate generation --case <CASE_ID> --row-key case_view
+        #       --actor-user-id <N> [--apply --expected-input-digest <DIGEST>]
+        print(
+            "orchestrator_engine.py - bkz. --self-test. Pending üretimi için: "
+            "python -m ui.cli_mutate generation --case <CASE_ID> --row-key case_view "
+            "--actor-user-id <N> [--apply --expected-input-digest <DIGEST>]"
+        )

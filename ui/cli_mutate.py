@@ -279,6 +279,12 @@ def _build_arg_parser():
     from ui.services import agent_generation_mutation_facade as _agent_generation_facade
     from ui.services import fact_extraction_mutation_facade as _fact_extraction_facade
     from ui.services import legal_research_case_law_mutation_facade as _legal_research_case_law_facade
+    # PHASE B (Commit A): a FIFTH backing facade for the SAME `generation`
+    # namespace - `qa`/`case_view` (Row 16/17), the first OFFICIAL pending
+    # publishers for QA and the orchestrator case view. Deterministic-
+    # only: `--with-agent`/`--allow-network` are REJECTED unconditionally
+    # for both row-keys (the pilot egress universe is NOT widened).
+    from ui.services import qa_case_view_generation_mutation_facade as _qa_case_view_generation_facade
 
     _AGENT_GENERATION_ROW_KEYS = frozenset(
         _agent_generation_facade.AGENT_GENERATION_ROW_KEY_TO_MODULE_NAME.keys()
@@ -289,6 +295,9 @@ def _build_arg_parser():
     _LEGAL_RESEARCH_CASE_LAW_ROW_KEYS = frozenset(
         _legal_research_case_law_facade.LEGAL_RESEARCH_CASE_LAW_ROW_KEY_TO_MODULE_NAME.keys()
     )
+    _QA_CASE_VIEW_GENERATION_ROW_KEYS = frozenset(
+        _qa_case_view_generation_facade.QA_CASE_VIEW_GENERATION_ROW_KEY_TO_MODULE_NAME.keys()
+    )
 
     generation_parser = subparsers.add_parser(
         "generation",
@@ -296,8 +305,9 @@ def _build_arg_parser():
             "Deterministic deadline/timeline (Row 19C-3c-i) AND case-scoped agent-gated "
             "issue_spotting/evidence/argument/risk_strategy/drafting (Row 19C-3c-ii) AND "
             "document-scoped fact_extraction (Row 19C-3c-iii) AND case-scoped deterministic+agent "
-            "legal_research/case_law, retrieval/discovery deferred (Row 19C-3c-iv Slice 1) pending "
-            "generation - one shared namespace, four backing facades."
+            "legal_research/case_law, retrieval/discovery deferred (Row 19C-3c-iv Slice 1) AND "
+            "deterministic-only qa/case_view (Phase B, Row 16/17 official pending publishers) "
+            "pending generation - one shared namespace, five backing facades."
         ),
     )
     generation_parser.add_argument("--case", dest="case_id", required=True)
@@ -308,6 +318,7 @@ def _build_arg_parser():
             | _AGENT_GENERATION_ROW_KEYS
             | _FACT_EXTRACTION_ROW_KEYS
             | _LEGAL_RESEARCH_CASE_LAW_ROW_KEYS
+            | _QA_CASE_VIEW_GENERATION_ROW_KEYS
         ),
     )
     generation_parser.add_argument(
@@ -346,7 +357,8 @@ def _build_arg_parser():
         "their prompts carry only ID/enum-only content (no raw case text), but the pilot bar "
         "closes every outbound AI path except fact_extraction regardless of data sensitivity. "
         "For all seven of these row-keys, deterministic mode (--with-agent OMITTED) is "
-        "completely unaffected. REJECTED for deadline/timeline.",
+        "completely unaffected. REJECTED for deadline/timeline. PHASE B: REJECTED UNCONDITIONALLY "
+        "for qa/case_view too (deterministic-only publishers - no agent mode exists).",
     )
     generation_parser.add_argument(
         "--allow-network", action="store_true", dest="allow_network", default=False,
@@ -619,6 +631,25 @@ def _legal_research_case_law_row_keys():
     )
 
 
+def _qa_case_view_generation_row_keys():
+    """PHASE B (Commit A): the deterministic-only `qa`/`case_view`
+    row-keys - same lazy, function-local import discipline as the three
+    helpers above (no module-import-time dependency)."""
+    from ui.services import qa_case_view_generation_mutation_facade as _qa_case_view_generation_facade
+
+    return frozenset(
+        _qa_case_view_generation_facade.QA_CASE_VIEW_GENERATION_ROW_KEY_TO_MODULE_NAME.keys()
+    )
+
+
+def _qa_case_view_generation_refusal_message(row_key):
+    """PHASE B: the facade's OWN fixed agent-mode refusal text (single
+    authority; the CLI never re-types the family names or the message)."""
+    from ui.services import qa_case_view_generation_mutation_facade as _qa_case_view_generation_facade
+
+    return _qa_case_view_generation_facade.agent_mode_refusal_message(row_key)
+
+
 # ----------------------------------------------------------------
 # PILOT READINESS ADIM 4b - ham case metni taşıyan ailelerin kapalı
 # kümeleri ve SABİT ret metni. TEK OTORİTE her iki facade'in KENDİ
@@ -833,6 +864,30 @@ def _validate_generation_args(args, *, stderr) -> int | None:
             return EXIT_USAGE_ERROR
         if args.allow_network and not args.with_agent:
             stderr.write("error: --allow-network requires --with-agent\n")
+            return EXIT_USAGE_ERROR
+    elif args.row_key in _qa_case_view_generation_row_keys():
+        # PHASE B (Commit A): `qa`/`case_view` are SALT deterministic -
+        # timeline-branch grammar (every deadline-only/fact_extraction-
+        # only flag rejected) PLUS an unconditional --with-agent/
+        # --allow-network refusal with the facade's OWN fixed message.
+        # Placed BEFORE the deadline `else:` fallback so neither row-key
+        # ever falls through into "--row-key deadline requires --anchor".
+        if args.document is not None:
+            stderr.write(f"error: --document is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.anchor_event_id is not None:
+            stderr.write(f"error: --anchor is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.judicial_recess_applicable != "unknown":
+            stderr.write(
+                f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.mask_term:
+            stderr.write(f"error: --mask-term is not accepted for --row-key {args.row_key}\n")
+            return EXIT_USAGE_ERROR
+        if args.with_agent or args.allow_network:
+            stderr.write(_qa_case_view_generation_refusal_message(args.row_key) + "\n")
             return EXIT_USAGE_ERROR
     else:
         if args.document is not None:
@@ -1210,14 +1265,17 @@ def _format_mask_terms_for_operator(mask_terms):
 
 
 def _run_generation(args, *, principal, repository, mutation_conn_factory) -> str:
-    """ROW 19C-3c-i/3c-ii/3c-iii. Dispatches by `--row-key` to ONE of
-    THREE backing facades, sharing the single `generation` CLI
-    namespace: `deadline`/`timeline` -> `ui.services.generation_
-    mutation_facade` (LOCKED, byte/behavior-UNCHANGED below); the five
-    agent-generation row-keys -> `ui.services.agent_generation_mutation_
-    facade` (ROW 19C-3c-ii, LOCKED, byte/behavior-UNCHANGED below);
-    `fact_extraction` -> `ui.services.fact_extraction_mutation_facade`
-    (ROW 19C-3c-iii, NEW). `llm_client` is NEVER passed by this
+    """ROW 19C-3c-i/3c-ii/3c-iii/3c-iv + PHASE B. Dispatches by
+    `--row-key` to ONE of FIVE backing facades, sharing the single
+    `generation` CLI namespace: `deadline`/`timeline` -> `ui.services.
+    generation_mutation_facade` (LOCKED, byte/behavior-UNCHANGED below);
+    the five agent-generation row-keys -> `ui.services.agent_generation_
+    mutation_facade` (ROW 19C-3c-ii, LOCKED, byte/behavior-UNCHANGED
+    below); `fact_extraction` -> `ui.services.fact_extraction_mutation_
+    facade` (ROW 19C-3c-iii); `legal_research`/`case_law` -> `ui.services.
+    legal_research_case_law_mutation_facade` (ROW 19C-3c-iv Slice 1);
+    `qa`/`case_view` -> `ui.services.qa_case_view_generation_mutation_
+    facade` (PHASE B Commit A, deterministic-only). `llm_client` is NEVER passed by this
     dispatcher in ANY branch, in either preview or apply - it is a
     test-only DI seam on each facade's own function signatures, not a
     CLI-reachable parameter (see each module's own header comment)."""
@@ -1381,6 +1439,47 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
             )
 
         result = _legal_research_case_law_facade.apply_generation(
+            args.row_key, args.case_id, args.expected_input_digest,
+            with_agent=args.with_agent, allow_network=args.allow_network,
+            principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+        )
+        return (
+            f"APPLIED generation row_key={args.row_key}\n"
+            f"pending_path={result.pending_path}\n"
+            f"pending_sha256={result.pending_sha256}\n"
+            f"audit_path={result.audit_path}\n"
+            f"replayed={result.replayed}\n"
+        )
+
+    if args.row_key in _qa_case_view_generation_row_keys():
+        # PHASE B (Commit A): `qa`/`case_view` -> `ui.services.
+        # qa_case_view_generation_mutation_facade` (deterministic-only;
+        # `with_agent`/`allow_network` are forwarded ONLY so the facade's
+        # own independent refusal fires even if the usage-shape layer
+        # above were ever bypassed - the CLI never passes any client).
+        from ui.services import qa_case_view_generation_mutation_facade as _qa_case_view_generation_facade
+
+        if not args.apply:
+            preview = _qa_case_view_generation_facade.preview_generation(
+                args.row_key, args.case_id,
+                with_agent=args.with_agent, allow_network=args.allow_network,
+                principal=principal, authz_repository=repository,
+            )
+            return (
+                f"PREVIEW generation row_key={args.row_key} case_id={preview['case_id']}\n"
+                f"target_ref={preview['target_ref']}\n"
+                f"input_digest={preview['input_digest']}\n"
+                f"generation_mode={preview['generation_mode']}\n"
+                f"model_id={preview['model_id']}\n"
+                f"prompt_agent_version={preview['prompt_agent_version']}\n"
+                f"pending_exists={preview['pending_exists']}\n"
+                f"pending_sha256={preview['pending_sha256']}\n"
+                "Üretmek için: python -m ui.cli_mutate generation --case "
+                f"{preview['case_id']} --row-key {args.row_key} --actor-user-id "
+                f"{args.actor_user_id} --apply --expected-input-digest {preview['input_digest']}\n"
+            )
+
+        result = _qa_case_view_generation_facade.apply_generation(
             args.row_key, args.case_id, args.expected_input_digest,
             with_agent=args.with_agent, allow_network=args.allow_network,
             principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,

@@ -10,9 +10,12 @@
 import hashlib
 import itertools
 import json
+import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 
+import path_containment
 from qa_policy import (
     QA_SCOPE_REGISTRY, QA_CHECK_REGISTRY, QA_OPTIONAL_SCOPES, QA_MULTI_FILE_SCOPES,
     CHECK_VERSION, CHECK_APPLICABLE_SCOPES, CASE_RISK_SCOPES,
@@ -23,8 +26,40 @@ from qa_discovery import (
     BASE_DIR, CASES_DIR, get_case_json_path, get_single_file_scope_path,
     get_document_path, get_facts_path, read_artifact_bytes, parse_json_bytes,
     resolve_document_membership, load_full_upstream_context, load_json_if_exists,
-    build_coverage_by_issue,
+    build_coverage_by_issue, qa_artifact_locator, canonical_locator_under,
 )
+
+
+# ============================================================
+# PHASE B - RESMİ PENDING PUBLISHER YÜZEYİ (generation.qa)
+#
+# Row 19A'nın "QA/Orchestrator pending-generation publisher'ları YOK"
+# boşluğunu kapatan, coordinator-route'lu writer yüzeyi (Row 19C-3c-ii
+# `issue_spotting_engine.write_pending()` emsalinin birebir deseni).
+# Domain/check mantığı (build_qa_engine_output ve 12 check) DEĞİŞMEZ;
+# bu blok yalnız I/O'dur: atomik pending yazımı, önceki pending'in
+# history'ye taşınması, post-write validator, canonical-mutation guard,
+# `O_CREAT|O_EXCL` generation audit ve rollback. Canonical `qa.json`'a
+# HİÇBİR ZAMAN yazılmaz; onay yalnız Layer A (`qa_approval.run_approve`,
+# `ui.cli_mutate approval --row-key qa`) ile yapılır.
+#
+# Emsalden BİLİNÇLİ sapma (kullanıcı kararı, Phase B Commit A, madde 4):
+# generation audit'indeki `history_backup_path` MUTLAK yol DEĞİL,
+# repo-göreli canonical locator'dır (`data/cases/<case_id>/qa/history/
+# <ad>`); adapter bu değeri yalnız DOĞRULANMIŞ history dizini altında,
+# ada göre çözer (carry-forward binding deseni) - audit'e worktree/
+# kullanıcı dizini mutlak yolu HİÇ girmez.
+# ============================================================
+
+GENERATION_ACTION_FAMILY = "generation.qa"
+
+GENERATION_AUDIT_SCHEMA_VERSION = "1"
+
+GENERATION_CHANNEL = "local_lawyer_generation_cli"
+
+
+class QaEngineError(Exception):
+    pass
 
 
 def get_qa_dir(case_id):
@@ -40,6 +75,36 @@ def get_qa_pending_path(case_id):
 def get_qa_canonical_path(case_id):
 
     return get_qa_dir(case_id) / "qa.json"
+
+
+def get_pending_path(case_id):
+    """Facade/adapter sözleşmesi (`module.get_pending_path`) - `qa_approval.
+    get_pending_path()` ile BİREBİR aynı dosya adı (`qa_<case_id>_v1.json.
+    pending`); parity izole testle sabitlenir."""
+
+    return get_qa_pending_path(case_id)
+
+
+def get_canonical_path(case_id):
+
+    return get_qa_canonical_path(case_id)
+
+
+def get_history_dir(case_id):
+
+    return get_qa_dir(case_id) / "history"
+
+
+def get_reviews_dir(case_id):
+
+    return get_qa_dir(case_id) / "generation_reviews"
+
+
+def get_target_ref():
+    """QA generation case-scopludur - tek case için tek operasyon slotu
+    (`issue_spotting_engine.get_target_ref()` ile aynı desen)."""
+
+    return "qa.pending"
 
 
 def now_iso():
@@ -166,7 +231,10 @@ class QaResultBuilder:
             "reason_code": reason_code,
             "artifact_locator": {
                 "scope_id": scope_id,
-                "path": str(path) if path is not None else None,
+                # PHASE B: repo köküne göre POSIX bağıl canonical locator
+                # (qa_discovery.qa_artifact_locator) - mutlak/OS'e bağlı
+                # str(Path) biçimi kaldırıldı; case kökü dışı fail-closed.
+                "path": qa_artifact_locator(path),
                 "raw_byte_sha256_at_scan": sha256_at_scan,
             },
         })
@@ -1106,6 +1174,317 @@ def build_qa_engine_output(case_id):
 
 
 # ============================================================
+# PHASE B - WRITER (yalnız pending; canonical'a ASLA yazılmaz)
+# ============================================================
+
+def atomic_write_json(path, data):
+    """LF-only, fsync'li, `os.replace` ile atomik pending yazımı -
+    commit'li Row 16 serileştirmesiyle (`json.dumps(ensure_ascii=False,
+    indent=2)` + tek `\\n`) BAYT-BAYT aynı tarif."""
+
+    path = Path(path)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    temp_path = path.parent / (path.name + ".tmp")
+
+    with open(temp_path, "w", encoding="utf-8", newline="\n") as file:
+
+        json.dump(data, file, ensure_ascii=False, indent=2)
+
+        file.write("\n")
+
+        file.flush()
+
+        os.fsync(file.fileno())
+
+    os.replace(temp_path, path)
+
+
+def preserve_previous_pending(case_id, pending_path, *, history_dir=None):
+    """Mevcut pending SESSİZCE ezilmez: `history/qa_pending_before_engine_
+    <ts>.json.pending` olarak taşınır ve generation audit'inde
+    `first_write=False` + `history_backup_path`/`history_backup_sha256`
+    ile kayda geçer. `history_dir` keyword-only/additive: `None` iken ham
+    getter'dan türetilir; coordinated yolda facade'in kilit altında
+    doğruladığı dizin açıkça geçirilir."""
+
+    pending_path = Path(pending_path)
+
+    if not pending_path.exists():
+
+        return None
+
+    if history_dir is None:
+
+        history_dir = get_history_dir(case_id)
+
+    history_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
+
+    # Aynı saniye içindeki iki yazım aynı ada çözülmesin: mevcut bir
+    # history yedeği ASLA ezilmez - sayısal sonekle boş ad aranır (audit
+    # yazıcısıyla aynı disiplin); aday ad containment ile doğrulanır.
+    base = "qa_pending_before_engine_" + timestamp
+
+    suffix = 0
+
+    while True:
+
+        name = base + (".json.pending" if suffix == 0 else f"_{suffix}.json.pending")
+
+        path_containment.validate_segment(name)
+
+        history_path = path_containment.resolve_for_create(history_dir, name)
+
+        if not os.path.lexists(history_path):
+            break
+
+        suffix += 1
+
+        if suffix > 1000:
+            raise QaEngineError("History yedeği dosya adı için 1000 denemede boş ad bulunamadı.")
+
+    shutil.move(str(pending_path), str(history_path))
+
+    return history_path
+
+
+def _canonical_json_bytes(data):
+    """Yalnız `*.generation_audit.json` için (deadline/issue_spotting
+    emsalinin bağımsız kopyası); pending tarifi (`atomic_write_json`)
+    LF-only kalır."""
+
+    text = json.dumps(data, ensure_ascii=False, indent=2)
+
+    return text.replace("\n", os.linesep).encode("utf-8")
+
+
+def _write_generation_audit_record_excl(reviews_dir, audit_record):
+    """Zaman damgalı taban ad + `O_CREAT|O_EXCL` + sayısal sonek - sabit
+    adın üzerine yazma sınıfı kapatılır; replay/reconciliation eşleşmesi
+    HER ZAMAN içerikten yapılır, addan asla."""
+
+    reviews_dir = Path(reviews_dir)
+
+    reviews_dir.mkdir(parents=True, exist_ok=True)
+
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    base = f"qa_{stamp}"
+
+    suffix = 0
+
+    while True:
+
+        if suffix == 0:
+            name = f"{base}.generation_audit.json"
+        else:
+            name = f"{base}_{suffix}.generation_audit.json"
+
+        path_containment.validate_segment(name)
+
+        candidate = path_containment.resolve_for_create(reviews_dir, name)
+
+        try:
+            fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            suffix += 1
+            if suffix > 1000:
+                raise RuntimeError("Generation audit dosya adı için 1000 denemede boş ad bulunamadı.")
+            continue
+
+        with os.fdopen(fd, "wb") as file:
+            file.write(_canonical_json_bytes(audit_record))
+
+        return candidate
+
+
+def write_pending(
+    case_id,
+    analysis,
+    *,
+    verified_paths=None,
+    input_digest=None,
+    identity_payload=None,
+    mutation_idempotency_key=None,
+    mutation_resource_key=None,
+    mutation_actor_ref=None,
+):
+    """PHASE B: Row 19C-3c-ii `write_pending()` emsali. Bütün parametreler
+    additive/keyword-only/`None`. `mutation_idempotency_key is not None`
+    -> mutation_binding_provided; bu durumda diğer dördü de ZORUNLUDUR
+    (kısmi binding kabul edilmez). `verified_paths` verildiğinde (facade,
+    kilit altında doğrulanmış) BÜTÜN çıktı I/O'su yalnız o nesne
+    üzerinden yapılır; ham getter'lar çağrılmaz.
+
+    Canonical `qa.json` bu fonksiyon tarafından ASLA yazılmaz/silinmez -
+    varlık VE bayt durumu yazım öncesi/sonrası karşılaştırılır."""
+
+    mutation_binding_provided = mutation_idempotency_key is not None
+
+    if mutation_binding_provided:
+
+        if (
+            input_digest is None
+            or identity_payload is None
+            or mutation_resource_key is None
+            or mutation_actor_ref is None
+        ):
+
+            raise QaEngineError(
+                "mutation_idempotency_key verildiğinde input_digest/identity_payload/"
+                "mutation_resource_key/mutation_actor_ref de verilmelidir (kısmi "
+                "mutation-binding kabul edilmez)."
+            )
+
+    if verified_paths is not None:
+
+        qa_dir = verified_paths.family_root
+        pending_path = verified_paths.pending_path
+        history_dir_used = verified_paths.history_dir
+        reviews_dir = verified_paths.reviews_dir
+
+    else:
+
+        qa_dir = get_qa_dir(case_id)
+        pending_path = get_qa_pending_path(case_id)
+        history_dir_used = get_history_dir(case_id)
+        reviews_dir = get_reviews_dir(case_id)
+
+    qa_dir.mkdir(parents=True, exist_ok=True)
+
+    canonical_path = qa_dir / "qa.json"
+
+    # ========================================================
+    # CANONICAL FILE IS NEVER MODIFIED HERE
+    # ========================================================
+
+    canonical_exists_before = canonical_path.exists()
+
+    canonical_sha_before = (
+        hashlib.sha256(canonical_path.read_bytes()).hexdigest() if canonical_exists_before else None
+    )
+
+    previous_pending_history = preserve_previous_pending(
+        case_id=case_id, pending_path=pending_path, history_dir=history_dir_used,
+    )
+
+    try:
+
+        atomic_write_json(pending_path, analysis)
+
+        # POST-WRITE VALIDATOR - fonksiyon-içi import: `qa_validator`
+        # modül başında `qa_engine`'i import eder (bağımsız yeniden
+        # hesaplama için); modül-seviyesi karşılıklı import döngüsü
+        # BİLİNÇLİ olarak kurulmaz.
+        import qa_validator
+
+        validation = qa_validator.validate_qa_analysis(
+            pending_path, expected_case_id=case_id, raise_on_error=True,
+        )
+
+        if validation.get("valid") is not True:
+
+            raise QaEngineError("Post-write QA Validator valid=False.")
+
+        pending_raw_bytes = pending_path.read_bytes()
+
+        pending_sha256 = hashlib.sha256(pending_raw_bytes).hexdigest()
+
+        written = json.loads(pending_raw_bytes.decode("utf-8"))
+
+        if written.get("qa_generation_status") == "aborted_source_changed":
+
+            raise QaEngineError(
+                "QA taraması sırasında kaynak değişti (aborted_source_changed) - pending "
+                "üretimi fail-closed reddedildi."
+            )
+
+        # CANONICAL MUTATION GUARD (varlık VE bayt)
+        canonical_exists_after = canonical_path.exists()
+
+        canonical_sha_after = (
+            hashlib.sha256(canonical_path.read_bytes()).hexdigest() if canonical_exists_after else None
+        )
+
+        if canonical_exists_before != canonical_exists_after or canonical_sha_before != canonical_sha_after:
+
+            raise QaEngineError("QA Engine canonical qa.json durumunu değiştirdi.")
+
+        audit_path = None
+
+        first_write = previous_pending_history is None
+
+        if mutation_binding_provided:
+
+            history_backup_path = None
+
+            history_backup_sha256 = None
+
+            if not first_write:
+
+                # Repo-göreli canonical locator (mutlak yol DEĞİL): history
+                # dizini çapası altında containment-doğrulanır.
+                history_backup_path = canonical_locator_under(
+                    previous_pending_history,
+                    anchor_root=history_dir_used,
+                    logical_prefix_parts=(case_id, "qa", "history"),
+                )
+
+                history_backup_sha256 = hashlib.sha256(previous_pending_history.read_bytes()).hexdigest()
+
+            audit_record = {
+                "schema_version": GENERATION_AUDIT_SCHEMA_VERSION,
+                "case_id": case_id,
+                "target_ref": get_target_ref(),
+                "target_state": "generated",
+                "action_family": GENERATION_ACTION_FAMILY,
+                "channel": GENERATION_CHANNEL,
+                "mutation_actor_ref": mutation_actor_ref,
+                "mutation_idempotency_key": mutation_idempotency_key,
+                "mutation_resource_key": mutation_resource_key,
+                "input_digest": input_digest,
+                "generation_parameters_digest": None,
+                "generation_mode": identity_payload.get("generation_mode"),
+                "model_id": identity_payload.get("model_id"),
+                "prompt_agent_version": identity_payload.get("prompt_agent_version"),
+                "identity_payload": identity_payload,
+                "first_write": first_write,
+                "history_backup_path": history_backup_path,
+                "history_backup_sha256": history_backup_sha256,
+                "pending_sha256": pending_sha256,
+                "generated_at": written.get("generated_at"),
+                "outcome": "generated",
+                "written_at": datetime.now().astimezone().isoformat(),
+            }
+
+            audit_path = _write_generation_audit_record_excl(reviews_dir=reviews_dir, audit_record=audit_record)
+
+        return {
+            "pending_path": pending_path,
+            "validation": validation,
+            "previous_pending_history": previous_pending_history,
+            "pending_sha256": pending_sha256,
+            "audit_path": audit_path,
+            "first_write": first_write,
+        }
+
+    except Exception:
+
+        if pending_path.exists():
+
+            pending_path.unlink()
+
+        if previous_pending_history is not None and previous_pending_history.exists():
+
+            shutil.move(str(previous_pending_history), str(pending_path))
+
+        raise
+
+
+# ============================================================
 # SELF TEST
 # ============================================================
 
@@ -1208,57 +1587,99 @@ def run_self_test():
     print("T04 evidence.json yokluğu doğru sınıflandırıldı (absent+optional=passed, bağımlılar=blocked):", "PASS")
 
     # ---- T05: scan_artifact - senkron sentetik dosya senaryoları ----
+    # PHASE B: fixture dosyaları, T08 ile AYNI desenle, geçici bir
+    # `<td>/data/cases/fixture_case/...` case kökü altına yerleştirilir ve
+    # `qa_discovery.CASES_DIR` o köke yönlendirilir - taşınabilir locator
+    # sözleşmesi case kökü DIŞINDAKİ bir yolu fail-closed reddeder.
+
+    import qa_discovery as _qa_discovery_for_t05
+
+    original_cases_dir_t05 = _qa_discovery_for_t05.CASES_DIR
 
     with tempfile.TemporaryDirectory(prefix="qa_engine_selftest_") as td:
 
-        valid_path = Path(td) / "valid.json"
-        valid_path.write_text('{"a": 1}', encoding="utf-8")
+        fixture_cases_dir = Path(td) / "data" / "cases"
+        fixture_case_dir = fixture_cases_dir / "fixture_case"
+        (fixture_case_dir / "timeline").mkdir(parents=True)
+        (fixture_case_dir / "issues").mkdir(parents=True)
 
-        malformed_path = Path(td) / "malformed.json"
-        malformed_path.write_bytes(b"{not valid json")
+        _qa_discovery_for_t05.CASES_DIR = fixture_cases_dir
 
-        absent_path = Path(td) / "does_not_exist.json"
+        try:
 
-        v = scan_artifact(valid_path)
-        assert v["state"] == "present_valid" and v["parsed"] == {"a": 1}
+            valid_path = fixture_case_dir / "valid.json"
+            valid_path.write_text('{"a": 1}', encoding="utf-8")
 
-        m = scan_artifact(malformed_path)
-        assert m["state"] == "present_invalid" and m["parsed"] is None
+            malformed_path = fixture_case_dir / "timeline" / "timeline.json"
+            malformed_path.write_bytes(b"{not valid json")
 
-        a = scan_artifact(absent_path)
-        assert a["state"] == "absent" and a["sha256"] is None
+            absent_path = fixture_case_dir / "issues" / "issues.json"
 
-        print("T05 scan_artifact: valid/malformed/absent senaryoları doğru sınıflandırıldı:", "PASS")
+            v = scan_artifact(valid_path)
+            assert v["state"] == "present_valid" and v["parsed"] == {"a": 1}
 
-        # ---- T06: _emit_1_2_3 - malformed JSON -> #3 failed, bağımlı YOK ----
+            m = scan_artifact(malformed_path)
+            assert m["state"] == "present_invalid" and m["parsed"] is None
 
-        builder = QaResultBuilder()
+            a = scan_artifact(absent_path)
+            assert a["state"] == "absent" and a["sha256"] is None
 
-        _emit_1_2_3(builder, "timeline", m, required=True, member_id=None, path=malformed_path)
+            print("T05 scan_artifact: valid/malformed/absent senaryoları doğru sınıflandırıldı:", "PASS")
 
-        by_check = {r["check_id"]: r for r in builder.results}
+            # ---- T06: _emit_1_2_3 - malformed JSON -> #3 failed, bağımlı YOK ----
 
-        assert by_check["artifact_presence"]["qa_result"] == "passed"
-        assert by_check["raw_byte_readability"]["qa_result"] == "passed"
-        assert by_check["json_validity"]["qa_result"] == "failed"
-        assert by_check["json_validity"]["reason_code"] == "malformed_json"
+            builder = QaResultBuilder()
 
-        print("T06 Okunabilir-ama-bozuk JSON: json_validity=failed (checker hatası DEĞİL):", "PASS")
+            _emit_1_2_3(builder, "timeline", m, required=True, member_id=None, path=malformed_path)
 
-        # ---- T07: _emit_1_2_3 - absent+required -> presence=failed, bağımlılar=blocked ----
+            by_check = {r["check_id"]: r for r in builder.results}
 
-        builder2 = QaResultBuilder()
+            assert by_check["artifact_presence"]["qa_result"] == "passed"
+            assert by_check["raw_byte_readability"]["qa_result"] == "passed"
+            assert by_check["json_validity"]["qa_result"] == "failed"
+            assert by_check["json_validity"]["reason_code"] == "malformed_json"
+            assert by_check["json_validity"]["artifact_locator"]["path"] == "data/cases/fixture_case/timeline/timeline.json"
 
-        _emit_1_2_3(builder2, "issues", a, required=True, member_id=None, path=absent_path)
+            print("T06 Okunabilir-ama-bozuk JSON: json_validity=failed (checker hatası DEĞİL):", "PASS")
 
-        by_check2 = {r["check_id"]: r for r in builder2.results}
+            # ---- T07: _emit_1_2_3 - absent+required -> presence=failed, bağımlılar=blocked ----
 
-        assert by_check2["artifact_presence"]["qa_result"] == "failed"
-        assert by_check2["artifact_presence"]["reason_code"] == "artifact_absent_required"
-        assert by_check2["raw_byte_readability"]["qa_result"] == "blocked"
-        assert by_check2["json_validity"]["qa_result"] == "blocked"
+            builder2 = QaResultBuilder()
 
-        print("T07 Eksik ZORUNLU artefakt: presence=failed, bağımlı check'ler=blocked:", "PASS")
+            _emit_1_2_3(builder2, "issues", a, required=True, member_id=None, path=absent_path)
+
+            by_check2 = {r["check_id"]: r for r in builder2.results}
+
+            assert by_check2["artifact_presence"]["qa_result"] == "failed"
+            assert by_check2["artifact_presence"]["reason_code"] == "artifact_absent_required"
+            assert by_check2["raw_byte_readability"]["qa_result"] == "blocked"
+            assert by_check2["json_validity"]["qa_result"] == "blocked"
+            assert by_check2["artifact_presence"]["artifact_locator"]["path"] == "data/cases/fixture_case/issues/issues.json"
+            assert by_check2["artifact_presence"]["artifact_locator"]["raw_byte_sha256_at_scan"] is None
+
+            print("T07 Eksik ZORUNLU artefakt: presence=failed, bağımlı check'ler=blocked:", "PASS")
+
+            # ---- T07b: taşınabilir locator - case kökü dışı yol fail-closed ----
+
+            outside_path = Path(td) / "outside.json"
+
+            try:
+
+                QaResultBuilder().add("artifact_presence", "timeline", "passed", {}, "ok", path=outside_path)
+
+                raise AssertionError("Case kökü dışındaki yol için QaLocatorError bekleniyordu.")
+
+            except _qa_discovery_for_t05.QaLocatorError:
+
+                pass
+
+            assert QaResultBuilder().add("artifact_presence", "timeline", "passed", {}, "ok", path=None) is not None
+
+            print("T07b Taşınabilir locator: case kökü dışı yol reddedildi, None korunuyor:", "PASS")
+
+        finally:
+
+            _qa_discovery_for_t05.CASES_DIR = original_cases_dir_t05
 
     # ---- T08: resolve_document_membership - case.json yok/bozuk/geçerli ----
 
@@ -1435,5 +1856,18 @@ if __name__ == "__main__":
 
     else:
 
-        result = build_qa_engine_output(args.case_id)
-        print(json.dumps(result, ensure_ascii=False, indent=1))
+        # PHASE B: bu doğrudan CLI üretim/döküm yolu KAPALIDIR. Eski dal
+        # motor çıktısını stdout'a basıyordu; bir operatör bunu elle pending
+        # yoluna yönlendirerek coordinator/journal dışı bir üretim rotası
+        # açabilirdi (Row 19C-3c-ii deseni). `--self-test` yolu KORUNUR.
+        # SystemExit bir BaseException'dır ve bu `if __name__` sarmalayıcısında
+        # try/except yoktur - gerçek OS process exit code'u tam olarak 2'dir.
+        import sys
+
+        print(
+            "HATA: Bu doğrudan CLI üretim yolu artık DEVRE DIŞIDIR (Phase B).\n"
+            "Gerçek üretim için: python -m ui.cli_mutate generation --case <CASE_ID> "
+            "--row-key qa --actor-user-id <N> [--apply --expected-input-digest <DIGEST>]",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
