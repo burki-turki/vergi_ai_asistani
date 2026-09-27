@@ -107,6 +107,29 @@ def snapshot_tree(root):
     return out
 
 
+def dir_snapshot(directory):
+    """`{name: sha256}` for the regular files DIRECTLY in `directory` (empty
+    when the directory does not exist). Used for RELATIVE before/after deltas
+    on append-only provenance dirs, so no test hard-codes an absolute count."""
+    if not directory.is_dir():
+        return {}
+    return {
+        p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in sorted(directory.iterdir()) if p.is_file()
+    }
+
+
+def kept_entries(directory, baseline):
+    """The subset of `dir_snapshot(directory)` whose names are in `baseline` -
+    compare against `baseline` to prove nothing pre-existing was overwritten."""
+    return {n: s for n, s in dir_snapshot(directory).items() if n in baseline}
+
+
+def new_entries(directory, baseline):
+    """Sorted names that appeared in `directory` after `baseline` was taken."""
+    return sorted(set(dir_snapshot(directory)) - set(baseline))
+
+
 REAL_DATA_DIR = REPO_ROOT / "data"
 REAL_CASE_0001 = REAL_DATA_DIR / "cases" / "case_0001"
 _real_data_before = snapshot_tree(REAL_DATA_DIR)
@@ -469,7 +492,67 @@ try:
     canonical_cv = CASE_DIR / "case_view" / "case_view.json"
     canonical_qa_before = canonical_qa.read_bytes()
     canonical_cv_before = canonical_cv.read_bytes()
-    historical_audits_before = snapshot_tree(CASE_DIR / "qa" / "reviews") | snapshot_tree(CASE_DIR / "case_view" / "reviews")
+
+    # --- append-only provenance BASELINE (Commit B) ---------------------
+    # The real case_0001 tree now carries the Commit B provenance directories
+    # (history/, generation_reviews/) and the Commit B promotion audits, so the
+    # copy carries them too. Every count below is therefore a RELATIVE delta
+    # against these baselines - never an absolute total - and every pre-existing
+    # entry must stay byte-identical (nothing overwritten).
+    qa_history_before = dir_snapshot(CASE_DIR / "qa" / "history")
+    qa_genrev_before = dir_snapshot(CASE_DIR / "qa" / "generation_reviews")
+    qa_reviews_before = dir_snapshot(CASE_DIR / "qa" / "reviews")
+    cv_history_before = dir_snapshot(CASE_DIR / "case_view" / "history")
+    cv_genrev_before = dir_snapshot(CASE_DIR / "case_view" / "generation_reviews")
+    cv_reviews_before = dir_snapshot(CASE_DIR / "case_view" / "reviews")
+    check(
+        "NON-VACUITY: the copied fixture carries the Commit B provenance set - a qa/ and case_view/ "
+        "history backup, a generation audit in each generation_reviews/, and in each reviews/ BOTH the "
+        "pre-Commit-B 20260904 promotion audit AND a Commit B (2026-09-2x) promotion audit. This suite "
+        "cannot go green on a pre-Commit-B tree.",
+        all(len(b) >= 1 for b in (qa_history_before, qa_genrev_before, cv_history_before, cv_genrev_before))
+        and any("20260904_202837" in n for n in qa_reviews_before)
+        and any("20260904_212319" in n for n in cv_reviews_before)
+        and any(n.startswith("qa_case_0001_v1_20260927") or n.startswith("qa_case_0001_v1_20260928")
+                or n.startswith("qa_case_0001_v1_20260929") for n in qa_reviews_before)
+        and any(n.startswith("case_view_case_0001_v1_20260927") or n.startswith("case_view_case_0001_v1_20260928")
+                or n.startswith("case_view_case_0001_v1_20260929") for n in cv_reviews_before),
+        f"qa_history={sorted(qa_history_before)} qa_genrev={sorted(qa_genrev_before)} "
+        f"qa_reviews={sorted(qa_reviews_before)} cv_history={sorted(cv_history_before)} "
+        f"cv_genrev={sorted(cv_genrev_before)} cv_reviews={sorted(cv_reviews_before)}",
+    )
+
+    def _commit_b_audit(reviews_dir, baseline, prefix):
+        """The Commit B (2026-09-2x) promotion audit already present in the
+        copied fixture - i.e. one of the TRANSFERRED records, not one this
+        suite generates."""
+        hits = [n for n in sorted(baseline) if n.startswith(prefix)
+                and any(f"_2026092{d}_" in n for d in "789")]
+        return (reviews_dir / hits[0]) if hits else None
+
+    for _fam, _reviews_dir, _baseline, _prefix in (
+        ("qa", CASE_DIR / "qa" / "reviews", qa_reviews_before, "qa_case_0001_v1_"),
+        ("case_view", CASE_DIR / "case_view" / "reviews", cv_reviews_before, "case_view_case_0001_v1_"),
+    ):
+        _audit_path = _commit_b_audit(_reviews_dir, _baseline, _prefix)
+        _audit_text = _audit_path.read_text(encoding="utf-8") if _audit_path else ""
+        _audit_doc = json.loads(_audit_text) if _audit_text else {}
+        check(
+            f"the TRANSFERRED Commit B {_fam} promotion audit carries ONLY repo-relative POSIX locators "
+            f"(source_pending_path / canonical_path / previous_canonical_backup under data/cases/{CASE_ID}/) "
+            "with no backslash, no drive letter and no worktree/repo absolute path",
+            _audit_path is not None
+            and all(
+                isinstance(_audit_doc.get(field), str)
+                and _audit_doc[field].startswith(f"data/cases/{CASE_ID}/{_fam}/")
+                and "\\" not in _audit_doc[field] and ":" not in _audit_doc[field]
+                for field in ("source_pending_path", "canonical_path", "previous_canonical_backup")
+            )
+            and "\\" not in _audit_text and "C:/" not in _audit_text
+            and str(REPO_ROOT) not in _audit_text and str(_TMP_ROOT) not in _audit_text,
+            f"audit={_audit_path.name if _audit_path else None} "
+            f"fields={ {f: _audit_doc.get(f) for f in ('source_pending_path', 'canonical_path', 'previous_canonical_backup')} }",
+        )
 
     # --- identity / manifest -------------------------------------------
     root_real = qcvf._resolve_module_case_root_real(qa_engine, CASE_ID)
@@ -511,14 +594,19 @@ try:
         and paths_qa.reviews_dir.name == "generation_reviews" and paths_qa.history_dir.name == "history",
     )
     check(
-        "the committed canonical qa.json is stale/invalid for a fresh tree (Commit B item, untouched here) "
-        "-> case_view identity derivation is REFUSED with CaseViewQaPrerequisiteError",
-        qa_validator.validate_qa_analysis(canonical_qa, expected_case_id=CASE_ID, raise_on_error=False)["valid"] is False,
+        "BASELINE: the canonical qa.json in this tree is FRESH/VALID (Commit B regenerated snapshot) - "
+        "so every stale-QA refusal below is exercised on a SYNTHETIC stale state this suite creates "
+        "itself, never on the committed fixture's state",
+        qa_validator.validate_qa_analysis(canonical_qa, expected_case_id=CASE_ID, raise_on_error=False)["valid"] is True,
+        str(qa_validator.validate_qa_analysis(canonical_qa, expected_case_id=CASE_ID, raise_on_error=False).get("errors"))[:400],
     )
-    expect_raises(
-        qcvf.CaseViewQaPrerequisiteError,
-        lambda: qcvf._derive_identity("case_view", orchestrator_engine, qcvf._resolve_module_case_root_real(orchestrator_engine, CASE_ID), CASE_ID),
-        "case_view on a stale canonical qa.json -> CaseViewQaPrerequisiteError",
+    check(
+        "case_view identity derivation SUCCEEDS on the fresh canonical qa.json (positive control for the "
+        "prerequisite guard: its refusals below cannot be an unrelated failure)",
+        qcvf._derive_identity(
+            "case_view", orchestrator_engine,
+            qcvf._resolve_module_case_root_real(orchestrator_engine, CASE_ID), CASE_ID,
+        )[4] is not None,
     )
 
     # --- facade preview with an in-memory authz repository ------------
@@ -555,6 +643,33 @@ try:
         "apply with a stale expected_input_digest -> StaleViewError BEFORE any connection factory call",
     )
     expect_raises(
+        qcvf.QaCaseViewGenerationAgentModeRefusedError,
+        lambda: qcvf.apply_generation("qa", CASE_ID, digest_qa, with_agent=True, allow_network=True, principal=lawyer, authz_repository=repo, conn_factory=_ExplodingConnFactory()),
+        "apply with agent flags refused BEFORE authz/connection",
+    )
+
+    # --- SYNTHETIC stale canonical qa.json -----------------------------
+    # ONE reversible, schema-preserving byte change to an upstream artefact the
+    # QA dependency manifest binds (timeline.json) is the ONLY thing that makes
+    # canonical qa.json stale here. The positive control above proved the guard
+    # accepts the fresh tree; the revert below proves the mutation - not an
+    # unrelated error - is what the refusals detect.
+    _stale_upstream = CASE_DIR / "timeline" / "timeline.json"
+    _stale_pristine = _stale_upstream.read_bytes()
+    _stale_upstream.write_bytes(_stale_pristine.replace(b"}", b" }", 1))
+    check(
+        "the single upstream mutation is schema-preserving (same parsed JSON, different bytes) and makes "
+        "canonical qa.json STALE/invalid",
+        json.loads(_stale_upstream.read_text(encoding="utf-8")) == json.loads(_stale_pristine.decode("utf-8"))
+        and _stale_upstream.read_bytes() != _stale_pristine
+        and qa_validator.validate_qa_analysis(canonical_qa, expected_case_id=CASE_ID, raise_on_error=False)["valid"] is False,
+    )
+    expect_raises(
+        qcvf.CaseViewQaPrerequisiteError,
+        lambda: qcvf._derive_identity("case_view", orchestrator_engine, qcvf._resolve_module_case_root_real(orchestrator_engine, CASE_ID), CASE_ID),
+        "case_view on a stale canonical qa.json -> CaseViewQaPrerequisiteError",
+    )
+    expect_raises(
         qcvf.CaseViewQaPrerequisiteError,
         lambda: qcvf.preview_generation("case_view", CASE_ID, principal=lawyer, authz_repository=repo),
         "case_view preview on the stale canonical qa.json -> CaseViewQaPrerequisiteError",
@@ -564,10 +679,13 @@ try:
         lambda: qcvf.apply_generation("case_view", CASE_ID, "0" * 64, principal=lawyer, authz_repository=repo, conn_factory=_ExplodingConnFactory()),
         "case_view apply on the stale canonical qa.json -> CaseViewQaPrerequisiteError BEFORE any connection",
     )
-    expect_raises(
-        qcvf.QaCaseViewGenerationAgentModeRefusedError,
-        lambda: qcvf.apply_generation("qa", CASE_ID, digest_qa, with_agent=True, allow_network=True, principal=lawyer, authz_repository=repo, conn_factory=_ExplodingConnFactory()),
-        "apply with agent flags refused BEFORE authz/connection",
+    _stale_upstream.write_bytes(_stale_pristine)
+    check(
+        "reverting that single byte change restores BOTH canonical qa.json validity AND the qa input_digest "
+        "(the synthetic stale state is fully reversible - nothing else drifted)",
+        _stale_upstream.read_bytes() == _stale_pristine
+        and qa_validator.validate_qa_analysis(canonical_qa, expected_case_id=CASE_ID, raise_on_error=False)["valid"] is True
+        and qcvf._derive_identity("qa", qa_engine, root_real, CASE_ID)[4] == digest_qa,
     )
 
     # --- builder result gates (fake builders; nothing written) ----------
@@ -598,8 +716,13 @@ try:
         )
     finally:
         qa_engine.build_qa_engine_output = _real_build
-    check("no pending / history / generation_reviews were created by any refusal above",
-          not paths_qa.pending_path.exists() and not paths_qa.history_dir.exists() and not paths_qa.reviews_dir.exists())
+    check("no pending and NO NEW history / generation_reviews entries were created by any refusal above "
+          "(relative to the Commit B provenance baseline, which is byte-identical)",
+          not paths_qa.pending_path.exists()
+          and new_entries(paths_qa.history_dir, qa_history_before) == []
+          and new_entries(paths_qa.reviews_dir, qa_genrev_before) == []
+          and kept_entries(paths_qa.history_dir, qa_history_before) == qa_history_before
+          and kept_entries(paths_qa.reviews_dir, qa_genrev_before) == qa_genrev_before)
 
     # --- writer: partial binding refused, first write, second write -----
     analysis = qcvf._invoke_builder("qa", qa_engine, CASE_ID)
@@ -632,7 +755,8 @@ try:
         and audit1["history_backup_path"] is None and audit1["history_backup_sha256"] is None
         and audit1["target_ref"] == "qa.pending" and audit1["action_family"] == "generation.qa"
         and audit1["input_digest"] == digest_qa and audit1["identity_payload"] == identity_for_audit
-        and str(_TMP_ROOT) not in res1["audit_path"].read_text(encoding="utf-8"),
+        and str(_TMP_ROOT) not in res1["audit_path"].read_text(encoding="utf-8")
+        and str(REPO_ROOT) not in res1["audit_path"].read_text(encoding="utf-8"),
         f"audit1={audit1}",
     )
     pending_locators = [
@@ -696,17 +820,34 @@ try:
         mutation_resource_key=f"case:{CASE_ID}", mutation_actor_ref="501",
     )
     audit2 = json.loads(res2["audit_path"].read_text(encoding="utf-8"))
-    backups = sorted(paths_qa.history_dir.glob("qa_pending_before_engine_*.json.pending"))
+    # Fail-safe: a writer that recorded NO history_backup_path must still yield
+    # clean FAILs below, never a NoneType AttributeError.
+    _audit2_backup_locator = audit2["history_backup_path"] or f"data/cases/{CASE_ID}/qa/history/__NO_NEW_BACKUP__"
+    _new_backup_names = new_entries(paths_qa.history_dir, qa_history_before)
+    backups = [paths_qa.history_dir / n for n in _new_backup_names]
+    # Fail-safe probes: if the writer produced NO new backup (a broken/neutered
+    # history move) every check below must report a clean FAIL instead of an
+    # IndexError that would abort the rest of the suite.
+    _backup_name = backups[0].name if backups else "__NO_NEW_BACKUP__"
+    _backup_bytes = backups[0].read_bytes() if backups else b""
+    _backup_str = str(backups[0]) if backups else str(paths_qa.history_dir / _backup_name)
     check(
-        "second write: previous pending moved to qa/history/ byte-identical; first_write=False",
-        res2["first_write"] is False and len(backups) == 1 and backups[0].read_bytes() == pending_before_second,
+        "second write: EXACTLY ONE NEW qa/history/ backup appeared (set difference against the Commit B "
+        "baseline) carrying the previous pending byte-identically; first_write=False; every pre-existing "
+        "history file untouched",
+        res2["first_write"] is False and len(backups) == 1 and backups[0].read_bytes() == pending_before_second
+        and backups[0].name.startswith("qa_pending_before_engine_")
+        and kept_entries(paths_qa.history_dir, qa_history_before) == qa_history_before,
+        f"new={_new_backup_names}",
     )
     check(
         "second audit: history_backup_path is the EXACT repo-relative locator "
         "data/cases/case_0001/qa/history/<name> (no absolute path), sha matches the backup",
-        audit2["history_backup_path"] == f"data/cases/{CASE_ID}/qa/history/{backups[0].name}"
-        and audit2["history_backup_sha256"] == hashlib.sha256(backups[0].read_bytes()).hexdigest()
-        and str(_TMP_ROOT) not in json.dumps(audit2),
+        len(backups) == 1
+        and audit2["history_backup_path"] == f"data/cases/{CASE_ID}/qa/history/{_backup_name}"
+        and audit2["history_backup_sha256"] == hashlib.sha256(_backup_bytes).hexdigest()
+        and str(_TMP_ROOT) not in json.dumps(audit2)
+        and str(REPO_ROOT) not in json.dumps(audit2),
         f"audit2={audit2}",
     )
     check(
@@ -718,13 +859,13 @@ try:
         ) is True,
     )
     for label, bad_path in {
-        "absolute path": str(backups[0]),
-        "backslash separators": audit2["history_backup_path"].replace("/", "\\"),
-        "wrong case_id in locator": audit2["history_backup_path"].replace(CASE_ID, "case_0002"),
-        "wrong family dir": audit2["history_backup_path"].replace("/qa/history/", "/case_view/history/"),
-        "traversal": "data/cases/case_0001/qa/history/../" + backups[0].name,
+        "absolute path": _backup_str,
+        "backslash separators": _audit2_backup_locator.replace("/", "\\"),
+        "wrong case_id in locator": _audit2_backup_locator.replace(CASE_ID, "case_0002"),
+        "wrong family dir": _audit2_backup_locator.replace("/qa/history/", "/case_view/history/"),
+        "traversal": "data/cases/case_0001/qa/history/../" + _backup_name,
         "nonexistent backup name": f"data/cases/{CASE_ID}/qa/history/qa_pending_before_engine_00000000_000000.json.pending",
-        "bare name": backups[0].name,
+        "bare name": _backup_name,
     }.items():
         check(
             f"adapter history_backup_path binding rejects: {label}",
@@ -764,31 +905,47 @@ try:
     except Exception:  # noqa: BLE001 - validator ValueError or QaEngineError, both fail-closed
         check("write_pending refuses an aborted_source_changed analysis (raises)", True)
     check(
-        "rollback: the previous pending is restored byte-identical, no extra history backup, no third audit",
+        "rollback: the previous pending is restored byte-identical, no extra NEW history backup, no third "
+        "NEW audit (relative deltas against the Commit B baseline; pre-existing entries untouched)",
         paths_qa.pending_path.read_bytes() == pending_before_bad
-        and len(list(paths_qa.history_dir.glob("qa_pending_before_engine_*.json.pending"))) == 1
-        and len(list(paths_qa.reviews_dir.glob("*.generation_audit.json"))) == 2,
+        and new_entries(paths_qa.history_dir, qa_history_before) == _new_backup_names
+        and len(new_entries(paths_qa.reviews_dir, qa_genrev_before)) == 2
+        and kept_entries(paths_qa.history_dir, qa_history_before) == qa_history_before
+        and kept_entries(paths_qa.reviews_dir, qa_genrev_before) == qa_genrev_before,
+        f"new_history={new_entries(paths_qa.history_dir, qa_history_before)} "
+        f"new_audits={new_entries(paths_qa.reviews_dir, qa_genrev_before)}",
     )
 
     # --- real Layer A run_approve (legacy path, no coordinator) -> option (b) audit locators
     qa_approval.run_approve(CASE_ID)
-    approval_audit = json.loads(sorted((CASE_DIR / "qa" / "reviews").glob("*.approval.json"))[-1].read_text(encoding="utf-8"))
+    _qa_new_approvals = new_entries(CASE_DIR / "qa" / "reviews", qa_reviews_before)
+    check(
+        "Layer A qa approval produced EXACTLY ONE NEW approval audit under qa/reviews/ (identified by set "
+        "difference against the Commit B baseline, never by `sorted(glob)[-1]`)",
+        len(_qa_new_approvals) == 1, f"new={_qa_new_approvals}",
+    )
+    # Fail-safe: a neutered/broken approval writes no new audit - report clean
+    # FAILs below instead of an IndexError that would abort the suite.
+    approval_audit = json.loads(
+        (CASE_DIR / "qa" / "reviews" / _qa_new_approvals[-1]).read_text(encoding="utf-8")
+    ) if _qa_new_approvals else {}
     check(
         "qa approval audit: source_pending_path/canonical_path/previous_canonical_backup are repo-relative "
         "POSIX locators with the exact canonical layout",
-        approval_audit["source_pending_path"] == f"data/cases/{CASE_ID}/qa/qa_{CASE_ID}_v1.json.pending"
-        and approval_audit["canonical_path"] == f"data/cases/{CASE_ID}/qa/qa.json"
-        and approval_audit["previous_canonical_backup"].startswith(f"data/cases/{CASE_ID}/qa/qa.json.before_approval_")
-        and str(_TMP_ROOT) not in json.dumps(approval_audit),
+        approval_audit.get("source_pending_path") == f"data/cases/{CASE_ID}/qa/qa_{CASE_ID}_v1.json.pending"
+        and approval_audit.get("canonical_path") == f"data/cases/{CASE_ID}/qa/qa.json"
+        and str(approval_audit.get("previous_canonical_backup")).startswith(f"data/cases/{CASE_ID}/qa/qa.json.before_approval_")
+        and str(_TMP_ROOT) not in json.dumps(approval_audit)
+        and str(REPO_ROOT) not in json.dumps(approval_audit),
         f"audit={approval_audit}",
     )
     check("canonical qa.json now equals the generated pending", canonical_qa.read_bytes() == paths_qa.pending_path.read_bytes())
     check(
-        "the historical approval audits copied from case_0001 are byte-identical (never rewritten)",
-        all(
-            hashlib.sha256((CASE_DIR / "qa" / "reviews" / Path(k).name).read_bytes()).hexdigest() == v
-            for k, v in snapshot_tree(CASE_DIR / "qa" / "reviews").items() if k in historical_audits_before
-        ),
+        "the pre-existing approval audits copied from case_0001 are byte-identical (never rewritten) - "
+        "both the pre-Commit-B 20260904_202837 record and the Commit B promotion record",
+        kept_entries(CASE_DIR / "qa" / "reviews", qa_reviews_before) == qa_reviews_before
+        and any("20260904_202837" in n for n in qa_reviews_before) and len(qa_reviews_before) >= 2,
+        f"baseline={sorted(qa_reviews_before)}",
     )
 
     # --- case_view now passes the prerequisite; write + approve --------
@@ -820,7 +977,18 @@ try:
         "case_view audit: generation.case_view / case_view.pending / channel / actor / no absolute path",
         audit_cv["action_family"] == "generation.case_view" and audit_cv["target_ref"] == "case_view.pending"
         and audit_cv["channel"] == "local_lawyer_generation_cli" and audit_cv["mutation_actor_ref"] == "501"
-        and str(_TMP_ROOT) not in json.dumps(audit_cv),
+        and str(_TMP_ROOT) not in json.dumps(audit_cv)
+        and str(REPO_ROOT) not in json.dumps(audit_cv),
+    )
+    check(
+        "case_view first write: EXACTLY ONE NEW generation audit and NO new history backup (set differences "
+        "against the Commit B baseline); every pre-existing case_view provenance file untouched",
+        len(new_entries(paths_cv.reviews_dir, cv_genrev_before)) == 1
+        and new_entries(paths_cv.history_dir, cv_history_before) == []
+        and kept_entries(paths_cv.reviews_dir, cv_genrev_before) == cv_genrev_before
+        and kept_entries(paths_cv.history_dir, cv_history_before) == cv_history_before,
+        f"new_audits={new_entries(paths_cv.reviews_dir, cv_genrev_before)} "
+        f"new_history={new_entries(paths_cv.history_dir, cv_history_before)}",
     )
     check(
         "adapter full binding accepts the REAL case_view audit",
@@ -832,13 +1000,26 @@ try:
         ) is True,
     )
     orchestrator_approval.run_approve(CASE_ID)
-    approval_audit_cv = json.loads(sorted((CASE_DIR / "case_view" / "reviews").glob("*.approval.json"))[-1].read_text(encoding="utf-8"))
+    _cv_new_approvals = new_entries(CASE_DIR / "case_view" / "reviews", cv_reviews_before)
+    check(
+        "Layer A case_view approval produced EXACTLY ONE NEW approval audit under case_view/reviews/ (set "
+        "difference, never `sorted(glob)[-1]`) and left every pre-existing audit byte-identical - including "
+        "the pre-Commit-B 20260904_212319 record and the Commit B promotion record",
+        len(_cv_new_approvals) == 1
+        and kept_entries(CASE_DIR / "case_view" / "reviews", cv_reviews_before) == cv_reviews_before
+        and any("20260904_212319" in n for n in cv_reviews_before) and len(cv_reviews_before) >= 2,
+        f"new={_cv_new_approvals} baseline={sorted(cv_reviews_before)}",
+    )
+    approval_audit_cv = json.loads(
+        (CASE_DIR / "case_view" / "reviews" / _cv_new_approvals[-1]).read_text(encoding="utf-8")
+    ) if _cv_new_approvals else {}
     check(
         "case_view approval audit: repo-relative POSIX locators with the exact canonical layout",
-        approval_audit_cv["source_pending_path"] == f"data/cases/{CASE_ID}/case_view/case_view_{CASE_ID}_v1.json.pending"
-        and approval_audit_cv["canonical_path"] == f"data/cases/{CASE_ID}/case_view/case_view.json"
-        and approval_audit_cv["previous_canonical_backup"].startswith(f"data/cases/{CASE_ID}/case_view/case_view.json.before_approval_")
-        and str(_TMP_ROOT) not in json.dumps(approval_audit_cv),
+        approval_audit_cv.get("source_pending_path") == f"data/cases/{CASE_ID}/case_view/case_view_{CASE_ID}_v1.json.pending"
+        and approval_audit_cv.get("canonical_path") == f"data/cases/{CASE_ID}/case_view/case_view.json"
+        and str(approval_audit_cv.get("previous_canonical_backup")).startswith(f"data/cases/{CASE_ID}/case_view/case_view.json.before_approval_")
+        and str(_TMP_ROOT) not in json.dumps(approval_audit_cv)
+        and str(REPO_ROOT) not in json.dumps(approval_audit_cv),
         f"audit={approval_audit_cv}",
     )
 

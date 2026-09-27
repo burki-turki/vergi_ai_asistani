@@ -1,0 +1,20 @@
+{
+  "audit_type": "case_view_approval",
+  "approval_version": "1",
+  "approved_at": "2026-09-27T19:32:45.745357+03:00",
+  "mutation_idempotency_key": "515761519476f700c6ff5a946118841ebbc11125d380c1855c658a1acced2a9c",
+  "mutation_resource_key": "case:case_0001",
+  "case_id": "case_0001",
+  "case_view_id": "case_view_case_0001_v1",
+  "source_pending_path": "data/cases/case_0001/case_view/case_view_case_0001_v1.json.pending",
+  "canonical_path": "data/cases/case_0001/case_view/case_view.json",
+  "pending_sha256": "6bbd518f794ac15fd5b0437b2dce743fcab9d63bc76dd27163815964c7582bc8",
+  "canonical_sha256": "6bbd518f794ac15fd5b0437b2dce743fcab9d63bc76dd27163815964c7582bc8",
+  "content_identical": true,
+  "previous_canonical_backup": "data/cases/case_0001/case_view/case_view.json.before_approval_20260927_193245.bak",
+  "generation_status": "completed",
+  "issue_panel_count": 6,
+  "open_items_count": 25,
+  "warnings_count": 1,
+  "approval_semantics": "Bu approval case_view'i canonical repository'ye kabul eder. Orchestrator HİÇBİR yeni hukuki fact/olasılık/sonuç İCAT ETMEZ - yalnız Row 1-16'nın zaten canonical olan çıktılarını issue etrafında yeniden gruplar. generation_status yalnız 'completed' olabilir - bir veya daha fazla zorunlu kaynak eksikken üretilen 'failed' bir case_view (kendi içinde tutarlı ve şema-geçerli olsa BİLE) Layer A tarafından REDDEDİLİR (kullanıcı kararı, 2026-09-04)."
+}

@@ -1,0 +1,162 @@
+{
+  "schema_version": "1",
+  "case_id": "case_0001",
+  "target_ref": "qa.pending",
+  "target_state": "generated",
+  "action_family": "generation.qa",
+  "channel": "local_lawyer_generation_cli",
+  "mutation_actor_ref": "2",
+  "mutation_idempotency_key": "9903ed86047584a4f5830faeb6ab58dcbeebbdec21cae26e1fdc54b792a3d003",
+  "mutation_resource_key": "case:case_0001",
+  "input_digest": "121e7ee8b3b0a52c1ce237fcea4bbcba5bbf285454b200e4499949c4f37a5754",
+  "generation_parameters_digest": null,
+  "generation_mode": "deterministic",
+  "model_id": "deterministic_no_model",
+  "prompt_agent_version": "n/a",
+  "identity_payload": {
+    "generation_mode": "deterministic",
+    "manifest": [
+      {
+        "files": [
+          {
+            "logical_relative_path": "arguments/arguments.json",
+            "sha256": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+          }
+        ],
+        "logical_name": "arguments",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "case.json",
+            "sha256": "2d98709671ea011d7587d3711bc8067431fa2e34eed73b1030645eab51177a54"
+          }
+        ],
+        "logical_name": "case",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "case_law/case_law.json",
+            "sha256": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
+          }
+        ],
+        "logical_name": "case_law",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "deadlines/deadline.json",
+            "sha256": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
+          }
+        ],
+        "logical_name": "deadline",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "documents/dava_dilekcesi_001/document.json",
+            "sha256": "6350680d1941545666e7f01ca170cc5a5e5bd8eeba681e3b48a86b86bea54439"
+          },
+          {
+            "logical_relative_path": "documents/ihbarname_001/document.json",
+            "sha256": "228ea01cfa3c497e2d1bc51a6e998a8673dca601cd7bc0766ddb1e60dd0fa9a3"
+          },
+          {
+            "logical_relative_path": "documents/vir_001/document.json",
+            "sha256": "5bf150b1ebc78c562d296510fbdf3bda9a2a45029b1ed9af403b31b11472d850"
+          }
+        ],
+        "logical_name": "documents",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "drafting/drafting.json",
+            "sha256": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+          }
+        ],
+        "logical_name": "drafting",
+        "state": "present"
+      },
+      {
+        "files": [],
+        "logical_name": "evidence",
+        "state": "missing"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "documents/dava_dilekcesi_001/extractions/facts.json",
+            "sha256": "22e28719feefa2c9b3352b9559ce1b6068f1f0ff7ec8aaa8a8d3a8da01e6e283"
+          },
+          {
+            "logical_relative_path": "documents/ihbarname_001/extractions/facts.json",
+            "sha256": "802be85d0406f49c7563e10e4e71c1a0147b5dfdd374eea08015cf57cc251938"
+          },
+          {
+            "logical_relative_path": "documents/vir_001/extractions/facts.json",
+            "sha256": "e9e2dca2ad3756a5d0eae95c58730084cab70c619cc5361050e5354fdd6a442c"
+          }
+        ],
+        "logical_name": "facts",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "issues/issues.json",
+            "sha256": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
+          }
+        ],
+        "logical_name": "issues",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "research/research.json",
+            "sha256": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
+          }
+        ],
+        "logical_name": "legal_research",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "risk_strategy/risk_strategy.json",
+            "sha256": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+          }
+        ],
+        "logical_name": "risk_strategy",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "timeline/timeline.json",
+            "sha256": "09800341d35335bc7831e9ca960ed4d24fe83b58e9eb7eb82b27e6ce8cf0c9cf"
+          }
+        ],
+        "logical_name": "timeline",
+        "state": "present"
+      }
+    ],
+    "manifest_version": "phaseb.qa_case_view_generation.v1",
+    "model_id": "deterministic_no_model",
+    "prompt_agent_version": "n/a"
+  },
+  "first_write": false,
+  "history_backup_path": "data/cases/case_0001/qa/history/qa_pending_before_engine_20260927_192103.json.pending",
+  "history_backup_sha256": "a4af057af4e21e6994823378bae6b1127a799cbc6db3ca7dc1b4b207d31aec40",
+  "pending_sha256": "dad0e73b11fa5e9d507fe4f7a87b6b8a621ebad9cd73beb139d236c27f584108",
+  "generated_at": "2026-09-27T19:21:03.615529+03:00",
+  "outcome": "generated",
+  "written_at": "2026-09-27T19:21:04.030052+03:00"
+}

@@ -4,18 +4,18 @@
   "case_id": "case_0001",
   "qa_generation_status": "completed",
   "qa_agent_execution_status": "not_requested",
-  "generated_at": "2026-09-27T19:21:03.615529+03:00",
+  "generated_at": "2026-09-04T19:24:35.725065+03:00",
   "analysis_metadata": {
     "dependency_manifest": [
       {
         "artifact_ref": "case.json",
-        "raw_byte_sha256": "2d98709671ea011d7587d3711bc8067431fa2e34eed73b1030645eab51177a54",
+        "raw_byte_sha256": "f0bc0d2f45a18e534a12e9dec73bd02449a25488451b1cfba948f5fbad019c39",
         "artifact_state": "present_valid",
         "is_membership_source": true
       },
       {
         "artifact_ref": "timeline",
-        "raw_byte_sha256": "09800341d35335bc7831e9ca960ed4d24fe83b58e9eb7eb82b27e6ce8cf0c9cf",
+        "raw_byte_sha256": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8",
         "artifact_state": "present_valid",
         "is_membership_source": false
       },
@@ -69,44 +69,44 @@
       },
       {
         "artifact_ref": "documents:vir_001",
-        "raw_byte_sha256": "5bf150b1ebc78c562d296510fbdf3bda9a2a45029b1ed9af403b31b11472d850",
+        "raw_byte_sha256": "f20add0fa6bab63968d31aa581b275284a9b27be04ee14c8cb62b22b42a1ba7a",
         "artifact_state": "present_valid",
         "is_membership_source": false
       },
       {
         "artifact_ref": "facts:vir_001",
-        "raw_byte_sha256": "e9e2dca2ad3756a5d0eae95c58730084cab70c619cc5361050e5354fdd6a442c",
+        "raw_byte_sha256": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907",
         "artifact_state": "present_valid",
         "is_membership_source": false
       },
       {
         "artifact_ref": "documents:ihbarname_001",
-        "raw_byte_sha256": "228ea01cfa3c497e2d1bc51a6e998a8673dca601cd7bc0766ddb1e60dd0fa9a3",
+        "raw_byte_sha256": "3731671efe6ed7aa4e5b9f21bd2f82d10a9af4f26f994dbe9d7811fdb4186fbc",
         "artifact_state": "present_valid",
         "is_membership_source": false
       },
       {
         "artifact_ref": "facts:ihbarname_001",
-        "raw_byte_sha256": "802be85d0406f49c7563e10e4e71c1a0147b5dfdd374eea08015cf57cc251938",
+        "raw_byte_sha256": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece",
         "artifact_state": "present_valid",
         "is_membership_source": false
       },
       {
         "artifact_ref": "documents:dava_dilekcesi_001",
-        "raw_byte_sha256": "6350680d1941545666e7f01ca170cc5a5e5bd8eeba681e3b48a86b86bea54439",
+        "raw_byte_sha256": "860a162bd47fbaeecf0011a7ad63cb863d3b506105b5a4dc2b93f1b4d4387df5",
         "artifact_state": "present_valid",
         "is_membership_source": false
       },
       {
         "artifact_ref": "facts:dava_dilekcesi_001",
-        "raw_byte_sha256": "22e28719feefa2c9b3352b9559ce1b6068f1f0ff7ec8aaa8a8d3a8da01e6e283",
+        "raw_byte_sha256": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec",
         "artifact_state": "present_valid",
         "is_membership_source": false
       }
     ],
     "check_registry_version": "1",
-    "scan_started_at": "2026-09-27T19:21:03.136526+03:00",
-    "scan_completed_at": "2026-09-27T19:21:03.610416+03:00",
+    "scan_started_at": "2026-09-04T19:24:35.487339+03:00",
+    "scan_completed_at": "2026-09-04T19:24:35.720580+03:00",
     "pre_scan_manifest_comparison": {
       "consistent": true,
       "changed_refs": []
@@ -211,8 +211,8 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/vir_001/document.json",
-        "raw_byte_sha256_at_scan": "5bf150b1ebc78c562d296510fbdf3bda9a2a45029b1ed9af403b31b11472d850"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\document.json",
+        "raw_byte_sha256_at_scan": "f20add0fa6bab63968d31aa581b275284a9b27be04ee14c8cb62b22b42a1ba7a"
       }
     },
     {
@@ -227,8 +227,8 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/vir_001/document.json",
-        "raw_byte_sha256_at_scan": "5bf150b1ebc78c562d296510fbdf3bda9a2a45029b1ed9af403b31b11472d850"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\document.json",
+        "raw_byte_sha256_at_scan": "f20add0fa6bab63968d31aa581b275284a9b27be04ee14c8cb62b22b42a1ba7a"
       }
     },
     {
@@ -243,8 +243,8 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/vir_001/document.json",
-        "raw_byte_sha256_at_scan": "5bf150b1ebc78c562d296510fbdf3bda9a2a45029b1ed9af403b31b11472d850"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\document.json",
+        "raw_byte_sha256_at_scan": "f20add0fa6bab63968d31aa581b275284a9b27be04ee14c8cb62b22b42a1ba7a"
       }
     },
     {
@@ -262,8 +262,8 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/ihbarname_001/document.json",
-        "raw_byte_sha256_at_scan": "228ea01cfa3c497e2d1bc51a6e998a8673dca601cd7bc0766ddb1e60dd0fa9a3"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\document.json",
+        "raw_byte_sha256_at_scan": "3731671efe6ed7aa4e5b9f21bd2f82d10a9af4f26f994dbe9d7811fdb4186fbc"
       }
     },
     {
@@ -278,8 +278,8 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/ihbarname_001/document.json",
-        "raw_byte_sha256_at_scan": "228ea01cfa3c497e2d1bc51a6e998a8673dca601cd7bc0766ddb1e60dd0fa9a3"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\document.json",
+        "raw_byte_sha256_at_scan": "3731671efe6ed7aa4e5b9f21bd2f82d10a9af4f26f994dbe9d7811fdb4186fbc"
       }
     },
     {
@@ -294,8 +294,8 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/ihbarname_001/document.json",
-        "raw_byte_sha256_at_scan": "228ea01cfa3c497e2d1bc51a6e998a8673dca601cd7bc0766ddb1e60dd0fa9a3"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\document.json",
+        "raw_byte_sha256_at_scan": "3731671efe6ed7aa4e5b9f21bd2f82d10a9af4f26f994dbe9d7811fdb4186fbc"
       }
     },
     {
@@ -313,8 +313,8 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/dava_dilekcesi_001/document.json",
-        "raw_byte_sha256_at_scan": "6350680d1941545666e7f01ca170cc5a5e5bd8eeba681e3b48a86b86bea54439"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\document.json",
+        "raw_byte_sha256_at_scan": "860a162bd47fbaeecf0011a7ad63cb863d3b506105b5a4dc2b93f1b4d4387df5"
       }
     },
     {
@@ -329,8 +329,8 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/dava_dilekcesi_001/document.json",
-        "raw_byte_sha256_at_scan": "6350680d1941545666e7f01ca170cc5a5e5bd8eeba681e3b48a86b86bea54439"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\document.json",
+        "raw_byte_sha256_at_scan": "860a162bd47fbaeecf0011a7ad63cb863d3b506105b5a4dc2b93f1b4d4387df5"
       }
     },
     {
@@ -345,8 +345,8 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "documents",
-        "path": "data/cases/case_0001/documents/dava_dilekcesi_001/document.json",
-        "raw_byte_sha256_at_scan": "6350680d1941545666e7f01ca170cc5a5e5bd8eeba681e3b48a86b86bea54439"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\document.json",
+        "raw_byte_sha256_at_scan": "860a162bd47fbaeecf0011a7ad63cb863d3b506105b5a4dc2b93f1b4d4387df5"
       }
     },
     {
@@ -364,8 +364,8 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/vir_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "e9e2dca2ad3756a5d0eae95c58730084cab70c619cc5361050e5354fdd6a442c"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907"
       }
     },
     {
@@ -380,8 +380,8 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/vir_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "e9e2dca2ad3756a5d0eae95c58730084cab70c619cc5361050e5354fdd6a442c"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907"
       }
     },
     {
@@ -396,8 +396,8 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/vir_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "e9e2dca2ad3756a5d0eae95c58730084cab70c619cc5361050e5354fdd6a442c"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907"
       }
     },
     {
@@ -415,8 +415,8 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/ihbarname_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "802be85d0406f49c7563e10e4e71c1a0147b5dfdd374eea08015cf57cc251938"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece"
       }
     },
     {
@@ -431,8 +431,8 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/ihbarname_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "802be85d0406f49c7563e10e4e71c1a0147b5dfdd374eea08015cf57cc251938"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece"
       }
     },
     {
@@ -447,8 +447,8 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/ihbarname_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "802be85d0406f49c7563e10e4e71c1a0147b5dfdd374eea08015cf57cc251938"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece"
       }
     },
     {
@@ -466,8 +466,8 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/dava_dilekcesi_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "22e28719feefa2c9b3352b9559ce1b6068f1f0ff7ec8aaa8a8d3a8da01e6e283"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec"
       }
     },
     {
@@ -482,8 +482,8 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/dava_dilekcesi_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "22e28719feefa2c9b3352b9559ce1b6068f1f0ff7ec8aaa8a8d3a8da01e6e283"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec"
       }
     },
     {
@@ -498,8 +498,8 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/dava_dilekcesi_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "22e28719feefa2c9b3352b9559ce1b6068f1f0ff7ec8aaa8a8d3a8da01e6e283"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec"
       }
     },
     {
@@ -517,8 +517,8 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "timeline",
-        "path": "data/cases/case_0001/timeline/timeline.json",
-        "raw_byte_sha256_at_scan": "09800341d35335bc7831e9ca960ed4d24fe83b58e9eb7eb82b27e6ce8cf0c9cf"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\timeline\\timeline.json",
+        "raw_byte_sha256_at_scan": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8"
       }
     },
     {
@@ -533,8 +533,8 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "timeline",
-        "path": "data/cases/case_0001/timeline/timeline.json",
-        "raw_byte_sha256_at_scan": "09800341d35335bc7831e9ca960ed4d24fe83b58e9eb7eb82b27e6ce8cf0c9cf"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\timeline\\timeline.json",
+        "raw_byte_sha256_at_scan": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8"
       }
     },
     {
@@ -549,8 +549,8 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "timeline",
-        "path": "data/cases/case_0001/timeline/timeline.json",
-        "raw_byte_sha256_at_scan": "09800341d35335bc7831e9ca960ed4d24fe83b58e9eb7eb82b27e6ce8cf0c9cf"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\timeline\\timeline.json",
+        "raw_byte_sha256_at_scan": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8"
       }
     },
     {
@@ -568,7 +568,7 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "deadline",
-        "path": "data/cases/case_0001/deadlines/deadline.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
         "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
       }
     },
@@ -584,7 +584,7 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "deadline",
-        "path": "data/cases/case_0001/deadlines/deadline.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
         "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
       }
     },
@@ -600,7 +600,7 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "deadline",
-        "path": "data/cases/case_0001/deadlines/deadline.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
         "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
       }
     },
@@ -619,7 +619,7 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "issues",
-        "path": "data/cases/case_0001/issues/issues.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
         "raw_byte_sha256_at_scan": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
       }
     },
@@ -635,7 +635,7 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "issues",
-        "path": "data/cases/case_0001/issues/issues.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
         "raw_byte_sha256_at_scan": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
       }
     },
@@ -651,7 +651,7 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "issues",
-        "path": "data/cases/case_0001/issues/issues.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
         "raw_byte_sha256_at_scan": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
       }
     },
@@ -670,7 +670,7 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "legal_research",
-        "path": "data/cases/case_0001/research/research.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
         "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
       }
     },
@@ -686,7 +686,7 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "legal_research",
-        "path": "data/cases/case_0001/research/research.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
         "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
       }
     },
@@ -702,7 +702,7 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "legal_research",
-        "path": "data/cases/case_0001/research/research.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
         "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
       }
     },
@@ -721,7 +721,7 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "case_law",
-        "path": "data/cases/case_0001/case_law/case_law.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
         "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
       }
     },
@@ -737,7 +737,7 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "case_law",
-        "path": "data/cases/case_0001/case_law/case_law.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
         "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
       }
     },
@@ -753,7 +753,7 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "case_law",
-        "path": "data/cases/case_0001/case_law/case_law.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
         "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
       }
     },
@@ -772,7 +772,7 @@
       "reason_code": "artifact_absent_optional",
       "artifact_locator": {
         "scope_id": "evidence",
-        "path": "data/cases/case_0001/evidence/evidence.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\evidence\\evidence.json",
         "raw_byte_sha256_at_scan": null
       }
     },
@@ -790,7 +790,7 @@
       "reason_code": "prerequisite_unmet",
       "artifact_locator": {
         "scope_id": "evidence",
-        "path": "data/cases/case_0001/evidence/evidence.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\evidence\\evidence.json",
         "raw_byte_sha256_at_scan": null
       }
     },
@@ -808,7 +808,7 @@
       "reason_code": "prerequisite_unmet",
       "artifact_locator": {
         "scope_id": "evidence",
-        "path": "data/cases/case_0001/evidence/evidence.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\evidence\\evidence.json",
         "raw_byte_sha256_at_scan": null
       }
     },
@@ -827,7 +827,7 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "arguments",
-        "path": "data/cases/case_0001/arguments/arguments.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
         "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
       }
     },
@@ -843,7 +843,7 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "arguments",
-        "path": "data/cases/case_0001/arguments/arguments.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
         "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
       }
     },
@@ -859,7 +859,7 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "arguments",
-        "path": "data/cases/case_0001/arguments/arguments.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
         "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
       }
     },
@@ -878,7 +878,7 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "risk_strategy",
-        "path": "data/cases/case_0001/risk_strategy/risk_strategy.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\risk_strategy\\risk_strategy.json",
         "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
       }
     },
@@ -894,7 +894,7 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "risk_strategy",
-        "path": "data/cases/case_0001/risk_strategy/risk_strategy.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\risk_strategy\\risk_strategy.json",
         "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
       }
     },
@@ -910,7 +910,7 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "risk_strategy",
-        "path": "data/cases/case_0001/risk_strategy/risk_strategy.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\risk_strategy\\risk_strategy.json",
         "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
       }
     },
@@ -929,7 +929,7 @@
       "reason_code": "artifact_present",
       "artifact_locator": {
         "scope_id": "drafting",
-        "path": "data/cases/case_0001/drafting/drafting.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
         "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
       }
     },
@@ -945,7 +945,7 @@
       "reason_code": "artifact_readable",
       "artifact_locator": {
         "scope_id": "drafting",
-        "path": "data/cases/case_0001/drafting/drafting.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
         "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
       }
     },
@@ -961,7 +961,7 @@
       "reason_code": "json_valid",
       "artifact_locator": {
         "scope_id": "drafting",
-        "path": "data/cases/case_0001/drafting/drafting.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
         "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
       }
     },
@@ -1019,8 +1019,8 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/vir_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "e9e2dca2ad3756a5d0eae95c58730084cab70c619cc5361050e5354fdd6a442c"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\vir_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "9f705e7bb67c4d35694319e404d093a9e8d3decb42a8f44106b7db62dc8b8907"
       }
     },
     {
@@ -1037,8 +1037,8 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/ihbarname_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "802be85d0406f49c7563e10e4e71c1a0147b5dfdd374eea08015cf57cc251938"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\ihbarname_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "acecdb2b6acc2849c6444dfe38a2fc3323ebe1dd3b42b53421921f0fb3a1bece"
       }
     },
     {
@@ -1055,8 +1055,8 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "facts",
-        "path": "data/cases/case_0001/documents/dava_dilekcesi_001/extractions/facts.json",
-        "raw_byte_sha256_at_scan": "22e28719feefa2c9b3352b9559ce1b6068f1f0ff7ec8aaa8a8d3a8da01e6e283"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\documents\\dava_dilekcesi_001\\extractions\\facts.json",
+        "raw_byte_sha256_at_scan": "399d8409e5f03630c4191117cd57fb3f9f1a39f562eab936866955eb0ae8f8ec"
       }
     },
     {
@@ -1073,8 +1073,8 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "timeline",
-        "path": "data/cases/case_0001/timeline/timeline.json",
-        "raw_byte_sha256_at_scan": "09800341d35335bc7831e9ca960ed4d24fe83b58e9eb7eb82b27e6ce8cf0c9cf"
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\timeline\\timeline.json",
+        "raw_byte_sha256_at_scan": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8"
       }
     },
     {
@@ -1091,7 +1091,7 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "deadline",
-        "path": "data/cases/case_0001/deadlines/deadline.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\deadlines\\deadline.json",
         "raw_byte_sha256_at_scan": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
       }
     },
@@ -1109,7 +1109,7 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "issues",
-        "path": "data/cases/case_0001/issues/issues.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\issues\\issues.json",
         "raw_byte_sha256_at_scan": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
       }
     },
@@ -1127,7 +1127,7 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "legal_research",
-        "path": "data/cases/case_0001/research/research.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\research\\research.json",
         "raw_byte_sha256_at_scan": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
       }
     },
@@ -1145,7 +1145,7 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "case_law",
-        "path": "data/cases/case_0001/case_law/case_law.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\case_law\\case_law.json",
         "raw_byte_sha256_at_scan": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
       }
     },
@@ -1163,7 +1163,7 @@
       "reason_code": "prerequisite_unmet",
       "artifact_locator": {
         "scope_id": "evidence",
-        "path": "data/cases/case_0001/evidence/evidence.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\evidence\\evidence.json",
         "raw_byte_sha256_at_scan": null
       }
     },
@@ -1181,7 +1181,7 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "arguments",
-        "path": "data/cases/case_0001/arguments/arguments.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\arguments\\arguments.json",
         "raw_byte_sha256_at_scan": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
       }
     },
@@ -1199,7 +1199,7 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "risk_strategy",
-        "path": "data/cases/case_0001/risk_strategy/risk_strategy.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\risk_strategy\\risk_strategy.json",
         "raw_byte_sha256_at_scan": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
       }
     },
@@ -1217,7 +1217,7 @@
       "reason_code": "row_validator_result",
       "artifact_locator": {
         "scope_id": "drafting",
-        "path": "data/cases/case_0001/drafting/drafting.json",
+        "path": "C:\\Users\\Burki\\vergi_ai_asistani\\data\\cases\\case_0001\\drafting\\drafting.json",
         "raw_byte_sha256_at_scan": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
       }
     },

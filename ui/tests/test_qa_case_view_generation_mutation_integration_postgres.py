@@ -10,8 +10,9 @@
 #   Q1-Q5  qa: fresh apply -> pending + journal + audit; safe replay;
 #          --with-agent refused (usage, zero rows); analyst preview ok /
 #          apply denied; stale digest refused (zero rows)
-#   C1     case_view on the committed (stale) canonical qa.json is
-#          REFUSED (CaseViewQaPrerequisiteError) - zero rows, zero writes
+#   C1     case_view on a canonical qa.json this fixture made stale (its
+#          own case_id rewrite changes the upstream bytes qa.json binds)
+#          is REFUSED (CaseViewQaPrerequisiteError) - zero rows/writes
 #   A1     REAL Layer A approval of the generated QA pending through the
 #          production `approval` CLI -> canonical qa.json; approval audit
 #          path fields are repo-relative POSIX locators (option b)
@@ -25,9 +26,14 @@
 #          adapter gather_evidence() re-verifies the REAL row
 #   R1/R2  merged reconciliation registry = 52, both families present;
 #          gather_evidence() on the REAL completed rows
-#   I1     production data/ tree, the 13 historical approval audits, the
-#          real case.json/timeline.json/deadline.json and the real qa/
-#          case_view pending+canonical are all BYTE-IDENTICAL afterwards
+#   I0/I1  the real case_0001 approval-audit set is EXACTLY the 13 pinned
+#          pre-Commit-B records plus the 2 Commit B promotion records, the
+#          13 still carry their LF-normalized committed-content SHA-256
+#          (EOL-agnostic - see _HISTORICAL_APPROVAL_AUDIT_SHA256), and
+#          afterwards the
+#          production data/ tree, the real case.json/timeline.json/
+#          deadline.json and the real qa/case_view pending+canonical are
+#          all BYTE-IDENTICAL
 #
 # Run: VERGI_TEST_PG_DSN=<db> python -m ui.tests.test_qa_case_view_generation_mutation_integration_postgres
 # ============================================================
@@ -267,9 +273,110 @@ _REAL_KEY_FILES = [
     "case_view/case_view.json", "case_view/case_view_case_0001_v1.json.pending",
 ]
 _real_key_before = {rel: hashlib.sha256((REAL_CASE_0001 / rel).read_bytes()).hexdigest() for rel in _REAL_KEY_FILES}
+# The 13 pre-Commit-B historical approval audits, pinned by repo-relative path
+# AND LF-normalized committed-content SHA-256: the digest of the file's bytes
+# with CRLF collapsed to LF, which for these 13 IS the digest of the committed
+# bytes, because all 13 are `i/lf` in the index (`git ls-files --eol`).
+#
+# Why normalize instead of hashing raw bytes: `.gitattributes` marks *.json
+# `text eol=lf`, but git only converts on check-IN, not check-OUT - a blob that
+# is LF in the index is written verbatim, and any writer that later emits CRLF
+# leaves the file `i/lf w/crlf`. Today that is exactly 4 of the 13 (the three
+# documents/*/extractions/reviews fact-promotion audits and the timeline audit).
+# `git status` normalizes before comparing, so it reports that drift as CLEAN.
+# Pinning raw bytes would therefore pin ONE checkout's line endings and fail on
+# the other; normalizing makes I0 EOL-agnostic, so it holds on the CRLF main
+# checkout and on a clean LF checkout alike while still catching every
+# non-EOL byte change.
+#
+# Commit B (the coordinated QA/case-view regeneration) appends exactly two MORE
+# promotion audits and must leave these 13 untouched - so I0 asserts an exact
+# SET (never a blind total) plus content-identity of the 13 modulo line endings.
+_HISTORICAL_APPROVAL_AUDIT_SHA256 = {
+    "arguments/reviews/arguments_case_0001_v1_20260903_142708.approval.json":
+        "e94d73609250b212c673cad0c616d097c62e7675ffd662d0edb67a8faee903fb",
+    "case_law/reviews/case_law_case_0001_v1_20260902_185750.approval.json":
+        "ad5e1f29f4015c85e021aac86c3ad02aef8bf070104cd3f02aa5708b2e91500d",
+    "case_view/reviews/case_view_case_0001_v1_20260904_212319.approval.json":
+        "25ed3c933e7d341bf0f1755ababf36ab4f276a57a3d10d99f27a46f1f3a01817",
+    "deadlines/reviews/deadline_case_0001_v1_20260902_001630.approval.json":
+        "8fc3325d41c533e1aa51a3632e6a8dfc418debc0b001a25f6b0aab8e235ebaf6",
+    "documents/dava_dilekcesi_001/extractions/reviews/extract_dava_dilekcesi_001_llm_v1_3_20260901_130225.approval.json":
+        "ebe936dac19eca63effa9e4d2f32979b00b5e1ddcf6fcb3b4b7dc22341d1eab2",
+    "documents/ihbarname_001/extractions/reviews/extract_ihbarname_001_llm_v1_2_1_20260901_122652.approval.json":
+        "52ece44d16cc9fe567bc5590b0859c669a5f7e107606a946e55322090495d54f",
+    "documents/vir_001/extractions/reviews/extract_vir_001_llm_v1_1_20260901_105342.approval.json":
+        "780baacd3ff69a57211adfca5a3b0f7be612e54f2233209999e6f55e31a30f2a",
+    "drafting/reviews/drafting_case_0001_v1_20260904_171024.approval.json":
+        "7022b8b3b821c2cac96815074d877850675712f69bf5fd81e4b87f8a88cb02cb",
+    "issues/reviews/issue_spotting_case_0001_v1_20260902_114359.approval.json":
+        "6a14eb80b5d91c08e3318069021a0095ed5b92b4321c3a397fbe4a9582782c3a",
+    "qa/reviews/qa_case_0001_v1_20260904_202837.approval.json":
+        "eb0ab3bc236a0410873ac6df6e4736ca731d0876b10eee649a28bd83accaa197",
+    "research/reviews/legal_research_case_0001_v1_20260902_151601.approval.json":
+        "f32f6fc99e7e68322251e1d1aef81df1613da31993921b8666a2dc433c3c38b0",
+    "risk_strategy/reviews/risk_strategy_case_0001_v1_20260904_112002.approval.json":
+        "907b05c88a033ebba9391f2e551e9f9a17f72faff0d3fdfb3ce14639d30359ab",
+    "timeline/reviews/timeline_case_0001_v1_1_20260901_184144.approval.json":
+        "bd5ae8dbefbfd19524066238bb1638dd1baffa9f5f7b6d5162a30225542c7bf9",
+}
+_COMMIT_B_APPROVAL_AUDIT_RELS = {
+    "qa/reviews/qa_case_0001_v1_20260927_193137.approval.json",
+    "case_view/reviews/case_view_case_0001_v1_20260927_193245.approval.json",
+}
+_EXPECTED_APPROVAL_AUDIT_RELS = set(_HISTORICAL_APPROVAL_AUDIT_SHA256) | _COMMIT_B_APPROVAL_AUDIT_RELS
+_observed_audit_rels = {Path(rel).as_posix() for rel in _real_approval_audits_before}
 check(
-    "I0 the real case_0001 tree carries exactly 13 historical *.approval.json records before the run",
-    len(_real_approval_audits_before) == 13, f"got {len(_real_approval_audits_before)}",
+    "I0 the real case_0001 approval-audit set is EXACTLY the 13 pinned pre-Commit-B historical records "
+    "PLUS the 2 Commit B promotion records (exact set, not a blind total) - NON-VACUITY: this suite cannot "
+    "go green on a pre-Commit-B tree",
+    _observed_audit_rels == _EXPECTED_APPROVAL_AUDIT_RELS,
+    f"unexpected={sorted(_observed_audit_rels - _EXPECTED_APPROVAL_AUDIT_RELS)} "
+    f"missing={sorted(_EXPECTED_APPROVAL_AUDIT_RELS - _observed_audit_rels)}",
+)
+
+
+class BareCarriageReturnError(RuntimeError):
+    """A historical approval audit carries a CR that CRLF->LF cannot explain."""
+
+
+def sha256_lf_normalized_audit(rel):
+    """SHA-256 of the historical audit at `rel`, with CRLF collapsed to LF.
+
+    CRLF->LF is the ONLY transformation applied (no strip, no BOM handling, no
+    lone-CR rewrite), so every non-EOL byte difference still changes the digest.
+    Fail-closed: a bare CR surviving the collapse is not an end-of-line variant
+    this normalization is licensed to absorb, so it raises rather than fold an
+    unexplained byte into a byte-identity comparison. A missing/unreadable file
+    returns the same non-digest sentinel `snapshot_tree` uses, so the exact-set
+    check above stays the legible reporter for that case.
+    """
+    try:
+        data = (REAL_CASE_0001 / rel).read_bytes()
+    except OSError:
+        return "<unreadable>"
+    data = data.replace(b"\r\n", b"\n")
+    if b"\r" in data:
+        raise BareCarriageReturnError(
+            f"bare CR (not part of CRLF) in historical approval audit {rel}"
+        )
+    return hashlib.sha256(data).hexdigest()
+
+
+# Computed over exactly the 13 pinned paths (not an rglob), so the normalization
+# is scoped to "historical approval audit bytes" and nothing else. Raw-byte
+# digests stay in `_real_approval_audits_before` for I1c, which must remain
+# EOL-SENSITIVE: it is a before/after invariance check on one single tree, so
+# normalizing there would blind it to an EOL-only mutation of a real audit.
+_historical_audits_lf = {
+    rel: sha256_lf_normalized_audit(rel) for rel in sorted(_HISTORICAL_APPROVAL_AUDIT_SHA256)
+}
+check(
+    "I0 each of the 13 pre-Commit-B historical approval audits still carries its LF-normalized "
+    "committed-content SHA-256 - EOL-agnostic, so CRLF-only checkout drift is normalized away "
+    "while every other byte change still fails (Commit B appended two records and rewrote NONE of the 13)",
+    all(_historical_audits_lf.get(rel) == digest for rel, digest in _HISTORICAL_APPROVAL_AUDIT_SHA256.items()),
+    f"drifted={sorted(rel for rel, digest in _HISTORICAL_APPROVAL_AUDIT_SHA256.items() if _historical_audits_lf.get(rel) != digest)}",
 )
 
 RUN_TOKEN = uuid.uuid4().hex[:8]
@@ -278,8 +385,11 @@ RUN_TOKEN = uuid.uuid4().hex[:8]
 def make_case(tag):
     """Tempdir copy of case_0001 with a fresh case_id (every `case_0001`
     mention rewritten). The committed qa/case_view pendings are removed
-    so the first coordinated write is a genuine first write; the committed
-    (stale) canonical qa.json/case_view.json are KEPT on purpose (C1)."""
+    so the first coordinated write is a genuine first write; the Commit B
+    provenance dirs (history/, generation_reviews/) are removed for the same
+    reason. The canonical qa.json/case_view.json are KEPT on purpose: the
+    case_id rewrite changes the upstream bytes they bind, which is exactly the
+    SYNTHETIC stale state C1 exercises (see C1a's mechanical proof)."""
     case_id = f"qacvpg{RUN_TOKEN}{tag}"
     dst = _TMP_CASES / case_id
     shutil.copytree(REAL_CASE_0001, dst)
@@ -539,10 +649,24 @@ try:
     canonical_qa_c1_valid = qa_validator.validate_qa_analysis(
         dir_q / "qa" / "qa.json", expected_case_id=case_q, raise_on_error=False,
     )["valid"]
+    # The stale state is created BY THIS FIXTURE, not inherited: `make_case`
+    # rewrites every `case_0001` mention to a fresh case_id, which changes the
+    # upstream bytes this copy's qa.json binds. Proven mechanically below - the
+    # recorded `case.json` hash still matches the REAL (Commit B, fresh) tree
+    # and no longer matches this copy.
+    _c1_recorded_case_sha = next(
+        e["raw_byte_sha256"] for e in
+        json.loads((dir_q / "qa" / "qa.json").read_text(encoding="utf-8"))["analysis_metadata"]["dependency_manifest"]
+        if e["artifact_ref"] == "case.json"
+    )
     check(
-        "C1a precondition: the committed canonical qa.json is NOT valid/fresh for this copy "
-        "(stale snapshot - the Commit B data-refresh item, NOT touched by Commit A)",
-        canonical_qa_c1_valid is False,
+        "C1a precondition: the canonical qa.json is NOT valid/fresh for THIS COPY, and the cause is this "
+        "fixture's own case_id rewrite - the recorded case.json hash still equals the REAL Commit B tree's "
+        "case.json and differs from this copy's",
+        canonical_qa_c1_valid is False
+        and _c1_recorded_case_sha == hashlib.sha256((REAL_CASE_0001 / "case.json").read_bytes()).hexdigest()
+        and _c1_recorded_case_sha != hashlib.sha256((dir_q / "case.json").read_bytes()).hexdigest(),
+        f"recorded={_c1_recorded_case_sha}",
     )
     code, out, err = run_cli([
         "generation", "--case", case_q, "--row-key", "case_view", "--actor-user-id", str(_ACTORS["lawyer"]),

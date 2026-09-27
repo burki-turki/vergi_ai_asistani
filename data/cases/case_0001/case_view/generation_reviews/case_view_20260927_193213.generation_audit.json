@@ -1,0 +1,136 @@
+{
+  "schema_version": "1",
+  "case_id": "case_0001",
+  "target_ref": "case_view.pending",
+  "target_state": "generated",
+  "action_family": "generation.case_view",
+  "channel": "local_lawyer_generation_cli",
+  "mutation_actor_ref": "2",
+  "mutation_idempotency_key": "9bf6e4485ba0269a7e860b6d1e74cab0464d02b5fac84203be0b93849480c1f2",
+  "mutation_resource_key": "case:case_0001",
+  "input_digest": "6e28fdd2b032b95f138fa2809f61a9edc7869a47c1dad675418bba224c578323",
+  "generation_parameters_digest": null,
+  "generation_mode": "deterministic",
+  "model_id": "deterministic_no_model",
+  "prompt_agent_version": "n/a",
+  "identity_payload": {
+    "generation_mode": "deterministic",
+    "manifest": [
+      {
+        "files": [
+          {
+            "logical_relative_path": "arguments/arguments.json",
+            "sha256": "24c2637663d40803f6720ce43e91ac02a190b82dbb4428fe5875829077bc0742"
+          }
+        ],
+        "logical_name": "arguments",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "case.json",
+            "sha256": "2d98709671ea011d7587d3711bc8067431fa2e34eed73b1030645eab51177a54"
+          }
+        ],
+        "logical_name": "case",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "case_law/case_law.json",
+            "sha256": "e56519ce0cca84ca3d299e2567bc75e484151ccd5d8db46b8cc53a9f6ea279bf"
+          }
+        ],
+        "logical_name": "case_law",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "deadlines/deadline.json",
+            "sha256": "e6818e23eaf27653c5bd6144be4b33bb6dcf924169aa7947d8c4f3c6acba2aff"
+          }
+        ],
+        "logical_name": "deadline",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "drafting/drafting.json",
+            "sha256": "eee885ddc6bd263dc5aeb8fe95fad74a885f0d49dfb33ef5e91faeddd1725536"
+          }
+        ],
+        "logical_name": "drafting",
+        "state": "present"
+      },
+      {
+        "files": [],
+        "logical_name": "evidence",
+        "state": "missing"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "issues/issues.json",
+            "sha256": "b2dd7e57862eb247c7daa7cc0f7431d34bc4b8f785e47ca663f8c22fba841a7e"
+          }
+        ],
+        "logical_name": "issues",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "research/research.json",
+            "sha256": "252c35d9ed9dab35fb3ea1dca17c20fb96e3a8c9732182b539a84cd90d71a089"
+          }
+        ],
+        "logical_name": "legal_research",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "qa/qa.json",
+            "sha256": "dad0e73b11fa5e9d507fe4f7a87b6b8a621ebad9cd73beb139d236c27f584108"
+          }
+        ],
+        "logical_name": "qa",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "risk_strategy/risk_strategy.json",
+            "sha256": "4b5cc8cfa0b0148ae13e84a96cbc94d2f022c81defba319aa139ee0fd35ceb7f"
+          }
+        ],
+        "logical_name": "risk_strategy",
+        "state": "present"
+      },
+      {
+        "files": [
+          {
+            "logical_relative_path": "timeline/timeline.json",
+            "sha256": "09800341d35335bc7831e9ca960ed4d24fe83b58e9eb7eb82b27e6ce8cf0c9cf"
+          }
+        ],
+        "logical_name": "timeline",
+        "state": "present"
+      }
+    ],
+    "manifest_version": "phaseb.qa_case_view_generation.v1",
+    "model_id": "deterministic_no_model",
+    "prompt_agent_version": "n/a"
+  },
+  "first_write": false,
+  "history_backup_path": "data/cases/case_0001/case_view/history/case_view_pending_before_engine_20260927_193213.json.pending",
+  "history_backup_sha256": "357e1d48b0cca73626a980d6e2bb84d785bab4236a539de9966e161e7b393a42",
+  "pending_sha256": "6bbd518f794ac15fd5b0437b2dce743fcab9d63bc76dd27163815964c7582bc8",
+  "generated_at": "2026-09-27T19:32:13.064407+03:00",
+  "outcome": "generated",
+  "written_at": "2026-09-27T19:32:13.497809+03:00"
+}

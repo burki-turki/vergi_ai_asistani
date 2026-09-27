@@ -3,17 +3,17 @@
   "case_view_id": "case_view_case_0001_v1",
   "case_id": "case_0001",
   "generation_status": "completed",
-  "generated_at": "2026-09-04T18:21:21.928166+00:00",
+  "generated_at": "2026-09-27T19:32:13.064407+03:00",
   "analysis_metadata": {
     "dependency_manifest": [
       {
         "artifact_ref": "case",
-        "raw_byte_sha256": "f0bc0d2f45a18e534a12e9dec73bd02449a25488451b1cfba948f5fbad019c39",
+        "raw_byte_sha256": "2d98709671ea011d7587d3711bc8067431fa2e34eed73b1030645eab51177a54",
         "artifact_state": "present_valid"
       },
       {
         "artifact_ref": "timeline",
-        "raw_byte_sha256": "50a456522390bd86ee168f93a17a974e911f378673799d4bff7ece4b53b719e8",
+        "raw_byte_sha256": "09800341d35335bc7831e9ca960ed4d24fe83b58e9eb7eb82b27e6ce8cf0c9cf",
         "artifact_state": "present_valid"
       },
       {
@@ -58,12 +58,12 @@
       },
       {
         "artifact_ref": "qa",
-        "raw_byte_sha256": "a4af057af4e21e6994823378bae6b1127a799cbc6db3ca7dc1b4b207d31aec40",
+        "raw_byte_sha256": "dad0e73b11fa5e9d507fe4f7a87b6b8a621ebad9cd73beb139d236c27f584108",
         "artifact_state": "present_valid"
       }
     ],
-    "scan_started_at": "2026-09-04T18:21:21.926432+00:00",
-    "scan_completed_at": "2026-09-04T18:21:21.928166+00:00"
+    "scan_started_at": "2026-09-27T19:32:13.061102+03:00",
+    "scan_completed_at": "2026-09-27T19:32:13.064407+03:00"
   },
   "case_summary": {
     "source_state": "present_valid",
