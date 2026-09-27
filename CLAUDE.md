@@ -981,9 +981,60 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   tatil tarihi eklenmedi; hiçbir yıl `verified:true` yapılmadı; hiçbir
   `verification_ref` alınmadı; avukat doğrulaması (Adım 6) TAMAMLANMADI
   ve Adım 6 ACTIVE / NEXT olarak KALIR; pilotun genel olarak
-  production-ready olduğu İDDİA EDİLMEZ. **Phase B (veri popülasyonu):
-  NOT STARTED / NOT AUTHORIZED / BLOCKED ON REAL LAWYER verification_ref**
-  — bu pointer Phase B için hiçbir kodlama/veri yetkisi VERMEZ.
+  production-ready olduğu İDDİA EDİLMEZ. Yukarıdaki bu paragraf Phase A
+  LOCK anının TARİHSEL kaydıdır ve DEĞİŞTİRİLMEMİŞTİR. **Phase B (veri
+  popülasyonu) artık DONE / LOCKED'dır** — Phase A turundaki "NOT
+  STARTED / NOT AUTHORIZED / BLOCKED ON REAL LAWYER verification_ref"
+  durumu bir sonraki madde tarafından SUPERSEDE EDİLMİŞTİR (bkz. Holiday
+  Calendar Phase B pointer'ı ve checkpoint özeti).
+- **Holiday Calendar Phase B — Veri Popülasyonu + Portable QA/Case-View
+  Publisher'ları — DONE / LOCKED.** Phase A'nın teknik tesisatı üzerine,
+  gerçek avukat doğrulamasına dayanan takvim verisi üretime alındı ve
+  Row 16/17 için İLK resmî pending publisher'ları eklendi. Kapsam DÖRT
+  yerel commit'tir (`fa6874a..dcba4db`, push YAPILMADI): `9773ffd`
+  (takvim popülasyonu + şema/validator genişletmesi), `073fc6b`
+  (`.gitattributes`'e tek satır `.gitignore text eol=lf`), `1c7d956`
+  (Phase B Commit A — portable QA locator + koordineli QA/case-view
+  publisher'ları), `dcba4db` (Phase B Commit B — `case_0001` QA ve
+  case-view snapshot'larının koordineli publisher'larla yeniden
+  üretilmesi). Toplam exact değişiklik: **10 YENİ + 25 DEĞİŞTİRİLMİŞ =
+  35 dosya**; sıfır migration (5'te kaldı). Üretim takvimi artık
+  TARİHSİZ DEĞİLDİR: `calendar_version` 2→**3**, 12 yılın **12'si de
+  `verified: true`** ve non-null `verification_ref` taşıyor, **205
+  tatil girdisi** ve **205'inin TAMAMI `observances`** taşıyor, 24
+  `source_refs`, üretim `half_day_policy` `not_decided`→
+  **`needs_review_if_deadline_day`** (Phase A'nın şema+hesaplayıcı
+  düzeyinde MEVCUT ama üretimde BENİMSENMEMİŞ dördüncü politikası artık
+  BENİMSENDİ). İki YENİ, case-scoped, **deterministik-only** action
+  family (`generation.qa` / `generation.case_view`) YEDİNCİ, AYRI bir
+  facade/adapters çiftiyle bağlandı — diğer altı çiftin HİÇBİRİ
+  GENİŞLETİLMEDİ; merged reconciliation routing key **50→52**, logical
+  action family **38→40**, test modülü **78→80**, `*_postgres` modülü
+  **14→15**, production Python **157→159**, CLI subcommand **6**
+  (DEĞİŞMEDİ — `qa`/`case_view` mevcut `generation` subcommand'ının yeni
+  row key'leridir). İki resmî kapı, `dcba4db` commit'inin baytlarına
+  karşı, TEMİZ bir exact-commit LF worktree'sinde ve taze/disposable bir
+  PostgreSQL 16.15 örneğinde (yalnız loopback, migration 0001-0005)
+  çalıştırıldı: `production-parity` **exit 0, SWEEP FULL, 80/80 modül
+  PASS, 6400 passed, 0 failed** (15/15 `*_postgres` modülü GERÇEKTEN
+  koştu) ve `rag-dependency` **exit 0, RAG_GATE_PASS, 3/3, 216 passed,
+  0 failed**. Ayrı, salt-okunur bir post-commit doğrulama turu 12
+  commit blob'unu, imzalı avukat artefaktını, 13 tarihsel audit
+  kaydının bayt-değişmezliğini ve bütünlük alanlarını bağımsızca
+  doğruladı; final verdict, exact olarak:
+  `PHASE B POST-COMMIT GATES PASS — READY FOR ROADMAP LOCK`
+  (bkz. Holiday Calendar Phase B checkpoint özeti, §5 sonrası, "## 6.
+  Cross-Cutting Backlog"dan hemen önce). **Dar, exact iddia**
+  (abartılmaz): bu LOCK YALNIZ takvim verisinin popülasyonunu, QA/
+  case-view publisher'larını ve bu dört commit'in kapılarını kapsar.
+  Avukat doğrulamasının (Adım 6) TAKVİM alt-maddesi bu turla
+  karşılanmıştır, ancak **Adım 6'nın kalan soruları (SORU 3.1-3.8 /
+  5.1-5.4) ve altın örnekleri TAMAMLANMAMIŞTIR ve Adım 6 ACTIVE / NEXT
+  olarak KALIR**; Adım 7'nin mali tatil dışındaki alt-kapsamları,
+  Adım 8-13 ve corpus acquisition/population BAŞLAMAMIŞTIR; pilotun
+  genel olarak production-ready olduğu İDDİA EDİLMEZ. Sertifika zinciri
+  ile OCSP/CRL iptal durumu **bağımsız doğrulanmış SAYILMAZ** (bkz.
+  checkpoint özeti §C).
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -9881,9 +9932,230 @@ eklenmeden oluşturulmuştur.
 Technical Plumbing" alt kapsamı için. **Phase B:
 NOT STARTED / NOT AUTHORIZED / BLOCKED ON REAL LAWYER verification_ref.**
 
+*(Bu iki satır Phase A LOCK anının TARİHSEL kaydıdır ve bilinçli olarak
+DEĞİŞTİRİLMEMİŞTİR. Phase B o turda gerçekten başlamamıştı. Güncel durum
+için bir sonraki bölüme bakın: Phase B artık DONE / LOCKED'dır ve bu iki
+satırı SUPERSEDE eder.)*
+
 **Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
 gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
 işlemidir; hiçbir kaynak/migration/test/production dosyasına dokunmaz.
+
+### Holiday Calendar Phase B — Veri Popülasyonu + Portable QA/Case-View Publisher'ları (DONE / LOCKED — checkpoint özeti)
+
+**A. Kapsam ve commit'ler** — Phase B, Phase A LOCK commit'i `fa6874a`'dan
+HEAD'e kadar **DÖRT yerel commit**tir; hiçbiri push EDİLMEMİŞTİR:
+
+| Commit | Subject | Dosya |
+|---|---|---|
+| `9773ffd` | Populate lawyer-verified 2024-2035 holiday calendar | 6 |
+| `073fc6b` | Pin root gitignore to LF in clean checkouts | 1 |
+| `1c7d956` | Add portable QA locator and coordinated QA/case-view pending publishers (Commit A) | 20 |
+| `dcba4db` | Regenerate case_0001 QA and case-view snapshots via coordinated publishers (Commit B) | 12 |
+
+Doğrulanan hedef commit (kullanıcı onayında exact olarak verilen):
+`dcba4db3c342f8535458b55c57899068b466eae4`, parent
+`1c7d956eecb0034bfa0137a430494a367cc730ae`, branch `claude-dev`.
+`fa6874a..dcba4db` birleşik exact değişiklik: **10 YENİ + 25
+DEĞİŞTİRİLMİŞ = 35 dosya** (bir test dosyası iki commit'te yer aldığı
+için 6+1+20+12=39 commit-başı satırı 35 benzersiz dosyaya indirgenir).
+**Sıfır migration** (5'te kaldı), sıfır web route, sıfır yeni CLI
+subcommand, sıfır cloud/Entra değişikliği.
+
+**B. Üretim takvimi artık popüle ve doğrulanmış** — Phase A'nın "üretim
+takvimi HÂLÂ TARİHSİZDİR" iddiası bu turla SUPERSEDE edilmiştir.
+`data/holiday_calendar/holiday_calendar.json`'ın canlı durumu, bu
+roadmap-lock turunda commit'li baytlardan mekanik olarak yeniden
+sayılmıştır:
+
+| Alan | Phase A (`fa6874a`) | Phase B (`dcba4db`) |
+|---|---|---|
+| `schema_version` (const) | **1** | **1 (DEĞİŞMEDİ)** |
+| `calendar_version` | 2 | **3** |
+| yıl sayısı | 12 (2024–2035) | **12 (2024–2035)** |
+| `verified: true` yıl | **0** | **12** |
+| non-null `verification_ref` | 0 | **12** |
+| toplam tatil girdisi | **0** (`holidays: []`) | **205** |
+| `observances` taşıyan girdi | **0** | **205 (tamamı)** |
+| `source_refs` toplamı | **0** | **24** |
+| `half_day_policy` | `not_decided` | **`needs_review_if_deadline_day`** |
+| `verifications` kaydı | (alan YOK) | **1** |
+
+Yani Phase A'da şema ve hesaplayıcı düzeyinde MEVCUT ama üretimde
+BENİMSENMEMİŞ olan dördüncü half-day politikası artık üretimde
+BENİMSENMİŞTİR. Şema `title` `V2`→`V2.1` (kozmetik), `schema_version`
+`const` **1** ve top-level `required` (10 anahtar) ile
+`half_day_policy` enum'u (4 değer) DEĞİŞMEDİ; `$defs` **4 → 9**
+(eklenen: `referenced_source_artifact`, `signed_artifact`,
+`verification_record`, `verification_scope`, `verifying_lawyer`).
+`HOLIDAY_CALENDAR_VALIDATOR_VERSION` `"2"` → **`"3"`**.
+
+**C. İmzalı avukat artefaktı — bağlama PASS, sınır AYNEN korunur** —
+Takvimin tek `verifications` kaydı repo DIŞINDA tutulan imzalı bir
+avukat dosyasına bağlıdır ve bağlama, temiz exact-commit worktree'sinin
+KENDİ validator'ıyla (dosya worktree'ye veya repoya KOPYALANMADAN,
+salt-okunur) doğrulanmıştır: boyut **9182**, SHA-256
+**`fb79b85fcf114c951f3f08a03a437e867430ecbf6cca0f477d77b9df6fd364e2`**,
+validator **exit 0**, `ok: True`, **12/12 yıl verified**, tek kayıt
+`HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95`, `final_decision
+KABUL`, `half_day_policy_decision needs_review_if_deadline_day`.
+
+**Sınır (aynen korunur, genişletilmez):** ham kriptografik imza ve gömülü
+sertifika CN'i daha önce doğrulanmıştır; **sertifika zinciri ile OCSP/CRL
+iptal durumu bağımsız doğrulanmış SAYILMAZ.** Bu dosya git'e
+GİRMEMİŞTİR — commit ağacında hiçbir
+`.udf/.sgn/.p7s/.pem/.cer/.crt/.pfx/.der/.p12` dosyası yoktur ve 12
+commit dosyasının hiçbirinde sertifika/imza yükü (`-----BEGIN`, `BEGIN
+CERTIFICATE`, `PKCS7`, `sign.sgn`) bulunmaz.
+
+**D. Row 16/17 için İLK resmî pending publisher'ları** — Row 19A'nın
+"QA/Orchestrator pending-generation publisher'ları şu an YOK —
+belgelenmemiş operasyonel boşluklardır" tespiti bu turla KAPANMIŞTIR.
+Commit A iki YENİ, case-scoped, **deterministik-only** action family
+ekledi: **`generation.qa`** ve **`generation.case_view`**. Bunlar
+YEDİNCİ, AYRI bir facade/adapters çiftiyle
+(`ui/services/qa_case_view_generation_mutation_facade.py` +
+`..._adapters.py`, ikisi de YENİ) mutation coordinator/journal
+altyapısına bağlandı — **önceki altı çiftin HİÇBİRİ GENİŞLETİLMEDİ**.
+Bu iki aile için **agent modu YOKTUR** (deterministik-only
+publisher'lar); mevcut `generation` CLI subcommand'ı yeni `qa`/
+`case_view` row key'leriyle additive olarak genişletildi, YENİ bir
+subcommand EKLENMEDİ. Ayrıca Commit A, Row 16'nın QA locator'ını
+**repo-relative (portable)** hale getirdi.
+
+**E. Sabit sayımlar (Phase A → Phase B), mekanik olarak doğrulanmış**:
+
+| Sayaç | Phase A | Phase B |
+|---|---|---|
+| `ui/tests/test_*.py` modülü | 78 | **80** |
+| `*_postgres` modülü | 14 | **15** |
+| merged reconciliation routing key | 50 | **52** |
+| logical action family | 38 | **40** |
+| production Python (tracked `*.py` − `ui/tests/**`) | 157 | **159** |
+| `db/migrations/*.sql` | 5 | **5 (DEĞİŞMEDİ)** |
+| CLI subcommand | 6 | **6 (DEĞİŞMEDİ)** |
+
+**Bağlayıcı not:** sweep artık **80 modül ve 15 `*_postgres`**'tir. Eski
+**78/78 ve 14** beklentisi `073fc6b` ve öncesine aittir ve
+**BAYATTIR** — Commit A (`1c7d956`) tam olarak
+`test_qa_case_view_generation_mutation_facade_isolated.py` ve
+`..._integration_postgres.py` modüllerini EKLEMİŞTİR (git ile
+türetilmiştir, varsayılmamıştır). Bundan sonraki hiçbir turda 78/78 veya
+14 beklentisi kullanılmamalıdır; 80 ile 78 arasındaki fark bir
+BAŞARISIZLIK DEĞİLDİR.
+
+**F. Resmî kapılar — `dcba4db` baytlarına karşı** — Değiştirilmemiş
+`scripts/run_ui_tests.py`, modül seçimi/atlaması olmadan, tek ve
+kesintisiz, TEMİZ bir exact-commit worktree'sinde (detached,
+`-c core.autocrlf=false -c core.eol=lf`, ana repoda hiç test
+çalıştırılmadan) ve taze/disposable bir **PostgreSQL 16.15** örneğinde
+(yalnız loopback, yeni port, migration **0001-0005** sırasıyla
+`ON_ERROR_STOP=1` ile worktree'nin kendi `db/migrations/`'inden)
+çalıştırıldı:
+
+- **`production-parity`**: `runner_exit_code 0`, `state completed`,
+  `SWEEP FULL`, **80/80 modül PASS** (`modules_non_pass 0`,
+  `modules_not_spawned 0`), **6400 passed, 0 failed**, 8 counted / 14
+  informational skip (hiçbir skip PASS SAYILMADI); discovery
+  `tracked_count 80 == run_count 80`, `missing []`, `untracked []`,
+  `rejected []`; guard `armed_count 214 == expected_armed 214`,
+  `inheritance_ok true`, positive controls **10/10**,
+  `net_blocked_count 0`, `env_open_blocked_count 0`,
+  `suspicious_popens []`; PostgreSQL `connected true`,
+  `migrations_ok true`, `migrations_missing []`,
+  `server_addr_loopback true`; **15/15 `*_postgres` modülü GERÇEKTEN
+  koştu** (sıfır zero-check); `protected_manifest_ok true` (377 giriş),
+  `protected_path_diff []`, `secret_scan` 160 dosya `hits []`; tüm
+  residue listeleri (`process`/`temp`/`db`/`bytecode`) boş,
+  `tmp_dir_removed true`; `refusals []`, `warnings []`; `git.clean true`,
+  `git.head dcba4db3c342f8535458b55c57899068b466eae4`. stderr boş.
+  `deviations`: 3 girdi — runner'ın kendi tasarım davranışının
+  dokümantasyonu (child `TEMP`→`vsw_<pid>`, NESTED_RUNNER V2 exclusion
+  penceresi, K.1 kuralı); kapı alanı DEĞİLDİR, başarısızlık DEĞİLDİR.
+- **`rag-dependency`**: exit **0**, **`RAG_GATE_PASS`**, 3/3 modül PASS,
+  **216 passed, 0 failed**, counted skip **0**, informational ham **1** /
+  K.1-muaf **1** / **etkin 0**, `marker_present true`, guard 7/7 ve
+  10/10, integrity temiz. Dürüst disclosure: `.venv` gitignore'lu olduğu
+  için temiz worktree'de yoktur; interpreter MUTLAK yolla, cwd =
+  worktree olarak çağrılmıştır (runner interpreter'ı yola göre değil
+  yeteneğe göre doğrular).
+
+**G. Post-commit bağımsız doğrulama turu** — Ayrı, salt-okunur bir tur
+12 commit blob'unun SHA-256'sını (hepsi **CR=0**) gerçek önceki commit
+raporuyla birebir eşleştirdi; `data/cases` tracked 71 == on-disk 71;
+`qa.json` ≡ pending'i (`dad0e73b…`) ve `case_view.json` ≡ pending'i
+(`6bbd518f…`) bayt-bayt aynı; `case_view`'ın `dependency_manifest`'i
+canlı `qa.json` digest'ini (`dad0e73b…`) bağlıyor ve 11 girdinin
+10'unun digest'i diskteki baytlarla eşleşiyor (`evidence` doğru şekilde
+`absent`); her iki generation audit'in `history_backup_path`'i
+**repo-relative**; **13 tarihsel audit kaydının TAMAMI bayt-bayt
+DEĞİŞMEDİ** (diff 6 A + 6 M'dir, hiçbiri audit değildir, ve 13'ünün her
+biri `parent → HEAD` blob-hash'iyle ayrıca doğrulandı); 6 yeni
+provenance dosyası mevcut; commit ağacında **sıfır `.bak`**; 12 dosyanın
+hiçbirinde geçici-worktree yol token'ı yok. Final verdict, exact olarak:
+`PHASE B POST-COMMIT GATES PASS — READY FOR ROADMAP LOCK`
+
+**H. Non-blocking / deferred hygiene notu (bu turda DÜZELTİLMEDİ)** —
+Commit B'nin eklediği iki `*.generation_audit.json` dosyası, yeni
+publisher'lar tarafından **platform (CRLF) satır sonlarıyla** ve
+sondaki newline olmadan yazılmıştır; kardeş yazıcıları
+(`history/*.json.pending`, `*.approval.json`) LF yazar.
+`.gitattributes`'in `*.json text eol=lf` kuralı bunları commit anında
+LF'e normalize etti, bu yüzden blob'lar LF'tir (`a1d7375c…`,
+`74027038…`) ama **ana repo çalışma kopyaları CRLF kalır** (135 / 161
+CR; disk `4335fc42…` / `4e097729…`) ve `git status` bunu yine de temiz
+sayar. Fark **YALNIZCA EOL kaynaklıdır, sıfır içerik değişikliği**
+vardır (blob'un LF'lerini CRLF'e çevirmek çalışma-kopyası hash'lerini
+birebir yeniden üretir). Bu turun kapılarında ve reconciliation
+adapter'larında (audit'in KENDİ hash'ini değil İÇERİĞİNİ ayrıştırır)
+hiçbir kontrol bu iki dosyanın ham SHA-256'sına dayanmaz; ancak
+ileride bu iki dosyanın ham SHA-256'sını pinleyen bir test yazılırsa
+ana ağaç ile temiz checkout arasında sapma oluşur — F1'in daha önce
+kapattığı sınıfın aynısı. **Yazıcı-tutarlılığı backlog maddesi olarak
+AÇIK kalır; bu turda düzeltilmemiştir.**
+
+**I. Kapsam dışı / kapanmayanlar** — Bu LOCK YALNIZ takvim verisi
+popülasyonunu, portable QA locator'ı, iki yeni deterministik publisher'ı
+ve yukarıdaki dört commit'in kapılarını kapsar. Kapanmayanlar:
+**Adım 6** — takvim alt-maddesi karşılandı, ancak SORU 3.1-3.8 /
+5.1-5.4 ve altın örnekler TAMAMLANMADI, **Adım 6 ACTIVE / NEXT olarak
+KALIR**; Adım 7'nin mali tatil DIŞINDAKİ alt-kapsamları;
+`stopping_event_status`; 27.01.2016 öncesi mali tatil temporal
+modellemesi; Adım 8 yerel PostgreSQL/IAM adoption; Adım 9 sentetik
+concierge dry-run; Adım 10 ilk gerçek concierge pilotu; Adım 11
+Entra/P1; Adım 12 hosting/Key Vault; Adım 13c configurable case root;
+corpus politikası/edinimi/population ve RAG-bağımlı Slice 2; Row 19D
+(OS ACL / service identity / TOCTOU, advisory-lock timeout backlog'u).
+Pilotun genel olarak production-ready olduğu **İDDİA EDİLMEZ**.
+
+**J. §9 LOCKED-file gerekçesi** — Phase B, LOCKED Row 8'in
+`src/holiday_calendar_validator.py`'sini ve Phase A'da kilitlenen
+`data/holiday_calendar.schema.json` / `holiday_calendar.json`'ı, Phase
+A'nın kendi sözleşmesinin ZORUNLU kıldığı veri popülasyonu için açtı
+(kullanıcı talebi + Phase A'nın açık prerequisite'i: "BLOCKED ON REAL
+LAWYER verification_ref" — o önkoşul bu turda sağlandı). Şema
+değişikliği additive'dir (`schema_version` const 1, top-level
+`required` ve `half_day_policy` enum'u DEĞİŞMEDİ; yalnız 5 yeni `$def`).
+LOCKED Row 16/17 tarafında `src/qa_engine.py`, `src/qa_discovery.py`,
+`src/qa_approval.py`, `src/orchestrator_engine.py`,
+`src/orchestrator_approval.py` yalnız portable locator ve resmî
+pending-publisher seam'i için açıldı — Row 19A'nın "var olan saf
+builder/validator fonksiyonlarını yeniden kullan, domain mantığını
+DEĞİŞTİRME veya KOPYALAMA" şartıyla; `ui/cli_mutate.py` ve
+`ui/reconciliation_operator.py` yalnız additive (19C-3b'den beri kabul
+edilen açılış sınıfı). Bunların DIŞINDA hiçbir LOCKED dosya açılmadı.
+
+**K. Final verdict**
+
+`PHASE B POST-COMMIT GATES PASS — READY FOR ROADMAP LOCK`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
+işlemidir; hiçbir kaynak/migration/test/production/canonical/pending/
+provenance dosyasına ve 13 tarihsel audit kaydına dokunmaz; `dcba4db`
+commit'i amend EDİLMEZ; stash/reset/cleanup/push YAPILMAZ.
 
 ## 6. Cross-Cutting Backlog
 
