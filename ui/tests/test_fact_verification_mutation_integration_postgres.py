@@ -1093,6 +1093,12 @@ try:
         "generation", "--case", case_p10, "--row-key", "deadline", "--anchor", anchor_event_id_p10,
         "--actor-user-id", str(_ACTORS["lawyer"]), "--apply", "--expected-input-digest", digest_p10d,
         "--judicial-recess-applicable", "no",
+        # PILOT READINESS ADIM 7 / SLICE 1: the fail-closed stopping-event
+        # attestation gate refuses a definite date without an EXPLICIT lawyer
+        # attestation; the ref below is a SYNTHETIC TEST value only - it is NOT a
+        # real lawyer or client declaration and carries no legal meaning.
+        "--stopping-event-status", "none",
+        "--stopping-event-attestation-ref", "TEST-P10-SYNTHETIC-NO-STOPPING-EVENT-ATTESTATION",
     ])
     check("P10k real generation.deadline apply (anchor verified) exits 0", code == 0, f"out={out!r} err={err!r}")
     pending_deadline_p10_v2 = json.loads(_pg_deadline_engine.get_pending_path(case_p10).read_bytes())
