@@ -1052,6 +1052,37 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   genel olarak production-ready olduğu İDDİA EDİLMEZ. Sertifika zinciri
   ile OCSP/CRL iptal durumu **bağımsız doğrulanmış SAYILMAZ** (bkz.
   checkpoint özeti §C).
+- **Pilot Readiness Adım 7 / Slice 1 — Stopping-Event Attestation Gate —
+  DONE / LOCKED.** **Adım 7'nin KENDİSİ ACTIVE / NEXT olarak KALIR** — bu
+  pointer YALNIZ Slice 1'i kilitler. Slice 1, bildirim/tebliğ sonrasında
+  süreyi durdurabilecek, kesebilecek veya başlangıcını değiştirebilecek bir
+  işlemin bulunup bulunmadığı BİLİNMEDEN sistemin kesin son gün üretmesini
+  engelleyen fail-closed bir kapıdır; `stopping_event_status ∈ {none,
+  present, unknown}` + `stopping_event_attestation_ref` sözleşmesi, kapı
+  sırası (`blocked_unverified_anchor` → stopping-event gate → hesaplama) ve
+  generation-audit izi ile sınırlıdır. Exact kapsam: implementasyon commit'i
+  `3f80945968f1429b39b47b69d7860934a5bb17b5` (**1 YENİ + 8 DEĞİŞTİRİLMİŞ = 9
+  dosya**, 1555 insertion / 5 deletion) + dar entegrasyon-testi remediasyon
+  commit'i `7428d00638cec619c7e2b0d6b8a74aa35f00896a` (**0 YENİ + 1
+  DEĞİŞTİRİLMİŞ = 1 dosya**, 6 insertion / 0 deletion); sıfır schema, sıfır
+  migration, sıfır web route, sıfır production data. Resmî kapılar exact
+  commit `7428d006`'nın baytlarına karşı, TEMİZ bir exact-commit LF
+  worktree'sinde ve taze/disposable bir PostgreSQL 16.15 örneğinde
+  çalıştırıldı: `production-parity` **exit 0, SWEEP FULL, 82/82 modül PASS,
+  6559 passed, 0 failed** ve `rag-dependency` **exit 0, RAG_GATE_PASS, 3/3,
+  216 passed, 0 failed** (bkz. Adım 7 / Slice 1 checkpoint özeti, §5
+  sonrası, "## 6. Cross-Cutting Backlog"dan hemen önce). **Sıradaki iş**
+  Adım 7'nin event-specific hukuki modelleme ve görünürlük alt-kapsamlarıdır:
+  uzlaşma süresi ve etkileri, İYUK m.11 başvurusunun kalan süre/zımni ret
+  hesabı, VUK m.35/376 kaynaklı başlangıç veya süre değişiklikleri, usulsüz
+  tebligat/öğrenme tarihi etkileri, pişmanlık ihlali, değerleme komisyonu
+  veya eksik matrah temeli, tarihsel çalışmaya-ara-verme dönemleri (SORU
+  5.5) ve `stopping_event_status`/`stopping_event_attestation_ref`'in
+  canonical `deadline.json` ile `case_view`/UI görünürlüğü — **hiçbiri bu
+  Slice ile modellenmemiştir**. **Dar, exact iddia** (abartılmaz): bu LOCK
+  YALNIZ fail-closed durdurma + audit izini kapsar; Adım 7'nin
+  TAMAMLANDIĞINI, Adım 8-13'ün kapandığını, corpus veya Row 19D'nin
+  kapandığını veya pilotun production-ready olduğunu **İDDİA ETMEZ**.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -10317,6 +10348,216 @@ hesaplayıcısının bugünkü davranışıyla mekanik olarak uyuştuğunu kayda
 gibi yalnız `CLAUDE.md`'yi değiştiren bir roadmap-lock işlemidir; hiçbir
 kaynak/migration/test/production/canonical/pending dosyasına dokunmaz;
 `2ba8f11` commit'i amend EDİLMEZ; stash/reset/cleanup/push YAPILMAZ.
+
+### Adım 7 / Slice 1 — Stopping-Event Attestation Gate (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve pilot blocker** — Bir bildirimin/tebliğin ARDINDAN, süreyi
+durdurabilecek, kesebilecek veya başlangıcını değiştirebilecek bir işlemin
+(uzlaşma başvurusu, düzeltme şikâyeti vb.) bulunup bulunmadığı BİLİNMEDEN,
+sistem yine de kesin bir son gün üretebiliyordu. Slice 1 bunu fail-closed
+bir kapıyla engeller: böyle bir işlemin YOKLUĞU AÇIKÇA beyan edilmedikçe
+hiçbir kesin tarih üretilmez (Prensip 9 — belirsizlik → hesaplama yok,
+onay bekle). Slice 1 hiçbir olayın hukuki aritmetiğini MODELLEMEZ (bkz. §H).
+
+**B. Exact kapsam — iki commit**
+
+| | Implementasyon | Remediasyon |
+|---|---|---|
+| SHA | `3f80945968f1429b39b47b69d7860934a5bb17b5` | `7428d00638cec619c7e2b0d6b8a74aa35f00896a` |
+| subject | `Add fail-closed stopping-event attestation gate` | `Pass stopping-event attestation in fact verification integration` |
+| parent | `5bffcb6e8974994464cdcdb0685058c5d8bfec94` | `3f80945968f1429b39b47b69d7860934a5bb17b5` |
+| kapsam | **1 YENİ + 8 DEĞİŞTİRİLMİŞ = 9 dosya** | **0 YENİ + 1 DEĞİŞTİRİLMİŞ = 1 dosya** |
+| diff | 1555 insertion / 5 deletion | 6 insertion / 0 deletion |
+| body/trailer | yok | yok |
+
+Implementasyon dosyaları: `src/deadline_calculator.py` (**LOCKED Row 8**),
+`src/deadline_engine.py` (**LOCKED Row 8**), `ui/cli_mutate.py`,
+`ui/services/generation_mutation_facade.py`,
+`ui/tests/test_deadline_stopping_events_isolated.py` (**YENİ**),
+`ui/tests/test_deadline_calculator_mali_tatil_isolated.py`,
+`ui/tests/test_deadline_engine_isolated.py`,
+`ui/tests/test_cli_mutate_isolated.py`,
+`ui/tests/test_generation_mutation_facade_isolated.py`. Remediasyon dosyası:
+`ui/tests/test_fact_verification_mutation_integration_postgres.py`.
+**Sıfır** schema, migration, `data/`, web route, cloud/Entra değişikliği;
+her iki commit de yalnız YEREL — **push YAPILMADI**.
+
+**C. Kaydedilen sözleşme (fail-closed)** — `stopping_event_status ∈ {none,
+present, unknown}`; `stopping_event_attestation_ref: string | null`
+(printable, 1-200 karakter, CR/LF/kontrol karakteri yok).
+
+| Girdi | Sonuç |
+|---|---|
+| `none` + geçerli ref + case çelişkisi yok | **hesaplamaya DEVAM** |
+| `none` + eksik/geçersiz ref | `needs_review` / `stopping_event_none_requires_attestation_ref` |
+| `none` + `settlement` veya `correction_complaint` sinyali | `needs_review` / `stopping_event_attestation_conflicts_with_case_record` |
+| `present` | `needs_review` / `stopping_event_present_requires_lawyer_review` |
+| `unknown` **veya parametre hiç verilmedi** | `needs_review` / `stopping_event_status_unknown` |
+| CLI'da tanınmayan değer | **exit 2**, herhangi bir mutation/authz/connection/file I/O'dan ÖNCE |
+
+**Kapı sırası:** `blocked_unverified_anchor` → **stopping-event gate** →
+deadline hesaplaması. Kapı YALNIZ case-aware `build_deadline_record`
+katmanındadır; saf tarih aritmetiği olan `calculate_rule_deadline`'a
+YERLEŞTİRİLMEMİŞTİR.
+
+**D. Audit / digest ve bunların DÜRÜST sınırları** —
+`generation_parameters_digest` `digest_version`
+`row19c3ci.deadline_params.v3` → **`v4`**; digest girdileri:
+`judicial_recess_applicable`, `stopping_event_status`,
+`stopping_event_attestation_ref`. Generation audit'e HAM olarak eklenen iki
+alan: `stopping_event_status`, `stopping_event_attestation_ref`.
+
+Sınırlar (abartılmaz):
+
+- Bu iki alan canonical `deadline.json` içinde **YOKTUR**.
+- `case_view`/UI içinde **görünmez**.
+- Yalnız **generation audit runtime dosyasında** bulunur; `data/cases`
+  gitignore kapsamında olduğundan **git ile versiyonlanmaz**.
+- Ref yalnız **biçimsel** olarak doğrulanır; gerçekliği veya gerçekten bir
+  avukat tarafından verildiği **DOĞRULANMAZ**.
+- Cross-check YALNIZ `action_category` alanındaki `settlement` ve
+  `correction_complaint` sinyallerini yakalar; **başka hiçbir olayın
+  otomatik tespit edildiği İDDİA EDİLMEZ**.
+
+**E. Remediasyon gerekçesi (dürüst kayıt)** — Implementasyon commit'inin
+resmî `production-parity` koşusu **exit 1 / SWEEP PARTIAL** verdi: 82/82
+modül spawn edildi, 81 PASS + **1 FAIL**
+(`test_fact_verification_mutation_integration_postgres`, 89 passed / **2
+failed**, P10l ve P10o). Neden mekanik olarak açıklandı: bu modül Slice
+1'in 9 dosyalık kapsamında DEĞİLDİ (`git show --name-only` → 0 eşleşme) ve
+P10 zincirinin gerçek deadline CLI çağrısı yeni iki parametreyi HİÇ
+geçirmiyordu (dosyada `stopping_event` 0 kez) — dolayısıyla yeni
+fail-closed varsayılan gereği `calculation_state='needs_review'`,
+`calculated_deadline=None`, `notes='stopping_event_status_unknown'`
+(`anchor_verification_state='verified'` iken) üretiliyordu. Kullanıcı
+kararıyla (Seçenek a) **production varsayılanı ve kapı GEVŞETİLMEDİ**;
+yalnız testin P10 apply çağrısına sentetik olarak
+`--stopping-event-status none` ve
+`--stopping-event-attestation-ref TEST-P10-SYNTHETIC-NO-STOPPING-EVENT-ATTESTATION`
+eklendi. Bu ref **sentetik bir test değeridir; gerçek avukat veya müvekkil
+beyanı DEĞİLDİR** ve hiçbir hukuki anlam taşımaz. P10l/P10o assertion
+blokları HEAD ile **byte-identical** kaldı (`cmp` ile doğrulandı); `check(`
+çağrı sayısı **93 = 93**; sıfır silme; skip/xfail/mock/monkeypatch
+eklenmedi; preview çağrısı ve unverified-anchor apply çağrısı
+DOKUNULMADI. `--expected-input-digest` geçerliliği korundu — kaynaktan
+doğrulandı ki iki parametre `generation_parameters_digest`'e girer,
+`_compute_deadline_input_digest`'e **GİRMEZ**.
+
+**F. Resmî kapı kanıtı — exact commit `7428d006`** — Değiştirilmemiş
+`scripts/run_ui_tests.py`, modül seçimi olmadan, tek kesintisiz sweep,
+TEMİZ detached exact-commit worktree'de (`core.autocrlf=false`,
+`core.eol=lf`, başlangıç status'ü `--ignored` dahil tamamen boş, `work/` ve
+`vacuum.wav` worktree'de yok) ve taze/disposable PostgreSQL 16.15'te
+(yalnız `127.0.0.1`, yeni boş cluster/DB, migration **0001→0005**
+`ON_ERROR_STOP=1`, `VERGI_IAM_DATABASE_URL` **UNSET**):
+
+`production-parity`: `runner_exit_code 0`, `state completed`, **SWEEP
+FULL**, `outcomes {"PASS": 82}`, `modules_non_pass 0`,
+`modules_not_spawned 0`, **6559 passed, 0 failed**, **8 counted skip**,
+**14 informational skip**; discovery `tracked=82 / filesystem=82 / run=82`,
+`missing=[] untracked=[] rejected=[]`; PostgreSQL `connected=true`,
+`migrations_ok=true`, `migrations_missing=[]`,
+`server_addr_loopback=true`, **15/15 `*_postgres` modülü GERÇEKTEN koştu**
+(hepsi `outcome=PASS`, hepsi `passed>0`, zero-check yok); guard
+`armed_count 216 == expected_armed 216`, `inheritance_ok true`, positive
+controls **10/10**, `net_blocked_count 0`, `env_open_blocked_count 0`,
+`malformed_lines 0`, `suspicious_popens []`; integrity
+`protected_manifest_ok true` (**379 giriş**), `protected_path_diff []`,
+secret scan **164 dosya, hits []**, `process/temp/db/bytecode residue []`,
+`failures []`; `refusals []`, **`warnings []`**, `tmp_dir_removed true`,
+`git.clean true`, `git.head 7428d006…`, stderr **0 bayt**.
+
+Özel modüller ve P10 zinciri:
+
+- `test_deadline_stopping_events_isolated`: **69 passed, 0 failed** (YENİ modül)
+- `test_fact_verification_mutation_integration_postgres`: **91 passed, 0 failed**
+- **P10k, P10l, P10m, P10n, P10o: beşi de PASS**
+- gerçek sonuç: `calculation_state = calculated`,
+  `calculated_deadline = 2026-03-12`,
+  `anchor_verification_state = verified`
+
+`rag-dependency` (yalnız `production-parity` tamamen PASS olduktan SONRA,
+aynı temiz worktree'de): `exit 0`, **RAG_GATE_PASS**, **3/3 modül PASS**,
+**216 passed, 0 failed**, `counted_skips 0`, informational **ham 1** / K.1
+win32 muafiyeti **1** / **etkin 0**, `marker_present true`, guard **7/7** +
+positive controls **10/10**, `net 0`, `env 0`, integrity temiz,
+`git.head 7428d006…`, `git.clean true`. **K.1 uyarı satırı** (`"rag gate:
+K.1 amendment exempted 1 platform-gated informational skip(s) by name on
+win32 (test_rag_bundle_builder_isolated=1)"`) sözleşme gereği **bildirilen
+platform muafiyetidir — bir gate başarısızlığı DEĞİLDİR** (Adım 3
+checkpoint'inde de "muafiyet bir uyarı satırıyla duyuruldu" olarak
+kayıtlıdır).
+
+Değişmezlik: ana repo `data/**` **117 dosya, kapılar öncesi/sonrası
+SHA-256 manifesti BİREBİR AYNI**; `data/cases` yalnız `case_0001` ve
+`git status --porcelain --ignored -uall -- data/cases` **boş** (Adım 2
+R11); canonical/pending/generation-audit ve sentetik temp residue **0**;
+disposable PostgreSQL durduruldu, portlar boş, cluster dizinleri ve
+detached worktree'ler kaldırıldı + `git worktree prune`.
+
+**G. Sabit sayımlar**
+
+| Sayaç | Öncesi | Sonrası |
+|---|---|---|
+| tracked `ui/tests/test_*.py` | 81 | **82** |
+| `*_postgres` modülü | 15 | **15 (değişmedi)** |
+| production Python | 159 | **159 (değişmedi)** |
+| `db/migrations/*.sql` | 5 | **5 (değişmedi)** |
+| merged reconciliation routing key | 52 | **52 (değişmedi)** |
+| logical action family | 40 | **40 (değişmedi)** |
+| CLI subcommand | 6 | **6 (değişmedi)** |
+| protected manifest girdisi | 378 | **379** |
+
+İki yeni CLI seçeneği — `--stopping-event-status` ve
+`--stopping-event-attestation-ref` — **yeni subcommand DEĞİLDİR**; mevcut
+`generation` subcommand'ının `--row-key deadline` + `--apply` dalına ait
+apply-only bayraklardır (preview'da reddedilirler). CLI subcommand sayısı
+bu yüzden **6'da kalır**.
+
+**H. Kapsam dışı / AÇIK kalan işler — Slice 1 bunları MODELLEMEDİ**
+
+- uzlaşma süresi ve etkileri
+- İYUK m.11 başvurusunun kalan süre / zımni ret hesabı
+- VUK m.35/376 kaynaklı başlangıç veya süre değişiklikleri
+- usulsüz tebligat / öğrenme tarihi etkileri
+- pişmanlık ihlali
+- değerleme komisyonu veya eksik matrah temeli
+- tarihsel çalışmaya-ara-verme dönemleri / SORU 5.5
+- diğer event-specific hukuki aritmetik
+- canonical `deadline.json` veya `case_view` görünürlüğü
+
+Bu nedenle: **Adım 7 ACTIVE / NEXT KALIR**; Slice 1'in görevi YALNIZ
+fail-closed durdurma ve audit izidir; **Adım 7 DONE/LOCKED DEĞİLDİR**;
+Adım 8-13 KAPANMAMIŞTIR; corpus ve Row 19D KAPANMAMIŞTIR; **pilot
+production-ready DEĞİLDİR**. Avukata yeni bir form veya yeniden onay
+GEREKMEMİŞTİR; DRAFT/LAWYER-CONFIRM formları canonical kanıt DEĞİLDİR ve
+yeniden gündeme GETİRİLMEMİŞTİR.
+
+**I. §9 LOCKED-file gerekçesi** — `src/deadline_calculator.py` ve
+`src/deadline_engine.py` (LOCKED Row 8; Adım 5, Adım 7-mali-tatil ve
+Holiday Calendar Phase A'da da dar biçimde açılmıştı): kullanıcı talebi +
+fail-closed güvenlik (durdurucu bir işlemin varlığı bilinmeden kesin tarih
+üretilmemesi). Değişiklikler additive'dir; `calculation_state` sözlüğü,
+adli tatil/mali tatil sırası, takvim-kapsam kapısı ve saf
+`calculate_rule_deadline` aritmetiği DEĞİŞMEDİ.
+`ui/services/generation_mutation_facade.py` ve `ui/cli_mutate.py` Row
+19C-3c-i/3b lineage'ındadır ve her slice'ta additive olarak
+açılagelmiştir (19C-3b'den beri kabul edilen açılış sınıfı). Beş test
+dosyası yalnız additive kanıt/mekanik uyum aldı; hiçbir mevcut assertion
+gevşetilmedi veya kaldırılmadı.
+
+**J. Final verdict**
+
+`POST-COMMIT GATES PASS — READY FOR SLICE 1 ROADMAP CHECKPOINT`
+
+**DONE / LOCKED** — YALNIZ "Adım 7 / Slice 1 — Stopping-Event Attestation
+Gate" alt kapsamı için. **Adım 7'nin kendisi ACTIVE / NEXT'tir.**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren bir roadmap-lock işlemidir; hiçbir
+kaynak/migration/test/production/canonical/pending/audit dosyasına
+dokunmaz; `3f80945` ve `7428d006` commit'leri amend EDİLMEZ;
+stash/reset/cleanup/push YAPILMAZ.
 
 ## 6. Cross-Cutting Backlog
 
