@@ -1083,6 +1083,40 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   YALNIZ fail-closed durdurma + audit izini kapsar; Adım 7'nin
   TAMAMLANDIĞINI, Adım 8-13'ün kapandığını, corpus veya Row 19D'nin
   kapandığını veya pilotun production-ready olduğunu **İDDİA ETMEZ**.
+- **Pilot Readiness Adım 7 / Slice 2 — Stopping-Event Canonical and UI
+  Visibility — DONE / LOCKED.** **Adım 7'nin KENDİSİ ACTIVE / NEXT olarak
+  KALIR** — bu pointer YALNIZ Slice 2'yi kilitler ve Slice 1'in DONE /
+  LOCKED durumunu DEĞİŞTİRMEZ. Slice 1'in yalnız generation-audit düzeyinde
+  bıraktığı stopping-event beyanı, Slice 2 ile (i) yeni üretilen canonical
+  deadline kayıtlarına, (ii) `case_view` projeksiyonuna ve (iii) avukat
+  arayüzüne deterministik, doğrulanmış ve fail-closed biçimde taşınmıştır;
+  ayrıca legacy/bozuk pending'in promosyonu writer ve journal satırından
+  ÖNCE fail-closed reddedilir. Exact kapsam: kod commit'i
+  `8e2ec896c6ed0ece0a61d61654b992cc80ba822e` ("Expose stopping-event
+  attestations in deadline views", **1 YENİ + 20 DEĞİŞTİRİLMİŞ = 21 dosya**)
+  + tally remediasyon commit'i `728c880803f6703ae8831c539c22ae8057c3c6b8`
+  ("Fix template test pass tally", **0 YENİ + 1 DEĞİŞTİRİLMİŞ = 1 dosya**,
+  yalnız `ui/tests/test_templates_isolated.py`; ilk commit amend
+  EDİLMEDİ); sıfır migration, sıfır `data/cases/**` değişikliği, sıfır
+  canonical/pending/audit üretimi, sıfır web route, sıfır yeni CLI
+  subcommand. Resmî kapılar exact commit `728c880`'in baytlarına karşı,
+  TEMİZ bir exact-commit LF worktree'sinde ve taze/disposable bir
+  PostgreSQL 16 örneğinde çalıştırıldı: `production-parity` **exit 0,
+  SWEEP FULL, 83/83 modül PASS, 6774 passed, 0 failed** ve
+  `rag-dependency` **exit 0, RAG_GATE_PASS, 3/3, 216 passed, 0 failed**
+  (bkz. Adım 7 / Slice 2 checkpoint özeti, §5 sonrası, "## 6.
+  Cross-Cutting Backlog"dan hemen önce). **Sıradaki iş** Adım 7'nin
+  event-specific hukuki modellemesi ve bunun süre hesabına GERÇEK
+  etkileridir: uzlaşma, İYUK m.11 başvurusunun kalan süre/zımni ret
+  hesabı, VUK m.35, VUK m.376, usulsüz tebligat/öğrenme tarihi etkileri,
+  pişmanlık ihlali, değerleme komisyonu veya eksik matrah temeli ve
+  tarihsel çalışmaya-ara-verme dönemleri (SORU 5.5) — bunların süre
+  başlangıcı, durması ve yeniden başlaması üzerindeki hukuki aritmetiği
+  **HİÇBİRİ bu Slice ile modellenmemiştir**. **Dar, exact iddia**
+  (abartılmaz): bu LOCK YALNIZ görünürlüğü ve mutasyon güvenliğini
+  kapsar; Adım 7'nin TAMAMLANDIĞINI, Adım 8-13'ün kapandığını, corpus
+  veya Row 19D'nin kapandığını veya pilotun production-ready olduğunu
+  **İDDİA ETMEZ**.
 
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
@@ -10557,6 +10591,232 @@ Gate" alt kapsamı için. **Adım 7'nin kendisi ACTIVE / NEXT'tir.**
 gibi yalnız `CLAUDE.md`'yi değiştiren bir roadmap-lock işlemidir; hiçbir
 kaynak/migration/test/production/canonical/pending/audit dosyasına
 dokunmaz; `3f80945` ve `7428d006` commit'leri amend EDİLMEZ;
+stash/reset/cleanup/push YAPILMAZ.
+
+### Adım 7 / Slice 2 — Stopping-Event Canonical and UI Visibility (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç** — Slice 1'in YALNIZ generation-audit düzeyinde bıraktığı
+stopping-event beyanının (`stopping_event_status` /
+`stopping_event_attestation_ref`) üç katmanda deterministik, doğrulanmış ve
+fail-closed biçimde görünür hale getirilmesi: (i) yeni üretilen canonical
+deadline kayıtları, (ii) `case_view` projeksiyonu, (iii) avukat arayüzü.
+**Bu Slice event-specific hukuki süre hesabını MODELLEMEZ** ve avukata yeni
+bir soru/form GETİRMEZ.
+
+**B. Exact commit zinciri**
+
+| | Kod commit'i | Tally remediasyonu |
+|---|---|---|
+| SHA | `8e2ec896c6ed0ece0a61d61654b992cc80ba822e` | `728c880803f6703ae8831c539c22ae8057c3c6b8` |
+| subject | `Expose stopping-event attestations in deadline views` | `Fix template test pass tally` |
+| parent | `d757f45ec3d6a3097aaae7fc2aa661ff19ee9bac` | `8e2ec896c6ed0ece0a61d61654b992cc80ba822e` |
+| kapsam | **1 A + 20 M = 21 dosya** | **yalnız `ui/tests/test_templates_isolated.py`** |
+| body / trailer | yok / yok | yok / yok |
+
+Her iki commit'te de `CLAUDE.md` ve `data/cases/**` **YOKTUR**. İlk commit
+**amend EDİLMEDİ**; remediasyon AYRI bir commit olarak kaydedildi.
+
+**C. Canonical sözleşmesi** — Yeni üretilen HER deadline entry iki anahtarı
+**fiziksel olarak** taşır: `stopping_event_status` ve
+`stopping_event_attestation_ref`. Kurallar:
+
+- `status` enum: **`none` / `present` / `unknown`**
+- geçersiz veya doğrulanamayan `ref` canonical'da **`null`** yazılır
+- **legacy canonical OKUNABİLİR KALIR** (iki alan da optional; şema
+  `schema_version` const 1 DEĞİŞMEDİ)
+- legacy canonical'da eksik alanlar **`unknown` / `null`** olarak yorumlanır
+- eksik alanlar **HİÇBİR ZAMAN sessizce `none` SAYILMAZ**
+- stopping-event kapısını geçmek sonucun mutlaka `calculated` olacağını
+  **GARANTİ ETMEZ** — yarım gün politikası
+  (`needs_review_if_deadline_day`) ve diğer downstream kurallar (hafta
+  sonu/resmî tatil/adli tatil/mali tatil/takvim kapsamı) yine
+  `needs_review` üretebilir
+
+**D. Promosyon sözleşmesi (fail-closed, writer ve journal'dan ÖNCE)** —
+Legacy veya bozuk bir pending, aşağıdaki SEKİZ koşuldan HERHANGİ biri
+gerçekleştiğinde reddedilir:
+
+1. root `dict` değil
+2. `deadlines` yok veya `list` değil
+3. schema/semantic validator başarısız
+4. `stopping_event_status` anahtarı **fiziksel olarak** yok
+5. `stopping_event_attestation_ref` anahtarı **fiziksel olarak** yok
+6. `stopping_event_status` değeri enum dışı
+7. `stopping_event_attestation_ref` tipi/biçimi geçersiz
+8. diğer deadline semantic kuralı başarısız
+
+Kapı, LOCKED Layer A facade'inin `precondition_callback`'inde (adım 5,
+`_insert_prepared`'dan ÖNCE) çalışır. **On vaka × sekiz güvence = 80/80
+PASS**, gerçek/disposable PostgreSQL'e karşı:
+
+- `prepared` journal satırı **0**
+- writer invocation **0**
+- canonical yazımı **0**
+- history/backup **0**
+- generation/approval audit **0**
+- pending **bayt-değişmez**
+- `reconciliation_required` / resource gate **YOK**
+- red sonrası **sonraki geçerli mutasyon BLOKE DEĞİL**
+
+Ayrıca kaydedilir: **geçerli** bir belge sonrası **enjekte edilen gerçek
+writer failure**, Row 19C-2a'nın mevcut
+`writer failure → reconciliation_required` sözleşmesini **AYNEN KORUR** —
+bu senaryo silinmedi veya zayıflatılmadı.
+
+**E. Digest / revision / attempt — üç namespace KARIŞTIRILMAZ**
+
+| Rol | Literal | Durum |
+|---|---|---|
+| ham `input_digest` (saf dosya girdisi) | `row19c3ci.deadline.v3` | **DEĞİŞMEDİ** |
+| `generation_parameters_digest` (fingerprint) | `row19c3ci.deadline_params.v4` | **DEĞİŞMEDİ** |
+| composite `pre_revision` (identity) | `row19c3ci.deadline_revision.v1` | **YENİ** |
+
+```
+pre_revision = sha256(canonical_json({revision_version, input_digest, attempt}))
+```
+
+Semantik:
+
+- `attempt` varsayılan **1**, apply-only, `>= 1`, **ASLA otomatik
+  ARTIRILMAZ**
+- aynı `attempt` + aynı parametreler → **safe replay** (writer ikinci kez
+  çağrılmaz)
+- aynı `attempt` + farklı parametreler → **deterministic conflict**
+  (`IdempotencyConflictError`, sıfır mutasyon)
+- `--attempt N+1` → **açık yeni revision**
+- `N+1` **yan etkisiz bir kimlik rotasyonu DEĞİLDİR**: aktif pending
+  KASITLI olarak yeniden üretilir, önceki pending `history/` altına
+  taşınabilir
+- generation audit'teki `input_digest` **ham dosya digest'i** olarak kalır
+- `attempt` audit'e **ayrı bir alan** olarak kaydedilir
+
+**F. Case-view ve UI**
+
+- `case_view` **YALNIZ canonical deadline'dan** türetilir — generation
+  audit'ten **ASLA**
+- `status` / `ref` / `notes` projekte edilir
+- `notes` başlığı: **`Hesaplama notu`**
+- `ref` `null` ise o satır **HİÇ render edilmez**
+- `status` için üç Türkçe etiket **deterministiktir**
+- **Markdown veya otomatik hyperlink YOK**; HTML autoescape korunur
+- dört XSS payload'u ham biçimde **SIZMAZ**
+- bidi / zero-width taşıyan `ref` **reddedilir**
+- **duplicate deadline paneli YOK** (generic dump'tan hariç tutuldu)
+- **cross-case veri sızıntısı YOK**
+- legacy canonical görünümü **`unknown` / `null`** olarak fail-closed kalır
+
+**G. İlk gate STOP ve remediasyon (tarihsel doğrulukla)** — `8e2ec896`
+üzerindeki İLK resmî `production-parity` koşumu **başarısız** oldu:
+
+- 83 attempted, **82 PASS**, **1 `TALLY_MISMATCH`**
+- **gerçek test failure = 0**
+- `test_templates_isolated`: raw PASS satırı **18**, summary **17**
+- STOP kuralı gereği **RAG kapısı ÇALIŞTIRILMADI**
+- **roadmap GÜNCELLENMEDİ**
+
+Kök neden: Slice 2'nin eklediği yeni kontrol çıplak `assert` + `print("PASS …")`
+kullanmış, modülün kendi `check()` sayacını **artırmamıştı**.
+
+Remediasyon: AYRI commit `728c880`; **üretim davranışı DEĞİŞTİRİLMEDİ**,
+**assertion GEVŞETİLMEDİ veya SİLİNMEDİ** (doğrulanan koşul hâlâ
+`case_scoped_review("case_view", …)`'in `ValueError` fırlatmasıdır; fırlatmazsa
+kontrol FAIL olur), `TOTAL` satırı **elle 18'e SABİTLENMEDİ** (hâlâ
+`f"TOTAL: {passed} passed, {failed} failed"`), raw ve summary **doğal olarak
+18/18** eşitlendi; `8e2ec896` **amend EDİLMEDİ**.
+
+**H. Başarılı resmî kapılar (exact HEAD `728c880`)**
+
+`production-parity` — temiz detached exact-commit LF worktree, taze/disposable
+PostgreSQL 16 (yalnız loopback, migration **0001→0005**), değiştirilmemiş
+runner, modül seçimi/filtresi yok, tek kesintisiz koşu:
+
+- `runner_exit_code` **0**, `state` **completed**, **SWEEP FULL**
+- discovery `tracked = filesystem = run = **83**`, `missing [] untracked []
+  rejected []`
+- **83/83 PASS** (`modules_non_pass 0`, `modules_not_spawned 0`)
+- **6774 passed, 0 failed**
+- **8 counted skip** / **14 informational skip**
+- `test_templates_isolated` **18/18**, `TALLY_MISMATCH` **YOK**
+- `test_deadline_stopping_event_visibility_isolated` **35/35**
+- **15/15 `*_postgres` modülü**, her biri `passed > 0` (zero-check yok)
+- guard **armed 217 = expected 217**, `inheritance_ok true`,
+  `net_blocked 0`, `env_open_blocked 0`, positive controls **10/10**
+- `protected_manifest_ok true`, **entries 380**, `protected_path_diff []`
+- secret scan **166 dosya**, `hits []`
+- process/temp/db/bytecode residue **hepsi `[]`**, `failures []`
+- `refusals []`, `warnings []`, `tmp_dir_removed true`, `git.clean true`
+
+`rag-dependency`:
+
+- **`RAG_GATE_PASS`**, exit **0**
+- **3/3 PASS**, **216 passed, 0 failed**
+- informational **ham 1** / K.1 muafiyeti **1** / **etkin 0**
+- `marker_present true`
+- guard **armed 7 = expected 7**, positive controls **10/10**
+- integrity temiz (`manifest_ok true`, `diff []`, `hits []`)
+
+**I. Veri bütünlüğü ve dürüst disclosure**
+
+- Temiz detached worktree'de `data/**` **110/110 bayt-değişmez** (her iki
+  kapıdan önce ve sonra; added/removed/changed hepsi boş)
+- `data/cases` **71 tracked dosya**; `git status --ignored -- data/cases`
+  **boş**
+- Bu turda **hiçbir canonical / pending / audit / history artefaktı
+  ÜRETİLMEDİ**
+- Ana repo `git status` **temiz**
+- Ana repo diskindeki **117** sayısı = **110 tracked + 7 ignored `.bak`**
+- **Ana repo için bu turda koşu-öncesi/sonrası disk-bayt manifesti
+  ALINMADIĞI için "ana repo `data/**` bayt-değişmez" iddiası YAPILMAZ** —
+  kullanılan kanıt git temizliğidir
+- Ana repo çalışma kopyalarındaki CRLF ile blob/worktree LF farkı, daha
+  önce kayıtlı (Holiday Calendar Phase B §H) **residual EOL gözlemidir**;
+  içerik farkı DEĞİLDİR
+- `src/deadline_validator.py --self-test`, **mevcut fixture-mutation
+  kusuru** (üretim `data/` altındaki yedi `deadline_validator_v1_*.json`
+  dosyasını taze `generated_at` ile yeniden yazması, Prensip 18 ihlali)
+  nedeniyle **ÇALIŞTIRILMADI**; bu kusur **bu Slice'ta DÜZELTİLMEDİ** ve
+  açık backlog olarak kalır
+
+**J. Sabit sayımlar (git ve dosya sisteminden yeniden türetildi)**
+
+| Sayaç | Öncesi | Sonrası |
+|---|---|---|
+| tracked `ui/tests/test_*.py` | 82 | **83** |
+| `*_postgres.py` | 15 | **15 (değişmedi)** |
+| production Python (tracked `*.py` − `ui/tests/**`) | 159 | **159 (değişmedi)** |
+| `db/migrations/*.sql` | 5 | **5 (değişmedi)** |
+| `data/*.schema.json` | 20 | **20 (değişmedi)** |
+| protected manifest girdisi | 379 | **380** |
+| merged reconciliation routing key | 52 | **52 (değişmedi)** |
+| logical action family | 40 | **40 (değişmedi)** |
+| CLI subcommand | 6 | **6 (değişmedi)** |
+
+Son üç sayaç bu turda **mekanik olarak yeniden doğrulandı** (üretim
+`_default_registry_factory()` ve `ui/cli_mutate.py`'nin gerçek
+`add_parser(...)` çağrıları sayılarak), tahmin edilmedi. `--attempt`, mevcut
+`generation` subcommand'ına eklenen bir **bayraktır** — yeni bir subcommand
+DEĞİLDİR.
+
+**K. Açık kapsam (abartılmaz)**
+
+- Slice 2 **YALNIZ görünürlüğü ve mutasyon güvenliğini** tamamlar
+- **event-specific hukuki modelleme YAPILMADI**
+- **durdurucu olayların süre aritmetiği UYGULANMADI**
+- **Adım 7 ACTIVE / NEXT olarak KALIR**
+- Adım 8-13, corpus acquisition/population ve diğer roadmap işleri
+  **AÇIKTIR**
+- **pilot production-ready DEĞİLDİR**
+- **yeni avukat formu GEREKMEDİ ve ÜRETİLMEDİ**
+
+`POST-COMMIT GATES PASS — READY FOR SLICE 2 ROADMAP CHECKPOINT`
+
+**DONE / LOCKED** — YALNIZ "Adım 7 / Slice 2 — Stopping-Event Canonical and
+UI Visibility" alt kapsamı için. **Adım 7'nin kendisi ACTIVE / NEXT'tir.**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren bir roadmap-lock işlemidir; hiçbir
+kaynak/migration/test/production/canonical/pending/audit dosyasına
+dokunmaz; `8e2ec896` ve `728c880` commit'leri amend EDİLMEZ;
 stash/reset/cleanup/push YAPILMAZ.
 
 ## 6. Cross-Cutting Backlog
