@@ -423,6 +423,115 @@ check(
     code == cli_mutate.EXIT_USAGE_ERROR and "--judicial-recess-applicable" in err,
 )
 
+# ============================================================
+# PILOT READINESS ADIM 7 / SLICE 1 - STOPPING-EVENT CLI CONTRACT
+#
+# Iki yeni bayrak YALNIZ `--row-key deadline` + `--apply` icindir. Her
+# red HERHANGI bir dosya/baglanti/authz/mutation I/O sundan ONCE olur:
+# `run_cli_usage_only` hem authz hem mutation connection factory sini
+# PATLAYAN bir fonksiyonla besler, yani sifir-I/O mekanik olarak
+# kanitlanir.
+# ============================================================
+
+_STOPEV_DEADLINE_APPLY = [
+    "generation", "--case", "x", "--row-key", "deadline",
+    "--anchor", "timeline_event_001", "--actor-user-id", "1",
+    "--apply", "--expected-input-digest", "h",
+]
+
+code, _, err = run_cli_usage_only(
+    _STOPEV_DEADLINE_APPLY + ["--stopping-event-status", "bogus"]
+)
+check(
+    "SLICE 1: taninmayan --stopping-event-status -> argparse exit 2, zero "
+    "connections (I/O oncesi)",
+    code == cli_mutate.EXIT_USAGE_ERROR
+    and "--stopping-event-status" in err
+    and "invalid choice" in err,
+    err.strip()[:160],
+)
+
+for _value in ("none", "present", "unknown"):
+    # KABUL kaniti: usage-shape GECERSE CLI authz baglantisini acmaya
+    # calisir ve patlayan factory AssertionError firlatir. Yani
+    # AssertionError = "usage-shape bu bayragi KABUL etti"; usage
+    # hatasi olsaydi exit 2 ile SIFIR baglanti acilirdi.
+    try:
+        run_cli_usage_only(
+            _STOPEV_DEADLINE_APPLY + ["--stopping-event-status", _value]
+        )
+    except AssertionError:
+        _accepted = True
+        _detail = "authz factory cagrildi -> usage-shape gecti"
+    else:
+        _accepted = False
+        _detail = "usage-shape reddetti (beklenmiyordu)"
+    check(
+        "SLICE 1: --stopping-event-status=%s deadline-apply icin usage-shape "
+        "seviyesinde KABUL edilir" % _value,
+        _accepted,
+        _detail,
+    )
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline",
+    "--anchor", "timeline_event_001", "--actor-user-id", "1",
+    "--stopping-event-status", "none",
+])
+check(
+    "SLICE 1: --stopping-event-status PREVIEW da (apply yok) reddedilir -> "
+    "exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "apply-only" in err,
+    err.strip()[:160],
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline",
+    "--anchor", "timeline_event_001", "--actor-user-id", "1",
+    "--stopping-event-attestation-ref", "AV-1",
+])
+check(
+    "SLICE 1: --stopping-event-attestation-ref PREVIEW da reddedilir -> "
+    "exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "apply-only" in err,
+    err.strip()[:160],
+)
+
+_STOPEV_OTHER_ROWS = [
+    ("timeline", []),
+    ("issue_spotting", []),
+    ("evidence", []),
+    ("argument", []),
+    ("risk_strategy", []),
+    ("drafting", []),
+    ("legal_research", []),
+    ("case_law", []),
+    ("qa", []),
+    ("case_view", []),
+    ("fact_extraction", ["--document", "doc_001"]),
+]
+for _row, _extra in _STOPEV_OTHER_ROWS:
+    code, _, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _row, "--actor-user-id", "1",
+    ] + _extra + ["--stopping-event-status", "none"])
+    check(
+        "SLICE 1: --stopping-event-status --row-key %s icin REDDEDILIR -> "
+        "exit 2, zero connections" % _row,
+        code == cli_mutate.EXIT_USAGE_ERROR and "--stopping-event-status" in err,
+        err.strip()[:160],
+    )
+    code, _, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _row, "--actor-user-id", "1",
+    ] + _extra + ["--stopping-event-attestation-ref", "AV-1"])
+    check(
+        "SLICE 1: --stopping-event-attestation-ref --row-key %s icin "
+        "REDDEDILIR -> exit 2, zero connections" % _row,
+        code == cli_mutate.EXIT_USAGE_ERROR
+        and "--stopping-event-attestation-ref" in err,
+        err.strip()[:160],
+    )
+
+
 code, _, err = run_cli_usage_only(["generation", "--case", "x", "--row-key", "deadline", "--actor-user-id", "1"])
 check(
     "generation: --row-key deadline WITHOUT --anchor -> exit 2, zero connections",

@@ -339,6 +339,23 @@ def _build_arg_parser():
         choices=["yes", "no", "unknown"], default="unknown",
         help="deadline-apply-only; REJECTED (non-default) for every other row-key.",
     )
+    # PILOT READINESS ADIM 7 / SLICE 1: stopping-event beyani. `choices`
+    # sayesinde TANINMAYAN bir status argparse tarafindan EXIT 2 ile,
+    # HERHANGI bir dosya/baglanti/authz/mutation I/O sundan ONCE
+    # reddedilir. Default `None` dir (= `unknown` = fail-closed);
+    # default ASLA "none" DEGILDIR.
+    generation_parser.add_argument(
+        "--stopping-event-status", dest="stopping_event_status",
+        choices=["none", "present", "unknown"], default=None,
+        help="deadline-apply-only; REJECTED for every other row-key and for preview. "
+        "Omitted => unknown => needs_review (fail-closed).",
+    )
+    generation_parser.add_argument(
+        "--stopping-event-attestation-ref", dest="stopping_event_attestation_ref",
+        default=None,
+        help="deadline-apply-only; the lawyer written attestation reference. REQUIRED "
+        "(1-200 printable chars, no CR/LF) when --stopping-event-status=none.",
+    )
     generation_parser.add_argument(
         "--document", dest="document", default=None,
         help="ROW 19C-3c-iii, fact_extraction-only: the document_id whose pending extraction is "
@@ -754,6 +771,17 @@ def _validate_generation_args(args, *, stderr) -> int | None:
                 f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
             )
             return EXIT_USAGE_ERROR
+        if args.stopping_event_status is not None:
+            stderr.write(
+                f"error: --stopping-event-status is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.stopping_event_attestation_ref is not None:
+            stderr.write(
+                f"error: --stopping-event-attestation-ref is not accepted for --row-key "
+                f"{args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
         if args.mask_term:
             stderr.write(f"error: --mask-term is not accepted for --row-key {args.row_key}\n")
             return EXIT_USAGE_ERROR
@@ -793,6 +821,14 @@ def _validate_generation_args(args, *, stderr) -> int | None:
         if args.judicial_recess_applicable != "unknown":
             stderr.write("error: --judicial-recess-applicable is not accepted for --row-key timeline\n")
             return EXIT_USAGE_ERROR
+        if args.stopping_event_status is not None:
+            stderr.write("error: --stopping-event-status is not accepted for --row-key timeline\n")
+            return EXIT_USAGE_ERROR
+        if args.stopping_event_attestation_ref is not None:
+            stderr.write(
+                "error: --stopping-event-attestation-ref is not accepted for --row-key timeline\n"
+            )
+            return EXIT_USAGE_ERROR
         if args.mask_term:
             stderr.write("error: --mask-term is not accepted for --row-key timeline\n")
             return EXIT_USAGE_ERROR
@@ -806,6 +842,17 @@ def _validate_generation_args(args, *, stderr) -> int | None:
         if args.judicial_recess_applicable != "unknown":
             stderr.write(
                 f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.stopping_event_status is not None:
+            stderr.write(
+                f"error: --stopping-event-status is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.stopping_event_attestation_ref is not None:
+            stderr.write(
+                f"error: --stopping-event-attestation-ref is not accepted for --row-key "
+                f"{args.row_key}\n"
             )
             return EXIT_USAGE_ERROR
         if args.document is None:
@@ -839,6 +886,17 @@ def _validate_generation_args(args, *, stderr) -> int | None:
         if args.judicial_recess_applicable != "unknown":
             stderr.write(
                 f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.stopping_event_status is not None:
+            stderr.write(
+                f"error: --stopping-event-status is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.stopping_event_attestation_ref is not None:
+            stderr.write(
+                f"error: --stopping-event-attestation-ref is not accepted for --row-key "
+                f"{args.row_key}\n"
             )
             return EXIT_USAGE_ERROR
         if args.mask_term:
@@ -883,6 +941,17 @@ def _validate_generation_args(args, *, stderr) -> int | None:
                 f"error: --judicial-recess-applicable is not accepted for --row-key {args.row_key}\n"
             )
             return EXIT_USAGE_ERROR
+        if args.stopping_event_status is not None:
+            stderr.write(
+                f"error: --stopping-event-status is not accepted for --row-key {args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
+        if args.stopping_event_attestation_ref is not None:
+            stderr.write(
+                f"error: --stopping-event-attestation-ref is not accepted for --row-key "
+                f"{args.row_key}\n"
+            )
+            return EXIT_USAGE_ERROR
         if args.mask_term:
             stderr.write(f"error: --mask-term is not accepted for --row-key {args.row_key}\n")
             return EXIT_USAGE_ERROR
@@ -901,6 +970,18 @@ def _validate_generation_args(args, *, stderr) -> int | None:
             return EXIT_USAGE_ERROR
         if args.with_agent or args.allow_network:
             stderr.write("error: --with-agent/--allow-network are not accepted for --row-key deadline\n")
+            return EXIT_USAGE_ERROR
+        # SLICE 1: stopping-event beyani APPLY-ONLY dir. `preview` hicbir
+        # tarih uretmez (yalniz input_digest gosterir), bu yuzden beyani
+        # preview da kabul etmek yaniltici olurdu.
+        if not args.apply and (
+            args.stopping_event_status is not None
+            or args.stopping_event_attestation_ref is not None
+        ):
+            stderr.write(
+                "error: --stopping-event-status/--stopping-event-attestation-ref are "
+                "apply-only for --row-key deadline\n"
+            )
             return EXIT_USAGE_ERROR
     if args.apply and args.expected_input_digest is None:
         stderr.write("error: --apply requires --expected-input-digest\n")
@@ -1520,6 +1601,12 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
         anchor_event_id=anchor_event_id,
         judicial_recess_applicable=(
             _parse_judicial_recess(args.judicial_recess_applicable) if args.row_key == "deadline" else None
+        ),
+        stopping_event_status=(
+            args.stopping_event_status if args.row_key == "deadline" else None
+        ),
+        stopping_event_attestation_ref=(
+            args.stopping_event_attestation_ref if args.row_key == "deadline" else None
         ),
         principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
     )

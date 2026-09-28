@@ -1390,6 +1390,243 @@ def apply_mali_tatil_pause_resume(
 
 
 # ============================================================
+# PILOT READINESS ADIM 7 / SLICE 1 - STOPPING-EVENT ATTESTATION
+#
+# DRAFT-4 SORU 8.5(iii) bağlayıcı talimatı: "bu tür bir başvuru/işlem
+# yapılmış dosyalar mevcut sürümde kapsam dışı bırakılmalı. İşletmeci
+# hukuki etkiyi KENDİSİ YORUMLAMAMALI; avukat 'bu olay süreyi
+# etkilemez' diye ayrıca YAZILI karar vermedikçe işlemeyi durdurmalı."
+# ve "HAYIR -> pilot devam edebilir. EVET / BİLİNMİYOR -> pilot durur;
+# son gün üretilmez ve avukat incelemesi gerekir."
+#
+# Bu blok TAM OLARAK bunu uygular ve BAŞKA HİÇBİR ŞEY yapmaz: hiçbir
+# hukuki süre aritmetiği (uzlaşmanın 15 günü, İYUK m.11'in kalan
+# süresi, VUK m.35/376'nın yeni başlangıcı) BU SLICE'TA modellenmez -
+# kapı yalnız DURDURUR.
+#
+# DAR, EXACT İDDİA (abartılmaz): aşağıdaki case.json çapraz kontrolü
+# bir DEDEKTÖR DEĞİLDİR. Yalnız case modelinin ifade edebildiği İKİ
+# kategoriyi (`settlement`, `correction_complaint`) görür. VUK m.35
+# (VİR/VTR eklenmemesi), usulsüz tebligat, VUK m.376, pişmanlık
+# ihlali, takdir komisyonu eksikliği ve genel İYUK m.11 başvurusunun
+# `action_category`'de HİÇBİR karşılığı YOKTUR; bu altı hâl tamamen
+# avukatın `none` beyanına dayanır.
+# ============================================================
+
+STOPPING_EVENT_STATUS_NONE = "none"
+STOPPING_EVENT_STATUS_PRESENT = "present"
+STOPPING_EVENT_STATUS_UNKNOWN = "unknown"
+
+STOPPING_EVENT_STATUS_VALUES = (
+    STOPPING_EVENT_STATUS_NONE,
+    STOPPING_EVENT_STATUS_PRESENT,
+    STOPPING_EVENT_STATUS_UNKNOWN,
+)
+
+# Sabit `reason`/notes literalleri - testler bunları PİNLER.
+STOPPING_EVENT_REASON_UNKNOWN = (
+    "stopping_event_status_unknown"
+)
+
+STOPPING_EVENT_REASON_PRESENT = (
+    "stopping_event_present_requires_lawyer_review"
+)
+
+STOPPING_EVENT_REASON_MISSING_REF = (
+    "stopping_event_none_requires_attestation_ref"
+)
+
+STOPPING_EVENT_REASON_CONFLICT = (
+    "stopping_event_attestation_conflicts_with_case_record"
+)
+
+# Çapraz kontrolün gördüğü TEK iki kategori (DAR - bkz. yukarıdaki
+# disclosure). `audit`/`assessment` gibi diğer kategoriler ASLA
+# engelleme üretmez.
+STOPPING_EVENT_CONFLICT_ACTION_CATEGORIES = frozenset(
+    {
+        "settlement",
+        "correction_complaint",
+    }
+)
+
+STOPPING_EVENT_ATTESTATION_REF_MIN_LENGTH = 1
+STOPPING_EVENT_ATTESTATION_REF_MAX_LENGTH = 200
+
+
+def normalize_stopping_event_status(
+    value,
+):
+    """Fail-closed normalizasyon. `None` (parametre hiç verilmedi) VE
+    tanınmayan/boş/non-str her değer `unknown`'a düşer - default ASLA
+    `none` DEĞİLDİR. Ham değer DEĞİŞTİRİLMEZ, yalnız sınıflandırılır."""
+
+    if not isinstance(
+        value,
+        str,
+    ):
+
+        return STOPPING_EVENT_STATUS_UNKNOWN
+
+    if (
+        value
+        in STOPPING_EVENT_STATUS_VALUES
+    ):
+
+        return value
+
+    return STOPPING_EVENT_STATUS_UNKNOWN
+
+
+def is_valid_stopping_event_attestation_ref(
+    value,
+):
+    """YALNIZ ŞEKİL doğrulaması - ref'in GERÇEKLİĞİ veya avukatın
+    gerçekten böyle bir beyan verdiği DOĞRULANMAZ. Sözleşme: `str`
+    olacak, `strip()` sonrası boş olmayacak, 1-200 karakter, TAMAMEN
+    printable (CR/LF/tab/kontrol karakteri YASAK). Non-str girdi
+    exception ÜRETMEZ, yalnız `False` döner (fail-closed)."""
+
+    if not isinstance(
+        value,
+        str,
+    ):
+
+        return False
+
+    if not value.strip():
+
+        return False
+
+    if (
+        len(
+            value
+        )
+        < STOPPING_EVENT_ATTESTATION_REF_MIN_LENGTH
+        or len(
+            value
+        )
+        > STOPPING_EVENT_ATTESTATION_REF_MAX_LENGTH
+    ):
+
+        return False
+
+    # `str.isprintable()` newline/CR/tab ve tüm kontrol karakterleri
+    # için False döner; ayrıca açık bir CR/LF kontrolü savunma amaçlı
+    # tekrarlanır.
+    if not value.isprintable():
+
+        return False
+
+    if (
+        "\r" in value
+        or "\n" in value
+    ):
+
+        return False
+
+    return True
+
+
+def case_has_stopping_event_signal(
+    case_data,
+):
+    """`administrative_actions[*].action_category`'nin YALNIZ iki
+    değerini görür (bkz. modül içi disclosure). Beklenmeyen/eksik
+    yapıda sessizce False döner - bu bir DEDEKTÖR değil, `none`
+    beyanıyla ÇELİŞKİ arayan dar bir kontroldür."""
+
+    if not isinstance(
+        case_data,
+        dict,
+    ):
+
+        return False
+
+    actions = case_data.get(
+        "administrative_actions",
+    )
+
+    if not isinstance(
+        actions,
+        list,
+    ):
+
+        return False
+
+    for action in actions:
+
+        if not isinstance(
+            action,
+            dict,
+        ):
+
+            continue
+
+        category = action.get(
+            "action_category"
+        )
+
+        if (
+            isinstance(
+                category,
+                str,
+            )
+            and category
+            in STOPPING_EVENT_CONFLICT_ACTION_CATEGORIES
+        ):
+
+            return True
+
+    return False
+
+
+def evaluate_stopping_event_gate(
+    stopping_event_status,
+    stopping_event_attestation_ref,
+    case_data,
+):
+    """Saf, I/O'suz karar fonksiyonu. Dönüş: `None` -> hesaplamaya
+    DEVAM; aksi halde sabit `reason` literali (string) -> ENGELLE.
+
+    Karar sırası fail-closed'dır: önce status sınıflandırılır (None/
+    tanınmayan -> unknown), sonra `none` için ref şekli, EN SON
+    case.json çelişkisi bakılır."""
+
+    status = normalize_stopping_event_status(
+        stopping_event_status
+    )
+
+    if (
+        status
+        == STOPPING_EVENT_STATUS_PRESENT
+    ):
+
+        return STOPPING_EVENT_REASON_PRESENT
+
+    if (
+        status
+        != STOPPING_EVENT_STATUS_NONE
+    ):
+
+        return STOPPING_EVENT_REASON_UNKNOWN
+
+    if not is_valid_stopping_event_attestation_ref(
+        stopping_event_attestation_ref
+    ):
+
+        return STOPPING_EVENT_REASON_MISSING_REF
+
+    if case_has_stopping_event_signal(
+        case_data
+    ):
+
+        return STOPPING_EVENT_REASON_CONFLICT
+
+    return None
+
+
+# ============================================================
 # CORE ARITHMETIC
 # ============================================================
 
@@ -2461,6 +2698,8 @@ def build_deadline_record(
     holiday_calendar,
     judicial_recess_applicable=None,
     provisions_path=None,
+    stopping_event_status=None,
+    stopping_event_attestation_ref=None,
 ):
 
     selection_state = (
@@ -2841,6 +3080,67 @@ def build_deadline_record(
         return base_record
 
     # ========================================================
+    # PILOT READINESS ADIM 7 / SLICE 1 - STOPPING-EVENT GATE
+    #
+    # Konum SÖZLEŞMESİ: `blocked_unverified_anchor` kontrolünden
+    # SONRA (satır ~2701 - bu yüzden doğrulanmamış anchor bu kapıya
+    # HİÇ ULAŞMAZ ve davranışı DEĞİŞMEZ), `calculate_rule_deadline()`
+    # çağrısından ÖNCE. Kapı `calculate_rule_deadline()`'ın İÇİNE
+    # KONMAZ - o fonksiyon saf tarih aritmetiği olarak kalır.
+    #
+    # case.json YALNIZ gerçekten gerekliyse (status=none VE ref şekil
+    # olarak geçerli) yüklenir - `present`/`unknown`/geçersiz-ref
+    # dallarında SIFIR ek I/O olur.
+    # ========================================================
+
+    stopping_gate_case_data = None
+
+    if (
+        normalize_stopping_event_status(
+            stopping_event_status
+        )
+        == STOPPING_EVENT_STATUS_NONE
+        and is_valid_stopping_event_attestation_ref(
+            stopping_event_attestation_ref
+        )
+    ):
+
+        stopping_gate_case_data, _ = load_case(
+            case_id
+        )
+
+    stopping_block_reason = (
+        evaluate_stopping_event_gate(
+            stopping_event_status,
+            stopping_event_attestation_ref,
+            stopping_gate_case_data,
+        )
+    )
+
+    if (
+        stopping_block_reason
+        is not None
+    ):
+
+        base_record.update(
+            {
+                "calculation_state":
+                    "needs_review",
+
+                "calculated_deadline":
+                    None,
+
+                "requires_human_review":
+                    True,
+
+                "notes":
+                    stopping_block_reason,
+            }
+        )
+
+        return base_record
+
+    # ========================================================
     # PILOT READINESS ADIM 7 - MALİ TATİL CASE TAX CONTEXT
     #
     # Yalnız kural `rule_has_mali_tatil_basis()` İSE case.json
@@ -2848,6 +3148,8 @@ def build_deadline_record(
     # selection_policy.select_for_case_event()`'in ZATEN kullandığı
     # AYNI, self-contained fonksiyon); aksi halde gereksiz I/O YOK,
     # davranış bu bölümün EKLENMESİNDEN ÖNCEki ile bayt-bayt aynı.
+    # SLICE 1: stopping-event kapısı case.json'ı zaten yüklediyse
+    # yeniden okunmaz (tek okuma).
     # ========================================================
 
     case_tax_context = None
@@ -2856,9 +3158,13 @@ def build_deadline_record(
         selected_rule
     ):
 
-        case_data, _ = load_case(
-            case_id
-        )
+        case_data = stopping_gate_case_data
+
+        if case_data is None:
+
+            case_data, _ = load_case(
+                case_id
+            )
 
         case_tax_context = {
             "tax_types":
@@ -3056,6 +3362,8 @@ def build_case_deadline_analysis(
     provisions_path=None,
     holiday_calendar=None,
     holiday_calendar_path=None,
+    stopping_event_status=None,
+    stopping_event_attestation_ref=None,
 ):
     """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete`
     parametreleri TAMAMEN KALKTI. `holiday_calendar` ZATEN türetilmiş
@@ -3120,6 +3428,12 @@ def build_case_deadline_analysis(
 
             provisions_path=
                 provisions_path,
+
+            stopping_event_status=
+                stopping_event_status,
+
+            stopping_event_attestation_ref=
+                stopping_event_attestation_ref,
         )
     )
 

@@ -545,6 +545,8 @@ def _compute_deadline_input_digest(
 
 def _compute_deadline_generation_parameters_digest(
     judicial_recess_applicable,
+    stopping_event_status=None,
+    stopping_event_attestation_ref=None,
 ) -> str:
     """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete`
     parametreleri TAMAMEN KALKTI (takvim artık `input_digest`'in bir
@@ -555,8 +557,10 @@ def _compute_deadline_generation_parameters_digest(
     yükseltildi."""
     payload = json.dumps(
         {
-            "digest_version": "row19c3ci.deadline_params.v3",
+            "digest_version": "row19c3ci.deadline_params.v4",
             "judicial_recess_applicable": judicial_recess_applicable,
+            "stopping_event_status": stopping_event_status,
+            "stopping_event_attestation_ref": stopping_event_attestation_ref,
         },
         sort_keys=True, separators=(",", ":"), ensure_ascii=True,
     ).encode("utf-8")
@@ -938,6 +942,8 @@ def _check_argument_shapes(
     expected_input_digest=None,
     *,
     for_apply: bool,
+    stopping_event_status=None,
+    stopping_event_attestation_ref=None,
 ):
     """PILOT READINESS ADIM 5 (bağımsız inceleme §5.3): `holiday_dates`/
     `calendar_complete` parametreleri ve onların timeline-ret dalları
@@ -955,6 +961,14 @@ def _check_argument_shapes(
         if judicial_recess_applicable is not None:
             raise GenerationArgumentError(
                 "timeline generation'ı judicial_recess_applicable parametresi KABUL ETMEZ "
+                "(I/O öncesi red)."
+            )
+        # PILOT READINESS ADIM 7 / SLICE 1: stopping-event beyanı YALNIZ
+        # deadline ailesine aittir (I/O öncesi red).
+        if stopping_event_status is not None or stopping_event_attestation_ref is not None:
+            raise GenerationArgumentError(
+                "timeline generation'ı stopping_event_status/"
+                "stopping_event_attestation_ref parametrelerini KABUL ETMEZ "
                 "(I/O öncesi red)."
             )
     else:
@@ -1083,6 +1097,8 @@ def apply_generation(
     *,
     anchor_event_id=None,
     judicial_recess_applicable=None,
+    stopping_event_status=None,
+    stopping_event_attestation_ref=None,
     principal,
     authz_repository=None,
     conn_factory=None,
@@ -1109,6 +1125,8 @@ def apply_generation(
     _check_argument_shapes(
         row_key, anchor_event_id, judicial_recess_applicable,
         expected_input_digest, for_apply=True,
+        stopping_event_status=stopping_event_status,
+        stopping_event_attestation_ref=stopping_event_attestation_ref,
     )
     module = importlib.import_module(GENERATION_ROW_KEY_TO_MODULE_NAME[row_key])
     deadline_validator = importlib.import_module("deadline_validator") if row_key == "deadline" else None
@@ -1161,6 +1179,8 @@ def apply_generation(
             )
             generation_parameters_digest = _compute_deadline_generation_parameters_digest(
                 judicial_recess_applicable,
+                stopping_event_status,
+                stopping_event_attestation_ref,
             )
             target_ref = module.get_target_ref(anchor_event_id)
         else:
@@ -1339,6 +1359,8 @@ def apply_generation(
                             mutation_resource_key=resource_key,
                             mutation_actor_ref=str(principal.user_id),
                             pre_commit_callback=pre_commit_callback,
+                            stopping_event_status=stopping_event_status,
+                            stopping_event_attestation_ref=stopping_event_attestation_ref,
                         )
             else:
                 with contextlib.redirect_stdout(stdout_capture):

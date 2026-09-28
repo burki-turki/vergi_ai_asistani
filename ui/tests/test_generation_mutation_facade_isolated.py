@@ -1266,6 +1266,74 @@ finally:
             shutil.rmtree(outside_target, ignore_errors=True)
     shutil.rmtree(_tmp_global_resources_dir, ignore_errors=True)
 
+# ============================================================
+# PILOT READINESS ADIM 7 / SLICE 1 - generation_parameters_digest v4
+# ============================================================
+
+import inspect as _stopev_inspect  # noqa: E402
+
+_STOPEV_DIGEST = gen._compute_deadline_generation_parameters_digest
+
+check(
+    "SLICE 1: deadline generation_parameters_digest payload'i digest_version "
+    "'row19c3ci.deadline_params.v4' tasir",
+    "row19c3ci.deadline_params.v4" in _stopev_inspect.getsource(_STOPEV_DIGEST),
+    "v4 literali kaynakta bulunamadi",
+)
+check(
+    "SLICE 1: digest determinist - ayni ucu ayni degeri uretir",
+    _STOPEV_DIGEST(True, "none", "R1") == _STOPEV_DIGEST(True, "none", "R1"),
+)
+check(
+    "SLICE 1: status degisimi digest'i DEGISTIRIR",
+    _STOPEV_DIGEST(True, "none", "R1") != _STOPEV_DIGEST(True, "present", "R1"),
+)
+check(
+    "SLICE 1: attestation_ref degisimi digest'i DEGISTIRIR",
+    _STOPEV_DIGEST(True, "none", "R1") != _STOPEV_DIGEST(True, "none", "R2"),
+)
+check(
+    "SLICE 1: iki yeni alan atlandiginda (None) digest, acikca None "
+    "verilmesiyle AYNIDIR - geriye uyumlu default",
+    _STOPEV_DIGEST(True) == _STOPEV_DIGEST(True, None, None),
+)
+check(
+    "SLICE 1: judicial_recess_applicable hala digest'i etkiler (mevcut "
+    "sozlesme korunur)",
+    _STOPEV_DIGEST(True, "none", "R1") != _STOPEV_DIGEST(False, "none", "R1"),
+)
+
+_stopev_sig = _stopev_inspect.signature(gen.apply_generation)
+check(
+    "SLICE 1: apply_generation iki yeni parametreyi KEYWORD-ONLY ve default "
+    "None olarak tasir (pozisyonel cagrilar kirilmaz, default ASLA 'none')",
+    all(
+        _stopev_sig.parameters[name].kind is _stopev_inspect.Parameter.KEYWORD_ONLY
+        and _stopev_sig.parameters[name].default is None
+        for name in ("stopping_event_status", "stopping_event_attestation_ref")
+    ),
+    {n: (str(_stopev_sig.parameters[n].kind), _stopev_sig.parameters[n].default)
+     for n in ("stopping_event_status", "stopping_event_attestation_ref")
+     if n in _stopev_sig.parameters},
+)
+
+try:
+    gen._check_argument_shapes(
+        "timeline", None, None, "x" * 64, for_apply=True,
+        stopping_event_status="none",
+    )
+except gen.GenerationArgumentError:
+    check(
+        "SLICE 1: timeline ailesi stopping_event_status'u I/O ONCESI reddeder",
+        True,
+    )
+else:
+    check(
+        "SLICE 1: timeline ailesi stopping_event_status'u I/O ONCESI reddeder",
+        False, "GenerationArgumentError firlatilmadi",
+    )
+
+
 _data_tree_after_everything = snapshot_data_tree()
 check(
     "the REAL data/ tree is byte-for-byte UNCHANGED before vs after this entire test file",

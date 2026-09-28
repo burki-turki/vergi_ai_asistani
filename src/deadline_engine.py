@@ -562,6 +562,8 @@ def build_deadline_engine_output(
     *,
     provisions_path=None,
     holiday_calendar_path=None,
+    stopping_event_status=None,
+    stopping_event_attestation_ref=None,
 ):
     """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete` elle
     beyan parametreleri TAMAMEN KALKTI. `holiday_calendar_path=None`
@@ -596,6 +598,12 @@ def build_deadline_engine_output(
 
             holiday_calendar=
                 holiday_calendar,
+
+            stopping_event_status=
+                stopping_event_status,
+
+            stopping_event_attestation_ref=
+                stopping_event_attestation_ref,
         )
     )
 
@@ -661,6 +669,8 @@ def write_pending(
     pre_commit_callback=None,
     holiday_calendar_sha256=None,
     holiday_calendar_version=None,
+    stopping_event_status=None,
+    stopping_event_attestation_ref=None,
 ):
 
     mutation_binding_provided = (
@@ -833,6 +843,14 @@ def write_pending(
                 "mutation_actor_ref": mutation_actor_ref,
                 "input_digest": input_digest,
                 "generation_parameters_digest": generation_parameters_digest,
+                # PILOT READINESS ADIM 7 / SLICE 1: ham (digest'lenmemiş)
+                # avukat beyanı - `generation_parameters_digest` TEK YÖNLÜ
+                # olduğu için "hangi status ve hangi ref kullanıldı?"
+                # sorusu yalnız BU İKİ ALANDAN cevaplanabilir. Değerler
+                # VERBATIM saklanır (normalize EDİLMEZ) ve `present`/
+                # `unknown` dallarında da SESSİZCE SİLİNMEZ.
+                "stopping_event_status": stopping_event_status,
+                "stopping_event_attestation_ref": stopping_event_attestation_ref,
                 "first_write": first_write,
                 "history_backup_path": history_backup_path,
                 "history_backup_sha256": history_backup_sha256,
@@ -909,10 +927,20 @@ def run_engine(
     mutation_resource_key=None,
     mutation_actor_ref=None,
     pre_commit_callback=None,
+    stopping_event_status=None,
+    stopping_event_attestation_ref=None,
 ):
     """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete` elle
     beyan parametreleri TAMAMEN KALKTI, yerine `holiday_calendar_path`
-    (test-injection seam'i, `provisions_path` deseni) geçti."""
+    (test-injection seam'i, `provisions_path` deseni) geçti.
+
+    PILOT READINESS ADIM 7 / SLICE 1: `stopping_event_status` /
+    `stopping_event_attestation_ref` keyword-only ve DEFAULT `None`
+    (= `unknown` = fail-closed) olarak eklendi - default ASLA `none`
+    DEĞİLDİR. Mevcut çağrı noktaları (parametre geçirmeyenler) bu
+    yüzden davranışlarını korur: kapı `build_deadline_record()`'un
+    `blocked_unverified_anchor` kontrolünden SONRA olduğundan,
+    doğrulanmamış anchor'lı çağrılar kapıya hiç ulaşmaz."""
 
     print()
 
@@ -965,6 +993,12 @@ def run_engine(
 
             holiday_calendar_path=
                 holiday_calendar_path,
+
+            stopping_event_status=
+                stopping_event_status,
+
+            stopping_event_attestation_ref=
+                stopping_event_attestation_ref,
         )
     )
 
@@ -1039,6 +1073,12 @@ def run_engine(
             holiday_calendar_for_audit[
                 "calendar_version"
             ],
+
+        stopping_event_status=
+            stopping_event_status,
+
+        stopping_event_attestation_ref=
+            stopping_event_attestation_ref,
     )
 
     pending_path = write_result["pending_path"]

@@ -62,6 +62,10 @@ COVERED_2026 = {
     "covered_verified_years": {2026, 2027},
 }
 
+# PILOT READINESS ADIM 7 / SLICE 1 - avukatin yazili stopping-event
+# beyani (sentetik test referansi; gercek bir beyan DEGILDIR).
+STOPPING_EVENT_ATTESTATION_REF = "AV-BEYAN-TEST-MALI-TATIL"
+
 KDV_CONTEXT = {
     "tax_types": {"kdv"},
     "issuing_authorities": set(),
@@ -594,6 +598,14 @@ try:
         case_id=CASE_ID, anchor_event=anchor_event, selection=selection,
         ruleset_path=dc.DEFAULT_RULESET_PATH, holiday_calendar=COVERED_2026,
         judicial_recess_applicable=False,
+        # PILOT READINESS ADIM 7 / SLICE 1: build_deadline_record() artik
+        # avukatin stopping-event beyanini ZORUNLU kilar (default =
+        # unknown = fail-closed). Bu testin konusu MALI TATIL wiring'i
+        # oldugu icin beyan acikca 'none' + gecerli ref olarak verilir;
+        # kapinin kendi davranisi test_deadline_stopping_events_isolated
+        # icinde test edilir.
+        stopping_event_status="none",
+        stopping_event_attestation_ref=STOPPING_EVENT_ATTESTATION_REF,
     )
     check(
         "End-to-end (real case_0001 copy, real case.json dispute_item.tax_type='KDV'): "
@@ -626,6 +638,14 @@ try:
         case_id=CASE_ID, anchor_event=anchor_event, selection=selection,
         ruleset_path=dc.DEFAULT_RULESET_PATH, holiday_calendar=COVERED_2026,
         judicial_recess_applicable=False,
+        # PILOT READINESS ADIM 7 / SLICE 1: build_deadline_record() artik
+        # avukatin stopping-event beyanini ZORUNLU kilar (default =
+        # unknown = fail-closed). Bu testin konusu MALI TATIL wiring'i
+        # oldugu icin beyan acikca 'none' + gecerli ref olarak verilir;
+        # kapinin kendi davranisi test_deadline_stopping_events_isolated
+        # icinde test edilir.
+        stopping_event_status="none",
+        stopping_event_attestation_ref=STOPPING_EVENT_ATTESTATION_REF,
     )
     check(
         "End-to-end: flipping the real case.json dispute_item to 'Özel Tüketim Vergisi' "
@@ -710,6 +730,8 @@ def _run_unicode_scenario(tax_type=None, issuing_authority=None):
             case_id=CASE_ID, anchor_event=_unicode_anchor_event, selection=_unicode_selection,
             ruleset_path=dc.DEFAULT_RULESET_PATH, holiday_calendar=COVERED_2026,
             judicial_recess_applicable=False,
+            stopping_event_status="none",
+            stopping_event_attestation_ref=STOPPING_EVENT_ATTESTATION_REF,
         )
     finally:
         deadline_validator.CASES_DIR = original_cases_dir

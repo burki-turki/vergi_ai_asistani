@@ -478,5 +478,164 @@ check(
 )
 
 
+# ============================================================
+# PILOT READINESS ADIM 7 / SLICE 1 - STOPPING-EVENT THREADING
+#
+# run_engine() -> build_deadline_engine_output() ->
+# build_case_deadline_analysis() -> build_deadline_record() zincirinin
+# iki yeni keyword-only parametreyi TASIDIGINI ve write_pending()'in
+# ham degerleri generation audit'ine YAZDIGINI kanitlar. Kapinin kendi
+# karar tablosu test_deadline_stopping_events_isolated.py'dedir.
+# ============================================================
+
+_STOPEV_REF = "AV-BEYAN-ENGINE-001"
+
+import timeline_validator as _stopev_timeline_validator  # noqa: E402
+
+_orig_engine_cases_dir_stopev = deadline_engine.CASES_DIR
+_orig_validator_cases_dir_stopev = deadline_validator.CASES_DIR
+# timeline_validator.CASES_DIR AYRI bir modul sabitidir ve canonical
+# timeline dogrulamasi kaynak fact'leri ORADAN okur - yonlendirilmezse
+# gercek data/ agacindaki (unverified) fact'ler okunur.
+_orig_tlv_cases_dir_stopev = _stopev_timeline_validator.CASES_DIR
+_stopev_tmp = Path(tempfile.mkdtemp(prefix="stopev_engine_"))
+try:
+    _stopev_cases = _stopev_tmp / "cases"
+    _stopev_cases.mkdir(parents=True)
+    deadline_engine.CASES_DIR = _stopev_cases
+    deadline_validator.CASES_DIR = _stopev_cases
+    _stopev_timeline_validator.CASES_DIR = _stopev_cases
+
+    def _stopev_case_copy():
+        target = _stopev_cases / CASE_ID
+        if target.exists():
+            shutil.rmtree(target)
+        shutil.copytree(REAL_CASE_0001, target)
+        return target
+
+    def _stopev_run(status, ref, idk):
+        _stopev_case_copy()
+        return deadline_engine.run_engine(
+            case_id=CASE_ID,
+            anchor_event_id=ANCHOR_EVENT_ID,
+            ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
+            input_digest="d" * 64,
+            generation_parameters_digest="g" * 64,
+            mutation_idempotency_key=idk,
+            mutation_resource_key=f"case:{CASE_ID}",
+            mutation_actor_ref="7",
+            stopping_event_status=status,
+            stopping_event_attestation_ref=ref,
+        )
+
+    # --- (a) run_engine kabul ediyor + ham alanlar audit'te ---
+    _res_a = _stopev_run("none", _STOPEV_REF, "idk-stopev-a")
+    _audit_a = json.loads(Path(_res_a["audit_path"]).read_text(encoding="utf-8"))
+    check(
+        "SLICE 1: run_engine() stopping_event_status/attestation_ref keyword-only "
+        "parametrelerini KABUL eder ve audit yazilir",
+        _res_a["audit_path"] is not None and isinstance(_res_a["pending_sha256"], str),
+        _res_a.get("audit_path"),
+    )
+    check(
+        "SLICE 1: generation audit'i HAM stopping_event_status/"
+        "stopping_event_attestation_ref alanlarini BIREBIR tasir",
+        _audit_a.get("stopping_event_status") == "none"
+        and _audit_a.get("stopping_event_attestation_ref") == _STOPEV_REF,
+        {k: _audit_a.get(k) for k in
+         ("stopping_event_status", "stopping_event_attestation_ref")},
+    )
+
+    # --- (b) needs_review dali: ham alanlar KAYBOLMAZ ---
+    _res_b = _stopev_run("present", _STOPEV_REF, "idk-stopev-b")
+    _audit_b = json.loads(Path(_res_b["audit_path"]).read_text(encoding="utf-8"))
+    check(
+        "SLICE 1: needs_review uretebilen bir beyanda (present) bile ham alanlar "
+        "audit'te KAYBOLMAZ ve ref SESSIZCE SILINMEZ",
+        _audit_b.get("stopping_event_status") == "present"
+        and _audit_b.get("stopping_event_attestation_ref") == _STOPEV_REF,
+        {k: _audit_b.get(k) for k in
+         ("stopping_event_status", "stopping_event_attestation_ref")},
+    )
+
+    # --- (c) parametre hic verilmedi -> audit'te iki alan None ---
+    _stopev_case_copy()
+    _res_c = deadline_engine.run_engine(
+        case_id=CASE_ID, anchor_event_id=ANCHOR_EVENT_ID,
+        ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
+        input_digest="d" * 64, generation_parameters_digest="g" * 64,
+        mutation_idempotency_key="idk-stopev-c",
+        mutation_resource_key=f"case:{CASE_ID}", mutation_actor_ref="7",
+    )
+    _audit_c = json.loads(Path(_res_c["audit_path"]).read_text(encoding="utf-8"))
+    check(
+        "SLICE 1: parametre HIC verilmediginde audit iki alani da None olarak "
+        "tasir (geriye uyumlu, sessiz 'none' YOK)",
+        "stopping_event_status" in _audit_c
+        and _audit_c["stopping_event_status"] is None
+        and _audit_c["stopping_event_attestation_ref"] is None,
+        {k: _audit_c.get(k) for k in
+         ("stopping_event_status", "stopping_event_attestation_ref")},
+    )
+
+    # --- (d) hesaplamaya DEVAM eden dal: gercek verified anchor ---
+    # Canonical timeline'in verification_state'i KAYNAK fact'lerden daha
+    # guclu olamaz (deadline_validator kurali) - bu yuzden sentetik
+    # kopyada ONCE kaynak fact'ler, SONRA timeline olayi verified yapilir.
+    # Gercek data/ agacina DOKUNULMAZ (tempdir kopyasi).
+    _case_d = _stopev_case_copy()
+    for _facts_path in sorted(
+        (_case_d / "documents").glob("*/extractions/facts.json")
+    ):
+        _facts = json.loads(_facts_path.read_text(encoding="utf-8"))
+        for _f in _facts.get("facts", []):
+            if isinstance(_f, dict) and "verification_state" in _f:
+                _f["verification_state"] = "verified"
+        _facts_path.write_text(
+            json.dumps(_facts, ensure_ascii=False, indent=2) + chr(10),
+            encoding="utf-8")
+    _tl_path = _case_d / "timeline" / "timeline.json"
+    _tl = json.loads(_tl_path.read_text(encoding="utf-8"))
+    for _ev in _tl.get("events", []):
+        if _ev.get("event_id") == ANCHOR_EVENT_ID:
+            _ev["verification_state"] = "verified"
+    _tl_path.write_text(
+        json.dumps(_tl, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _analysis_d = deadline_engine.build_deadline_engine_output(
+        case_id=CASE_ID, anchor_event_id=ANCHOR_EVENT_ID,
+        ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
+        stopping_event_status="none",
+        stopping_event_attestation_ref=_STOPEV_REF,
+    )
+    _first_d = _analysis_d["deadlines"][0]
+    check(
+        "SLICE 1: verified anchor + status=none + gecerli ref -> engine yolu "
+        "HESAPLAMAYA DEVAM eder (kapi mesru yolu engellemez)",
+        _first_d["calculation_state"] == "calculated"
+        and _first_d["calculated_deadline"] is not None,
+        _first_d,
+    )
+
+    # --- (e) AYNI verified anchor, beyan YOK -> fail-closed ---
+    _analysis_e = deadline_engine.build_deadline_engine_output(
+        case_id=CASE_ID, anchor_event_id=ANCHOR_EVENT_ID,
+        ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
+    )
+    _first_e = _analysis_e["deadlines"][0]
+    check(
+        "SLICE 1: AYNI verified anchor, beyan YOK -> needs_review / "
+        "stopping_event_status_unknown (default fail-closed)",
+        _first_e["calculation_state"] == "needs_review"
+        and _first_e["calculated_deadline"] is None
+        and _first_e["notes"] == "stopping_event_status_unknown",
+        _first_e,
+    )
+finally:
+    deadline_engine.CASES_DIR = _orig_engine_cases_dir_stopev
+    deadline_validator.CASES_DIR = _orig_validator_cases_dir_stopev
+    _stopev_timeline_validator.CASES_DIR = _orig_tlv_cases_dir_stopev
+    shutil.rmtree(_stopev_tmp, ignore_errors=True)
+
+
 print(f"--- test_deadline_engine_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)
