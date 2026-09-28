@@ -1118,6 +1118,51 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   veya Row 19D'nin kapandığını veya pilotun production-ready olduğunu
   **İDDİA ETMEZ**.
 
+- **Pilot Readiness Adım 7 — Deadline Hardening — DONE / LOCKED FOR
+  CURRENT PILOT — EVENT-SPECIFIC LEGAL ARITHMETIC EXPLICITLY EXCLUDED,
+  NOT IMPLEMENTED.** Bu pointer Adım 7'yi **YALNIZ mevcut pilot
+  bakımından** kapatır ve Slice 1 / Slice 2 pointer'larının "**Adım
+  7'nin KENDİSİ ACTIVE / NEXT olarak KALIR**" ifadelerini SUPERSEDE
+  eder; o ifadeler kendi LOCK anlarının TARİHSEL kaydı olarak
+  DEĞİŞTİRİLMEDEN bırakılmıştır ve Slice 1 / Slice 2'nin kendi DONE /
+  LOCKED durumları DEĞİŞMEZ. Kapanış **"olaylar modellendi" ANLAMINA
+  GELMEZ**: tek dayanağı, avukatın DRAFT-4 **SORU 8.5(iii)** bağlayıcı
+  talimatına uyularak bu olayların bilinçli olarak kapsam dışı
+  bırakılması ve fail-closed davranışın tamamlanmış olmasıdır.
+
+  **Altı bağlayıcı sınır:** (1) sekiz olayın (uzlaşma, İYUK m.11
+  başvurusu, VUK m.35, VUK m.376, usulsüz tebligat/öğrenme tarihi,
+  pişmanlık ihlali, değerleme/takdir komisyonu, SORU 5.5 tarihsel
+  çalışmaya-ara-verme dönemleri) hukuki aritmetiği **MODELLENMEDİ**;
+  (2) `stopping_event_status` `present` veya `unknown` iken **KESİN
+  TARİH ÜRETİLMEZ** (`needs_review`, `calculated_deadline=null`);
+  (3) **operatör hukuki etkiyi YORUMLAYAMAZ** — buna izin veren
+  parametre/bayrak/override YOKTUR; (4) sonuç **avukat incelemesine
+  gider** (`requires_human_review=True`); (5) bu olaylar gelecekte
+  **ANCAK yeni ve açık YAZILI avukat kararıyla** yeniden açılabilir —
+  genel bir "Adım 7 kapandı" ifadesi böyle bir kararın YERİNE GEÇMEZ;
+  (6) **kapanış, bu olayların otomatik hesaplandığı ANLAMINA GELMEZ.**
+
+  **K2 — SORMA:** mevcut pilot için yeni avukat sorusu/formu
+  **HAZIRLANMAYACAKTIR**; avukat bu olayları zaten mevcut sürümün
+  dışında bırakmıştır, aynı konu yeniden GÖNDERİLMEZ. Kapsam
+  genişletilirse **ayrı bir sürüm kararı** olarak sorulur. **K3 —
+  ERTELE:** yapılandırılmış olay intake'i ŞİMDİ YAPILMAYACAKTIR; bugün
+  kaynakta gözlenen gerçek, `case.json` için koordineli bir production
+  writer BULUNMADIĞIDIR, bu nedenle intake mevcut Slice'ın küçük bir
+  uzantısı DEĞİLDİR ve gelecekte ayrı bir exact-scope ve sözleşme planı
+  gerektirir. **K4 — Sıradaki canlı iş: PILOT READINESS ADIM 8 — YEREL
+  PostgreSQL / IAM ADOPTION — ACTIVE / NEXT**; Adım 8 için hiçbir dosya
+  değişikliği bu pointer ile YETKİLENDİRİLMEZ.
+
+  **Dar, exact iddia (abartılmaz):** bu kapanış YALNIZ Adım 7'yi ve
+  yalnız mevcut pilot bakımından kapsar; Adım 9-13, corpus
+  acquisition/population ve Row 19D **KAPANMAMIŞTIR**. **Pilotun
+  production-ready olduğu İDDİA EDİLMEZ.** Kaynak envanteri, sekiz
+  olayın durumu, bugünkü fail-closed teknik yol ve SORU 5.5'e ilişkin
+  sınırlı disclosure için bkz. Adım 7 kapanış checkpoint özeti, §5
+  sonrası, "## 6. Cross-Cutting Backlog"dan hemen önce.
+
 ### Row 9 — Issue Spotting Agent (DONE / LOCKED — checkpoint özeti)
 
 Deterministik Policy/Engine (`issue_spotting_policy.py`, `issue_spotting_engine.py`) +
@@ -10817,6 +10862,177 @@ UI Visibility" alt kapsamı için. **Adım 7'nin kendisi ACTIVE / NEXT'tir.**
 gibi yalnız `CLAUDE.md`'yi değiştiren bir roadmap-lock işlemidir; hiçbir
 kaynak/migration/test/production/canonical/pending/audit dosyasına
 dokunmaz; `8e2ec896` ve `728c880` commit'leri amend EDİLMEZ;
+stash/reset/cleanup/push YAPILMAZ.
+
+### Adım 7 — Deadline Hardening Pilot-Scope Closure (DONE / LOCKED FOR CURRENT PILOT — checkpoint özeti)
+
+**A. İki ayrı işlem, iki ayrı mutasyon durumu** — Bu kapanışın
+dayandığı kaynak denetimi (Adım 7 / Slice 3 — Event-Specific Legal
+Modeling Discovery) **read-only** yürütülmüş ve repository'de **sıfır
+mutasyona** yol açmıştır: preflight ve kapanışta `git status
+--porcelain --untracked-files=all` boş, HEAD
+`4f54c7ed4d385a5e0fef314480a52fe51a99cf51` değişmedi, `data/` ağacı **117
+dosya bayt-değişmez**, bytecode/temp artığı yok. Bu checkpoint turu ise
+AYRI bir işlemdir ve **documentation-only**'dir: yalnız `CLAUDE.md`
+değişir (iki saf ekleme, 0 silme). Bu tur "salt-okunur" DEĞİLDİR —
+ayırım bilinçli olarak kayıttadır.
+
+**B. Kapanışın dayanağı — DRAFT-4 SORU 8.5(iii)** — Avukatın kendi
+bağlayıcı talimatı `src/deadline_calculator.py:1394-1401`'de birebir
+kayıtlıdır: *"bu tür bir başvuru/işlem yapılmış dosyalar mevcut
+sürümde kapsam dışı bırakılmalı. İşletmeci hukuki etkiyi KENDİSİ
+YORUMLAMAMALI; avukat 'bu olay süreyi etkilemez' diye ayrıca YAZILI
+karar vermedikçe işlemeyi durdurmalı."* ve *"HAYIR → pilot devam
+edebilir. EVET / BİLİNMİYOR → pilot durur; son gün üretilmez ve avukat
+incelemesi gerekir."* Adım 7, bu talimata uyularak yapılan **bilinçli
+kapsam dışı bırakma** ve **fail-closed davranışın tamamlanmış olması**
+nedeniyle kapanmıştır — "olaylar modellendi" anlamında DEĞİL.
+
+**C. Mevcut lawyer-approved kaynak envanteri** — DRAFT-4 Avukat
+Doğrulama Paketi (repo DIŞI, SHA-256
+`dcf4df690bf8298830a3e19b9041d148cb331ccd198f16bceb73129cf186ecd1`;
+SORU 3.1-3.8, SORU 5.1-5.4, 14 altın örnek, SORU 8.5(iii)); imzalı
+resmî tatil takvimi doğrulaması (repo İÇİ,
+`HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95`); mali tatil (5604
+m.1/3) uygulanabilirlik görüşü (repo DIŞI, ilgili checkpoint'te
+kayıtlı); `data/provisions.json` **8 provision** (`kanun_6736_m5_f3`,
+`kanun_2577_m7_f1`, `m7_f2_b`, `m8_f1`, `m8_f2`, `m8_f3`, `m61_f1`,
+`kanun_5604_m1`); `data/deadline_rules/deadline_rules.json` **1 aktif
+kural** (`iyuk_tax_court_general_lawsuit_filing`, 7 `legal_basis_refs`);
+`ui/tests/test_deadline_lawyer_golden_examples_isolated.py` **14 altın
+örnek + `lawyer_note` provenance**. LAWYER-CONFIRM-v3/v4 taslakları
+canonical kaynak SAYILMAMIŞTIR; bu turda yeni avukat formu
+ÜRETİLMEMİŞ, internet/dış API KULLANILMAMIŞTIR.
+
+**D. Sekiz olayın mevcut pilot kapsamı dışındaki durumu** — Sekiz olay
+şunlardır: uzlaşma; İYUK m.11 başvurusu; VUK m.35; VUK m.376; usulsüz
+tebligat/öğrenme tarihi; pişmanlık ihlali; değerleme/takdir komisyonu;
+SORU 5.5 tarihsel çalışmaya-ara-verme dönemleri. Bunların her biri için
+durum **aynıdır ve dar biçimde şöyledir**: mevcut pilotta **bilinçli
+olarak kapsam dışıdır**; **mevcut pilotun bloklayıcısı DEĞİLDİR**
+(SORU 8.5(iii) bu dışarda bırakmayı zaten talimatlandırmıştır);
+**hukuki aritmetik UYGULANMIYOR**; ve **gelecekte kapsam yeniden
+açılırsa lawyer confirmation required** olacaktır.
+
+Kaynak denetiminin mekanik bulgusu: sekiz olayın HİÇBİRİ için
+`data/provisions.json` içinde provision, `deadline_rules.json` içinde
+kural, canonical şemalarda tarih alanı veya kodda aritmetik YOKTUR.
+Yalnız ikisi (`settlement`, `correction_complaint`) `case.schema.json`
+→ `administrative_actions[].action_category` enum'unda bir değer
+taşır; bu çapraz kontrol (`case_has_stopping_event_signal()`) **bir
+DEDEKTÖR DEĞİLDİR** ve
+`ui/tests/test_deadline_stopping_events_isolated.py` test K bunu kalıcı
+olarak pinler. Kalan altı hâlin enum karşılığı YOKTUR ve tamamen
+avukatın `none` beyanına dayanır (disclosure, kusur değil). Ek dar
+gözlem (kusur iddiası DEĞİL): `case_has_stopping_event_signal()` YALNIZ
+`administrative_actions[].action_category`'yi tarar;
+`case.schema.json`'ın `case_type` enum'undaki `correction_complaint`
+değeri TARANMAZ.
+
+**SORU 5.5 — sınırlı disclosure (dar, abartılmaz):** SORU 5.5 bir
+durdurucu olay değil, temporal-versioning konusudur ve avukat
+tarafından **CEVAPLANMAMIŞTIR; UNRESOLVED kalır** (Adım 6 YALNIZ SORU
+5.1-5.4'ü kapsar). Mevcut `kanun_2577_m61_f1` kaydının
+`formal.valid_from = "2016-07-23"` kapısı, denetimde test edilen 2014 ve
+erken 2016 anchor tarihlerini **tarih aritmetiğinden ÖNCE**
+`needs_review`'a düşürmüştür. Bu **yalnız gözlenen mevcut fail-closed
+davranıştır**; SORU 5.5'e **hukuki bir cevap DEĞİLDİR**, tüm tarihsel
+dönemlerin doğru modellendiğini veya riskin tamamen kapandığını
+**GÖSTERMEZ**. Gelecekte tarihsel kapsam açılırsa **ayrıca avukat onayı
+gerekir**.
+
+**E. Bugünkü fail-closed teknik yol (salt-okunur doğrulandı)** —
+`build_deadline_record()` kapı sırası: rule çözümü →
+`blocked_unverified_anchor` → rule selection policy → historical legal
+basis check → **stopping-event gate** (Slice 1) →
+`calculate_rule_deadline()`. Sözleşme kaynakta yazılıdır: kapı
+`calculate_rule_deadline()`'ın İÇİNE KONMAZ — o fonksiyon saf tarih
+aritmetiği olarak KALIR. `stopping_event_status` `present` veya
+`unknown` iken sonuç `calculation_state="needs_review"`,
+`calculated_deadline=null`, `requires_human_review=True`'dur. Promosyon
+`src/deadline_approval.py`'nin **8-koşullu fail-closed** kapısındadır
+(`_insert_prepared`'dan ÖNCE; sıfır journal/writer/canonical/audit).
+`case_view` projeksiyonu (`src/orchestrator_engine.py:233`) canonical'da
+alan YOKSA **`unknown`** üretir, ASLA `none`. Avukat arayüzü
+(`ui/templates/macros.html`) "Durdurucu olay", "Beyan referansı" ve
+"Hesaplama notu" satırlarını gösterir. Bu checkpoint, gelecekteki bir
+event-modeling sürümünün şema/digest/migration/registry etkileri
+hakkında **HİÇBİR ön-karar VERMEZ**; bunlar ayrı bir tasarım turunun
+konusudur.
+
+**F. K1-K4 kullanıcı kararları** — **K1 KAPAT**: Adım 7 mevcut pilot
+bakımından kapanır, "modellendi" anlamında DEĞİL. **K2 SORMA**: mevcut
+pilot için yeni avukat sorusu/formu hazırlanmaz; aynı konu yeniden
+avukata gönderilmez; kapsam genişletilirse ayrı bir sürüm kararı olarak
+sorulur. Denetim turunda taslağı çıkarılan ek avukat soruları
+**KULLANILMAMIŞTIR, canonical kanıt DEĞİLDİR** ve bloklayıcı veya
+yapılacak iş olarak BIRAKILMAMIŞTIR. **K3 ERTELE**: yapılandırılmış olay
+intake'i şimdi yapılmaz; bugün kaynakta gözlenen gerçek, `case.json`
+için koordineli bir production writer bulunmadığıdır (tüm
+`ui/services/*facade*` ve `src/*approval*` tarandı; tek yazma çağrıları
+`src/qa_engine.py:1705-1717`'deki geçici self-test fixture'larıdır), bu
+nedenle intake mevcut Slice'ın küçük bir uzantısı değildir ve gelecekte
+ayrı bir exact-scope ve sözleşme planı gerektirir. **K4 ADIM-8**:
+sıradaki canlı iş Pilot Readiness Adım 8 — yerel PostgreSQL / IAM
+adoption, **ACTIVE / NEXT**.
+
+**G. Son doğrulanmış resmî gate kanıtı** — Bu tur hiçbir
+kaynak/test/production dosyasına dokunmadığı için resmî kapı koşusu
+GEREKMEMİŞ ve ÇALIŞTIRILMAMIŞTIR. Yürürlükteki son doğrulanmış sonuç,
+exact commit `728c880803f6703ae8831c539c22ae8057c3c6b8`'in baytlarına
+karşı, temiz bir exact-commit LF worktree'sinde ve taze/disposable bir
+PostgreSQL 16 örneğinde alınmıştır:
+
+- `production-parity`: **exit 0**, `state completed`, **SWEEP FULL**,
+  **83/83 modül PASS**, **6774 passed, 0 failed**, **8 counted skip**,
+  **14 informational skip**; **15/15 `*_postgres` modülü gerçekten
+  koştu**; guard `armed 217 = expected 217`, positive controls
+  **10/10**, `net_blocked 0`, `env_open_blocked 0`; integrity
+  `protected_manifest_ok true` (**380 giriş**), `protected_path_diff []`,
+  secret scan **166 dosya, hits []**; `refusals []`, `warnings []`.
+- `rag-dependency`: **`RAG_GATE_PASS`**, **exit 0**, **3/3 modül PASS**,
+  **216 passed**, **0 failed**, informational **ham 1**, K.1 muafiyeti
+  **1**, **etkin informational skip 0**, `marker_present true`, guard
+  `armed 7 = expected 7` ve positive controls **10/10**, integrity temiz
+  (`manifest_ok true`, `diff []`, `hits []`).
+
+Bu tur o sonuçları DEĞİŞTİRMEZ ve yeniden ÜRETMEZ.
+
+**H. §9 / §12 değerlendirmesi** — Bu turda **hiçbir LOCKED
+üretim/şema/migration/data dosyası AÇILMAMIŞTIR**; **§9 gerekçesi
+GEREKMEZ**. Tek değişen dosya `CLAUDE.md`'dir ve değişiklik **§12
+kapsamındadır** (yalnız §5 checkpoint durumu + next-active
+güncellemesi). **§3 temel mimari prensipler ve §4 roadmap sırası
+DEĞİŞMEMİŞTİR**; Pilot Readiness adımları §4 row'u değildir ve
+`19. Production / Security — ACTIVE / NEXT` ile `20. Pilot /
+Evaluation` satırları AYNEN KALMIŞTIR. Eski Adım 6 / Slice 1 / Slice 2
+pointer'ları, eski checkpoint bölümleri ve §6 backlog'a
+DOKUNULMAMIŞTIR.
+
+**I. Değişmeyen mekanik sayaçlar** — tracked test modülü **83**;
+`*_postgres` modülü **15**; production Python **159**; migration **5**;
+merged reconciliation routing key **52**; logical action family **40**;
+CLI subcommand **6**; `data/*.schema.json` **20**. Bu turda hiçbiri
+değişmemiştir.
+
+**J. Kapanmayan roadmap alanları** — Sekiz olayın hukuki aritmetiği
+(gelecekte kapsam yeniden açılırsa lawyer confirmation required); SORU
+5.5 (cevaplanmadı, UNRESOLVED); Adım 9 sentetik concierge dry-run; Adım
+10 ilk gerçek concierge pilotu; Adım 11 Entra/P1; Adım 12 hosting/Key
+Vault; Adım 13c configurable case root; corpus acquisition/population;
+Row 19D (OS ACL / service identity / TOCTOU, advisory-lock timeout
+backlog'u). **Pilotun production-ready olduğu İDDİA EDİLMEZ.**
+
+**K. Final verdict**
+
+`ADIM 7 DONE / LOCKED FOR CURRENT PILOT — EVENT-SPECIFIC LEGAL ARITHMETIC EXPLICITLY EXCLUDED, NOT IMPLEMENTED`
+
+**DONE / LOCKED FOR CURRENT PILOT**
+
+**Bu checkpoint'in kendisi** — **documentation-only** bir roadmap-lock
+işlemidir: yalnız `CLAUDE.md`'yi değiştirir (iki saf ekleme, 0 silme);
+hiçbir kaynak/migration/test/production/canonical/pending/audit
+dosyasına dokunmaz; hiçbir commit amend EDİLMEZ;
 stash/reset/cleanup/push YAPILMAZ.
 
 ## 6. Cross-Cutting Backlog
