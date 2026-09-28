@@ -865,24 +865,41 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   onaylayıp `verified:true` yapana kadar, `next_business_day_if_holiday`
   policy'li tek aktif kural HİÇBİR gerçek dosyada `calculated` bir tarih
   ÜRETMEZ.
-- **Pilot Readiness Adım 6 — Avukat Doğrulaması — ACTIVE / NEXT.** Avukat
-  paketi (`avukat_dogrulama_paketi_DRAFT2`) repo dışında hazırdır ve avukata
-  verilebilir — Adım 4a Remediation (satır-sonu tire maskeleme açığının
-  kapatılması), Adım 4b (ham-veri kapatma), Adım 4c (kalan outbound LLM
-  yollarının kapatılması) ve Adım 5 (takvim registry'si) kilitleriyle
-  önkoşulları sağlanmıştır. Bu pointer KODLAMA/İMPLEMENTASYON YETKİSİ VERMEZ —
-  Adım 6 avukatın SORU 3.1-3.8/5.1-5.4'ü yanıtlaması ve altın örnekleri
-  doldurmasıdır (bir hukuk işidir, bir kod turu DEĞİL). Avukat doğrulamasının
-  mali tatil alt-bölümüne ilişkin yazılı cevap alınmış ve bu cevap
+- **Pilot Readiness Adım 6 — Avukat Doğrulaması — DONE / LOCKED.** Adım 6'nın
+  `CLAUDE.md`'de tanımlı ÜÇ zorunlu kabul ölçütünün tamamı karşılanmıştır:
+  (i) avukatın **SORU 3.1-3.8 / 5.1-5.4**'ü yanıtlaması, (ii) **altın
+  örnekleri doldurması**, (iii) **takvim içeriğinin doğrulanması**
+  (`data/holiday_calendar/holiday_calendar.json`'daki ilgili yılların
+  `verified:true`'ya çevrilmesi). (iii) Holiday Calendar Phase B ile
+  kapanmıştır (12/12 yıl `verified:true`, imzalı `HC-LAWYER-VERIFY-v1-2024-
+  2035-fb79b85fcf114c95`). (i) ve (ii), **kullanıcının bu turdaki bağlayıcı
+  kararıyla**, repo DIŞINDA saklanan `burki_avukat_dogrulama_paketi_DRAFT4_
+  DOLDURULABILIR (1).docx` (SHA-256 `dcf4df690bf8298830a3e19b9041d148cb331
+  ccd198f16bceb73129cf186ecd1`) üzerinden karşılanmıştır; bu belge **avukat
+  tarafından incelenmiş/onaylanmış hukuki girdi** olarak kabul edilir ve
+  cevaplarının doğrulanması için **yeniden bir avukat provenance formu
+  İSTENMEYECEKTİR** (kullanıcı kararı). **DRAFT-4 elektronik imzalı DEĞİLDİR
+  ve öyleymiş gibi SUNULMAZ** — e-imzalı olan tek artefakt takvim
+  doğrulamasıdır (`sonn_avukat_onay.udf`); DRAFT-4, kullanıcı tarafından
+  teyit edilen avukat-onaylı kaynak olarak kaydedilir. Hazırlanan
+  `LAWYER-CONFIRM` (v3/v4/FINAL) ek teyit formu taslakları **KULLANILMAMIŞTIR
+  ve canonical kanıt DEĞİLDİR** — repo dışındadır, hiçbir roadmap maddesi
+  onlara dayanmaz ve bloklayıcı veya yapılacak iş olarak bırakılmamıştır.
+  DRAFT-4'ün 14 altın örneği, üretim `deadline_calculator` zincirine karşı
+  mekanik olarak doğrulanmıştır — bkz. **Adım 6 — Altın Örnek Diferansiyel
+  Doğrulama** checkpoint özeti (§5 sonrası); S05 ve S11 için alınan iki
+  bağlayıcı yorum kararı orada kayıtlıdır. Avukat doğrulamasının mali tatil
+  alt-bölümüne ilişkin yazılı cevap daha önce alınmış ve bu cevap
   doğrultusunda Adım 7'nin mali tatil alt-kapsamı ayrı, dar bir implementasyon
   turuyla DONE/LOCKED olmuştur (bkz. aşağıdaki Pilot Readiness Adım 7 — Mali
-  Tatil pointer ve checkpoint özeti). Adım 6'nın kalan soruları/altın
-  örnekleri, takvim içeriğinin
-  (`data/holiday_calendar/holiday_calendar.json`'daki ilgili yılların
-  `verified:true`'ya çevrilmesi) doğrulaması ve Adım 7'nin mali tatil
-  dışındaki kalan deadline hardening alt-kapsamları ayrıca tamamlanmış veya
-  yetkilendirilmiş DEĞİLDİR — bu nedenle Adım 6'nın genel statüsü ACTIVE /
-  NEXT olarak kalır. Açıkça BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 8 yerel
+  Tatil pointer ve checkpoint özeti). **Dar, exact iddia** (abartılmaz): bu
+  LOCK YALNIZ Adım 6'nın kendi üç ölçütünü kapsar. **Adım 7'nin mali tatil
+  DIŞINDAKİ kalan deadline hardening alt-kapsamları hâlâ AÇIKTIR** ve bu LOCK
+  onları kapatmaz veya yetkilendirmez; eski Adım 6 pointer'ı bu Adım 7
+  maddesini kendi ACTIVE gerekçeleri arasında saymıştı — bu bir kategori
+  hatasıydı (Adım 7, Adım 6'dan SONRA gelir; Adım 6'yı Adım 7'ye bağlamak
+  döngüsel olurdu) ve bu turda düzeltilmiştir. Açıkça
+  BAŞLAMAMIŞ/YETKİLENDİRİLMEMİŞ: Adım 7'nin kalan alt-kapsamları; Adım 8 yerel
   PostgreSQL/IAM adoption; Adım 9 sentetik concierge dry-run; Adım 10 ilk
   gerçek concierge pilotu; Adım 11 Entra/P1; Adım 12 hosting/Key Vault;
   configurable external case root (post-pilot Adım 13c). Eski "Row 19D
@@ -10156,6 +10173,150 @@ gibi yalnız `CLAUDE.md`'yi değiştiren, salt-okunur bir roadmap-lock
 işlemidir; hiçbir kaynak/migration/test/production/canonical/pending/
 provenance dosyasına ve 13 tarihsel audit kaydına dokunmaz; `dcba4db`
 commit'i amend EDİLMEZ; stash/reset/cleanup/push YAPILMAZ.
+
+### Adım 6 — Altın Örnek Diferansiyel Doğrulama (DONE / LOCKED — checkpoint özeti)
+
+**A. Amaç ve exact kapsam** — Avukatın doldurduğu DRAFT-4 belgesindeki 14
+altın örneğin (Bölüm 4-B S01-S12, Bölüm 4-C S13, Bölüm 4-D A-1), üretim
+`src/deadline_calculator.py` zincirine karşı mekanik olarak
+karşılaştırılmasıdır. Exact uygulama kapsamı: **1 YENİ + 0 DEĞİŞTİRİLMİŞ =
+1 dosya**.
+
+| | |
+|---|---|
+| Yeni dosya | `ui/tests/test_deadline_lawyer_golden_examples_isolated.py` |
+| SHA-256 | `4efa0815676acdc83a37757f7467a3b64bab5394671f473c1ee5401057fecd5f` |
+| Boyut / satır | 19.025 bayt · 499 satır · saf LF (0 CR) |
+| Commit | **`2ba8f11e4116819b76db8e02ee870c2003e09e90`** (parent `34cc7748afb1bc54c8c0562ca0ea4ca2ad478b3a`) |
+
+Sıfır üretim kodu, sıfır şema, sıfır migration, sıfır `data/`, sıfır mevcut
+test değişikliği, sıfır web/CLI yüzeyi. Test SALT-OKUNURDUR: case dizini,
+PostgreSQL, mutation coordinator, ağ/API ve gerçek müvekkil verisi
+KULLANILMAZ; tüm senaryolar sentetiktir.
+
+**B. Provenance (kullanıcının bağlayıcı kararı)** — Kaynak, repo DIŞINDA
+saklanan `burki_avukat_dogrulama_paketi_DRAFT4_DOLDURULABILIR (1).docx`,
+SHA-256 `dcf4df690bf8298830a3e19b9041d148cb331ccd198f16bceb73129cf186ecd1`.
+DRAFT-4 **avukat tarafından incelenmiş/onaylanmış hukuki girdidir**; yeniden
+provenance formu İSTENMEYECEKTİR. **DRAFT-4 e-imzalı DEĞİLDİR ve öyle
+GÖSTERİLMEZ** — belge içinde imza, değişiklik izleme veya yorum kaydı yoktur;
+kullanıcı tarafından teyit edilen avukat-onaylı kaynak olarak kaydedilir.
+E-imzalı tek artefakt takvim doğrulamasıdır (`verification_ref
+HC-LAWYER-VERIFY-v1-2024-2035-fb79b85fcf114c95`). Hazırlanan `LAWYER-CONFIRM`
+ek teyit formu taslakları (v3/v4/FINAL/FINAL_WORD) **kullanılmamıştır,
+canonical kanıt DEĞİLDİR ve bloklayıcı/yapılacak iş olarak BIRAKILMAMIŞTIR**.
+Her iki kimlik de test dosyasının başlık bloğunda provenance notu olarak
+kayıtlıdır.
+
+**C. İki bağlayıcı yorum kararı** — **S05 (yarım gün):** DRAFT-4 SORU 3.4
+"süre o gün dolar" demiş ve tabloya `28.10.2026` yazmıştır; buna karşılık
+**26.09.2026 tarihli, DAHA SONRAKİ ve e-imzalı** takvim doğrulaması yarım gün
+politikası olarak `needs_review_if_deadline_day` KABUL etmiştir. **Sonraki
+tarihli imzalı politika ÜSTÜNDÜR**: beklenen sonuç kesin tarih DEĞİL,
+fail-closed `needs_review` + sabit `reason =
+holiday_calendar_half_day_deadline_requires_review`tir; `28.10.2026` yalnız
+insan onayına sunulacak değer olarak kayıt altındadır. **S11 (Cumartesi):**
+DRAFT-4 tablosu `07.09.2030` yazmıştır, ancak o gün **CUMARTESİ**dir; avukatın
+KENDİ onayladığı **SORU 5.4** kuralı gereği İYUK m.8/2 devreye girer ve son
+gün **`09.09.2030` PAZARTESİ**dir. Tablodaki `07.09.2030` bir
+**aritmetik/yazım hatasıdır** ve KULLANILMAZ.
+
+**D. 14 senaryo ve sonuçları — 14/14 PASS**
+
+| Case | Anchor | Beklenen | Mekanizma |
+|---|---|---|---|
+| S01 | 2026-02-10 | 2026-03-12 | düz 30 gün |
+| S02 | 2026-01-15 | 2026-02-16 | m.8/2 (Cmt) |
+| S03 | 2026-01-16 | 2026-02-16 | m.8/2 (Paz) |
+| S04 | 2026-12-02 | 2027-01-04 | m.8/2 (Yılbaşı) |
+| **S05** | 2026-09-28 | **`needs_review`** + `holiday_calendar_half_day_deadline_requires_review` | yarım gün, imzalı politika |
+| S06 | 2026-09-29 | 2026-10-30 | m.8/2 (tam gün bayram) |
+| S07 | 2026-06-19 | 2026-09-07 | mali tatil + m.8/3 |
+| S08 | 2026-06-20 | 2026-09-07 | mali tatil + m.8/3 |
+| S09 | 2026-08-01 | 2026-09-07 | m.8/3 |
+| S10 | 2026-08-02 | 2026-09-01 | m.8/3 UYGULANMAZ (SORU 5.2 ayrımı) |
+| **S11** | 2030-07-01 | **2030-09-09** | mali tatil + m.8/3 + m.8/2 |
+| S12 | 2028-01-30 | 2028-02-29 | artık yıl, tatil yok |
+| S13 | 2032-12-03 | 2033-01-05 | dinî bayram zinciri |
+| A-1 | 2029-03-22 | 2029-04-30 | hafta sonu + ulusal + Kurban zinciri |
+
+S07-S11'de `judicial_recess_applicable=True` AÇIKÇA geçirilir. Hiçbir senaryo
+skip/xfail/karantina DEĞİLDİR. **Hiçbir senaryoda sapma çıkmamıştır — üretim
+koduna yama GEREKMEMİŞ ve YAPILMAMIŞTIR.**
+
+**E. Modülün tamamı: 48/48** — 14 altın örneğin yanında 4 ön koşul (takvim
+2024-2035 kapsamı, kuralın m.8/3 + 5604 dayanakları, 2026-10-28'in gerçekten
+yalnız-yarım-gün olması — tautolojik geçişi önler), 13 mekanizma-atfı kontrolü
+(`mali_tatil_applied` / `judicial_recess_applied` /
+`holiday_adjustment_applied` / `provisional_deadline=2030-09-07`), 14
+determinizm kontrolü ve `data/` bayt-değişmezliği.
+
+**F. Kanıt — commit `2ba8f11` baytlarına karşı iki resmî kapı** — Temiz,
+detached, exact-commit LF worktree'sinde; gerçek, disposable **PostgreSQL 16**
+(yalnız loopback, migration 0001-0005):
+
+- **`production-parity`**: `runner_exit_code 0`, `state completed`, `SWEEP
+  FULL`, **81/81 modül PASS** (`outcomes {"PASS": 81}`, `modules_non_pass 0`,
+  `modules_not_spawned 0`), **6448 passed, 0 failed**, 8 counted skip, 14
+  informational skip. `git.head 2ba8f11…`, `git.clean true`,
+  `tracked_test_count 81`; discovery `tracked 81 / filesystem 81 / run 81`,
+  `missing [] untracked [] rejected []`. PostgreSQL `connected true`,
+  `migrations_ok true`, `migrations_missing []`, `server_addr_loopback true`;
+  **15/15 `*_postgres` modülü GERÇEKTEN koştu** (hepsi PASS, `passed > 0`).
+  Guard `armed 215 = expected 215`, `inheritance_ok true`, `net_blocked 0`,
+  `env_open_blocked 0`, positive controls **10/10**, `suspicious_popens []`.
+  Integrity `protected_manifest_ok true` (**378 giriş**),
+  `protected_path_diff []`, secret scan 162 dosya `hits []`, process/temp/db/
+  bytecode residue hepsi `[]`; `refusals []`, `warnings []`,
+  `tmp_dir_removed true`. Yeni modül sweep içinde: `PASS passed=48 failed=0`.
+- **`rag-dependency`**: `SWEEP RAG_GATE_PASS`, exit 0, **3/3 modül PASS**,
+  **216 passed, 0 failed**, `informational_skips_effective 0` (ham 1, K.1
+  platform muafiyeti 1), `marker_present true`, guard 10/10, integrity temiz.
+
+Disposable PostgreSQL kümesi ve geçici worktree işlem sonunda tamamen
+kaldırıldı; `data/`, `src/`, `index/`, `db/` ve `CLAUDE.md` commit öncesine
+göre DEĞİŞMEDİ.
+
+**G. Sabit sayımlar** — `ui/tests/test_*.py` modülü **80 → 81**;
+`*_postgres` modülü **15 → 15 (DEĞİŞMEDİ)**; protected manifest girdisi
+**378**; production Python **159 → 159 (değişmedi)**; migration **5 → 5**;
+merged reconciliation routing key **52**, logical action family **40**, CLI
+subcommand **6** — hiçbiri değişmedi (bu tur hiçbir facade/registry/CLI/
+migration dosyasına dokunmadı).
+
+**H. Disclosure — DRAFT-4'te boş kalan alanlar (bloklayıcı DEĞİL, yapılacak
+iş olarak BIRAKILMAMIŞTIR)** — Dürüstlük gereği kaydedilir; kullanıcı kararı
+uyarınca bunlar için ek avukat formu İSTENMEYECEKTİR: SORU 3.8'in
+`Kanıt/kaynak` ve `Belgeleme biçimi` alt-alanları DRAFT-4'te boştur (ancak
+usul 26.09.2026'da FİİLEN uygulanmıştır: e-imzalı belge + SHA-256/kapsam
+kaydı); S13'ün üç alt sorusu ve gerekçe alanı boştur (S13 satırının kendisi
+dolu ve takvime karşı doğrulanmıştır); Bölüm 4-D'de istenen 3-5 ek
+senaryodan 1'i (A-1) gelmiştir (A-1 doğrulanmıştır); SORU 5.6'nın soru metni
+DRAFT-4'te teknik bir hatayla kaybolmuştur ve `BEKLİYOR / ONAYLANDI /
+OVERRIDE` işareti belirsizdir (5.6, `CLAUDE.md`'nin Adım 6 ölçütü olan
+SORU 5.1-5.4 aralığının DIŞINDADIR).
+
+**I. Bu LOCK'un KAPSAMADIĞI** — Adım 7'nin mali tatil dışındaki kalan
+deadline hardening alt-kapsamları (`stopping_event_status`, SORU 5.5'in
+tarihsel çalışmaya-ara-verme dönemleri, VUK m.35/376 ve uzlaşma/usulsüz
+tebligat gibi süre başlangıcını/işleyişini değiştiren hâller); Adım 8-13;
+DRAFT-4 Bölüm 6'nın dış sağlayıcıya aktarım (KVKK/DPA/veri lokasyonu)
+soruları ve 6.4'ün 9 hard-block belge sınıfı; corpus acquisition/population;
+Row 19D. **Bu LOCK, pilotun genel olarak production-ready olduğunu,
+yazılımın hukuken hatasız olduğunu veya gerçek bir dosyada kullanıma hazır
+olduğunu İDDİA ETMEZ** — yalnız 14 sentetik avukat örneğinin, üretim
+hesaplayıcısının bugünkü davranışıyla mekanik olarak uyuştuğunu kayda geçirir.
+
+**J. Final verdict**
+
+`POST-COMMIT GATES PASS — READY FOR ROADMAP UPDATE`
+
+**DONE / LOCKED**
+
+**Bu checkpoint'in kendisi** — önceki tüm checkpoint'ler örneğinde olduğu
+gibi yalnız `CLAUDE.md`'yi değiştiren bir roadmap-lock işlemidir; hiçbir
+kaynak/migration/test/production/canonical/pending dosyasına dokunmaz;
+`2ba8f11` commit'i amend EDİLMEZ; stash/reset/cleanup/push YAPILMAZ.
 
 ## 6. Cross-Cutting Backlog
 
