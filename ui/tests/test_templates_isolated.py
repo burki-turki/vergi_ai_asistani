@@ -118,19 +118,25 @@ first_issue = live["issue_panel"][0]
 # üç `case_view.html` testi bunu kanıtlıyor: hepsi gerçek canlı
 # görünümle render ediliyor).
 # ============================================================
-_cv_stale_rejected = False
-try:
-    reg.case_scoped_review("case_view", CASE_ID)
-except ValueError:
-    _cv_stale_rejected = True
+def _stale_case_view_pending_is_rejected():
+    """Bu modülün `check()` sözleşmesi: BAŞARIDA boş olmayan bir string
+    döndür, BAŞARISIZLIKTA istisna fırlat. Doğrulanan koşul DEĞİŞMEDİ -
+    `case_scoped_review("case_view", …)` hâlâ `ValueError` fırlatmak
+    ZORUNDADIR; fırlatmazsa bu kontrol FAIL olur."""
+    try:
+        reg.case_scoped_review("case_view", CASE_ID)
+    except ValueError as error:
+        return f"fail-closed reddedildi: {type(error).__name__}"
+    raise AssertionError(
+        "case_view pending'i taze yeniden hesaplamayla EŞLEŞTİ - Slice 2'nin üç "
+        "yeni projeksiyon alanı beklendiği gibi bir uyuşmazlık üretmedi."
+    )
 
-assert _cv_stale_rejected, (
-    "case_view pending'i taze yeniden hesaplamayla EŞLEŞTİ - Slice 2'nin üç "
-    "yeni projeksiyon alanı beklendiği gibi bir uyuşmazlık üretmedi."
-)
-print(
-    "PASS ADIM 7/SLICE 2: Slice 2 öncesi üretilmiş case_view pending'i "
-    "inspect_pending() tarafından fail-closed REDDEDİLİYOR"
+
+check(
+    "ADIM 7/SLICE 2: Slice 2 öncesi üretilmiş case_view pending'i "
+    "inspect_pending() tarafından fail-closed REDDEDİLİYOR",
+    _stale_case_view_pending_is_rejected,
 )
 
 # `approval_review.html` fixture'ı artık `deadline` satırından kurulur:
