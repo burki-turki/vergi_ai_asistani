@@ -498,6 +498,22 @@ def make_deadline_case(base_name):
 
     pending_path = deadline_approval.get_pending_path(case_id)
     canonical_path = deadline_approval.get_canonical_path(case_id)
+
+    # ADIM 7 / SLICE 2 - MEKANİK FIXTURE UYUMU. Kopyalanan `case_0001`
+    # pending'i Slice 2 ÖNCESİ üretilmiştir ve iki canonical stopping
+    # alanını TAŞIMAZ; promosyon sözleşmesi kapısı onu haklı olarak
+    # reddeder. Bu senaryoların konusu CLI/coordinator davranışıdır,
+    # stopping-event DEĞİL. `--expected-hash` bu dosyadan TÜRETİLİR,
+    # bu yüzden enjeksiyon burada (hash okunmadan ÖNCE) yapılır.
+    _doc = json.loads(pending_path.read_text(encoding="utf-8"))
+    for _record in _doc.get("deadlines", []):
+        _record.setdefault("stopping_event_status", "unknown")
+        _record.setdefault("stopping_event_attestation_ref", None)
+    pending_path.write_text(
+        json.dumps(_doc, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
     if canonical_path.exists():
         canonical_path.unlink()
     reviews_dir = deadline_approval.get_reviews_dir(case_id)

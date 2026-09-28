@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "case_deadline.schema.json",
-  "title": "Vergi AI Case Deadline Schema V1",
+  "title": "Vergi AI Case Deadline Schema V1.1",
   "type": "object",
   "additionalProperties": false,
 
@@ -211,6 +211,24 @@
             "string",
             "null"
           ]
+        },
+
+        "stopping_event_status": {
+          "type": "string",
+          "enum": [
+            "none",
+            "present",
+            "unknown"
+          ],
+          "description": "ADIM 7 / SLICE 2 - additive, OPSİYONEL (required'a EKLENMEDİ). Bildirim/tebliğ sonrasında süreyi durdurabilecek bir işlemin bulunup bulunmadığına dair AVUKAT BEYANI. 'none' bağımsız doğrulanmış bir hukuki gerçek DEĞİL, yalnız bir beyandır. ALANIN YOKLUĞU ASLA 'none' ANLAMINA GELMEZ - Slice 2 öncesi üretilmiş legacy kayıtlarda alan bulunmaz ve her okuyucu bunu 'unknown' olarak yorumlamak ZORUNDADIR."
+        },
+
+        "stopping_event_attestation_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "ADIM 7 / SLICE 2 - additive, OPSİYONEL. Avukatın yazılı beyanına işaret eden serbest referans; YALNIZ ŞEKİL doğrulanır (1-200 printable karakter, CR/LF yok), GERÇEKLİĞİ veya avukatın böyle bir beyan verdiği DOĞRULANMAZ. Şekil olarak geçersiz veya non-str bir girdi canonical'a ham biçimde YAZILMAZ, null olur; ham girdi yalnız generation audit'te saklanır."
         }
       }
     },

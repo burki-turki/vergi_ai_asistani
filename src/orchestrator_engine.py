@@ -39,6 +39,8 @@ from orchestrator_policy import (
     OPEN_ITEM_KIND_NEEDS_REVIEW_STATE,
     OPEN_ITEM_KIND_QA_BLOCKED,
     OPEN_ITEM_KIND_QA_FAILED,
+    STOPPING_EVENT_STATUS_ENUM,
+    STOPPING_EVENT_STATUS_UNKNOWN,
     group_by_issue_id,
     group_by_issue_id_membership,
 )
@@ -219,6 +221,25 @@ def build_case_view(case_id):
         key=lambda d: (d.get("calculated_deadline") is None, d.get("calculated_deadline") or ""),
     )
 
+    # ADIM 7 / SLICE 2: stopping-event beyanı + kaydın kendi hesaplama
+    # notu artık projekte edilir. Kaynak YALNIZ canonical deadline.json'dur
+    # - generation audit dosyası ASLA okunmaz (Row 17 kontratı).
+    #
+    # `_project_stopping_event_status` fail-closed'dır: canonical'da alan
+    # YOKSA (Slice 2 öncesi legacy kayıt) veya tanınmayan bir değer
+    # taşıyorsa `unknown` üretir. Alanın yokluğu ASLA `none` DEĞİLDİR -
+    # "beyan verilmedi" ile "durdurucu olay yok beyanı verildi" farklı
+    # şeylerdir ve bunların karıştırılması avukatı yanıltırdı.
+    def _project_stopping_event_status(record):
+
+        value = record.get("stopping_event_status")
+
+        if value in STOPPING_EVENT_STATUS_ENUM:
+
+            return value
+
+        return STOPPING_EVENT_STATUS_UNKNOWN
+
     deadline_panel = {
         "source_state": sources["deadline"]["artifact_state"],
         "deadline_analysis_id": deadline_data.get("deadline_analysis_id"),
@@ -230,6 +251,9 @@ def build_case_view(case_id):
                 "calculated_deadline": d.get("calculated_deadline"),
                 "expiry_state": d.get("expiry_state"),
                 "requires_human_review": bool(d.get("requires_human_review")),
+                "stopping_event_status": _project_stopping_event_status(d),
+                "stopping_event_attestation_ref": d.get("stopping_event_attestation_ref"),
+                "notes": d.get("notes"),
             }
             for d in deadlines_sorted
         ],

@@ -45,6 +45,32 @@ CASE_VIEW_SCHEMA_VERSION = 1
 
 
 # ============================================================
+# ADIM 7 / SLICE 2 - STOPPING-EVENT PROJEKSİYON SABİTLERİ
+#
+# Bu üç satır Row 17'nin KENDİ projeksiyon kontratıdır (aynı sınıf:
+# ORCHESTRATOR_SOURCE_REGISTRY) - Row 8'in gate MANTIĞININ bir
+# kopyası DEĞİLDİR. `evaluate_stopping_event_gate()` ve
+# `normalize_stopping_event_status()` Row 8'de kalır; orchestrator
+# onları import ETMEZ (3500 satırlık `deadline_calculator` +
+# transitif `jsonschema` yükünü Row 17'ye bağlamamak için).
+#
+# DRIFT KORUMASI: bu demetin
+#   - `deadline_calculator.STOPPING_EVENT_STATUS_VALUES`,
+#   - `data/case_deadline.schema.json`'ın enum'u,
+#   - `data/case_view.schema.json`'ın enum'u
+# ile BİREBİR aynı olduğu kalıcı bir testte pinlenir.
+#
+# FAIL-CLOSED: canonical kayıtta alan YOKSA veya tanınmayan bir
+# değer taşıyorsa projeksiyon `STOPPING_EVENT_STATUS_UNKNOWN`
+# üretir - ASLA `"none"`. Alanın yokluğu bir BEYAN DEĞİLDİR.
+# ============================================================
+
+STOPPING_EVENT_STATUS_UNKNOWN = "unknown"
+
+STOPPING_EVENT_STATUS_ENUM = ("none", "present", "unknown")
+
+
+# ============================================================
 # ARTIFACT STATE SABİTLERİ (Row 16 ile birebir aynı taksonomi -
 # yeni bir sözlük İCAT EDİLMEZ, aynı dört değer yeniden kullanılır)
 # ============================================================

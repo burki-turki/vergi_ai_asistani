@@ -1157,6 +1157,41 @@ def approve_case_scoped_mutation(
                 )
 
             # ========================================================
+            # ADIM 7 / SLICE 2 - PENDING PROMOTION CONTRACT GATE
+            #
+            # GENERIC ve DUCK-TYPED: aile modülü
+            # `check_pending_promotion_contract` attribute'unu SUNMUYORSA
+            # bu blok TAMAMEN atlanır. Bugün yalnız `deadline_approval`
+            # sunar; diğer DOKUZ Layer A ailesinin davranışı BAYT-BAYT
+            # DEĞİŞMEZ (ne ek I/O, ne ek exception yüzeyi).
+            #
+            # KONUM KRİTİK: burası `run_mutation()`'ın AUTHORITATIVE
+            # ORDER'ında adım 5'tir - `_insert_prepared` (adım 6)
+            # ÖNCESİ. Buradan fırlayan istisna => SIFIR journal satırı
+            # (`prepared` dahil), writer HİÇ çağrılmaz, canonical/
+            # backup/audit yazımı SIFIR.
+            #
+            # NEDEN writer'ın İÇİNE KONMADI: `run_approve()`'tan fırlayan
+            # bir istisna `reconciliation_required` satırı bırakırdı;
+            # `mutation_approval_adapters` canonical MEVCUTKEN
+            # `pre_state_confirmed_unchanged=True` dönen bir dala SAHİP
+            # DEĞİLDİR (yalnız `post_state_verified=True` ya da
+            # dual-false), dolayısıyla o satır
+            # `ui/reconciliation_operator.py` ile ÇÖZÜLEMEZDİ ve
+            # `mutation_coordinator._journal_gate_check` o case'in TÜM
+            # mutasyonlarını KALICI olarak bloke ederdi.
+            #
+            # Sıra: race/stale kontrollerinden SONRA çalışır, böylece
+            # gerçek bir eşzamanlılık sorunu kendi (daha acil) hatasıyla
+            # yüzeye çıkar ve mevcut sözleşme korunur.
+            # ========================================================
+            promotion_contract_check = getattr(
+                module, "check_pending_promotion_contract", None,
+            )
+            if promotion_contract_check is not None:
+                promotion_contract_check(pending_path, outer_resolved_case_id)
+
+            # ========================================================
             # ROW 19C-3a SLICE 2 - CARRY-FORWARD DIRECTORY-CHAIN GATE
             # (the 4 families that have one: `hasattr(module, "get_
             # carry_forward_dir")` - generic, no row_key hardcoded).

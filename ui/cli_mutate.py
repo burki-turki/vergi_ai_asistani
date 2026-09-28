@@ -351,6 +351,16 @@ def _build_arg_parser():
         "Omitted => unknown => needs_review (fail-closed).",
     )
     generation_parser.add_argument(
+        "--attempt", dest="attempt", type=int, default=1,
+        help="ADIM 7 / SLICE 2: deadline-apply-only identity-affecting retry counter "
+        "(default 1, must be >= 1; NEVER auto-incremented). Only the composite "
+        "pre_revision (row19c3ci.deadline_revision.v1) carries it - the raw "
+        "input_digest (row19c3ci.deadline.v3) does NOT. Use --attempt N+1 to apply a "
+        "deliberate revision (e.g. correcting --stopping-event-status unknown to none) "
+        "WITHOUT touching any unrelated input file. REJECTED (non-default) for every "
+        "other row-key and without --apply.",
+    )
+    generation_parser.add_argument(
         "--stopping-event-attestation-ref", dest="stopping_event_attestation_ref",
         default=None,
         help="deadline-apply-only; the lawyer written attestation reference. REQUIRED "
@@ -759,6 +769,26 @@ def _validate_generation_args(args, *, stderr) -> int | None:
     placed BEFORE the deadline `else:` fallback, not after, so
     fact_extraction never falls through into "--row-key deadline
     requires --anchor")."""
+    # ADIM 7 / SLICE 2 - `--attempt` (composite `pre_revision`'ın
+    # bileşeni). TEK, GLOBAL kontrol: fact_verification emsaliyle
+    # birebir (default 1, int, >= 1), deadline-only ve apply-only.
+    # Buraya konur çünkü dört row-key dalının HEPSİNİ tek noktadan
+    # kapsar ve her authz/DB/dosya/mutation I/O'sundan ÖNCE çalışır.
+    if args.attempt != 1:
+        if args.row_key != "deadline":
+            stderr.write(
+                "error: --attempt is only accepted for --row-key deadline\n"
+            )
+            return EXIT_USAGE_ERROR
+        if not args.apply:
+            stderr.write(
+                "error: --attempt is only meaningful together with --apply\n"
+            )
+            return EXIT_USAGE_ERROR
+    if args.attempt < 1:
+        stderr.write("error: --attempt must be a positive integer\n")
+        return EXIT_USAGE_ERROR
+
     if args.row_key in _agent_generation_row_keys():
         if args.document is not None:
             stderr.write(f"error: --document is not accepted for --row-key {args.row_key}\n")
@@ -1591,9 +1621,22 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
             f"input_digest={preview['input_digest']}\n"
             f"pending_exists={preview['pending_exists']}\n"
             f"pending_sha256={preview['pending_sha256']}\n"
-            "Üretmek için: python -m ui.cli_mutate generation --case "
-            f"{preview['case_id']} --row-key {args.row_key}{anchor_part} --actor-user-id "
-            f"{args.actor_user_id} --apply --expected-input-digest {preview['input_digest']}\n"
+            # ADIM 7 / SLICE 2: `--attempt` önerilen komutta AÇIKÇA
+            # ECHO EDİLİR (rag_bundle emsali). fact_verification bunu
+            # YAPMIYOR ve operatörü kör bırakıyor; bu Slice'ın
+            # etkinleştirdiği `unknown -> none` düzeltme akışı tam olarak
+            # operatörün attempt'i bilip artırmasına bağlı olduğu için
+            # burada o boşluk TEKRARLANMAZ.
+            + (
+                "Üretmek için: python -m ui.cli_mutate generation --case "
+                f"{preview['case_id']} --row-key {args.row_key}{anchor_part} --actor-user-id "
+                f"{args.actor_user_id} --apply --expected-input-digest {preview['input_digest']}"
+                + (
+                    f" --attempt {args.attempt}\n"
+                    if args.row_key == "deadline"
+                    else "\n"
+                )
+            )
         )
 
     result = _generation_facade.apply_generation(
@@ -1608,6 +1651,10 @@ def _run_generation(args, *, principal, repository, mutation_conn_factory) -> st
         stopping_event_attestation_ref=(
             args.stopping_event_attestation_ref if args.row_key == "deadline" else None
         ),
+        # ADIM 7 / SLICE 2: usage-shape katmanı zaten deadline
+        # dışındaki her row-key'de non-default attempt'i reddetti;
+        # burada yine de aile-koşullu geçilir (iki bağımsız katman).
+        attempt=(args.attempt if args.row_key == "deadline" else 1),
         principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
     )
     return (

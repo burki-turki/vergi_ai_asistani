@@ -118,6 +118,34 @@ class DeadlineApprovalError(
     pass
 
 
+class DeadlinePendingContractError(
+    DeadlineApprovalError
+):
+    """ADIM 7 / SLICE 2 - legacy (Slice 2 ÖNCESİ üretilmiş) bir pending
+    deadline paketinin promosyonu. SABİT mesaj; testte pinlenir. Ham
+    dosya yolu / serbest metin SIZDIRMAZ."""
+
+    def __init__(
+        self,
+    ):
+
+        super().__init__(
+            PENDING_CONTRACT_REFUSAL_MESSAGE
+        )
+
+
+PENDING_CONTRACT_REFUSAL_MESSAGE = (
+    "Bu pending deadline paketi ADIM 7 / SLICE 2 öncesinde üretilmiş: "
+    "kayıtlarında stopping_event_status ve/veya "
+    "stopping_event_attestation_ref anahtarları eksik ya da geçersiz. "
+    "Eksik bir stopping-event beyanı ASLA 'durdurucu olay yok' anlamına "
+    "GELMEZ, bu yüzden bu paket canonical'a promote EDİLEMEZ. "
+    "Pending'i güncel motorla yeniden üretin "
+    "(python -m ui.cli_mutate generation --row-key deadline ... --apply "
+    "--attempt N+1) ve yeniden onaylayın. Hiçbir değişiklik yapılmadı."
+)
+
+
 # ============================================================
 # PATH HELPERS
 # ============================================================
@@ -385,12 +413,194 @@ def validate_deadline_file(
 
 
 # ============================================================
+# ADIM 7 / SLICE 2 - PENDING PROMOTION CONTRACT (fail-closed)
+# ============================================================
+
+STOPPING_EVENT_STATUS_ENUM = (
+    "none",
+    "present",
+    "unknown",
+)
+
+
+def check_pending_promotion_contract_object(
+    analysis,
+):
+    """SAF, I/O'suz. `analysis` bir deadline paketi dict'idir.
+
+    HER `deadlines[*]` kaydı için:
+      1. `stopping_event_status` anahtarı FİZİKSEL olarak mevcut
+         (`in` kontrolü - `.get()` DEĞİL, çünkü `None` değerli bir
+         anahtar ile HİÇ OLMAYAN anahtar farklı şeylerdir),
+      2. `stopping_event_attestation_ref` anahtarı FİZİKSEL olarak
+         mevcut (değeri `None` OLABİLİR, anahtar eksik OLAMAZ),
+      3. status değeri üç enum değerinden biri,
+      4. ref değeri `str` veya `None`.
+
+    Herhangi biri sağlanmazsa `DeadlinePendingContractError`. İKİ
+    anahtar da AYRI AYRI kontrol edilir - yalnız birini kontrol etmek
+    sözleşme ihlalidir."""
+
+    # FAIL-CLOSED, İSTİSNASIZ. Yapısal olarak yorumlanamayan bir belge
+    # de REDDEDİLİR - "anlayamadım, geçireyim" davranışı YOKTUR.
+    if not isinstance(
+        analysis,
+        dict,
+    ):
+
+        raise DeadlinePendingContractError()
+
+    records = analysis.get(
+        "deadlines"
+    )
+
+    if not isinstance(
+        records,
+        list,
+    ):
+
+        raise DeadlinePendingContractError()
+
+    for record in records:
+
+        if not isinstance(
+            record,
+            dict,
+        ):
+
+            raise DeadlinePendingContractError()
+
+        if (
+            "stopping_event_status"
+            not in record
+        ):
+
+            raise DeadlinePendingContractError()
+
+        if (
+            "stopping_event_attestation_ref"
+            not in record
+        ):
+
+            raise DeadlinePendingContractError()
+
+        if (
+            record[
+                "stopping_event_status"
+            ]
+            not in STOPPING_EVENT_STATUS_ENUM
+        ):
+
+            raise DeadlinePendingContractError()
+
+        ref = record[
+            "stopping_event_attestation_ref"
+        ]
+
+        if (
+            ref is not None
+            and not isinstance(
+                ref,
+                str,
+            )
+        ):
+
+            raise DeadlinePendingContractError()
+
+    return True
+
+
+def check_pending_promotion_contract(
+    pending_path,
+    case_id,
+):
+    """ADIM 7 / SLICE 2 - Layer A facade'in `precondition_callback`'i
+    tarafından DUCK-TYPED olarak çözülen public hook.
+
+    ÇAĞRI ANI KRİTİKTİR: `run_mutation()`'ın AUTHORITATIVE ORDER'ında
+    adım 5'te, `_insert_prepared` (adım 6) ÖNCESİNDE çalışır. Buradan
+    fırlayan her istisna => SIFIR journal satırı, writer HİÇ
+    çağrılmaz, canonical/backup/audit yazımı SIFIR.
+
+    Bunu writer sınırının (`run_approve`) İÇİNE koymak KASITLI olarak
+    REDDEDİLDİ: oradan fırlayan bir istisna `reconciliation_required`
+    satırı bırakır; `mutation_approval_adapters` canonical MEVCUTKEN
+    `pre_state_confirmed_unchanged=True` dönen bir dala SAHİP DEĞİLDİR
+    (yalnız `post=True` ya da dual-false), dolayısıyla satır
+    `reconciliation_operator` ile ÇÖZÜLEMEZ ve
+    `mutation_coordinator._journal_gate_check` o case'in TÜM
+    mutasyonlarını KALICI olarak bloke ederdi.
+
+    KAPSAM - SEKİZ KOŞULUN TAMAMI, İSTİSNASIZ FAIL-CLOSED:
+      (1) root dict değil,
+      (2) `deadlines` yok veya list değil,
+      (3) kayıt validator/şema sözleşmesini geçmiyor,
+      (4) `stopping_event_status` anahtarı fiziksel olarak yok,
+      (5) `stopping_event_attestation_ref` anahtarı fiziksel olarak yok,
+      (6) status enum dışında,
+      (7) ref tipi/biçimi geçersiz,
+      (8) diğer deadline semantic-validator kuralları başarısız.
+
+    (1)(2)(4)(5)(6)(7) -> `DeadlinePendingContractError` (sabit mesaj).
+    (3)(8) -> `deadline_validator` zincirinin KENDİ hata sınıfı
+    (`DeadlineValidationError` / `DeadlineApprovalError`) - detayı
+    kaybetmemek için sarmalanMAZ.
+
+    HER İKİ SINIF DA precondition sınırında fırlar: sıfır prepared
+    journal satırı, writer HİÇ çağrılmaz, sıfır canonical/backup/audit,
+    `reconciliation_required` OLUŞMAZ ve case kalıcı olarak
+    KİLİTLENMEZ.
+
+    SIRA (önemli): önce SAF yapısal + stopping kontrolü, SONRA tam
+    validator. Gerekçe mekanik: `deadline_validator` kök nesnenin dict
+    olduğunu VARSAYAR (`validate_case_id()` doğrudan `.get()` çağırır),
+    bu yüzden root'u dict OLMAYAN bir belgeyi ona vermek TİPSİZ bir
+    `AttributeError` üretir - fail-closed ama sınıflandırılamaz bir
+    çökme. Yapısal kontrolü öne almak, (1)(2) için TEMİZ ve testte
+    PİNLENEBİLİR bir `DeadlinePendingContractError` verir; (3)(8) ise
+    ardından gelen gerçek validator zincirinden kendi zengin hata
+    mesajıyla gelir."""
+
+    try:
+        analysis = load_json(
+            pending_path
+        )
+
+    except Exception as error:
+
+        # Hiç JSON olmayan bir pending de yapısal bir sözleşme
+        # ihlalidir - tipsiz bir JSONDecodeError'ın dışarı kaçmasına
+        # izin verilmez.
+        raise DeadlinePendingContractError() from error
+
+    check_pending_promotion_contract_object(
+        analysis
+    )
+
+    validate_deadline_file(
+        pending_path,
+        case_id,
+    )
+
+    return True
+
+
+# ============================================================
 # APPROVAL SEMANTIC GUARD
 # ============================================================
 
 def validate_approval_semantics(
     analysis,
 ):
+
+    # ADIM 7 / SLICE 2 NOTU: promosyon sözleşmesi kontrolü BİLİNÇLİ
+    # olarak BURAYA KONMADI. Bu fonksiyon `inspect_pending()` üzerinden
+    # UI'ın SALT-GÖRÜNTÜLEME yolunda da çalışır; buraya konsaydı legacy
+    # bir pending avukatın ekranında HİÇ GÖRÜNTÜLENEMEZDİ (yalnız genel
+    # bir hata sayfası). Kapı bunun yerine (a) facade'in
+    # `precondition_callback`'inde - `check_pending_promotion_contract()`,
+    # sıfır journal satırı - ve (b) `run_approve()`'un en başında,
+    # herhangi bir I/O'dan önce uygulanır.
 
     if not isinstance(
         analysis,
@@ -1056,6 +1266,21 @@ def run_approve(
     # always passes BOTH together - they are threaded, unchanged, into
     # write_approval_audit() and become two additive fields on the
     # approval audit record.
+
+    # ADIM 7 / SLICE 2 - promosyon sözleşmesi, writer sınırındaki
+    # İKİNCİ (defense-in-depth) kapı. Koordineli yolda buraya asla
+    # ulaşılmaz: facade'in `precondition_callback`'i aynı kontrolü
+    # SIFIR journal satırıyla daha önce yapar. Bu kontrol, bu
+    # fonksiyonu DOĞRUDAN çağıran (coordinator-sarmalı OLMAYAN, yani
+    # hiçbir journal satırı üretmeyen) bir Python çağıranı için
+    # vardır. Her türlü I/O'dan ÖNCE çalışır: sıfır backup, sıfır
+    # canonical yazımı, sıfır audit.
+    check_pending_promotion_contract(
+        get_pending_path(
+            case_id
+        ),
+        case_id,
+    )
 
     print()
 

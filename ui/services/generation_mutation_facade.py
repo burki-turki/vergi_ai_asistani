@@ -18,6 +18,32 @@
 # case içeriğinden BİZZAT hesapladığı `input_digest`'tir.
 #
 # ACTION FAMILY'LER: `generation.deadline` / `generation.timeline`.
+#
+# ============================================================
+# ADIM 7 / SLICE 2 GÜNCELLEMESİ - bu blok, AŞAĞIDAKİ eski header
+# metninin "`pre_revision` = `input_digest`" diyen HER İFADESİNİ
+# (özellikle ~:17-18, ~:28, ~:71-72, ~:87-88 ve
+# `_compute_generation_snapshot()`'ın docstring'i) DEADLINE AİLESİ
+# İÇİN GEÇERSİZ KILAR ve YERİNE GEÇER. Eski metin `generation.timeline`
+# için AYNEN geçerlidir.
+#
+#   deadline:  pre_revision = sha256(canonical_json({
+#                  "revision_version": "row19c3ci.deadline_revision.v1",
+#                  "input_digest":     <SAF dosya digest'i, v3>,
+#                  "attempt":          <operatör beyanı, >= 1>}))
+#   timeline:  pre_revision = input_digest        (DEĞİŞMEDİ)
+#
+# `input_digest`'in KENDİSİ (`row19c3ci.deadline.v3`) DEĞİŞMEDİ: hâlâ
+# yalnız dosya girdilerini temsil eder, `--expected-input-digest` onunla
+# karşılaştırılır ve generation audit'e `input_digest` ADIYLA O yazılır.
+# `attempt` audit'e AYRI bir alandır. Composite revision dışarıya
+# `input_digest` adıyla ASLA yazılmaz.
+#
+# `_compute_generation_snapshot()`'a da (pre-lock VE kilit-altı) artık
+# revision beslenir - `generation_mutation_adapters._compute_pre_state_
+# proof` `pre_hash` adayını `entry.pre_revision`'dan yeniden kurduğu
+# için ikisinin AYNI değerden türemesi ZORUNLUDUR.
+# ============================================================
 # Kanal ayrımı YOK - bu iki aile YALNIZ CLI'dan erişilebilir
 # (`python -m ui.cli_mutate generation ...`); web mutasyon yüzeyi
 # YOKTUR (bilinçli kapsam dışı).
@@ -49,7 +75,7 @@
 #       * deadline için YALNIZ `judicial_recess_applicable`'ın
 #         deterministik hash'i (`_compute_deadline_generation_
 #         parameters_digest`, `digest_version=
-#         "row19c3ci.deadline_params.v3"` - PILOT READINESS ADIM 5'te
+#         "row19c3ci.deadline_params.v4"` - PILOT READINESS ADIM 5'te
 #         `holiday_dates`/`calendar_complete` TAMAMEN KALDIRILDIĞI için
 #         `v2`'den `v3`'e yükseltildi) - ruleset/provisions/
 #         holiday_calendar ARTIK BU DİGEST'TE DEĞİLDİR (input_digest'e
@@ -568,6 +594,71 @@ def _compute_deadline_generation_parameters_digest(
 
 
 # ----------------------------------------------------------------
+# ADIM 7 / SLICE 2 - COMPOSITE REVISION (deadline ailesine ÖZGÜ)
+#
+# ÜÇ KAVRAM, ÜÇ AYRI NAMESPACE - asla karıştırılmaz:
+#
+#   1. `row19c3ci.deadline.v3`           -> `input_digest`
+#      SAF DOSYA girdisi (case/timeline/ruleset/provisions/takvim).
+#      status/ref/attempt değişince DEĞİŞMEZ. `--expected-input-digest`
+#      bununla karşılaştırılır ve audit'e BU AD ALTINDA bu değer yazılır.
+#
+#   2. `row19c3ci.deadline_params.v4`    -> `generation_parameters_digest`
+#      judicial_recess + stopping_event_status/ref. YALNIZ
+#      `secondary_input_hash` => `request_fingerprint`; kimliğe GİRMEZ.
+#
+#   3. `row19c3ci.deadline_revision.v1`  -> `pre_revision` (AŞAĞIDAKİ)
+#      composite: {revision_version, input_digest, attempt}. Idempotency
+#      slot'u BUNDAN türer (`mutation_guard._identity_fields()`).
+#
+# NEDEN: `secondary_input_hash` kimliğe girmediği için (bilinçli, tüm
+# ailelerde), aynı dosyalarla `unknown` -> `none` düzeltmesi eskiden
+# KALICI `IdempotencyConflictError` üretiyordu ve tek çıkış ilgisiz bir
+# girdi dosyasını değiştirmekti. `attempt` bu kaçışı açık, denetlenebilir
+# ve operatör-beyanlı hale getirir (fact_verification emsali:
+# `compute_identity_payload()` + `--attempt`, otomatik ARTIRILMAZ).
+#
+# DIŞARIYA SIZMA YASAĞI: composite değer `input_digest` ADIYLA hiçbir
+# yere yazılmaz - audit'in `input_digest` alanı (1) numaralı saf dosya
+# digest'idir, `attempt` audit'e AYRI bir alan olarak gider.
+# ----------------------------------------------------------------
+
+DEADLINE_REVISION_VERSION = "row19c3ci.deadline_revision.v1"
+
+
+def _compute_deadline_pre_revision(input_digest: str, attempt: int) -> str:
+    payload = json.dumps(
+        {
+            "revision_version": DEADLINE_REVISION_VERSION,
+            "input_digest": input_digest,
+            "attempt": attempt,
+        },
+        sort_keys=True, separators=(",", ":"), ensure_ascii=True,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _deadline_revision_for(row_key: str, input_digest: str, attempt: int) -> str:
+    """`MutationIntent.pre_revision` olarak kullanılacak değer.
+
+    `deadline` -> composite; `timeline` -> ham `input_digest` (DEĞİŞMEDİ,
+    bayt-bayt aynı davranış).
+
+    KRİTİK: bu dönüş değeri AYNI ZAMANDA `_compute_generation_snapshot()`'a
+    beslenir. Sebep, `generation_mutation_adapters._compute_pre_state_proof`'un
+    adayı `entry.pre_revision`'dan yeniden kurmasıdır (`:294`); facade
+    `pre_hash`'i ham `input_digest`'ten kurarsa ikisi ayrışır ve her
+    deadline satırı için `pre_state_confirmed_unchanged` SESSİZCE ve
+    KALICI olarak `False` olurdu. İkisini de revision'dan beslemek bu
+    yazılı olmayan invariant'ı korur - ve `:1294`'teki
+    `ul_snapshot.input_digest != intent.pre_revision` kontrolü de
+    revision-vs-revision olarak geçerli kalır."""
+    if row_key == "deadline":
+        return _compute_deadline_pre_revision(input_digest, attempt)
+    return input_digest
+
+
+# ----------------------------------------------------------------
 # TIMELINE - sabit, containment-verified path-set taraması (fail-closed,
 # `list_contained_dir()` KULLANILMAZ - bkz. modül header'ı).
 # ----------------------------------------------------------------
@@ -944,6 +1035,7 @@ def _check_argument_shapes(
     for_apply: bool,
     stopping_event_status=None,
     stopping_event_attestation_ref=None,
+    attempt=1,
 ):
     """PILOT READINESS ADIM 5 (bağımsız inceleme §5.3): `holiday_dates`/
     `calendar_complete` parametreleri ve onların timeline-ret dalları
@@ -971,11 +1063,24 @@ def _check_argument_shapes(
                 "stopping_event_attestation_ref parametrelerini KABUL ETMEZ "
                 "(I/O öncesi red)."
             )
+        # ADIM 7 / SLICE 2: composite revision YALNIZ deadline ailesine
+        # aittir; timeline'ın `pre_revision`'ı ham `input_digest` olarak
+        # KALIR. Non-default bir attempt I/O öncesi reddedilir.
+        if attempt != 1:
+            raise GenerationArgumentError(
+                "timeline generation'ı attempt parametresini KABUL ETMEZ (I/O öncesi red)."
+            )
     else:
         if not isinstance(anchor_event_id, str) or not anchor_event_id.strip():
             raise GenerationArgumentError(
                 "deadline generation'ı için anchor_event_id ZORUNLUDUR, boş olamaz."
             )
+
+    # ADIM 7 / SLICE 2 - fact_verification emsaliyle BİREBİR: int, bool
+    # DEĞİL, >= 1. CLI'dan bağımsız İKİNCİ katman (doğrudan Python
+    # çağıranları da kapsar) ve her authz/DB/dosya erişiminden ÖNCE.
+    if not isinstance(attempt, int) or isinstance(attempt, bool) or attempt < 1:
+        raise GenerationArgumentError("attempt >= 1 tam sayı olmalıdır.")
 
     if for_apply and (not isinstance(expected_input_digest, str) or not expected_input_digest.strip()):
         raise GenerationArgumentError("expected_input_digest apply için zorunlu, boş olamaz.")
@@ -1099,6 +1204,7 @@ def apply_generation(
     judicial_recess_applicable=None,
     stopping_event_status=None,
     stopping_event_attestation_ref=None,
+    attempt=1,
     principal,
     authz_repository=None,
     conn_factory=None,
@@ -1127,6 +1233,7 @@ def apply_generation(
         expected_input_digest, for_apply=True,
         stopping_event_status=stopping_event_status,
         stopping_event_attestation_ref=stopping_event_attestation_ref,
+        attempt=attempt,
     )
     module = importlib.import_module(GENERATION_ROW_KEY_TO_MODULE_NAME[row_key])
     deadline_validator = importlib.import_module("deadline_validator") if row_key == "deadline" else None
@@ -1196,7 +1303,13 @@ def apply_generation(
                 "İşlem iptal edildi, HİÇBİR değişiklik yapılmadı."
             )
 
-        pre_snapshot = _compute_generation_snapshot(input_digest, pre_paths.pending_path)
+        # ADIM 7 / SLICE 2: snapshot'a ham `input_digest` DEĞİL, composite
+        # revision beslenir (deadline'da; timeline'da ikisi AYNIDIR).
+        # Gerekçe `_deadline_revision_for()`'un docstring'inde: adapter
+        # `pre_hash` adayını `entry.pre_revision`'dan yeniden kurar, bu
+        # yüzden facade `pre_hash`'i de AYNI değerden kurmak ZORUNDADIR.
+        pre_revision = _deadline_revision_for(row_key, input_digest, attempt)
+        pre_snapshot = _compute_generation_snapshot(pre_revision, pre_paths.pending_path)
 
         intent = MutationIntent(
             actor_type="iam_user",
@@ -1206,7 +1319,7 @@ def apply_generation(
             target_ref=target_ref,
             target_state=TARGET_STATE,
             pre_hash=pre_snapshot.composite_digest,
-            pre_revision=input_digest,
+            pre_revision=pre_revision,
             secondary_input_hash=generation_parameters_digest,
         )
         idempotency_key_for_audit = compute_idempotency_key(intent)
@@ -1285,7 +1398,14 @@ def apply_generation(
                 under_lock_box["document_paths"] = ul_document_paths
                 under_lock_box["facts_paths"] = ul_facts_paths
 
-            ul_snapshot = _compute_generation_snapshot(ul_input_digest, ul_paths.pending_path)
+            # ADIM 7 / SLICE 2: pre-lock ile AYNI formül - revision'dan.
+            # Böylece aşağıdaki iki kontrol de anlamını KORUR: `:1289`
+            # composite-vs-composite, `:1294` revision-vs-revision. Aynı
+            # `attempt` altında `ul_revision != intent.pre_revision`
+            # ancak ve ancak `ul_input_digest != input_digest` ise olur,
+            # yani gerçek bir girdi değişikliği hâlâ yakalanır.
+            ul_revision = _deadline_revision_for(row_key, ul_input_digest, attempt)
+            ul_snapshot = _compute_generation_snapshot(ul_revision, ul_paths.pending_path)
             if ul_snapshot.composite_digest != pre_snapshot.composite_digest:
                 raise PreconditionRaceDetectedError(
                     "Bu generation isteği case kilidini beklerken girdi/pending durumu DEĞİŞTİ. "
@@ -1361,6 +1481,11 @@ def apply_generation(
                             pre_commit_callback=pre_commit_callback,
                             stopping_event_status=stopping_event_status,
                             stopping_event_attestation_ref=stopping_event_attestation_ref,
+                            # ADIM 7 / SLICE 2: audit'e AYRI bir alan
+                            # olarak gider. `input_digest` YUKARIDA hâlâ
+                            # SAF dosya digest'idir - composite revision
+                            # o adla ASLA yayımlanmaz.
+                            attempt=attempt,
                         )
             else:
                 with contextlib.redirect_stdout(stdout_capture):

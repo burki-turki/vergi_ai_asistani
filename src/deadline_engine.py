@@ -671,6 +671,7 @@ def write_pending(
     holiday_calendar_version=None,
     stopping_event_status=None,
     stopping_event_attestation_ref=None,
+    attempt=None,
 ):
 
     mutation_binding_provided = (
@@ -692,6 +693,31 @@ def write_pending(
                 "anchor_event_id/input_digest/"
                 "generation_parameters_digest/mutation_resource_key/"
                 "mutation_actor_ref de verilmelidir (kısmi "
+                "mutation-binding kabul edilmez)."
+            )
+
+        # ADIM 7 / SLICE 2 - `attempt` composite `pre_revision`'ın
+        # (dolayısıyla idempotency slot'unun) bir bileşenidir; audit
+        # onu taşımazsa "hangi revizyon hangi status/ref ile yazıldı?"
+        # sorusu provenance'tan CEVAPLANAMAZ. Bu yüzden mutation
+        # binding verildiğinde ZORUNLUDUR (aynı all-or-nothing
+        # disiplini). Ayrı bir kontrol olarak yazılır ki hata mesajı
+        # eksik olanın tam olarak `attempt` olduğunu söylesin.
+        if (
+            not isinstance(
+                attempt,
+                int,
+            )
+            or isinstance(
+                attempt,
+                bool,
+            )
+            or attempt < 1
+        ):
+
+            raise DeadlineEngineError(
+                "mutation_idempotency_key verildiğinde attempt "
+                ">= 1 tam sayı olarak da verilmelidir (kısmi "
                 "mutation-binding kabul edilmez)."
             )
 
@@ -851,6 +877,13 @@ def write_pending(
                 # `unknown` dallarında da SESSİZCE SİLİNMEZ.
                 "stopping_event_status": stopping_event_status,
                 "stopping_event_attestation_ref": stopping_event_attestation_ref,
+                # ADIM 7 / SLICE 2: composite `pre_revision`'ın
+                # (`row19c3ci.deadline_revision.v1`) attempt bileşeni.
+                # `input_digest` YUKARIDA hâlâ SAF DOSYA digest'idir
+                # (`row19c3ci.deadline.v3`) - composite revision o adla
+                # ASLA yayımlanmaz. İkisi birlikte, journal'daki
+                # `pre_revision`'ı audit'ten yeniden türetilebilir kılar.
+                "attempt": attempt,
                 "first_write": first_write,
                 "history_backup_path": history_backup_path,
                 "history_backup_sha256": history_backup_sha256,
@@ -929,6 +962,7 @@ def run_engine(
     pre_commit_callback=None,
     stopping_event_status=None,
     stopping_event_attestation_ref=None,
+    attempt=None,
 ):
     """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete` elle
     beyan parametreleri TAMAMEN KALKTI, yerine `holiday_calendar_path`
@@ -1060,6 +1094,9 @@ def run_engine(
 
         mutation_actor_ref=
             mutation_actor_ref,
+
+        attempt=
+            attempt,
 
         pre_commit_callback=
             pre_commit_callback,

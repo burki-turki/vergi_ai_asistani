@@ -15,6 +15,7 @@
 # ============================================================
 
 import hashlib
+import inspect
 import json
 import os
 import shutil
@@ -296,7 +297,9 @@ def preview(row_key, case_id, *, anchor_event_id=None, principal, repo, ruleset_
 
 def apply(row_key, case_id, expected_input_digest, *, anchor_event_id=None,
           judicial_recess_applicable=None, principal, repo, conn=None,
-          ruleset_path=None, provisions_path=None, holiday_calendar_path=None):
+          ruleset_path=None, provisions_path=None, holiday_calendar_path=None,
+          stopping_event_status=None, stopping_event_attestation_ref=None,
+          attempt=1):
     """PILOT READINESS ADIM 5: `holiday_dates`/`calendar_complete` kwarg'ları
     TAMAMEN KALDIRILDI - `gen.apply_generation()` artık bu iki parametreyi
     KABUL ETMEZ (K4). `holiday_calendar_path` yeni test-injection seam'i,
@@ -311,6 +314,9 @@ def apply(row_key, case_id, expected_input_digest, *, anchor_event_id=None,
         anchor_event_id=anchor_event_id, judicial_recess_applicable=judicial_recess_applicable,
         principal=principal, authz_repository=repo, conn_factory=conn_factory,
         ruleset_path=ruleset_path, provisions_path=provisions_path, holiday_calendar_path=holiday_calendar_path,
+        stopping_event_status=stopping_event_status,
+        stopping_event_attestation_ref=stopping_event_attestation_ref,
+        attempt=attempt,
     )
     return result, conn
 
@@ -1332,6 +1338,273 @@ else:
         "SLICE 1: timeline ailesi stopping_event_status'u I/O ONCESI reddeder",
         False, "GenerationArgumentError firlatilmadi",
     )
+
+
+# ================================================================
+# ADIM 7 / SLICE 2 - ÜÇ NAMESPACE, COMPOSITE REVISION, ATTEMPT
+# ================================================================
+
+# --- S1: üç version literali ayrı ayrı pinli VE karşılıklı farklı ---
+_raw_digest_probe = gen._compute_deadline_input_digest(b"c", b"t", b"r", b"p", b"h")
+_params_probe = gen._compute_deadline_generation_parameters_digest(True)
+_revision_probe = gen._compute_deadline_pre_revision(_raw_digest_probe, 1)
+
+check(
+    "S1a raw input digest namespace'i SABİT: row19c3ci.deadline.v3 "
+    "(v4'e YÜKSELTİLMEDİ)",
+    '"digest_version": "row19c3ci.deadline.v3"'
+    in inspect.getsource(gen._compute_deadline_input_digest),
+)
+check(
+    "S1b params digest namespace'i SABİT: row19c3ci.deadline_params.v4",
+    '"digest_version": "row19c3ci.deadline_params.v4"'
+    in inspect.getsource(gen._compute_deadline_generation_parameters_digest),
+)
+check(
+    "S1c composite revision namespace'i: row19c3ci.deadline_revision.v1",
+    gen.DEADLINE_REVISION_VERSION == "row19c3ci.deadline_revision.v1",
+    gen.DEADLINE_REVISION_VERSION,
+)
+check(
+    "S1d 'row19c3ci.deadline.v4' literali kod tabanında HİÇ YOK",
+    "row19c3ci.deadline.v4" not in inspect.getsource(gen),
+)
+check(
+    "S1e üç değer birbirinden FARKLI (namespace ayrımı gerçekten çalışıyor)",
+    len({_raw_digest_probe, _params_probe, _revision_probe}) == 3,
+)
+
+# --- S2: digest matrisi (a)-(c) ---
+_d_none_r1 = gen._compute_deadline_generation_parameters_digest(True, "none", "R1")
+_d_present_r1 = gen._compute_deadline_generation_parameters_digest(True, "present", "R1")
+_d_none_r2 = gen._compute_deadline_generation_parameters_digest(True, "none", "R2")
+_d_none_r1_again = gen._compute_deadline_generation_parameters_digest(True, "none", "R1")
+
+check(
+    "S2a aynı dosyalar + none/R1 vs present/R1 -> input_digest AYNI, "
+    "parameters_digest FARKLI",
+    _d_none_r1 != _d_present_r1,
+)
+check(
+    "S2b aynı dosyalar + none/R1 vs none/R2 -> parameters_digest FARKLI",
+    _d_none_r1 != _d_none_r2,
+)
+check(
+    "S2c aynı dosyalar + aynı parametre -> iki digest de AYNI",
+    _d_none_r1 == _d_none_r1_again,
+)
+check(
+    "S2d status/ref DEĞİŞİMİ raw input_digest'i ETKİLEMEZ "
+    "(dosya girdileri değişmedi)",
+    gen._compute_deadline_input_digest(b"c", b"t", b"r", b"p", b"h") == _raw_digest_probe,
+)
+check(
+    "S2e attempt DEĞİŞİMİ raw input_digest'i ETKİLEMEZ, composite revision'ı DEĞİŞTİRİR",
+    gen._compute_deadline_pre_revision(_raw_digest_probe, 2) != _revision_probe,
+)
+check(
+    "S2f aynı input_digest + aynı attempt -> AYNI composite revision (deterministik)",
+    gen._compute_deadline_pre_revision(_raw_digest_probe, 1) == _revision_probe,
+)
+check(
+    "S2g (d) eski raw pre_revision (=ham input_digest) ile yeni composite FARKLI "
+    "-> eski v3 journal satırı yeni pending olarak REPLAY EDİLEMEZ",
+    _revision_probe != _raw_digest_probe,
+)
+check(
+    "S2h timeline'ın pre_revision'ı ham input_digest OLARAK KALIR (bayt-değişmez)",
+    gen._deadline_revision_for("timeline", _raw_digest_probe, 1) == _raw_digest_probe
+    and gen._deadline_revision_for("deadline", _raw_digest_probe, 1) == _revision_probe,
+)
+
+# --- S3: facade <-> adapter coupling + drift canary (BUGÜN YOKTU) ---
+check(
+    "S3a drift canary: facade._SNAPSHOT_VERSION == adapters._SNAPSHOT_VERSION",
+    gen._SNAPSHOT_VERSION == gen_adapters._SNAPSHOT_VERSION,
+    f"{gen._SNAPSHOT_VERSION} vs {gen_adapters._SNAPSHOT_VERSION}",
+)
+_coupling_snapshot = gen._compute_generation_snapshot(_revision_probe, Path("does_not_exist_xyz"))
+check(
+    "S3b pre_hash coupling: adapters._compute_candidate_pre_hash(pre_revision, ...) "
+    "== facade'in pre_hash'i (Kırılma 2 regresyonu)",
+    gen_adapters._compute_candidate_pre_hash(
+        _revision_probe,
+        _coupling_snapshot.pending_presence,
+        _coupling_snapshot.pending_sha256,
+    ) == _coupling_snapshot.composite_digest,
+)
+check(
+    "S3c snapshot'a beslenen değer `pre_revision`'dır (ham input_digest DEĞİL) - "
+    "ham digest beslenseydi coupling KIRILIRDI",
+    gen._compute_generation_snapshot(
+        _raw_digest_probe, Path("does_not_exist_xyz")
+    ).composite_digest != _coupling_snapshot.composite_digest,
+)
+
+# --- S4: attempt usage-shape (I/O ÖNCESİ, facade katmanı) ---
+for _bad, _why in (
+    (0, "0"), (-1, "negatif"), (True, "bool"), ("1", "string"), (1.0, "float"),
+):
+    expect_raises(
+        gen.GenerationArgumentError,
+        lambda b=_bad: gen._check_argument_shapes(
+            "deadline", ANCHOR_EVENT_ID, None, "x" * 64, for_apply=True, attempt=b,
+        ),
+        f"S4 attempt={_why} -> GenerationArgumentError (I/O öncesi)",
+    )
+expect_raises(
+    gen.GenerationArgumentError,
+    lambda: gen._check_argument_shapes(
+        "timeline", None, None, "x" * 64, for_apply=True, attempt=2,
+    ),
+    "S4 timeline ailesi non-default attempt'i I/O ÖNCESİ reddeder",
+)
+
+# --- S5: attempt davranış matrisi (gerçek apply, fake conn) ---
+# Bu blok yukarıdaki `finally:`den SONRA çalıştığı için sahte kilit
+# fonksiyonlarını KENDİSİ yeniden kurar ve kendi case dizinlerini
+# KENDİSİ temizler (gerçek `data/` ağacına dokunmaz).
+ml.acquire_case_lock_session = _fake_acquire
+ml.release_lock_session = _fake_release
+_slice2_case_dirs = []
+
+_case_s5, _dir_s5 = make_generation_case()
+_slice2_case_dirs.append(_dir_s5)
+_pri_s5, _repo_s5 = make_principal_and_repo(_case_s5)
+_prev_s5 = preview("deadline", _case_s5, anchor_event_id=ANCHOR_EVENT_ID,
+                   principal=_pri_s5, repo=_repo_s5)
+_conn_s5 = FakeJournalConn()
+
+_r1_s5, _ = apply(
+    "deadline", _case_s5, _prev_s5["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+    principal=_pri_s5, repo=_repo_s5, conn=_conn_s5,
+    stopping_event_status="unknown", attempt=1,
+)
+_rows_after_first = len(_conn_s5.table)
+check(
+    "S5a attempt=1 + unknown -> gerçek mutasyon, tek journal satırı",
+    _rows_after_first == 1,
+    _rows_after_first,
+)
+
+_r2_s5, _ = apply(
+    "deadline", _case_s5, _prev_s5["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+    principal=_pri_s5, repo=_repo_s5, conn=_conn_s5,
+    stopping_event_status="unknown", attempt=1,
+)
+check(
+    "S5b attempt=1 + AYNI parametre -> deterministik safe-replay (yeni satır YOK)",
+    len(_conn_s5.table) == _rows_after_first,
+    len(_conn_s5.table),
+)
+
+expect_raises(
+    mc.IdempotencyConflictError,
+    lambda: apply(
+        "deadline", _case_s5, _prev_s5["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+        principal=_pri_s5, repo=_repo_s5, conn=_conn_s5,
+        stopping_event_status="none", stopping_event_attestation_ref="AV-R",
+        attempt=1,
+    ),
+    "S5c attempt=1 + FARKLI parametre -> deterministik conflict "
+    "(sessiz overwrite YOK)",
+)
+check(
+    "S5d conflict SIFIR yeni journal satırı bıraktı",
+    len(_conn_s5.table) == _rows_after_first,
+    len(_conn_s5.table),
+)
+
+_r3_s5, _ = apply(
+    "deadline", _case_s5, _prev_s5["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+    principal=_pri_s5, repo=_repo_s5, conn=_conn_s5,
+    stopping_event_status="none", stopping_event_attestation_ref="AV-R",
+    attempt=2,
+)
+check(
+    "S5e attempt=2 + none/geçerli ref -> AÇIK yeni revision, gerçek writer koştu "
+    "(ilgisiz HİÇBİR girdi dosyası değiştirilmeden)",
+    len(_conn_s5.table) == _rows_after_first + 1,
+    len(_conn_s5.table),
+)
+check(
+    "S5f iki satırın pre_revision'ı FARKLI, ama ikisi de composite (ham "
+    "input_digest DEĞİL)",
+    _conn_s5.table[0]["pre_revision"] != _conn_s5.table[1]["pre_revision"]
+    and _prev_s5["input_digest"] not in (
+        _conn_s5.table[0]["pre_revision"], _conn_s5.table[1]["pre_revision"],
+    ),
+)
+check(
+    "S5g idempotency_key'ler de FARKLI (gerçek yeni slot)",
+    _conn_s5.table[0]["idempotency_key"] != _conn_s5.table[1]["idempotency_key"],
+)
+
+_before_replay2 = len(_conn_s5.table)
+apply(
+    "deadline", _case_s5, _prev_s5["input_digest"], anchor_event_id=ANCHOR_EVENT_ID,
+    principal=_pri_s5, repo=_repo_s5, conn=_conn_s5,
+    stopping_event_status="none", stopping_event_attestation_ref="AV-R",
+    attempt=2,
+)
+check(
+    "S5h attempt=2 + aynı parametre -> deterministik safe-replay",
+    len(_conn_s5.table) == _before_replay2,
+)
+
+# --- S6: audit `attempt` + saf `input_digest` bir arada ---
+_audit_dir_s6 = _dir_s5 / "deadlines" / "generation_reviews"
+_audits_s6 = sorted(_audit_dir_s6.glob("*.generation_audit.json"))
+check(
+    "S6a her gerçek yazım için bir generation audit kaydı var",
+    len(_audits_s6) >= 2,
+    len(_audits_s6),
+)
+_rec_s6 = [json.loads(p.read_text(encoding="utf-8")) for p in _audits_s6]
+check(
+    "S6b audit `attempt` alanını TAŞIYOR (provenance'tan cevaplanabilir)",
+    sorted(r["attempt"] for r in _rec_s6) == [1, 2],
+    [r.get("attempt") for r in _rec_s6],
+)
+check(
+    "S6c audit'in `input_digest` alanı SAF DOSYA digest'idir - composite "
+    "revision o adla ASLA yayımlanmaz",
+    all(r["input_digest"] == _prev_s5["input_digest"] for r in _rec_s6),
+)
+check(
+    "S6d audit stopping alanlarını VERBATIM taşır (ham operatör beyanı)",
+    {(r["attempt"], r["stopping_event_status"], r["stopping_event_attestation_ref"])
+     for r in _rec_s6}
+    == {(1, "unknown", None), (2, "none", "AV-R")},
+    [(r["attempt"], r["stopping_event_status"], r["stopping_event_attestation_ref"])
+     for r in _rec_s6],
+)
+check(
+    "S6e audit'teki (input_digest, attempt) ikilisinden journal'ın pre_revision'ı "
+    "YENİDEN TÜRETİLEBİLİR",
+    {gen._compute_deadline_pre_revision(r["input_digest"], r["attempt"]) for r in _rec_s6}
+    == {row["pre_revision"] for row in _conn_s5.table},
+)
+
+# --- S7: canonical alanlar pending'e GERÇEKTEN yazıldı ---
+_pending_s7 = json.loads(
+    (_dir_s5 / "deadlines" / f"deadline_{_case_s5}_v1.json.pending").read_text(encoding="utf-8")
+)
+check(
+    "S7 attempt=2 revizyonunun pending'i canonical stopping alanlarını taşıyor",
+    all(
+        "stopping_event_status" in d and "stopping_event_attestation_ref" in d
+        for d in _pending_s7["deadlines"]
+    )
+    and _pending_s7["deadlines"][0]["stopping_event_status"] == "none"
+    and _pending_s7["deadlines"][0]["stopping_event_attestation_ref"] == "AV-R",
+    _pending_s7["deadlines"][0],
+)
+
+ml.acquire_case_lock_session = _original_acquire
+ml.release_lock_session = _original_release
+for _d in _slice2_case_dirs:
+    shutil.rmtree(_d, ignore_errors=True)
 
 
 _data_tree_after_everything = snapshot_data_tree()

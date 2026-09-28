@@ -647,6 +647,31 @@ def make_case(base_name, *, pending_content=None):
 
     if pending_content is not None:
         pending_path.write_text(pending_content, encoding="utf-8")
+    else:
+        # ADIM 7 / SLICE 2 - MEKANİK FIXTURE UYUMU.
+        #
+        # Kopyalanan `case_0001` pending'i Slice 2 ÖNCESİ üretilmiştir
+        # ve iki canonical stopping alanını TAŞIMAZ; Slice 2'nin
+        # promosyon sözleşmesi kapısı (facade'in `precondition_
+        # callback`'i) onu haklı olarak REDDEDER. Bu senaryoların
+        # konusu stopping-event DEĞİL, coordinator/journal/writer
+        # davranışıdır - bu yüzden pending'e iki alan eklenir.
+        #
+        # `expected_hash` AŞAĞIDA dosyadan TÜRETİLDİĞİ için elle hash
+        # yeniden hesaplaması GEREKMEZ; enjeksiyon o satırdan ÖNCE
+        # yapıldığı sürece `StaleViewError` OLUŞMAZ.
+        #
+        # `pending_content` verilen (writer-failure) senaryo BİLİNÇLİ
+        # olarak DIŞARIDA bırakılır: orada amaç zaten gerçek
+        # validator'ın belgeyi reddetmesidir.
+        _doc = json.loads(pending_path.read_text(encoding="utf-8"))
+        for _record in _doc.get("deadlines", []):
+            _record.setdefault("stopping_event_status", "unknown")
+            _record.setdefault("stopping_event_attestation_ref", None)
+        pending_path.write_text(
+            json.dumps(_doc, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
 
     return {
         "case_id": case_id,
@@ -1088,37 +1113,80 @@ try:
     # journal row must end up 'reconciliation_required', NEVER 'failed'.
     # ============================================================
 
-    fx5 = make_case("case_pgint_writerfail", pending_content='{"deadline_analysis_id": "not-valid-at-all"}')
+    # ADIM 7 / SLICE 2 DÜZELTMESİ: bu senaryo eskiden precondition'ı
+    # GEÇERLİ ama İÇERİĞİ GEÇERSİZ bir belgeyle ("not-valid-at-all")
+    # kuruluyordu ve writer başarısızlığını gerçek validator'ın
+    # reddine dayandırıyordu. Slice 2 ile validator/şema/stopping
+    # sözleşmesi ARTIK PRECONDITION'DA çalıştığı için o belge writer'a
+    # HİÇ ULAŞAMAZ. Senaryonun ASIL konusu ("writer sınırı aşıldıktan
+    # SONRAKİ bir istisna `reconciliation_required` üretir, ASLA
+    # `failed` değil") korunmalı - bu yüzden iki davranış kesin olarak
+    # AYRILDI:
+    #
+    #   A) precondition/validator reddi -> journal ve writer ÖNCESİ,
+    #      sıfır yan etki (aşağıdaki ADIM 7 / SLICE 2 bölümü),
+    #   B) TAMAMEN GEÇERLİ bir belge + KASITLI olarak enjekte edilmiş
+    #      writer başarısızlığı -> mevcut `reconciliation_required`
+    #      semantiği (BU senaryo).
+    #
+    # Hiçbir assertion silinmedi/gevşetilmedi; yalnız başarısızlığın
+    # KAYNAĞI, gerçek writer katmanını izole edecek şekilde değişti.
+    fx5 = make_case("case_pgint_writerfail")
     principal5, repo5 = make_principal_and_repo(fx5["case_id"])
     writer_state["calls"] = 0
     writer_state["fault"] = None
 
     check(
-        "scenario 5 preflight: the request's expected_hash really matches the (invalid) pending "
+        "scenario 5 preflight: the request's expected_hash really matches the pending "
         "document, so the facade's own precondition genuinely passes",
         fx5["expected_hash"] == sha256_file(fx5["pending_path"]),
     )
+    # Precondition'ın GERÇEKTEN geçtiğini ayrıca, doğrudan kanıtla:
+    # üretim kapısının KENDİSİ bu belge üzerinde hata fırlatmıyor.
+    _precondition_ok5 = True
+    try:
+        deadline_approval.check_pending_promotion_contract(
+            fx5["pending_path"], fx5["case_id"],
+        )
+    except Exception as _exc5:
+        _precondition_ok5 = False
+        _precondition_detail5 = repr(_exc5)
+    check(
+        "scenario 5 preflight: the REAL Slice 2 promotion precondition (schema + semantic "
+        "validator + stopping-event contract) PASSES on this document - so anything that "
+        "fails below is genuinely a WRITER-layer failure, not a precondition rejection",
+        _precondition_ok5,
+        "" if _precondition_ok5 else _precondition_detail5,
+    )
 
-    # The REAL exception here is `deadline_validator.DeadlineValidationError`,
-    # raised by the real `validate_deadline_analysis(raise_on_error=True)`
-    # call inside the real `deadline_approval.inspect_pending()` - NOT
-    # `deadline_approval`'s own wrapper class, which only fires for a
-    # `valid=False` RESULT rather than a raised validation error. Both
-    # are accepted here because which of the two the real chain raises
-    # is Row 8's own internal business (and either one is equally a
-    # "the writer raised" case from the coordinator's point of view) -
-    # but a generic `Exception` is deliberately NOT accepted, so an
-    # unrelated failure (a TypeError from a bad signature, say) could
-    # never masquerade as this scenario passing.
+    # Writer sınırının ÖTESİNDE, kasıtlı, enjekte edilmiş bir
+    # başarısızlık. `"before"` faultu gerçek `run_approve()`'u HİÇ
+    # çağırmaz -> hiçbir canonical/backup/audit yan etkisi olmadan
+    # writer sınırının aşıldığı kanıtlanır.
+    writer_state["fault"] = "before"
+
+    # Enjekte edilen fault `RuntimeError`'dır. Generic `Exception`
+    # BİLİNÇLİ olarak kabul edilmez: ilgisiz bir hata (ör. bozuk bir
+    # imzadan gelen `TypeError`) bu senaryoyu geçmiş gibi
+    # GÖSTEREMEZ. Ayrıca mesaj, faultun TAM OLARAK enjekte ettiğimiz
+    # fault olduğunu pinler - bir precondition reddi (ki o
+    # `DeadlinePendingContractError`/`DeadlineValidationError`
+    # olurdu) buraya ASLA karışamaz.
     writer_error5 = expect_raises(
-        (deadline_approval.DeadlineApprovalError, _deadline_validator.DeadlineValidationError),
+        RuntimeError,
         lambda: approve(fx5, principal5, repo5),
-        "scenario 5: the REAL writer's OWN domain exception propagates out of the facade unchanged",
+        "scenario 5: the writer-boundary exception propagates out of the facade unchanged",
     )
     check(
-        "scenario 5: that exception really came from the REAL deadline validator chain (its message "
-        "names the real validator), and was neither swallowed nor reclassified by the coordinator",
-        writer_error5 is not None and "DEADLINE VALIDATOR" in str(writer_error5),
+        "scenario 5: that exception really is the INJECTED writer-layer fault (not a precondition "
+        "rejection, not a validator error), and was neither swallowed nor reclassified by the "
+        "coordinator",
+        writer_error5 is not None
+        and "INJECTED FAULT (before)" in str(writer_error5)
+        and not isinstance(
+            writer_error5,
+            (deadline_approval.DeadlineApprovalError, _deadline_validator.DeadlineValidationError),
+        ),
         f"error={writer_error5!r}",
     )
     check(
@@ -1153,9 +1221,26 @@ try:
 
     # --- The resource is now GATED for real. A new, DIFFERENT request
     #     on the same case is refused by the real journal gate. ---
+    # ADIM 7 / SLICE 2: bu takip adımı eskiden pending'i GEÇERSİZ bir
+    # belgeyle ("still-not-valid") değiştiriyordu. Artık belge GEÇERLİ
+    # kalır ve yalnız zararsız bir alan (`notes`) değiştirilerek FARKLI
+    # bir identity üretilir - böylece kanıtlanan şey KESİNLİKLE journal
+    # gate'idir (`_journal_gate_check`, adım 3), bir validator reddi
+    # (adım 5) DEĞİL.
     fx5_retry_hash = fx5["expected_hash"]
-    fx5["pending_path"].write_text('{"deadline_analysis_id": "still-not-valid"}', encoding="utf-8")
+    _doc5 = json.loads(fx5["pending_path"].read_text(encoding="utf-8"))
+    _doc5["notes"] = (_doc5.get("notes") or "") + " [gate-retry]"
+    fx5["pending_path"].write_text(
+        json.dumps(_doc5, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+    )
     fx5["expected_hash"] = sha256_file(fx5["pending_path"])
+    check(
+        "scenario 5 follow-up preflight: the retry document is STILL fully valid under the Slice 2 "
+        "precondition - so the refusal below can only be the journal gate",
+        deadline_approval.check_pending_promotion_contract(
+            fx5["pending_path"], fx5["case_id"],
+        ) is True,
+    )
     expect_raises(
         mutcoord.ResourceGatedError,
         lambda: approve(fx5, principal5, repo5),
@@ -1165,6 +1250,9 @@ try:
         "scenario 5: the gate refusal added no journal row and did not re-invoke the writer",
         len(journal_rows(fx5["resource_key"])) == 1 and writer_state["calls"] == 1,
     )
+    # Enjekte edilen faultu KAPAT - sonraki senaryolar gerçek writer'ı
+    # kullanır.
+    writer_state["fault"] = None
 
     # ============================================================
     # SCENARIO 6 - NO INFORMATION LEAK FROM A GATED RESOURCE. An
@@ -2048,6 +2136,192 @@ try:
         if os.path.lexists(a2_carry_dir):
             os.rmdir(a2_carry_dir)
         shutil.rmtree(a2_outside_root, ignore_errors=True)
+
+    # ============================================================
+    # ADIM 7 / SLICE 2 - LEGACY PENDING PROMOTION GATE
+    #
+    # Slice 2 ÖNCESİ üretilmiş (iki canonical stopping alanını
+    # TAŞIMAYAN) bir pending promote EDİLEMEZ. Kritik olan yalnız
+    # reddin kendisi DEĞİL, SIFIR YAN ETKİ olmasıdır: kapı facade'in
+    # `precondition_callback`'inde, `_insert_prepared`'dan ÖNCE
+    # çalışır, bu yüzden journal'da HİÇBİR satır kalmaz ve case
+    # `_journal_gate_check` tarafından KİLİTLENMEZ.
+    # ============================================================
+
+    deadline_approval.run_approve = _REAL_RUN_APPROVE
+
+    def _reject_is_not_gated(fixture, principal, repo):
+        """İkinci bir istek: `ResourceGatedError` ALMAMALI. Aynı
+        fail-closed reddi tekrar almak BEKLENEN sonuçtur - kanıtlanan
+        şey, ilk reddin case'i kalıcı olarak KİLİTLEMEDİĞİDİR."""
+        try:
+            approve(fixture, principal, repo)
+        except mutcoord.ResourceGatedError:
+            return False
+        except (
+            deadline_approval.DeadlineApprovalError,
+            _deadline_validator.DeadlineValidationError,
+        ):
+            return True
+        except Exception:
+            return False
+        return True
+
+    def _rewrite_pending(fixture, mutate):
+        """`mutate` pending belgesini yerinde değiştirir; ham string
+        döndürürse o AYNEN yazılır (JSON olmayan/root-dict olmayan
+        belgeler için)."""
+        raw = fixture["pending_path"].read_text(encoding="utf-8")
+        result = mutate(json.loads(raw))
+        if isinstance(result, str):
+            fixture["pending_path"].write_text(result, encoding="utf-8")
+        else:
+            fixture["pending_path"].write_text(
+                json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+            )
+        fixture["expected_hash"] = sha256_file(fixture["pending_path"])
+
+    def _drop_keys(*keys):
+        def _m(doc):
+            for rec in doc["deadlines"]:
+                for k in keys:
+                    rec.pop(k, None)
+            return doc
+        return _m
+
+    def _set_field(key, value):
+        def _m(doc):
+            for rec in doc["deadlines"]:
+                rec[key] = value
+            return doc
+        return _m
+
+    _CONTRACT_ERR = deadline_approval.DeadlinePendingContractError
+    _VALIDATOR_ERRS = (
+        deadline_approval.DeadlineApprovalError,
+        _deadline_validator.DeadlineValidationError,
+    )
+
+    # §E'nin SEKİZ koşulunun TAMAMI. Her satır için sıfır yan etki
+    # mekanik olarak kanıtlanır.
+    _GATE_MATRIX = (
+        ("S2-G1 (1) root dict değil",
+         lambda doc: '"not-a-dict-at-all"\n', _CONTRACT_ERR),
+        ("S2-G2 (2) `deadlines` alanı YOK",
+         lambda doc: {k: v for k, v in doc.items() if k != "deadlines"}, _CONTRACT_ERR),
+        ("S2-G3 (2) `deadlines` list DEĞİL",
+         lambda doc: dict(doc, deadlines="not-a-list"), _CONTRACT_ERR),
+        ("S2-G4 (3) entry şema sözleşmesini geçmiyor (zorunlu alan silinmiş)",
+         _drop_keys("calculation_state"), _VALIDATOR_ERRS),
+        ("S2-G5 (4) `stopping_event_status` anahtarı fiziksel olarak YOK",
+         _drop_keys("stopping_event_status"), _CONTRACT_ERR),
+        ("S2-G6 (5) `stopping_event_attestation_ref` anahtarı fiziksel olarak YOK",
+         _drop_keys("stopping_event_attestation_ref"), _CONTRACT_ERR),
+        ("S2-G7 (4+5) İKİ anahtar da YOK (gerçek legacy pending)",
+         _drop_keys("stopping_event_status", "stopping_event_attestation_ref"), _CONTRACT_ERR),
+        ("S2-G8 (6) status enum DIŞINDA",
+         _set_field("stopping_event_status", "bogus"), _CONTRACT_ERR),
+        ("S2-G9 (7) ref tipi geçersiz (int)",
+         _set_field("stopping_event_attestation_ref", 12345), _CONTRACT_ERR),
+        ("S2-G10 (8) diğer semantic-validator kuralı başarısız "
+         "(calculation_state enum dışı)",
+         _set_field("calculation_state", "totally_bogus_state"), _VALIDATOR_ERRS),
+    )
+
+    for _i, (_label, _mutate, _expected_exc) in enumerate(_GATE_MATRIX):
+        fx_s2 = make_case(f"case_pgint_s2gate{_i}")
+        _rewrite_pending(fx_s2, _mutate)
+        writer_state["calls"] = 0
+        _canon_before = fx_s2["canonical_path"].exists()
+        _reviews_dir = deadline_approval.get_reviews_dir(fx_s2["case_id"])
+        _pending_sha_before = sha256_file(fx_s2["pending_path"])
+        principal_s2, repo_s2 = make_principal_and_repo(fx_s2["case_id"])
+
+        _raised = None
+        try:
+            approve(fx_s2, principal_s2, repo_s2)
+        except _VALIDATOR_ERRS as exc:
+            # `DeadlinePendingContractError` bu demetin bir ALT SINIFI
+            # olduğu için her iki sınıf da buraya düşer; tip ayrımı
+            # aşağıda AÇIKÇA assert edilir. Generic `Exception`
+            # BİLİNÇLİ olarak yakalanmaz.
+            _raised = exc
+
+        check(
+            f"{_label} -> fail-closed red, beklenen sınıf",
+            _raised is not None and isinstance(_raised, _expected_exc),
+            f"{type(_raised).__name__}: {str(_raised)[:120]}",
+        )
+        if _expected_exc is _CONTRACT_ERR:
+            check(
+                f"{_label} -> sabit (pinned) refusal mesajı",
+                str(_raised) == deadline_approval.PENDING_CONTRACT_REFUSAL_MESSAGE,
+                str(_raised)[:160],
+            )
+        # --- §E'nin SEKİZ güvencesi, vaka başına AYRI AYRI pinlenir.
+        #     10 vaka x 8 güvence = 80 GUARANTEE kontrolü. Hiçbiri
+        #     birleştirilmez ki sayım mekanik olarak doğrulanabilsin.
+        _rows_s2 = journal_rows(fx_s2["resource_key"])
+        _dl_dir_s2 = fx_s2["pending_path"].parent
+        _gen_reviews_s2 = _dl_dir_s2 / "generation_reviews"
+        _history_s2 = _dl_dir_s2 / "history"
+
+        check(
+            f"{_label}: GUARANTEE 1/8 prepared journal row = 0",
+            [r for r in _rows_s2 if r["state"] == "prepared"] == [] and _rows_s2 == [],
+            _rows_s2,
+        )
+        check(
+            f"{_label}: GUARANTEE 2/8 writer invocation = 0",
+            writer_state["calls"] == 0,
+            writer_state["calls"],
+        )
+        check(
+            f"{_label}: GUARANTEE 3/8 canonical değişikliği = 0",
+            fx_s2["canonical_path"].exists() == _canon_before,
+        )
+        check(
+            f"{_label}: GUARANTEE 4/8 history/backup = 0",
+            (not _history_s2.is_dir() or not list(_history_s2.iterdir()))
+            and not list(_dl_dir_s2.glob("*.bak")),
+        )
+        check(
+            f"{_label}: GUARANTEE 5/8 generation/approval audit = 0",
+            (not _reviews_dir.is_dir() or not list(_reviews_dir.iterdir()))
+            and (not _gen_reviews_s2.is_dir() or not list(_gen_reviews_s2.iterdir())),
+        )
+        check(
+            f"{_label}: GUARANTEE 6/8 pending bayt-değişmez",
+            sha256_file(fx_s2["pending_path"]) == _pending_sha_before,
+        )
+        check(
+            f"{_label}: GUARANTEE 7/8 reconciliation_required / resource gate OLUŞMUYOR",
+            [
+                r for r in _rows_s2
+                if r["state"] in ("prepared", "executing", "reconciliation_required")
+            ] == [],
+            [(r["id"], r["state"]) for r in _rows_s2],
+        )
+        check(
+            f"{_label}: GUARANTEE 8/8 sonraki geçerli mutasyon ResourceGatedError ALMAZ",
+            _reject_is_not_gated(fx_s2, principal_s2, repo_s2),
+        )
+
+    # Diğer DOKUZ Layer A ailesi: hook attribute'u YOK -> davranışları
+    # bayt-bayt DEĞİŞMEZ (duck-typed kanıtı).
+    import importlib as _importlib
+
+    _hook_owners = []
+    for _rk, _mod_name in facade.ROW_KEY_TO_MODULE_NAME.items():
+        _mod = _importlib.import_module(_mod_name)
+        if hasattr(_mod, "check_pending_promotion_contract"):
+            _hook_owners.append(_rk)
+    check(
+        "S2-G11 promosyon-sözleşmesi hook'unu SADECE deadline ailesi sunar "
+        "(diğer dokuz aile ETKİLENMEZ)",
+        _hook_owners == ["deadline"],
+        _hook_owners,
+    )
 
 finally:
     deadline_approval.run_approve = _REAL_RUN_APPROVE

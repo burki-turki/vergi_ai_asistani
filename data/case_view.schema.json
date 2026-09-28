@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Row 17 - Product Orchestrator Case View V1",
+  "title": "Row 17 - Product Orchestrator Case View V1.1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -137,7 +137,20 @@
         "calculation_state": { "type": "string" },
         "calculated_deadline": { "type": ["string", "null"] },
         "expiry_state": { "type": ["string", "null"] },
-        "requires_human_review": { "type": "boolean" }
+        "requires_human_review": { "type": "boolean" },
+        "stopping_event_status": {
+          "type": "string",
+          "enum": ["none", "present", "unknown"],
+          "description": "ADIM 7 / SLICE 2 - additive, OPSİYONEL (required'a EKLENMEDİ). Canonical deadline kaydından pass-through. Canonical'da alan YOKSA (Slice 2 öncesi legacy kayıt) projeksiyon fail-closed 'unknown' üretir - ASLA 'none'."
+        },
+        "stopping_event_attestation_ref": {
+          "type": ["string", "null"],
+          "description": "ADIM 7 / SLICE 2 - additive, OPSİYONEL. Canonical'dan verbatim pass-through; canonical'da yoksa veya null ise null."
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "ADIM 7 / SLICE 2 - additive, OPSİYONEL. Canonical deadline kaydının kendi serbest metin hesaplama notu, BİREBİR pass-through. Stopping-event bloklarında bu alan sabit reason literalini taşır (Adım 5 K2 kararı korunur: YENİ bir yapılandırılmış reason alanı EKLENMEZ)."
+        }
       }
     },
 

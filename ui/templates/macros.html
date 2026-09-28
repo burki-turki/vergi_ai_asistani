@@ -8,6 +8,79 @@
    bir şemanın alanı yanlış etiketlenmiş/atlanmış olmaz (Prensip 9).
    ============================================================ #}
 
+{# ============================================================
+   ADIM 7 / SLICE 2 - STOPPING-EVENT SUNUMU
+
+   YALNIZ sunum: canonical'daki üç enum değerini avukatın okuyacağı
+   Türkçe metne çevirir. Hiçbir hukuki karar VERMEZ, hiçbir değeri
+   yeniden sınıflandırmaz.
+
+   `else` dalı KASITLI olarak en muhafazakâr metni verir: `unknown`
+   ve BEKLENMEYEN/eksik her değer "bilinmiyor" olarak gösterilir -
+   ASLA "yok beyanı". `none` metni de MUTLAKA "beyan" kelimesini
+   taşır: bu bağımsız doğrulanmış bir hukuki gerçek DEĞİL, avukatın
+   kendi beyanıdır (Prensip 3/7).
+
+   Escaping: düz `{{ }}`; hiçbir escape-bypass filtresi KULLANILMAZ
+   (bunu bir regresyon testi mekanik olarak pinler). Starlette'in
+   Jinja2Templates
+   varsayılanı autoescape=True'dur ve `ui/main.py` onu override
+   ETMEZ; bu makro o varsayıma dayanır.
+   ============================================================ #}
+
+{% macro stopping_event_label(status) %}
+{%- if status == "none" -%}
+Durdurucu olay yok beyanı
+{%- elif status == "present" -%}
+Durdurucu olay mevcut — avukat incelemesi gerekli
+{%- else -%}
+Durdurucu olay durumu bilinmiyor — hesaplama durduruldu
+{%- endif -%}
+{% endmacro %}
+
+
+{% macro render_deadline_entry(entry) %}
+  <table class="kv">
+    <tr><th>Deadline ID</th><td>{{ entry.deadline_id }}</td></tr>
+    <tr><th>Tür</th><td>{{ entry.deadline_type }}</td></tr>
+    <tr><th>Hesaplama durumu</th><td>{{ entry.calculation_state }}</td></tr>
+    <tr>
+      <th>Hesaplanan son gün</th>
+      <td>
+        {%- if entry.calculated_deadline is none -%}
+          <span class="muted">—</span>
+        {%- else -%}
+          {{ entry.calculated_deadline }}
+        {%- endif -%}
+      </td>
+    </tr>
+    <tr>
+      <th>Geçerlilik durumu</th>
+      <td>
+        {%- if entry.expiry_state is none -%}
+          <span class="muted">—</span>
+        {%- else -%}
+          {{ entry.expiry_state }}
+        {%- endif -%}
+      </td>
+    </tr>
+    <tr><th>İnceleme gerekli mi</th><td>{{ "evet" if entry.requires_human_review else "hayır" }}</td></tr>
+    <tr><th>Durdurucu olay</th><td>{{ stopping_event_label(entry.stopping_event_status) }}</td></tr>
+    {# ref null ise SATIR HİÇ RENDER EDİLMEZ - hayali/boş bir referans
+       metni üretmek avukatı yanıltırdı. #}
+    {% if entry.stopping_event_attestation_ref is not none %}
+    <tr><th>Beyan referansı</th><td>{{ entry.stopping_event_attestation_ref }}</td></tr>
+    {% endif %}
+    {# Başlık TAM OLARAK "Hesaplama notu" - "Neden" DEĞİL: bu alan
+       yalnız stopping-event bloklarında bir reason literali taşır,
+       `calculated` kayıtlarda ise genel hesap notudur. #}
+    {% if entry.notes is not none %}
+    <tr><th>Hesaplama notu</th><td>{{ entry.notes }}</td></tr>
+    {% endif %}
+  </table>
+{% endmacro %}
+
+
 {% macro render_value(value) %}
 {%- if value is mapping -%}
   {%- if value|length == 0 -%}

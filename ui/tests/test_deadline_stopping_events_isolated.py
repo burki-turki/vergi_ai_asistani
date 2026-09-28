@@ -447,6 +447,7 @@ def _write_and_read_audit(status, ref, *, analysis):
         mutation_idempotency_key="idk-stopev",
         mutation_resource_key=f"case:{CASE_ID}",
         mutation_actor_ref="7",
+        attempt=1,
         stopping_event_status=status,
         stopping_event_attestation_ref=ref,
     )
@@ -698,6 +699,216 @@ def test_reason_literals_pinned():
 # J) DATA-TREE INVARIANCE
 # ================================================================
 
+# ================================================================
+# L) ADIM 7 / SLICE 2 - CANONICAL ALANLAR: 12 DURUM
+#
+# Slice 1 iki alanı YALNIZ kapı girdisi ve generation-audit alanı
+# olarak taşıyordu; `base_record` onları DÜŞÜRÜYORDU. Slice 2 onları
+# canonical deadline kaydına yazar. Aşağıdaki tablo düzeltilmiş
+# sözleşmenin 12 durumunu exact olarak pinler.
+#
+# KRİTİK (satır 1): stopping gate'ini GEÇMEK bir `calculated`
+# GARANTİSİ DEĞİLDİR - kapı yalnız KENDİ engelini kaldırır; sonuç
+# downstream zincir (hafta sonu/resmî tatil/adli tatil/mali tatil,
+# takvim kapsamı, S05 yarım-gün politikası) tarafından belirlenir.
+# ================================================================
+
+def test_l_canonical_fields_12_states():
+
+    def rec(**kw):
+        with CaseSandbox():
+            return _record(**kw)
+
+    # --- 1: none + geçerli ref + çelişki yok -> gate GEÇİLİR ---
+    r1 = rec(
+        stopping_event_status="none",
+        stopping_event_attestation_ref=VALID_REF,
+    )
+    check(
+        "L1 none+geçerli ref: canonical status='none', ref VERBATIM",
+        r1["stopping_event_status"] == "none"
+        and r1["stopping_event_attestation_ref"] == VALID_REF,
+        r1,
+    )
+    check(
+        "L1b none+geçerli ref: stopping-event kapısı GEÇİLDİ (notes artık bir "
+        "stopping reason literali DEĞİL) - ama bu bir 'calculated' GARANTİSİ DEĞİLDİR; "
+        "sonuç downstream zincire aittir",
+        r1["notes"] not in (
+            dc.STOPPING_EVENT_REASON_UNKNOWN,
+            dc.STOPPING_EVENT_REASON_PRESENT,
+            dc.STOPPING_EVENT_REASON_MISSING_REF,
+            dc.STOPPING_EVENT_REASON_CONFLICT,
+        ),
+        r1.get("notes"),
+    )
+    check(
+        "L1c none+geçerli ref: calculation_state downstream mantığın sonucudur "
+        "(şemanın tanıdığı bir değer; 'calculated' ZORUNLU DEĞİL)",
+        r1["calculation_state"] in (
+            "calculated", "needs_review", "blocked_unverified_anchor",
+            "blocked_missing_rule", "blocked_ambiguous_rule", "not_applicable",
+        ),
+        r1["calculation_state"],
+    )
+
+    # --- 2/3/4: none + ref yok / geçersiz / non-str ---
+    for label, ref in (
+        ("L2 none+ref YOK", None),
+        ("L3 none+geçersiz string ref", "   "),
+        ("L4 none+non-str ref", 12345),
+    ):
+        r = rec(
+            stopping_event_status="none",
+            stopping_event_attestation_ref=ref,
+        )
+        check(
+            f"{label} -> needs_review + canonical ref null + sabit reason",
+            r["calculation_state"] == "needs_review"
+            and r["calculated_deadline"] is None
+            and r["requires_human_review"] is True
+            and r["stopping_event_status"] == "none"
+            and r["stopping_event_attestation_ref"] is None
+            and r["notes"] == dc.STOPPING_EVENT_REASON_MISSING_REF,
+            r,
+        )
+
+    # --- 5: none + settlement çelişkisi -> ref KORUNUR ---
+    with CaseSandbox(action_categories=["settlement"]):
+        r5 = _record(
+            stopping_event_status="none",
+            stopping_event_attestation_ref=VALID_REF,
+        )
+    check(
+        "L5 none+çelişki -> conflict reason, ref KORUNUR (gerçekten verilmiş bir beyandır)",
+        r5["calculation_state"] == "needs_review"
+        and r5["stopping_event_status"] == "none"
+        and r5["stopping_event_attestation_ref"] == VALID_REF
+        and r5["notes"] == dc.STOPPING_EVENT_REASON_CONFLICT,
+        r5,
+    )
+
+    # --- 6/7/8: present ---
+    r6 = rec(stopping_event_status="present")
+    check(
+        "L6 present+ref YOK -> needs_review, status='present', ref null",
+        r6["calculation_state"] == "needs_review"
+        and r6["calculated_deadline"] is None
+        and r6["stopping_event_status"] == "present"
+        and r6["stopping_event_attestation_ref"] is None
+        and r6["notes"] == dc.STOPPING_EVENT_REASON_PRESENT,
+        r6,
+    )
+    r7 = rec(
+        stopping_event_status="present",
+        stopping_event_attestation_ref=VALID_REF,
+    )
+    check(
+        "L7 present+geçerli ref -> ref VERBATIM korunur (status'tan BAĞIMSIZ)",
+        r7["stopping_event_status"] == "present"
+        and r7["stopping_event_attestation_ref"] == VALID_REF
+        and r7["notes"] == dc.STOPPING_EVENT_REASON_PRESENT,
+        r7,
+    )
+    r8 = rec(
+        stopping_event_status="present",
+        stopping_event_attestation_ref=object(),
+    )
+    check(
+        "L8 present+non-str ref -> ref null, crash YOK",
+        r8["stopping_event_status"] == "present"
+        and r8["stopping_event_attestation_ref"] is None,
+        r8,
+    )
+
+    # --- 9/10: unknown ---
+    r9 = rec(stopping_event_status="unknown")
+    check(
+        "L9 unknown+ref YOK -> needs_review, status='unknown', ref null",
+        r9["calculation_state"] == "needs_review"
+        and r9["stopping_event_status"] == "unknown"
+        and r9["stopping_event_attestation_ref"] is None
+        and r9["notes"] == dc.STOPPING_EVENT_REASON_UNKNOWN,
+        r9,
+    )
+    r10 = rec(
+        stopping_event_status="unknown",
+        stopping_event_attestation_ref=VALID_REF,
+    )
+    check(
+        "L10 unknown+geçerli ref -> ref VERBATIM korunur",
+        r10["stopping_event_status"] == "unknown"
+        and r10["stopping_event_attestation_ref"] == VALID_REF,
+        r10,
+    )
+
+    # --- 11: parametre TAMAMEN omitted -> #9 ile BİREBİR aynı ---
+    r11 = rec()
+    check(
+        "L11 parametre omitted -> L9 ile BİREBİR aynı (default ASLA 'none' DEĞİL)",
+        r11["stopping_event_status"] == "unknown"
+        and r11["stopping_event_attestation_ref"] is None
+        and r11["notes"] == dc.STOPPING_EVENT_REASON_UNKNOWN
+        and r11["calculation_state"] == r9["calculation_state"],
+        r11,
+    )
+    check(
+        "L11b tanınmayan bir status string'i de 'unknown'a düşer (fail-closed)",
+        rec(stopping_event_status="bogus")["stopping_event_status"] == "unknown",
+    )
+
+    # --- 12: legacy canonical (iki anahtar da YOK) ---
+    legacy = json.loads(
+        (REAL_CASE_0001 / "deadlines" / "deadline.json").read_text(encoding="utf-8")
+    )
+    check(
+        "L12 legacy canonical kayıt iki anahtarı da TAŞIMIYOR (Slice 2 öncesi üretim) "
+        "- okunabilir kalır, projeksiyon onu 'unknown' gösterir, ASLA 'none'",
+        all(
+            "stopping_event_status" not in d
+            and "stopping_event_attestation_ref" not in d
+            for d in legacy["deadlines"]
+        ),
+    )
+
+    # --- ERKEN DÖNÜŞ DALLARI: iki anahtar HER kayıtta fiziksel olarak var ---
+    early = _record(
+        anchor_event=_anchor("2026-02-10", verification_state="unverified"),
+        stopping_event_status="none",
+        stopping_event_attestation_ref=VALID_REF,
+    )
+    check(
+        "L13 blocked_unverified_anchor (stopping kapısına HİÇ ULAŞMAYAN erken dönüş) "
+        "kaydında da İKİ ANAHTAR fiziksel olarak MEVCUT",
+        "stopping_event_status" in early
+        and "stopping_event_attestation_ref" in early,
+        sorted(early.keys()),
+    )
+
+    # --- ŞEMA: iki alan optional, required DEĞİŞMEDİ, const 1 ---
+    schema = json.loads(
+        (REAL_DATA_DIR / "case_deadline.schema.json").read_text(encoding="utf-8")
+    )
+    dl = schema["$defs"]["deadline"]
+    check(
+        "L14 şema: iki alan properties'te, required'a EKLENMEDİ, "
+        "additionalProperties hâlâ false, schema_version const hâlâ 1",
+        "stopping_event_status" in dl["properties"]
+        and "stopping_event_attestation_ref" in dl["properties"]
+        and "stopping_event_status" not in dl["required"]
+        and "stopping_event_attestation_ref" not in dl["required"]
+        and len(dl["required"]) == 16
+        and dl["additionalProperties"] is False
+        and schema["properties"]["schema_version"]["const"] == 1,
+    )
+    check(
+        "L15 legacy canonical belge PATCH'LENMİŞ şemaya karşı HÂLÂ geçerli "
+        "(geriye uyumluluk)",
+        deadline_validator.validate_schema(legacy) == [],
+        deadline_validator.validate_schema(legacy)[:3],
+    )
+
+
 def run_self_test():
     before = _snapshot_data_tree()
 
@@ -710,6 +921,7 @@ def run_self_test():
     test_g_audit_persistence()
     test_i_no_production_bypass()
     test_k_cross_check_is_not_a_detector()
+    test_l_canonical_fields_12_states()
 
     after = _snapshot_data_tree()
     check(

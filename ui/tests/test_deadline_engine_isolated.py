@@ -134,6 +134,7 @@ try:
             case_id=CASE_ID, analysis=analysis_1,
             mutation_idempotency_key="idk", mutation_resource_key=None,
             mutation_actor_ref="7", anchor_event_id=ANCHOR_EVENT_ID,
+            attempt=1,
             input_digest="d", generation_parameters_digest="g",
         ),
         "write_pending(): mutation_idempotency_key given but mutation_resource_key missing -> "
@@ -220,6 +221,7 @@ try:
         mutation_idempotency_key="idk_5",
         mutation_resource_key=f"case:{CASE_ID}",
         mutation_actor_ref="42",
+        attempt=1,
     )
     check(
         "coordinator-mode run_engine(): a real audit_path was returned and the file exists under "
@@ -275,6 +277,7 @@ try:
             input_digest="d6", generation_parameters_digest="g6",
             mutation_idempotency_key="idk_6", mutation_resource_key=f"case:{CASE_ID}",
             mutation_actor_ref="7", pre_commit_callback=_exploding_pre_commit,
+            attempt=1,
         ),
         "pre_commit_callback raising -> the exception propagates unchanged",
     )
@@ -327,6 +330,7 @@ try:
                 ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
                 mutation_idempotency_key="idk_7", mutation_resource_key=f"case:{CASE_ID}",
                 mutation_actor_ref="7", input_digest="d7", generation_parameters_digest="g7",
+                attempt=1,
             ),
             "post-write validator failure -> exception propagates, rollback engaged",
         )
@@ -360,6 +364,7 @@ try:
         ruleset_path=deadline_engine.DEFAULT_RULESET_PATH,
         mutation_idempotency_key="idk_8a", mutation_resource_key=f"case:{CASE_ID}",
         mutation_actor_ref="7", input_digest="d8a", generation_parameters_digest="g8a",
+        attempt=1,
     )
     audit_record_8a = json.loads(Path(result_8a["audit_path"]).read_text(encoding="utf-8"))
     check(
@@ -394,6 +399,7 @@ try:
             holiday_calendar_path=synthetic_calendar_path,
             mutation_idempotency_key="idk_8c", mutation_resource_key=f"case:{CASE_ID}",
             mutation_actor_ref="7", input_digest="d8c", generation_parameters_digest="g8c",
+            attempt=1,
         )
         audit_record_8c = json.loads(Path(result_8c["audit_path"]).read_text(encoding="utf-8"))
         check(
@@ -429,6 +435,7 @@ try:
                 holiday_calendar_path=missing_calendar_path,
                 mutation_idempotency_key="idk_8e", mutation_resource_key=f"case:{CASE_ID}",
                 mutation_actor_ref="7", input_digest="d8e", generation_parameters_digest="g8e",
+                attempt=1,
             ),
             "8e: missing holiday_calendar_path -> FileNotFoundError, fail-closed",
         )
@@ -524,6 +531,7 @@ try:
             mutation_idempotency_key=idk,
             mutation_resource_key=f"case:{CASE_ID}",
             mutation_actor_ref="7",
+            attempt=1,
             stopping_event_status=status,
             stopping_event_attestation_ref=ref,
         )
@@ -566,6 +574,7 @@ try:
         input_digest="d" * 64, generation_parameters_digest="g" * 64,
         mutation_idempotency_key="idk-stopev-c",
         mutation_resource_key=f"case:{CASE_ID}", mutation_actor_ref="7",
+        attempt=1,
     )
     _audit_c = json.loads(Path(_res_c["audit_path"]).read_text(encoding="utf-8"))
     check(

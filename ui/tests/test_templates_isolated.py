@@ -96,11 +96,52 @@ def check_not_contains(label, html, *substrings):
 live = live_view.build_live_view(CASE_ID)
 staleness = live_view.get_case_view_with_staleness(CASE_ID)
 rows = reg.full_case_approval_status(CASE_ID)
-cv_review = reg.case_scoped_review("case_view", CASE_ID)
 first_issue = live["issue_panel"][0]
 
+# ============================================================
+# ADIM 7 / SLICE 2 - BAYAT case_view PENDING'İ FAIL-CLOSED REDDEDİLİR
+#
+# Bu tur `build_case_view()`'a üç alan ekledi
+# (stopping_event_status / stopping_event_attestation_ref / notes).
+# Row 17'nin validator'ı TAM BELGE EŞİTLİĞİ ister, bu yüzden Slice 2
+# ÖNCESİNDE üretilmiş case_view pending'i artık taze bir yeniden
+# hesaplamayla eşleşmez ve `inspect_pending()` onu reddeder.
+#
+# Bu DOĞRU davranıştır, bir regresyon DEĞİL: o pending GERÇEKTEN
+# bayattır ve promote edilmesi, canonical'a taze build'den FARKLI bir
+# belge yazardı. Kabul edilmiş "görünüm güncel değil" banner'ıyla aynı
+# sınıftadır. Artefakt BİLİNÇLİ olarak yeniden üretilmedi (kullanıcı
+# kararı: sıfır canonical/pending mutasyonu).
+#
+# Salt-okunur `GET /cases/<id>` yolu ETKİLENMEZ - `live_view` yalnız
+# dört validator çağırır, tam-eşitlik kontrolünü ÇAĞIRMAZ (aşağıdaki
+# üç `case_view.html` testi bunu kanıtlıyor: hepsi gerçek canlı
+# görünümle render ediliyor).
+# ============================================================
+_cv_stale_rejected = False
+try:
+    reg.case_scoped_review("case_view", CASE_ID)
+except ValueError:
+    _cv_stale_rejected = True
+
+assert _cv_stale_rejected, (
+    "case_view pending'i taze yeniden hesaplamayla EŞLEŞTİ - Slice 2'nin üç "
+    "yeni projeksiyon alanı beklendiği gibi bir uyuşmazlık üretmedi."
+)
+print(
+    "PASS ADIM 7/SLICE 2: Slice 2 öncesi üretilmiş case_view pending'i "
+    "inspect_pending() tarafından fail-closed REDDEDİLİYOR"
+)
+
+# `approval_review.html` fixture'ı artık `deadline` satırından kurulur:
+# o ailenin pending'i HÂLÂ inceleme yoluyla okunabilir (Slice 2'nin
+# promosyon kapısı BİLİNÇLİ olarak `validate_approval_semantics()`'e
+# DEĞİL, facade'in `precondition_callback`'ine konuldu - tam da avukat
+# bayat bir pending'i EKRANDA GÖREBİLSİN diye).
+cv_review = reg.case_scoped_review("deadline", CASE_ID)
+
 _secret = security.new_csrf_secret()
-_csrf_token = security.make_csrf_token(_secret, CASE_ID, "case_view", cv_review["pending_hash"])
+_csrf_token = security.make_csrf_token(_secret, CASE_ID, "deadline", cv_review["pending_hash"])
 
 check("index.html (with cases)", lambda: env.get_template("index.html").render(
     case_ids=paths.list_case_ids(),

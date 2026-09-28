@@ -532,6 +532,75 @@ for _row, _extra in _STOPEV_OTHER_ROWS:
     )
 
 
+# ============================================================
+# ADIM 7 / SLICE 2 - --attempt CLI CONTRACT
+#
+# fact_verification emsaliyle BIREBIR: default 1, int, >= 1,
+# deadline-only, apply-only. Her red HERHANGI bir dosya/baglanti/
+# authz/mutation I/O sundan ONCE olur (`run_cli_usage_only` patlayan
+# factory'lerle besler -> sifir-I/O mekanik olarak kanitlanir).
+# ============================================================
+
+for _bad, _why in (("0", "sifir"), ("-1", "negatif")):
+    code, _, err = run_cli_usage_only(
+        _STOPEV_DEADLINE_APPLY + ["--attempt", _bad]
+    )
+    check(
+        "SLICE 2: --attempt=%s (%s) -> exit 2, zero connections" % (_bad, _why),
+        code == cli_mutate.EXIT_USAGE_ERROR and "--attempt" in err,
+        err.strip()[:160],
+    )
+
+code, _, err = run_cli_usage_only(_STOPEV_DEADLINE_APPLY + ["--attempt", "abc"])
+check(
+    "SLICE 2: --attempt=abc (non-integer) -> argparse exit 2, zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--attempt" in err,
+    err.strip()[:160],
+)
+
+code, _, err = run_cli_usage_only([
+    "generation", "--case", "x", "--row-key", "deadline",
+    "--anchor", "timeline_event_001", "--actor-user-id", "1",
+    "--attempt", "2",
+])
+check(
+    "SLICE 2: --attempt PREVIEW da (apply yok) reddedilir -> exit 2, "
+    "zero connections",
+    code == cli_mutate.EXIT_USAGE_ERROR and "--apply" in err,
+    err.strip()[:160],
+)
+
+for _row, _extra in _STOPEV_OTHER_ROWS:
+    code, _, err = run_cli_usage_only([
+        "generation", "--case", "x", "--row-key", _row, "--actor-user-id", "1",
+    ] + _extra + ["--attempt", "2"])
+    check(
+        "SLICE 2: --attempt --row-key %s icin REDDEDILIR -> exit 2, "
+        "zero connections" % _row,
+        code == cli_mutate.EXIT_USAGE_ERROR and "--attempt" in err,
+        err.strip()[:160],
+    )
+
+# KABUL kaniti: default (1) ve acik bir gecerli deger usage-shape'i
+# GECER -> patlayan authz factory AssertionError firlatir.
+for _argv, _label in (
+    (_STOPEV_DEADLINE_APPLY, "default (--attempt verilmedi)"),
+    (_STOPEV_DEADLINE_APPLY + ["--attempt", "1"], "--attempt=1"),
+    (_STOPEV_DEADLINE_APPLY + ["--attempt", "2"], "--attempt=2"),
+):
+    try:
+        run_cli_usage_only(_argv)
+    except AssertionError:
+        _accepted = True
+    else:
+        _accepted = False
+    check(
+        "SLICE 2: %s deadline-apply icin usage-shape seviyesinde KABUL edilir"
+        % _label,
+        _accepted,
+    )
+
+
 code, _, err = run_cli_usage_only(["generation", "--case", "x", "--row-key", "deadline", "--actor-user-id", "1"])
 check(
     "generation: --row-key deadline WITHOUT --anchor -> exit 2, zero connections",

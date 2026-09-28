@@ -689,6 +689,43 @@ _reset_listing_repo()  # restore the baseline the rest of this file (T02 onward)
 r = client.get(f"/cases/{case_id}")
 check("T02 GET /cases/{case_id} -> 200", r.status_code == 200, f"status={r.status_code}")
 
+# --- ADIM 7 / SLICE 2: stopping-event GÖRÜNÜRLÜĞÜ (HTTP katmanı) ---
+# `case_0001`'in canonical deadline kaydı Slice 2 ÖNCESİ üretilmiştir
+# (iki alan da YOK), bu yüzden projeksiyon fail-closed `unknown`
+# üretmeli ve ekranda o metin görünmelidir - ASLA "yok beyanı".
+check(
+    "T02-S2a deadline paneli avukatın gördüğü sayfada AÇIK bir blok olarak var",
+    "Deadline Paneli" in r.text,
+)
+check(
+    "T02-S2b legacy kayıt -> 'bilinmiyor' metni (fail-closed)",
+    "Durdurucu olay durumu bilinmiyor" in r.text,
+)
+check(
+    "T02-S2c legacy kayıt ASLA 'yok beyanı' olarak gösterilmez",
+    "Durdurucu olay yok beyanı" not in r.text,
+)
+check(
+    "T02-S2d deadline paneli sayfada TAM BİR KEZ (generic <details> dökümü "
+    "onu artık render etmiyor)",
+    r.text.count("Deadline Paneli") == 1
+    and "<summary>deadline_panel</summary>" not in r.text,
+    f"count={r.text.count('Deadline Paneli')}",
+)
+check(
+    "T02-S2e ref null olduğu için 'Beyan referansı' satırı render EDİLMEDİ",
+    "Beyan referansı" not in r.text,
+)
+
+# Cross-case sızıntı: bu case'in sayfası BAŞKA bir case'in id'sini
+# içermemeli (deadline bloğu case-scoped tek kaynaktan türer).
+_other_case_ids = [c for c in svc_paths.list_case_ids() if c != case_id]
+check(
+    "T02-S2f cross-case sızıntı yok: sayfa başka hiçbir case_id'yi İÇERMİYOR",
+    all(other not in r.text for other in _other_case_ids),
+    f"others={_other_case_ids}",
+)
+
 # --- T03: HAM nokta-segmentli path'ler ("/"e normalize olanlar) -
 # istemci tarafında '/'e normalize edilir, uygulama traversal'ı HİÇ
 # GÖRMEZ (DÜZELTİLDİ - bkz. modül docstring'i §1). "Kabul edildi"

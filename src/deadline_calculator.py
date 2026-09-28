@@ -1626,6 +1626,58 @@ def evaluate_stopping_event_gate(
     return None
 
 
+def canonical_stopping_event_fields(
+    stopping_event_status,
+    stopping_event_attestation_ref,
+):
+    """ADIM 7 / SLICE 2. Bir deadline kaydına YAZILACAK iki canonical
+    alanı üretir. SAF, I/O'suz; yalnız mevcut iki fail-closed
+    primitive'i (`normalize_stopping_event_status`,
+    `is_valid_stopping_event_attestation_ref`) YENİDEN KULLANIR -
+    normalizasyon mantığı KOPYALANMAZ.
+
+    Sözleşme:
+
+    - `stopping_event_status` HER ZAMAN üç enum değerinden biridir;
+      `None` (parametre hiç verilmedi) ve tanınmayan/non-str her değer
+      `unknown`'a düşer - default ASLA `none` DEĞİLDİR.
+    - `stopping_event_attestation_ref` YALNIZ şekil olarak geçerliyse
+      VERBATIM (strip/normalize EDİLMEDEN) yazılır; aksi halde `None`.
+      Bu, status'tan BAĞIMSIZDIR: avukat `present`/`unknown` beyanıyla
+      birlikte de geçerli bir referans verebilir ve onu sessizce
+      silmek, gerçekten verilmiş bir beyanı yok etmek olurdu.
+    - Non-str/geçersiz ham girdi canonical'a ASLA sızmaz (ve exception
+      da ÜRETMEZ - her iki primitive de fail-closed'dır); ham değer
+      yalnız generation audit'te verbatim saklanır.
+
+    Bu fonksiyonun çıktısı `build_deadline_record()`'un DÖRT erken
+    dönüşünde ve normal hesaplama yolunda AYNI şekilde kullanılır, yani
+    iki anahtar ÜRETİLEN HER kayıtta fiziksel olarak bulunur."""
+
+    normalized_status = (
+        normalize_stopping_event_status(
+            stopping_event_status
+        )
+    )
+
+    if is_valid_stopping_event_attestation_ref(
+        stopping_event_attestation_ref
+    ):
+
+        normalized_ref = (
+            stopping_event_attestation_ref
+        )
+
+    else:
+
+        normalized_ref = None
+
+    return (
+        normalized_status,
+        normalized_ref,
+    )
+
+
 # ============================================================
 # CORE ARITHMETIC
 # ============================================================
@@ -2702,6 +2754,19 @@ def build_deadline_record(
     stopping_event_attestation_ref=None,
 ):
 
+    # ADIM 7 / SLICE 2: canonical'a yazılacak iki alan EN BAŞTA, her
+    # erken dönüşten ÖNCE normalize edilir; böylece bu fonksiyonun
+    # ÜRETTİĞİ HER kayıtta (rule çözülemedi / blocked_unverified_anchor
+    # / date_precision / selection / legal-basis / stopping-gate /
+    # normal hesap) iki anahtar da FİZİKSEL olarak bulunur.
+    (
+        canonical_stopping_event_status,
+        canonical_stopping_event_attestation_ref,
+    ) = canonical_stopping_event_fields(
+        stopping_event_status,
+        stopping_event_attestation_ref,
+    )
+
     selection_state = (
         selection.get(
             "selection_state"
@@ -2831,6 +2896,16 @@ def build_deadline_record(
                     "reason"
                 )
                 or "Deadline rule selection çözümlenemedi.",
+
+            # ADIM 7 / SLICE 2 - bu dal stopping-event kapısına HİÇ
+            # ULAŞMAZ (rule çözülemedi), ama avukatın BEYANI yine de
+            # kayda geçer. Çelişki çapraz-kontrolü bu dalda
+            # DEĞERLENDİRİLMEMİŞTİR.
+            "stopping_event_status":
+                canonical_stopping_event_status,
+
+            "stopping_event_attestation_ref":
+                canonical_stopping_event_attestation_ref,
         }
 
     # ========================================================
@@ -2931,6 +3006,18 @@ def build_deadline_record(
                 )
                 is True
             ),
+
+        # ADIM 7 / SLICE 2 - `base_record`'a EN BAŞTA konur, böylece
+        # bundan sonraki BEŞ erken dönüşün (unverified anchor,
+        # date_precision, selection, legal-basis, stopping-gate) ve
+        # normal hesap yolunun HEPSİ iki anahtarı taşır. Sonraki
+        # `base_record.update(...)` çağrılarının hiçbiri bu iki alana
+        # DOKUNMAZ.
+        "stopping_event_status":
+            canonical_stopping_event_status,
+
+        "stopping_event_attestation_ref":
+            canonical_stopping_event_attestation_ref,
     }
 
     # ========================================================

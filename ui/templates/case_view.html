@@ -62,13 +62,45 @@
     </table>
   {% endif %}
 
+  {#  ADIM 7 / SLICE 2 - AÇIK DEADLINE BLOĞU
+
+      `issue_panel` precedent'i birebir: (a) anahtar aşağıdaki generic
+      döngünün exclusion listesine EKLENİR, (b) blok generic başlıktan
+      ÖNCE gelir. Böylece panel ekranda TAM BİR KEZ görünür - generic
+      `<details>` dökümü onu artık HİÇ render etmez.
+
+      `case_summary` tuzağına düşmemek için (o, exclusion listesinde
+      ama yalnız `.title`'ı gösteriliyor) bu blok KAYIPSIZDIR: panel
+      seviyesindeki iki alan + kayıt başına dokuz alanın TAMAMI
+      gösterilir.
+
+      NOT: `deadline_panel` bir DICT'tir (list değil), yani
+      `deadlines: []` iken bile truthy'dir - bu yüzden boş liste
+      AYRICA ele alınır. #}
+  {% if view.deadline_panel %}
+    <h2>Deadline Paneli ({{ view.deadline_panel.deadlines|length }})</h2>
+    <p class="muted">
+      Kaynak durumu: {{ view.deadline_panel.source_state }}
+      {% if view.deadline_panel.deadline_analysis_id is not none %}
+        · Analiz: <code>{{ view.deadline_panel.deadline_analysis_id }}</code>
+      {% endif %}
+    </p>
+    {% if view.deadline_panel.deadlines|length == 0 %}
+      <p class="muted">(bu dosyada deadline kaydı yok)</p>
+    {% else %}
+      {% for entry in view.deadline_panel.deadlines %}
+        {{ m.render_deadline_entry(entry) }}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+
   <h2>Diğer paneller (ham veri)</h2>
   <p class="muted">
     Aşağıdaki paneller, hiçbir şema bilgisi hardcode edilmeden, olduğu gibi
     gösterilir - hiçbir alan gizlenmez veya yorumlanmaz.
   </p>
   {% for key, value in view.items() %}
-    {% if key not in ["case_summary", "issue_panel"] %}
+    {% if key not in ["case_summary", "issue_panel", "deadline_panel"] %}
       <details>
         <summary>{{ key }}</summary>
         {{ m.render_value(value) }}
