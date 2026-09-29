@@ -210,6 +210,39 @@ Durdurma:
 & "«PGBIN»\pg_ctl.exe" --pgdata="«DATA_DIR»" --mode=fast stop
 ```
 
+**Yaşam döngüsü penceresi (bağlayıcı).** Kümeyi yukarıdaki `start` komutuyla
+başlatan PowerShell penceresi, bu kümenin **yaşam döngüsü penceresidir**. Bu
+pencere **kapatılmaz** ve içinde **Ctrl+C kullanılmaz**: Windows'ta konsolun
+kapanması `postmaster`'a `STATUS_CONTROL_C_EXIT` iletir ve küme düşebilir — bu
+**gözlenmiş** bir davranıştır, kuramsal bir risk değildir. IAM komutları,
+migration'lar, `psql` oturumları ve diğer bütün interaktif işlemler **ayrı
+PowerShell pencerelerinde** yapılır.
+
+**Doğru kapanış yalnızca** bu bölümdeki `--mode=fast stop` komutudur.
+
+**Beklenmedik kapanıştan sonra `initdb` TEKRAR ÇALIŞTIRILMAZ** — mevcut veri
+dizinini yok etme riski taşır. Küme **mevcut `«DATA_DIR»` ile** yeniden
+başlatılır ve şunlar doğrulanır: `pg_ctl status` sunucunun çalıştığını söyler;
+`pg_isready` kabul ettiğini söyler; `«DATA_DIR»\server.log` içinde
+`database system was not properly shut down; automatic recovery in progress`
+ardından `redo done` ve `database system is ready to accept connections`
+satırları görünür. Recovery tamamlanmıyorsa **DUR**.
+
+Servis kaydı, bu bölümün başında belirtildiği gibi, **hâlâ kapsam dışıdır**
+(Row 19D).
+
+**`server.log` ve geçici sharing-violation (gözlem kaydı).** `--log` hedefi
+`«DATA_DIR»` içinde olduğu için Windows'ta başlangıç/`fsync` aşamasında
+`could not open file "./server.log": sharing violation` biçiminde **geçici** bir
+uyarı görülebilir; PostgreSQL yeniden dener ve başlatma devam eder. **Bu uyarı
+tek başına ne başarı kanıtı ne de başarısızlık kararıdır.** Kümenin ayakta
+olduğu şu dördünün **birlikte** sağlanmasıyla belirlenir: `pg_ctl status`
+çalıştığını söyler; `pg_isready` kabul ettiğini söyler; dinleyen soket **yalnız
+loopback**'tir; log'da `database system is ready to accept connections` satırı
+vardır. Uyarı **kalıcıysa** veya sunucu ready olmuyorsa **DUR**. Log
+yerleşiminin değiştirilmesi bu runbook'un kapsamı **dışındadır** ve **Row 19D /
+ayrı bir operasyon tasarımı** işidir.
+
 ---
 
 ## E. Superuser'ın exact minimal görevleri ve parola sözleşmesi
@@ -339,6 +372,45 @@ Son alan gerçek paroladır ve bu belgeye **yazılmaz**; yukarıdaki `«…»` y
 alanın yerini gösterir.
 
 Bootstrap superuser için passfile satırı **yazılmaz** (§E.1).
+
+**Kaçış ve güvenli yazım kuralı (bağlayıcı).** libpq passfile alanlarında:
+
+- `:` karakteri `\:` olarak kaçırılır;
+- `\` karakteri `\\` olarak kaçırılır;
+- kaçırılmamış bir `:` parolayı **sessizce keser**, kaçırılmamış bir `\` ise
+  kaçış karakteri olarak **yutulur**; ikisi de biçim hatası vermez, yanlış
+  parolayla **başarısız kimlik doğrulama** üretir;
+- satırın ve parolanın başında veya sonunda **boşluk ya da görünmez karakter
+  bulunamaz**; tek bir kenar boşluğu kimlik doğrulamayı düşürür;
+- joker `*` **kullanılmaz** (bu bölümün exact-tuple şartı);
+- mümkünse operatör parolası bu kaçışların **hiçbirini gerektirmeyen** ASCII
+  karakterlerden seçilir — en sağlam yol budur;
+- dosya **BOM'suz UTF-8** olmalıdır; BOM ilk satırın host alanını bozar ve o
+  satır sessizce eşleşmez.
+
+**Biçim kontrolü** parola değerini **yazdırmaz**; yalnız satır sayısını, exact
+öneki, kenar boşluğunu, ASCII'liği ve kaçış durumunu raporlar. Önek listesi **o
+an bulunması gereken satırlarla** eşleşmelidir: §L sırasında `«VERIFY_DB»`
+satırı eklendiğinde listeye o da eklenir, §L.5'ten sonra çıkarılır.
+
+```powershell
+$p = "«PASSFILE»"
+$prefixes = @("127.0.0.1:«PORT»:«PILOT_DB»:vergi_owner:", "127.0.0.1:«PORT»:«PILOT_DB»:vergi_app:", "127.0.0.1:«PORT»:«PILOT_DB»:vergi_iam_admin:")
+$b = [System.IO.File]::ReadAllBytes($p)
+$lines = @([System.IO.File]::ReadAllLines($p) | Where-Object { $_.Trim() -ne "" })
+$fail = 0
+if ($b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF) { Write-Output "STOP: BOM bulundu"; $fail = $fail + 1 }
+if ($lines.Count -ne $prefixes.Count) { Write-Output "STOP: satir sayisi $($lines.Count), beklenen $($prefixes.Count)"; $fail = $fail + 1 }
+foreach ($e in $prefixes) { $m = @($lines | Where-Object { $_.StartsWith($e) -and $_.Length -gt $e.Length }); if ($m.Count -ne 1) { Write-Output "STOP: onek tam 1 kez eslesmedi ($($m.Count))"; $fail = $fail + 1; continue }; $l = $m[0]; $pw = $l.Substring($e.Length); $rest = $pw.Replace("\\", "").Replace("\:", ""); $okTrim = ($l -eq $l.Trim()) -and ($pw -eq $pw.Trim()); $okAscii = (@($pw.ToCharArray() | Where-Object { [int]$_ -lt 33 -or [int]$_ -gt 126 })).Count -eq 0; $okEscape = (-not $rest.Contains(":")) -and (-not $rest.Contains("\")); $okWild = -not $pw.Contains("*"); if ($okTrim -and $okAscii -and $okEscape -and $okWild) { Write-Output "OK bicim" } else { Write-Output "STOP: bicim (kenar=$okTrim ascii=$okAscii kacis=$okEscape joker=$okWild)"; $fail = $fail + 1 } }
+if ($fail -ne 0) { Write-Output "PASSFILE_FORMAT=FAIL ($fail)" } else { Write-Output "PASSFILE_FORMAT=PASS" }
+```
+
+Beklenen: her önek için `OK bicim` ve son satırda **`PASSFILE_FORMAT=PASS`**.
+Herhangi bir `STOP: …` satırında **DUR**.
+
+**Biçim kontrolü başarılı bir bağlantının yerine geçmez.** Biçim kusursuz olsa
+bile dosyadaki parola sunucudaki değerden farklı olabilir; tek gerçek kanıt
+§G'deki parolasız DSN ile kurulan **başarılı bağlantıdır**. İkisi de zorunludur.
 
 ### F.3 URI için yol biçimi
 
