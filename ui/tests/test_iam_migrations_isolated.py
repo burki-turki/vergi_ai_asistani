@@ -276,6 +276,50 @@ try:
         journal_row_count = psql(PSQL_BIN, db_name, sql="SELECT count(*) FROM mutation.mutation_journal;").stdout.strip()
         check("mutation.mutation_journal starts out empty on a freshly migrated database", journal_row_count == "0")
 
+        # ---------------------------------------------------------------
+        # Slice 8A (decision III-a): this file used to stop at 0003, so
+        # nothing in the repository ever proved that 0004 and 0005 apply
+        # cleanly on top of it - they were only ever assumed to have been
+        # applied externally. That gap is closed here, and ONLY that gap:
+        # 0006 is deliberately NOT exercised in this module. 0006 needs
+        # three pre-existing non-superuser roles and a database owned by
+        # the owner role, neither of which this throwaway database has, so
+        # every one of its branches - positive apply, each fail-closed
+        # precondition, atomicity, idempotency - lives in
+        # ui/tests/test_iam_runtime_privileges_postgres.py instead.
+        # ---------------------------------------------------------------
+        r = psql(PSQL_BIN, db_name, file=MIGRATIONS_DIR / "0004_mutation_reconciliation_provenance.sql")
+        check("0004_mutation_reconciliation_provenance.sql applies cleanly after 0001+0002+0003",
+              r.returncode == 0, r.stderr)
+
+        provenance_cols = psql(
+            PSQL_BIN, db_name,
+            sql="SELECT column_name FROM information_schema.columns "
+                "WHERE table_schema='mutation' AND table_name='mutation_journal' "
+                "AND column_name IN ('reconciled_by_actor_type','reconciled_by_actor_ref') ORDER BY 1;",
+        ).stdout.strip().splitlines()
+        check("0004 adds exactly its two reconciliation-provenance columns",
+              provenance_cols == ["reconciled_by_actor_ref", "reconciled_by_actor_type"],
+              f"got {provenance_cols}")
+
+        r = psql(PSQL_BIN, db_name, file=MIGRATIONS_DIR / "0005_global_resource_grants.sql")
+        check("0005_global_resource_grants.sql applies cleanly after 0001-0004", r.returncode == 0, r.stderr)
+
+        tables_after_0005 = psql(
+            PSQL_BIN, db_name,
+            sql="SELECT table_schema||'.'||table_name FROM information_schema.tables "
+                "WHERE table_schema IN ('iam','mutation') ORDER BY 1;",
+        ).stdout.strip().splitlines()
+        check("after 0001-0005 the iam/mutation schemas hold exactly the expected table set "
+              "(0005's two grant tables added, nothing else)",
+              set(tables_after_0005) == expected_tables | {"iam.global_resource_grants",
+                                                           "iam.global_resource_grant_events"},
+              f"got {tables_after_0005}")
+
+        r_again = psql(PSQL_BIN, db_name, file=MIGRATIONS_DIR / "0005_global_resource_grants.sql")
+        check("re-applying 0005 on an already-migrated database is safe (idempotent guards hold)",
+              r_again.returncode == 0, r_again.stderr)
+
         # Re-running all three migrations must not fail (IF NOT EXISTS
         # / ON CONFLICT / CREATE ... IF NOT EXISTS guards) - a
         # legitimate convenience for test/dev re-runs.

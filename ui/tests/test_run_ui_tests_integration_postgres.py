@@ -514,18 +514,97 @@ try:
         check("target database name is a bare dbname per L.1", runner.validate_pg_dsn_name(PG_DB) is None)
 
         # -----------------------------------------------------------------------
-        # S1. L.4 preflight passes on the real 0001-0005 database
+        # S1. L.4 preflight passes on the real 0001-0006 database
         # -----------------------------------------------------------------------
         code, out, err, report, run_dir = run_fake(BASE, "preflight", {"test_ok": SRC_OK})
         check("S1: production-parity preflight + fake OK module -> exit 0", code == 0 and report is not None, f"code={code} {last_line(out)} {err[-300:]}")
         if report:
             pg = report["postgres"]
-            check("S1: preflight connected, server-side loopback proof, migrations 0001-0005 ok",
+            check("S1: preflight connected, server-side loopback proof, migrations 0001-0006 ok",
                   pg.get("connected") is True and pg.get("server_addr_loopback") is True and pg.get("migrations_ok") is True and pg.get("migrations_missing") == [], pg)
+            # Slice 8A: 0006 creates no object, so its eight contract probes are
+            # the only thing standing between "0006 applied" and "0006 silently
+            # never applied". The probe must have really run, not errored.
+            check("S1: the 0006 contract probe ran cleanly against the live database",
+                  pg.get("contract_probe") == "ok", pg.get("contract_probe"))
             check("S1: pg_database snapshot count matches an independent count", pg.get("database_snapshot_count") == len(list_databases()), pg.get("database_snapshot_count"))
             check("S1: fake-dir run is labelled DIAGNOSTIC, never FULL (self-test seam)", report["sweep_label"] == "DIAGNOSTIC" and report["discovery"]["mode"] == "fake_dir", report["sweep_label"])
             check("S1: env snapshot carries PG contract NAMES only", report["env_snapshot"].get("VERGI_TEST_PG_DSN") == "passed" and report["env_snapshot"].get("VERGI_IAM_DATABASE_URL") in (None, "stripped_denylist", "absent"))
             check("S1: no db residue after a clean run", report["integrity"].get("db_residue") == [] and report["integrity"].get("failures") == [], report["integrity"])
+
+        # -----------------------------------------------------------------------
+        # S1b. Slice 8A / G3 - no password value reaches a child process.
+        # The parent here really does carry a PGPASSWORD; the nested runner must
+        # strip it as a denylisted secret rather than forward it, and the value
+        # must not appear anywhere in stdout, stderr or report.json.
+        # -----------------------------------------------------------------------
+        G3_SENTINEL = "slice8a-pw-Kb7Qx2Nv9Rt4"
+        G3_PASSFILE = "C:/slice8a/never-forwarded-passfile-Qm3Zt7.conf"
+        # A module that reports on its OWN child environment: this is what turns
+        # "the runner says it stripped it" into "the child really never saw it".
+        SRC_ENV_PROBE = (
+            "import os, sys\n"
+            "print('PASS PGPASSWORD absent from child env' if 'PGPASSWORD' not in os.environ "
+            "else 'FAIL PGPASSWORD leaked into child env')\n"
+            "print('PASS PGPASSFILE absent from child env' if 'PGPASSFILE' not in os.environ "
+            "else 'FAIL PGPASSFILE leaked into child env')\n"
+            "print('--- {n}: 2 passed, 0 failed ---')\nsys.exit(0)\n"
+        )
+        code_g3, out_g3, err_g3, report_g3, rd_g3 = run_fake(
+            BASE, "g3pw", {"test_env_probe": SRC_ENV_PROBE},
+            extra_env={"PGPASSWORD": G3_SENTINEL, "PGPASSFILE": G3_PASSFILE})
+        check("S1b: a parent PGPASSWORD/PGPASSFILE does not stop the run (exit 0)", code_g3 == 0,
+              (code_g3, last_line(out_g3), err_g3[-200:]))
+        g3_mod = module_entry(report_g3, "test_env_probe") if report_g3 else None
+        check("S1b: the child process itself reports BOTH names absent from its own environment",
+              g3_mod is not None and g3_mod["outcome"] == "PASS" and g3_mod["passed"] == 2, g3_mod)
+        if report_g3:
+            check("S1b: PGPASSWORD is recorded as stripped_denylist, never passed",
+                  report_g3["env_snapshot"].get("PGPASSWORD") == "stripped_denylist",
+                  report_g3["env_snapshot"].get("PGPASSWORD"))
+            check("S1b: PGPASSFILE is recorded as stripped_denylist, never passed",
+                  report_g3["env_snapshot"].get("PGPASSFILE") == "stripped_denylist",
+                  report_g3["env_snapshot"].get("PGPASSFILE"))
+        g3_report_text = (rd_g3 / "report.json").read_text(encoding="utf-8") if rd_g3 else ""
+        g3_logs = b""
+        if rd_g3 and (rd_g3 / "logs").is_dir():
+            g3_logs = b"".join((rd_g3 / "logs" / f).read_bytes() for f in os.listdir(rd_g3 / "logs"))
+        check("S1b: neither value appears in stdout, stderr, report.json or the raw logs",
+              G3_SENTINEL not in out_g3 and G3_SENTINEL not in err_g3
+              and G3_SENTINEL not in g3_report_text and G3_SENTINEL.encode() not in g3_logs
+              and G3_PASSFILE not in g3_report_text and G3_PASSFILE.encode() not in g3_logs)
+
+        # -----------------------------------------------------------------------
+        # S1c. Slice 8A - the 0006 contract sentinel is not one probe but eight.
+        # Granting PUBLIC a single USAGE on iam must flip EXACTLY the PUBLIC
+        # label and refuse the run, proving a PARTIALLY undone 0006 cannot pass
+        # unnoticed. PUBLIC is grantee OID 0, checked through nspacl+aclexplode:
+        # has_schema_privilege() does not accept PUBLIC as a user argument.
+        # -----------------------------------------------------------------------
+        public_grant_applied = False
+        try:
+            with psycopg.connect(dbname=PG_DB, autocommit=True) as c, c.cursor() as cur:
+                cur.execute("GRANT USAGE ON SCHEMA iam TO PUBLIC")
+            public_grant_applied = True
+            code_pub, out_pub, _err_pub, report_pub, _rd_pub = run_fake(
+                BASE, "pubacl", {"test_ok": SRC_OK})
+            check("S1c: PUBLIC USAGE on iam -> exit 2 MIGRATION_MISSING, no module ran",
+                  code_pub == 2 and "MIGRATION_MISSING[" in out_pub, (code_pub, last_line(out_pub)))
+            check("S1c: EXACTLY the 0006 PUBLIC label is reported missing, nothing else",
+                  report_pub is not None
+                  and report_pub["postgres"].get("migrations_missing") == ["0006:public_has_no_schema_access"],
+                  report_pub and report_pub["postgres"].get("migrations_missing"))
+        finally:
+            if public_grant_applied:
+                with psycopg.connect(dbname=PG_DB, autocommit=True) as c, c.cursor() as cur:
+                    cur.execute("REVOKE USAGE ON SCHEMA iam FROM PUBLIC")
+
+        code_back, out_back, _err_back, report_back, _rd_back = run_fake(
+            BASE, "pubaclback", {"test_ok": SRC_OK})
+        check("S1c: after the PUBLIC grant is revoked the contract is satisfied again (exit 0, none missing)",
+              code_back == 0 and report_back is not None
+              and report_back["postgres"].get("migrations_missing") == [],
+              (code_back, report_back and report_back["postgres"].get("migrations_missing"), last_line(out_back)))
 
         # -----------------------------------------------------------------------
         # S2. throwaway database with only 0001-0003 -> MIGRATION_MISSING
@@ -546,7 +625,14 @@ try:
         # -----------------------------------------------------------------------
         # S3. end-to-end: PG-using fake module + documented skip under production-parity
         # -----------------------------------------------------------------------
-        code, out, err, report, run_dir = run_fake(BASE, "e2e", {"test_pg_select": SRC_PG_SELECT, "test_doc_skip": SRC_DOC_SKIP})
+        # Slice 8A: this run carries a KNOWN PGPASSWORD canary. Before, the two
+        # secret checks below read PGPASSWORD out of os.environ, which is empty
+        # under a sweep (the runner strips it), so they asserted `all([])` -
+        # always true, proving nothing. The canary makes them deterministic.
+        S3_CANARY = "slice8a-s3-canary-Lz8Wq4Ym1Dx6"
+        code, out, err, report, run_dir = run_fake(
+            BASE, "e2e", {"test_pg_select": SRC_PG_SELECT, "test_doc_skip": SRC_DOC_SKIP},
+            extra_env={"PGPASSWORD": S3_CANARY})
         check("S3: exit 1 (documented zero-check violates the production-parity rule)", code == 1 and report is not None, f"code={code} {last_line(out)} {err[-300:]}")
         if report:
             m1 = module_entry(report, "test_pg_select")
@@ -554,11 +640,18 @@ try:
             check("S3: PG-using fake module PASS (3 checks) through the child environment", m1 and m1["outcome"] == "PASS" and m1["passed"] == 3, m1)
             check("S3: documented-skip module -> ZERO_CHECK_DOCUMENTED_SKIP", m2 and m2["outcome"] == "ZERO_CHECK_DOCUMENTED_SKIP", m2)
             check("S3: GUARD_ARMED count == 2 modules, inheritance ok", report["guard"]["armed_count"] == 2 and report["guard"]["inheritance_ok"], report["guard"])
-            secrets = [v for k, v in os.environ.items() if k.upper() == "PGPASSWORD" and len(v) >= 8]
             logs = b"".join((run_dir / "logs" / f).read_bytes() for f in os.listdir(run_dir / "logs"))
-            check("S3: raw logs carry no PGPASSWORD value", all(s.encode() not in logs for s in secrets))
             text = (run_dir / "report.json").read_text(encoding="utf-8")
-            check("S3: report.json carries no PGPASSWORD value and no conninfo", all(s not in text for s in secrets) and "postgresql://" not in text)
+            check("S3: the PGPASSWORD canary really was present in this run's parent environment "
+                  "(the two checks below are therefore not vacuous)", len(S3_CANARY) >= 8)
+            check("S3: raw logs carry no PGPASSWORD canary value", S3_CANARY.encode() not in logs)
+            check("S3: report.json carries no PGPASSWORD canary value and no conninfo",
+                  S3_CANARY not in text and "postgresql://" not in text)
+            check("S3: report.json records PGPASSWORD as stripped_denylist, never as passed",
+                  report["env_snapshot"].get("PGPASSWORD") == "stripped_denylist",
+                  report["env_snapshot"].get("PGPASSWORD"))
+            check("S3: the canary value is absent from this run's stdout and stderr",
+                  S3_CANARY not in out and S3_CANARY not in err)
             check("S3: label DIAGNOSTIC (fake dir), PARTIAL/FULL reserved for real discovery", report["sweep_label"] == "DIAGNOSTIC")
             check("S3: secret scan clean", report["integrity"]["secret_scan"]["hits"] == [], report["integrity"]["secret_scan"])
 

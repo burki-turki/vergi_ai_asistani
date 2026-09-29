@@ -637,7 +637,16 @@ try:
     env, snap = runner.build_child_env(
         {"PATH": "p", "ANTHROPIC_API_KEY": "k", "Pgpassword": "pw", "VERGI_TEST_PG_DSN": "db", "PYTHONPATH": "evil", "TEMP": "parenttemp", "HOME": "h"},
         "production-parity", "GUARDDIR", "LEDGER", "RUN", 42, "TMPDIR", platform="win32")
-    check("build_child_env: allowlist passes PATH and PG contract (case-insensitive)", env.get("PATH") == "p" and env.get("PGPASSWORD") == "pw" and env.get("VERGI_TEST_PG_DSN") == "db")
+    check("build_child_env: allowlist passes PATH and PG contract (case-insensitive)", env.get("PATH") == "p" and env.get("VERGI_TEST_PG_DSN") == "db")
+    # Slice 8A / G3: no password value is forwarded to any child, and the
+    # passfile PATH variable stays denylisted as it always has been. A test that
+    # needs a specific passfile passes it as a libpq CONNECTION parameter.
+    check("build_child_env: PGPASSWORD is stripped as a denylisted secret (Slice 8A / G3)",
+          "PGPASSWORD" not in env and snap["PGPASSWORD"] == "stripped_denylist", snap.get("PGPASSWORD"))
+    check("build_child_env: PGPASSFILE remains denylisted (never forwarded)",
+          runner.is_denylisted_name("PGPASSFILE")
+          and "PGPASSFILE" not in runner.build_child_env(
+              {"PGPASSFILE": "x"}, "production-parity", "g", "l", "r", 1, "t", platform="win32")[0])
     check("build_child_env: denylisted parent PYTHONPATH replaced by guard dir", env.get("PYTHONPATH") == "GUARDDIR" and snap["PYTHONPATH"] == "runner_set")
     check("build_child_env: parent TEMP not forwarded; runner-owned tmp used", env.get("TEMP") == "TMPDIR" and env.get("TMP") == "TMPDIR")
     check("build_child_env: HOME is not in the Windows allowlist", "HOME" not in env and snap["HOME"] == "stripped_unlisted")
@@ -647,7 +656,34 @@ try:
     check("assert_env_denylist: violation detected for a smuggled secret", runner.assert_env_denylist({"ANTHROPIC_API_KEY": "x", "PATH": "p"}, {}) == ["ANTHROPIC_API_KEY"])
     check("assert_env_denylist: runner-set PYTHONPATH tolerated only with the runner value",
           runner.assert_env_denylist({"PYTHONPATH": "g"}, {"PYTHONPATH": "g"}) == [] and runner.assert_env_denylist({"PYTHONPATH": "other"}, {"PYTHONPATH": "g"}) == ["PYTHONPATH"])
-    check("is_denylisted_name: PGPASSWORD is the sole PASSWORD exception", not runner.is_denylisted_name("PGPASSWORD") and runner.is_denylisted_name("DB_PASSWORD") and runner.is_denylisted_name("x_api_key") and runner.is_denylisted_name("GIT_DIR"))
+    check("is_denylisted_name: PASSWORD has no exception any more - PGPASSWORD is denylisted too (Slice 8A / G3)",
+          runner.is_denylisted_name("PGPASSWORD") and runner.is_denylisted_name("DB_PASSWORD") and runner.is_denylisted_name("x_api_key") and runner.is_denylisted_name("GIT_DIR"))
+    check("PGPASSWORD is in ENV_DENY_EXACT and no longer in ENV_ALLOWLIST_PG",
+          "PGPASSWORD" in runner.ENV_DENY_EXACT and "PGPASSWORD" not in runner.ENV_ALLOWLIST_PG)
+    check("collect_parent_secret_values still redacts a PGPASSWORD value (denylist covers it)",
+          runner.collect_parent_secret_values({"PGPASSWORD": "sentinel-value-long-enough"}) == [b"sentinel-value-long-enough"])
+    # Slice 8A: the operator precondition text is the only place the trust
+    # boundary is written down, so it is pinned here. It must scope trust to the
+    # disposable cluster and to an exact superuser + exact loopback rule, name
+    # the forbidden blanket rule verbatim, and never use vague wording that
+    # could be read as "any trust rule is fine".
+    _epilog = runner.build_arg_parser().epilog
+    check("--help precondition text scopes trust to the DISPOSABLE cluster only",
+          "disposable test cluster ONLY" in _epilog)
+    check("--help precondition text requires an exact superuser + exact loopback trust rule",
+          "host all <superuser> 127.0.0.1/32 trust" in _epilog
+          and "the exact bootstrap superuser" in _epilog and "the exact loopback address" in _epilog)
+    check("--help precondition text names the forbidden blanket-trust rule and who refuses it",
+          "'host all all 127.0.0.1/32 trust'" in _epilog and "FORBIDDEN" in _epilog
+          and "P1" in _epilog)
+    check("--help precondition text states every other role uses scram-sha-256",
+          "scram-sha-256" in _epilog and "vergi_owner, vergi_app, vergi_iam_admin" in _epilog)
+    check("--help precondition text forbids trust on the persistent pilot cluster, superuser included",
+          "PERSISTENT pilot cluster uses trust for no role at all" in _epilog)
+    check("--help precondition text states neither PGPASSWORD nor PGPASSFILE is carried to a child",
+          "neither PGPASSWORD nor PGPASSFILE" in _epilog and "passfile` connection parameter" in _epilog)
+    check("--help precondition text no longer contains the vague 'expose a passfile' wording",
+          "expose a passfile" not in _epilog)
 
     # -----------------------------------------------------------------------
     # 10. capability profiles
@@ -696,12 +732,36 @@ try:
     check("iam url different db -> not same target", not runner.iam_url_targets_test_db(dict(same, dbname="iam"), "127.0.0.1", "55432", "testdb"))
     check("iam url different port -> not same target", not runner.iam_url_targets_test_db(dict(same, port="5432"), "127.0.0.1", "55432", "testdb"))
     check("iam url default port 5432 when omitted", runner.iam_url_targets_test_db({"host": "127.0.0.1", "dbname": "t"}, None, None, "t"))
-    check("migration sentinels: all present -> none missing", runner.missing_migrations(
-        {n for _, k, n in runner.MIGRATION_SENTINELS if k == "table"}, {n for _, k, n in runner.MIGRATION_SENTINELS if k == "column"}) == [])
-    check("migration sentinels: 0004 columns + 0005 tables missing are named",
+    ALL_T = {n for _, k, n in runner.MIGRATION_SENTINELS if k == "table"}
+    ALL_C = {n for _, k, n in runner.MIGRATION_SENTINELS if k == "column"}
+    ALL_K = set(runner.CONTRACT_LABELS)
+    check("migration sentinels: all present -> none missing", runner.missing_migrations(ALL_T, ALL_C, ALL_K) == [])
+    check("migration sentinels: 0004 columns + 0005 tables + every 0006 contract missing are named",
           runner.missing_migrations({"iam.users", "mutation.mutation_resources", "mutation.mutation_journal"}, set()) ==
           ["0004:mutation.mutation_journal.reconciled_by_actor_type", "0004:mutation.mutation_journal.reconciled_by_actor_ref",
-           "0005:iam.global_resource_grants", "0005:iam.global_resource_grant_events"])
+           "0005:iam.global_resource_grants", "0005:iam.global_resource_grant_events",
+           "0006:roles_exist", "0006:roles_not_privileged", "0006:owner_is_vergi_owner",
+           "0006:app_can_write_journal", "0006:admin_can_insert_grants",
+           "0006:app_cannot_insert_oidc", "0006:admin_cannot_insert_journal",
+           "0006:public_has_no_schema_access"])
+    # Slice 8A: 0006 grants privileges and creates no object, so a single probe
+    # could not tell a fully applied 0006 from a partially applied one. Each of
+    # the eight contract labels must be able to fail ON ITS OWN.
+    check("migration sentinels: 0006 has exactly eight independent contract labels", len(ALL_K) == 8, sorted(ALL_K))
+    for one in sorted(ALL_K):
+        check(f"migration sentinels: dropping only 0006:{one} names exactly that label",
+              runner.missing_migrations(ALL_T, ALL_C, ALL_K - {one}) == ["0006:" + one])
+    check("migration sentinels: contracts default to missing when the caller supplies none (fail-closed)",
+          runner.missing_migrations(ALL_T, ALL_C) == ["0006:" + n for n in runner.CONTRACT_LABELS])
+    _saved_sentinels = runner.MIGRATION_SENTINELS
+    try:
+        runner.MIGRATION_SENTINELS = (("9999", "not_a_known_kind", "whatever"),)
+        check("migration sentinels: an unknown sentinel kind fails closed instead of silently passing",
+              runner.missing_migrations({"whatever"}, {"whatever"}, {"whatever"}) == ["9999:whatever"])
+    finally:
+        runner.MIGRATION_SENTINELS = _saved_sentinels
+    check("migration sentinels: the real sentinel tuple was restored after the unknown-kind probe",
+          runner.MIGRATION_SENTINELS is _saved_sentinels and runner.missing_migrations(ALL_T, ALL_C, ALL_K) == [])
     check("inet_server_addr loopback classification", runner.is_loopback_server_addr("127.0.0.1") and runner.is_loopback_server_addr(None)
           and runner.is_loopback_server_addr("::1") and not runner.is_loopback_server_addr("192.168.1.2"))
     check("concurrent sweep detection (pure)", runner.concurrent_sweep_present([("psql", 1), (runner.APPLICATION_NAME, 2)]) and not runner.concurrent_sweep_present([("psql", 1)]))

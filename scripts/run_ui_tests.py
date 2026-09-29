@@ -162,9 +162,16 @@ ENV_ALLOWLIST_WINDOWS = (
     "PROCESSOR_ARCHITECTURE", "PROCESSOR_IDENTIFIER", "OS",
 )
 ENV_ALLOWLIST_POSIX_EXTRA = ("HOME", "LANG", "LC_ALL", "SHELL", "PATH")
+# Slice 8A / G3: PGPASSWORD was removed from this allowlist and added to
+# ENV_DENY_EXACT below. The runner forwards NO password and NO passfile
+# environment value to any child process: PGPASSWORD is stripped, and
+# PGPASSFILE stays denylisted as it always has been. A disposable cluster that
+# uses scram is still reachable, because libpq finds a passfile at its own
+# default location without any environment variable; a test that needs a
+# specific passfile passes it as a `passfile` connection parameter instead.
 ENV_ALLOWLIST_PG = (
     "VERGI_TEST_PG_DSN", "VERGI_TEST_PSQL_BIN", "VERGI_TEST_PG_SUPERUSER_AVAILABLE",
-    "VERGI_TEST_PG_MAINTENANCE_DB", "PGHOST", "PGPORT", "PGUSER", "PGPASSWORD",
+    "VERGI_TEST_PG_MAINTENANCE_DB", "PGHOST", "PGPORT", "PGUSER",
 )
 # TEMP/TMP are in the contract's pass-through list (J.1); this runner instead
 # points them at a short, runner-owned, private ``%TEMP%/vsw_<pid>`` so that
@@ -178,6 +185,7 @@ RUNNER_SET_ENV_NAMES = (
 RAG_PROFILE_ENV = {"VERGI_RAG_DEPENDENCY_GATE": "require"}
 
 ENV_DENY_EXACT = frozenset({
+    "PGPASSWORD",
     "VERGI_KEY_PROVIDER_KIND", "VERGI_DEPLOYMENT_MODE", "VERGI_IAM_DATABASE_URL",
     "PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP", "PYTHONINSPECT", "PYTHONWARNINGS",
     "PYTHONBREAKPOINT", "PYTHONSAFEPATH", "PYTHONUSERBASE", "PYTHONPYCACHEPREFIX",
@@ -493,7 +501,7 @@ def is_denylisted_name(name):
         return True
     if "SECRET" in upper or "TOKEN" in upper:
         return True
-    if "PASSWORD" in upper and upper != "PGPASSWORD":
+    if "PASSWORD" in upper:
         return True
     for prefix in ENV_DENY_PREFIXES:
         if upper.startswith(prefix):
@@ -632,6 +640,13 @@ def concurrent_sweep_present(rows):
     return any(app == APPLICATION_NAME for app, _pid in rows)
 
 
+# Slice 8A: 0006 grants privileges and creates no table, column or sequence, so
+# it has no object a "table"/"column" sentinel could see. A single
+# has_table_privilege() probe would also not notice a PARTIALLY applied 0006.
+# The "contract" kind therefore pins eight independent propositions - positive
+# grants, negative (must-NOT-have) grants, role attributes, ownership and the
+# PUBLIC schema ACL - each evaluated by PG_CONTRACT_SQL below and each able to
+# fail on its own.
 MIGRATION_SENTINELS = (
     ("0001", "table", "iam.users"),
     ("0003", "table", "mutation.mutation_resources"),
@@ -640,15 +655,91 @@ MIGRATION_SENTINELS = (
     ("0004", "column", "mutation.mutation_journal.reconciled_by_actor_ref"),
     ("0005", "table", "iam.global_resource_grants"),
     ("0005", "table", "iam.global_resource_grant_events"),
+    ("0006", "contract", "roles_exist"),
+    ("0006", "contract", "roles_not_privileged"),
+    ("0006", "contract", "owner_is_vergi_owner"),
+    ("0006", "contract", "app_can_write_journal"),
+    ("0006", "contract", "admin_can_insert_grants"),
+    ("0006", "contract", "app_cannot_insert_oidc"),
+    ("0006", "contract", "admin_cannot_insert_journal"),
+    ("0006", "contract", "public_has_no_schema_access"),
 )
 
+CONTRACT_ROLE_OWNER = "vergi_owner"
+CONTRACT_ROLE_APP = "vergi_app"
+CONTRACT_ROLE_ADMIN = "vergi_iam_admin"
 
-def missing_migrations(present_tables, present_columns):
+# Every probe is guarded so the statement can never raise: has_table_privilege()
+# errors on an unknown role or an unknown table, so each call sits behind an
+# EXISTS(pg_roles) + to_regclass() CASE and falls back to false. PUBLIC is a
+# pseudo-role and is NOT accepted by has_schema_privilege(); it is grantee OID 0
+# inside the ACL, so the PUBLIC probe goes through pg_namespace.nspacl +
+# aclexplode(), with acldefault('n', nspowner) standing in for a NULL acl, and
+# fails closed when a schema is missing instead of reporting "no access found".
+PG_CONTRACT_SQL = """
+SELECT
+  (SELECT count(*) = 3 FROM pg_roles WHERE rolname IN (%(owner)s, %(app)s, %(admin)s))
+    AS roles_exist,
+  ((SELECT count(*) = 3 FROM pg_roles WHERE rolname IN (%(owner)s, %(app)s, %(admin)s))
+   AND NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname IN (%(owner)s, %(app)s, %(admin)s)
+                     AND (rolsuper OR rolcreatedb OR rolcreaterole
+                          OR rolreplication OR rolbypassrls)))
+    AS roles_not_privileged,
+  (EXISTS (SELECT 1 FROM pg_database d JOIN pg_roles r ON r.oid = d.datdba
+             WHERE d.datname = current_database() AND r.rolname = %(owner)s)
+   AND (SELECT count(*) = 2 FROM pg_namespace n JOIN pg_roles r ON r.oid = n.nspowner
+          WHERE n.nspname IN ('iam', 'mutation') AND r.rolname = %(owner)s))
+    AS owner_is_vergi_owner,
+  (CASE WHEN EXISTS (SELECT 1 FROM pg_roles WHERE rolname = %(app)s)
+          AND to_regclass('mutation.mutation_journal') IS NOT NULL
+        THEN has_table_privilege(%(app)s, 'mutation.mutation_journal', 'INSERT')
+         AND has_table_privilege(%(app)s, 'mutation.mutation_journal', 'UPDATE')
+        ELSE false END)
+    AS app_can_write_journal,
+  (CASE WHEN EXISTS (SELECT 1 FROM pg_roles WHERE rolname = %(admin)s)
+          AND to_regclass('iam.global_resource_grants') IS NOT NULL
+        THEN has_table_privilege(%(admin)s, 'iam.global_resource_grants', 'INSERT')
+        ELSE false END)
+    AS admin_can_insert_grants,
+  (CASE WHEN EXISTS (SELECT 1 FROM pg_roles WHERE rolname = %(app)s)
+          AND to_regclass('iam.oidc_login_transactions') IS NOT NULL
+        THEN NOT has_table_privilege(%(app)s, 'iam.oidc_login_transactions', 'INSERT')
+        ELSE false END)
+    AS app_cannot_insert_oidc,
+  (CASE WHEN EXISTS (SELECT 1 FROM pg_roles WHERE rolname = %(admin)s)
+          AND to_regclass('mutation.mutation_journal') IS NOT NULL
+        THEN NOT has_table_privilege(%(admin)s, 'mutation.mutation_journal', 'INSERT')
+        ELSE false END)
+    AS admin_cannot_insert_journal,
+  ((SELECT count(*) = 2 FROM pg_namespace WHERE nspname IN ('iam', 'mutation'))
+   AND NOT EXISTS (
+         SELECT 1
+         FROM pg_namespace AS n
+         CROSS JOIN LATERAL aclexplode(
+             coalesce(n.nspacl, acldefault('n', n.nspowner))) AS a
+         WHERE n.nspname IN ('iam', 'mutation')
+           AND a.grantee = 0
+           AND a.privilege_type IN ('USAGE', 'CREATE')))
+    AS public_has_no_schema_access
+"""
+
+CONTRACT_LABELS = tuple(name for mig, kind, name in MIGRATION_SENTINELS if kind == "contract")
+
+
+def missing_migrations(present_tables, present_columns, present_contracts=frozenset()):
     """Pure. present_tables: set of regclass names present; present_columns:
-    set of 'schema.table.column'. Returns list of missing sentinel labels."""
+    set of 'schema.table.column'; present_contracts: set of satisfied 0006
+    contract labels. Returns list of missing sentinel labels."""
     missing = []
     for mig, kind, name in MIGRATION_SENTINELS:
-        ok = name in present_tables if kind == "table" else name in present_columns
+        if kind == "table":
+            ok = name in present_tables
+        elif kind == "column":
+            ok = name in present_columns
+        elif kind == "contract":
+            ok = name in present_contracts
+        else:
+            ok = False  # unknown kind fails closed, never silently passes
         if not ok:
             missing.append("%s:%s" % (mig, name))
     return missing
@@ -1647,10 +1738,24 @@ def build_arg_parser():
         description="Single honest runner for ui/tests (Pilot Readiness Step 3).",
         epilog=(
             "production-parity operator preconditions (values never printed): a fresh, DISPOSABLE, "
-            "loopback-only PostgreSQL 16 with migrations 0001-0005 applied; environment "
-            "VERGI_TEST_PG_DSN=<dbname> PGHOST=127.0.0.1 PGPORT=<port> PGUSER=<user> [PGPASSWORD] "
+            "loopback-only PostgreSQL 16 with migrations 0001-0006 applied; environment "
+            "VERGI_TEST_PG_DSN=<dbname> PGHOST=127.0.0.1 PGPORT=<port> PGUSER=<user> "
             "VERGI_TEST_PSQL_BIN=<psql.exe> VERGI_TEST_PG_SUPERUSER_AVAILABLE=1 "
-            "VERGI_TEST_PG_MAINTENANCE_DB=postgres. This is NOT the persistent IAM database; "
+            "VERGI_TEST_PG_MAINTENANCE_DB=postgres. "
+            "AUTHENTICATION, disposable test cluster ONLY: a trust rule is permitted here and "
+            "nowhere else, and only when the pg_hba line matches the exact bootstrap superuser "
+            "AND the exact loopback address, i.e. 'host all <superuser> 127.0.0.1/32 trust'. "
+            "'host all all 127.0.0.1/32 trust' and every other blanket-trust rule are FORBIDDEN "
+            "and are refused by test_iam_runtime_privileges_postgres' P1 check. vergi_owner, "
+            "vergi_app, vergi_iam_admin and every other role authenticate with scram-sha-256. "
+            "The PERSISTENT pilot cluster uses trust for no role at all, the superuser included. "
+            "The runner carries neither PGPASSWORD nor PGPASSFILE into any child process: both "
+            "are denylisted, so a test that needs a password supplies it through libpq's "
+            "`passfile` connection parameter, never through the environment. "
+            "0006 additionally requires the roles vergi_owner / vergi_app / vergi_iam_admin to "
+            "exist (created by operational bootstrap, never by a migration), none of them "
+            "superuser/createdb/createrole/replication/bypassrls, with the database and both "
+            "schemas owned by vergi_owner. This is NOT the persistent IAM database; "
             "VERGI_IAM_DATABASE_URL is never forwarded and a same-target value is refused."
         ),
     )
@@ -2050,7 +2155,25 @@ class Sweep:
                     "SELECT table_schema || '.' || table_name || '.' || column_name FROM information_schema.columns "
                     "WHERE table_schema = 'mutation' AND table_name = 'mutation_journal'")
                 columns = {row[0] for row in cur.fetchall()}
-                missing = missing_migrations(tables, columns)
+                # 0006 contract probe. Fails CLOSED: if the statement itself
+                # raises, every contract label counts as missing and only the
+                # exception CLASS is recorded - never its message, which could
+                # carry connection details.
+                contracts = set()
+                try:
+                    cur.execute(PG_CONTRACT_SQL, {"owner": CONTRACT_ROLE_OWNER,
+                                                  "app": CONTRACT_ROLE_APP,
+                                                  "admin": CONTRACT_ROLE_ADMIN})
+                    row = cur.fetchone()
+                    if row is not None and len(row) == len(CONTRACT_LABELS):
+                        contracts = {label for label, value in zip(CONTRACT_LABELS, row) if value is True}
+                        pg["contract_probe"] = "ok"
+                    else:
+                        pg["contract_probe"] = "unexpected_shape"
+                except Exception as exc:
+                    conn.rollback()
+                    pg["contract_probe"] = "error:%s" % type(exc).__name__
+                missing = missing_migrations(tables, columns, contracts)
                 pg["migrations_ok"] = (len(missing) == 0)
                 pg["migrations_missing"] = missing
                 if missing and self.profile == "production-parity":
