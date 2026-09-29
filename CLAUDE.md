@@ -1183,6 +1183,22 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   DONE/LOCKED DEĞİLDİR**; **pilotun production-ready olduğu İDDİA
   EDİLMEZ**. Ayrıntılar için bkz.
   [`pilot-readiness-step-8-slice-8a-iam-runtime-privileges.md`](docs/roadmap/checkpoints/pilot-readiness-step-8-slice-8a-iam-runtime-privileges.md).
+- **Pilot Readiness Adım 8 — Yerel PostgreSQL / IAM Adoption — DONE / LOCKED
+  FOR CURRENT PILOT.** Slice 8B (operatör runbook'u) ve Slice 8C (operational
+  adoption) **DONE / LOCKED**. Kapanış **yalnız mevcut yerel CLI pilot kapsamı**
+  bakımındandır ve Slice 8A pointer'ının "Adım 8'in KENDİSİ ACTIVE / NEXT olarak
+  KALIR" ifadesini SUPERSEDE eder. Commit zinciri: `5186db94` runbook →
+  `b8048015` privilege-ordering remediation → `82fc0bed` synthetic-fixture
+  remediation → `4fa2d1ca` final passfile/console hardening. Kalıcı,
+  loopback-only, servissiz cluster kuruldu; 0001–0006 uygulandı; ilk admin ve
+  avukat kullanıcısı oluşturuldu; sentetik case üzerinde tek preview + tek apply
+  ve `completed` journal satırı kanıtlandı; dump/restore paritesi kanıtlandı.
+  Resmî kapılar: `production-parity` **84/84 PASS, 6864 passed, 0 failed**;
+  `rag-dependency` **3/3 RAG_GATE_PASS, 216 passed, 0 failed**. **Sıradaki iş:
+  Adım 9 — ACTIVE / NEXT.** Web login hâlâ **Adım 11'in gerçek Entra
+  tenant'ını** bekler; **Row 19D ve Adım 9–13 açıktır**; **pilotun
+  production-ready olduğu İDDİA EDİLMEZ**. Ayrıntılar:
+  [`pilot-readiness-step-8-local-postgresql-iam-adoption.md`](docs/roadmap/checkpoints/pilot-readiness-step-8-local-postgresql-iam-adoption.md).
 
 ### Tarihsel Checkpoint Arşivi
 
