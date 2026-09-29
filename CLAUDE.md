@@ -1163,6 +1163,27 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   sınırlı disclosure için bkz. Adım 7 kapanış checkpoint özeti, §5
   sonrası, "## 6. Cross-Cutting Backlog"dan hemen önce.
 
+- **Pilot Readiness Adım 8 / Slice 8A — IAM Runtime Privilege Contract —
+  DONE / LOCKED.** **Adım 8'in KENDİSİ ACTIVE / NEXT olarak KALIR** — bu
+  pointer YALNIZ Slice 8A'yı kilitler. Implementasyon commit'i
+  `229489c34574f4718e1f65b6d4f8478c308ed6a2` (2 YENİ + 4 DEĞİŞTİRİLMİŞ =
+  6 dosya): `db/migrations/0006_iam_runtime_privileges.sql` least-privilege
+  rol/ACL sözleşmesini (üç canonical rol, exact GRANT matrisi, PUBLIC
+  schema ACL revoke'u) fail-closed, atomik ve idempotent biçimde getirir;
+  `ui/tests/test_iam_runtime_privileges_postgres.py` bunu gerçek
+  PostgreSQL üzerinde kanıtlar. Resmî kapılar commit'li baytlara karşı,
+  temiz detached worktree ve taze disposable cluster ile çalıştırıldı:
+  `production-parity` **exit 0, SWEEP FULL, 84/84 modül PASS, 6864 passed,
+  0 failed** ve `rag-dependency` **exit 0, RAG_GATE_PASS, 3/3, 216 passed,
+  0 failed**. **Sıradaki exact iş: Slice 8B — operatör runbook'u**;
+  ardından **Slice 8C — kalıcı yerel cluster ve IAM operational adoption**.
+  **Dar, exact iddia (abartılmaz):** kalıcı pilot cluster'ı **HENÜZ
+  KURULMADI**; kalıcı bir veritabanına 0001–0006 **UYGULANMADI**; IAM
+  admin/avukat kullanıcısı ve case assignment **OLUŞTURULMADI**; **Adım 8
+  DONE/LOCKED DEĞİLDİR**; **pilotun production-ready olduğu İDDİA
+  EDİLMEZ**. Ayrıntılar için bkz.
+  [`pilot-readiness-step-8-slice-8a-iam-runtime-privileges.md`](docs/roadmap/checkpoints/pilot-readiness-step-8-slice-8a-iam-runtime-privileges.md).
+
 ### Tarihsel Checkpoint Arşivi
 
 Tamamlanmış Row / Phase / Step / Slice checkpoint gövdeleri (original

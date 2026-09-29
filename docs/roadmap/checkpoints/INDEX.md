@@ -95,3 +95,16 @@ Sekiz içerik dosyası **aşağıdaki sırayla** birleştirildiğinde original
 | 45 | Adım 7 / Slice 1 — Stopping-Event Attestation Gate (DONE / LOCKED — checkpoint özeti) | L10431–10640 | 210 | 11286 | `bfcac4111951f3f536ea35840dbac19983e05de72d31ca22b28d5979a8f7d739` | `holiday-calendar-and-deadline-hardening.md` |
 | 46 | Adım 7 / Slice 2 — Stopping-Event Canonical and UI Visibility (DONE / LOCKED — checkpoint özeti) | L10641–10866 | 226 | 10314 | `a07b90adcc18abb705b8f9abd6daeb4929f64ba31330aedf1a05617eefb60fdb` | `holiday-calendar-and-deadline-hardening.md` |
 | 47 | Adım 7 — Deadline Hardening Pilot-Scope Closure (DONE / LOCKED FOR CURRENT PILOT — checkpoint özeti) | L10867–11037 | 171 | 9620 | `e9bed98ba97b972d94e080912fe676ba73038eba03faa9790ae6856a73688375` | `holiday-calendar-and-deadline-hardening.md` |
+
+## Migration sonrası eklenen checkpoint'ler
+
+Aşağıdaki dosyalar **original `L1166`–`L11037` migration'ının parçası
+DEĞİLDİR** ve yukarıdaki "Dosya sırası" / "Blok manifesti" tablolarının
+byte-exact reconstruction kanıtına dahil edilmez. Bunlar, arşive taşımadan
+SONRA doğrudan buraya yazılmış yeni checkpoint gövdeleridir (bkz. `CLAUDE.md`
+§5, "Bundan sonra"). Atıflar normal Markdown bağlantısıdır; otomatik import
+sözdizimi kullanılmamıştır.
+
+| # | Dosya | Kapsam | Amaç | Satır | Karakter | Bayt | SHA-256 |
+|---|---|---|---|---|---|---|---|
+| 1 | [`pilot-readiness-step-8-slice-8a-iam-runtime-privileges.md`](pilot-readiness-step-8-slice-8a-iam-runtime-privileges.md) | Pilot Readiness Adım 8 / Slice 8A — IAM Runtime Privilege Contract (DONE / LOCKED) | `db/migrations/0006_iam_runtime_privileges.sql`'in least-privilege rol/ACL sözleşmesi, fail-closed/atomik/idempotent davranışı, gerçek PostgreSQL test matrisi ve resmî kapı kanıtları; commit `229489c34574f4718e1f65b6d4f8478c308ed6a2` | 261 | 14827 | 15541 | `744b6d6c4d4b78d7c85c14a29502b687cbdcb2a3d72afdbcc83f6b45c7847e35` |
