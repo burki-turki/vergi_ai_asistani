@@ -763,14 +763,41 @@ foreach ($t in $targets) { $raw = [System.IO.File]::ReadAllText($t); $new = $raw
 **İSTİSNA — `documents\*\document.json` dosyalarına DOKUNULMAZ.** Bunlar
 bayt-bayt aynı kalır ve içlerinde `case_0001` demeye devam eder.
 
-Doğrulama:
+Doğrulama — fail-closed hedef doğrulaması:
 
 ```powershell
-Get-ChildItem -LiteralPath "data\cases\case_adim8_smoke" -Recurse -File | Select-String -SimpleMatch '"case_id": "case_0001"' | Select-Object Path
+$smoke = "data\cases\case_adim8_smoke"
+$src = "data\cases\case_0001"
+$targets = @("$smoke\case.json", "$smoke\issues\issues.json", "$smoke\evidence\evidence_case_adim8_smoke_v1.json.pending", "$smoke\documents\dava_dilekcesi_001\extractions\facts.json", "$smoke\documents\ihbarname_001\extractions\facts.json", "$smoke\documents\vir_001\extractions\facts.json")
+$fail = 0
+foreach ($t in $targets) { if (-not (Test-Path -LiteralPath $t -PathType Leaf)) { Write-Output "STOP eksik hedef: $t"; $fail = $fail + 1; continue }; $raw = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $t).Path); $yeni = ([regex]::Matches($raw, [regex]::Escape('"case_id": "case_adim8_smoke"'))).Count; $eski = ([regex]::Matches($raw, [regex]::Escape('"case_id": "case_0001"'))).Count; if ($yeni -ne 1 -or $eski -ne 0) { Write-Output "STOP sayim ($yeni/$eski): $t"; $fail = $fail + 1 } else { Write-Output "OK $t" } }
+foreach ($d in @("dava_dilekcesi_001", "ihbarname_001", "vir_001")) { $a = "$src\documents\$d\document.json"; $b = "$smoke\documents\$d\document.json"; if (-not (Test-Path -LiteralPath $b -PathType Leaf)) { Write-Output "STOP eksik document.json: $b"; $fail = $fail + 1; continue }; if ((Get-FileHash -LiteralPath $a -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $b -Algorithm SHA256).Hash) { Write-Output "STOP bayt farki: $b"; $fail = $fail + 1 } else { Write-Output "OK bayt-ozdes $b" } }
+$docCount = @(Get-ChildItem -LiteralPath "$smoke\documents" -Recurse -File -Filter "document.json").Count
+if ($docCount -ne 3) { Write-Output "STOP document.json sayisi $docCount, beklenen 3"; $fail = $fail + 1 }
+if ($fail -ne 0) { Write-Output "K3_VERIFY=FAIL ($fail)" } else { Write-Output "K3_VERIFY=PASS" }
 ```
 
-Beklenen: **yalnız** `documents\*\document.json` dosyaları listelenir; başka
-hiçbir dosya listelenmez.
+Beklenen: altı hedefin her biri için `OK`, üç `document.json` için
+`OK bayt-ozdes` ve son satırda **`K3_VERIFY=PASS`**. Herhangi bir `STOP …`
+satırı veya `K3_VERIFY=FAIL` görülürse **DUR**. Bağlayıcı ölçüt şudur: altı
+exact hedefin **her biri mevcut** olmalı; her hedefte
+`"case_id": "case_adim8_smoke"` **tam 1 kez**, `"case_id": "case_0001"` ise
+**0 kez** bulunmalı; üç `documents\*\document.json` kaynak `case_0001`
+kopyasıyla **bayt-özdeş** olmalı ve sayıları **tam 3** olmalıdır. Eksik dosya,
+fazla dosya, sayım farkı veya hash farkı **DUR** sebebidir.
+
+**Diğer dosyalarda `case_0001` referanslarının kalması BEKLENENDİR.** Sentetik
+kopyada, yeniden yazılan altı hedef ve üç `document.json` dışındaki dosyalar
+(`timeline/`, `deadlines/`, `qa/`, `case_view/`, `arguments/`, `case_law/`,
+`research/`, `risk_strategy/`, `drafting/` altındaki canonical, `.pending`,
+`*.approval.json`, `*.generation_audit.json` ve `history/` dosyaları)
+`"case_id": "case_0001"` demeye devam eder. Bu dosyaların sayısı fixture
+değiştikçe değişir ve bu belgeye **pinlenmez**. Bunlar, §K.5'te seçilen
+evidence-approval yolunun §K.3.1'de sayılan **dört fail-closed loader
+girdisi değildir**; bu yüzden **yeniden yazılmazlar**. Audit, history veya
+kayıtlı hash taşıyan dosyalara **dokunulmaz**. Smoke yalnız §K.5'te seçilen
+exact approval kaydı (`evidence`) üzerinde yürütülür; eski referans taşıyan
+bu dosyalar **seçilmez ve mutasyona uğratılmaz**.
 
 #### K.3.1 Neden bu kural, neden bu istisna
 
