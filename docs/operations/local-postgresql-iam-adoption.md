@@ -516,7 +516,7 @@ CROSS JOIN LATERAL aclexplode(coalesce(c.relacl, acldefault((CASE c.relkind WHEN
 WHERE n.nspname IN ('iam', 'mutation')
   AND c.relkind IN ('r', 'S')
   AND a.grantee = (SELECT oid FROM pg_roles WHERE rolname = 'vergi_app')
-ORDER BY priv COLLATE "C";
+ORDER BY (n.nspname || '.' || c.relname || ':' || a.privilege_type) COLLATE "C";
 ```
 
 Beklenen 11 satır: `iam.case_assignments:SELECT`,
