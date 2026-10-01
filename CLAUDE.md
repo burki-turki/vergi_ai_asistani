@@ -1199,6 +1199,26 @@ Agent kendi kararıyla sıralamayı değiştiremez.
   tenant'ını** bekler; **Row 19D ve Adım 9–13 açıktır**; **pilotun
   production-ready olduğu İDDİA EDİLMEZ**. Ayrıntılar:
   [`pilot-readiness-step-8-local-postgresql-iam-adoption.md`](docs/roadmap/checkpoints/pilot-readiness-step-8-local-postgresql-iam-adoption.md).
+- **Pilot Readiness Adım 9 — Sentetik Concierge Dry Run ve Deadline Raporu —
+  DONE / LOCKED FOR CURRENT PILOT.** Adım 8 pointer'ındaki "Adım 9 — ACTIVE /
+  NEXT" ifadesini SUPERSEDE eder (o kayıt değiştirilmedi). "Dry run" ağsız
+  anlamına gelmez; başarılı model çıkarımını yalnız son yetkili POST üretti.
+  Tamamen sentetik tek dosyada: 9A offline concierge runtime (41 wheel, offline kurulum); egress
+  harness + outer monitor; auth probe ve **tek** başarılı, maskeli sentetik
+  model gönderimi; fact extraction → promotion → tebliğ tarihi verification;
+  timeline generation/promotion; deadline generation/approval; salt-okunur
+  avukat deadline raporu. Remediation A: fact-verification downstream sırasına
+  qa/case_view eklendi. Remediation B: warnings/notes token redaksiyonu,
+  masking policy v5, forward-only. Commit zinciri: `50bba37` fail-closed
+  deadline report CLI → `bcf2842` downstream rerun order → `940c26b`
+  warning/note redaksiyonu + masking v5. Resmî kapılar (`940c26b`):
+  `production-parity` **86/86 PASS, 7192 passed, 0 failed**; `rag-dependency`
+  **3/3 RAG_GATE_PASS, 216 passed, 0 failed**. Sentetik assignment revoke
+  edildi; final snapshot alındı ve ignored fixture kaldırıldı; DB audit/journal
+  izleri korundu. **Sıradaki iş: Adım 10 — ACTIVE / NEXT.** Web login **Adım
+  11**'i bekler; **Row 19D ve Adım 10–13 açıktır**; **pilotun production-ready
+  olduğu İDDİA EDİLMEZ**. Ayrıntılar:
+  [`pilot-readiness-step-9-synthetic-concierge-dry-run.md`](docs/roadmap/checkpoints/pilot-readiness-step-9-synthetic-concierge-dry-run.md).
 
 ### Tarihsel Checkpoint Arşivi
 
