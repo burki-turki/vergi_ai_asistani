@@ -139,7 +139,21 @@
 #     baytlarina karsi hicbir production mutasyonu calismadi (kanit:
 #     implementasyon raporu). Eger ileride bu varsayim yanlis cikarsa
 #     `v4` -> `v5` bump'i AYRI bir onay bekleyen, tek satirlik bir
-#     degisikliktir.
+#     degisikliktir. (Not: `v5` bump'i daha sonra bu R5 nedeniyle DEGIL,
+#     asagidaki REMEDIATION B nedeniyle, ayri kullanici onayiyla yapildi.)
+#   * REMEDIATION B (Adim 9 backlog: maskesiz model uyarilari): modelin
+#     serbest metin alanlari - top-level `warnings` ve fact-level
+#     `notes` - bir maskeleme token'i tasiyorsa, geri cevirme ile gercek
+#     degeri pending/canonical'a TASIMAMALIDIR. `redact_token_bearing_
+#     free_text()` bu iki alandaki token tasiyan girdinin TAMAMINI sabit
+#     bir redaksiyon metniyle degistirir (uyarilar, yalniz redakte
+#     edilenler arasinda 1'den baslayan sira numarasi alir - boylece
+#     tekillestirmede birlesmez ve sayi korunur). Token butunlugu
+#     redaksiyondan ONCE mevcut geri-cevirme kontrolleriyle dogrulanir
+#     (bilinmeyen/bozuk token hala fail-closed reddedilir). `statement`,
+#     `normalized_statement`, `source.text_excerpt` ve
+#     `structured_values` redakte EDILMEZ, geri cevrilir.
+#     `MASKING_POLICY_VERSION` `v4` -> `v5`.
 #
 # MIMARI KURALLAR:
 #   * stdlib-only (`re`, `json`, `hashlib`, `unicodedata`, `dataclasses`).
@@ -242,9 +256,16 @@ from dataclasses import dataclass, field
 # Repo-geneli `git grep tr_pseudonymisation_v4` ile CAKISMASIZ oldugu
 # implementasyon oncesi DOGRULANMISTIR (yalniz bu iki dosyada
 # "tr_pseudonymisation_v3" geciyordu, v2'nin aksine bir cakisma YOK).
+#
+# v4 -> v5 (REMEDIATION B): token tasiyan `warnings`/`notes` serbest
+# metninin redaksiyonu (bkz. modul basligi REMEDIATION B notu). Bump
+# ZORUNLUDUR: v4 ile TAMAMLANMIS bir mutasyon (gercek deger uyari/not
+# metnine geri cevrilmis olabilir) "safe replay" ile sessizce eski
+# sonucu DONDURMEMELI. Politika YALNIZ yeni uretimler icin ileriye
+# donuktur; eski pending/canonical/audit kayitlari migrate EDILMEZ.
 # ------------------------------------------------------------
 
-MASKING_POLICY_VERSION = "tr_pseudonymisation_v4"
+MASKING_POLICY_VERSION = "tr_pseudonymisation_v5"
 
 
 # ------------------------------------------------------------
@@ -2296,6 +2317,95 @@ def count_dropped_tokens(obj, mapping_or_result):
             by_class[token_class] += 1
 
     return {"dropped_token_count": dropped, "dropped_by_class": by_class}
+
+
+# ------------------------------------------------------------
+# SERBEST METIN REDAKSIYONU (REMEDIATION B)
+# ------------------------------------------------------------
+
+REDACTED_WARNING_TEMPLATE = (
+    "[REDAKTE #{number}] Model uyarısı kişisel tanımlayıcı token'ı "
+    "içerdiği için kaldırıldı."
+)
+REDACTED_NOTE_TEXT = (
+    "[REDAKTE] Not metni kişisel tanımlayıcı token'ı içerdiği için "
+    "kaldırıldı."
+)
+
+
+def redacted_warning_text(number):
+    """`number`. redakte edilmis uyarinin sabit metni (1'den baslar)."""
+    return REDACTED_WARNING_TEMPLATE.format(number=number)
+
+
+def _carries_token(node):
+    """Dugumun (string, ya da ic ice dict/list) HERHANGI bir string'i
+    tam kurallı bir maskeleme token'i tasiyor mu? Token dilbilgisi
+    `TOKEN_RE`'dir - ayri/gevsek bir regex YOKTUR."""
+    for text in _walk_strings(node):
+        if TOKEN_RE.search(text):
+            return True
+    return False
+
+
+def redact_token_bearing_free_text(obj, mapping_or_result):
+    """Model cevabinin serbest metin alanlarini redakte eder; SAF fonksiyon.
+
+    Kapsam YALNIZ: top-level `warnings` listesinin elemanlari ve
+    `facts[i].notes`. Baska hicbir alana (ozellikle `statement`,
+    `normalized_statement`, `source.text_excerpt`, `structured_values`)
+    dokunulmaz - onlar sonra `de_mask_tree()` ile geri cevrilir.
+
+    SIRA:
+      1. Butunluk: tum agac MEVCUT geri-cevirme kontrollerinden gecirilir
+         (`de_mask_tree()`, sonucu atilir). Bilinmeyen/bozuk token veya
+         anahtardaki token redaksiyondan ONCE, AYNI hata ile reddedilir -
+         redaksiyon bir hatali token'i sessizce "temizleyemez".
+      2. Redaksiyon: token tasiyan her uyari elemaninin TAMAMI
+         `redacted_warning_text(n)` ile degistirilir; `n` yalniz redakte
+         edilenler arasinda, giris sirasiyla 1'den artar (bir elemanda
+         kac token/sinif olursa olsun TEK satir). Token tasiyan bir
+         `notes` degerinin TAMAMI `REDACTED_NOTE_TEXT` olur.
+
+    Girdi YERINDE DEGISTIRILMEZ; degisen kaplar yeni nesnelerdir.
+    `warnings` liste degilse veya bir fact dict degilse oldugu gibi
+    birakilir."""
+    mapping = _resolve_mapping(mapping_or_result)
+
+    de_mask_tree(obj, mapping)
+
+    if not isinstance(obj, dict):
+        return obj
+
+    out = dict(obj)
+
+    warnings = obj.get("warnings")
+    if isinstance(warnings, list):
+        redacted_count = 0
+        new_warnings = []
+        for warning in warnings:
+            if _carries_token(warning):
+                redacted_count += 1
+                new_warnings.append(redacted_warning_text(redacted_count))
+            else:
+                new_warnings.append(warning)
+        out["warnings"] = new_warnings
+
+    facts = obj.get("facts")
+    if isinstance(facts, list):
+        new_facts = []
+        for fact in facts:
+            if (
+                isinstance(fact, dict)
+                and "notes" in fact
+                and _carries_token(fact["notes"])
+            ):
+                fact = dict(fact)
+                fact["notes"] = REDACTED_NOTE_TEXT
+            new_facts.append(fact)
+        out["facts"] = new_facts
+
+    return out
 
 
 # ------------------------------------------------------------

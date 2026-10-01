@@ -2077,10 +2077,12 @@ check(
 #    non-colliding value avoids touching a third file.
 check(
     "R4/R5: MASKING_POLICY_VERSION was bumped away from the pre-R4 v1 value (R5 has since "
-    "bumped it again, v3 -> v4 - see the ## 15d-7 R5 section below) - without EACH bump, "
+    "bumped it again, v3 -> v4 - see the ## 15d-7 R5 section below - and Remediation B "
+    "bumped it once more, v4 -> v5) - without EACH bump, "
     "coordinator safe-replay could return an already-completed, pre-fix (buggy/unmasked) "
     "result for identical inputs instead of re-running with the fixed masker",
-    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v4"
+    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v5"
+    and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v4"
     and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v1"
     and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v2"
     and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v3",
@@ -2966,8 +2968,9 @@ check(
 # R5 (13): MASKING_POLICY_VERSION v4 bump.
 # ------------------------------------------------------------
 
-check("R5(13): MASKING_POLICY_VERSION was bumped v3 -> v4",
-      lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v4"
+check("R5(13): MASKING_POLICY_VERSION moved past v3 (R5: v3 -> v4; Remediation B has since "
+      "bumped it again, v4 -> v5)",
+      lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v5"
       and lpb.MASKING_POLICY_VERSION != "tr_pseudonymisation_v3",
       lpb.MASKING_POLICY_VERSION)
 
@@ -3372,9 +3375,9 @@ check(
 # on. ---
 
 check(
-    "R5(15) IDENTITY: MASKING_POLICY_VERSION is still exactly 'tr_pseudonymisation_v4' after the "
-    "mixed-kind fix (NOT bumped again - see the module header R5 KARAR A note for the premise)",
-    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v4",
+    "R5(15) IDENTITY: the R5 mixed-kind fix itself did NOT bump past v4; the only later bump is "
+    "Remediation B's v4 -> v5 (see the module header REMEDIATION B note)",
+    lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v5",
     lpb.MASKING_POLICY_VERSION,
 )
 _v4_collisions_after_fix = []
@@ -3746,6 +3749,213 @@ check("the de-masked party name is byte-identical to the original",
       e2e_back["facts"][0]["party"] == "Deneme Tekstil A.Ş.")
 check("assert_no_tokens_remain passes on the de-masked tree",
       lpb.assert_no_tokens_remain(e2e_back, e2e) is None)
+
+print("## 21b - REMEDIATION B: token-bearing warnings/notes are redacted, numbered")
+
+# One REAL token per class, taken from the e2e masking above (never a
+# hardcoded VGMASK_0001P) together with its original value.
+RB_TOKENS = {}
+for _rb_tok in e2e.mapping.tokens():
+    RB_TOKENS.setdefault(e2e.mapping.class_of(_rb_tok), _rb_tok)
+check("RB PRECONDITION: one real token per class P/T/V/B/F/E is available",
+      sorted(RB_TOKENS) == sorted(lpb.ALL_CLASSES), sorted(RB_TOKENS))
+RB_ORIGINALS = {cls: e2e.mapping.original_for(tok) for cls, tok in RB_TOKENS.items()}
+RB_W = lpb.redacted_warning_text
+RB_NOTE = lpb.REDACTED_NOTE_TEXT
+
+
+def rb_full_flow(tree):
+    """The engine's binding order: count -> redact -> de-mask -> residual scan."""
+    lpb.count_dropped_tokens(tree, e2e)
+    redacted = lpb.redact_token_bearing_free_text(tree, e2e)
+    back = lpb.de_mask_tree(redacted, e2e)
+    lpb.assert_no_tokens_remain(back, e2e)
+    return back
+
+
+def rb_fact(**overrides):
+    fact = {
+        "statement": "Davacı iddia ileri sürmüştür.",
+        "normalized_statement": None,
+        "source": {"page": None, "text_excerpt": None},
+        "structured_values": [],
+        "notes": None,
+    }
+    fact.update(overrides)
+    return fact
+
+
+check("RB: the contract texts are exact",
+      RB_W(1) == "[REDAKTE #1] Model uyarısı kişisel tanımlayıcı token'ı içerdiği için kaldırıldı."
+      and RB_W(2) == "[REDAKTE #2] Model uyarısı kişisel tanımlayıcı token'ı içerdiği için kaldırıldı."
+      and RB_NOTE == "[REDAKTE] Not metni kişisel tanımlayıcı token'ı içerdiği için kaldırıldı.")
+
+for _cls in lpb.ALL_CLASSES:
+    _tok = RB_TOKENS[_cls]
+    _orig = RB_ORIGINALS[_cls]
+    _back = rb_full_flow({"facts": [], "warnings": [f"Uyarı: {_tok} token olarak korunmuştur."]})
+    check(f"RB warnings: a class-{_cls} token-bearing warning becomes exactly one '#1' line",
+          _back["warnings"] == [RB_W(1)], _back["warnings"])
+    check(f"RB warnings: the class-{_cls} ORIGINAL value does not reach the warnings",
+          _orig not in json.dumps(_back["warnings"], ensure_ascii=False))
+    _back_n = rb_full_flow({"facts": [rb_fact(notes=f"Not: {_tok} geçmektedir.")], "warnings": []})
+    check(f"RB notes: a class-{_cls} token-bearing note is replaced by the fixed note text",
+          _back_n["facts"][0]["notes"] == RB_NOTE, _back_n["facts"][0]["notes"])
+    check(f"RB notes: the class-{_cls} ORIGINAL value does not reach the notes",
+          _orig not in json.dumps(_back_n["facts"], ensure_ascii=False))
+
+_rb_all = " ".join(RB_TOKENS[c] for c in lpb.ALL_CLASSES)
+_back_multi = rb_full_flow({"facts": [], "warnings": [f"Hepsi: {_rb_all} ve yine {RB_TOKENS['P']}"]})
+check("RB: one warning carrying SEVERAL tokens of ALL six classes yields exactly ONE line",
+      _back_multi["warnings"] == [RB_W(1)], _back_multi["warnings"])
+
+_rb_p, _rb_t, _rb_e = RB_TOKENS["P"], RB_TOKENS["T"], RB_TOKENS["E"]
+_rb_in = [
+    "Serbest uyarı bir.",
+    f"{_rb_p} adına tarh.",
+    "Serbest uyarı iki.",
+    f"{_rb_t} ve {_rb_e} korunmuştur.",
+    f"{_rb_p} adına tarh.",          # identical content to #1 - must NOT merge
+    "Serbest uyarı bir.",            # token-free duplicate - left for the engine's dedupe
+]
+_rb_red = lpb.redact_token_bearing_free_text({"facts": [], "warnings": _rb_in}, e2e)
+check("RB numbering: input order is preserved, free warnings stay in place, numbers count "
+      "ONLY redacted warnings (#1, #2, #3)",
+      _rb_red["warnings"] == [
+          "Serbest uyarı bir.", RB_W(1), "Serbest uyarı iki.", RB_W(2), RB_W(3),
+          "Serbest uyarı bir.",
+      ], _rb_red["warnings"])
+check("RB numbering: two token warnings with IDENTICAL content become two DISTINCT lines",
+      len({RB_W(1), RB_W(3)}) == 2 and _rb_red["warnings"].count(RB_W(1)) == 1
+      and _rb_red["warnings"].count(RB_W(3)) == 1)
+_rb_expected_count = sum(1 for w in _rb_in if lpb.TOKEN_RE.search(w))
+_rb_line_re = re.compile(r"^\[REDAKTE #([0-9]+)\] ")
+_rb_numbers = [int(m.group(1)) for m in (_rb_line_re.match(w) for w in _rb_red["warnings"]) if m]
+check("RB count conservation: token-bearing warnings IN == numbered redaction lines OUT, "
+      "numbered 1..n in order",
+      _rb_numbers == list(range(1, _rb_expected_count + 1)) and _rb_expected_count == 3,
+      (_rb_expected_count, _rb_numbers))
+check("RB: redaction is deterministic (same input -> identical output)",
+      lpb.redact_token_bearing_free_text({"facts": [], "warnings": _rb_in}, e2e) == _rb_red)
+
+# Non-string elements: normalize_llm_warnings str()-ifies them, so a
+# token nested in a dict/list element would otherwise leak de-masked.
+_back_ns = rb_full_flow({
+    "facts": [rb_fact(notes=["liste", {"k": f"{_rb_p}"}])],
+    "warnings": [{"detail": f"{_rb_t} burada"}, ["x", f"{_rb_e}"], 7, None],
+})
+check("RB: a dict/list warning element carrying a nested token is replaced whole; "
+      "token-free non-string elements are left as-is",
+      _back_ns["warnings"] == [RB_W(1), RB_W(2), 7, None], _back_ns["warnings"])
+check("RB: a non-string notes value carrying a nested token is replaced whole",
+      _back_ns["facts"][0]["notes"] == RB_NOTE, _back_ns["facts"][0]["notes"])
+
+_rb_free_note = "Kaynak yalnızca dava tarihini belirtmektedir."
+_back_free = rb_full_flow({"facts": [rb_fact(notes=_rb_free_note), rb_fact()],
+                           "warnings": ["Serbest uyarı."]})
+check("RB: a token-free note is unchanged, a None note stays None, a free warning is unchanged",
+      _back_free["facts"][0]["notes"] == _rb_free_note
+      and _back_free["facts"][1]["notes"] is None
+      and _back_free["warnings"] == ["Serbest uyarı."])
+
+# Protected fields are NEVER redacted - they keep round-tripping.
+_rb_v, _rb_b = RB_TOKENS["V"], RB_TOKENS["B"]
+_rb_protected_in = rb_fact(
+    statement=f"{_rb_p} adına tarhiyat yapılmıştır.",
+    normalized_statement=f"{_rb_p} hakkında {_rb_t}",
+    source={"page": 1, "text_excerpt": f"{_rb_p} adına, VKN {_rb_v}"},
+    structured_values=[{"kind": "iban", "value": _rb_b, "raw_text": f"IBAN {_rb_b}"}],
+    notes=f"{_rb_e} not",
+)
+_rb_protected_red = lpb.redact_token_bearing_free_text(
+    {"facts": [_rb_protected_in], "warnings": []}, e2e,
+)["facts"][0]
+check("RB: statement / normalized_statement / text_excerpt / structured_values are NOT "
+      "redacted (they still carry their tokens before de-masking)",
+      _rb_protected_red["statement"] == _rb_protected_in["statement"]
+      and _rb_protected_red["normalized_statement"] == _rb_protected_in["normalized_statement"]
+      and _rb_protected_red["source"] == _rb_protected_in["source"]
+      and _rb_protected_red["structured_values"] == _rb_protected_in["structured_values"]
+      and _rb_protected_red["notes"] == RB_NOTE)
+_rb_protected_back = rb_full_flow({"facts": [_rb_protected_in], "warnings": []})["facts"][0]
+_P, _T, _V, _B = (RB_ORIGINALS[c] for c in ("P", "T", "V", "B"))
+check("RB: the protected fields de-mask to the ORIGINAL values byte-exactly",
+      _rb_protected_back["statement"] == f"{_P} adına tarhiyat yapılmıştır."
+      and _rb_protected_back["normalized_statement"] == f"{_P} hakkında {_T}"
+      and _rb_protected_back["source"]["text_excerpt"] == f"{_P} adına, VKN {_V}"
+      and _rb_protected_back["structured_values"] == [
+          {"kind": "iban", "value": _B, "raw_text": f"IBAN {_B}"}],
+      _rb_protected_back)
+
+_rb_everything = {
+    "facts": [_rb_protected_in, rb_fact(notes=f"{_rb_all}")],
+    "warnings": [f"{c} {RB_TOKENS[c]}" for c in lpb.ALL_CLASSES] + ["Serbest."],
+}
+_rb_everything_snapshot = json.dumps(_rb_everything, ensure_ascii=False, sort_keys=True)
+_rb_everything_back = rb_full_flow(_rb_everything)
+_rb_dump = json.dumps(_rb_everything_back, ensure_ascii=False)
+check("RB: no P/T/V/B/F/E token (and no VGMASK prefix in any case) survives the full flow",
+      lpb.TOKEN_RE.search(_rb_dump) is None and lpb.PREFIX_RE.search(_rb_dump) is None)
+check("RB: six warnings, one per class, become #1..#6 in order; the free one is kept",
+      _rb_everything_back["warnings"] == [RB_W(n) for n in range(1, 7)] + ["Serbest."])
+check("RB purity: the input tree is NOT mutated in place",
+      json.dumps(_rb_everything, ensure_ascii=False, sort_keys=True) == _rb_everything_snapshot)
+check("RB purity: a non-dict tree, a non-list warnings and a non-dict fact pass through",
+      lpb.redact_token_bearing_free_text(["a"], e2e) == ["a"]
+      and lpb.redact_token_bearing_free_text({"warnings": "tek metin", "facts": ["x"]}, e2e)
+      == {"warnings": "tek metin", "facts": ["x"]})
+check("RB: count_dropped_tokens runs on the UNREDACTED tree, so a token that appears only "
+      "in a warning is still counted as echoed (not dropped)",
+      lpb.count_dropped_tokens({"facts": [], "warnings": [f"{_rb_p}"]}, e2e)["dropped_by_class"]["P"]
+      == sum(1 for t in e2e.mapping.tokens() if e2e.mapping.class_of(t) == "P") - 1)
+
+# Fail-closed: integrity is checked BEFORE redaction - a bad token in a
+# warning/note is NEVER silently "cleaned" by the redaction.
+_rb_unknown = "VGMASK_0999P"
+check("RB PRECONDITION: the unknown-token probe is grammatical but NOT in the mapping",
+      lpb.TOKEN_RE.fullmatch(_rb_unknown) is not None and e2e.mapping.original_for(_rb_unknown) is None)
+for _where, _mk in [
+    ("warning", lambda bad: {"facts": [], "warnings": [f"uyarı {bad}"]}),
+    ("notes", lambda bad: {"facts": [rb_fact(notes=f"not {bad}")], "warnings": []}),
+]:
+    for _bad, _exc, _bad_label in [
+        (_rb_unknown, lpb.UnknownTokenError, "an UNKNOWN token"),
+        (_rb_p.lower(), lpb.MalformedTokenError, "a LOWER-CASED token"),
+        (_rb_p.replace("_", "_0", 1), lpb.MalformedTokenError, "an EXTENDED digit run (count mismatch)"),
+        ("VGMASK", lpb.MalformedTokenError, "a bare prefix"),
+        (f"{_rb_p} {_rb_unknown}", lpb.UnknownTokenError, "a valid token NEXT TO an unknown one"),
+    ]:
+        expect_raises(
+            _exc,
+            lambda t=_mk(_bad): lpb.redact_token_bearing_free_text(t, e2e),
+            f"RB fail-closed: {_bad_label} in a {_where} is refused by redaction, not redacted away",
+        )
+expect_raises(
+    lpb.TokenInKeyError,
+    lambda: lpb.redact_token_bearing_free_text(
+        {"facts": [], "warnings": [{_rb_p: "değer"}]}, e2e),
+    "RB fail-closed: a token in a JSON KEY inside a warning element is refused",
+)
+
+check("RB: MASKING_POLICY_VERSION was bumped v4 -> v5 for the redaction contract",
+      lpb.MASKING_POLICY_VERSION == "tr_pseudonymisation_v5", lpb.MASKING_POLICY_VERSION)
+_v5_collisions = []
+for _py_file in sorted(REPO_ROOT.rglob("*.py")):
+    _resolved = _py_file.resolve()
+    if any(part in (".venv", "vergi_ui_runtime", "__pycache__") for part in _resolved.parts):
+        continue
+    try:
+        _content = _py_file.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        continue
+    if "tr_pseudonymisation_v5" in _content and _resolved not in (
+        REPO_ROOT / "src" / "llm_privacy_boundary.py",
+        REPO_ROOT / "ui" / "tests" / "test_llm_privacy_boundary_isolated.py",
+    ):
+        _v5_collisions.append(str(_py_file))
+check("RB: repo-wide check - 'tr_pseudonymisation_v5' appears in NO .py file outside "
+      "llm_privacy_boundary.py and this test (no third file pins the new value)",
+      _v5_collisions == [], _v5_collisions)
 
 print("## 22 - module import hygiene")
 

@@ -732,6 +732,10 @@ try:
             return {"dropped_token_count": 0, "dropped_by_class": {}}
 
         @staticmethod
+        def redact_token_bearing_free_text(obj, result):
+            return obj
+
+        @staticmethod
         def de_mask_tree(obj, result):
             return obj
 
@@ -994,6 +998,153 @@ try:
         > build_10d["masking_summary"]["token_count"],
         build_10h["masking_summary"],
     )
+
+    # ---- 10i) REMEDIATION B: token-bearing warnings/notes are redacted ----
+    RB_W = lpb.redacted_warning_text
+    RB_LINE_RE = re.compile(r"^\[REDAKTE #([0-9]+)\] ")
+
+    # (a) the REAL normalize_llm_warnings keeps every numbered line - the
+    # ignored_phrases filter never drops them and dedupe never merges them.
+    _rb_lines = [RB_W(n) for n in range(1, 8)]
+    check(
+        "REMEDIATION B: normalize_llm_warnings() keeps ALL numbered redaction lines "
+        "(not filtered by ignored_phrases, not merged by dedupe)",
+        fee.normalize_llm_warnings(list(_rb_lines)) == _rb_lines,
+        fee.normalize_llm_warnings(list(_rb_lines)),
+    )
+    check(
+        "REMEDIATION B: the fixed note text and the warning template contain none of the "
+        "engine's ignored phrases",
+        fee.normalize_llm_warnings([lpb.REDACTED_NOTE_TEXT]) == [lpb.REDACTED_NOTE_TEXT],
+    )
+    check(
+        "REMEDIATION B: token-FREE warnings keep the pre-existing strip / empty-skip / "
+        "ignored-phrase / dedupe / str() behaviour unchanged",
+        fee.normalize_llm_warnings(
+            ["  a ", "a", "", "   ", "related_document_ids alanı boş", "Sentetik test verisi",
+             "b", 3, "B"]
+        ) == ["a", "b", "3", "B"],
+    )
+    check(
+        "REMEDIATION B: a non-list warnings value still normalises to []",
+        fee.normalize_llm_warnings("tek metin") == [],
+    )
+
+    # (b) full engine flow with a fake model answering in TOKEN form.
+    def _rb_answer(prompt):
+        tok = _party_token_from_prompt(prompt)
+        return json.dumps({
+            "facts": [{
+                "fact_kind": "taxpayer_claim",
+                "statement": f"{tok} adına tarhiyat yapılmıştır.",
+                "normalized_statement": f"{tok} hakkında tarhiyat",
+                "extraction_basis": "explicit_text",
+                "attributed_party_id": None,
+                "attributed_actor_label": None,
+                "source": {"page": None, "section": None, "paragraph": None,
+                           "text_excerpt": f"{tok} adına"},
+                "structured_values": [],
+                "related_party_ids": [],
+                "related_document_ids": [],
+                "related_dispute_item_ids": [],
+                "confidence": 0.8,
+                "verification_state": "unverified",
+                "notes": f"{tok} ve kimlik bilgileri token olarak aynen korunmuştur.",
+            }],
+            "warnings": [
+                "Serbest uyarı.",
+                f"{tok} unvanı token olarak aynen korunmuştur.",
+                f"related_document_ids {tok} için belirlenemedi.",
+                f"{tok} unvanı token olarak aynen korunmuştur.",
+                "Serbest uyarı.",
+                f"{tok} {tok} iki kez geçti.",
+            ],
+        })
+
+    _fresh_case_copy()
+    rb_client = _PromptRecordingClient(_rb_answer)
+    build_10i = fee.build_fact_extraction(
+        CASE_ID, DOCUMENT_ID, fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID),
+        model=fee.DEFAULT_MODEL, llm_client=rb_client,
+    )
+    check(
+        "REMEDIATION B PRECONDITION: the fake really answered in TOKEN form",
+        _party_token_from_prompt(rb_client.messages.prompts[0]) is not None,
+    )
+    _w10i = build_10i["extraction"]["warnings"]
+    _f10i = build_10i["extraction"]["facts"][0]
+    check(
+        "REMEDIATION B: the four token-bearing warnings become #1..#4 in input order; the "
+        "free warning keeps its place and is still deduped",
+        _w10i[:5] == ["Serbest uyarı.", RB_W(1), RB_W(2), RB_W(3), RB_W(4)],
+        _w10i,
+    )
+    check(
+        "REMEDIATION B count conservation: 4 token-bearing warnings IN -> exactly 4 numbered "
+        "lines OUT (the duplicate is NOT merged; the one that also carries an ignored phrase "
+        "is NOT filtered - it now survives as a redaction line)",
+        [int(m.group(1)) for m in (RB_LINE_RE.match(w) for w in _w10i) if m] == [1, 2, 3, 4],
+        _w10i,
+    )
+    check(
+        "REMEDIATION B: the token-bearing fact note is replaced by the fixed note text "
+        "(any later deterministic guard note may only be APPENDED after it)",
+        isinstance(_f10i["notes"], str) and _f10i["notes"].startswith(lpb.REDACTED_NOTE_TEXT),
+        _f10i["notes"],
+    )
+    check(
+        "REMEDIATION B: the real party name reaches NEITHER the warnings NOR the notes",
+        REAL_PARTY_NAME not in json.dumps(_w10i, ensure_ascii=False)
+        and REAL_PARTY_NAME not in (_f10i["notes"] or ""),
+    )
+    check(
+        "REMEDIATION B: statement / normalized_statement / text_excerpt are NOT redacted - "
+        "they still de-mask to the real party name byte-exactly",
+        _f10i["statement"] == f"{REAL_PARTY_NAME} adına tarhiyat yapılmıştır."
+        and _f10i["normalized_statement"] == f"{REAL_PARTY_NAME} hakkında tarhiyat"
+        and _f10i["source"]["text_excerpt"] == f"{REAL_PARTY_NAME} adına",
+        _f10i,
+    )
+    _bytes_10i = fac._freeze_pending_bytes(build_10i["extraction"])
+    check(
+        "REMEDIATION B: no VGMASK token survives anywhere in the frozen pending bytes",
+        b"VGMASK" not in _bytes_10i and b"vgmask" not in _bytes_10i.lower(),
+    )
+
+    # (c) fail-closed: a bad token inside a warning / note is REFUSED,
+    # never redacted away; pending is never written.
+    for rb_bad_answer, rb_bad_label, rb_expected in [
+        (lambda prompt: json.loads(_rb_answer(prompt)) | {"warnings": ["uyarı VGMASK_0099P"]},
+         "an UNKNOWN token in a warning", lpb.UnknownTokenError),
+        (lambda prompt: json.loads(_rb_answer(prompt)) | {
+            "warnings": [(_party_token_from_prompt(prompt) or "VGMASK_0001P").lower()]},
+         "a LOWER-CASED token in a warning", lpb.MalformedTokenError),
+        (lambda prompt: json.loads(_rb_answer(prompt)) | {"warnings": [{"VGMASK_0001P": "x"}]},
+         "a token in a JSON KEY inside a warning", lpb.TokenInKeyError),
+        (lambda prompt: {**json.loads(_rb_answer(prompt)), "facts": [
+            {**json.loads(_rb_answer(prompt))["facts"][0], "notes": "not VGMASK_0099P"}]},
+         "an UNKNOWN token in a note", lpb.UnknownTokenError),
+        (lambda prompt: {**json.loads(_rb_answer(prompt)), "facts": [
+            {**json.loads(_rb_answer(prompt))["facts"][0], "notes": "not VGMASK_00011P"}]},
+         "an EXTENDED digit run (count mismatch) in a note", lpb.MalformedTokenError),
+    ]:
+        _fresh_case_copy()
+        rb_pending_before = fee.get_pending_path(CASE_ID, DOCUMENT_ID)
+        rb_bad_client = _PromptRecordingClient(
+            lambda prompt, f=rb_bad_answer: json.dumps(f(prompt), ensure_ascii=False),
+        )
+        expect_raises(
+            rb_expected,
+            lambda c=rb_bad_client: fee.build_fact_extraction(
+                CASE_ID, DOCUMENT_ID, fee.get_extracted_text_path(CASE_ID, DOCUMENT_ID),
+                model=fee.DEFAULT_MODEL, llm_client=c,
+            ),
+            f"REMEDIATION B return path REFUSES {rb_bad_label} (not redacted away)",
+        )
+        check(
+            f"REMEDIATION B: NO pending artefact is written after refusing {rb_bad_label}",
+            not rb_pending_before.exists(),
+        )
 
 finally:
     fee.CASES_DIR = _original_engine_cases_dir

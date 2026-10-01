@@ -3679,9 +3679,19 @@ def build_fact_extraction(
     # token bir sızıntı değil, kalite kaybıdır (kapsam raporu §5 not b).
     # Reddetmek, modelin alıntılamadığı her IBAN/telefon için dosyayı
     # kalıcı olarak işlenemez kılardı.
+    #
+    # REMEDIATION B: sayım (ham, maskeli ağaç) → bütünlük doğrulama +
+    # `warnings`/`notes` redaksiyonu → geri çevirme → artık-token
+    # taraması. Redaksiyon geri çevirmeden ÖNCE olmalıdır; aksi halde
+    # gerçek değer uyarı/not metnine geri çevrilmiş olurdu.
     # ========================================================
 
     dropped = llm_privacy_boundary.count_dropped_tokens(
+        raw_result,
+        masking,
+    )
+
+    raw_result = llm_privacy_boundary.redact_token_bearing_free_text(
         raw_result,
         masking,
     )
