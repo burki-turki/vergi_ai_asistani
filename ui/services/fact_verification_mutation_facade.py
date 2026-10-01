@@ -542,9 +542,18 @@ _RERUN_ORDER = (
     "approval.risk_strategy",
     "generation.drafting",
     "approval.drafting",
+    # ADIM 9 REMEDIATION A: Holiday Calendar Phase B added coordinated
+    # qa/case_view publishers. qa reads every canonical through drafting;
+    # case_view requires a current canonical qa.json - hence this order.
+    "generation.qa",
+    "approval.qa",
+    "generation.case_view",
+    "approval.case_view",
 )
 
-_NO_COORDINATED_PATH = ("qa", "case_view")
+# Every stale family now has a coordinated rerun path. The header is kept
+# (rendered as `none`) so the CLI block keeps its three-section shape.
+_NO_COORDINATED_PATH = ()
 
 
 def render_stale_downstream_block() -> str:
@@ -552,7 +561,7 @@ def render_stale_downstream_block() -> str:
     lines.extend(_RERUN_ORDER)
     lines.append("")
     lines.append("NO_COORDINATED_PATH:")
-    lines.append(" ".join(_NO_COORDINATED_PATH))
+    lines.append(" ".join(_NO_COORDINATED_PATH) if _NO_COORDINATED_PATH else "none")
     return "\n".join(lines) + "\n"
 
 

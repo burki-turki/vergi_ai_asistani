@@ -855,12 +855,108 @@ try:
     check("F13d argument-shape rejections performed ZERO journal SQL", len(conn13.calls) == 0)
 
     # ============================================================
-    # F14 - stale-downstream block renders the exact literal contract.
+    # F14 - stale-downstream block (ADIM 9 REMEDIATION A). The contract is
+    # cross-checked against the REAL registries the CLI dispatches from,
+    # so a newly coordinated family can no longer go stale silently (the
+    # old literal pin locked in "qa case_view have no coordinated path"
+    # long after Holiday Calendar Phase B added both).
     # ============================================================
+    import ui.cli_mutate as _cli_mutate                                          # noqa: E402
+    from ui.services import approval_registry as _approval_registry              # noqa: E402
+    from ui.services import generation_mutation_facade as _generation_facade     # noqa: E402
+    from ui.services import promotion_mutation_facade as _promotion_facade       # noqa: E402
+
+    registry_keys = {
+        "generation": (
+            set(_generation_facade.GENERATION_ROW_KEY_TO_MODULE_NAME)
+            | _cli_mutate._agent_generation_row_keys()
+            | _cli_mutate._fact_extraction_row_keys()
+            | _cli_mutate._legal_research_case_law_row_keys()
+            | _cli_mutate._qa_case_view_generation_row_keys()
+        ),
+        "approval": set(_approval_registry.CASE_SCOPED_ROWS_BY_KEY),
+        "promotion": set(_promotion_facade.PROMOTION_ROW_KEY_TO_MODULE_NAME),
+    }
+    # The one family whose generation row-key differs from its approval key.
+    generation_alias = {"arguments": "argument"}
+    must_follow = (
+        ("promotion.timeline", "generation.deadline"),
+        ("approval.drafting", "generation.qa"),
+        ("approval.qa", "generation.case_view"),
+    )
+
+    def _stale_contract_violations(stale, rerun, no_coordinated):
+        violations = []
+        if len(set(rerun)) != len(rerun):
+            violations.append("duplicate rerun step")
+        for step in rerun:
+            kind, _, key = step.partition(".")
+            if key not in registry_keys.get(kind, set()):
+                violations.append(f"unknown rerun step {step}")
+        for family in stale:
+            gen_key = generation_alias.get(family, family)
+            coordinated = gen_key in registry_keys["generation"]
+            if coordinated and family in no_coordinated:
+                violations.append(f"{family} listed as uncoordinated but has generation.{gen_key}")
+            if not coordinated and family not in no_coordinated:
+                violations.append(f"{family} has no generation path and is not listed as uncoordinated")
+            if not coordinated:
+                continue
+            gen_step = f"generation.{gen_key}"
+            finals = [s for s in (f"approval.{family}", f"promotion.{family}") if s in rerun]
+            if gen_step not in rerun or not finals:
+                violations.append(f"{family} missing from rerun order")
+                continue
+            if any(rerun.index(gen_step) > rerun.index(s) for s in finals):
+                violations.append(f"{family} finalised before it is generated")
+        for earlier, later in must_follow:
+            if earlier in rerun and later in rerun and rerun.index(earlier) > rerun.index(later):
+                violations.append(f"{later} precedes its prerequisite {earlier}")
+        return violations
+
+    live = (fv_facade._STALE_DOWNSTREAM_FAMILIES, fv_facade._RERUN_ORDER, fv_facade._NO_COORDINATED_PATH)
+    violations14 = _stale_contract_violations(*live)
+    check("F14a stale contract has zero violations against the real generation/approval/promotion registries",
+          violations14 == [], f"{violations14!r}")
+    check("F14b qa and case_view are now in the rerun order, after drafting, case_view after qa",
+          fv_facade._RERUN_ORDER[-4:] == ("generation.qa", "approval.qa", "generation.case_view", "approval.case_view"))
+    check("F14c every one of the 11 stale families has a coordinated path (NO_COORDINATED_PATH empty)",
+          fv_facade._NO_COORDINATED_PATH == () and len(fv_facade._STALE_DOWNSTREAM_FAMILIES) == 11)
+
     block = fv_facade.render_stale_downstream_block()
-    check("F14a STALE_DOWNSTREAM block lists all 11 families", "qa case_view" in block and "timeline deadline" in block)
-    check("F14b RERUN_ORDER block starts with generation.timeline", "generation.timeline\npromotion.timeline" in block)
-    check("F14c NO_COORDINATED_PATH block names qa and case_view", "NO_COORDINATED_PATH:\nqa case_view" in block)
+    check("F14d STALE_DOWNSTREAM block lists all 11 families", "qa case_view" in block and "timeline deadline" in block)
+    check("F14e RERUN_ORDER block starts with generation.timeline and lists all 22 steps in order",
+          "generation.timeline\npromotion.timeline" in block
+          and "\n".join(fv_facade._RERUN_ORDER) in block and len(fv_facade._RERUN_ORDER) == 22)
+    check("F14f NO_COORDINATED_PATH header is kept and renders `none`", block.endswith("NO_COORDINATED_PATH:\nnone\n"),
+          f"{block[-60:]!r}")
+
+    stale, rerun, nocoord = live
+    for label14, mutant in (
+        ("generation.qa removed", (stale, tuple(s for s in rerun if s != "generation.qa"), nocoord)),
+        ("approval.case_view removed", (stale, tuple(s for s in rerun if s != "approval.case_view"), nocoord)),
+        ("unknown step generation.foo added", (stale, rerun + ("generation.foo",), nocoord)),
+        ("old stale NO_COORDINATED_PATH restored", (stale, rerun[:-4], ("qa", "case_view"))),
+        ("qa listed as uncoordinated", (stale, rerun, ("qa",))),
+        ("case_view generated before approval.qa",
+         (stale, rerun[:-4] + ("generation.qa", "generation.case_view", "approval.qa", "approval.case_view"), nocoord)),
+        ("approval.qa before generation.qa",
+         (stale, rerun[:-4] + ("approval.qa", "generation.qa", "generation.case_view", "approval.case_view"), nocoord)),
+        ("qa moved before drafting", (stale, rerun[:-6] + rerun[-4:] + rerun[-6:-4], nocoord)),
+        ("duplicate step", (stale, rerun + ("approval.qa",), nocoord)),
+        ("new stale family without a rerun path", (stale + ("orphan_family",), rerun, nocoord)),
+    ):
+        check(f"F14g negative: {label14} -> contract violation detected", _stale_contract_violations(*mutant) != [])
+
+    saved_nocoord = fv_facade._NO_COORDINATED_PATH
+    try:
+        fv_facade._NO_COORDINATED_PATH = ("qa", "case_view")
+        mutated_block = fv_facade.render_stale_downstream_block()
+    finally:
+        fv_facade._NO_COORDINATED_PATH = saved_nocoord
+    check("F14h negative: a non-empty NO_COORDINATED_PATH renders the names, never `none` (render is not a constant)",
+          mutated_block.endswith("NO_COORDINATED_PATH:\nqa case_view\n")
+          and fv_facade.render_stale_downstream_block().endswith("NO_COORDINATED_PATH:\nnone\n"))
 
     # ============================================================
     # F15 - DOWNSTREAM STALENESS (Fable FINAL §O #18, real evidence.json
