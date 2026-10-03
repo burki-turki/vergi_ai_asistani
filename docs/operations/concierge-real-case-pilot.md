@@ -92,14 +92,20 @@ anındaki durum evidence'ta ölçülür.
 | `<archive-parent>` | Yalnız şifreli arşiv kararında: yazılı kararda önceden onaylanmış, `<archive-dir>`'in exact ebeveyni (§28.5) |
 | `<python-runtime-root>` | §13.3'teki concierge runtime'ının kök dizini; `<python>` bunun altındadır (§13.8) |
 | `<pg-bin-dir>` | PostgreSQL 16 `bin` dizini; `<psql>` bunun doğrudan altındadır (§13.8) |
-| `<harness-output-names>` | Harness'in pinli manifestinin sabitlediği kalıcı çıktı dosyası adlarının PowerShell dizi literal'i; harness kalıcı dosya yazmıyorsa `@()` (§10.5) |
+| `<harness-output-names>` | Harness'in pinli manifestinin sabitlediği kalıcı çıktı dosyası adlarının PowerShell dizi literal'i; harness kalıcı dosya yazmıyorsa `@()`. Bu pilotta harness'e `--evidence-dir` **verilmez** ve harness kalıcı dosya yazmaz; değer her zaman `@()`'dir (§10.5, §18.2) |
+| `<monitor-py>` | Pinli outer monitor betiğinin (`adim9_outer_egress_monitor.py`) mutlak yolu (§13.7) |
+| `<harness-py>` | Pinli egress harness betiğinin (`adim9_egress_harness.py`) mutlak yolu (§13.7) |
+| `<process-temp>` | Süreç yardımcısının preflight'ında (§13.9) oluşturulan, Temp kökünün (`[System.IO.Path]::GetTempPath()`) **doğrudan** altındaki benzersiz dizin. Gerçek içerik taşımaz; yalnız boş `synthetic-appdata` dizinini ve `argv-roundtrip.dll` dosyasını taşır. `<external-root>`'un dışındadır ve onun çocuk kümesine **eklenmez** |
+| `<deny-file-sha256>` | Avukatın tohum teyidinde onaylanan `<restricted-dir>\egress-deny-values.txt` dosyasının SHA-256'sı (§15.5) |
+| `<deny-value-count>` | Aynı teyitte onaylanan, o dosyadaki değer sayısı (§15.5) |
 | `<report-produced>` | Zincir adım 25 çıkış `0` ile tamamlandıysa `$true`, aksi hâlde `$false` (§28.2) |
 
 - **Dizin ve dosya yer tutucuları mutlak, canonical ve önceden çözümlenmiş
   yollardır**: `<repo-root>`, `<case-root>`, `<python>`, `<psql>`,
   `<python-runtime-root>`, `<pg-bin-dir>`, `<external-root>`,
   `<evidence-dir>`, `<probe-evidence-dir>`, `<inference-evidence-dir>`,
-  `<restricted-dir>`, `<archive-parent>` ve `<archive-dir>`. Göreli
+  `<restricted-dir>`, `<monitor-py>`, `<harness-py>`, `<process-temp>`,
+  `<archive-parent>` ve `<archive-dir>`. Göreli
   yol kabul **edilmez**: .NET dosya çağrıları göreli bir yolu PowerShell
   konumuna göre değil, sürecin çalışma dizinine göre çözer. Her yol,
   kullanılmadan önce §13.8'deki yol kapısından geçer; geçmeyen yol **DUR**'dur.
@@ -111,7 +117,14 @@ anındaki durum evidence'ta ölçülür.
   değerlerdir.
 - Bütün komutlar repo kökünden (`<repo-root>`) ve Windows PowerShell içinde
   çalıştırılır. Python modülleri **yalnız `-m` biçimiyle** çağrılır
-  (`docs/operations/local-postgresql-iam-adoption.md` §B.3).
+  (`docs/operations/local-postgresql-iam-adoption.md` §B.3). Tek istisna
+  §18.2'deki gerçek inference zinciridir: orada `<python>` pinli
+  `<monitor-py>` betiğini başlatır ve `ui.cli_mutate` harness tarafından
+  **aynı süreç içinde** çağrılır; o zincirde `-m ui.cli_mutate` bulunmaz.
+- Gerçek `--mask-term` değerlerini taşıyan iki Python çağrısı (§17.1 preview
+  ve §18.2 apply) **yalnız** §13.9'daki `Invoke-VergiPilotProcess`
+  yardımcısıyla başlatılır. Bu iki çağrı için `Start-Process -ArgumentList`
+  ve native `&` çağrı operatörü **yasaktır** (H58).
 - Her Python oturumunda, aynı runbook'un §B.2 emsaliyle, önce şu ayarlanır
   (`ui/cli_mutate.py`, `scripts/iam_admin.py` ve iki validator kendi çıktı
   kodlamasını ayarlamaz; yalnız `ui/deadline_report.py` ayarlar):
@@ -119,6 +132,10 @@ anındaki durum evidence'ta ölçülür.
 ```powershell
 $env:PYTHONIOENCODING = "utf-8"
 ```
+
+  §13.9 yardımcısı bu değişkeni yalnız adıyla çocuk sürece taşır. Apply
+  zinciri `-I` ile çalıştığı için Python orada onu yok sayar; harness kendi
+  çıktı kodlamasını ayarlar (`adim9_egress_harness.py`, `run_cli`).
 
 - Bu belgede gerçek kullanıcı adı, mutlak yerel yol, port, veritabanı adı,
   bağlantı dizesi, kimlik bilgisi dosyası, anahtar, kişi/kurum adı, iletişim
@@ -176,13 +193,60 @@ Gerçek veri alınmadan **önce**, aşağıdakilerin hepsi sağlanmış olmalıd
      silme bloğu **hiç çalıştırılmaz** (§28.3);
    - `--mask-term` argüman dizisinin fail-closed kurulması ve tırnaklama
      (§15.3);
-   - harness wrapper'ı ile iç argv'nin birleşimi (§18.2): iç argv dizisi,
-     harness'in pinli manifestindeki çağırma biçimiyle, boşluk, Türkçe
-     karakter, tek tırnak, `;` ve `$` içeren sentetik terimlerle verilir; iç
-     hedef yerine yalnız aldığı eleman sayısını ve beklenen diziyle
-     eleman-eleman eşitlik boolean'ını basan sentetik bir hedef kullanılır.
-     Beklenen: eleman sayısı aynı, eşitlik `True`, harness sayaçlarında
-     reddedilmiş olay 0 ve dış bağlantı 0;
+   - süreç yardımcısının preflight'ı (§13.9): `<process-temp>` ve boş
+     `synthetic-appdata` kapısı, DLL'in içeriksiz ve anahtarsız pencerede
+     derlenmesi, öz-testi ve hash kaydı (`ARGV_DLL=OK`); ayrı bir pencerede
+     derleyici çalıştırmadan, yalnız hash doğrulamasıyla yüklenmesi; hash
+     kaydı değiştirildiğinde veya DLL değiştirildiğinde yüklemenin reddi;
+   - `$cliArgv` ve `$procArgv` kuruluşu (§18.2): `CLI_ARGV=OK` ve
+     `PROC_ARGV=OK`; `$cliArgv` tam 14+2n eleman ve ilk elemanı
+     `generation`; `$procArgv` tam 27+2n eleman, `[6]` ve `[12]` tam olarak
+     `--`, `[13]` `generation`; `[13]` ve sonrasına `-m` veya
+     `ui.cli_mutate` eklendiğinde ya da harness'e `--evidence-dir`
+     verildiğinde `STOP` (H57);
+   - eleman sadakati: yardımcı → `<python>` `-I -S -B` → gerçek `<monitor-py>`
+     zinciriyle, iç hedef yerine yalnız eleman sayısını ve eleman-eleman
+     eşitlik boolean'ını basan sentetik bir hedef çalıştırılır; ayrıca pinli
+     harness'in kendi `main` ayrıştırıcısının `--` sonrasını değiştirmeden
+     ilettiği, `run_cli` yerine geçen sentetik bir kayıtla gösterilir.
+     Sentetik eleman kümesi: boşluklu ad-soyad, Türkçe karakterler, tek
+     tırnak, `;`, `$`, ters bölüyle biten değer, ters bölü ve ardından çift
+     tırnak (yalnız yardımcı düzeyinde; gerçek terimlerde çift tırnak §15.3
+     gereği yasaktır), BMP dışı karakter, 64 küçük hex digest ve tamsayı
+     bayraklar. Beklenen: eleman sayısı aynı, eşitlik `True`, monitor
+     özetinde `deny=0` ve dış bağlantı 0;
+   - yardımcının negatif kontrolleri: boş eleman, `$null`, kontrol karakteri
+     (TAB, CR, LF, NUL dahil), tek başına surrogate ve uzunluk sınırı aşımı
+     süreç **başlamadan** `STOP PROC_ARGS=FAIL` (H58); `-` ile başlayan
+     veya kontrol karakteri taşıyan terim `STOP MASK_ARGS=FAIL` (H44);
+     native `&` ile ters bölüyle biten boşluklu bir değerin bozulduğunun
+     yalnız gözlem olarak kaydı (yardımcının neden zorunlu olduğunun kanıtı);
+   - ortam profilleri (§13.9): yalnız ad basan sentetik bir hedefle preview
+     ve apply profillerinin exact ad kümesi; preview'da üst süreçte anahtar
+     bulunduğunda ve profile fazladan ad eklendiğinde `STOP PROC_ENV=FAIL`
+     (H59); `synthetic-appdata` boş değilken `STOP` (H59); harness'in
+     `--self-test` kipinin apply profili ve sentetik `APPDATA` ile PASS
+     vermesi;
+   - egress engel değerleri dosyası (§15.5): BOM, kontrol karakteri, eksik
+     tohum kaynağı, kamu kurumu adı ve sayı/hash uyuşmazlığı durumlarında
+     `STOP DENY_FILE=FAIL`; pinli harness'in `load_plain_values` ve
+     `scan_body` fonksiyonlarının, sentetik bir dosya ve sentetik bir JSON
+     gövdesiyle, ağ ve veritabanı olmadan, dosyadaki bir değeri (tam,
+     Türkçe katlanmış ve aksansız biçimleriyle) `plain_value` sayacına
+     düşürdüğünün yalnız sayaçla gösterilmesi;
+   - egress engel değerleri dosyasının ordinal/NFC kuralları (§15.5):
+     dosyada veya 1–4 girdisinde NFD biçimli bir terimin reddi; en az bir
+     `\p{Cf}` karakteri (ör. soft hyphen veya sıfır genişlikli karakter)
+     taşıyan bir terimin reddi; ordinal olarak yinelenen bir değerin ve
+     ordinal olarak eksik bir üyeliğin reddi (her biri `STOP
+     DENY_FILE=FAIL`); doğru NFC ve ordinal birebir kümenin `DENY_FILE=OK`
+     vermesi; sentetik bir şirket adının çekirdeği/varyantıyla, dosyanın
+     yalnız ham tohum değerlerini kapsadığı sınırın belgelenen davranışla
+     uyumlu olduğu; sentetik kısa/opak bir değerin gövdeyle çakışmasının ağ
+     çağrısından önce fail-closed DUR ürettiği ve retry yapılmadığı;
+   - harness sayaç satırının ayrıştırılması (§18.4): sentetik `HARNESS`
+     satırlarından allowlist içindekilerin kabulü, allowlist dışı bir
+     gerekçenin veya ikinci bir `HARNESS` satırının reddi;
    - rapor satırı boolean kontrolü, sentetik bir metin dosyasıyla (§23);
    - salt-okunur SQL çağırma ve çıktı sözleşmesinin **bağlantı açmadan**
      statik kontrolü (§13.5);
@@ -238,10 +302,10 @@ değişiklikleri ve silme için kullanıcı onayı **her seferinde ayrıca** al�
 | 2 | Hukuki onay ve imzalı hard-block eki | — | Yazılı | — | §6, §9 |
 | 3 | Yazılı rıza ve eksiksiz veri akıbeti kararı | — | Müvekkil imzası + avukatın yazılı kararı | — | §7, §28.1 |
 | 4 | Kapsam ön elemesi (gerçek veri alınmadan) | — | Yazılı | — | §8 |
-| 5 | İçerik oturumu, kanal kapısı, yol kapısı, repo ve DB durumunun ölçülmesi; `<restricted-dir>` izinli dosya kümesinin ve SHA-256 kaydının oluşturulması | Salt-okunur + iki kayıt dosyası | — | — | §4.3, §10.5, §13 |
+| 5 | Süreç yardımcısı preflight'ı (içerik oturumundan **önce**, ayrı, içeriksiz ve anahtarsız pencerede: `<process-temp>`, `synthetic-appdata`, DLL ve hash kaydı); içerik oturumu, kanal kapısı, yol kapısı, repo ve DB durumunun ölçülmesi; `<restricted-dir>` izinli dosya kümesinin ve SHA-256 kaydının oluşturulması | Salt-okunur + `<process-temp>` + üç kayıt dosyası | — | — | §13.9, §4.3, §10.5, §13 |
 | 6 | Manuel intake | Dosya oluşturma | — | — | §11.2 |
 | 7 | Mekanik kontroller ve avukatın alan-alan intake onayı | Salt-okunur | Yazılı | — | §11.3, §11.4 |
-| 8 | Tam maskeleme tohumu | — | Yazılı tamlık teyidi | — | §15.2 |
+| 8 | Tam maskeleme tohumu ve egress engel değerleri dosyası | Dosya oluşturma (`<restricted-dir>`) | Yazılı tamlık teyidi | — | §15.2, §15.5 |
 | 9 | `assign-case` | Tek çalıştırma | — | Ayrı onay | §12.3 |
 | 10 | Ağsız preview ve `input_digest` | Preview | Yazılı (maskeli metin ve maskeli context okuması) | — | §17 |
 | 11 | Ortam preflight'ı, harness paritesi ve anahtarın oluşturulması | Salt-okunur + anahtar | — | — | §13.6, §13.7, §14 |
@@ -327,7 +391,8 @@ hiçbir durumda operatör rolüyle birleşmez.
 
 **Gerçek içerik** şunların tamamıdır: orijinal belge; maskesiz extracted text;
 `case.json` ve `document.json`; preview'ın bastığı maskeli case context ve
-maskeli belge metni; `--mask-term` değerleri; pending ve canonical fact,
+maskeli belge metni; `--mask-term` değerleri; `egress-deny-values.txt`
+değerleri (§15.5); pending ve canonical fact,
 timeline ve deadline dosyalarının içeriği; deadline raporu; bu komutların ham
 stdout/stderr çıktısı.
 
@@ -365,8 +430,16 @@ stdout/stderr çıktısı.
      extraction başlatılıyor..." bloğu). Bu satırın konsola ulaşıp
      ulaşmadığından bağımsız olarak apply çıktısı gerçek içerik sayılır.
    - Validator çıktısı kimlik ve yol taşır.
-   - Harness veya monitor stdout/stderr'i kalıcı yazıyorsa bu dosyalar
-     `<restricted-dir>` içinde tutulur ve veri akıbeti kararına tabidir.
+   - Harness'e `--evidence-dir` verilmez; kaynakta harness bu durumda
+     istek/yanıt gövdesi, `egress_record.json` veya `harness_summary.txt`
+     **yazmaz** (`adim9_egress_harness.py`, `write_record` ve
+     `write_summary`'deki `evidence_dir` koşulu). Monitor yalnız
+     `<inference-evidence-dir>` içine metadata özetini yazar. Apply
+     stderr'i yalnız §13.9 yardımcısının belleğinde tutulur, konsola
+     aynen yeniden yazılır ve dosyaya yazılmaz (§18.4). Harness veya monitor
+     ileride kalıcı ham çıktı yazarsa bu dosyalar `<restricted-dir>` içinde
+     tutulur ve veri akıbeti kararına tabidir; bu durum yeni bir inceleme
+     gerektirir.
 9. **Kayıt ve telemetri.** PowerShell transcription, script-block logging,
    modül logging veya süreç-oluşturma komut satırı denetimi gerçek değerleri
    cihazın dışına (merkezi log, EDR, SIEM) çıkarıyorsa: **DUR**. Bu runbook
@@ -751,7 +824,8 @@ Başka hiçbir belge bu dizine konmaz.
 - **`<restricted-dir>`** — dava-türevi içerik dizini. Erişimi avukat ve
   operatörle sınırlıdır ve §28'deki veri akıbeti kararına **tabidir**. Yalnız
   şunları taşır: deadline raporu (§23); ek maskeleme terimleri dosyası
-  (§15.3); varsa harness'in kalıcı yazdığı ham stdout/stderr dosyaları (§4.2).
+  (§15.3); egress engel değerleri dosyası (§15.5). Harness bu pilotta kalıcı
+  dosya yazmaz (§4.2/8, §18.2).
   İzinli dosya adları intake'ten önce sabitlenir ve envanter mekanik olarak
   denetlenir (§10.5).
 - **`<evidence-dir>`**, `<probe-evidence-dir>` ve `<inference-evidence-dir>`:
@@ -810,8 +884,9 @@ oturum içi komut geçmişi oturumla birlikte yok olur. Hiçbir değişken —
    normal dosya dışında herhangi bir öğe bulunursa: **DUR** (H56).
 2. **Genel ve sabit adlar.** İzinli dosya adları gerçek kişi, kurum, case,
    belge veya tarih değeri **taşımaz**: `mask-terms.txt` (§15.3),
-   `deadline-report.txt` (§23) ve harness kalıcı çıktı yazıyorsa
-   `<harness-output-names>`. Harness'in kalıcı çıktı adları yalnız onun pinli
+   `egress-deny-values.txt` (§15.5), `deadline-report.txt` (§23) ve harness
+   kalıcı çıktı yazıyorsa `<harness-output-names>` (bu pilotta `@()`,
+   §18.2). Harness'in kalıcı çıktı adları yalnız onun pinli
    manifestinden alınır (§13.7); manifest adları sabitlemiyorsa veya bir ad
    aşağıdaki biçime uymuyorsa: **DUR** (H56).
 3. **Önceden kayıt.** İzinli küme, intake'ten önce (zincir adım 5),
@@ -850,8 +925,8 @@ oturum içi komut geçmişi oturumla birlikte yok olur. Hiçbir değişken —
    `$rGuard` `False` kalır, silme yapılmaz, **DUR** (H56). Bu mekanizma
    yanlışlıkla değişimi tespit eder; iki dosyayı aynı anda değiştiren kötü
    niyetli bir operatöre karşı kriptografik imza **iddiası taşımaz**.
-5. **Envanter.** Her içerik oturumunun başında, terim dosyası yazıldıktan
-   sonra, rapor yazıldıktan sonra ve kapanış manifestinden önce envanter
+5. **Envanter.** Her içerik oturumunun başında, terim dosyası ve engel
+   değerleri dosyası yazıldıktan sonra, rapor yazıldıktan sonra ve kapanış manifestinden önce envanter
    alınır. İzinli küme dışındaki her dosya veya dizin: **DUR** (H56).
 
 Ortak yardımcılar. Fonksiyonlar ve değişkenler bir oturumdan diğerine
@@ -880,7 +955,7 @@ reddeder. Yazma sırasında bir hata oluşursa komut hata verir: **DUR**.
 `PATH_OK` verdikten sonra, bir kez):
 
 ```powershell
-$allowedNames = @('mask-terms.txt', 'deadline-report.txt') + <harness-output-names>
+$allowedNames = @('mask-terms.txt', 'egress-deny-values.txt', 'deadline-report.txt') + <harness-output-names>
 $namesOk = ($allowedNames.Count -eq @($allowedNames | Sort-Object -Unique).Count) -and (@($allowedNames | Where-Object { $_ -cnotmatch '^[a-z0-9][a-z0-9-]{0,62}\.(txt|log|jsonl)$' }).Count -eq 0)
 $rState = Get-PilotRestrictedState "<restricted-dir>"
 if ($namesOk -and ($null -ne $rState) -and ($rState.Bad -eq 0) -and ($rState.Files.Count -eq 0) -and (Write-PilotExclusive "<evidence-dir>\restricted-allowed-files.txt" (@('# kind=restricted-allowed') + $allowedNames))) { "RESTRICTED_ALLOWED_RECORD=WRITTEN" } else { "STOP RESTRICTED_ALLOWED_RECORD=FAIL" }
@@ -1022,7 +1097,7 @@ verir. Bu karşılaştırma bu yüzden **operatörün zorunlu adımıdır**:
 $docPath = "<case-root>\documents\<document-id>\document.json"
 $doc = [System.IO.File]::ReadAllText($docPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
 $declared = [string]$doc.file.sha256
-if ($declared -notmatch '^[0-9a-fA-F]{64}$') { Write-Output "STOP sha256 beyani yok veya gecersiz" } else { $orig = (Resolve-Path -LiteralPath (Join-Path "<repo-root>\data" $doc.file.relative_path)).Path; $actual = (Get-FileHash -LiteralPath $orig -Algorithm SHA256).Hash; if ($actual.ToLowerInvariant() -eq $declared.ToLowerInvariant()) { Write-Output "INTAKE_HASH=MATCH" } else { Write-Output "STOP INTAKE_HASH=MISMATCH" } }
+if ($declared -notmatch '^[0-9a-fA-F]{64}\z') { Write-Output "STOP sha256 beyani yok veya gecersiz" } else { $orig = (Resolve-Path -LiteralPath (Join-Path "<repo-root>\data" $doc.file.relative_path)).Path; $actual = (Get-FileHash -LiteralPath $orig -Algorithm SHA256).Hash; if ($actual.ToLowerInvariant() -eq $declared.ToLowerInvariant()) { Write-Output "INTAKE_HASH=MATCH" } else { Write-Output "STOP INTAKE_HASH=MISMATCH" } }
 ```
 
 Bu komut dosya adını veya yolunu basmaz. Beklenen: **`INTAKE_HASH=MATCH`**.
@@ -1453,25 +1528,64 @@ taramasında görünmez; proxy'nin reddi harness sözleşmesine dayanır (§16.2
 Bu, repo kaynağından değil, işletim sisteminin genel davranışından gelen bir
 nottur.
 
+**(c) Çocuk süreç ortamı.** Yukarıdaki tarama üst PowerShell oturumunu
+ölçer. Preview ve apply Python süreçlerinin ortamı ayrıca §13.9'daki iki
+**exact** ad profiliyle sınırlanır; profilde olmayan her ad çocuk sürece
+geçmeden silinir ve son ad kümesi profille birebir karşılaştırılır. Kaynakta
+apply yolunun okuduğu iki değişken `VERGI_IAM_DATABASE_URL`
+(`ui/services/db.py`) ve `ANTHROPIC_API_KEY`'dir
+(`src/fact_extraction_engine.py`, `call_llm`). Değerler hiçbir zaman okunmaz,
+bir değişkene atanmaz veya basılmaz.
+
 ### 13.7 Harness ve runtime paritesi (bağlayıcı)
 
 "Değişmedi" varsayımı **kullanılmaz**.
 
 1. Egress harness, outer monitor, auth probe aracı, harness'in düz-değer
    (plain-values) ve politika dosyaları ile runtime'ın `pip freeze` çıktısı
-   için **pinli SHA-256 değerleri veya bir manifest** gerekir.
-2. Bu bileşenlerin her biri, kullanılmadan önce, Adım 9 kanıtındaki pinli
-   kayda karşı **mekanik olarak** (SHA-256 ile) karşılaştırılır. Runtime için
+   için **pinli SHA-256 değerleri veya bir manifest** gerekir. Adım 9'un
+   pinli sentetik düz-değer fixture'ı gerçek pilotta **kullanılmaz**: gerçek
+   apply'da harness'in `--plain-values` argümanı yalnız
+   `<restricted-dir>\egress-deny-values.txt` dosyasıdır ve o dosyanın pini
+   Adım 9 kaydı değil, avukatın teyit ettiği `<deny-file-sha256>`'dır
+   (§15.5).
+2. Bu bileşenlerin her biri — gerçek apply'ın düz-değer dosyası hariç
+   (o, madde 1 ve §15.5 gereği `<deny-file-sha256>`'ya karşı denetlenir) —
+   kullanılmadan önce, Adım 9 kanıtındaki pinli kayda karşı **mekanik
+   olarak** (SHA-256 ile) karşılaştırılır. Runtime için
    Adım 9 checkpoint'i §C'nin kaydettiği paket kümesi (41 manifest paketi ve
    `pip`, toplam 42 satır) esas alınır.
 3. Pinli kayıt mevcut değilse veya karşılaştırma uyuşmuyorsa bileşen
    **kullanılmaz**; yeni bir bağımsız inceleme gerekir ve o olmadan **DUR**.
-4. Bu bileşenlerin adları, sayısı ve çağırma biçimi repo içinden
-   **doğrulanamaz**; hepsi repo dışındadır (Adım 9 checkpoint'i §D). Bu
-   runbook onları tahmin etmez; harness'in kendi manifesti esas alınır.
+4. Bu bileşenler repo dışındadır ve kimlikleri repo içinden doğrulanamaz
+   (Adım 9 checkpoint'i §D). Gerçek inference'ın çağırma biçimi tahmin
+   **edilmez**: §18.2'deki exact argv, pinli iki kaynağın kendi kullanım
+   başlıklarından ve `main` ayrıştırıcılarından türetilmiştir — outer
+   monitor SHA-256
+   `936b49edb9da72fabf19b6630f9665d5e366f9670780491a3d1fba49908830da`
+   (`--evidence-dir` DİZİN `--` HEDEF.py [ARGÜMANLAR], pozisyonel ve
+   sıkı; `-I -S -B` zorunlu) ve egress harness SHA-256
+   `d427f00fccce8cbbed87a65b54e71dfc5553f2659188b2ed569b216f7e5aea4b`
+   (ilk `--`'dan sonraki her eleman değiştirilmeden
+   `cli_mutate.main(list(cli_argv))`'ye verilir) — ve §1.5 provasıyla
+   doğrulanır. `<monitor-py>` veya `<harness-py>` bu iki değerden farklı bir
+   SHA-256 verirse türetme geçersizdir: **DUR** (H32, H57).
 5. Her gerçek ağ turu **yeni** bir evidence dizini kullanır
    (`<probe-evidence-dir>`, `<inference-evidence-dir>`); önceki bir turun
    dizini yeniden kullanılmaz.
+6. Pinli harness repo kökünü kendi `REPO` sabitinden alır ve oraya geçer;
+   bu sabit `<repo-root>` ile birebir aynı olmalıdır. Yalnız boolean basan
+   kontrol:
+
+```powershell
+$chainPinsOk = $false
+try { $chainPinsOk = (Test-PilotLeafFile "<monitor-py>") -and (Test-PilotLeafFile "<harness-py>") -and ((Get-FileHash -LiteralPath "<monitor-py>" -Algorithm SHA256).Hash.ToLowerInvariant() -ceq '936b49edb9da72fabf19b6630f9665d5e366f9670780491a3d1fba49908830da') -and ((Get-FileHash -LiteralPath "<harness-py>" -Algorithm SHA256).Hash.ToLowerInvariant() -ceq 'd427f00fccce8cbbed87a65b54e71dfc5553f2659188b2ed569b216f7e5aea4b') -and (@([System.IO.File]::ReadAllLines("<harness-py>") | Where-Object { $_ -ceq ('REPO = r"' + "<repo-root>" + '"') }).Count -eq 1) } catch { $chainPinsOk = $false }
+if ($chainPinsOk) { "HARNESS_CHAIN_PINS=OK" } else { "STOP HARNESS_CHAIN_PINS=FAIL" }
+```
+
+   Beklenen: `HARNESS_CHAIN_PINS=OK`; başka sonuç **DUR**'dur (H57). Monitor
+   kendi başlangıcında `sys.prefix`'in concierge runtime'ı olduğunu ayrıca
+   denetler ve uymazsa hedefi hiç başlatmaz.
 
 ### 13.8 Yol kapısı (bağlayıcı)
 
@@ -1582,6 +1696,196 @@ ebeveyn bu runbook'ta tanımlı değildir; konumu, bulut senkronizasyonu
 olmadığı operatörce §4.3 (a) kaydında doğrulanan bir yerdir. Bu komutlar
 standart PowerShell davranışından gelir ve §1.5'teki provada doğrulanır.
 
+### 13.9 Süreç başlatma yardımcısı ve preflight (bağlayıcı)
+
+**Gerekçe.** Step 10B provası iki şeyi gösterdi: `Start-Process
+-ArgumentList` boşluk içeren bir elemanı ikiye böler ve önceden
+tırnaklamak yasak olan yeniden tırnaklamadır (B2). Windows PowerShell
+5.1'in native `&` operatörü de ters bölüyle biten boşluklu bir değeri ve
+gömülü çift tırnağı korumaz. Gerçek `--mask-term` değerlerini taşıyan iki
+çağrı (§17.1 preview ve §18.2 apply) bu yüzden **yalnız** aşağıdaki
+`Invoke-VergiPilotProcess` yardımcısıyla başlatılır. Bu yardımcı
+`System.Diagnostics.ProcessStartInfo` kullanır, `UseShellExecute=$false`
+ile çalışır, exact yorumlayıcı, exact çalışma dizini ve exact ortam ad
+profiliyle başlatır. Her elemanı Windows `CommandLineToArgvW` kurallarına
+göre kodlar ve süreci başlatmadan **önce** kodlanmış satırı gerçek
+`shell32!CommandLineToArgvW` ile geri ayrıştırıp girdiyle eleman eleman
+karşılaştırır. Bu iki çağrı için `Start-Process` ve native `&` **yasaktır**
+(H58). Kodlayıcı, Step 10B driver'ında doğrulanan algoritmanın aynısıdır;
+körlemesine kopyalanmamış, şu boşluklar ayrıca kapatılmıştır: boş veya
+`$null` eleman, kontrol karakteri (TAB, CR, LF ve NUL dahil; NUL
+CreateProcess satırını sessizce keser), tek başına surrogate, toplam
+uzunluk sınırı ve round-trip doğrulaması. Kodlayıcı, tırnaklı bir bölge
+içinde ardışık iki tırnak (`""`) yalnız boş eleman için üretir (boş eleman
+da reddedilir). İki ayrıştırıcının farklılaştığı tek biçim bu olduğu için
+python.exe'nin kendi ayrıştırıcısı ile `CommandLineToArgvW` aynı sonucu
+verir (§32/30).
+
+**(a) Preflight — zincir adım 5, içerik oturumundan önce, ayrı bir
+pencerede.** Bu pencere `-NoProfile` ile açılır; gerçek içerik dosyası
+açılmaz, `$maskArgs` kurulmaz ve Process kapsamında `ANTHROPIC_API_KEY`
+**bulunmaz**. Önce §13.8 ve §10.5 ortak yardımcıları tanımlanır ve
+`Test-PilotPath 'evidence-dir' "<evidence-dir>" "<external-root>"`
+`PATH_OK=evidence-dir` vermiş olmalıdır.
+`<process-temp>`, Temp kökünün doğrudan altındaki sabit genel adlı
+`vergi-pilot-proc` dizinidir. Önceden mevcutsa (önceki bir turdan kalmışsa)
+**DUR**: kullanıcı kararı olmadan silinmez veya yeniden kullanılmaz.
+
+```powershell
+$tempRoot = [System.IO.Path]::GetTempPath().TrimEnd('\')
+$ptOk = $false
+try { if ((-not (Test-Path Env:ANTHROPIC_API_KEY)) -and ("<process-temp>" -ceq (Join-Path $tempRoot 'vergi-pilot-proc')) -and (-not (Test-Path -LiteralPath "<process-temp>"))) { [void](New-Item -ItemType Directory -Path "<process-temp>" -ErrorAction Stop); [void](New-Item -ItemType Directory -Path "<process-temp>\synthetic-appdata" -ErrorAction Stop); $ptOk = ((Test-PilotPath 'process-temp' "<process-temp>" $tempRoot) -ceq 'PATH_OK=process-temp') -and ((Test-PilotPath 'synthetic-appdata' "<process-temp>\synthetic-appdata" "<process-temp>") -ceq 'PATH_OK=synthetic-appdata') -and (@(Get-ChildItem -LiteralPath "<process-temp>\synthetic-appdata" -Force).Count -eq 0) } } catch { $ptOk = $false }
+if ($ptOk) { "PROCESS_TEMP=OK" } else { "STOP PROCESS_TEMP=FAIL" }
+```
+
+Ardından, **aynı preflight penceresinde** ve yalnız `PROCESS_TEMP=OK`
+alındıysa, `CommandLineToArgvW` P/Invoke tanımı bir DLL'e derlenir. Hash'i
+ölçülür, basılmaz ve `<evidence-dir>` altına exclusive-create ile tek satır
+olarak yazılır. Derleyici **yalnız** bu pencerede çalışır:
+
+```powershell
+$argvSrc = @'
+using System;
+using System.Runtime.InteropServices;
+namespace VergiPilot {
+    public static class ArgvRoundTrip {
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr CommandLineToArgvW(string lpCmdLine, out int pNumArgs);
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr LocalFree(IntPtr hMem);
+        public static string[] Split(string commandLine) {
+            int n;
+            IntPtr p = CommandLineToArgvW(commandLine, out n);
+            if (p == IntPtr.Zero) { throw new InvalidOperationException("split"); }
+            try {
+                string[] r = new string[n];
+                for (int i = 0; i < n; i++) { r[i] = Marshal.PtrToStringUni(Marshal.ReadIntPtr(p, i * IntPtr.Size)); }
+                return r;
+            } finally { LocalFree(p); }
+        }
+    }
+}
+'@
+$dllRecOk = $false
+try { if ($ptOk -and (-not (Test-Path -LiteralPath "<process-temp>\argv-roundtrip.dll"))) { Add-Type -TypeDefinition $argvSrc -OutputAssembly "<process-temp>\argv-roundtrip.dll" -OutputType Library -ErrorAction Stop; if (Test-PilotLeafFile "<process-temp>\argv-roundtrip.dll") { $h = (Get-FileHash -LiteralPath "<process-temp>\argv-roundtrip.dll" -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant(); if (($h -cmatch '^[0-9a-f]{64}\z') -and (Write-PilotExclusive "<evidence-dir>\argv-roundtrip-dll.sha256.txt" @("argv_roundtrip_dll_sha256=$h"))) { $back = (New-Object System.Text.UTF8Encoding($false)).GetString([System.IO.File]::ReadAllBytes("<evidence-dir>\argv-roundtrip-dll.sha256.txt")); $dllRecOk = ($back -ceq ("argv_roundtrip_dll_sha256=" + $h + "`n")) } } } } catch { $dllRecOk = $false }
+$h = $null
+if ($dllRecOk) { "ARGV_DLL_RECORDED=True" } else { "STOP ARGV_DLL_RECORD=FAIL" }
+```
+
+Beklenen: `PROCESS_TEMP=OK` ve `ARGV_DLL_RECORDED=True`. Preflight penceresi
+bundan sonra **kapatılır**; yüklenmiş tip başka bir sürece taşınmaz. Kayıt
+sonradan yeniden üretilemez, silinemez veya üzerine yazılamaz; değişiklik
+gereği **DUR** ve yeni inceleme demektir (H58).
+
+**(b) Her içerik oturumunda yükleme — derleyici yok.** §17.1 preview ve
+§18.2 apply oturumlarında, §13.8 ve §10.5 ortak yardımcılarından sonra ve
+herhangi bir gerçek içerik değişkeni kurulmadan **önce** aşağıdaki
+tanımlar yapılır ve `Import-VergiPilotArgvDll` bir kez çağrılır. Bu blokta
+`Add-Type`, derleyici veya yeni bir geçici dosya **yoktur**. DLL yalnız
+kayıtlı hash'le birebir eşleşirse
+`[System.Reflection.Assembly]::LoadFile` ile yüklenir; ardından sabit
+sentetik vektörlerle round-trip öz-testi yapılır:
+
+```powershell
+function ConvertTo-VergiWinArg([string]$a) { if (($a.Length -gt 0) -and ($a -cnotmatch '[\s"]')) { return $a }; $sb = New-Object System.Text.StringBuilder; [void]$sb.Append([char]34); $bs = 0; foreach ($ch in $a.ToCharArray()) { if ($ch -eq [char]92) { $bs++ } elseif ($ch -eq [char]34) { [void]$sb.Append([char]92, ($bs * 2 + 1)); [void]$sb.Append([char]34); $bs = 0 } else { if ($bs -gt 0) { [void]$sb.Append([char]92, $bs); $bs = 0 }; [void]$sb.Append($ch) } }; if ($bs -gt 0) { [void]$sb.Append([char]92, ($bs * 2)) }; [void]$sb.Append([char]34); return $sb.ToString() }
+function Test-VergiArgElement($a) { if (($null -eq $a) -or ($a -isnot [string]) -or ($a.Length -eq 0)) { return $false }; if ($a -cmatch '[\x00-\x1F\x7F]') { return $false }; for ($i = 0; $i -lt $a.Length; $i++) { $c = $a[$i]; if ([char]::IsHighSurrogate($c)) { if ((($i + 1) -ge $a.Length) -or (-not [char]::IsLowSurrogate($a[$i + 1]))) { return $false }; $i++ } elseif ([char]::IsLowSurrogate($c)) { return $false } }; return $true }
+function Test-VergiArgRoundTrip([object[]]$list, [string]$line) { try { $back = [string[]]$global:VergiArgvSplit.Invoke($null, @(, ('x ' + $line))); if (($back.Count -ne ($list.Count + 1)) -or ($back[0] -cne 'x')) { return $false }; for ($i = 0; $i -lt $list.Count; $i++) { if (-not [string]::Equals($back[$i + 1], [string]$list[$i], [System.StringComparison]::Ordinal)) { return $false } }; return $true } catch { return $false } }
+function Import-VergiPilotArgvDll { $global:VergiArgvSplit = $null; try { $dll = "<process-temp>\argv-roundtrip.dll"; $rec = "<evidence-dir>\argv-roundtrip-dll.sha256.txt"; if (-not ((Test-PilotLeafFile $dll) -and (Test-PilotLeafFile $rec))) { return $false }; $txt = (New-Object System.Text.UTF8Encoding($false)).GetString([System.IO.File]::ReadAllBytes($rec)); if ($txt -cnotmatch '^argv_roundtrip_dll_sha256=[0-9a-f]{64}\n\z') { return $false }; $exp = $txt.Substring('argv_roundtrip_dll_sha256='.Length, 64); $h = (Get-FileHash -LiteralPath $dll -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant(); if (-not [string]::Equals($h, $exp, [System.StringComparison]::Ordinal)) { return $false }; $asm = [System.Reflection.Assembly]::LoadFile($dll); $global:VergiArgvSplit = $asm.GetType('VergiPilot.ArgvRoundTrip', $true).GetMethod('Split'); $vec = @('plain', 'a b', 'tail\', 'a b\', 'x\"y', 'q"r', "O'Hara;x", 'a$b', ([string][char]0x00C7 + [char]0x011F + ' ' + [char]0x015E), ([string][char]0xD835 + [char]0xDC00), ('0' * 64)); $line = (@(foreach ($e in $vec) { ConvertTo-VergiWinArg $e }) -join ' '); if (-not (Test-VergiArgRoundTrip $vec $line)) { $global:VergiArgvSplit = $null; return $false }; return $true } catch { $global:VergiArgvSplit = $null; return $false } }
+$argvDllOk = (Import-VergiPilotArgvDll) -eq $true
+if ($argvDllOk) { "ARGV_DLL=OK" } else { "STOP ARGV_DLL=FAIL" }
+```
+
+Beklenen: `ARGV_DLL=OK`; başka sonuç **DUR**'dur (H58). Öz-test vektörleri
+sabit ve sentetiktir; gerçek değer taşımaz.
+
+**(c) Ortam profilleri (exact ad kümeleri).** Çocuk süreç ortamı devralınan
+sözlükten başlar. Profilde olmayan her **ad** silinir; `PATH` System32 ile,
+apply'da `APPDATA` ise `<process-temp>\synthetic-appdata` ile değiştirilir.
+Diğer değerlere dokunulmaz: okunmaz, bir değişkene atanmaz, basılmaz. Son ad
+kümesi profille birebir karşılaştırılır (Windows'ta ad karşılaştırması
+büyük/küçük harfe duyarsızdır):
+
+| Profil | Exact ad kümesi |
+|---|---|
+| Sistem allowlist'i | `SystemRoot`, `windir`, `SystemDrive`, `PATH`, `PATHEXT`, `TEMP`, `TMP`, `PYTHONIOENCODING` |
+| `preview` | sistem allowlist'i + `VERGI_IAM_DATABASE_URL`; `ANTHROPIC_API_KEY` **kesinlikle yok** (üst süreçte bulunması da `STOP`) |
+| `apply` | sistem allowlist'i + yalnız `VERGI_IAM_DATABASE_URL`, `ANTHROPIC_API_KEY` ve `APPDATA` (sentetik) |
+
+Sentetik `APPDATA` gerekir: anahtarsız provada, `APPDATA` ve
+`USERPROFILE` taşımayan bir ortamda SDK istemcisi kurulurken ev dizini
+çözümlemesi hata verdi. Gerçek `APPDATA` ise SDK'nın kullanıcıya ait
+yapılandırmasını okumasına yol açabilir. Dizin çağrıdan önce ve sonra
+**boş**, canonical ve reparse point'siz olmalıdır (H59).
+
+**(d) Yardımcı.** Yalnız sabit durum satırları basar; argüman, yol veya
+ortam değeri basmaz. Her profil oturum başına **bir kez** çağrılabilir;
+ikinci çağrı `STOP`'tur ve süreci başlatma girişiminden sonra (başarılı
+olsun olmasın) yeniden çağrı yapılamaz. stdout yönlendirilmez ve konsola
+gider. Yalnız `apply` profilinde stderr bellekte toplanır, süreç bitince
+konsola aynen yazılır ve **dosyaya yazılmaz** (§18.4). Bekleme
+**sınırsızdır** ve süreç **öldürülmez**: POST ile journal yazımı arasında
+süreci sonlandırmak §18.3'teki sonuçsuz tüketim durumunu üretir.
+
+```powershell
+function Invoke-VergiPilotProcess([string]$Profile, [object[]]$ArgList) {
+    $r = [pscustomobject]@{ Started = $false; ExitCode = $null; Stderr = $null }
+    if ($null -eq $global:VergiPilotProcessUsed) { $global:VergiPilotProcessUsed = @{} }
+    if (($Profile -cne 'preview') -and ($Profile -cne 'apply')) { [Console]::Out.WriteLine('STOP PROC_PROFILE=FAIL'); return $r }
+    if ($global:VergiPilotProcessUsed.ContainsKey($Profile)) { [Console]::Out.WriteLine('STOP PROC_SECOND_CALL'); return $r }
+    if ($null -eq $global:VergiArgvSplit) { [Console]::Out.WriteLine('STOP ARGV_DLL=FAIL'); return $r }
+    if (-not ((Test-PilotLeafFile "<python>") -and ((Get-Location).Path -ceq "<repo-root>"))) { [Console]::Out.WriteLine('STOP PROC_EXE_CWD=FAIL'); return $r }
+    $argsOk = ($null -ne $ArgList) -and ($ArgList.Count -ge 1)
+    if ($argsOk) { for ($i = 0; $i -lt $ArgList.Count; $i++) { if (-not (Test-VergiArgElement $ArgList[$i])) { $argsOk = $false } } }
+    $line = $null
+    if ($argsOk) { $line = (@(foreach ($e in $ArgList) { ConvertTo-VergiWinArg ([string]$e) }) -join ' '); $argsOk = (("<python>".Length + 3 + $line.Length) -le 32766) -and (Test-VergiArgRoundTrip $ArgList $line) }
+    if (-not $argsOk) { [Console]::Out.WriteLine('STOP PROC_ARGS=FAIL'); return $r }
+    [Console]::Out.WriteLine('PROC_ARGS=OK')
+    $want = @('SystemRoot', 'windir', 'SystemDrive', 'PATH', 'PATHEXT', 'TEMP', 'TMP', 'PYTHONIOENCODING', 'VERGI_IAM_DATABASE_URL')
+    if ($Profile -ceq 'apply') { $want += @('ANTHROPIC_API_KEY', 'APPDATA') }
+    $appData = "<process-temp>\synthetic-appdata"
+    if (($Profile -ceq 'preview') -and (Test-Path Env:ANTHROPIC_API_KEY)) { [Console]::Out.WriteLine('STOP PROC_ENV=FAIL'); return $r }
+    if ($Profile -ceq 'apply') { if (-not (((Test-PilotPath 'synthetic-appdata' $appData "<process-temp>") -ceq 'PATH_OK=synthetic-appdata') -and (@(Get-ChildItem -LiteralPath $appData -Force).Count -eq 0))) { [Console]::Out.WriteLine('STOP SYNTHETIC_APPDATA=FAIL'); return $r } }
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "<python>"
+    $psi.Arguments = $line
+    $psi.WorkingDirectory = "<repo-root>"
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardInput = $true
+    $psi.RedirectStandardOutput = $false
+    $psi.RedirectStandardError = ($Profile -ceq 'apply')
+    if ($Profile -ceq 'apply') { $psi.StandardErrorEncoding = New-Object System.Text.UTF8Encoding($false) }
+    $wantSet = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($n in $want) { [void]$wantSet.Add($n) }
+    foreach ($k in @($psi.EnvironmentVariables.Keys)) { if (-not $wantSet.Contains([string]$k)) { $psi.EnvironmentVariables.Remove([string]$k) } }
+    $psi.EnvironmentVariables['PATH'] = [System.Environment]::GetFolderPath('System')
+    if ($Profile -ceq 'apply') { $psi.EnvironmentVariables['APPDATA'] = $appData }
+    $have = @($psi.EnvironmentVariables.Keys | ForEach-Object { [string]$_ })
+    $envOk = ($have.Count -eq $want.Count) -and (@($have | Where-Object { -not $wantSet.Contains($_) }).Count -eq 0) -and (@($want | Where-Object { -not $psi.EnvironmentVariables.ContainsKey($_) }).Count -eq 0)
+    if (-not $envOk) { [Console]::Out.WriteLine('STOP PROC_ENV=FAIL'); return $r }
+    [Console]::Out.WriteLine('PROC_ENV=OK')
+    $global:VergiPilotProcessUsed[$Profile] = $true
+    $p = $null
+    try { $p = [System.Diagnostics.Process]::Start($psi) } catch { [Console]::Out.WriteLine('STOP PROC_START=FAIL'); return $r }
+    $r.Started = $true
+    $p.StandardInput.Close()
+    $tErr = $null
+    if ($Profile -ceq 'apply') { $tErr = $p.StandardError.ReadToEndAsync() }
+    $p.WaitForExit()
+    if ($null -ne $tErr) { $r.Stderr = [string]$tErr.Result; [Console]::Error.Write($r.Stderr) }
+    $r.ExitCode = $p.ExitCode
+    $p.Dispose()
+    [Console]::Out.WriteLine('PROC_EXIT=' + $r.ExitCode)
+    return $r
+}
+```
+
+Yardımcı çıktısı: `PROC_ARGS=OK`, `PROC_ENV=OK` ve `PROC_EXIT=` ve ardından çıkış kodu. `STOP
+PROC_*`, `STOP ARGV_DLL=FAIL` veya `STOP SYNTHETIC_APPDATA=FAIL` satırları
+**DUR**'dur (H58, H59). `<process-temp>` gerçek içerik taşımaz. Kapanışta
+yalnız `synthetic-appdata`'nın boş olduğu ve DLL hash'inin kayıtla aynı
+olduğu yeniden doğrulandıktan sonra, ayrı kullanıcı kararıyla silinebilir;
+silinmesi bu runbook'un zorunlu adımı **değildir**.
+
 ---
 
 ## 14. API credential sözleşmesi (P3)
@@ -1682,7 +1986,9 @@ notu). Bu adlar `--mask-term` olarak **eklenmez**; aktarımları §6.1/7 ve
 
 Tohumun tamlığını **avukat** yazılı olarak teyit eder. Teyit, ek maskeleme
 terimleri dosyasının SHA-256'sına (`<mask-file-sha256>`) ve içindeki terim
-sayısına (`<mask-term-count>`) **bağlanır** (§15.3). Eksik tohum: **DUR**.
+sayısına (`<mask-term-count>`) **bağlanır** (§15.3). Aynı teyit, egress
+engel değerleri dosyasının SHA-256'sına (`<deny-file-sha256>`) ve değer
+sayısına (`<deny-value-count>`) da bağlanır (§15.5). Eksik tohum: **DUR**.
 
 ### 15.3 `--mask-term` değerlerinin geçirilmesi
 
@@ -1715,7 +2021,7 @@ Set-PSReadLineOption -HistorySaveStyle SaveNothing
 Remove-Variable maskArgs, maskOk -ErrorAction SilentlyContinue
 $maskOk = $false
 $maskFile = "<restricted-dir>\mask-terms.txt"
-if (Test-Path -LiteralPath $maskFile -PathType Leaf) { $maskTerms = @([System.IO.File]::ReadAllLines($maskFile, [System.Text.Encoding]::UTF8) | Where-Object { $_.Length -gt 0 }); $maskUnsafe = @($maskTerms | Where-Object { $_ -ne $_.Trim() -or $_.Contains('"') }).Count; $maskSha = (Get-FileHash -LiteralPath $maskFile -Algorithm SHA256).Hash.ToLowerInvariant(); if ($maskTerms.Count -ge 1 -and $maskTerms.Count -eq <mask-term-count> -and $maskUnsafe -eq 0 -and $maskSha -eq "<mask-file-sha256>".ToLowerInvariant()) { $maskArgs = @(); foreach ($t in $maskTerms) { $maskArgs += @('--mask-term', $t) }; $maskOk = ($maskArgs.Count -eq (2 * <mask-term-count>)) } }
+if (Test-Path -LiteralPath $maskFile -PathType Leaf) { $maskTerms = @([System.IO.File]::ReadAllLines($maskFile, [System.Text.Encoding]::UTF8) | Where-Object { $_.Length -gt 0 }); $maskUnsafe = @($maskTerms | Where-Object { $_ -ne $_.Trim() -or $_.Contains('"') -or $_.StartsWith('-') -or ($_ -cmatch '[\x00-\x1F\x7F\u0085\u2028\u2029]') }).Count; $maskSha = (Get-FileHash -LiteralPath $maskFile -Algorithm SHA256).Hash.ToLowerInvariant(); if ($maskTerms.Count -ge 1 -and $maskTerms.Count -eq <mask-term-count> -and $maskUnsafe -eq 0 -and $maskSha -eq "<mask-file-sha256>".ToLowerInvariant()) { $maskArgs = @(); foreach ($t in $maskTerms) { $maskArgs += @('--mask-term', $t) }; $maskOk = ($maskArgs.Count -eq (2 * <mask-term-count>)) } }
 if ($maskOk) { "MASK_ARGS=OK" } else { Remove-Variable maskArgs -ErrorAction SilentlyContinue; "STOP MASK_ARGS=FAIL" }
 Remove-Variable maskTerms, maskUnsafe, maskSha -ErrorAction SilentlyContinue
 ```
@@ -1725,7 +2031,13 @@ Remove-Variable maskTerms, maskUnsafe, maskSha -ErrorAction SilentlyContinue
   birini basar. `MASK_ARGS=OK` şu koşulların hepsi sağlanırsa çıkar: dosya
   mevcut; en az bir terim var; terim sayısı `<mask-term-count>` ile aynı;
   dosya hash'i `<mask-file-sha256>` ile aynı; hiçbir terim baştaki veya
-  sondaki boşluk ya da çift tırnak içermiyor.
+  sondaki boşluk, çift tırnak veya kontrol karakteri (TAB, CR, LF, NUL ve
+  Unicode satır ayırıcıları dahil) içermiyor ve hiçbir terim `-` ile
+  başlamıyor. `-` ile başlayan bir terim (`--` dahil) `argparse` tarafından
+  değer değil seçenek sayılır ve çağrıyı exit 2 ile düşürür; bu yüzden
+  ayrıca reddedilir. Çift tırnak yasağı, §13.9 yardımcısı çift tırnağı
+  kayıpsız taşıyabildiği hâlde, gerçek terimler için **bağımsız bir kapı
+  olarak korunur**.
 - `$maskArgs` tanımsızsa, boşsa veya sayı ya da hash eşleşmiyorsa preview ve
   apply **çalıştırılmaz**: **DUR** (H44). §17.1 ve §18.2'deki komutlar bu
   koşulu kendi satırlarında yeniden denetler; tanımsız bir `$maskArgs` hiçbir
@@ -1768,6 +2080,182 @@ içermeden) ve inceleme beklenir. Bu bir **DUR**'dur. Kamu kurumu **adı** bu
 kuralın istisnasıdır (§15.2); kamu kurumu **personelinin** adı istisna
 değildir.
 
+### 15.5 Egress engel değerleri dosyası (`--plain-values`, bağlayıcı)
+
+**Kaynak karşılaştırması.** Pinli harness `--plain-values` dosyasını
+`utf-8` ile açar, `splitlines()` ile satırlara böler, her satırı `strip()`
+eder ve boş satırları atar; liste boşsa çalışmaz
+(`adim9_egress_harness.py`, `load_plain_values`). Gönderim gövdesindeki
+bütün JSON dizgilerinde her değeri tam biçimiyle, Türkçe katlanmış biçimiyle
+ve aksansız biçimiyle **alt-dizgi** olarak arar. Bir eşleşme gönderimi ağa
+çıkmadan reddeder ve süreç exit 96 verir (`scan_body`, `Gate.check`). Tohum
+ise `build_seed_terms` tarafından şu kaynaklardan kurulur: `parties[]`
+`display_name` (yalnız `individual`/`company`), `parties[].reference_code`,
+case `reference_code`, `provenance.original_file_name`,
+`provenance.uploaded_by_ref`, `file.file_name` ve `--mask-term` terimleri
+(`src/llm_privacy_boundary.py`). §15.3'e göre `mask-terms.txt` yalnız taraf
+**olmayan** adları taşır. Bu yüzden `mask-terms.txt` harness'in engel
+kümesini **karşılamaz** ve `--plain-values` olarak yeniden kullanılamaz.
+Adım 9'un sentetik fixture'ı da gerçek değer taşımadığı için kullanılmaz
+(§13.7).
+
+**Dosya.** `<restricted-dir>\egress-deny-values.txt`. Gerçek kişi verisi
+taşır: §4.2 gerçek içeriğidir, §10.5 izinli kümesindedir, envantere,
+kapanış manifestine ve veri akıbeti kararına (§28.1) ile onun rızadaki
+karşılığına (§7.1/6) tabidir ve H56'nın kapsamındadır. Dosya modele
+**gönderilmez**; yalnız yerel harness'in gönderim öncesi taramasında okunur.
+Bu yüzden §7.1/2'deki aktarım kategorilerine yeni bir kalem eklemez. Komut satırına elle yazılmaz;
+`mask-terms.txt` gibi operatör ve avukat tarafından düzenlenir.
+
+**Biçim (hepsi):** BOM'suz UTF-8; satır sonu yalnız LF; her satırda tam bir
+değer; boş satır yok; baştaki veya sondaki boşluk yok; kontrol karakteri ve
+Unicode satır ayırıcısı (U+0085, U+2028, U+2029) yok, çünkü harness'in
+`splitlines()`'ı onlarda da böler; Unicode Format kategorisinde (`\p{Cf}`;
+soft hyphen U+00AD ve sıfır genişlikli karakterler dahil) karakter yok; her
+değer NFC biçiminde ve en az 3 karakter; aynı değer iki kez yok. BOM
+yasağının kaynağı şudur: harness dosyayı `utf-8` ile açar ve BOM'u ilk
+değerin parçası olarak okur; o değer sessizce eşleşmez hâle gelir.
+
+**Karşılaştırma kuralı (bağlayıcı).** NFC denetimi
+`string.IsNormalized(NormalizationForm.FormC)` ile yapılır; NFC olmayan bir
+değer normalize edilerek kabul **edilmez**, fail-closed reddedilir. Bu kural
+hem dosyadaki satırlara hem aşağıdaki 1–4 girdilerine uygulanır; `\p{Cf}`
+yasağı da ikisine birden uygulanır. Exact üyelik ve yinelenen değer
+kararları `HashSet[string]` ile `StringComparer.Ordinal` üzerinden verilir;
+diğer string eşitlikleri `String.Equals(..., StringComparison.Ordinal)` ile
+yapılır. Üyelik, eşitlik ve yineleme kararlarında PowerShell'in
+`-contains`/`-ccontains`/`-eq`/`-ceq` operatörlerine veya kültüre duyarlı
+sıralamaya (`Sort-Object -Unique` dahil) dayanılmaz.
+
+**İçerik — zorunlu üst küme.** Dosya, aşağıdaki değerlerin **her birini**
+(baş ve son boşlukları kırpılmış hâliyle; kırpılmış değer NFC biçiminde
+olmalı ve `\p{Cf}` taşımamalıdır, aksi hâlde normalize edilmeden
+reddedilir) ordinal ve birebir bir satır olarak içerir:
+
+1. `mask-terms.txt`'teki her terim;
+2. `case.json` `parties[]` içinde `party_type` değeri `individual` veya
+   `company` olan her tarafın `display_name`'i;
+3. her `parties[].reference_code` ve case `reference_code`;
+4. `document.json` `provenance.original_file_name`,
+   `provenance.uploaded_by_ref` ve `file.file_name`;
+5. belgede geçen her kişi tanımlayıcısının **belgede yazıldığı ham
+   biçimi**: kimlik ve vergi numarası, IBAN, telefon, e-posta ve adres.
+   Desen kuralları bunları maskeler; harness 10/11 haneli rakam dizilerini
+   ve e-posta desenini ayrıca kendisi tarar, ama IBAN, telefon ve adresi
+   desenle taramaz.
+
+1–4 mekanik olarak denetlenir. 5'in tamlığı yalnız avukatın yazılı tohum
+teyidiyle sağlanır (§15.2).
+
+**İçerik — yasaklar.** Dosya şunları **içermez**, çünkü bunlar gönderim
+gövdesinde meşru olarak maskesiz bulunur ve harness'in alt-dizgi
+eşleşmesiyle gönderimi yanlışlıkla reddettirir:
+
+- kamu kurumu adları (`individual`/`company` dışındaki tarafların
+  `display_name`'leri, K2-A, §15.2);
+- maskelenmeyen korunan kimliklerin (`case_id`, `source_document_id`,
+  `source_document_issuer_party_id`, `party_id`, `dispute_item_id`;
+  `src/llm_privacy_boundary.py`, `_PROTECTED_CONTEXT_ID_KEYS`) içinde
+  büyük/küçük harfe duyarsız alt-dizgi olarak geçen bir değer.
+
+Mekanik kontrol bu iki yasağı yalnız büyük/küçük harfe duyarsız ordinal
+alt-dizgi olarak yaklaşık denetler. Harness'in Türkçe katlama ve aksan
+kaldırma biçimiyle kalan bir yanlış pozitif, gönderimi **ağa çıkmadan**
+reddeder: tek gönderim hakkı yanar ama dışarı veri çıkmaz (§18.3).
+
+**Kontrol bloğu.** Avukatın teyidinden sonra ve her preview/apply
+oturumunda, `MASK_ARGS=OK`'tan sonra çalıştırılır. Değer, sayı veya hash
+**basmaz**:
+
+```powershell
+Remove-Variable denyOk -ErrorAction SilentlyContinue
+$denyOk = $false
+try {
+    $u8s = New-Object System.Text.UTF8Encoding($false, $true)
+    $ord = [System.StringComparison]::Ordinal
+    $nfc = [System.Text.NormalizationForm]::FormC
+    $badChar = '[\x00-\x1F\x7F\u0085\u2028\u2029]|\p{Cf}'
+    $denyPath = "<restricted-dir>\egress-deny-values.txt"
+    $expHash = "<deny-file-sha256>".ToLowerInvariant()
+    if ((Test-PilotLeafFile $denyPath) -and (Test-PilotLeafFile "<restricted-dir>\mask-terms.txt") -and ($expHash -cmatch '^[0-9a-f]{64}\z')) {
+        $bytes = [System.IO.File]::ReadAllBytes($denyPath)
+        $bom = ($bytes.Length -ge 3) -and ($bytes[0] -eq 0xEF) -and ($bytes[1] -eq 0xBB) -and ($bytes[2] -eq 0xBF)
+        $text = $u8s.GetString($bytes)
+        $vals = @($text -split "`n")
+        if (($vals.Count -ge 1) -and ($vals[-1].Length -eq 0)) { $vals = @($vals | Select-Object -First ($vals.Count - 1)) }
+        $valSet = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
+        $shapeBad = 0
+        foreach ($v in $vals) {
+            if (($v.Length -lt 3) -or (-not [string]::Equals($v, $v.Trim(), $ord)) -or (-not $v.IsNormalized($nfc)) -or ($v -cmatch $badChar) -or (-not $valSet.Add($v))) { $shapeBad++ }
+        }
+        $fileHash = (Get-FileHash -LiteralPath $denyPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $shapeOk = (-not $bom) -and ($vals.Count -ge 1) -and ($vals.Count -eq <deny-value-count>) -and ($shapeBad -eq 0) -and ($valSet.Count -eq $vals.Count) -and [string]::Equals($fileHash, $expHash, $ord)
+        $case = $u8s.GetString([System.IO.File]::ReadAllBytes("<case-root>\case.json")) | ConvertFrom-Json
+        $docj = $u8s.GetString([System.IO.File]::ReadAllBytes("<case-root>\documents\<document-id>\document.json")) | ConvertFrom-Json
+        $req = New-Object System.Collections.Generic.List[string]
+        $addReq = { param($v) if (($v -is [string]) -and ($v.Trim().Length -gt 0)) { $req.Add($v.Trim()) } }
+        foreach ($t in [System.IO.File]::ReadAllLines("<restricted-dir>\mask-terms.txt", $u8s)) { & $addReq $t }
+        $publicNames = New-Object System.Collections.Generic.List[string]
+        $ids = New-Object System.Collections.Generic.List[string]
+        $ids.Add("<case-id>"); $ids.Add("<document-id>")
+        foreach ($p in @($case.parties)) { if ($null -eq $p) { continue }; $pt = $p.party_type; if (($pt -is [string]) -and ([string]::Equals($pt, 'individual', $ord) -or [string]::Equals($pt, 'company', $ord))) { & $addReq $p.display_name } elseif ($p.display_name -is [string]) { $publicNames.Add($p.display_name) }; & $addReq $p.reference_code; if ($p.party_id -is [string]) { $ids.Add($p.party_id) } }
+        foreach ($d in @($case.dispute_items)) { if (($null -ne $d) -and ($d.dispute_item_id -is [string])) { $ids.Add($d.dispute_item_id) } }
+        & $addReq $case.reference_code
+        if ($null -ne $docj.provenance) { & $addReq $docj.provenance.original_file_name; & $addReq $docj.provenance.uploaded_by_ref }
+        if ($null -ne $docj.file) { & $addReq $docj.file.file_name }
+        $reqBad = 0
+        $missing = 0
+        foreach ($r in $req) {
+            if ((-not $r.IsNormalized($nfc)) -or ($r -cmatch $badChar)) { $reqBad++ }
+            if (-not $valSet.Contains($r)) { $missing++ }
+        }
+        $clash = @($vals | Where-Object { $v = $_.ToLowerInvariant(); (@($publicNames | Where-Object { $_.ToLowerInvariant().Contains($v) }).Count -gt 0) -or (@($ids | Where-Object { $_.ToLowerInvariant().Contains($v) }).Count -gt 0) }).Count
+        $denyOk = $shapeOk -and ($req.Count -ge 1) -and ($reqBad -eq 0) -and ($missing -eq 0) -and ($clash -eq 0)
+    }
+}
+catch {
+    $denyOk = $false
+}
+Remove-Variable bytes, text, vals, valSet, shapeBad, fileHash, expHash, case, docj, req, reqBad, publicNames, ids, pt, missing, clash -ErrorAction SilentlyContinue
+if ($denyOk) { "DENY_FILE=OK" } else { "STOP DENY_FILE=FAIL" }
+```
+
+Beklenen: `DENY_FILE=OK`. Başka her sonuç **DUR**'dur (H44): geçersiz
+UTF-8 veya BOM, biçim ihlali (NFC olmayan satır, `\p{Cf}` karakteri ve
+ordinal yinelenen değer dahil), sayı ya da hash uyuşmazlığı, NFC olmayan
+veya `\p{Cf}` taşıyan bir 1–4 girdisi, 1–4'ten ordinal olarak eksik bir
+değer, kamu kurumu adıyla veya korunan bir kimlikle çakışma.
+`DENY_FILE=OK`, 5'in tamlığını **kanıtlamaz**; o yalnız avukat teyidiyle
+sağlanır. Değerler evidence'a yazılmaz; yalnız `<deny-file-sha256>`,
+`<deny-value-count>` ve `DENY_FILE=OK` sonucu yazılır.
+
+**Dürüst sınırlar.**
+
+- Harness taraması alt-dizgi eşleşmesidir: ancak dosyada bulunan değerleri
+  yakalar ve tohum kapsamıyla sınırlıdır (§15.1). Bu, maskeleme katmanının
+  gönderim öncesi kendi taramasına eklenen **ikinci, bağımsız** bir
+  kapıdır; onun yerine geçmez.
+- Gövdenin **herhangi bir yerinde** meşru olarak bulunan bir dosya değeri —
+  sabit sistem istemi ve talimat metni, kamu kurumu adları, korunan
+  kimlikler — `body_scan:plain_value` reddini tetikler. Red ağa çıkmadan
+  olur (exit 96), ama tek gönderim hakkını yakar. Mekanik kontrol yalnız
+  kamu kurumu adlarını ve korunan kimlikleri denetler; sistem istemi metniyle
+  çakışma denetlenmez. 3. ve 4. kalemlerdeki opak değerler (referans kodları,
+  dosya adları, `uploaded_by_ref`; §10.3) bu yüzeyi büyütür. Yine de tohum
+  kaynaklarıyla birebir üst küme kuralını korumak için dosyada tutulurlar;
+  bu bilinçli bir ödünleşimdir.
+- Dosya yalnız **ham tohum değerlerini** kapsar. Şirket adı gibi bir
+  değerden türetilen çekirdeklerin veya varyantların (ör. unvan eki
+  atılmış ticari ad) eksiksiz bir listesi olduğu **iddia edilmez**. Bir
+  işletme çekirdeği kendi başına hassassa operatör onu dosyaya ayrıca açık
+  bir terim olarak ekler. Türetilmiş varyantların birincil maskelenmesinden
+  mevcut masker sorumludur; bu dosya o sorumluluğu üstlenmez.
+- Kısa veya opak sentetik değerler JSON anahtarları, sistem metni ya da
+  başka bir bağlamla tesadüfen eşleşebilir. Böyle bir çakışma, ağ
+  çağrısından **önce** fail-closed **DUR** üretir; otomatik retry
+  yapılmaz. Bu bir kullanılabilirlik riskidir; veri sızıntısı olarak
+  değerlendirilmez.
+
 ---
 
 ## 16. Egress harness, outer monitor, auth probe ve tek gönderim sınırı
@@ -1775,8 +2263,12 @@ değildir.
 ### 16.1 Kaynak durumu
 
 Egress harness, outer monitor ve auth probe aracı **repo dışındadır** (Adım 9
-checkpoint'i §D). Bu runbook onların çağırma biçimini veya bayraklarını
-**tanımlamaz**; yalnız karşılamaları gereken sözleşmeyi kaydeder.
+checkpoint'i §D). Gerçek inference için monitor ve harness'in çağırma
+biçimi tahmin **edilmez**: pinli iki kaynağın kendi kullanım
+başlıklarından ve `main` ayrıştırıcılarından türetilmiş exact argv §18.2'de
+tanımlıdır, pinleri §13.7/4'tedir ve §1.5 provasıyla doğrulanır. Pinler
+değişirse türetme geçersizdir (H57). Auth probe aracının çağırma biçimi bu
+runbook'ta tanımlı **değildir** (§16.4, araç sınırı).
 
 ### 16.2 Sözleşme
 
@@ -1856,13 +2348,24 @@ preview için de zorunludur. Preview sırasında ortamda API anahtarı
 **bulunmaz** (§14.1). Preview'dan önce bu oturumda §11.3 (b)'deki yeniden
 karşılaştırma `SOURCE_HASHES_MATCH=True` vermiş olmalıdır.
 
+Preview, gerçek `--mask-term` değerlerini taşıdığı için native `&` ile
+**değil**, §13.9'daki yardımcıyla ve `preview` ortam profiliyle başlatılır.
+Bu doğrudan bir çağrıdır: harness yoktur, `-I` yoktur ve `-m
+ui.cli_mutate` **yalnız burada** argv'nin başındadır. Oturumda sırasıyla
+§13.8 ve §10.5 ortak yardımcıları, §13.9 (b) (`ARGV_DLL=OK`), §15.3
+(`MASK_ARGS=OK`) ve §15.5 (`DENY_FILE=OK`) çalışmış olmalıdır.
+
 ```powershell
-if (-not $maskOk -or $maskArgs.Count -ne (2 * <mask-term-count>)) { "STOP MASK_ARGS=FAIL" } else { & "<python>" -m ui.cli_mutate generation --case <case-id> --row-key fact_extraction --document <document-id> --with-agent @maskArgs --actor-user-id <actor-user-id> }
+Remove-Variable previewArgv, pres -ErrorAction SilentlyContinue
+if ((-not $maskOk) -or ($maskArgs.Count -ne (2 * <mask-term-count>)) -or (-not $argvDllOk) -or (-not $denyOk)) { "STOP PREVIEW_ARGV=FAIL" } else { $previewArgv = @('-m', 'ui.cli_mutate', 'generation', '--case', '<case-id>', '--row-key', 'fact_extraction', '--document', '<document-id>', '--with-agent') + $maskArgs + @('--actor-user-id', '<actor-user-id>'); if ($previewArgv.Count -eq (12 + 2 * <mask-term-count>)) { "PREVIEW_ARGV=OK"; $pres = Invoke-VergiPilotProcess 'preview' $previewArgv } else { Remove-Variable previewArgv; "STOP PREVIEW_ARGV=FAIL" } }
 ```
 
-`$maskArgs`, **bu oturumda** §15.3'e göre yeniden kurulmuş dizidir. Komut,
-dizi tanımsızsa veya beklenen uzunlukta değilse CLI'ı **hiç çağırmaz** ve
-`STOP MASK_ARGS=FAIL` basar: **DUR**.
+`$maskArgs`, **bu oturumda** §15.3'e göre yeniden kurulmuş dizidir. Preview
+argv'si tam 12+2n elemandır (n = `<mask-term-count>`). Koşullardan biri
+sağlanmazsa CLI **hiç çağrılmaz** ve `STOP PREVIEW_ARGV=FAIL` basılır:
+**DUR** (H44, H58). Beklenen yardımcı satırları: `PREVIEW_ARGV=OK`,
+`PROC_ARGS=OK`, `PROC_ENV=OK`, `PROC_EXIT=0`. Preview profilinde stdout ve
+stderr yönlendirilmez; çıktı yalnız ekranda okunur (§10.4).
 
 ### 17.2 Okunacak çıktı
 
@@ -1883,8 +2386,10 @@ Preview stdout'a şu etiketleri basar (`ui/cli_mutate.py`, `_run_generation`):
 - önerilen apply komutu ve, terimler komuta gömülemiyorsa, ayrı bir
   `--mask-term` değerleri bloğu. **Bu son kısım gerçek terimleri düz metin
   olarak taşır** (§4.2/8). Önerilen komut kopyalanmaz ve **doğrudan
-  çalıştırılmaz**; apply yalnız §18.2'deki iç argv ve harness zinciriyle, o
-  oturumda §15.3'e göre yeniden kurulan diziyle yapılır.
+  çalıştırılmaz**. Önerilen komut `-m ui.cli_mutate` biçimindedir; harness
+  zincirinde bu iki eleman **bulunmaz**. Apply yalnız §18.2'deki `$cliArgv`
+  ve `$procArgv` ile, §13.9 yardımcısı üzerinden ve o oturumda §15.3'e göre
+  yeniden kurulan diziyle yapılır.
 
 ### 17.3 Kabul kriterleri
 
@@ -1934,63 +2439,132 @@ evidence'a yazılmaz, dosyaya yönlendirilmez, bir AI oturumuna aktarılmaz.
 7. Kullanıcının bu tek POST için **ayrı, açık ağ onayı** alındı; onay
    `<expected-input-digest>` değerine bağlıdır ve probe onayının yerine
    geçmez.
+8. Bu oturumda sırasıyla şunlar alındı: §13.8 yol kapıları (yeni ve boş
+   `<inference-evidence-dir>` dahil), `HARNESS_CHAIN_PINS=OK` (§13.7/6),
+   `ARGV_DLL=OK` (§13.9 b), `MASK_ARGS=OK` (§15.3) ve `DENY_FILE=OK`
+   (§15.5). Preflight'taki `PROCESS_TEMP=OK` ve `ARGV_DLL_RECORDED=True`
+   kayıtları (§13.9 a) evidence'ta bulunuyor.
 
-### 18.2 İç argv ve harness çağrı zinciri (APP oturumu, insan-only, tek çalıştırma)
+### 18.2 Exact argv ve harness çağrı zinciri (APP oturumu, insan-only, tek çalıştırma)
 
-**Bu bölüm doğrudan çalıştırılacak bir model komutu vermez.** Gerçek apply
-**yalnız** doğrulanmış outer monitor + pinli single-send harness zinciri
-içinden çalışabilir. Operatör çıplak bir
-`& "<python>" -m ui.cli_mutate ... --apply` çağrısını **çalıştıramaz**;
-böyle bir çağrı harness'in tek-POST, retry, redirect ve proxy sınırlarını
-atlar ve kendisi bir sapmadır: **DUR** (H57).
+Gerçek apply **yalnız** pinli outer monitor + pinli single-send harness
+zinciri içinden ve **yalnız** §13.9 yardımcısıyla çalışır. Operatör çıplak
+bir `& "<python>" -m ui.cli_mutate ... --apply` çağrısını, `Start-Process`
+çağrısını veya native `&` ile kurulmuş bir zincir çağrısını
+**çalıştıramaz**: böyle bir çağrı harness'in tek-POST, retry, redirect ve
+proxy sınırlarını atlar ya da argv'yi bozar; kendisi bir sapmadır: **DUR**
+(H57, H58).
 
-Aşağıdaki blok yalnız harness'in **iç hedef argv'sini** bir dizi olarak
-kurar; hiçbir süreç başlatmaz. Dizi önceki oturumdan **taşınmaz**: bu
-oturumda §15.3'e göre, preview'da kullanılan **aynı** dosyadan yeniden
-kurulmuş `$maskArgs` ile oluşturulur. `$maskArgs` elemanları dizi
-birleştirmesiyle eklenir; hiçbir eleman bir dizgiye birleştirilmez:
+**Kaynaktan türetilen zincir.** `<python>` `-I -S -B` ile `<monitor-py>`'yi
+başlatır. Monitor kendi argv'sini pozisyonel ve sıkı okur:
+`argv[0]=='--evidence-dir'`, `argv[2]=='--'`, `argv[3]` hedef betik.
+Hedefi `sys.argv=[hedef, *kalan]` ile aynı süreçte `runpy` üzerinden
+çalıştırır. Harness ilk `--`'ya kadar kendi seçeneklerini okur ve sonrasını
+değiştirmeden `cli_mutate.main(list(cli_argv))`'ye verir; `ui.cli_mutate`'i
+kendisi import eder. Bu yüzden `-m` ve `ui.cli_mutate` harness'ten sonraki
+argv'de **hiçbir pozisyonda bulunmaz**. Bulunsaydı CLI'ın `argparse`'ı
+herhangi bir G/Ç'den önce exit 2 verirdi: gönderim yapılmazdı, ama tek
+yetkili deneme boşa giderdi (Step 10B bulgusu B1). Harness'e
+`--evidence-dir` **verilmez**: kaynakta harness bu durumda istek/yanıt
+gövdesi, `egress_record.json` veya `harness_summary.txt` yazmaz ve sayaç
+satırını yalnız stderr'e basar (`write_record`, `write_summary`).
+
+Diziler önceki oturumdan **taşınmaz**: bu oturumda §15.3'e göre, preview'da
+kullanılan **aynı** dosyadan yeniden kurulmuş `$maskArgs` ile oluşturulur.
+Elemanlar dizi birleştirmesiyle eklenir; hiçbir eleman bir dizgiye
+birleştirilmez. n = `<mask-term-count>`.
+
+**`$cliArgv` — harness'e giden çıplak CLI argv'si (tam 14+2n eleman):**
 
 ```powershell
-Remove-Variable innerArgv -ErrorAction SilentlyContinue
-if (-not $maskOk -or $maskArgs.Count -ne (2 * <mask-term-count>) -or ("<expected-input-digest>" -cnotmatch '^[0-9a-f]{64}$')) { "STOP INNER_ARGV=FAIL" } else { $innerArgv = @('-m', 'ui.cli_mutate', 'generation', '--case', '<case-id>', '--row-key', 'fact_extraction', '--document', '<document-id>', '--with-agent', '--allow-network') + $maskArgs + @('--actor-user-id', '<actor-user-id>', '--apply', '--expected-input-digest', '<expected-input-digest>'); if ($innerArgv.Count -eq (16 + 2 * <mask-term-count>)) { "INNER_ARGV=OK" } else { Remove-Variable innerArgv; "STOP INNER_ARGV=FAIL" } }
+Remove-Variable cliArgv, procArgv, res, hc -ErrorAction SilentlyContinue
+$cliOk = $false
+if ($maskOk -and ($maskArgs.Count -eq (2 * <mask-term-count>)) -and ("<expected-input-digest>" -cmatch '^[0-9a-f]{64}\z')) { $cliArgv = @('generation', '--case', '<case-id>', '--row-key', 'fact_extraction', '--document', '<document-id>', '--with-agent', '--allow-network') + $maskArgs + @('--actor-user-id', '<actor-user-id>', '--apply', '--expected-input-digest', '<expected-input-digest>'); $cliOk = ($cliArgv.Count -eq (14 + 2 * <mask-term-count>)) -and ($cliArgv[0] -ceq 'generation') -and (@($cliArgv | Where-Object { ($_ -ceq '-m') -or ($_ -ceq 'ui.cli_mutate') -or ($_ -ceq '--') -or ($_ -ceq '--evidence-dir') }).Count -eq 0) }
+if ($cliOk) { "CLI_ARGV=OK" } else { Remove-Variable cliArgv -ErrorAction SilentlyContinue; "STOP CLI_ARGV=FAIL" }
 ```
 
-Beklenen: `INNER_ARGV=OK`. Blok argüman değerlerini basmaz.
+**`$procArgv` — `<python>`'a giden tam argv (tam 27+2n eleman):**
 
-**Harness çağrısı.** İç hedef programı `<python>`, argümanları `$innerArgv`
-dizisinin elemanlarıdır. Bu dizinin harness'e hangi biçimle verileceği repo
-dışındaki harness'in **pinli manifestinde** tanımlıdır (§13.7, §16.1); bu
-runbook o biçimi **tanımlamaz ve tahmin etmez**. Apply'dan önce şunların
-hepsi mekanik olarak ölçülmüş ve evidence'a yazılmış olmalıdır:
+| İndeks | Eleman |
+|---|---|
+| `[0]`–`[2]` | `-I`, `-S`, `-B` |
+| `[3]` | `<monitor-py>` |
+| `[4]`, `[5]` | `--evidence-dir`, `<inference-evidence-dir>` (monitor'ün; tek `--evidence-dir`) |
+| `[6]` | `--` |
+| `[7]` | `<harness-py>` |
+| `[8]`, `[9]` | `--mode`, `single-send` |
+| `[10]`, `[11]` | `--plain-values`, `<restricted-dir>\egress-deny-values.txt` (§15.5) |
+| `[12]` | `--` |
+| `[13]`… | `$cliArgv` (`[13]` = `generation`) |
 
-1. Harness, outer monitor ve politika dosyalarının SHA-256'ları pinli
-   kayıtla aynı (§13.7).
-2. Harness sözleşmesi: tek POST; retry yok; redirect yok; proxy ve
-   `trust_env` kapalı; yalnız §16.2/2'deki izinli host; `allowed_sends=1`;
-   başlangıçta `refused_total=0`.
-3. Pinli manifest, `<python>` ile `$innerArgv` elemanlarının iç sürece
-   **değer kaybı, yeniden tırnaklama veya dizgi birleştirmesi olmadan**,
-   eleman-eleman iletildiği çağırma biçimini açıkça tanımlıyor.
-4. Bu wrapper/argv birleşimi §1.5'teki anahtarsız, DB'siz ve ağsız
-   sentetik provada PASS verdi.
+```powershell
+$procOk = $false
+if ($cliOk -and $chainPinsOk -and $argvDllOk -and $denyOk) { $procArgv = @('-I', '-S', '-B', "<monitor-py>", '--evidence-dir', "<inference-evidence-dir>", '--', "<harness-py>", '--mode', 'single-send', '--plain-values', "<restricted-dir>\egress-deny-values.txt", '--') + $cliArgv; $tail = @($procArgv | Select-Object -Skip 13); $procOk = ($procArgv.Count -eq (27 + 2 * <mask-term-count>)) -and ($procArgv[6] -ceq '--') -and ($procArgv[12] -ceq '--') -and ($procArgv[13] -ceq 'generation') -and (@($procArgv | Where-Object { $_ -ceq '--' }).Count -eq 2) -and (@($procArgv | Where-Object { $_ -ceq '--evidence-dir' }).Count -eq 1) -and ($procArgv[4] -ceq '--evidence-dir') -and (@($tail | Where-Object { ($_ -ceq '-m') -or ($_ -ceq 'ui.cli_mutate') }).Count -eq 0) }
+if ($procOk) { "PROC_ARGV=OK" } else { Remove-Variable procArgv -ErrorAction SilentlyContinue; "STOP PROC_ARGV=FAIL" }
+```
 
-Bunlardan biri sağlanmıyorsa — özellikle harness'in çağırma biçimi pinli
-manifest ve prova ile doğrulanamıyorsa — komut **uydurulmaz**: gerçek apply
-kapısı **DUR** olarak kalır ve yeni bir bağımsız inceleme gerekir (H57).
+Beklenen: `CLI_ARGV=OK` ve `PROC_ARGV=OK`. Bloklar argüman değerlerini
+basmaz. `STOP CLI_ARGV=FAIL` veya `STOP PROC_ARGV=FAIL` çıkarsa zincir
+başlatılmaz ve gönderim yapılmaz: **DUR** (H57). Bu satır-içi kontroller
+kaynaktaki `input_digest` kapısının yerine geçmez; onu tamamlar (§15.3).
 
-`STOP INNER_ARGV=FAIL` çıkarsa harness çağrılmaz ve gönderim yapılmaz:
-**DUR**. Bu satır-içi kontrol, kaynaktaki `input_digest` kapısının yerine
-geçmez; onu tamamlar (§15.3).
+**Tek çağrı.** Yalnız `PROC_ARGV=OK` alındıysa, §18.1'deki ağ onayından
+sonra **bir kez**:
+
+```powershell
+if ($procOk -and (Test-Path Env:ANTHROPIC_API_KEY)) { $res = Invoke-VergiPilotProcess 'apply' $procArgv } else { "STOP APPLY_NOT_STARTED" }
+```
+
+Yardımcı `apply` profiliyle başlatır: ortam exact ad kümesine indirilir,
+`APPDATA` boş sentetik dizine yönlendirilir, stdout konsola gider, stderr
+yalnız bellekte toplanıp konsola aynen yazılır, bekleme sınırsızdır ve
+süreç öldürülmez (§13.9). Hiçbir koşulda ikinci bir çağrı yapılmaz.
+
+**Çağrı sonrası, yalnız boolean/sayaç üreten kontroller.** Pinli harness'in
+stderr'e bastığı tek sayaç satırı kaynakta şu biçimdedir: `HARNESS
+mode=KİP allowed_sends=SAYI refused_total=SAYI refused=JSON`. JSON'un
+anahtarları yalnız sabit gerekçe adlarıdır; `body_scan:` gerekçesi de
+yalnız sabit sayaç adlarından kurulur (`plain_value`, `digit_run`,
+`email`, `api_key`, `undecodable`). Satır belge metni, maskeli metin, kişi
+adı, credential veya yanıt gövdesi taşımaz (`Gate.refuse`, `scan_body`,
+`write_summary`). Ayrıştırıcı yalnız bu allowlist'e uyan **tek** satırı
+kabul eder; başka her durumda `$null` döner:
+
+```powershell
+function Get-VergiHarnessCounters([string]$err) { $v = '(client_config_redirects|client_config_trust_env|proxy_mount|transport_proxy|transport_type|deny_all_mode|method|target|port|path_or_query|second_send|body_unavailable|explicit_proxy|stream_requested|redirect_response|body_scan:(api_key|digit_run|email|plain_value|undecodable)(,(api_key|digit_run|email|plain_value|undecodable))*)'; $lines = @(([string]$err) -split "`r?`n" | Where-Object { $_.StartsWith('HARNESS ') }); if ($lines.Count -ne 1) { return $null }; $m = [regex]::Match($lines[0], '^HARNESS mode=single-send allowed_sends=([0-9]{1,3}) refused_total=([0-9]{1,6}) refused=(\{\}|\{"' + $v + '": [0-9]{1,6}(, "' + $v + '": [0-9]{1,6})*\})\z'); if (-not $m.Success) { return $null }; return [pscustomobject]@{ AllowedSends = [int]$m.Groups[1].Value; RefusedTotal = [int]$m.Groups[2].Value; Refused = $m.Groups[3].Value } }
+$hc = $null; $exitCode = $null
+if (($null -ne $res) -and $res.Started) { $hc = Get-VergiHarnessCounters $res.Stderr; $exitCode = $res.ExitCode; $res.Stderr = $null }
+$appEmpty = $false
+try { $appEmpty = ((Test-PilotPath 'synthetic-appdata' "<process-temp>\synthetic-appdata" "<process-temp>") -ceq 'PATH_OK=synthetic-appdata') -and (@(Get-ChildItem -LiteralPath "<process-temp>\synthetic-appdata" -Force).Count -eq 0) } catch { $appEmpty = $false }
+$monOk = $false
+try { $ms = "<inference-evidence-dir>\outer_monitor_summary.json"; if (Test-PilotLeafFile $ms) { $j = (New-Object System.Text.UTF8Encoding($false)).GetString([System.IO.File]::ReadAllBytes($ms)) | ConvertFrom-Json; $monOk = ($j.finalized -eq $true) -and ($j.monitor_sha256 -ceq '936b49edb9da72fabf19b6630f9665d5e366f9670780491a3d1fba49908830da') -and ($j.exit_code -eq 0) -and ($j.target_outcome -ceq 'returned') -and ($j.counts.deny -eq 0) -and ($j.counts.spawn_denied -eq 0) -and ($j.flags.isolated -eq 1) -and ($j.flags.no_site -eq 1) -and ($j.flags.dont_write_bytecode -eq 1) } } catch { $monOk = $false }
+$hcLines = @('# kind=harness-counters', ('harness_line_found=' + ($null -ne $hc)), ('process_exit=' + $exitCode), ('monitor_summary_ok=' + $monOk), ('synthetic_appdata_empty_after=' + $appEmpty))
+if ($null -ne $hc) { $hcLines += @(('allowed_sends=' + $hc.AllowedSends), ('refused_total=' + $hc.RefusedTotal), ('refused=' + $hc.Refused)) }
+if (Write-PilotExclusive "<inference-evidence-dir>\harness-counters.txt" $hcLines) { "HARNESS_COUNTERS=WRITTEN" } else { "STOP HARNESS_COUNTERS=FAIL" }
+"APPLY_RESULT exit=$exitCode harness_line=$($null -ne $hc) allowed_sends=$(if ($null -ne $hc) { $hc.AllowedSends } else { 'NA' }) refused_total=$(if ($null -ne $hc) { $hc.RefusedTotal } else { 'NA' }) monitor_ok=$monOk appdata_empty=$appEmpty"
+```
+
+Bu blok yalnız sabit satırlar, sayaçlar ve boolean'lar basar ve yazar.
+`<inference-evidence-dir>` sonunda yalnız monitor'ün
+`outer_monitor_summary.json` dosyasını ve `harness-counters.txt`'yi taşır.
 
 ### 18.3 Sonuç
 
-- Başarı: çıkış kodu `0`, harness'te tam **1** POST, **0** redirect, **0**
-  retry, **0** reddedilmiş egress olayı, yanıtta bilinmeyen maskeleme
-  belirteci **0**.
-- Herhangi bir sapma, `1`/`2` çıkış kodu veya belirsiz sonuç: **DUR**. Yeniden
-  deneme yapılmaz; farklı bir terim listesiyle veya yeni bir anahtarla yeni
-  bir deneme ancak yeni bir kullanıcı kararıyla ve ayrı bir turda
-  düşünülebilir.
+- **Başarı (hepsi):** `PROC_EXIT=0`; `harness_line_found=True`,
+  `allowed_sends=1`, `refused_total=0`, `refused={}`;
+  `monitor_summary_ok=True` (monitor çıkışı `0`, hedef `returned`, `deny=0`,
+  `spawn_denied=0`, `-I -S -B` bayrakları açık, monitor hash'i pinle aynı);
+  `synthetic_appdata_empty_after=True`. Yanıtta bilinmeyen bir maskeleme
+  belirteci varsa uygulamanın geri çevirmesi onu fail-closed reddeder ve
+  pending yazılmaz (Adım 4a); bu durum sıfır olmayan çıkış kodu olarak
+  görünür. Harness bu sayıyı artık kaydetmez.
+- Monitor çıkış kodları kaynaktan: `0` başarı, `96` harness reddi
+  (`body_scan:plain_value` dahil; bu red ağa çıkmadan olur), `97` monitor
+  reddi, `2` kullanım hatası (monitor veya CLI), `1` hedef istisnası.
+  Herhangi bir sapma, sıfır olmayan çıkış kodu veya belirsiz sonuç:
+  **DUR**. Yeniden deneme yapılmaz; farklı bir terim listesiyle veya yeni
+  bir anahtarla yeni bir deneme ancak yeni bir kullanıcı kararıyla ve ayrı
+  bir turda düşünülebilir.
 - POST biter bitmez — başarılı da olsa başarısız da olsa — §29'daki Process
   temizliği ve Console revoke yapılır; anahtar bir sonraki adıma taşınmaz.
 
@@ -1998,15 +2572,24 @@ geçmez; onu tamamlar (§15.3).
 yalnız bellektedir. POST ile journal yazımı arasında veritabanı düşerse tek
 gönderim **sonuçsuz tüketilmiş** olur: maskeli veri iletilmiştir, pending
 yoktur ve yeniden gönderim yasaktır. Bu durum **DUR**'dur; ikinci bir gönderim
-yeni rıza değerlendirmesi ve yeni kullanıcı kararı gerektirir.
+yeni rıza değerlendirmesi ve yeni kullanıcı kararı gerektirir. Harness
+evidence'ı kapalı olduğundan HTTP durum kodu ve istek/yanıttaki maskeleme
+belirteci sayıları **kaydedilmez**; başarı yukarıdaki sayaçlar ve çıkış
+koduyla belirlenir.
 
 ### 18.4 Kayıt
 
-`<inference-evidence-dir>` içine: model kimliği, HTTP durum kodu,
-POST/redirect/retry/denied sayıları, istekteki ve yanıttaki maskeleme
-belirteci sayıları, input/output token kullanımı, oluşan pending dosyasının
-SHA-256'sı, kullanıcının ağ onayının zamanı. İstek ve yanıt **gövdeleri** ile
-ham stdout/stderr **yazılmaz**.
+`<inference-evidence-dir>` içine yalnız şunlar girer: monitor'ün kendi
+yazdığı `outer_monitor_summary.json` (yalnız metadata: sayaçlar, bayraklar,
+izinli hedefler, sabit etiketli olaylar) ve onun SHA-256'sı; §18.2
+bloğunun yazdığı `harness-counters.txt` (yalnız allowlist'teki sayaç ve
+boolean'lar); `CLI_ARGV=OK`, `PROC_ARGV=OK`, `PROC_ARGS=OK`, `PROC_ENV=OK`,
+`HARNESS_CHAIN_PINS=OK`, `ARGV_DLL=OK` ve `DENY_FILE=OK` sonuçları; model
+kimliği (preview'ın bastığı `model_id`, §17.2); oluşan pending dosyasının
+SHA-256'sı; kullanıcının ağ onayının zamanı. HTTP gövdesi, maskelenmiş
+prompt, model yanıtı, ham stdout/stderr ve `HARNESS` satırının ham metni
+**yazılmaz**. Harness'e `--evidence-dir` verilmediği için harness kalıcı
+dosya üretmez (`<harness-output-names>` = `@()`).
 
 ---
 
@@ -2052,7 +2635,7 @@ kullanılmaz: **DUR**.
 Apply (tek çalıştırma):
 
 ```powershell
-if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}$') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate promotion --case <case-id> --row-key fact --document <document-id> --actor-user-id <actor-user-id> --approve --expected-hash <expected-hash> }
+if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate promotion --case <case-id> --row-key fact --document <document-id> --actor-user-id <actor-user-id> --approve --expected-hash <expected-hash> }
 ```
 
 `--discard-verified-states` bu pilotta **kullanılmaz**; yalnız
@@ -2094,7 +2677,7 @@ kullanılmaz: **DUR**.
 Apply (tek çalıştırma):
 
 ```powershell
-if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}$') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate verification --case <case-id> --document <document-id> --fact-id <fact-id> --actor-user-id <actor-user-id> --apply --target-state verified --expected-hash <expected-hash> --evidence-ref <document-id> }
+if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate verification --case <case-id> --document <document-id> --fact-id <fact-id> --actor-user-id <actor-user-id> --apply --target-state verified --expected-hash <expected-hash> --evidence-ref <document-id> }
 ```
 
 `--target-state` için CLI yalnız `unverified`, `partially_verified` ve
@@ -2123,7 +2706,7 @@ kullanıcı onayı gerektirmez (§2.1). Biri eksikse apply bloğu kullanılmaz:
 Generation apply (tek çalıştırma):
 
 ```powershell
-if ("<expected-input-digest>" -cnotmatch '^[0-9a-f]{64}$') { "STOP EXPECTED_INPUT_DIGEST=INVALID" } else { & "<python>" -m ui.cli_mutate generation --case <case-id> --row-key timeline --actor-user-id <actor-user-id> --apply --expected-input-digest <expected-input-digest> }
+if ("<expected-input-digest>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_INPUT_DIGEST=INVALID" } else { & "<python>" -m ui.cli_mutate generation --case <case-id> --row-key timeline --actor-user-id <actor-user-id> --apply --expected-input-digest <expected-input-digest> }
 ```
 
 Promotion preview:
@@ -2140,7 +2723,7 @@ baseline ölçüldü. Biri eksikse apply bloğu kullanılmaz: **DUR**.
 Promotion apply (tek çalıştırma):
 
 ```powershell
-if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}$') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate promotion --case <case-id> --row-key timeline --actor-user-id <actor-user-id> --approve --expected-hash <expected-hash> }
+if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate promotion --case <case-id> --row-key timeline --actor-user-id <actor-user-id> --approve --expected-hash <expected-hash> }
 ```
 
 Kabul: canonical timeline'da tebliğ olayı **tam bir** tanedir ve
@@ -2221,7 +2804,7 @@ yerine avukatın yazılı kararı `no` ise `no` yazılır. `<attestation-ref>`
 tırnak içinde verilir:
 
 ```powershell
-if ("<expected-input-digest>" -cnotmatch '^[0-9a-f]{64}$') { "STOP EXPECTED_INPUT_DIGEST=INVALID" } else { & "<python>" -m ui.cli_mutate generation --case <case-id> --row-key deadline --anchor <anchor-event-id> --actor-user-id <actor-user-id> --apply --expected-input-digest <expected-input-digest> --stopping-event-status none --stopping-event-attestation-ref "<attestation-ref>" --judicial-recess-applicable yes }
+if ("<expected-input-digest>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_INPUT_DIGEST=INVALID" } else { & "<python>" -m ui.cli_mutate generation --case <case-id> --row-key deadline --anchor <anchor-event-id> --actor-user-id <actor-user-id> --apply --expected-input-digest <expected-input-digest> --stopping-event-status none --stopping-event-attestation-ref "<attestation-ref>" --judicial-recess-applicable yes }
 ```
 
 ### 22.2 Pending deadline kabul kriterleri
@@ -2268,7 +2851,7 @@ karşılaştırmasından **önce** verilemez.
 Apply (tek çalıştırma):
 
 ```powershell
-if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}$') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate approval --case <case-id> --row-key deadline --actor-user-id <actor-user-id> --approve --expected-hash <expected-hash> }
+if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate approval --case <case-id> --row-key deadline --actor-user-id <actor-user-id> --approve --expected-hash <expected-hash> }
 ```
 
 ---
@@ -2385,7 +2968,7 @@ gönderimi **yok**, elle dosya düzeltmesi **yok**.
 | H41 | Bağımsız inceleme, commit veya sentetik prova ön koşulu eksik | §1.5 |
 | H42 | Kapsam ön elemesi başarısız (belge türü, takvim yılı, tek dava/tebliğ/deadline) | §8 |
 | H43 | Intake alanlarından birinin avukat onayı eksik; intake'te `unverified` dışı `verification_state`; JSON'da BOM; metin uzunluğu sınır dışı | §11.2, §11.4 |
-| H44 | `MASK_ARGS=OK` alınamadı: `$maskArgs` tanımsız veya boş; terim dosyası yok, boş, sayısı ya da hash'i onaylanan değerle eşleşmiyor; terim güvenli biçimde geçirilemiyor; preview `mask_term_count` değeri `<mask-term-count>` ile aynı değil | §15.3, §17, §18.2 |
+| H44 | `MASK_ARGS=OK` alınamadı: `$maskArgs` tanımsız veya boş; terim dosyası yok, boş, sayısı ya da hash'i onaylanan değerle eşleşmiyor; terim güvenli biçimde geçirilemiyor; bir terim `-` ile başlıyor veya kontrol karakteri taşıyor; preview `mask_term_count` değeri `<mask-term-count>` ile aynı değil; `DENY_FILE=OK` alınamadı (BOM, biçim, sayı/hash, 1–4'ten eksik değer, kamu kurumu adı veya korunan kimlikle çakışma) | §15.3, §15.5, §17, §18.2 |
 | H45 | Verification ön koşulu sağlanmıyor: locator dar tanımla mevcut değil, evidence belgesi `active` değil veya avukat locator'ı orijinal belgeyle karşılaştırmadı | §19.1, §19.3 |
 | H46 | Silme guard'ı başarısız — case: hedef yol, `case_0001`, ebeveyn, örtüşme, reparse point veya normal dosya/dizin dışı öğe, case manifesti türü, ayrıştırma hatası veya yinelenen göreli yol, canlı dosya kümesi, bayt veya SHA-256'nın kapanış manifestinden sapması; `<restricted-dir>`: exact yol, ebeveyn, `<external-root>` sözleşmesi, örtüşme, reparse point, dosya kümesi, bayt veya SHA-256'nın kapanış manifestinden sapması; her iki hedefte korunan bir yolun tanımsız, yer tutucu veya çözümlenemez olması ya da guard istisnası — ya da o hedef için silme anı onayı yok; silme başarısız, kısmi veya sonrası ölçüm (`CASE_DIR_ABSENT`, `RESTRICTED_DIR_ABSENT`, kalıntı ölçümleri) beklenenden farklı | §28.3 |
 | H47 | Şifreli arşivin paritesi, iki manifestin her biriyle, çalışma kopyası silinmeden önce doğrulanamadı | §28.5 |
@@ -2398,7 +2981,9 @@ gönderimi **yok**, elle dosya düzeltmesi **yok**.
 | H54 | Salt-okunur SQL sözleşmesi ihlali: `psql` çıkış kodu 0 değil, `transaction_read_only` `on` değil, `SELECT`/`SHOW` dışı ifade, düzeltici SQL gereği veya IAM mutasyonunun CLI dışında denenmesi | §13.5 |
 | H55 | Eksik veya belirsiz veri akıbeti kararı (arşivde beşinci unsurun yokluğu dahil) intake'ten sonra fark edildi: veri silinmez, arşivlenmez; değiştirilmeden korunur ve yeni yazılı karar beklenir | §28.1 |
 | H56 | `<restricted-dir>` içerik sözleşmesi ihlali: izinli küme kaydı veya `restricted-allowed-files.sha256.txt` hash kaydı yok, sonradan değişti (`ALLOWED_FILE_HASH_OK=True` alınamadı: hash kaydı eksik/bozuk/tek satır ve exact label biçiminde değil, 64 küçük hex değil, kayıt okunamıyor ya da hash eşleşmiyor) veya intake'ten önce yazılamadı ya da `ALLOWED_FILE_HASH_RECORDED=True` alınamadı; izinli küme dışında dosya, herhangi bir alt dizin, reparse point veya symlink; genel olmayan dosya adı; bir manifestin exclusive-create ile yazılamaması veya türünün beklenenden farklı olması | §10.5, §28.2 |
-| H57 | Harness çağrı zinciri doğrulanamadı: çıplak `ui.cli_mutate ... --apply` çağrısı; iç argv `INNER_ARGV=OK` vermedi; harness'in çağırma biçimi pinli manifest ve prova ile doğrulanmadı; harness sözleşme ölçümü eksik | §18.2 |
+| H57 | Harness çağrı zinciri ihlali: çıplak `ui.cli_mutate ... --apply` çağrısı; `CLI_ARGV=OK`, `PROC_ARGV=OK` veya `HARNESS_CHAIN_PINS=OK` alınamadı; `$procArgv` 27+2n eleman değil, `[6]` veya `[12]` `--` değil, `[13]` `generation` değil, `[13]` ve sonrasında `-m` veya `ui.cli_mutate` var; harness'e `--evidence-dir` verildi; harness sayaç satırı bulunamadı, birden fazla veya allowlist dışında; `monitor_summary_ok` `False`; başarı ölçütlerinden sapma | §13.7, §18.2, §18.3 |
+| H58 | Süreç yardımcısı kapısı: `PROCESS_TEMP=OK`, `ARGV_DLL_RECORDED=True` veya `ARGV_DLL=OK` alınamadı; DLL ya da hash kaydı değişti; içerik penceresinde `Add-Type` veya derleyici çalıştı; `STOP PROC_ARGS=FAIL` (boş veya `$null` eleman, kontrol karakteri, tek başına surrogate, uzunluk sınırı, round-trip uyuşmazlığı), `STOP PROC_EXE_CWD=FAIL`, `STOP PROC_START=FAIL` veya aynı profilin ikinci çağrısı; gerçek `--mask-term` taşıyan bir çağrının `Start-Process -ArgumentList` veya native `&` ile yapılması | §13.9, §17.1, §18.2 |
+| H59 | Çocuk süreç ortamı: `STOP PROC_ENV=FAIL` (son ad kümesi profille birebir değil); preview sırasında üst süreçte `ANTHROPIC_API_KEY` var; `synthetic-appdata` çağrıdan önce veya sonra boş değil, canonical değil ya da reparse point; `<process-temp>` kapısı geçmedi | §13.9 |
 
 ### 25.2 Güvenli DUR/abort yolu (bağlayıcı)
 
@@ -2473,7 +3058,7 @@ ham stdout/stderr, deadline raporu, gerçek tarih veya kişisel veri buralara
 | Hukuki/rıza | Onay, ek, rıza ve veri-akıbeti belgelerinin SHA-256'ları ve redakte kapsam özetleri |
 | Restricted kümesi | `restricted-allowed-files.txt` kaydı, `ALLOWED_FILE_HASH_RECORDED=True`, `restricted-allowed-files.sha256.txt` kaydının kendi bayt sayısı ve SHA-256'sı, her envanterde `ALLOWED_FILE_HASH_OK=True`, `RESTRICTED_INVENTORY=OK` ve dosya sayısı (§10.5) |
 | Intake | BOM ve uzunluk kontrolleri, `INTAKE_HASH=MATCH`, `INTAKE_HASHES_RECORDED=True`, her preview ve POST öncesinde `SOURCE_HASHES_MATCH=True`, validator PASS/sayılar, `TAX_TYPE_VOCAB=OK`, ignore kontrolü, metin çıkarma aracının adı ve sürümü, avukat intake onayının hash'i |
-| Maskeleme tohumu | `<mask-file-sha256>`, `<mask-term-count>`, her içerik oturumunda `MASK_ARGS=OK`, avukat tohum teyidinin hash'i |
+| Maskeleme tohumu | `<mask-file-sha256>`, `<mask-term-count>`, `<deny-file-sha256>`, `<deny-value-count>`, her içerik oturumunda `MASK_ARGS=OK` ve `DENY_FILE=OK`, avukat tohum teyidinin hash'i |
 | Ortam | §13.6 eşleşme sayıları ve adları, `.env` durumu, §13.7 parite sonuçları |
 | Preview | §17.4'teki alanlar |
 | Auth probe | §16.4'teki alanlar (ayrı dizin) |
@@ -2483,7 +3068,8 @@ ham stdout/stderr, deadline raporu, gerçek tarih veya kişisel veri buralara
 | Kör hesap | Sabitlenmiş kaydın SHA-256'sı ve zamanı (§21.2) |
 | Karşılaştırma | `PENDING_MATCH` (§22.3) ve `MATCH` (§24) sonuçları |
 | Rapor | Çıkış kodu, rapor dosyası SHA-256'sı, iki boolean (§23) |
-| Inference zinciri | `INNER_ARGV=OK`, harness sözleşme ölçümleri ve wrapper/argv prova sonucu (§18.2) |
+| Süreç yardımcısı | Preflight'ta `PROCESS_TEMP=OK` ve `ARGV_DLL_RECORDED=True`; `argv-roundtrip-dll.sha256.txt` kaydının bayt sayısı ve SHA-256'sı; her preview/apply oturumunda `ARGV_DLL=OK`, `PROC_ARGS=OK`, `PROC_ENV=OK`, `PROC_EXIT` (§13.9) |
+| Inference zinciri | `HARNESS_CHAIN_PINS=OK`, `CLI_ARGV=OK`, `PROC_ARGV=OK`, `harness-counters.txt` ve `outer_monitor_summary.json` SHA-256'ları, `APPLY_RESULT` satırı ve argv/ortam prova sonucu (§18.2, §18.4) |
 | Kapanış | §28.2'deki iki ayrı manifest ve dosya sayıları, `CASE_DELETE_GUARD`, `CASE_DELETE_RESULT`, `CASE_DIR_ABSENT`, `ALLOWED_FILE_HASH_OK` ve `RESTRICTED_DELETE_GUARD` sonuçları, §28.3.2 son ölçüm satırları, varsa `PATH_OK=archive-dir` ve arşiv paritesi, revoke ve temizlik sonuçları, postcondition'lar |
 | DUR | Tetiklenen satır, §25.2 adımlarının sonucu, kalan durum |
 
@@ -2643,7 +3229,7 @@ if (($lines.Count -ge 1) -and (Write-PilotExclusive "<evidence-dir>\closing-case
 baştan genel ve sabit olduğu için manifest gerçek ad **sızdırmaz**; ayrı bir
 ekran aşamasına gerek yoktur. Önce §10.5 envanteri `RESTRICTED_INVENTORY=OK`
 vermiş olmalıdır. Kapanış kümesi izinli kümenin alt kümesidir;
-`mask-terms.txt` her zaman bulunur; `deadline-report.txt` yalnız ve yalnız
+`mask-terms.txt` ve `egress-deny-values.txt` her zaman bulunur; `deadline-report.txt` yalnız ve yalnız
 zincir adım 25 çıkış `0` ile tamamlandıysa (`<report-produced>` `$true`)
 bulunur:
 
@@ -2653,7 +3239,7 @@ $allowedLines = @([System.IO.File]::ReadAllLines("<evidence-dir>\restricted-allo
 $allowedSet = @($allowedLines | Select-Object -Skip 1)
 $rState = Get-PilotRestrictedState $rDir
 $rNames = @($rState.Files | ForEach-Object { $_.Name })
-$rSetOk = ($allowedLines.Count -ge 2) -and ($allowedLines[0] -ceq '# kind=restricted-allowed') -and ($null -ne $rState) -and ($rState.Bad -eq 0) -and (@($rNames | Where-Object { $allowedSet -cnotcontains $_ }).Count -eq 0) -and ($rNames -ccontains 'mask-terms.txt') -and (($rNames -ccontains 'deadline-report.txt') -eq <report-produced>)
+$rSetOk = ($allowedLines.Count -ge 2) -and ($allowedLines[0] -ceq '# kind=restricted-allowed') -and ($null -ne $rState) -and ($rState.Bad -eq 0) -and (@($rNames | Where-Object { $allowedSet -cnotcontains $_ }).Count -eq 0) -and ($rNames -ccontains 'mask-terms.txt') -and ($rNames -ccontains 'egress-deny-values.txt') -and (($rNames -ccontains 'deadline-report.txt') -eq <report-produced>)
 if ($rSetOk) { $rLines = @($rState.Files | ForEach-Object { "{0}`t{1}`t{2}" -f $_.Name, $_.Length, (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }) }
 if ($rSetOk -and (Write-PilotExclusive "<evidence-dir>\closing-restricted-manifest.tsv" (@('# kind=restricted') + $rLines))) { "RESTRICTED_MANIFEST=WRITTEN"; "RESTRICTED_FILE_COUNT=$($rLines.Count)" } else { "STOP RESTRICTED_MANIFEST=FAIL" }
 ```
@@ -3085,7 +3671,8 @@ içeriği taşımaz.
 8. IAM aktörü avukatın kimliğini veya imzasını kanıtlamaz.
 9. Egress katmanları tam bir işletim sistemi sandbox'ı değildir; harness,
    monitor ve probe aracı repo dışındadır ve kimlikleri repo içinden
-   doğrulanamaz (§13.7).
+   doğrulanamaz. Gerçek inference'ın exact argv'si pinli iki kaynaktan
+   türetilmiştir ve yalnız o pinler için geçerlidir (§13.7/4, §18.2).
 10. Kümenin, harness'in veya ortamın durumu varsayılmaz; her operasyon
     öncesinde mekanik olarak ölçülür. Küme bir servis değildir.
 11. Advisory-lock bounded acquisition hâlâ açıktır (`CLAUDE.md` §6).
@@ -3135,9 +3722,34 @@ içeriği taşımaz.
     düşürebilir ve örtüşme kontrolü iki farklı yazımın aynı dizini
     gösterdiğini tanımayabilir. Bu davranış bu runbook'ta ayrıca
     modellenmemiştir; yer tutucular uzun adla verilir.
-27. Gerçek inference'ın harness çağırma biçimi repo dışındadır; bu runbook
-    yalnız iç argv'yi kurar (§18.2). Biçim pinli manifest ve prova ile
-    doğrulanmadıkça gerçek apply kapısı **DUR** olarak kalır.
+27. Gerçek inference'ın exact argv'si (`$procArgv`, 27+2n eleman) pinli
+    monitor ve harness kaynaklarından türetilmiş ve §18.2'de tanımlanmıştır.
+    Gerçek apply kapısı, §1.5'teki argv/ortam provası PASS verene ve bu
+    runbook o hâliyle bağımsız incelenip commit'lenene kadar **DUR** olarak
+    kalır (H41, H57).
+28. Harness'e `--evidence-dir` verilmediği için HTTP durum kodu ve
+    istek/yanıttaki maskeleme belirteci sayıları kaydedilmez; başarı,
+    harness sayaç satırı, monitor özeti ve çıkış koduyla belirlenir (§18.3,
+    §18.4). Step 10B'nin B5 gözlemi (restricted ad deseninin harness'in
+    alt çizgili çıktı adlarına uymaması) bu yüzden gerçek apply yolunu
+    etkilemez ve kayıtlı bir gözlem olarak açık kalır.
+29. `egress-deny-values.txt` taraması alt-dizgi eşleşmesidir; yalnız dosyada
+    bulunan değerleri yakalar. Belgedeki ham kişi tanımlayıcılarının (5.
+    madde) tamlığı mekanik olarak kanıtlanamaz, avukat teyidine dayanır.
+    Mekanik çakışma kontrolü harness'in Türkçe katlama biçimini yalnız
+    yaklaşık denetler; kalan bir yanlış pozitif ağa çıkmadan red üretir ve
+    tek gönderim hakkını yakar (§15.5).
+30. `CommandLineToArgvW` round-trip'i Windows kabuk ayrıştırıcısını kanıtlar;
+    python.exe kendi C çalışma zamanı ayrıştırıcısını kullanır. Kodlayıcı iki
+    ayrıştırıcının farklılaştığı biçimi (tırnaklı bölge içinde `""`)
+    üretmez; gerçek yorumlayıcıdaki uçtan uca sadakat ayrıca §1.5 provasında
+    ölçülür (§13.9).
+31. Apply ortamı `USERPROFILE` taşımaz ve `APPDATA` boş sentetik dizindir
+    (§13.9 c). Bu ortamda SDK istemcisinin kurulabildiği yalnız anahtarsız
+    harness `--self-test` yolunda kanıtlanmıştır. Gerçek
+    `Anthropic(api_key=...)` kurulumunun bu ortamda hata vermesi POST'tan
+    **önce** sıfır olmayan çıkış üretir. Dışarı veri çıkmaz, ama yeniden
+    deneme yasağı nedeniyle tek yetkili deneme yanar.
 
 **Sonraki adım:** bu runbook'un yazar oturumundan ayrı ve temiz bir oturumda,
 alt-ajan, Fable modeli ve advisor aracı kullanılmadan bağımsız incelenmesi;
