@@ -1288,6 +1288,119 @@ Row 9 yerine geçirilmez; production/pilot öncesi kapatılmalıdır.
   `MUTATION_REQUIRES_REVIEW` sözleşmesine eşleyerek. Bu turda
   `mutation_lock.py` ve bağlantı katmanı KASITLI olarak
   DEĞİŞTİRİLMEMİŞTİR.
+- **Ürün Genişletme Backlog'u (öneri — 2026-10-03; roadmap sırasını
+  DEĞİŞTİRMEZ).** Aşağıdaki B-01…B-20 maddeleri, pazardaki genel amaçlı
+  hukuki araştırma/yazım platformlarıyla yapılan bir karşılaştırma
+  sonucunda tespit edilen ürün açıklarıdır. Hiçbiri bir roadmap Row'u
+  DEĞİLDİR, hiçbiri bu kayıtla YETKİLENDİRİLMEZ; her biri uygulamadan
+  ÖNCE kendi exact dosya allowlist'i, kapsamı ve ayrı kullanıcı onayını
+  gerektirir. LOCKED bir row'a dokunan madde §9 raporu (neden, etkilenen
+  locked contract, regression riski) olmadan başlatılamaz. Hukuki dış
+  görüş gerektiren maddeler `EXTERNAL LEGAL VERIFICATION REQUIRED`
+  olarak işaretlidir ve kodla kapanmaz.
+  §6 giriş cümlesindeki "production/pilot öncesi kapatılmalıdır"
+  ifadesi bu maddelere UYGULANMAZ; B-01…B-20 isteğe bağlı ürün
+  genişletme adaylarıdır, pilot veya production için ön koşul
+  DEĞİLDİR (B-14 yalnız kapalı ajanların yeniden açılması için ön
+  koşuldur).
+
+  **A. Corpus / veri**
+  - **B-01 — Kaynak hukuki ön değerlendirmesi** (`EXTERNAL LEGAL
+    VERIFICATION REQUIRED`): her resmî kaynağın (Danıştay/Yargıtay karar
+    arama, UYAP Emsal, AYM Kararlar Bilgi Bankası, mevzuat.gov.tr,
+    Resmî Gazete, GİB mevzuat/özelge) kullanım şartları, otomatik erişim
+    izni, FSEK m.31 kapsamı ve KVKK/anonimleştirme yükümlülüğü hakkında
+    yazılı avukat görüşü. Corpus işinin (B-02…B-07) ön koşuludur.
+  - **B-02 — Vergi corpus V1 kapsam tanımı**: VUK, İYUK, 213, GVK, KVK,
+    KDV, ÖTV, AATUHK ve ilgili tebliğler; Danıştay VDDK ve vergi
+    daireleri kararları; BİM vergi dava daireleri kararları; GİB
+    özelgeleri. Kapsam LOCKED `data/corpus_policy/corpus_policy.json`
+    sözleşmesi içinde ifade edilir; policy değişikliği git-governed
+    kalır. Bağımlılık: B-01.
+  - **B-03 — Kaynak başına içe aktarım bağlayıcıları**: önce elle
+    edinim + manifest; otomatik erişim YALNIZ B-01 izin verirse. Mevcut
+    `ingest.py` + `rag_bundle.build`/`rag_bundle.activate` zincirine
+    bağlanır; yeni bir action family gerekirse ayrı onay. Bağımlılık:
+    B-01, B-02.
+  - **B-04 — Karar meta-veri çıkarımı ve doğrulaması**: `daire`,
+    `esas_no`, `karar_no`, `karar_tarihi`, `temyiz_kesinlesme_durumu`
+    alanlarının (RAG Corpus Prerequisite Documents-Schema Patch ile
+    şemada MEVCUT) gerçek veriyle doldurulması; mevcut
+    `manifest_validator.py` kuralları fail-closed kalır. Bağımlılık:
+    B-03.
+  - **B-05 — İçe alınan kararlarda anonimleştirme kontrolü**: kişisel
+    veri taraması, şüphede fail-closed red; `llm_privacy_boundary.py`
+    tarayıcılarının yeniden kullanımı değerlendirilir. Bağımlılık:
+    B-01, B-03.
+  - **B-06 — Düzenli güncelleme süreci**: yeni karar ve mevzuat
+    değişikliklerinin periyodik alınması; yürürlük/sürüm çözümü yalnız
+    Legal Knowledge Engine (§3 Prensip 20) üzerinden. Bağımlılık: B-03.
+  - **B-07 — Araştırma değerlendirme seti**: avukat hazırlı soru →
+    beklenen karar/madde altın seti ve ölçüm. Row 20 (Pilot /
+    Evaluation) ile ilişkilidir. Bağımlılık: B-03.
+
+  **B. Dilekçe / taslak**
+  - **B-08 — Drafting agent modunun yeniden açılması**: Pilot Readiness
+    Adım 4c ile pilot politikası gereği kapatıldı. Yeniden açma yalnız
+    yazılı kullanıcı kararı + B-14 ile. Bağımlılık: B-14.
+  - **B-09 — Vergi dava dilekçesi montaj şablonu**: canonical, onaylı
+    `draft_sections[]`'ı (facts_summary, legal_basis, argument_summary,
+    request, procedural_history) standart dilekçe yapısında (başlık,
+    mahkeme, taraflar, konu, açıklamalar, hukuki nedenler, deliller,
+    netice-i talep, ekler) birleştiren deterministik katman. LOCKED Row
+    15 sözleşmesine dokunmadan, onun ÜSTÜNE eklenir; `submission_status
+    = "draft_only"` korunur. Bağımlılık: B-08 veya avukat girdisi.
+  - **B-10 — .docx / PDF dışa aktarma**: "TASLAK" ibaresi zorunlu;
+    avukat onayı olmadan "sunulabilir" ibaresi üretilmez. Bağımlılık:
+    B-09.
+  - **B-11 — Avukat arayüzünde bölüm bazlı taslak düzenleme**:
+    düzeltmeler pending → validation → human approval → canonical
+    akışından geçer (§3 Prensip 16). Bağımlılık: B-09, Pilot Readiness
+    Adım 11/12.
+  - **B-12 — Dilekçe türleri genişletme**: iptal davası, tarhiyata
+    itiraz, yürütmeyi durdurma talebi, istinaf, temyiz, uzlaşma
+    başvurusu, VUK m.122 düzeltme başvurusu; her tür için ayrı şablon
+    ve kural seti. Bağımlılık: B-09.
+
+  **C. Entegrasyon / kullanılabilirlik**
+  - **B-13 — UYAP UDF belge okuma**: tebligat/karar/dilekçe UDF'lerinin
+    Case Document Layer'a (Row 3, LOCKED) yüklenmesi; çıkarılan tarih
+    otomatik `verified` YAPILMAZ.
+  - **B-14 — Dış LLM kullanımının hukuki çerçevesi** (`EXTERNAL LEGAL
+    VERIFICATION REQUIRED`): sağlayıcı veri-işleme şartları, KVKK yurt
+    dışı aktarım, avukatlık sırrı. Adım 4b/4c ile kapatılan ajanların
+    (B-08 dahil) yeniden açılmasının ön koşuludur.
+  - **B-15 — Kaynaklı, dosya-bağlamlı araştırma sorgu modu**: serbest
+    sohbet DEĞİL; yalnız corpus'a dayanan, atıfsız cevap üretmeyen,
+    deterministik cevap varken LLM'in onunla çelişemediği sınırlı
+    sorgu. Kapatılmış `app.py` yolu yeniden AÇILMAZ; ayrı ürün kararı
+    gerektirir. Bağımlılık: B-03, B-14.
+  - **B-16 — UETS / e-tebligat tarihinin içe aktarılması**: tebliğ
+    tarihi süre hesabının çapasıdır; içe aktarılan değer
+    `unverified` olarak girer, `verification.fact` akışı olmadan
+    yükseltilmez (§3 Prensip 8). Bağımlılık: B-13.
+
+  **D. Ticari / operasyon**
+  - **B-17 — Çok kullanıcılı büro modeli**: büro/avukat/stajyer rolleri,
+    dosya paylaşımı; Row 19B IAM altyapısı üzerine. Bağımlılık: Pilot
+    Readiness Adım 11.
+  - **B-18 — Abonelik ve faturalama**: Row 21 (Commercial V1) kapsamında
+    planlanır. Bağımlılık: B-17.
+  - **B-19 — Süre hatırlatma / bildirim**: yalnız canonical, onaylı ve
+    `calculated` deadline'lar için; `needs_review` veya
+    `blocked_unverified_anchor` durumundaki kayıtlar için kesin tarih
+    bildirimi ÜRETİLMEZ. Bağımlılık: Pilot Readiness Adım 12.
+  - **B-20 — Sekiz olayın süre aritmetiği** (uzlaşma, İYUK m.11, VUK
+    m.35, VUK m.376, usulsüz tebligat/öğrenme tarihi, pişmanlık ihlali,
+    değerleme/takdir komisyonu, SORU 5.5 dönemleri): §5 Adım 7 kapanışı
+    ve §13.2 gereği YALNIZ yeni ve açık YAZILI avukat kararıyla
+    açılabilir.
+
+  **Önerilen öncelik (bağlayıcı DEĞİL):** (1) B-01 ve B-14 — kod
+  gerektirmeyen, paralel yürüyebilen dış hukuki ön koşullar; (2) Adım 10
+  sonrasında B-09 → B-10; (3) Adım 11/12 ile birlikte B-02 → B-03 →
+  B-04 → B-05, ardından B-07; (4) ticari öncesi B-13, B-11, B-17, B-19;
+  (5) ürün kararına bağlı B-15, B-12, B-16, B-18, B-20.
 
 Bu maddeler Row 9'u bloke etmiyorsa **şimdi düzeltilmez**.
 
