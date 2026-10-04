@@ -235,9 +235,16 @@ Gerçek veri alınmadan **önce**, aşağıdakilerin hepsi sağlanmış olmalıd
      Türkçe katlanmış ve aksansız biçimleriyle) `plain_value` sayacına
      düşürdüğünün yalnız sayaçla gösterilmesi;
    - egress engel değerleri dosyasının ordinal/NFC kuralları (§15.5):
-     dosyada veya 1–4 girdisinde NFD biçimli bir terimin reddi; en az bir
-     `\p{Cf}` karakteri (ör. soft hyphen veya sıfır genişlikli karakter)
-     taşıyan bir terimin reddi; ordinal olarak yinelenen bir değerin ve
+     dosyada veya 1–4 girdisinde NFD biçimli bir terimin reddi; dosyada ve
+     1–4 girdisinde Unicode Format kategorisinde en az bir karakter taşıyan
+     bir terimin reddi (soft hyphen U+00AD ve tamamlayıcı düzlemdeki
+     U+E0001 dahil; ikisi eski `\p{Cf}` kuralında kabul ediliyordu);
+     eşleşmemiş bir surrogate taşıyan bir değerin reddi (bellekte doğrudan
+     oluşturulan değerle); `case.json` içindeki JSON `\ud800` girdisinin
+     PowerShell 5.1'de U+FFFD'ye dönüştüğünün ve dosyada karşılığı bulunsa
+     bile U+FFFD kuralıyla reddedildiğinin gösterilmesi; dosyada geçerli bir
+     surrogate çifti (ör. U+1F600) taşıyan bir değerin bu kural yüzünden
+     reddedilmemesi (pozitif kontrol); ordinal olarak yinelenen bir değerin ve
      ordinal olarak eksik bir üyeliğin reddi (her biri `STOP
      DENY_FILE=FAIL`); doğru NFC ve ordinal birebir kümenin `DENY_FILE=OK`
      vermesi; sentetik bir şirket adının çekirdeği/varyantıyla, dosyanın
@@ -2110,8 +2117,10 @@ Bu yüzden §7.1/2'deki aktarım kategorilerine yeni bir kalem eklemez. Komut sa
 **Biçim (hepsi):** BOM'suz UTF-8; satır sonu yalnız LF; her satırda tam bir
 değer; boş satır yok; baştaki veya sondaki boşluk yok; kontrol karakteri ve
 Unicode satır ayırıcısı (U+0085, U+2028, U+2029) yok, çünkü harness'in
-`splitlines()`'ı onlarda da böler; Unicode Format kategorisinde (`\p{Cf}`;
-soft hyphen U+00AD ve sıfır genişlikli karakterler dahil) karakter yok; her
+`splitlines()`'ı onlarda da böler; Unicode Format kategorisinde (Cf; soft
+hyphen U+00AD, sıfır genişlikli karakterler ve U+E0001 gibi tamamlayıcı
+düzlem karakterleri dahil) karakter yok; eşleşmemiş surrogate ve U+FFFD
+(REPLACEMENT CHARACTER) yok; her
 değer NFC biçiminde ve en az 3 karakter; aynı değer iki kez yok. BOM
 yasağının kaynağı şudur: harness dosyayı `utf-8` ile açar ve BOM'u ilk
 değerin parçası olarak okur; o değer sessizce eşleşmez hâle gelir.
@@ -2119,18 +2128,42 @@ değerin parçası olarak okur; o değer sessizce eşleşmez hâle gelir.
 **Karşılaştırma kuralı (bağlayıcı).** NFC denetimi
 `string.IsNormalized(NormalizationForm.FormC)` ile yapılır; NFC olmayan bir
 değer normalize edilerek kabul **edilmez**, fail-closed reddedilir. Bu kural
-hem dosyadaki satırlara hem aşağıdaki 1–4 girdilerine uygulanır; `\p{Cf}`
-yasağı da ikisine birden uygulanır. Exact üyelik ve yinelenen değer
-kararları `HashSet[string]` ile `StringComparer.Ordinal` üzerinden verilir;
-diğer string eşitlikleri `String.Equals(..., StringComparison.Ordinal)` ile
-yapılır. Üyelik, eşitlik ve yineleme kararlarında PowerShell'in
+hem dosyadaki satırlara hem aşağıdaki 1–4 girdilerine uygulanır. Format
+karakteri, eşleşmemiş surrogate ve exact U+FFFD (REPLACEMENT CHARACTER)
+yasağı da **ikisine birden** (dosya satırları ve 1–4 girdileri) aynı yerel
+kontrolle uygulanır ve NFC denetiminden **önce** çalışır (eşleşmemiş
+surrogate taşıyan bir değerde `IsNormalized` istisna fırlatır). Bu yasak
+regex `\p{Cf}` ile **yapılmaz**: .NET Framework'ün regex'i U+00AD'yi Format
+saymaz ve tamamlayıcı düzlem karakterlerini UTF-16 birimi bazında görür.
+Bunun yerine yerel `$testPilotFormatOrSurrogateChar` scriptblock'u değeri
+skaler değer bazında dolaşır (geçerli bir surrogate çifti tek kod noktası
+sayılır), exact U+FFFD gördüğünde ya da
+`CharUnicodeInfo.GetUnicodeCategory(string, index)` ile alınan kategori
+`Format` veya eşleşmemiş `Surrogate` olduğunda değeri reddeder. Başka bir
+kategori veya karakter bu kontrolle reddedilmez.
+
+U+FFFD reddinin nedeni şudur: dosya satırları katı UTF-8 çözücüyle okunur
+ve kodlanmış bir surrogate'ı zaten reddeder; `mask-terms.txt` de aynı
+çözücüyle okunur. `case.json` ve `document.json` ise `ConvertFrom-Json` ile
+okunur ve PowerShell 5.1'de JSON'daki eşleşmemiş bir `\ud800` kaçışı
+U+FFFD'ye dönüşür. Bu yüzden 1–4 girdilerinde eşleşmemiş surrogate kontrolü
+pratikte tetiklenemez; böyle bir girdi U+FFFD kuralıyla fail-closed
+reddedilir. Aynı JSON'u pinli Python (`json.loads`) U+D800 olarak, yani
+farklı bir değer olarak okur. Bu temsil farkı nedeniyle U+FFFD taşıyan bir
+değer, dosyaya eklenmiş olsa bile kabul edilmez.
+
+Exact üyelik ve yinelenen değer kararları `HashSet[string]` ile
+`StringComparer.Ordinal` üzerinden verilir; diğer string eşitlikleri
+`String.Equals(..., StringComparison.Ordinal)` ile yapılır. Üyelik, eşitlik
+ve yineleme kararlarında PowerShell'in
 `-contains`/`-ccontains`/`-eq`/`-ceq` operatörlerine veya kültüre duyarlı
 sıralamaya (`Sort-Object -Unique` dahil) dayanılmaz.
 
 **İçerik — zorunlu üst küme.** Dosya, aşağıdaki değerlerin **her birini**
 (baş ve son boşlukları kırpılmış hâliyle; kırpılmış değer NFC biçiminde
-olmalı ve `\p{Cf}` taşımamalıdır, aksi hâlde normalize edilmeden
-reddedilir) ordinal ve birebir bir satır olarak içerir:
+olmalı ve Format karakteri, eşleşmemiş surrogate ya da U+FFFD
+taşımamalıdır, aksi hâlde normalize edilmeden reddedilir) ordinal ve
+birebir bir satır olarak içerir:
 
 1. `mask-terms.txt`'teki her terim;
 2. `case.json` `parties[]` içinde `party_type` değeri `individual` veya
@@ -2174,7 +2207,8 @@ try {
     $u8s = New-Object System.Text.UTF8Encoding($false, $true)
     $ord = [System.StringComparison]::Ordinal
     $nfc = [System.Text.NormalizationForm]::FormC
-    $badChar = '[\x00-\x1F\x7F\u0085\u2028\u2029]|\p{Cf}'
+    $badChar = '[\x00-\x1F\x7F\u0085\u2028\u2029]'
+    $testPilotFormatOrSurrogateChar = { param([string]$s) $i = 0; while ($i -lt $s.Length) { if ([int]$s[$i] -eq 0xFFFD) { return $true }; $cat = [System.Globalization.CharUnicodeInfo]::GetUnicodeCategory($s, $i); if (($cat -eq [System.Globalization.UnicodeCategory]::Format) -or ($cat -eq [System.Globalization.UnicodeCategory]::Surrogate)) { return $true }; if ([char]::IsSurrogatePair($s, $i)) { $i += 2 } else { $i += 1 } }; return $false }
     $denyPath = "<restricted-dir>\egress-deny-values.txt"
     $expHash = "<deny-file-sha256>".ToLowerInvariant()
     if ((Test-PilotLeafFile $denyPath) -and (Test-PilotLeafFile "<restricted-dir>\mask-terms.txt") -and ($expHash -cmatch '^[0-9a-f]{64}\z')) {
@@ -2186,7 +2220,7 @@ try {
         $valSet = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal)
         $shapeBad = 0
         foreach ($v in $vals) {
-            if (($v.Length -lt 3) -or (-not [string]::Equals($v, $v.Trim(), $ord)) -or (-not $v.IsNormalized($nfc)) -or ($v -cmatch $badChar) -or (-not $valSet.Add($v))) { $shapeBad++ }
+            if (($v.Length -lt 3) -or (-not [string]::Equals($v, $v.Trim(), $ord)) -or (& $testPilotFormatOrSurrogateChar $v) -or (-not $v.IsNormalized($nfc)) -or ($v -cmatch $badChar) -or (-not $valSet.Add($v))) { $shapeBad++ }
         }
         $fileHash = (Get-FileHash -LiteralPath $denyPath -Algorithm SHA256).Hash.ToLowerInvariant()
         $shapeOk = (-not $bom) -and ($vals.Count -ge 1) -and ($vals.Count -eq <deny-value-count>) -and ($shapeBad -eq 0) -and ($valSet.Count -eq $vals.Count) -and [string]::Equals($fileHash, $expHash, $ord)
@@ -2206,7 +2240,7 @@ try {
         $reqBad = 0
         $missing = 0
         foreach ($r in $req) {
-            if ((-not $r.IsNormalized($nfc)) -or ($r -cmatch $badChar)) { $reqBad++ }
+            if ((& $testPilotFormatOrSurrogateChar $r) -or (-not $r.IsNormalized($nfc)) -or ($r -cmatch $badChar)) { $reqBad++ }
             if (-not $valSet.Contains($r)) { $missing++ }
         }
         $clash = @($vals | Where-Object { $v = $_.ToLowerInvariant(); (@($publicNames | Where-Object { $_.ToLowerInvariant().Contains($v) }).Count -gt 0) -or (@($ids | Where-Object { $_.ToLowerInvariant().Contains($v) }).Count -gt 0) }).Count
@@ -2216,14 +2250,15 @@ try {
 catch {
     $denyOk = $false
 }
-Remove-Variable bytes, text, vals, valSet, shapeBad, fileHash, expHash, case, docj, req, reqBad, publicNames, ids, pt, missing, clash -ErrorAction SilentlyContinue
+Remove-Variable bytes, text, vals, valSet, shapeBad, fileHash, expHash, case, docj, req, reqBad, publicNames, ids, pt, missing, clash, testPilotFormatOrSurrogateChar -ErrorAction SilentlyContinue
 if ($denyOk) { "DENY_FILE=OK" } else { "STOP DENY_FILE=FAIL" }
 ```
 
 Beklenen: `DENY_FILE=OK`. Başka her sonuç **DUR**'dur (H44): geçersiz
-UTF-8 veya BOM, biçim ihlali (NFC olmayan satır, `\p{Cf}` karakteri ve
-ordinal yinelenen değer dahil), sayı ya da hash uyuşmazlığı, NFC olmayan
-veya `\p{Cf}` taşıyan bir 1–4 girdisi, 1–4'ten ordinal olarak eksik bir
+UTF-8 veya BOM, biçim ihlali (NFC olmayan satır, Format karakteri,
+eşleşmemiş surrogate, U+FFFD ve ordinal yinelenen değer dahil), sayı ya da
+hash uyuşmazlığı, NFC olmayan veya Format karakteri, eşleşmemiş surrogate
+ya da U+FFFD taşıyan bir 1–4 girdisi, 1–4'ten ordinal olarak eksik bir
 değer, kamu kurumu adıyla veya korunan bir kimlikle çakışma.
 `DENY_FILE=OK`, 5'in tamlığını **kanıtlamaz**; o yalnız avukat teyidiyle
 sağlanır. Değerler evidence'a yazılmaz; yalnız `<deny-file-sha256>`,
@@ -2255,6 +2290,11 @@ sağlanır. Değerler evidence'a yazılmaz; yalnız `<deny-file-sha256>`,
   çağrısından **önce** fail-closed **DUR** üretir; otomatik retry
   yapılmaz. Bu bir kullanılabilirlik riskidir; veri sızıntısı olarak
   değerlendirilmez.
+- Format karakteri denetimi, makinedeki .NET Framework'ün Unicode
+  kategori tablosuna dayanır. O tablonun sürümünden sonra Unicode'a
+  eklenmiş ya da kategorisi değiştirilmiş Format karakterleri tanınmayabilir
+  ve denetimden geçebilir. Bu kalan risk, maskeleme katmanının ve harness
+  taramasının yerine geçmez; yalnız biçim kuralının sınırını belirtir.
 
 ---
 
