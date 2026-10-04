@@ -1609,3 +1609,224 @@ kopyalanmamıştır — yalnız checkpoint adı ve exact arşiv yolu verilmişti
 
 Supersede edilmiş (kapanmış) kurallar yalnız arşivde kalır ve canlı kural
 olarak okunmaz.
+
+## 14. Yetki, Onay ve Ajan Çalışma Sözleşmesi
+
+### 14.1 Amaç ve uygulanma sınırı
+
+Bu sözleşmenin amacı; planlama, uygulama, sentetik doğrulama, bağımsız inceleme ve raporlama işlerinin ajanlar tarafından yürütülmesini sağlarken kullanıcının yalnız yüksek değerli karar kapılarında devreye girmesidir.
+
+Bu sözleşme ancak kullanıcı bir çalışma paketinin kapsamını açıkça onayladığında uygulanır. Kullanıcının güncel ve açık talimatı bu sözleşmeden üstündür. Güvenlik, gizlilik, kanıt bütünlüğü, tek çalışımlık prova ve gerçek veri kurallarıyla çelişki varsa daha kısıtlayıcı kural uygulanır.
+
+Bu sözleşme roadmap sırasını, mevcut LOCK’ları, kanıt pinlerini veya hukuki onay şartlarını kendiliğinden değiştirmez.
+
+Kapsam onayı (`SCOPE_APPROVED`) ve §14.11 kapsamındaki toplu yetki, §8’de sayılan DUR noktalarının hiçbiri için — canonical case/fact/timeline/deadline truth mutation, `verification_state` yükseltme veya düşürme, production rule activation/deactivation, locked row contract değişikliği, destructive delete veya mass rename, `main` üzerinde geliştirme ve git commit/push/tag/reset/rebase/force — §8’in gerektirdiği açık kullanıcı onayının yerine geçmez.
+
+### 14.2 Çalışma paketi ve kapsam onayı
+
+Her çalışma paketi başlamadan önce ajan tek bir kapsam özeti sunar. Özette en az şunlar bulunur:
+
+- amaç ve beklenen çıktı;
+- değiştirilebilecek dosyalar ve yazma kökleri;
+- kapsam dışı alanlar;
+- çalıştırılabilecek testler ve komut türleri;
+- gerçek ağ, API, DB, credential veya gerçek veri kullanılıp kullanılmayacağı;
+- normal testler için izin verilen remediation/tekrar sınırı;
+- tek çalışımlık veya kanıt niteliğindeki adımlar;
+- otomatik DUR koşulları;
+- commit/push planı;
+- gerekiyorsa hukuki karar noktaları.
+
+Bu dosya ve yazma kökü listesi yalnız ilgili çalışma paketinin operasyonel yetki sınırıdır; §8’i değiştirmez ve §13.2’de ayrı kullanıcı kararına bırakılan evrensel faz/alt-faz allowlist kuralını vermez.
+
+Kullanıcının `SCOPE_APPROVED` anlamına gelen açık onayından sonra ajan, onaylı sınırlar içinde kalan işlemler için tekrar tekrar izin istemez.
+
+### 14.3 Ajanların kapsam içindeki yetkisi
+
+Kapsam onaylandıktan sonra ajanlar şunları kullanıcıya yeniden sormadan yapabilir:
+
+- kaynakları ve mevcut kanıtları salt-okunur incelemek;
+- uygulama planını ayrıntılandırmak;
+- yalnız izin verilen dosyaları değiştirmek;
+- sentetik fixture ve test verisi hazırlamak;
+- izin verilen statik kontrolleri, parser kontrollerini ve testleri çalıştırmak;
+- normal testlerde bulunan teknik sorunları onaylı dosya ve davranış sınırı içinde düzeltmek;
+- onaylı tekrar sınırı içinde normal testleri yeniden çalıştırmak;
+- sonuçları, residual riskleri ve değişmezlik kontrollerini raporlamak;
+- ayrı ve temiz bir inceleme oturumu hazırlamak.
+
+Ajan, testi geçirmek amacıyla güvenlik kapısını gevşetemez, beklentiyi gerçeğe uyduramaz veya başarısız kanıtı silemez.
+
+### 14.4 Tek yazan ilkesi ve bağımsız inceleme
+
+Aynı repo, sandbox veya kanıt alanında aynı anda yalnız bir yazan oturum bulunabilir.
+
+Paralel ajanlar ancak salt-okunur analiz yapabilir veya birbirinden açıkça ayrılmış çalışma alanlarında çalışabilir. Birden fazla ajan aynı dosyaları eş zamanlı değiştiremez.
+
+Bağımsız inceleme:
+
+- değişikliği yazan oturumdan ayrı ve temiz bir oturumda yapılır;
+- varsayılan olarak salt-okunurdur;
+- önceki rapora güvenmek yerine kaynak ve disk üzerinden yeniden ölçüm yapar;
+- Critical, High, Medium, Low ve Observation bulgularını ayrı bildirir;
+- kullanılan model veya oturum için özel bir kısıt verilmişse buna uyar;
+- dosya değiştirme yetkisi ayrıca verilmedikçe remediation yapmaz.
+
+Bağımsız inceleme bloklayıcı bulgu görmezse `READY_FOR_COMMIT=YES` sonucu verebilir. Bu sonuç commit veya push yetkisi değildir.
+
+### 14.5 Normal test ve tek çalışımlık kanıt ayrımı
+
+Normal birim, entegrasyon ve statik testlerde ajan, kapsam paketinde belirtilen sınır içinde düzeltme ve tekrar yapabilir. Her deneme nihai raporda açıklanır.
+
+Aşağıdakiler tek çalışımlık kanıt adımıdır:
+
+- rehearsal/evidence koşuları;
+- silme, junction, link veya restricted-delete denemeleri;
+- gerçekçi güvenlik kapısı ölçümleri;
+- dış etkisi olabilecek apply/pilot işlemleri;
+- kullanıcı tarafından açıkça “tam bir kez” denilen çağrılar.
+
+Tek çalışımlık adımda beklenmeyen FAIL, STOP veya postcondition farkı oluşursa:
+
+- retry yapılmaz;
+- cleanup, rollback veya restore kendiliğinden yapılmaz;
+- başarısız kanıt korunur;
+- ajan snapshot ve salt-okunur kök-neden incelemesi için yeni yetki gerekip gerekmediğini bildirir;
+- zincirdeki sonraki aşamalar çalıştırılmaz.
+
+### 14.6 Toplu karar paketi
+
+Ajan, küçük kararları kullanıcıya tek tek sormak yerine mümkün olduğu ölçüde tek bir toplu karar paketinde birleştirir.
+
+Her karar maddesi şu biçimde sunulur:
+
+- karar konusu;
+- önerilen seçenek;
+- alternatifler;
+- güvenlik, kapsam, zaman ve kanıt etkisi;
+- ajan önerisinin kısa gerekçesi.
+
+Kullanıcı kararları tek yanıtla onaylayabilir. Bir karar güvenlik sınırını, gerçek veri kullanımını, hukuki sonucu veya geri döndürülemez işlemi etkiliyorsa ajan bu karar verilmeden ilgili işlemi başlatamaz.
+
+### 14.7 Otomatik DUR gerektiren durumlar
+
+Ajan aşağıdaki durumlarda çalışmayı genişletemez ve kullanıcıya döner:
+
+- onaylı dosya veya davranış kapsamının genişlemesi;
+- gerçek dava/vergi/müvekkil verisine erişim gereği;
+- credential, API anahtarı veya gerçek kullanıcı sırrı kullanımı;
+- onaylanmamış gerçek ağ, API veya DB erişimi;
+- sandbox dışı silme, taşıma, izin/ACL, registry veya environment değişikliği;
+- yeni dependency, veri şeması, dış sözleşme veya mimari karar;
+- test veya güvenlik beklentisinin gevşetilmesi;
+- LOCK’lı veya pinli bir sözleşmenin değiştirilmesi;
+- tek çalışımlık kanıtta beklenmeyen sonuç;
+- aynı çalışma alanında başka bir yazan oturum;
+- hukuki yorum veya içerik bakımından avukat kararı gerektiren belirsizlik;
+- kullanıcının onayladığı risk profilini anlamlı biçimde değiştiren başka bir durum.
+
+### 14.8 Commit ve push kapıları
+
+Uygulama ve bağımsız inceleme tamamlandıktan sonra ajan tek bir kapanış paketi sunar:
+
+- değişen dosyalar ve diff kapsamı;
+- test ve inceleme sonuçları;
+- residual bulgular;
+- çalışma ağacı ve index durumu;
+- önerilen commit mesajı;
+- hedef dal ve push planı;
+- gerçek veri veya dış sistem etkisi olmadığının durumu.
+
+`READY_FOR_COMMIT=YES` yalnız teknik hazırlık sonucudur.
+
+Ajan:
+
+- `COMMIT_APPROVED` anlamına gelen kullanıcı onayı olmadan commit oluşturamaz;
+- `PUSH_APPROVED` anlamına gelen kullanıcı onayı olmadan push yapamaz;
+- kullanıcı aynı mesajda açıkça ikisini birlikte onaylarsa commit ve normal fast-forward push’u tek kapı altında gerçekleştirebilir;
+- açıkça izin verilmedikçe amend, force-push, tag, merge, rebase, reset veya stash yapamaz.
+- `git clean -fdx` ve `git stash --all`, §13.1.3 gereği açık izinle dahi yapılamaz.
+- `v0.8-pre-claude` etiketi §7.16 uyarınca korunur; bu sözleşme etiketin değiştirilmesine, taşınmasına veya yeniden oluşturulmasına yetki vermez.
+
+Commit veya push başarısız olursa otomatik olarak alternatif yöntem ya da force uygulanmaz.
+
+### 14.9 Gerçek veri ve kesin işlem kapısı
+
+Aşağıdakiler her zaman kullanıcı tarafından açıkça ve hedefi belirtilerek onaylanmalıdır:
+
+- gerçek dava, müvekkil, vergi veya kimlik verisinin işlenmesi;
+- gerçek API, internet servisi veya production DB çağrısı;
+- gerçek credential kullanımı;
+- gerçek kaydın oluşturulması, değiştirilmesi, gönderilmesi veya silinmesi;
+- pilot apply;
+- UYAP, e-imza, mobil imza, e-posta veya başka dış sisteme gönderim;
+- geri döndürülmesi zor veya hukuki sonuç doğurabilecek işlem.
+
+Genel kapsam onayı bu işlemler için yeterli değildir. Bu işlemler için `REAL_ACTION_APPROVED` anlamına gelen ayrı ve açık onay gerekir.
+
+### 14.10 Avukat onayı
+
+Aşağıdaki konular avukat kararına veya onayına tabidir:
+
+- hukuki kuralın yorumu;
+- süre, başvuru yolu veya hukuki sonuç üzerinde karar;
+- dilekçe, savunma, iddia veya hukuki strateji içeriği;
+- gerçek dosyada kullanılacak hukuki metnin nihai hâli;
+- avukatlık sırrı, mesleki sorumluluk veya dosya saklama kararı.
+
+Teknik biçimlendirme, kodlama, sentetik test, parser kontrolü ve avukatın daha önce onayladığı sabit metnin bayt/parite kontrolü yeni hukuki karar sayılmaz.
+
+Gerekli hukuki onay `LEGAL_APPROVED` olarak açıkça kaydedilmeden ajan ilgili içeriği kesin veya onaylanmış olarak gösteremez.
+
+### 14.11 Aşama zincirlerinin toplu yetkilendirilmesi
+
+Kullanıcı, isimleri ve sınırları önceden belirtilmiş birden fazla sentetik aşamayı tek kapsam onayıyla yetkilendirebilir.
+
+Bu durumda ajan:
+
+1. aşamaları yalnız onaylanan sırada yürütür;
+2. bir aşama PASS olmadan sonrakine geçmez;
+3. ilk beklenmeyen FAIL, STOP, değişmezlik farkı veya kapsam sapmasında zinciri durdurur;
+4. tek çalışımlık aşamaları yeniden denemez;
+5. onay verilmedikçe cleanup veya rollback yapmaz;
+6. her aşamanın kanıtını ayrı ve değiştirilemez bir dizinde tutar;
+7. zincirin sonunda tek bir birleşik rapor sunar.
+
+Toplu yetki gerçek veri, gerçek ağ/DB, commit/push, hukuki onay veya kesin kayıt işlemi için örtülü yetki oluşturmaz.
+
+### 14.12 Kanıt ve raporlama ilkeleri
+
+Kanıt niteliğindeki çıktılar:
+
+- mümkünse yeni ve önceden bulunmayan dizine yazılır;
+- overwrite yerine CreateNew veya eşdeğer fail-closed yöntem kullanır;
+- başarısız koşuda da korunur;
+- retry, cleanup veya rollback ile sessizce değiştirilmez;
+- kaynak, hash, exit code, stdout/stderr ve değişmezlik ölçümlerini gerektiği ölçüde içerir;
+- gerçek credential veya gereksiz kişisel veri içermez.
+
+Rapor, talimat ile gözlemlenmiş gerçeği ayırır. “Çalıştırılacaktı”, “çalıştırıldı” yerine kullanılamaz. Kanıtlanamayan sonuç açıkça sınırlama veya çıkarım olarak belirtilir.
+
+### 14.13 Varsayılan durum belirteçleri
+
+Gerektiğinde şu durumlar kullanılabilir:
+
+- `SCOPE_APPROVED`
+- `BATCH_DECISIONS_REQUIRED`
+- `READY_FOR_INDEPENDENT_REVIEW`
+- `READY_FOR_NARROW_REMEDIATION`
+- `READY_FOR_COMMIT`
+- `COMMIT_APPROVED`
+- `PUSH_APPROVED`
+- `COMMIT_PUSH_APPROVED`
+- `LEGAL_APPROVED`
+- `REAL_ACTION_APPROVED`
+- `STOPPED_ON_UNEXPECTED_RESULT`
+
+Bu belirteçler tek başına yetki oluşturmaz; kullanıcının açık mesajı ve onaylanan kapsamla birlikte yorumlanır.
+
+### 14.14 Geçiş hükmü
+
+Bu sözleşme kabul edilmeden önce oluşturulmuş commit, sandbox ve kanıt alanlarının anlamını değiştirmez. Eski kanıtlar sabitlendikleri commit ve pinlerle geçerliliğini korur.
+
+Devam eden bir çalışma paketi bu sözleşmeye ancak kullanıcı açıkça karar verirse geçirilir. Geçiş sırasında mevcut başarısız kanıtlar korunur; yeniden adlandırılmaz, silinmez veya başarılı koşuyla değiştirilmez.
