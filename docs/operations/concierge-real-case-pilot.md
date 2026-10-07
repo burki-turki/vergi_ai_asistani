@@ -3790,6 +3790,75 @@ içeriği taşımaz.
     `Anthropic(api_key=...)` kurulumunun bu ortamda hata vermesi POST'tan
     **önce** sıfır olmayan çıkış üretir. Dışarı veri çıkmaz, ama yeniden
     deneme yasağı nedeniyle tek yetkili deneme yanar.
+32. Kapı 2026-10-07 R5 provasında kurulmuştur (aşağıdaki R5 gözlemi).
+    §1.5 provasının süreç gözlem kapısı prova sarmalayıcısına ait bir
+    yapıdır; bu runbook'un adımlarından biri değildir. **Ölçüm (yalnız bu
+    makinede, yalnız `QueryFullProcessImageNameW` ile ve Step 10B tanısının
+    iş yükleriyle):** çıkmış bir sürecin image yolu okunamaz, hata 31 döner
+    (10/10); bu, süreç yaşarken açılmış handle'da da çıkıştan sonra açılan
+    yeni handle'da da böyledir. O handle'ın süreç boyunca kesintisiz
+    tutulduğu ayrıca ölçülmemiştir. Yaşayan kısa ömürlü süreçlerde aynı
+    okuma başarılıdır (80/80). Başka API'ler denenmemiştir. **Çıkarım
+    (ölçüm değil):** önceki provalarda yolu okunamayan süreç kayıtları bu
+    mekanizmadan kaynaklanmıştır. Kurulan kapının **yolu okunamayan süreç
+    kabul kuralı** (R5 kaynaklarında `K2` adıyla geçer), yolu okunamayan
+    bir süreci yalnız şunların **hepsi** o süreç için ölçülürse kabul eden
+    kuraldır; aksi **FAIL**'dir: süreç prova job'ı içindedir ve job'ın
+    toplam süreç sayısı kaynaktan türetilen sayıyla birebir tutar; kimliği
+    (PID ve oluşturma zamanı) bir handle ile bağlıdır; ebeveyninin kendi
+    yolu fiilen okunmuş ve pinli python veya powershell'dir; ebeveyni de
+    prova job'ı içindedir; ebeveyni çocuğun oluşturulduğu anda canlıdır
+    (son okumada hâlâ çalışıyordur ya da çıkış zamanı çocuğun oluşturma
+    zamanından önce değildir); yol okuma hatası tam olarak 31'dir; okumadan
+    önce çıkmış olduğu handle üzerinden ölçülmüştür; bu tür süreçlerin
+    sayısı toplamda 4'ü ve prova vakası başına 1'i aşmaz. Ağ çıkışının
+    sıfır olduğu süreç başına **ölçülemez**; yerine koşu çapında bir ölçüm
+    kullanılır (job'daki süreçlerin bağlantı tablosunun 250 ms aralıkla
+    yoklanması, monitor özetleri ve Python denetim (audit) kancası
+    sayaçları). Bu yoklama yaklaşık 65 ms yaşayan bir süreci ve kısa ömürlü
+    bağlantıları göremez. Genel olarak yoklama aralığından (250 ms; ölçülen
+    en büyük boşluk 295 ms) kısa her süreç ve bağlantı görülmeyebilir.
+    Kalan risk: kabul edilen sürecin çalıştırdığı program kanıtlanmaz; ada
+    dayalı süreç yasağı ona yalnız aynı süreç için bir yardımcı (CIM) kaydı
+    bulunursa uygulanabilir, kayıt yoksa uygulanamaz; süreç yalnız ebeveyn,
+    job üyeliği, sayı ve ömür bakımından sınırlanır. Bu sınır gerçek
+    pilotun güvenlik kapılarının yerine geçmez ve 20. maddedeki süreç adı
+    taramasının sınırıyla birlikte okunur.
+    **C-aşamaları (Compile, DllReview, PinDll, Postcheck) için ek sınır
+    (2026-10-07 kararı):** bu aşamaların süreç gözlemi CIM sorgusu ve süreç
+    listesi yoklamasına dayanır. **Ölçüm (yalnız bu makinede):** bir prova
+    Compile koşusunda (`10dc6f2c`) bir `cvtres` kaydı ebeveyni ve yolu
+    okunamadan, prova ağacının dışında görüldü; o koşu bu kayıt yüzünden
+    FAIL oldu. **Çıkarım (ölçüm değil):** kısa ömürlü bir alt süreç
+    çıkarken görülmüştür; makine genelindeki başka bir etkinlik de
+    dışlanamamıştır. CIM gözlemi kısa ömürlü süreçleri kaçırabilir ve
+    makine genelindeki etkinliğe duyarlıdır. Bu yüzden C-aşamalarında ağaç
+    dışı veya ebeveyni okunamayan kayıtlar ile makine genelindeki
+    csc/cvtres/python adları yalnız **bilgi amaçlı raporlanır**, **FAIL
+    üretmez**. Ağaç içindeki (ebeveyni okunmuş ve ağaca bağlı) yasaklı ad,
+    ağ çıkışının sıfır olması, DLL hash zinciri, sandbox'ın birebir öğe
+    listesi ve baştaki/sondaki değişmezlik kontrolleri sert kalır;
+    C-aşamalarının asıl güvencesi hash zinciri, sandbox ve ağ kapılarıdır.
+    Ağaç içi denetim de kısa ömürlü süreçleri kaçırabileceği için eksik
+    kalabilir. ND aşaması job gözlemcisi ve yolu okunamayan süreç kabul
+    kuralıyla sert kalır.
+    **R5 provası gözlemi (ölçüm, yalnız bu makinede, 2026-10-07):** kapı
+    R5 provasında kuruldu ve ND aşamasında PASS verdi. Kanıt kökleri:
+    `vergi_rehearsal_10b_r5_obs_a184779e` (ve `_recovery`: P1'in 51
+    sentetik vektörü ve smoke sonucu),
+    `vergi_rehearsal_10b_r3_851a8bb5` (ve `_recovery`),
+    `vergi_rehearsal_10b_r5_smoke_f7f1944e` (yalnız smoke girdileri),
+    `vergi_rehearsal_10b_r5_src_681ff5fc` (paket ve README C6.1). DryRun
+    çıktıları kalıcı bir kökte değil oturum scratchpad'inde tutulduğu için
+    kalıcı kanıt olarak gösterilmez. Job'ın toplam süreç sayısı 174'tür ve
+    kaynaktan türetilen sayıya eşittir; yolu okunamayan süreç 0'dır; ağ
+    yoklamaları arasındaki en büyük boşluk 295 ms'dir.
+    **Açık sınır:** yolu okunamayan süreç kabul kuralı bu gerçek koşuda
+    tetiklenmedi (aday 0); bu kural yalnız P1'in 51 sentetik vektörüyle
+    sınanmıştır. C-aşamalarının RAPOR yolu da bu koşuda tetiklenmedi
+    (`cvtres` görülmedi). Bu yolun davranışı hiçbir koşuda sınanmamıştır;
+    sentetik DryRun yalnız sarmalayıcının üretimini (Apply-DX1 eşdeğerliği,
+    parse 0 hata) doğrulamıştır.
 
 **Sonraki adım:** bu runbook'un yazar oturumundan ayrı ve temiz bir oturumda,
 alt-ajan, Fable modeli ve advisor aracı kullanılmadan bağımsız incelenmesi;
