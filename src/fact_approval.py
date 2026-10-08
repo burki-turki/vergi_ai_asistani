@@ -427,29 +427,26 @@ def validate_pending(
     )
 
     # --------------------------------------------------------
-    # LLM kendi fact'ini verified yapamaz.
+    # K-3 (Adım 10 B): promotion HİÇBİR extraction yöntemiyle
+    # verification_state TAŞIYAMAZ - llm/hybrid/rule/manual fark
+    # etmez. Doğrulama yalnız verification.fact akışıyla yapılır.
     # --------------------------------------------------------
 
-    if method in {
-        "llm",
-        "hybrid",
-    }:
+    for fact in facts:
 
-        for fact in facts:
+        if (
+            fact.get(
+                "verification_state"
+            )
+            != "unverified"
+        ):
 
-            if (
-                fact.get(
-                    "verification_state"
-                )
-                != "unverified"
-            ):
-
-                raise ValueError(
-                    "LLM extraction içinde "
-                    "verification_state=unverified "
-                    "olmayan fact bulundu: "
-                    f"{fact.get('fact_id')}"
-                )
+            raise ValueError(
+                f"Pending extraction (method={method}) içinde "
+                "verification_state=unverified "
+                "olmayan fact bulundu: "
+                f"{fact.get('fact_id')}"
+            )
 
     return (
         extraction,

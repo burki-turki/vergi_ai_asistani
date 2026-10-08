@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "manual_fact_input.schema.json",
+
+  "title": "Vergi AI Manual Fact Input Schema V1",
+
+  "description": "Adım 10 B yolu: avukatın orijinal belgeyle karşılaştırdığı tek tebliğ tarihi girdisi. verification_state, confidence ve serbest not alanları BİLİNÇLİ olarak yoktur.",
+
+  "type": "object",
+
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "case_id",
+    "document_id",
+    "facts"
+  ],
+
+  "properties": {
+
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "minLength": 3
+    },
+
+    "document_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "minLength": 3
+    },
+
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+
+      "items": {
+        "$ref": "#/$defs/notification_fact"
+      }
+    }
+  },
+
+  "$defs": {
+
+    "notification_fact": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "role",
+        "date",
+        "page",
+        "text_excerpt"
+      ],
+
+      "properties": {
+
+        "role": {
+          "type": "string",
+          "const": "notification_date"
+        },
+
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+
+        "text_excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "^.*\\S.*$"
+        }
+      }
+    }
+  }
+}

@@ -501,11 +501,13 @@ try:
     # ============================================================
     merged_registry_a7 = op._default_registry_factory()
     check(
-        "A7 merged reconciliation registry has exactly 52 routing keys "
+        "A7 merged reconciliation registry has exactly 53 routing keys "
         "(10 approval + 24 review + 1 drafting_request + 2 promotion + 2 deterministic-generation "
         "+ 5 agent-generation + 1 fact-extraction-generation + 2 legal-research/case-law-generation "
-        "+ 2 rag-bundle-build/activate + 1 fact-verification + 2 Phase B qa/case_view generation)",
-        len(merged_registry_a7.known_action_families()) == 52,
+        "+ 2 rag-bundle-build/activate + 1 fact-verification + 2 Phase B qa/case_view generation "
+        "+ 1 Adim 10 B manual-fact generation; the ONLY addition over 52 is generation.fact_manual)",
+        len(merged_registry_a7.known_action_families()) == 53
+        and len(set(merged_registry_a7.known_action_families()) - {"generation.fact_manual"}) == 52,
         f"got {len(merged_registry_a7.known_action_families())}",
     )
     check(

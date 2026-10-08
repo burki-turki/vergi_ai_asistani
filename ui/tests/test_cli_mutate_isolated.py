@@ -2468,5 +2468,144 @@ check(
 )
 
 
+# ============================================================
+# ADIM 10 B YOLU - `manual-fact` subcommand (exact-scope §5.5: C-N1,
+# C-N2, C-P1, C-P2). Every refusal below happens BEFORE any connection
+# (exploding factories).
+# ============================================================
+
+_MF_BASE = ["manual-fact", "--case", "case_0001", "--document", "ihbarname_001", "--actor-user-id", "7"]
+_MF_DIGEST = "a" * 64
+
+for _mf_flag in (["--with-agent"], ["--allow-network"], ["--mask-term", "x"], ["--text-path", "p"],
+                 ["--model", "m"]):
+    code, out, err = run_cli_usage_only(_MF_BASE + _mf_flag)
+    check(
+        f"C-N1 manual-fact {_mf_flag[0]} -> exit 2 'unrecognized arguments', zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and out == "",
+        f"code={code} err={err!r}",
+    )
+    code, out, err = run_cli_usage_only(_MF_BASE + ["--apply", "--expected-input-digest", _MF_DIGEST] + _mf_flag)
+    check(
+        f"C-N1 manual-fact --apply {_mf_flag[0]} -> exit 2 'unrecognized arguments', zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and "unrecognized arguments" in err and out == "",
+        f"code={code} err={err!r}",
+    )
+
+for _mf_label, _mf_argv, _mf_needle in (
+    ("--apply without --expected-input-digest", _MF_BASE + ["--apply"], "--expected-input-digest"),
+    ("--expected-input-digest without --apply", _MF_BASE + ["--expected-input-digest", _MF_DIGEST],
+     "--expected-input-digest"),
+    ("--attempt 2 without --apply", _MF_BASE + ["--attempt", "2"], "--attempt"),
+    ("--attempt 0", _MF_BASE + ["--apply", "--expected-input-digest", _MF_DIGEST, "--attempt", "0"], "--attempt"),
+    ("--attempt -1", _MF_BASE + ["--apply", "--expected-input-digest", _MF_DIGEST, "--attempt", "-1"], "--attempt"),
+    ("non-hex digest", _MF_BASE + ["--apply", "--expected-input-digest", "z" * 64], "--expected-input-digest"),
+    ("uppercase digest", _MF_BASE + ["--apply", "--expected-input-digest", "A" * 64], "--expected-input-digest"),
+    ("short digest", _MF_BASE + ["--apply", "--expected-input-digest", "a" * 63], "--expected-input-digest"),
+):
+    code, out, err = run_cli_usage_only(_mf_argv)
+    check(
+        f"C-N2 manual-fact {_mf_label} -> exit 2, zero connections",
+        code == cli_mutate.EXIT_USAGE_ERROR and _mf_needle in err and out == "",
+        f"code={code} err={err!r}",
+    )
+
+code, out, err = run_cli_usage_only(["manual-fact", "--case", "case_0001", "--actor-user-id", "7"])
+check("C-N2 manual-fact without --document -> exit 2 (required), zero connections",
+      code == cli_mutate.EXIT_USAGE_ERROR and "--document" in err, f"err={err!r}")
+
+_mf_parser = cli_mutate._build_arg_parser()
+_mf_sub_choices = _mf_parser._subparsers._group_actions[0].choices
+_mf_options = set()
+for _sub_action in _mf_sub_choices["manual-fact"]._actions:
+    _mf_options.update(_sub_action.option_strings)
+check(
+    "C-P1 manual-fact accepts EXACTLY {--case, --document, --actor-user-id, --apply, "
+    "--expected-input-digest, --attempt, -h/--help}",
+    _mf_options == {"--case", "--document", "--actor-user-id", "--apply", "--expected-input-digest",
+                    "--attempt", "-h", "--help"},
+    f"{sorted(_mf_options)!r}",
+)
+check(
+    "C-P2a the dispatcher now has exactly 7 subcommands (manual-fact added, none removed)",
+    set(_mf_sub_choices) == {"approval", "review", "promotion", "generation", "rag-bundle", "verification",
+                             "manual-fact"},
+    f"{sorted(_mf_sub_choices)!r}",
+)
+_mf_generation_row_keys = None
+for _sub_action in _mf_sub_choices["generation"]._actions:
+    if "--row-key" in _sub_action.option_strings:
+        _mf_generation_row_keys = set(_sub_action.choices)
+check(
+    "C-P2b `generation --row-key` choices do NOT include fact_manual (separate subcommand only) and still "
+    "include fact_extraction",
+    _mf_generation_row_keys is not None and "fact_manual" not in _mf_generation_row_keys
+    and "fact_extraction" in _mf_generation_row_keys,
+    f"{sorted(_mf_generation_row_keys or [])!r}",
+)
+
+# C-P3: dispatch wiring with a fake facade (no filesystem, no journal).
+from ui.services import manual_fact_mutation_facade as _mf_facade  # noqa: E402
+
+_mf_calls = []
+_mf_orig_preview = _mf_facade.preview_manual_fact
+_mf_orig_apply = _mf_facade.apply_manual_fact
+
+
+def _mf_fake_preview(case_id, document_id, *, principal, authz_repository):
+    _mf_calls.append(("preview", case_id, document_id))
+    return {
+        "case_id": case_id, "document_id": document_id, "target_ref": f"fact.{document_id}.pending",
+        "input_digest": "b" * 64, "pending_sha256": "c" * 64, "notification_date": "2026-02-10",
+        "page": 1, "excerpt_found": True, "text_excerpt_sha256": "d" * 64,
+    }
+
+
+def _mf_fake_apply(case_id, document_id, expected_input_digest, *, attempt, principal, authz_repository,
+                   conn_factory):
+    _mf_calls.append(("apply", case_id, document_id, expected_input_digest, attempt))
+    if attempt == 9:
+        raise _mf_facade.ManualFactExcerptRejectedError("Manuel fact girişi reddedildi (kural M-07).")
+    return _mf_facade.ManualFactApplyResult(
+        case_id=case_id, document_id=document_id, pending_sha256="c" * 64,
+        audit_file="manual_ihbarname_001_20261008_000000.generation_audit.json", journal_id=5,
+        attempt=attempt, replayed=False,
+    )
+
+
+_mf_facade.preview_manual_fact = _mf_fake_preview
+_mf_facade.apply_manual_fact = _mf_fake_apply
+try:
+    _mf_conn = FakeAuthzConn(users={7: (1, False)}, assignments={(7, "case_0001"): "lawyer"})
+    code, out, err = run_cli(_MF_BASE, authz_conn=_mf_conn, mutation_conn_factory=_exploding_mutation_conn_factory)
+    check(
+        "C-P3a preview dispatch -> exit 0, prints input_digest/excerpt_found/sha and the apply command with --attempt 1",
+        code == 0 and "PREVIEW manual-fact" in out and f"input_digest={'b' * 64}" in out
+        and "excerpt_found=true" in out and f"text_excerpt_sha256={'d' * 64}" in out
+        and f"--expected-input-digest {'b' * 64} --attempt 1" in out and _mf_calls[-1][0] == "preview",
+        f"code={code} out={out!r} err={err!r}",
+    )
+    code, out, err = run_cli(_MF_BASE + ["--apply", "--expected-input-digest", _MF_DIGEST, "--attempt", "3"],
+                             authz_conn=_mf_conn, mutation_conn_factory=_exploding_mutation_conn_factory)
+    check(
+        "C-P3b apply dispatch passes --expected-input-digest and --attempt through unchanged",
+        code == 0 and _mf_calls[-1] == ("apply", "case_0001", "ihbarname_001", _MF_DIGEST, 3)
+        and "APPLIED manual-fact" in out and "attempt=3" in out and "journal_id=5" in out
+        and "promotion --case case_0001 --row-key fact --document ihbarname_001" in out,
+        f"code={code} out={out!r} err={err!r}",
+    )
+    code, out, err = run_cli(_MF_BASE + ["--apply", "--expected-input-digest", _MF_DIGEST, "--attempt", "9"],
+                             authz_conn=_mf_conn, mutation_conn_factory=_exploding_mutation_conn_factory)
+    check(
+        "C-P3c a facade domain error -> exit 1, ONE clean ERROR line, no traceback",
+        code == cli_mutate.EXIT_DOMAIN_ERROR and err.startswith("ERROR: ManualFactExcerptRejectedError:")
+        and "Traceback" not in err and out == "",
+        f"code={code} out={out!r} err={err!r}",
+    )
+finally:
+    _mf_facade.preview_manual_fact = _mf_orig_preview
+    _mf_facade.apply_manual_fact = _mf_orig_apply
+
+
 print(f"--- test_cli_mutate_isolated: {passed} passed, {failed} failed ---")
 sys.exit(1 if failed else 0)

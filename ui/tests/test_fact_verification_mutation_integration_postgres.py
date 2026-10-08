@@ -853,14 +853,16 @@ try:
     check("P7c analyst-denied apply wrote ZERO journal rows", len(journal_rows(f"case:{case_p7}")) == 0)
 
     # ============================================================
-    # P8 - REAL merged reconciliation registry has exactly 52 routing
-    #      keys (50 + Phase B's 2 qa/case_view generation families) and
-    #      includes 'verification.fact'.
+    # P8 - REAL merged reconciliation registry has exactly 53 routing
+    #      keys (50 + Phase B's 2 qa/case_view generation families + Adim
+    #      10 B's generation.fact_manual) and includes 'verification.fact'.
     # ============================================================
     real_registry = op._default_registry_factory()
     check(
-        "P8a real merged reconciliation registry has exactly 52 routing keys",
-        len(real_registry.known_action_families()) == 52,
+        "P8a real merged reconciliation registry has exactly 53 routing keys (the ONLY addition "
+        "over 52 is generation.fact_manual)",
+        len(real_registry.known_action_families()) == 53
+        and len(set(real_registry.known_action_families()) - {"generation.fact_manual"}) == 52,
         f"got {len(real_registry.known_action_families())}",
     )
     check(

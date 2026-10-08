@@ -1308,6 +1308,120 @@ try:
     check("S19i preview_promotion now reports verified_state_count == 0",
           preview19b["verified_state_count"] == 0)
 
+    # ============================================================
+    # S20 - ADIM 10 B K-3 + K-16 (exact-scope §5.4): promotion can carry
+    #       NO verification_state for ANY extraction method, and the
+    #       refusal happens BEFORE any journal row (pre-lock / under-lock
+    #       precondition), never inside the writer.
+    # ============================================================
+    def _k3_mutate_pending(pending_path, *, method, state, drop_locator=False):
+        data = json.loads(pending_path.read_text(encoding="utf-8"))
+        data["extractor"]["method"] = method
+        fact0 = data["facts"][0]
+        fact0["verification_state"] = state
+        if drop_locator:
+            fact0["extraction_basis"] = "derived"
+            fact0["source"] = {"page": None, "section": None, "paragraph": None, "text_excerpt": None}
+        pending_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    _K3_MATRIX = (
+        ("K3-N1", "manual", "verified", False),
+        ("K3-N2", "manual", "partially_verified", True),
+        ("K3-N3", "rule", "verified", False),
+        ("K3-N4", "rule", "partially_verified", False),
+        ("K3-N5", "hybrid", "partially_verified", False),
+        ("K3-N6", "llm", "verified", False),
+    )
+    _writer_calls = []
+    _orig_promote = fact_approval.promote
+
+    def _spy_promote(*args, **kwargs):
+        _writer_calls.append(kwargs.get("pending_path"))
+        return _orig_promote(*args, **kwargs)
+
+    fact_approval.promote = _spy_promote
+    try:
+        for _k3_id, _k3_method, _k3_state, _k3_drop in _K3_MATRIX:
+            case_k3, dir_k3 = make_promotion_case()
+            fp_k3 = fact_paths_for(dir_k3)
+            principal_k3, repo_k3 = make_principal_and_repo(case_k3)
+            _k3_mutate_pending(fp_k3["pending"], method=_k3_method, state=_k3_state, drop_locator=_k3_drop)
+
+            try:
+                fact_approval.validate_pending(fp_k3["pending"])
+                check(f"{_k3_id} direct validate_pending({_k3_method}/{_k3_state}) -> ValueError", False,
+                      "no exception raised")
+            except ValueError as _k3_error:
+                check(f"{_k3_id} direct validate_pending({_k3_method}/{_k3_state}) -> ValueError naming method=",
+                      f"method={_k3_method}" in str(_k3_error), str(_k3_error))
+
+            canonical_before = fp_k3["canonical"].read_bytes()
+            audits_before = sorted(p.name for p in fp_k3["reviews"].glob("*")) if fp_k3["reviews"].is_dir() else []
+            conn_k3 = FakeJournalConn()
+            writer_calls_before = len(_writer_calls)
+            err_k3 = expect_raises(
+                promo.PromotionPendingInvalidError,
+                lambda: approve("fact", case_k3, sha256_file(fp_k3["pending"]), document_id=FACT_DOC,
+                                principal=principal_k3, repo=repo_k3, conn=conn_k3),
+                f"{_k3_id} {_k3_method}/{_k3_state} promotion -> PromotionPendingInvalidError (K-16, pre-lock)",
+            )
+            check(f"{_k3_id} ZERO journal rows (case NOT gated)", conn_k3.table == [], f"{conn_k3.table!r}")
+            check(f"{_k3_id} canonical byte-identical, no new audit, writer never called",
+                  fp_k3["canonical"].read_bytes() == canonical_before
+                  and (sorted(p.name for p in fp_k3["reviews"].glob("*")) if fp_k3["reviews"].is_dir() else []) == audits_before
+                  and len(_writer_calls) == writer_calls_before)
+            check(f"{_k3_id} the refusal is the K-3 rule itself (cause names method=) and the message is a fixed "
+                  "literal without the fact id or an absolute path",
+                  err_k3 is not None and f"method={_k3_method}" in str(err_k3.__cause__)
+                  and "fact_" not in str(err_k3) and str(REPO_ROOT) not in str(err_k3),
+                  f"{err_k3!r} cause={getattr(err_k3, '__cause__', None)!r}")
+
+        # K3-P1: manual + all unverified -> promotion succeeds.
+        case_p1, dir_p1 = make_promotion_case()
+        fp_p1 = fact_paths_for(dir_p1)
+        principal_p1, repo_p1 = make_principal_and_repo(case_p1)
+        _k3_mutate_pending(fp_p1["pending"], method="manual", state="unverified")
+        result_p1, conn_p1, _ = approve("fact", case_p1, sha256_file(fp_p1["pending"]), document_id=FACT_DOC,
+                                        principal=principal_p1, repo=repo_p1)
+        check("K3-P1 manual extraction with every fact unverified promotes normally (completed)",
+              conn_p1.table[0]["state"] == "completed" and result_p1.replayed is False)
+
+        # K-16 under-lock branch: the pending passes pre-lock, then the
+        # validator CONTEXT (case.json) is broken while waiting for the lock
+        # - the pending bytes (and so the composite snapshot) are unchanged,
+        # so ONLY the new under-lock validate_pending can refuse it.
+        case_ul, dir_ul = make_promotion_case()
+        fp_ul = fact_paths_for(dir_ul)
+        principal_ul, repo_ul = make_principal_and_repo(case_ul)
+        canonical_ul_before = fp_ul["canonical"].read_bytes()
+        case_json_ul = dir_ul / "case.json"
+
+        def _break_case_json(_case_id):
+            data = json.loads(case_json_ul.read_text(encoding="utf-8"))
+            data["case_id"] = data["case_id"] + "x"
+            case_json_ul.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        _on_acquire_hooks.append(_break_case_json)
+        conn_ul = FakeJournalConn()
+        writer_calls_before = len(_writer_calls)
+        try:
+            err_ul = expect_raises(
+                promo.PromotionPendingInvalidError,
+                lambda: approve("fact", case_ul, sha256_file(fp_ul["pending"]), document_id=FACT_DOC,
+                                principal=principal_ul, repo=repo_ul, conn=conn_ul),
+                "K16-UL validator-level invalidity appearing while waiting for the lock -> refused in the "
+                "precondition (PromotionPendingInvalidError)",
+            )
+        finally:
+            _on_acquire_hooks.clear()
+        check("K16-UL the refusal came from the under-lock stage, zero journal rows, writer never called, "
+              "canonical byte-identical",
+              err_ul is not None and "kilit altı" in str(err_ul) and conn_ul.table == []
+              and len(_writer_calls) == writer_calls_before
+              and fp_ul["canonical"].read_bytes() == canonical_ul_before, f"{err_ul!r}")
+    finally:
+        fact_approval.promote = _orig_promote
+
 finally:
     ml.acquire_case_lock_session = _original_acquire
     ml.release_lock_session = _original_release

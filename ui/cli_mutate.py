@@ -123,6 +123,14 @@
 # apply, for every `generation` row-key EXCEPT `fact_extraction` (which
 # keeps its own, unchanged Row 19C-3c-iii dual gate, already routed
 # through the Adım 4a masking boundary).
+#
+# ADIM 10 B YOLU: a SEVENTH subcommand, `manual-fact`, routed to the NEW,
+# separate `ui.services.manual_fact_mutation_facade` (action family
+# `generation.fact_manual`, target_ref `fact.<document_id>.pending`). It
+# turns ONE lawyer-checked notification-date input file into a
+# deterministic, ALWAYS-`unverified`, method=manual pending extraction -
+# no model, no network, no agent/masking flag exists on this parser at
+# all. Verification stays the separate `verification` subcommand.
 # ============================================================
 
 from __future__ import annotations
@@ -182,7 +190,9 @@ def _build_arg_parser():
             "Row 19C-3b/3c-i - coordinator-integrated CLI for the 10 Layer A approval "
             "families, 12 Layer B review families, the 2 fact/timeline promotion families, "
             "and (Row 19C-3c-i) the 2 deadline/timeline pending-generation families. "
-            "drafting_request.save is NOT covered by this dispatcher."
+            "drafting_request.save is NOT covered by this dispatcher. "
+            "Adım 10 B: `manual-fact` turns one lawyer-checked notification-date input into an "
+            "unverified, deterministic pending extraction (no model, no network)."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -510,6 +520,29 @@ def _build_arg_parser():
         "--attempt", dest="attempt", type=int, default=1,
         help="Identity-affecting retry counter (default 1, must be >= 1). REJECTED (non-default) "
         "without --apply.",
+    )
+
+    # ADIM 10 B YOLU: manual notification-date fact entry - routed to
+    # ui.services.manual_fact_mutation_facade. Deliberately NO
+    # --with-agent/--allow-network/--mask-term/--text-path/--model: an
+    # unrecognized flag is argparse's own exit 2, before any connection.
+    manual_fact_parser = subparsers.add_parser(
+        "manual-fact",
+        help="Adım 10 B: lawyer-checked manual notification-date pending (generation.fact_manual)",
+    )
+    manual_fact_parser.add_argument("--case", dest="case_id", required=True)
+    manual_fact_parser.add_argument("--document", dest="document", required=True)
+    manual_fact_parser.add_argument("--actor-user-id", dest="actor_user_id", required=True, type=int)
+    manual_fact_parser.add_argument("--apply", action="store_true", default=False)
+    manual_fact_parser.add_argument(
+        "--expected-input-digest", dest="expected_input_digest", default=None,
+        help="REQUIRED with --apply (rejected without it): 64 lowercase hex, as printed by a prior "
+        "preview (no --apply) run of this same command.",
+    )
+    manual_fact_parser.add_argument(
+        "--attempt", dest="attempt", type=int, default=1,
+        help="Identity-affecting retry counter (default 1, must be >= 1, NEVER auto-incremented); "
+        "use --attempt N+1 after a reconciled failed attempt. REJECTED (non-default) without --apply.",
     )
 
     return parser
@@ -1094,6 +1127,32 @@ def _validate_rag_bundle_args(args, *, stderr) -> int | None:
     return None
 
 
+def _validate_manual_fact_args(args, *, stderr) -> int | None:
+    """ADIM 10 B YOLU: pure, zero-connection usage-shape checks for the
+    `manual-fact` subcommand (the facade re-enforces the same rules as
+    its own pre-I/O `ManualFactArgumentError`)."""
+    import re as _re
+
+    if not args.apply:
+        if args.expected_input_digest is not None:
+            stderr.write("error: --expected-input-digest is only meaningful together with --apply\n")
+            return EXIT_USAGE_ERROR
+        if args.attempt != 1:
+            stderr.write("error: --attempt is only meaningful together with --apply\n")
+            return EXIT_USAGE_ERROR
+        return None
+    if args.expected_input_digest is None:
+        stderr.write("error: --apply requires --expected-input-digest\n")
+        return EXIT_USAGE_ERROR
+    if not _re.fullmatch(r"[0-9a-f]{64}", args.expected_input_digest):
+        stderr.write("error: --expected-input-digest must be 64 lowercase hex characters\n")
+        return EXIT_USAGE_ERROR
+    if args.attempt < 1:
+        stderr.write("error: --attempt must be a positive integer\n")
+        return EXIT_USAGE_ERROR
+    return None
+
+
 def _parse_judicial_recess(value):
     if value == "yes":
         return True
@@ -1146,6 +1205,8 @@ def main(
         usage_error = _validate_rag_bundle_args(args, stderr=stderr)
     elif args.command == "verification":
         usage_error = _validate_verification_args(args, stderr=stderr)
+    elif args.command == "manual-fact":
+        usage_error = _validate_manual_fact_args(args, stderr=stderr)
     else:
         usage_error = _validate_review_args(args, stderr=stderr)
     if usage_error is not None:
@@ -1202,6 +1263,11 @@ def main(
                 )
             elif args.command == "verification":
                 outcome = _run_verification(
+                    args, principal=principal, repository=repository,
+                    mutation_conn_factory=mutation_conn_factory,
+                )
+            elif args.command == "manual-fact":
+                outcome = _run_manual_fact(
                     args, principal=principal, repository=repository,
                     mutation_conn_factory=mutation_conn_factory,
                 )
@@ -1793,6 +1859,50 @@ def _run_verification(args, *, principal, repository, mutation_conn_factory) -> 
         f"audit_path={result.audit_path}\n"
         f"replayed={result.replayed}\n"
         f"{_fv_facade.render_stale_downstream_block()}"
+    )
+
+
+def _run_manual_fact(args, *, principal, repository, mutation_conn_factory) -> str:
+    """ADIM 10 B YOLU. PREVIEW: the facade's own outer 'read'
+    authorization runs first; the excerpt TEXT is never printed (K-18),
+    only `excerpt_found` + its sha256. APPLY: zero authz logic of our
+    own; `--expected-input-digest` is always the operator's explicit
+    claim."""
+    from ui.services import manual_fact_mutation_facade as _mf_facade
+
+    if not args.apply:
+        preview = _mf_facade.preview_manual_fact(
+            args.case_id, args.document, principal=principal, authz_repository=repository,
+        )
+        return (
+            f"PREVIEW manual-fact case_id={preview['case_id']} document={preview['document_id']}\n"
+            f"target_ref={preview['target_ref']}\n"
+            f"input_digest={preview['input_digest']}\n"
+            f"pending_sha256={preview['pending_sha256']}\n"
+            f"notification_date={preview['notification_date']}\n"
+            f"page={preview['page']}\n"
+            f"excerpt_found={'true' if preview['excerpt_found'] else 'false'}\n"
+            f"text_excerpt_sha256={preview['text_excerpt_sha256']}\n"
+            "verification_state=unverified (manuel giriş doğrulama DEĞİLDİR)\n"
+            "Uygulamak için: python -m ui.cli_mutate manual-fact --case "
+            f"{preview['case_id']} --document {preview['document_id']} --actor-user-id "
+            f"{args.actor_user_id} --apply --expected-input-digest {preview['input_digest']} --attempt 1\n"
+        )
+
+    result = _mf_facade.apply_manual_fact(
+        args.case_id, args.document, args.expected_input_digest, attempt=args.attempt,
+        principal=principal, authz_repository=repository, conn_factory=mutation_conn_factory,
+    )
+    return (
+        f"APPLIED manual-fact case_id={result.case_id} document={result.document_id}\n"
+        f"pending_sha256={result.pending_sha256}\n"
+        f"audit_file={result.audit_file}\n"
+        f"journal_id={result.journal_id}\n"
+        f"attempt={result.attempt}\n"
+        f"replayed={result.replayed}\n"
+        "Sonraki adım: python -m ui.cli_mutate promotion --case "
+        f"{result.case_id} --row-key fact --document {result.document_id} --actor-user-id "
+        f"{args.actor_user_id}\n"
     )
 
 

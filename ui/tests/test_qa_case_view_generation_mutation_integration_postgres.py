@@ -24,7 +24,8 @@
 #   H1     second qa generation (new identity): history backup written,
 #          audit `history_backup_path` is the repo-relative locator,
 #          adapter gather_evidence() re-verifies the REAL row
-#   R1/R2  merged reconciliation registry = 52, both families present;
+#   R1/R2  merged reconciliation registry = 53 (Adim 10 B added
+#          generation.fact_manual), both families present;
 #          gather_evidence() on the REAL completed rows
 #   I0/I1  the real case_0001 approval-audit set is EXACTLY the 13 pinned
 #          pre-Commit-B records plus the 2 Commit B promotion records, the
@@ -883,9 +884,10 @@ try:
     # ============================================================
     merged = op._default_registry_factory()
     check(
-        "R1 merged reconciliation registry has exactly 52 routing keys and contains generation.qa + "
-        "generation.case_view",
-        len(merged.known_action_families()) == 52
+        "R1 merged reconciliation registry has exactly 53 routing keys (the ONLY addition over 52 is "
+        "generation.fact_manual) and contains generation.qa + generation.case_view",
+        len(merged.known_action_families()) == 53
+        and len(set(merged.known_action_families()) - {"generation.fact_manual"}) == 52
         and {"generation.qa", "generation.case_view"} <= set(merged.known_action_families()),
         f"got {len(merged.known_action_families())}",
     )

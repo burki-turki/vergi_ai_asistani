@@ -219,6 +219,28 @@ class PromotionVerifiedStateLossError(ApprovalUiError):
     strictly READ-ONLY - this guard lives entirely in this facade."""
 
 
+class PromotionPendingInvalidError(ApprovalUiError):
+    """K-16 (Adım 10 B): row_key='fact' pending'i `fact_approval.
+    validate_pending()`'den geçmiyor (validator hatası, unverified dışı
+    fact, eksik dosya). Pre-lock VE kilit altında `precondition_callback`
+    içinde kontrol edilir - red SIFIR journal satırı bırakır, case
+    gate'lenmez. Mesaj yalnız sabit metin + istisna sınıf adı taşır
+    (validator mesajı fact metni/mutlak yol içerebilir); teşhis için
+    preview'un `validation_ready` alanı kullanılır. Writer içindeki
+    çağrı savunma derinliği olarak kalır."""
+
+
+def _require_valid_fact_pending(module, pending_path: Path, *, stage: str) -> None:
+    try:
+        module.validate_pending(pending_path)
+    except (ValueError, FileNotFoundError, OSError) as error:
+        raise PromotionPendingInvalidError(
+            f"Fact pending doğrulamadan geçmedi ({stage}; {type(error).__name__}); promotion "
+            "reddedildi (sıfır journal satırı, sıfır dosya değişikliği). Ayrıntı için preview'daki "
+            "validation_ready alanına bakın."
+        ) from error
+
+
 class PromotionAuditBindingVerificationFailedError(ApprovalUiError):
     """Safe-replay corroboration başarısız - ne doğrulanmış başarı ne
     doğrulanmış başarısızlık; insan reconciliation'ı gerekir (Layer A
@@ -815,6 +837,12 @@ def approve_promotion_mutation(
             raise PendingNotFoundError(f"Pending bulunamadı: {pre_paths.pending_path}")
         _cross_check_pending_content(row_key, outer_resolved_case_id, document_id, pre_paths.pending_path)
 
+        # K-16 (Adım 10 B): fact pending'i validator düzeyinde PRE-LOCK
+        # doğrulanır - red writer'a (reconciliation_required) değil, sıfır
+        # journal satırına düşer.
+        if row_key == "fact":
+            _require_valid_fact_pending(module, pre_paths.pending_path, stage="pre-lock")
+
         # FACT VERIFICATION WORKFLOW re-promotion guard (row_key='fact'
         # only) - pre-lock check. See PromotionVerifiedStateLossError's
         # own docstring.
@@ -902,6 +930,10 @@ def approve_promotion_mutation(
                     f"(beklenen: {expected_hash}, şimdiki: {ul_snapshot.pending_sha256}). Onay iptal edildi."
                 )
             _cross_check_pending_content(row_key, outer_resolved_case_id, document_id, ul_paths.pending_path)
+            # K-16 (Adım 10 B): kilit-altı yeniden doğrulama (kilit
+            # beklenirken pending geçersize çevrilmiş olabilir).
+            if row_key == "fact":
+                _require_valid_fact_pending(module, ul_paths.pending_path, stage="kilit altı")
             # Deterministik beklenen canonical hash - kilit altında,
             # doğrulanmış pending'den (writer sonrası eşitlik assert'i
             # için).

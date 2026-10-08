@@ -610,7 +610,8 @@ def test_activate_and_reconciliation_real(build_result):
         # Real reconciliation_operator merged registry includes the new families.
         registry = op._default_registry_factory()
         families = registry.known_action_families()
-        check("real reconciliation_operator: 52 routing keys", len(families) == 52, len(families))
+        check("real reconciliation_operator: 53 routing keys (Adim 10 B added generation.fact_manual)",
+              len(families) == 53 and len(set(families) - {"generation.fact_manual"}) == 52, len(families))
         check("real reconciliation_operator: rag_bundle.build registered", "rag_bundle.build" in families)
         check("real reconciliation_operator: rag_bundle.activate registered", "rag_bundle.activate" in families)
     finally:
@@ -767,7 +768,7 @@ def test_t17_real_pg_a_b_a_b_activation_attempt_cycle():
         check("T17: pointer GENUINELY flips to B via activation_attempt=1", current_version == result_b.bundle_version)
 
         registry = op._default_registry_factory()
-        check("T17: real reconciliation_operator registry still has 52 routing keys", len(registry.known_action_families()) == 52, len(registry.known_action_families()))
+        check("T17: real reconciliation_operator registry has 53 routing keys", len(registry.known_action_families()) == 53 and len(set(registry.known_action_families()) - {"generation.fact_manual"}) == 52, len(registry.known_action_families()))
         return result_a, result_b
     finally:
         repo_conn.close()
