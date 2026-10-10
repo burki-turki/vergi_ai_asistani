@@ -189,6 +189,49 @@
         "ocr_required": false
       },
       "notes": "5604 sayılı Malî Tatil İhdas Edilmesi Hakkında Kanun. Deadline Calculator V1 (Pilot Readiness Adım 7 - mali tatil pause/resume mekanizması) için m.1 provision kaydı canonical Legal Knowledge Engine'e eklenmiştir. 14/1/2016 tarihli ve 6661 sayılı Kanun m.18 ile m.1/6, m.1/7 ve m.1/8 fıkraları değiştirilmiştir; kaynak URL güncel konsolide metne (değişiklikler dahil) işaret eder. Fiziksel PDF ingest işlemi bu turun kapsamı dışındadır (ingest.enabled=false)."
+    },
+    {
+      "document_id": "kanun_6183",
+      "file_name": "6183.pdf",
+      "active": true,
+      "belge_turu": "Kanun",
+      "title": "Amme Alacaklarının Tahsil Usulü Hakkında Kanun",
+      "short_title": "6183 sayılı AATUHK",
+      "kanun_no": "6183",
+      "document_number": "6183",
+      "kaynak_kurum": "T.C. Cumhurbaşkanlığı Mevzuat Bilgi Sistemi",
+      "official_source": true,
+      "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.3.6183.pdf",
+      "resmi_gazete_tarihi": "1953-07-28",
+      "resmi_gazete_sayisi": "8469",
+      "yayin_tarihi": "1953-07-28",
+      "yururluk_tarihi": "1954-01-01",
+      "gecerlilik_baslangici": "1954-01-01",
+      "gecerlilik_sonu": null,
+      "mulga_tarihi": null,
+      "status": "active",
+      "version": "1",
+      "previous_version": null,
+      "next_version": null,
+      "supersedes": null,
+      "superseded_by": null,
+      "jurisdiction": "TR",
+      "language": "tr",
+      "tags": [
+        "amme_alacaklari",
+        "odeme_emri",
+        "sureler",
+        "dava_acma_suresi"
+      ],
+      "relations": [],
+      "ingest": {
+        "enabled": false,
+        "parser": "legal_pdf",
+        "chunk_strategy": "legal_hierarchy",
+        "ocr_required": false
+      },
+      "notes": "6183 sayılı Amme Alacaklarının Tahsil Usulü Hakkında Kanun. Kabul tarihi 21/7/1953; Resmî Gazete 28/7/1953, sayı 8469; Düstur tertip 3, cilt 34, sayfa 1658. Kaynak URL Mevzuat Bilgi Sistemi resmî PDF'ine (57 sayfa) işaret eder; bu PDF'in ham bayt SHA-256'sı b286b3b7342d5e5bf3db5c640554d830148ee38675e921cd60776756318e5fa2 olarak kullanıcı tarafından resmî kaynaktan doğrulanmış ve raw_byte_sha256 alanına yazılmıştır (ingest.enabled=false kayıtta bu değer build-time'da doğrulanmaz - şema açıklamasındaki disclosed sınır). Kayıt, ödeme emrine karşı dava açma süresi TASLAK deadline kuralının (aatuhk_6183_payment_order_lawsuit_filing, status=draft) m.58/1 provision kaydı için eklenmiştir. Fiziksel PDF ingest işlemi bu turun kapsamı dışındadır (ingest.enabled=false). Yürürlük m.117: \"Bu kanun 1 Ocak 1954 tarihinde yürürlüğe girer\" (yururluk_tarihi ve gecerlilik_baslangici 1954-01-01; yayin_tarihi ve resmi_gazete_tarihi 1953-07-28; kullanıcı resmî PDF'ten doğruladı).",
+      "raw_byte_sha256": "b286b3b7342d5e5bf3db5c640554d830148ee38675e921cd60776756318e5fa2"
     }
   ]
 }

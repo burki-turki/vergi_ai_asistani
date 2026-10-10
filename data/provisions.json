@@ -565,6 +565,36 @@
       "subject_periods": [],
       "relations": [],
       "notes": "HUKUKİ DOĞRULAMA KAPSAMI (Prensip 3 gereği açıkça ayrılmıştır): bu kaydın doğruladığı şey, 5604 sayılı Kanun m.1'in GÜNCEL, YÜRÜRLÜKTE olan metnidir (resmî mevzuat.gov.tr konsolide kaynağından, doğrudan fetch edilip okunmuştur). M.1/3'ün (VUK'a tabi dava açma sürelerinin mali tatilde durup sonra devam etmesi) İYUK m.7 genel vergi mahkemesi dava açma süresi kuralına UYGULANABİLİRLİĞİ ise bu kaydın kendisinin kanıtladığı bir şey DEĞİLDİR - bu, avukatın yazılı teyidine (bkz. proje checkpoint, Pilot Readiness Adım 7) ve deadline_rules.json'daki legal_basis_refs bağlantısını kuran mühendislik kararına dayanır. Kaynağın söylediği (kanun metni) ile doğrulanmış hukuki gerçek (bu metnin somut kurala uygulanabilirliği) aynı şey değildir."
+    },
+    {
+      "provision_id": "kanun_6183_m58_f1",
+      "provision_version_id": "kanun_6183_m58_f1_v1",
+      "document_id": "kanun_6183",
+      "enabled": true,
+      "verification_state": "unverified",
+      "locator": {
+        "madde": "58",
+        "fikra": "1",
+        "bent": null
+      },
+      "formal": {
+        "verified": false,
+        "status": "unknown",
+        "valid_from": null,
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": []
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": null
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "6183 sayılı AATUHK m.58 (madde başlığı: \"Ödeme emrine itiraz\"), fıkra 1: ödeme emrine karşı tebliğ tarihinden itibaren 15 gün içinde dava açılabilir. Mevzuat Bilgi Sistemi metninde fıkrada \"vergi itiraz komisyonu\" ifadesi geçmektedir (metnin 29 numaralı dipnotu). Maddenin bir fıkrası Anayasa Mahkemesinin 21/4/2022 tarihli, E.2021/119, K.2022/48 sayılı kararıyla iptal edilmiştir. Bu kaydın fıkra eşlemesi (locator madde 58 / fıkra 1), yürürlük durumu ve AYM iptalinin bu fıkraya etkisi AVUKAT TEYİDİ BEKLİYOR: verification_state=unverified, formal.verified=false, formal.status=unknown ve formal.evidence boş bırakılmıştır; bu nedenle Legal Knowledge Engine bu hükmü aktivasyona uygun (activation_eligible) saymaz. Kaynağın söylediği ile doğrulanmış hukuki gerçek aynı şey değildir (CLAUDE.md §3 Prensip 3)."
     }
   ]
 }

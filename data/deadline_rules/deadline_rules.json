@@ -43,6 +43,41 @@
       "priority": 100,
       "requires_human_review": true,
       "notes": "İYUK m.7/1, m.7/2-b, m.8, m.61/1 ve 5604 sayılı Kanun m.1 (mali tatil) esas alınarak oluşturulmuş genel vergi mahkemesi dava açma süresi kuralıdır. Hukuki dayanaklar Legal Knowledge Engine üzerinden canonical ve verified provision version'lara bağlanmıştır. Özel kanunda farklı süre bulunması, somut anchor event'in doğrulama durumu, çalışmaya ara verme uygulanabilirliği ve mali tatil m.1/7 istisna kapsamı (case tax_type/issuing_authority verisi belirsizse mali tatil uygulanmadan needs_review) ayrıca deterministik policy katmanları tarafından değerlendirilmelidir."
+    },
+    {
+      "rule_id": "aatuhk_6183_payment_order_lawsuit_filing",
+      "rule_version": "1.0",
+      "name": "Ödeme Emrine Karşı Vergi Mahkemesinde Dava Açma Süresi",
+      "status": "draft",
+      "deadline_type": "lawsuit_filing",
+      "anchor_event_types": [
+        "notification_date"
+      ],
+      "applicability": {
+        "case_types": [],
+        "tax_types": [],
+        "document_types": [
+          "odeme_emri"
+        ],
+        "case_stages": []
+      },
+      "legal_basis_refs": [
+        "AATUHK_6183_m58_1"
+      ],
+      "duration": {
+        "value": 15,
+        "unit": "day"
+      },
+      "start_rule": "next_day",
+      "day_count_policy": "calendar_days",
+      "end_day_policy": "next_business_day_if_holiday",
+      "required_anchor_verification": "verified",
+      "calculation_enabled": false,
+      "effective_from": null,
+      "effective_to": null,
+      "priority": 100,
+      "requires_human_review": true,
+      "notes": "TASLAK — AVUKAT TEYİDİ BEKLİYOR (LEGAL_APPROVED yok). 6183 sayılı AATUHK m.58/1 esas alınarak ödeme emrine karşı vergi mahkemesinde dava açma süresi (tebliğ tarihini izleyen günden itibaren 15 takvim günü) için hazırlanmış taslak kuraldır; status=draft ve calculation_enabled=false olduğu için seçim politikası bu kuralı HİÇBİR ZAMAN aday yapmaz ve odeme_emri çapasında hesaplama blocked_missing_rule ile fail-closed kalır. end_day_policy, ihbarname kuralıyla aynı varsayılan olarak next_business_day_if_holiday seçilmiştir; avukat teyidi bekliyor. BİLİNÇLİ OLARAK DIŞARIDA BIRAKILAN REF'LER: KANUN_5604_m1 (mali tatil — 5604 m.1/3'ün ödeme emrine karşı dava açma süresine uygulanabilirliği), IYUK_2577_m8_2 ve IYUK_2577_m8_3 (son günün tatile rastlaması ve adli tatil — 6183 m.58'in özel süresine uygulanabilirliği) ve IYUK_2577_m61_1 (adli tatil) bu taslağa eklenmemiştir; bu ref'lerin bu kurala bağlanması özel kanun / genel kanun ilişkisine ilişkin hukuki bir karardır ve avukat kararına bağlıdır (CLAUDE.md §3 Prensip 19, §11). AKTİVASYON ÖN ŞARTI: kuralın active ve calculation_enabled=true yapılması ancak açık, yazılı avukat kararı (LEGAL_APPROVED), m.58/1 provision kaydının verified olması ve mali tatil ref'i taşıyıp İYUK adli tatil ref'lerini taşımayan bir kural için grace-floor/recess birleşiminin yeniden doğrulanması (CLAUDE.md §13.2, Pilot Readiness Adım 7 — Mali Tatil) ile mümkündür. odeme_emri belge türünü üreten bir yol (manual-fact allowlist, K5) eklenmeden kural hiçbir çapada eşleşmez. priority=100, mevcut İYUK kuralıyla KASITLI olarak eşittir: kural ileride aktive edilirse ve bir çapanın belge türleri hem vergi_ceza_ihbarnamesi hem odeme_emri içerirse seçim ambiguous ile fail-closed sonuçlanır. document_types=[\"odeme_emri\"] boş bırakılmamıştır; boş liste seçim politikasında joker sayıldığı için kural her belge türüne uygulanırdı."
     }
   ],
   "notes": "Vergi AI Deadline Rule Registry V1. Hukuki dayanağı Legal Knowledge Engine üzerinden canonical olarak çözümlenmeyen kurallar draft ve calculation_enabled=false tutulur."
