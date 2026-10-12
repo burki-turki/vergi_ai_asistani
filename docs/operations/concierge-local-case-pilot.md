@@ -10,8 +10,12 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > satırı yazılmadı; hiçbir ağ isteği yapılmadı; hiçbir API anahtarı, `.env`
 > veya passfile okunmadı. Komut bloklarının yanındaki kaynak atıfları yalnız
 > repo kaynağının **okunmasıyla** türetilmiştir. `13f19d0` sürümünün
-> komutları ayrı bir sentetik provada çalıştırılmıştır (§0); bu
-> revizyonun yeni ve değişen blokları henüz çalıştırılmamıştır (§32/1).
+> komutları ayrı bir sentetik provada çalıştırılmıştır (§0); revizyon
+> 1'in (`4f5c37e`) yeni ve değişen blokları §34.4 eşlemesine göre delta
+> provasında (e11bab73, §0) çalıştırılmıştır. **Revizyon 2'nin (§34.8) değişen ve yeni
+> blokları henüz çalıştırılmamıştır**; yalnız PowerShell ayrıştırıcısıyla
+> (`ParseInput`) denetlenmiştir ve delta provasına (Δ1–Δ5) tabidir
+> (§32/1).
 
 ---
 
@@ -28,7 +32,8 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Avukat kararı | DRAFT-4 SORU 6.7: "Gerçek müvekkil dosyası + tamamen local processing → KABUL, dar kapsamlı pilot" |
 | Sentetik prova | `vergi_step10_local_rehearsal_ae129016` (repo dışı; plan v3 SHA-256 `587b45d953a1a018ac8783aa6362e3890b68277ab7085389a8f80cbe2de7df6e`), runbook `13f19d0` üzerinde. Özet `run\summary.md` SHA-256 `30c630c7bbb83caf7e882c8371b00b6b29a1db6babd814d0f697f03ad6ddeac0` |
 | Prova incelemesi | Aynı kökte `run\review\20261010-independent-review.md`, SHA-256 `62e80d52d563c23c0b3bd459c8383f2989d1a6dc9f1bbe9ffa5578392bfbe640` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; 207 dosyanın tam hash manifesti) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur; ID → bölüm eşlemesi **§34**'tedir |
+| Delta prova (revizyon 1) | `vergi_step10_delta_e11bab73` (repo dışı), runbook `4f5c37e` (blob SHA-256 `1397ea07ad0c56e689d073ccbfc0b74177edc39847c5895f69596b1bf9f08699`; `c2a7dbc` ile aynı) üzerinde. Plan v7 SHA-256 `237990f4e6585ad567c02080c5e37183faa196a4c9a94471a2b12d8dd4378d08`; özet `run\summary-r2.md` SHA-256 `97df1d1f5e3e7a19cda95a37d8b94d90a4d11b72aa7a3bfcbd38af19b8f3ce86`; inceleme `run\review\20261012-161035-independent-review.md` SHA-256 `29d0038d4b4d65b39679b1cdceb69f1c04fa3e48436ba60c0060563cba4e6352` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; 270 dosyanın tam hash manifesti) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1) ve e11bab73 delta provası bulgularıyla revizyon 2'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -104,10 +109,12 @@ geçerli olduğunu formun **A1** sorusunda ayrıca teyit eder (§6.2).
   sonradan bir model çağrısına "yükseltilerek" kullanılamaz; dış yol
   yalnız temel runbook ve Bölüm 6-D kapanışıyla mümkündür.
 - **Production-ready iddiası değildir.**
-- **Bu revizyonun provası yapılmış değildir.** `13f19d0` sürümü sentetik
-  olarak prova edilmiştir (§0, prova ae129016); bu revizyonda yeniden
-  yazılan ve yeni eklenen bloklar §1.6/3'teki delta provadan geçmeden
-  gerçek veriyle kullanılamaz (§34.4, §32/1).
+- **Revizyon 2'nin provası yapılmış değildir.** `13f19d0` sürümü sentetik
+  olarak prova edilmiştir (§0, prova ae129016); revizyon 1'in (`4f5c37e`)
+  yeniden yazılan ve yeni eklenen blokları delta provasından (§0, prova
+  e11bab73) geçmiştir. Revizyon 2'de (§34.8) yeniden yazılan ve yeni
+  eklenen bloklar §1.6/3'teki delta provadan (Δ1–Δ5) geçmeden gerçek
+  veriyle kullanılamaz (§34.4, §32/1).
 
 ### 1.5 Yazım kuralları (bağlayıcı)
 
@@ -330,9 +337,12 @@ Gerçek veri alınmadan **önce**, aşağıdakilerin hepsi sağlanmış olmalıd
 
    **Revizyon sonrası delta prova (kullanıcı kararı D13).** `13f19d0`
    provasının (§0) kanıtı yalnız **bayt-bayt aynı kalmış** komut
-   bloklarını kapsar ve §34.4'teki eşleme tablosuyla devralınır. Bu
-   revizyonda yeniden yazılan veya yeni eklenen her blok yeniden prova
-   edilir; §4.2/10, §4.4, §13.8 ve §28 **tek-çalışımlık** olarak yeniden
+   bloklarını kapsar ve §34.4'teki eşleme tablosuyla devralınır. Revizyon
+   1'de yeniden yazılan veya yeni eklenen bloklar e11bab73 delta
+   provasında prova edilmiştir (§0); revizyon 2'de (§34.8) yeniden
+   yazılan veya yeni eklenen her blok, devralma tabanı e11bab73 olmak
+   üzere (§34.4, K-R2-10) yeniden prova edilir. Her iki revizyonda da
+   yeniden yazılan veya yeni eklenen her blok yeniden prova edilir; §4.2/10, §4.4, §13.8 ve §28 **tek-çalışımlık** olarak yeniden
    prova edilir. Ortam değiştiği için (kapsayıcı birimi, TEMP) ayrıca
    kapsayıcı içinde **bir** hafif uçtan uca sentetik geçiş (intake →
    `manual-fact` → promotion → verification → timeline → deadline →
@@ -373,9 +383,10 @@ Gerçek veri alınmadan **önce**, aşağıdakilerin hepsi sağlanmış olmalıd
      5–27) boyunca §4.3 (a)'daki altı kanal sınıfı kapalıdır ve
      `AI_CONTENT_CHANNELS_CLOSED=True` yazılmıştır. Bu, pencere boyunca
      Claude Code'un ve VS Code'un **hiç** kullanılmaması demektir:
-     `claude`, `Code`, `copilot-runtime`, `M365Copilot`, `OneDrive`,
-     `OneDrive.Sync.Service` ve desene uyan her süreç kapatılır;
-     kapatılamayan → **DUR** (H40).
+     `claude`, `Code`, `ChatGPT`, `copilot-runtime`, `M365Copilot`,
+     `OneDrive`, `OneDrive.Sync.Service` ve desene uyan her süreç §4.3
+     (a)'daki kapatma prosedürüyle kapatılır; kapatılamayan veya ikinci
+     taramada yeniden görünen → **DUR** (H40).
    - **Tek yazan oturum.** İçerik penceresi boyunca **sıfır** AI oturumu
      bulunur. Pencere dışındaki ajan işlerinde aynı repo, kapsayıcı ve
      evidence alanında tek yazan oturum kuralı (`CLAUDE.md` §14.4)
@@ -643,7 +654,8 @@ satırları ve her Python traceback'i).
    manifestinin SHA-256'sı pilot öncesi teknik kayda yazılır (§4.4/6);
    sürüm kaydı yoksa pilot başlamaz. Bu runbook'ta **OCR aracı yoktur**:
    metin katmanı olmayan (taranmış görüntü) bir PDF'ten metin
-   çıkarılamazsa §11.2/4 kontrolü `STOP` verir ve **DUR**'dur. E4 boş veya
+   çıkarılamazsa §11.2/4 kontrolü `STOP TEXT_VISIBLE=EMPTY` verir ve
+   **DUR**'dur (revizyon 2; R-D-IMGPDF). E4 boş veya
    onaysızsa: **DUR** (Y5).
 4. Bulut senkronizasyonlu klasör ve bulut senkronizasyonlu pano kullanılmaz.
 5. Gerçek içerik veya onu gösteren bir ekran görüntüsü hiçbir sohbet veya
@@ -704,7 +716,15 @@ Remove-Variable auditVal -ErrorAction SilentlyContinue
    aktarılmadığını yazılı olarak beyan etmedikçe **DUR**.
    `CMDLINE_AUDIT_VALUE` yalnız **bilgidir**: `0` veya `ABSENT` olması
    anahtar `PRESENT` iken yazılı beyan şartını **kaldırmaz** (kullanıcı
-   kararı D10). Bu ölçüm üçüncü
+   kararı D10). **`CMDLINE_AUDIT_KEY=PRESENT` bir bulgudur** (revizyon 2;
+   F-0.8-CMDLINE-AUDIT; kullanıcı kararı K-R2-9): bu cihazda delta
+   provasında (e11bab73) `CMDLINE_AUDIT_KEY=PRESENT` ve
+   `CMDLINE_AUDIT_VALUE=ABSENT` ölçüldü; bu yüzden gerçek koşuda yazılı
+   beyan **zorunludur**. Beyan, cihaz sahibinin süreç-oluşturma denetim
+   kaydının cihaz dışına (merkezi log, EDR, SIEM) aktarılmadığına dair
+   kişisel veri içermeyen yazılı metnidir; repo dışında saklanır ve
+   evidence'a yalnız `CMDLINE_AUDIT_DECLARATION sha256=<64-küçük-hex>`
+   yazılır. Beyan yoksa: **DUR**. Bu ölçüm üçüncü
    taraf güvenlik yazılımının (antivirüs, EDR) kendi telemetrisini
    **göremez**; o sınır §32'de açık kalır. B yolunda belge içeriği süreç
    argümanı olarak **geçmez** (§1.5); komut satırı denetimi opak
@@ -745,6 +765,44 @@ Remove-Variable auditVal -ErrorAction SilentlyContinue
       için sürücü harfiyle ayrı bir çift yazılır:
       `EXTERNAL_DISK_ENCRYPTED=False` ve `EXTERNAL_DISK_REMOVED=True`.
       Kabul edilen **tek** birleşim budur.
+    - **Yerleşik optik sürücü (bağlayıcı; revizyon 2; R-D-EOPTICAL;
+      kullanıcı kararı K-R2-7).** Cihaza **yerleşik** bir optik sürücü
+      (yazım anında `E:`) fiziksel olarak çıkarılamaz; yukarıdaki harici
+      disk çiftine tabi **değildir**, bunun yerine **medya takılı değil**
+      kuralına tabidir: içerik penceresi boyunca sürücüde disk veya
+      bağlanmış görüntü (ISO) bulunmaz. Zincir adım 4'te (§4.4/6 teknik
+      kaydından **sonra**) ve her silme gününde, harici disk kaydının
+      yanında şu blok çalıştırılır (yalnız sayı, sürücü harfi ve boolean
+      basar; standart Windows/CIM davranışından gelir, delta provasında
+      doğrulanır):
+
+```powershell
+$cdr = $null; try { $cdr = @(Get-CimInstance -ClassName Win32_CDROMDrive -ErrorAction Stop) } catch { $cdr = $null }
+$cdTr = $null; try { $cdTr = @([System.IO.File]::ReadAllLines("<evidence-dir>\technical-record.txt", (New-Object System.Text.UTF8Encoding($false)))) } catch { $cdTr = $null }
+if ($null -eq $cdr) { "STOP CDROM_QUERY=FAIL" } else { "CDROM_DRIVE_COUNT=$($cdr.Count)"; $cdL = [string[]]@($cdr | ForEach-Object { [string]$_.Drive }); [Array]::Sort($cdL, [System.StringComparer]::Ordinal); if (($null -ne $cdTr) -and ($cdTr -ccontains "CDROM_DRIVE_COUNT=$($cdr.Count)") -and ($cdTr -ccontains ('OPTICAL_DRIVE_LETTERS=' + ($cdL -join ',')))) { "OPTICAL_DRIVES_MATCH_RECORD=True" } else { "STOP OPTICAL_DRIVES_MATCH_RECORD=False" }; foreach ($cd in $cdr) { $cdMl = $cd.MediaLoaded; if ($cdMl -is [bool]) { "OPTICAL_MEDIA_LOADED=$cdMl drive=$($cd.Drive)" } else { "STOP OPTICAL_MEDIA_LOADED=UNKNOWN drive=$($cd.Drive)" } } }
+Remove-Variable cdr, cdTr, cdL, cd, cdMl -ErrorAction SilentlyContinue
+```
+
+      Beklenen: `CDROM_DRIVE_COUNT=<n>`, `OPTICAL_DRIVES_MATCH_RECORD=True`
+      (sayı ve sürücü harfleri §4.4/6 teknik kaydıyla **birebir** eşit;
+      revizyon 2, L-2) ve her optik sürücü için
+      `OPTICAL_MEDIA_LOADED=False drive=<sürücü-harfi>`. Bu kural yalnız
+      **yerleşik** optik sürücü içindir; harici (USB) bir optik sürücü
+      harici disk kuralına tabidir ve takılıysa kayıtla eşleşme bozulur.
+    - **Açık DUR satırları (optik sürücü).**
+      - **İçerik penceresinden önce:** `STOP
+        OPTICAL_DRIVES_MATCH_RECORD=False` veya `OPTICAL_MEDIA_LOADED=True`
+        çıkarsa (ör. bağlı bir ISO/sanal sürücü veya takılı disk),
+        operatör sanal sürücüyü ayırır / medyayı çıkarır ve optik bloğu
+        **bir kez** yeniden çalıştırır; ikinci ölçüm de eşleşmezse
+        (`OPTICAL_DRIVES_MATCH_RECORD=True` ve her sürücüde
+        `OPTICAL_MEDIA_LOADED=False` alınamazsa): **DUR** (Y5).
+      - `STOP CDROM_QUERY=FAIL` veya `STOP OPTICAL_MEDIA_LOADED=UNKNOWN`
+        (pencere öncesinde): **DUR** (Y5); yeniden çalıştırma yoktur.
+      - **İçerik penceresi içinde** her uyuşmazlık — `STOP
+        OPTICAL_DRIVES_MATCH_RECORD=False`, `OPTICAL_MEDIA_LOADED=True`,
+        bir optik sürücüye medya takılması veya görüntü bağlanması —
+        doğrudan **DUR** (H40); çıkarıp yeniden ölçme yoktur.
     - **Açık DUR satırları (harici disk).**
       - `EXTERNAL_DISK_REMOVED=False`, durum okunamıyor veya çift eksik:
         **DUR** (Y5).
@@ -827,14 +885,46 @@ edilemez**. `0` sonucu tek başına kanalların kapalı olduğunu kanıtlamaz:
 $channelPattern = '(?i)claude|chatgpt|copilot|cursor|windsurf|^code$|pycharm|idea|webstorm|rider|teams|zoom|anydesk|teamviewer|quickassist|onedrive|dropbox|googledrive'
 $channelNames = @(Get-Process | Select-Object -ExpandProperty ProcessName -Unique | Where-Object { $_ -match $channelPattern } | Sort-Object)
 "AI_CHANNEL_PROCESS_COUNT=$($channelNames.Count)"; foreach ($n in $channelNames) { "AI_CHANNEL_PROCESS=$n" }
+"AI_CHANNEL_SCAN at=$([DateTimeOffset]::Now.ToString('yyyy-MM-ddTHH:mm:sszzz', [System.Globalization.CultureInfo]::InvariantCulture))"
 ```
 
 Beklenen: `AI_CHANNEL_PROCESS_COUNT=0`. Eşleşen her araç kapatılır ve tarama
-yeniden çalıştırılır; kapatılamıyorsa **DUR**. Operatör, bu desende olmayan
+yeniden çalıştırılır; kapatılamıyorsa **DUR**. Bu "kapat ve yeniden tara"
+kuralı yalnız aşağıdaki kapatma prosedürünün **ilk** taramasından önceki
+kapatma için geçerlidir; ilk taramadan sonra eşleşme görülürse kapatılıp
+yeniden taranmaz (aşağıdaki madde 3). Operatör, bu desende olmayan
 ama yukarıdaki altı sınıftan birine giren her aracı da kendi bilgisiyle
 kapatır. Çalışma ağacına, `<restricted-dir>`'e veya içerik oturumunun
 ekranına erişebilecek bir süreç **bilinmiyorsa** ya da altı sınıftan birine
 girip girmediği **sınıflandırılamıyorsa**: **DUR — belge teslim alınmaz.**
+
+**Kapatma prosedürü (bağlayıcı; revizyon 2; L-1; kullanıcı kararı
+K-R2-6).** Delta provasında (e11bab73) bu cihazda şu süreçlerin kendiliğinden
+çalıştığı ölçüldü: `ChatGPT`, `M365Copilot`, `copilot-runtime`,
+`OneDrive` (ve içerik penceresi dışında `claude`, `Code`). Operatör her
+içerik oturumunun başında (yeniden başlatmadan sonra dahil):
+
+1. Her uygulamayı kendi tepsi/menüsünden kapatır ("Çık"/"Quit");
+   OneDrive için "Eşitlemeyi duraklat" **yeterli değildir**, "OneDrive'ı
+   kapat" seçilir.
+2. Süreç hâlâ listedeyse Görev Yöneticisi → Ayrıntılar → "Görevi
+   sonlandır" kullanır.
+3. Yukarıdaki taramayı **iki kez** çalıştırır: kapatmadan hemen sonra ve
+   **en az 2 dakika sonra**. İki taramada da `AI_CHANNEL_PROCESS_COUNT=0`
+   gerekir; ikinci taramada yeniden görünen (kendini yeniden başlatan) bir
+   süreç → **DUR** (H40). Her tarama kendi `AI_CHANNEL_SCAN
+   at=<zaman-damgası>` satırını basar ve iki tarama da bu satırla birlikte
+   evidence'a yazılır (revizyon 2; L-3); iki zaman damgası arasındaki
+   süre kayıttan doğrulanır. Kısa aralıklı (< 2 dk) ikinci tarama
+   geçersiz sayılır ve en az 2 dakika sonra yeniden yapılır; **ancak**
+   geçersiz taramada da `AI_CHANNEL_PROCESS_COUNT` > 0 görülürse **DUR**
+   (H40) — süreç kapatılıp yeniden taranmaz. Zaman damgası eksik veya
+   okunamıyorsa **DUR** (H40).
+
+Bu prosedür yalnız pencere boyunca kapatmadır; **hiçbir sistem ayarı
+değiştirilmez**. Başlangıç öğelerinin kalıcı olarak devre dışı bırakılması
+(Görev Yöneticisi → Başlangıç) bir sistem ayarı değişikliğidir; bu runbook
+bunu önermez ve ayrı kullanıcı onayı gerektirir.
 
 Adım 2 — kontrol kaydı. Altı sınıfın her biri için bir boolean ve sonuç
 satırı `<evidence-dir>` içine yazılır:
@@ -1064,11 +1154,23 @@ Remove-Variable stRec, stOk -ErrorAction SilentlyContinue
 ```powershell
 function Get-PilotBinManifestSha([string]$dir) { try { if (-not ((Test-PilotResolved $dir) -and (Test-Path -LiteralPath $dir -PathType Container) -and (Test-PilotNoReparse $dir))) { return $null }; $lines = [string[]]@(Get-ChildItem -LiteralPath $dir -Force -File -ErrorAction Stop | ForEach-Object { "{0}`t{1}" -f $_.Name, (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant() }); if ($lines.Count -lt 1) { return $null }; [Array]::Sort($lines, [System.StringComparer]::Ordinal); $bytes = (New-Object System.Text.UTF8Encoding($false)).GetBytes(($lines -join "`n") + "`n"); $sha = [System.Security.Cryptography.SHA256]::Create(); try { return ([System.BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant() } finally { $sha.Dispose() } } catch { return $null } }
 $popSha = Get-PilotBinManifestSha "<poppler-bin-dir>"; $szSha = Get-PilotBinManifestSha "<sevenzip-root>"
-if (($null -ne $popSha) -and ($null -ne $szSha) -and (Write-PilotExclusive "<evidence-dir>\technical-record.txt" @('# kind=technical-record', 'CONTAINER_TOOL=VeraCrypt', 'CONTAINER_TOOL_VERSION=<veracrypt-version>', 'PDFTOTEXT_VERSION=<pdftotext-version>', "POPPLER_BIN_MANIFEST_SHA256=$popSha", 'SEVENZIP_VERSION=<7z-version>', "SEVENZIP_ROOT_MANIFEST_SHA256=$szSha"))) { "TECHNICAL_RECORD=WRITTEN" } else { "STOP TECHNICAL_RECORD=FAIL" }
-Remove-Variable popSha, szSha -ErrorAction SilentlyContinue
+$cdRec = $null; try { $cdRec = [string[]]@(Get-CimInstance -ClassName Win32_CDROMDrive -ErrorAction Stop | ForEach-Object { [string]$_.Drive }) } catch { $cdRec = $null }
+$cdRecOk = ($null -ne $cdRec) -and (@($cdRec | Where-Object { $_ -cnotmatch '^[A-Z]:$' }).Count -eq 0)
+$cdRecLines = @(); if ($cdRecOk) { [Array]::Sort($cdRec, [System.StringComparer]::Ordinal); $cdRecLines = @("CDROM_DRIVE_COUNT=$($cdRec.Count)", ('OPTICAL_DRIVE_LETTERS=' + ($cdRec -join ','))) }
+if (($null -ne $popSha) -and ($null -ne $szSha) -and $cdRecOk -and (Write-PilotExclusive "<evidence-dir>\technical-record.txt" (@('# kind=technical-record', 'CONTAINER_TOOL=VeraCrypt', 'CONTAINER_TOOL_VERSION=<veracrypt-version>', 'PDFTOTEXT_VERSION=<pdftotext-version>', "POPPLER_BIN_MANIFEST_SHA256=$popSha", 'SEVENZIP_VERSION=<7z-version>', "SEVENZIP_ROOT_MANIFEST_SHA256=$szSha") + $cdRecLines))) { "TECHNICAL_RECORD=WRITTEN" } else { "STOP TECHNICAL_RECORD=FAIL" }
+Remove-Variable popSha, szSha, cdRec, cdRecOk, cdRecLines -ErrorAction SilentlyContinue
 ```
 
-   Beklenen: `TECHNICAL_RECORD=WRITTEN`. Kayıt yeniden üretilmez, üzerine
+   Beklenen: `TECHNICAL_RECORD=WRITTEN`. Kayıt ayrıca yerleşik optik
+   sürücülerin sayısını ve sürücü harflerini taşır (revizyon 2; L-2):
+   `CDROM_DRIVE_COUNT=<n>` ve `OPTICAL_DRIVE_LETTERS=<harfler>`
+   (sıralı, virgülle ayrılmış; sürücü yoksa boş). Blok çalıştırılmadan
+   önce harici (USB) optik sürücüler harici disk kuralı gereği çıkarılmış
+   olmalıdır (§4.2/10). Bu cihazda beklenen değerler `CDROM_DRIVE_COUNT=1`
+   ve `OPTICAL_DRIVE_LETTERS=E:`'dir; operatör yazılan kaydı ekranda okur
+   ve kayıt farklı değer taşıyorsa **DUR** (Y5) — kayıt yeniden üretilmez,
+   runbook revizyonu gerekir. Sorgu başarısız olursa veya bir sürücünün
+   harfi yoksa kayıt yazılmaz: `STOP TECHNICAL_RECORD=FAIL`. Kayıt yeniden üretilmez, üzerine
    yazılmaz; araç değişirse **DUR** ve runbook revizyonu. `pdftotext` veya
    `7z` her kullanılmadan önce aynı oturumda yeniden doğrulama yapılır:
 
@@ -1247,6 +1349,72 @@ yazılır: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
   **DUR** (Y15) ve parola kullanılmaz. Parola, parolanın hash'i veya
   herhangi bir türevi **hiçbir zaman** evidence'a, bir komut satırına,
   dosyaya veya panoya yazılmaz.
+- **Arşivin gönderen tarafta hazırlanması (revizyon 2; R-D-7ZPROMPT,
+  R-D-7ZFOLDER; kullanıcı kararı K-R2-1).** **Gönderen kuralı** (aşağıdaki
+  yöntem kontrolü mekanik olarak daha geniş bir biçimi de — ör. boş
+  klasör girdisi taşıyan bir arşivi — geçirebilir;
+  `SEVENZIP_FOLDER_ENTRY_COUNT` yalnız bilgidir ve açmada
+  `X_ENTRY_COUNT=1` şartı tek dosyayı ayrıca zorlar): arşiv
+  **başlıkları açık** (`-mhe=off`) bir AES-256 7z arşividir; 7-Zip'te
+  "Dosya adlarını şifrele" kutusu **işaretsizdir**. Arşiv **tek bir PDF**
+  taşır, **klasör içermez**, ve PDF kişisel veri içermeyen **nötr** bir
+  adla (ör. `belge.pdf`) arşivlenir: başlıklar açık olduğu için girdi adı
+  aktarım kanalında görünür (§32/30). Bu biçim kuralı ve aşağıdaki parola
+  kuralı dosya avukatına, kanal belirlemesiyle birlikte, karar kanalında
+  içeriksiz bir teknik not olarak iletilir (`OUTBOUND_NOTICE_SENT`; §21/4).
+  Başlıkları şifreli bir arşiv aşağıdaki yöntem kontrolünde **her zaman**
+  `STOP` verir (parola istenmez; bu davranış — `$null |` bağlamasında
+  7z'nin istem göstermeden ve beklemeden dönmesi — **Δ1'de doğrulanır**,
+  doğrulanana kadar varsayımdır); dosya avukatından bu biçimde yeni bir
+  arşiv istenir.
+- **Parola biçimi ve girişi (revizyon 2; R-D-TRKBDPW; kullanıcı kararları
+  K-R2-3, K-R2-4).** Parolayı dosya avukatı **rastgele** üretir (sözcük,
+  ad, tarih kullanılmaz) ve **yalnız** şu 29 sembolü kullanır: büyük harf
+  `A B C D E F G H J K L M N P R S T U V Y Z` ve rakam `2 3 4 5 6 7 8 9`
+  (I, İ, ı, i, O, Q, W, X, 0, 1, küçük harf ve Türkçe özel harfler
+  **yoktur**). Uzunluk **20** karakterdir; sesli görüşmede **4'erli 5
+  grup** hâlinde okunur ve operatör her grubu **geri okur**. Harfler
+  Türk telefon alfabesiyle, rakamlar Türkçe adıyla, **harf harf** okunur
+  ve aynı biçimde geri okunur (revizyon 2; O-7):
+
+  | Sembol | Okunuş | Sembol | Okunuş | Sembol | Okunuş |
+  |---|---|---|---|---|---|
+  | A | Adana | K | Kars | V | Van |
+  | B | Bolu | L | Lüleburgaz | Y | Yozgat |
+  | C | Ceyhan | M | Muş | Z | Zonguldak |
+  | D | Denizli | N | Niğde | 2 | iki |
+  | E | Edirne | P | Polatlı | 3 | üç |
+  | F | Fatsa | R | Rize | 4 | dört |
+  | G | Giresun | S | Sinop | 5 | beş |
+  | H | Hatay | T | Tokat | 6 | altı |
+  | J | Jandarma | U | Uşak | 7 | yedi |
+  | — | — | — | — | 8 | sekiz |
+  | — | — | — | — | 9 | dokuz |
+
+  Bu 29 sembol dışındaki bir okunuş (ör. "Isparta", "Ordu", "sıfır",
+  "bir") alfabe dışıdır.
+  - Operatör parolayı görüşme sırasında **yalnız kâğıda** yazar (dosya,
+    pano, ekran, fotoğraf yok). Giriş **yalnız elle yazmadır**: parola
+    panoya veya dosyaya yazılamadığı için yapıştırma bu runbook'ta
+    mümkün değildir. Operatör Caps Lock açık yazar.
+  - Operatör alfabe dışı bir karakter duyarsa veya geri okuma tutmazsa
+    parola **kullanılmaz** (revizyon 2; L-4): o parolanın kâğıdı **hemen**
+    imha edilir (`E2_PASSWORD_PAPER_DESTROYED=True at=<zaman-damgası>
+    reason=rejected`), eski `transfer.7z` §28.6 geçici kopya kuralına
+    göre exact-path silinir ve dosya avukatı yeni bir parolayla yeni bir
+    arşiv üretip yeniden gönderir (parola arşive bağlıdır). Yeni parola
+    için yeni bir `E2_KEY_CHANNEL=VOICE_CALL at=<zaman-damgası>` satırı
+    yazılır. Yeniden gönderim **en fazla bir kez** yapılır: ikinci
+    arşivin parolası da alfabe dışıysa veya geri okuması tutmazsa
+    **DUR** (Y5); üçüncü arşiv istenmez. İkinci arşiv aşağıdaki yöntem
+    kontrolü ve açma kurallarına aynen tabidir; açmadaki tek ek deneme
+    pilot boyunca toplam **bir** kezdir (birinci arşivde kullanıldıysa
+    ikinci arşivde yoktur).
+  - Kullanılan parolanın kâğıdı, açmada başarı (`SEVENZIP_RC=0` ve
+    `X_ENTRY_COUNT=1`) alındıktan sonra **aynı gün** imha edilir;
+    evidence: `E2_PASSWORD_PAPER_DESTROYED=True at=<zaman-damgası>
+    reason=used`. Pilot DUR ile biterse kâğıt yine aynı gün imha edilir:
+    `… reason=stopped`.
 - **Kaydetme.** Dosya tarayıcının veya istemcinin "Farklı kaydet"
   iletişim kutusuyla **doğrudan** `<intake-dir>` içine, sabit
   `transfer.7z` adıyla kaydedilir; indirme dizinine veya kapsayıcı dışına
@@ -1255,38 +1423,79 @@ yazılır: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
 - **Şifreleme yöntemi kontrolü (açmadan önce; remediasyon turu 1).**
   §4.4/6 `TOOL_MANIFEST_MATCH=True` alındıktan sonra, içerik oturumunda,
   arşiv **açılmadan önce** `7z l -slt` çıktısı yalnız bellekte okunur ve
-  yalnız sonuç satırı basılır (girdi adları basılmaz; başlıklar şifreliyse
-  7z parola ister ve parola **etkileşimli istem** ile girilir, komut
-  satırına `-p` yazılmaz; istemin ekranda görünmesi §1.6/3 delta
-  provasında doğrulanır). Arşiv türü `7z` olmalı ve klasör olmayan **her**
-  girdi `Encrypted = +` ve `7zAES` yöntemini taşımalıdır:
+  yalnız klasör sayısı ile sonuç satırı basılır (girdi adları basılmaz).
+  7z'nin standart girdisi boş bağlanır (`$null |`); böylece listelemede
+  **hiçbir zaman** parola istenmez ve komut satırına `-p` yazılmaz.
+  Başlıkları şifreli bir arşiv listelenemez: `Type = 7z` satırı ve çıkış
+  `0` gelmez, sonuç `STOP`'tur (revizyon 2; R-D-7ZPROMPT, K-R2-1).
+  **`$null |` bağlamasında 7z'nin beklemeden döndüğü delta provasında
+  (Δ1) ölçülür; 7z asılırsa (dönmezse) DUR — önceden onaylanmış bir yedek
+  yöntem yoktur, ayrı kullanıcı kararı gerekir (K-R2-2).** Arşiv türü
+  `7z` olmalıdır. Bir girdi **yalnız** klasör işareti taşıyorsa (`Folder
+  = +` satırı veya `Attributes` değerinin ilk sözcüğünde büyük `D`)
+  **ve** `Size` ile `Packed Size` değerleri `0` veya boşsa klasör sayılır;
+  diğer **her** girdi dosyadır, en az bir dosya bulunur ve **her** dosya
+  `Encrypted = +` ve `7zAES` yöntemini taşımalıdır (revizyon 2;
+  R-D-7ZFOLDER):
 
 ```powershell
-$szL = @(& "<7z>" l -slt "<intake-dir>\transfer.7z"); $szLRc = $LASTEXITCODE
+$szL = @($null | & "<7z>" l -slt "<intake-dir>\transfer.7z"); $szLRc = $LASTEXITCODE
 $szAfter = $false; $szEnt = @(); $szCur = $null
-foreach ($szLn in $szL) { if ($szLn -ceq '----------') { $szAfter = $true; continue }; if (-not $szAfter) { continue }; if ($szLn -cmatch '^Path = ') { if ($null -ne $szCur) { $szEnt += ,$szCur }; $szCur = @{ Folder = $false; Enc = $false; Aes = $false } } elseif ($null -ne $szCur) { if ($szLn -ceq 'Folder = +') { $szCur.Folder = $true }; if ($szLn -ceq 'Encrypted = +') { $szCur.Enc = $true }; if ($szLn -cmatch '^Method = .*7zAES') { $szCur.Aes = $true } } }
+foreach ($szLn in $szL) { if ($szLn -ceq '----------') { $szAfter = $true; continue }; if (-not $szAfter) { continue }; if ($szLn -cmatch '^Path = ') { if ($null -ne $szCur) { $szEnt += ,$szCur }; $szCur = @{ DirMark = $false; Size0 = $false; Pack0 = $false; Enc = $false; Aes = $false } } elseif ($null -ne $szCur) { if (($szLn -ceq 'Folder = +') -or ($szLn -cmatch '^Attributes = \S*D')) { $szCur.DirMark = $true }; if (($szLn -ceq 'Size = 0') -or ($szLn -ceq 'Size = ')) { $szCur.Size0 = $true }; if (($szLn -ceq 'Packed Size = 0') -or ($szLn -ceq 'Packed Size = ')) { $szCur.Pack0 = $true }; if ($szLn -ceq 'Encrypted = +') { $szCur.Enc = $true }; if ($szLn -cmatch '^Method = .*7zAES') { $szCur.Aes = $true } } }
 if ($null -ne $szCur) { $szEnt += ,$szCur }
-$szFiles = @($szEnt | Where-Object { -not $_.Folder })
+$szDirs = @($szEnt | Where-Object { $_.DirMark -and $_.Size0 -and $_.Pack0 })
+$szFiles = @($szEnt | Where-Object { -not ($_.DirMark -and $_.Size0 -and $_.Pack0) })
 $szOk = ($szLRc -eq 0) -and ($szL -ccontains 'Type = 7z') -and ($szFiles.Count -ge 1) -and (@($szFiles | Where-Object { -not ($_.Enc -and $_.Aes) }).Count -eq 0)
+"SEVENZIP_FOLDER_ENTRY_COUNT=$($szDirs.Count)"
 if ($szOk) { "SEVENZIP_ALL_ENTRIES_7ZAES=True" } else { "STOP SEVENZIP_ALL_ENTRIES_7ZAES=False" }
-Remove-Variable szL, szLRc, szAfter, szEnt, szCur, szLn, szFiles, szOk -ErrorAction SilentlyContinue
+Remove-Variable szL, szLRc, szAfter, szEnt, szCur, szLn, szDirs, szFiles, szOk -ErrorAction SilentlyContinue
 ```
 
   `SEVENZIP_ALL_ENTRIES_7ZAES=True` dışındaki her sonuç: arşiv
-  **açılmaz**, `E2_CARRIER_ENCRYPTED=False` → **DUR**.
+  **açılmaz**, `E2_CARRIER_ENCRYPTED=False` → **DUR**. Klasör işareti
+  taşıyıp boyutu sıfır olmayan bir girdi dosya sayılır; şifreli değilse
+  sonuç `STOP`'tur. macOS/Linux'ta oluşturulmuş bir arşivde klasör
+  yalnız küçük `d` ile (ör. `drwxr-xr-x`) basılabilir; bu durumda klasör
+  tanınmaz, dosya sayılır ve sonuç `STOP`'tur (fail-closed; gönderen
+  kuralı "klasörsüz" bunu önler). `SEVENZIP_FOLDER_ENTRY_COUNT` yalnız
+  bilgidir; kapı değildir.
 - **Açma.** Yalnız `SEVENZIP_ALL_ENTRIES_7ZAES=True` alındıktan sonra,
   aynı içerik oturumunda, parola **etkileşimli istem** ile girilerek
   (komut satırına `-p` yazılmaz):
 
 ```powershell
 & "<7z>" x "<intake-dir>\transfer.7z" "-o<intake-dir>\x"
-"SEVENZIP_RC=$LASTEXITCODE"
+"SEVENZIP_RC=$LASTEXITCODE attempt=<attempt>"
+$xDir = "<intake-dir>\x"; try { $xCnt = if (Test-Path -LiteralPath $xDir) { @(Get-ChildItem -LiteralPath $xDir -Recurse -Force -ErrorAction Stop).Count } else { 0 }; "X_ENTRY_COUNT=$xCnt" } catch { "STOP X_ENTRY_COUNT=UNKNOWN" }
+Remove-Variable xDir, xCnt -ErrorAction SilentlyContinue
 ```
 
-  `E2_CARRIER_ENCRYPTED=True` yalnız `SEVENZIP_ALL_ENTRIES_7ZAES=True`
-  **ve** 7z'nin açmada parola istemesinin ekran gözlemiyle birlikte
-  yazılır. Parola istenmeden açılan bir arşiv `E2_CARRIER_ENCRYPTED=False`
-  → **DUR**. `SEVENZIP_RC=0` dışındaki her sonuç **DUR**'dur. Yöntem
+  `<attempt>` ilk çalıştırmada `1`'dir. `E2_CARRIER_ENCRYPTED=True` yalnız
+  `SEVENZIP_ALL_ENTRIES_7ZAES=True` **ve** 7z'nin açmada parola
+  istemesinin ekran gözlemiyle birlikte yazılır. Parola istenmeden açılan
+  bir arşiv `E2_CARRIER_ENCRYPTED=False` → **DUR**.
+  **Parola hatası gözlemi (revizyon 2; M-1).** Her denemeden sonra
+  operatör 7z'nin ekran çıktısında `Wrong password` alt dizesinin
+  görünüp görünmediğini okur ve evidence'a yalnız
+  `SEVENZIP_WRONG_PASSWORD_SHOWN=True/False attempt=<k>` yazar. Mesaj
+  metni kopyalanmaz; 7-Zip 26.04'te mesaj `ERROR: Data Error in encrypted
+  file. Wrong password? : <ad>` biçimindedir ve `<ad>` (girdi adı)
+  evidence'a **yazılmaz**.
+  **Sonuçlar (revizyon 2; R-D-TRKBDPW; kullanıcı kararı K-R2-5; L-1).**
+  - **Başarı** yalnız `SEVENZIP_RC=0` **ve** `X_ENTRY_COUNT=1` (tek PDF)
+    birleşimidir.
+  - **Tek ek deneme:** yalnız `<attempt>` = `1` iken `SEVENZIP_RC=2`,
+    `SEVENZIP_WRONG_PASSWORD_SHOWN=True attempt=1` ve `X_ENTRY_COUNT=0`
+    **birlikte** gözlenirse blok, aynı oturumda ve aynı kâğıttan elle
+    yeniden yazılarak, `<attempt>` = `2` ile **bir kez daha** çalıştırılır
+    (pilot boyunca toplam bir kez).
+  - **Başka her birleşim DUR'dur** (Y5): ör. `SEVENZIP_RC=0` ile
+    `X_ENTRY_COUNT` ≠ `1` (birden fazla girdi veya klasör);
+    `SEVENZIP_RC` ≠ `0` olup ek deneme koşullarından biri eksik
+    (`SEVENZIP_WRONG_PASSWORD_SHOWN=False`, `X_ENTRY_COUNT` ≠ `0`, `STOP
+    X_ENTRY_COUNT=UNKNOWN` veya `2` dışında bir `SEVENZIP_RC`); ikinci
+    denemede başarı birleşimi dışındaki her sonuç. Üçüncü deneme
+    yoktur. Yöntem
   ölçümünün kalan sınırı §32/30'dadır. Açılan dosyaların adları kişisel veri taşıyabilir;
   bunlar komut satırına veya evidence'a yazılmaz. Orijinal belge, opak
   `<file-name>` adıyla case dizinine elle kopyalanır (§11.2/2).
@@ -1793,8 +2002,20 @@ foreach ($f in @("<case-root>\case.json", "<case-root>\documents\<document-id>\d
 ```powershell
 $txt = [System.IO.File]::ReadAllText("<case-root>\documents\<document-id>\extracted\<document-id>.txt", [System.Text.Encoding]::UTF8)
 if ($txt.Length -gt 0 -and $txt.Length -le 60000) { Write-Output "TEXT_LENGTH=OK" } else { Write-Output "STOP TEXT_LENGTH=OUT_OF_RANGE" }
+if ([regex]::Matches($txt, '\S').Count -ge 1) { Write-Output "TEXT_VISIBLE=OK" } else { Write-Output "STOP TEXT_VISIBLE=EMPTY" }
 Remove-Variable txt -ErrorAction SilentlyContinue
 ```
+
+   Beklenen: **`TEXT_LENGTH=OK`** ve **`TEXT_VISIBLE=OK`**. Başka her
+   çıktı **DUR**'dur (H43). Üçüncü satır revizyon 2'de eklendi
+   (R-D-IMGPDF; kullanıcı kararı K-R2-8): `pdftotext` metin katmanı
+   olmayan (görüntü) bir sayfa için yalnız sayfa sonu karakteri (`\f`)
+   üretir ve uzunluk kontrolü bunu geçer; .NET `\S` sayfa sonu, boşluk,
+   satır sonu ve Unicode boşluk karakterlerini saymaz, bu yüzden metin
+   katmanı hiç olmayan bir PDF `STOP TEXT_VISIBLE=EMPTY` verir. Eşik
+   (en az 1 görünür karakter) yalnız **tamamen** boş metin katmanını
+   yakalar; kısmen metinli bir PDF §11.3 (b) tarih token'ı kontrolünde
+   ve `manual-fact` M-07'de (alıntı bulunamadı) durur.
 
 5. **`file.page_count` operatör tarafından DOLDURULUR.** Repoda
    `page_count` dolduran bir kod yoktur ve şema alanın `null` olmasına izin
@@ -1827,7 +2048,8 @@ Remove-Variable pcDoc, pc -ErrorAction SilentlyContinue
 "PDFTOTEXT_RC=$LASTEXITCODE"
 ```
 
-   Beklenen: `PDFTOTEXT_RC=0` ve ardından (4)'teki `TEXT_LENGTH=OK`.
+   Beklenen: `PDFTOTEXT_RC=0` ve ardından (4)'teki `TEXT_LENGTH=OK` ve
+   `TEXT_VISIBLE=OK`.
    Başka her sonuç **DUR**'dur (Y5). `pdftotext` sayfa sınırlarını sayfa
    sonu karakteriyle işaretler; ayrı bir görüntüleyici kullanılmaz
    (kullanıcı kararı D7): sayfa numarası bu çıktıdan belirlenir ve dosya
@@ -3361,6 +3583,16 @@ Remove-Variable dl, dlFiles, dlRecs, x -ErrorAction SilentlyContinue
 Beklenen: bütün satırlar `True`. Biri `False` veya satır eksikse: **DUR**
 (H19, H20, H21). Evidence'a yalnız bu boolean satırlar yazılır.
 
+**Bu blok yalnız approval'dan önceki kapıdır (revizyon 2;
+R-D-E18PENDING).** Approval pending dosyasını **silmez**: pending içerik
+değiştirilmeden canonical'a kopyalanır ve pending yerinde kalır
+(`src/deadline_approval.py` L46, L50; kopya `atomic_copy_file`, L283–L342;
+dosyadaki iki `unlink` çağrısı, L1408 ve L1476, yalnız hata dalında
+canonical'ı geri alır). Bu yüzden approval'dan sonra blok yine `True`
+satırları basar; bu bir kapı sonucu **değildir** ve blok approval'dan
+sonra çalıştırılmaz. Kalan pending dosyaları §28.2 case manifestine girer
+ve §28.3.1 case dizini silmesiyle imha edilir.
+
 ### 18.3 Pending tarihin sabitlenmiş hesapla karşılaştırılması
 
 1. Pending'deki `calculated_deadline`, avukatın §17.2'de sabitlenmiş
@@ -3397,6 +3629,12 @@ Apply (tek çalıştırma):
 ```powershell
 if ("<expected-hash>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_HASH=INVALID" } else { & "<python>" -m ui.cli_mutate approval --case <case-id> --row-key deadline --actor-user-id <actor-user-id> --approve --expected-hash <expected-hash> }
 ```
+
+Approval'dan sonra `deadlines\deadline.json` ile kardeş `*.json.pending`
+aynı baytları taşır; bu eşitlik yalnız deadline katmanı içindir. Fact ve
+timeline pending'leri de yerinde kalır, ancak verification ve promotion
+sonrasında canonical'dan **farklı** baytlar taşırlar (revizyon 2;
+R-D-E18PENDING; delta prova incelemesi O-2).
 
 ---
 
@@ -3696,10 +3934,10 @@ intake düzeltmesi, §14.6 — ikisi de ayrı yazılı kararla).
 | H37 | Herhangi bir komutta sıfır olmayan çıkış kodu, traceback veya yetkilendirme reddi | Genel, §14.5.3 |
 | H38 | **Kaldırıldı** (auth probe; §29) | — |
 | H39 | Güvenli DUR/abort veya teardown adımı başarısız ya da belirsiz | §25.2 |
-| H40 | Gerçek içerik güven sınırının ihlali veya şüphesi; kanal kapısı geçmedi; kapsayıcı dışında gerçek içerik; içerik penceresi içinde çıkarılmış bir harici sürücünün yeniden takılması veya **yeni** bir harici/çıkarılabilir sürücünün takılması (bu olayların **tek** kodu; §4.2/10) | §4.2, §4.3, §4.4 |
+| H40 | Gerçek içerik güven sınırının ihlali veya şüphesi; kanal kapısı geçmedi; kapsayıcı dışında gerçek içerik; içerik penceresi içinde çıkarılmış bir harici sürücünün yeniden takılması veya **yeni** bir harici/çıkarılabilir sürücünün takılması; içerik penceresi içinde yerleşik optik sürücüye medya takılması, görüntü bağlanması veya optik sürücünün kayıtla eşleşmemesi (bu olayların **tek** kodu; §4.2/10; optik sürücü revizyon 2); §4.3 (a) kapatma prosedürünün ikinci (veya kısa aralıklı, geçersiz) taramasında görünen süreç (revizyon 2) | §4.2, §4.3, §4.4 |
 | H41 | Bağımsız inceleme, commit veya sentetik prova ön koşulu eksik | §1.6 |
 | H42 | Form G'de "Hayır" veya boş | §8 |
-| H43 | Intake alanlarından birinin avukat onayı eksik; `unverified` dışı `verification_state`; JSON'da BOM; metin uzunluğu sınır dışı | §11.2, §11.4 |
+| H43 | Intake alanlarından birinin avukat onayı eksik; `unverified` dışı `verification_state`; JSON'da BOM; metin uzunluğu sınır dışı; metinde görünür karakter yok (`STOP TEXT_VISIBLE=EMPTY`; revizyon 2) | §11.2, §11.4 |
 | H44 | **Kaldırıldı** (`--mask-term` ve engel değerleri dosyası; §29) | — |
 | H45 | Verification ön koşulu sağlanmıyor: locator yok, belge `active` değil veya avukatın ayrı verification kararı yok | §15.3 |
 | H46 | Silme guard'ı başarısız veya silme kısmi/belirsiz; o hedef için silme anı onayı yok | §28.3 |
@@ -3717,7 +3955,7 @@ intake düzeltmesi, §14.6 — ikisi de ayrı yazılı kararla).
 | Y2 | Form B1–B3 veya B5 kapısı; dosya avukatının bu dosya için işleme şartı teyidi yok veya hiçbir işleme şartını adıyla belirtmiyor (`PROCESSING_BASIS_CONFIRMED=True` yok; pilot başlamaz); B5 "Evet" iken Ek 2 yok veya operatör/dosya avukatı imzalarından biri eksik | §6.3 |
 | Y3 | Kullanılmıyor (Form C kapısı H3 satırındadır) | — |
 | Y4 | İki kişi kuralı: B4 boş; aynı kişi iken B4 "Hayır" veya dosya avukatının ayrı yazılı kabulü yok; `TWO_PERSON_CONTROL=SEPARATE` veya `=WAIVED_B4` kaydından tam biri yok | §4.1, §14.3 |
-| Y5 | Form E kapısı: E1 kapsayıcı seçeneği değil veya E1'e §4.4'te karşılığı olmayan ek koşul yazılmış; kapsayıcı doğrulanamadı (`CONTAINER_VERIFIED=True` yok) veya teknik kayıt yok/uyuşmuyor (`TOOL_MANIFEST_MATCH=True` yok); harici disk çifti kabul edilen tek birleşim değil (`EXTERNAL_DISK_REMOVED=False`, okunamıyor, ikisi de `True` veya `EXTERNAL_DISK_ENCRYPTED=True`; §4.2/10); E2 kanalı veya taşıyıcı kontrolü (`ENCRYPTED_TRANSFER` dışı tür, `E2_CARRIER_ENCRYPTED=False`, parola aynı kanaldan veya sesli görüşme dışında bir kanaldan (ayrıca Y15), kapsayıcıya doğrudan kaydedilmedi, e-posta eki için hukuki cevap yok, `SEVENZIP_ALL_ENTRIES_7ZAES=True` yok); `PDFTOTEXT_RC`/`SEVENZIP_RC` ≠ 0; E3 bildirim yolu veya E4 aracı/onayı eksik. **Pencere içinde yeniden takılan veya yeni takılan sürücü Y5 değil, H40'tır** | §4.2, §4.4, §6.4, §11.2/6 |
+| Y5 | Form E kapısı: E1 kapsayıcı seçeneği değil veya E1'e §4.4'te karşılığı olmayan ek koşul yazılmış; kapsayıcı doğrulanamadı (`CONTAINER_VERIFIED=True` yok) veya teknik kayıt yok/uyuşmuyor (`TOOL_MANIFEST_MATCH=True` yok); harici disk çifti kabul edilen tek birleşim değil (`EXTERNAL_DISK_REMOVED=False`, okunamıyor, ikisi de `True` veya `EXTERNAL_DISK_ENCRYPTED=True`; §4.2/10); içerik penceresinden önce yerleşik optik sürücü kaydı alınamadı veya tek yeniden ölçümden sonra da medya takılı ya da kayıtla eşleşmiyor (`STOP CDROM_QUERY=FAIL`, `STOP OPTICAL_MEDIA_LOADED=UNKNOWN`, ikinci ölçümde `OPTICAL_MEDIA_LOADED=True` veya `STOP OPTICAL_DRIVES_MATCH_RECORD=False`; §4.2/10, revizyon 2); E2 kanalı veya taşıyıcı kontrolü (`ENCRYPTED_TRANSFER` dışı tür, `E2_CARRIER_ENCRYPTED=False`, parola aynı kanaldan veya sesli görüşme dışında bir kanaldan (ayrıca Y15), kapsayıcıya doğrudan kaydedilmedi, e-posta eki için hukuki cevap yok, `SEVENZIP_ALL_ENTRIES_7ZAES=True` yok); `PDFTOTEXT_RC` ≠ 0; açmada başarı birleşimi (`SEVENZIP_RC=0` ve `X_ENTRY_COUNT=1`) dışındaki her sonuç — tek istisna, ilk denemede `SEVENZIP_RC=2` + `SEVENZIP_WRONG_PASSWORD_SHOWN=True` + `X_ENTRY_COUNT=0` birleşiminden sonraki tek ek denemedir; ek denemede de başarı yoksa Y5 (§6.4, revizyon 2); alfabe dışı parola veya tutmayan geri okumadan sonra eski parolanın kullanılması, ya da ikinci arşivin parolasının da alfabe dışı olması veya geri okumasının tutmaması (§6.4, revizyon 2); optik sürücü sayısı veya harfleri teknik kayıtla eşleşmiyor (pencere öncesinde, tek yeniden ölçümden sonra; `STOP OPTICAL_DRIVES_MATCH_RECORD=False`; §4.2/10, §4.4/6, revizyon 2); `$null` borusu bağlamasında 7z'nin dönmemesi (§6.4, K-R2-2); E3 bildirim yolu veya E4 aracı/onayı eksik. **Pencere içinde yeniden takılan veya yeni takılan sürücü Y5 değil, H40'tır** | §4.2, §4.4, §6.4, §11.2/6 |
 | Y6 | Form F1, F4–F7 kapısı; F4 kapsayıcı yöntemi değil; silme günü kapsayıcı yeniden doğrulanamadı; F1 kopyası kapsayıcı dışında; F1 süresi aşıldı; kapsayıcı imhası veya anahtar imhası kaydı yok; imha kaydı yazılmadı | §1.6/4, §23, §28 |
 | Y7 | G0 boş veya kişisel veri taşıyor; G8 boş; G10/G11 eksik veya imza §6.6/1 biçiminde değil; G10 tarihi bağlayıcı I3'ten önce veya avukatın sıra beyanı yok; A–F yeniden imzalandı ve G yeniden imzalanmadı | §6.6, §8 |
 | Y8 | `PAGE_COUNT=OK` alınamadı (`file.page_count` boş, tamsayı değil veya < 1) | §11.2/5 |
@@ -3808,18 +4046,18 @@ yardımcısı, probe ve inference satırları çıkarıldı; form, manuel girdi,
 
 | Kayıt | İçerik |
 |---|---|
-| Başlangıç | Branch, HEAD, temiz ağaç, runbook'un tracked olduğu, ignored görünüm, küme durumu, `pip check`, kayıt/telemetri ön kontrolü |
+| Başlangıç | Branch, HEAD, temiz ağaç, runbook'un tracked olduğu, ignored görünüm, küme durumu, `pip check`, kayıt/telemetri ön kontrolü; `CMDLINE_AUDIT_KEY=PRESENT` ise `CMDLINE_AUDIT_DECLARATION sha256=<64-küçük-hex>` (§4.2/9; revizyon 2) |
 | İçerik oturumu | §4.3 (b) çıktıları (her içerik oturumu için) |
-| Kanal kapısı | §4.3 (a): süreç adı taraması sonucu, altı sınıf boolean'ı ve `AI_CONTENT_CHANNELS_CLOSED=True` |
+| Kanal kapısı | §4.3 (a): süreç adı taraması sonucu (kapatma prosedürünün iki taraması, her biri kendi `AI_CHANNEL_SCAN at=<zaman-damgası>` satırıyla, ikisi de `AI_CHANNEL_PROCESS_COUNT=0`, iki zaman damgası arası en az 2 dakika; revizyon 2), altı sınıf boolean'ı ve `AI_CONTENT_CHANNELS_CLOSED=True` |
 | Yol kapısı | §13.8: her yer tutucu adı için `PATH_OK`, `PATH_OK=external-root-contract`, `PATH_OK=container-root`, `PATH_OK=pilot-root-contract`, `PATH_OK=container-file-parent` (oluşturmadan önce) ve `PATH_OK=container-file` (oluşturduktan sonra) |
 | Ön koşullar | Bağımsız inceleme sonucu, commit kimliği, sentetik prova evidence'ının hash'i (`13f19d0` provası ve bu revizyonun delta provası); §1.6/5 kapıları: `AI_CONTENT_CHANNELS_CLOSED=True`, tek yazan oturum beyanı, PR-NOPROFILE sonuç satırları, `CONTAINER_RESIDUAL_NOTICE_SENT=True` ve bildirim/cevap hash'leri, E2 kanal belirlemesinin ve (gerekiyorsa) hukuki cevabın hash'i |
 | Avukat formu | Form v5 hash'i (§0) ve ölçülen `FORM_HASH unit=AF seq=1` ile eşliği; §6.6/7 biçimindeki bütün `FORM_HASH` ve `FORM_BINDING` satırları (her imzalı sürüm ve her ek — `ATT1` Ek 1, `ATT2` Ek 2 — ayrı satır) ve her `FORM_HASH_RECHECK` sonucu; imza biçimi (taranmış PDF / e-imza); her e-imzalı birim için `UDF_SIGN_PART_PRESENT=True` ve `UDF_SIGNATURE_VALID=True unit=<birim> seq=<n>` ile UYAP editörü ağ erişimi onayının zamanı; I3–G10 sıra kontrolü ve dosya avukatı beyanının hash'i; Ek 1 teslim teyidinin hash'i; redakte kapsam özeti; `TWO_PERSON_CONTROL=SEPARATE` veya `TWO_PERSON_CONTROL=WAIVED_B4` (ikincisinde kullanıcı onayının zamanı); girdi düzenleyicisinin adı |
-| Kapsayıcı ve teknik kayıt | `technical-record.txt` ve SHA-256'sı; `system-temp.txt`, `SYSTEM_TEMP_RECORDED=True` ve her içerik oturumunda `SYSTEM_TEMP_MATCH=True` (§4.4/5); her ölçüm için (zincir adım 4, her içerik oturumu, her silme günü): `CONTAINER_MOUNTED_AS_DRIVE_LETTER=True`, `CONTAINER_VERIFIED=True`, `TEMP_IN_CONTAINER=True`, `PILOT_ACL_PRINCIPALS_OK=True`, `TOOL_MANIFEST_MATCH=True`; oluşturmada `CONTAINER_ONE_TIME_KEY=True`, `CONTAINER_FILE_BYTES`, `CONTAINER_FILE_NOT_CLOUD_SYNCED=True`, `ICACLS_RC=0`; harici disk için sürücü harfiyle `EXTERNAL_DISK_ENCRYPTED=False` / `EXTERNAL_DISK_REMOVED=True`; kurulum ve UYAP editörü için `PRE_PILOT_NETWORK_ACTION` satırları ve onay zamanları. Provadan: `CONTAINER_TOOL_PRESENT`, `CONTAINER_MOUNTED_AS_DRIVE_LETTER`, `PATH_OK=container-root`, `EXTERNAL_DISK_PRESENT` (§1.6/3) |
-| E2 taşıyıcısı | `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`, `SEVENZIP_ALL_ENTRIES_7ZAES`, `E2_CARRIER_ENCRYPTED`, `E2_KEY_SEPARATE_CHANNEL`, `E2_KEY_CHANNEL=VOICE_CALL at=<zaman-damgası>` (parola veya türevi yok; §21/5), `E2_SAVED_DIRECTLY_TO_CONTAINER`, `E2_INBOUND_TRANSFER_RECEIVED=True` (§21/2), `SEVENZIP_RC` (§6.4); `PDFTOTEXT_RC` (§11.2/6) |
+| Kapsayıcı ve teknik kayıt | `technical-record.txt` ve SHA-256'sı; `system-temp.txt`, `SYSTEM_TEMP_RECORDED=True` ve her içerik oturumunda `SYSTEM_TEMP_MATCH=True` (§4.4/5); her ölçüm için (zincir adım 4, her içerik oturumu, her silme günü): `CONTAINER_MOUNTED_AS_DRIVE_LETTER=True`, `CONTAINER_VERIFIED=True`, `TEMP_IN_CONTAINER=True`, `PILOT_ACL_PRINCIPALS_OK=True`, `TOOL_MANIFEST_MATCH=True`; oluşturmada `CONTAINER_ONE_TIME_KEY=True`, `CONTAINER_FILE_BYTES`, `CONTAINER_FILE_NOT_CLOUD_SYNCED=True`, `ICACLS_RC=0`; harici disk için sürücü harfiyle `EXTERNAL_DISK_ENCRYPTED=False` / `EXTERNAL_DISK_REMOVED=True`; teknik kayıtta `CDROM_DRIVE_COUNT=<n>` ve `OPTICAL_DRIVE_LETTERS=<harfler>` (§4.4/6); yerleşik optik sürücü için her ölçümde `CDROM_DRIVE_COUNT=<n>`, `OPTICAL_DRIVES_MATCH_RECORD=True` ve her sürücü için `OPTICAL_MEDIA_LOADED=False drive=<sürücü-harfi>` (§4.2/10; revizyon 2); kurulum ve UYAP editörü için `PRE_PILOT_NETWORK_ACTION` satırları ve onay zamanları. Provadan: `CONTAINER_TOOL_PRESENT`, `CONTAINER_MOUNTED_AS_DRIVE_LETTER`, `PATH_OK=container-root`, `EXTERNAL_DISK_PRESENT` (§1.6/3) |
+| E2 taşıyıcısı | `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`, `SEVENZIP_ALL_ENTRIES_7ZAES`, `E2_CARRIER_ENCRYPTED`, `E2_KEY_SEPARATE_CHANNEL`, `E2_KEY_CHANNEL=VOICE_CALL at=<zaman-damgası>` (parola veya türevi yok; §21/5), `E2_SAVED_DIRECTLY_TO_CONTAINER`, `E2_INBOUND_TRANSFER_RECEIVED=True` (§21/2), `SEVENZIP_RC=<n> attempt=<k>`, `X_ENTRY_COUNT` ve `SEVENZIP_WRONG_PASSWORD_SHOWN=True/False attempt=<k>` (her deneme ayrı satır; mesaj metni ve girdi adı yok), `SEVENZIP_FOLDER_ENTRY_COUNT` (bilgi), her parola için `E2_KEY_CHANNEL=VOICE_CALL at=<zaman-damgası>` ve `E2_PASSWORD_PAPER_DESTROYED=True at=<zaman-damgası> reason=<neden>` (`<neden>` ∈ `used`, `rejected`, `stopped`; §6.4; revizyon 2); `PDFTOTEXT_RC` (§11.2/6) |
 | Olay bildirimi | Varsa `INCIDENT_PHONE_NOTIFIED=True`, `INCIDENT_NOTICE_CHANNEL=VOICE_CALL at=<zaman-damgası>` (§21/5), `INCIDENT_WRITTEN_NOTICE_SAME_DAY=True`, olay kaydının SHA-256'sı (§4.2/11) |
 | Karar kanalı | Her gelen yazılı karar için `INBOUND_DECISION_RECEIVED seq=<n> sha256=<64-küçük-hex>`, her giden bildirim için `OUTBOUND_NOTICE_SENT seq=<n> sha256=<64-küçük-hex>` (§21); `PROCESSING_BASIS_CONFIRMED=True` (§6.3 B3) |
 | Restricted kümesi | `restricted-allowed-files.txt`, `ALLOWED_FILE_HASH_RECORDED=True`, hash kaydının bayt sayısı ve SHA-256'sı, her envanterde `ALLOWED_FILE_HASH_OK=True`, `RESTRICTED_INVENTORY=OK` ve dosya sayısı |
-| Intake | `JSON_BOM=NONE`, `TEXT_LENGTH=OK`, `PAGE_COUNT=OK`, `INTAKE_HASH=MATCH`, `TEXT_DATE_TOKEN_PRESENT=True`, `INTAKE_HASHES_RECORDED=True`, her `manual-fact` çağrısı öncesi `SOURCE_HASHES_MATCH=True`, validator PASS/sayılar, `TAX_TYPE_VOCAB=OK`, ignore kontrolü, avukat intake onayının hash'i |
+| Intake | `JSON_BOM=NONE`, `TEXT_LENGTH=OK`, `TEXT_VISIBLE=OK` (revizyon 2), `PAGE_COUNT=OK`, `INTAKE_HASH=MATCH`, `TEXT_DATE_TOKEN_PRESENT=True`, `INTAKE_HASHES_RECORDED=True`, her `manual-fact` çağrısı öncesi `SOURCE_HASHES_MATCH=True`, validator PASS/sayılar, `TAX_TYPE_VOCAB=OK`, ignore kontrolü, avukat intake onayının hash'i |
 | Manuel girdi | Her sürüm için `MANUAL_INPUT_ENCODING=OK`, `MANUAL_INPUT_HASH_RECORDED=True`, `manual-input-r<input-revision>.sha256.txt` kayıtları, avukat karşılaştırmasının hash'i, `MANUAL_INPUT_MATCHES_LAWYER_REVISION=True` ve `LAWYER_DECISION_CITES_RECORD=True`, girdi düzeltme döngüsü sayısı (en fazla 2) ve her turun sınıf/kural kodu |
 | `manual-fact` preview | Çıkış kodu, `input_digest`, `pending_sha256`, `text_excerpt_sha256`, `excerpt_found`, `PREVIEW_DATE_MATCHES_LAWYER`, `PREVIEW_PAGE_MATCHES_LAWYER`, `<fact-id>`, preview öncesi/sonrası journal sayısı |
 | `manual-fact` apply | Çıkış kodu, `pending_sha256`, `audit_file`, `journal_id`, `attempt`, `replayed`, `PENDING_SHA_MATCH`, `TEMP_RESIDUE_ABSENT`, `CANONICAL_ABSENT`, `AUDIT_FILE_BOUND`, `AUDIT_LIST_OK`, `AUDIT_UNPARSEABLE_COUNT`, kullanıcı onayının zamanı |
@@ -3988,7 +4226,12 @@ Göreli yollar §10.3'teki opak kimlikler sayesinde kişisel veri taşımamalıd
 Beklenen yollar arasında `documents\<document-id>\manual_input\manual_facts.input.json`,
 `documents\<document-id>\extractions\…` ve
 `documents\<document-id>\extractions\generation_reviews\manual_<document-id>_….generation_audit.json`
-bulunur. Bir yol kişisel veri taşıyorsa manifest **oluşturulmadan DUR**
+bulunur. Approval'dan sonra da yerinde kalan pending dosyaları
+(`documents\<document-id>\extractions\facts_llm_v1_3.json.pending`,
+`timeline\…json.pending`, `deadlines\…json.pending`; §18.2) beklenen
+yollardır (revizyon 2; R-D-E18PENDING). `facts_llm_…` adı tarihsel bir
+sabittir; LLM kullanıldığını göstermez (§15.1, §22.1; delta prova
+incelemesi O-3). Bir yol kişisel veri taşıyorsa manifest **oluşturulmadan DUR**
 (H36).
 
 **Aşama 2 — case manifestinin yazılması** (Temel L3264–L3265 birebir):
@@ -4489,9 +4732,12 @@ Hepsi mekanik olarak ölçülür ve evidence'a yazılır:
     (`DELETION_RECORD_COPY_TO_FILE_LAWYER=True`).
 13. Her silme günü için §4.4/7 kapsayıcı doğrulaması evidence'ta
     (`CONTAINER_VERIFIED=True`; her harici sürücü için
-    `EXTERNAL_DISK_ENCRYPTED=False` ve `EXTERNAL_DISK_REMOVED=True`); E2
-    taşıyıcısı için `E2_CARRIER_KIND=ENCRYPTED_TRANSFER` ve
-    `E2_CARRIER_ENCRYPTED=True` (başka taşıyıcı türü yoktur, §6.4); F1
+    `EXTERNAL_DISK_ENCRYPTED=False` ve `EXTERNAL_DISK_REMOVED=True`; her
+    yerleşik optik sürücü için `OPTICAL_MEDIA_LOADED=False`, revizyon 2);
+    E2 taşıyıcısı için `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
+    `E2_CARRIER_ENCRYPTED=True` (başka taşıyıcı türü yoktur, §6.4) ve
+    alınan her parola için `E2_PASSWORD_PAPER_DESTROYED=True` (`reason`
+    ile; revizyon 2); F1
     kopyaları için `TEMP_COPIES_INSIDE_CONTAINER=True`; her e-imzalı birim
     için `UDF_SIGNATURE_VALID=True`; form, G bölümü ve eklerin hash'lerinin
     kapanış yeniden ölçümü kayıtla aynı (§6.6/7).
@@ -4528,9 +4774,11 @@ taşır.
 ## 32. Açık sınırlar
 
 1. **Prova durumu.** `13f19d0` sürümü sentetik olarak prova edildi (§0;
-   prova ae129016, inceleme `REHEARSAL_EVIDENCE_VERIFIED`). Bu revizyonda
-   yeniden yazılan ve yeni eklenen bloklar (§34.4) **henüz
-   çalıştırılmamıştır**; §1.6/3 delta provası zorunludur ve provada
+   prova ae129016, inceleme `REHEARSAL_EVIDENCE_VERIFIED`). Revizyon 1'in
+   (`4f5c37e`) yeniden yazılan ve yeni eklenen blokları delta provasında
+   (e11bab73) prova edildi (inceleme `REHEARSAL_EVIDENCE_VERIFIED`; §0).
+   Revizyon 2'de (§34.8) değişen ve yeni eklenen bloklar **henüz
+   çalıştırılmamıştır**; §1.6/3 delta provası (Δ1–Δ5) zorunludur ve provada
    yazıldığı gibi çalışmayan bir komut runbook düzeltmesi ve yeniden
    inceleme gerektirir. Prova veritabanı kararı kapanmıştır (§1.6/3).
    Runtime paket kümesi karşılaştırmasının komutu §13.3'te sabitlenmiştir.
@@ -4682,9 +4930,19 @@ taşır.
     bayrağını ve yöntem adını (`7zAES`) okur. Parolanın gücünü, anahtar
     türetme parametrelerini, arşivin gönderen tarafta veya kanalda başka
     bir kopyasının bulunup bulunmadığını ve başlıkların şifreli olup
-    olmadığını (girdi adlarının kanalda görünürlüğü) doğrulamaz. Parola
-    isteminin `l -slt` çıktısı değişkene alınırken ekranda görünmesi §1.6/3
-    delta provasında doğrulanır.
+    olmadığını (girdi adlarının kanalda görünürlüğü) doğrulamaz. Revizyon
+    2'den itibaren (R-D-7ZPROMPT, K-R2-1) listelemede parola istenmez
+    (standart girdi boş bağlanır) ve başlıkları şifreli bir arşiv
+    fail-closed `STOP` verir; kabul edilen biçim başlıkları açık arşiv
+    olduğundan **girdi adları aktarım kanalında görünür** — bu yüzden
+    gönderen kuralı nötr dosya adı ister (§6.4). Nötr adın gerçekten
+    kişisel veri taşımadığı gönderenin beyanına dayanır; mekanik olarak
+    doğrulanmaz. `$null |` bağlamasının 7z'yi beklemeden döndürdüğü delta provasında
+    (Δ1) ölçülür. Klasör tanıma, 7-Zip'in `Attributes` satırındaki büyük
+    `D` karakterine ve boyut-sıfır koşuluna dayanır; büyük `D`'nin
+    yalnız dizin bitine karşılık geldiği 7-Zip kaynağıyla bu runbook'ta
+    doğrulanmamıştır (boyut-sıfır koşulu bu belirsizliği güvenli tarafta
+    tutar).
 31. **D9 bildirim listesinde olmayan işletim sistemi izleri.** §1.6/5 ve
     §4.4/8'deki liste sayfa dosyası, hazırda bekletme dosyası, Windows
     Search indeksi ve antivirüs karantinasıyla sınırlıdır. Dosya
@@ -5000,6 +5258,17 @@ edilir. "Tek-çalışım" satırları ayrı onaylı, tekrarlanmayan adımlar ola
 yeniden prova edilir. Ayrıca kapsayıcı içinde bir hafif uçtan uca sentetik
 geçiş yapılır (D13a; §1.6/3).
 
+**Revizyon 2 devralma tabanı (kullanıcı kararı K-R2-10).** Revizyon 2'den
+itibaren devralma tabanı, son prova edilmiş sürümdür: runbook `4f5c37e`
+(= `c2a7dbc`, blob SHA-256 `1397ea07…`) ve onun delta provası e11bab73
+(§0). Bu sürümle **bayt-bayt aynı** bir blok e11bab73 kanıtıyla (ve oradan
+geçişli olarak, aşağıdaki tabloda "Devralınır" olan bloklar için
+`13f19d0` kanıtıyla) devralınır. Revizyon 2'de değişen veya yeni eklenen
+bloklar ve Δ5 aşağıdaki revizyon 2 satırlarında "Yeniden/Yeni"dir.
+Sonraki prova planı kod bloğu ekini bu tabana göre yeniden üretir; yeni
+optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
+(§34.8).
+
 | Runbook bloğu | `13f19d0` provası kanıtı | Revizyonda | Prova |
 |---|---|---|---|
 | §4.3 (a) süreç adı deseni | 0.10 | Blok aynı (metin eklendi) | Devralınır |
@@ -5033,6 +5302,13 @@ geçiş yapılır (D13a; §1.6/3).
 | §28.3.1 case guard fonksiyonu (ilk blok) | A.31–A.35, B.36–B.40, Z.0 (ortak) | Aynı (bayt-bayt) | Devralınır |
 | §28.3.1 guard ve silme blokları (iki blok) | A.31–A.35, B.36–B.40, Z.0 (ortak) | Korunan listede `<system-temp>`/`<container-temp>` (remediasyon turu 1, H-1) | **Yeniden, tek-çalışım** |
 | §28.3.2, §28.3.3, §28.5 arşiv kapısı, §28.6 F1 | A.31–A.35, B.36–B.40, Z.0 (ortak) | Yeniden yazıldı / yeni (remediasyon turu 1 dahil) | **Yeniden, tek-çalışım** |
+| **Revizyon 2:** §6.4 `7z l -slt` yöntem kontrolü (klasör tanıma + boyut-sıfır, `$null` borusu, `SEVENZIP_FOLDER_ENTRY_COUNT`) | e11bab73 T.3/T.3u (eski blok) | Yeniden yazıldı | **Yeniden** (Δ1: A0, A0z, A1 [`STOP`, beklemeden dönüş], staging A2, A2b, yeni A3 [klasör + şifreli + şifresiz dosya → `STOP`; yapım yöntemi Δ1'de denenir, kurulamazsa sınır olarak yazılır], yeni A5 [yalnız boş klasör → `STOP`]) |
+| **Revizyon 2:** §6.4 açma (`attempt`, `X_ENTRY_COUNT`, `SEVENZIP_WRONG_PASSWORD_SHOWN`, tek ek deneme, başarı = `SEVENZIP_RC=0` + `X_ENTRY_COUNT=1`) ve parola biçimi/girişi (telefon alfabesi, alfabe dışı → yeniden gönderim en fazla bir kez) | e11bab73 T.3u (eski blok) | Değişti | **Yeniden, insan-only** (Δ2: 29 sembollü 20 karakterlik parola; telefon alfabesiyle sesli okuma, kâğıt, geri okuma, elle yazma; bilinçli hata → `SEVENZIP_RC=2`, `SEVENZIP_WRONG_PASSWORD_SHOWN=True`, `X_ENTRY_COUNT=0` → tek ek deneme → `SEVENZIP_RC=0`, `X_ENTRY_COUNT=1`; kâğıt imhası `reason=used`) |
+| **Revizyon 2:** §4.4/6 teknik kayıt bloğu (`CDROM_DRIVE_COUNT`, `OPTICAL_DRIVE_LETTERS`) | e11bab73 K.8 (eski blok) | Değişti | **Yeniden, tek-çalışım** (Δ3a: kayıt `CDROM_DRIVE_COUNT=1`, `OPTICAL_DRIVE_LETTERS=E:` taşır) |
+| **Revizyon 2:** §4.2/10 yerleşik optik sürücü bloğu (teknik kayıtla eşleşme dahil) | e11bab73 K.0, M.5, R.4 (plan dışı ölçüm; blok yoktu) | Yeni | **Yeni, tek-çalışım** (Δ3b: `OPTICAL_DRIVES_MATCH_RECORD=True`, `OPTICAL_MEDIA_LOADED=False drive=E:`) |
+| **Revizyon 2:** §11.2/4 uzunluk bloğu (`TEXT_VISIBLE`) | e11bab73 T.2, E.4 (eski blok) | Değişti | **Yeniden** (Δ4: metinli PDF → `TEXT_VISIBLE=OK`; görüntü PDF → `STOP TEXT_VISIBLE=EMPTY`) |
+| **Revizyon 2:** §4.3 (a) kapatma prosedürü ve tarama bloğu (`AI_CHANNEL_SCAN at=` satırı eklendi) | e11bab73 E.0, R.4 (eski blok) | Değişti | **Yeniden, insan-only** (Δ5: ajan kapalıyken iki tarama, `at=` damgaları arası en az 2 dakika, ikisi de `AI_CHANNEL_PROCESS_COUNT=0`) |
+| **Revizyon 2:** §4.2/9, §18.2, §18.4, §28.2 metinleri | e11bab73 0.8, E.16, Z | Yalnız metin; bloklar bayt-bayt aynı | Devralınır |
 
 ### 34.5 Yazım sınırları
 
@@ -5130,3 +5406,126 @@ delta prova eşlemesi değişmez. "Eski satır" `a95f8291` sürümündeki,
   veya karşı tarafın adı yazılmaz (§1.5).
 - **Ayrıştırma.** Bu turda PowerShell kod bloğu eklenmedi veya
   değiştirilmedi; bütün blokların hash'i `a95f8291` sürümüyle aynıdır.
+
+### 34.8 Revizyon 2
+
+YENİ. Kaynak sürüm: `4f5c37e` (= `c2a7dbc`; SHA-256
+`1397ea07ad0c56e689d073ccbfc0b74177edc39847c5895f69596b1bf9f08699`, 5132
+satır). Girdi: e11bab73 delta provasının bağımsız incelemesi (§0; SHA-256
+`29d0038d…6352`; verdict `REHEARSAL_EVIDENCE_VERIFIED`), §4 "Runbook
+revizyonu için konsolide bulgu listesi" maddeleri 1–9, ve aynı kökteki
+`run\findings.md` ile bağlı kayıtlar. Kullanıcı kararları K-R2-1…K-R2-10
+(2026-10-12). Yalnız bu dosya değişti; kod, şema, veri, test, başka
+runbook veya `CLAUDE.md` değişmedi; LOCKED bir sözleşmeye dokunulmadı.
+Yazılırken hiçbir runbook komutu çalıştırılmadı; değişen ve yeni bloklar
+yalnız `ParseInput` ile denetlendi. Aşağıdaki "Bulgu → satır eşlemesi"
+tablosunda "eski satır" `4f5c37e`'deki, "yeni satır" remediasyondan
+önceki revizyon 2 taslağındaki (SHA-256
+`3eb5e745cb61b31773267c2d268da44ebe0e59ff8a4cc3fe3e2a579cf2c15975`, 5399
+satır) satır numarasıdır; remediasyon (aşağıda) bu numaraları
+kaydırmıştır. Bu tur §34.6 ve §34.7'deki "yeni satır" numaralarını da
+kaydırmıştır.
+
+**Kullanıcı kararları.**
+
+| Karar | İçerik |
+|---|---|
+| K-R2-1 | Kabul edilen tek biçim başlıkları açık AES-256 7z; tek PDF, klasörsüz, nötr dosya adı; dosya avukatına karar kanalında teknik not |
+| K-R2-2 | Önceden onaylı yedek yöntem **yok**: `$null` borusu davranışı Δ1'de ölçülür; 7z dönmezse DUR ve ayrı karar |
+| K-R2-3 | Parola: 29 sembol (A–Z eksi I, O, Q, W, X; 2–9), 20 karakter, 4'erli 5 grup, geri okuma, rastgele üretim |
+| K-R2-4 | Yalnız kâğıt; `SEVENZIP_RC=0`'dan sonra aynı gün imha; `E2_PASSWORD_PAPER_DESTROYED` |
+| K-R2-5 | Tek ek deneme yalnız `SEVENZIP_RC=2` + "Wrong password" + `X_ENTRY_COUNT=0`; ikinci hata DUR |
+| K-R2-6 | Yalnız pencere boyunca kapatma; tarama iki kez, en az 2 dakika arayla; sistem ayarı değişikliği yok; §1.6/5 listesine `ChatGPT` |
+| K-R2-7 | Yerleşik optik sürücü: medya-yok kuralı; Y5/H40 |
+| K-R2-8 | En az 1 görünür karakter; H43 |
+| K-R2-9 | Komut satırı denetimi: yazılı beyan repo dışında; evidence'a yalnız `CMDLINE_AUDIT_DECLARATION sha256=` |
+| K-R2-10 | §0 e11bab73 pinleri; bu bölüm; §34.4 tabanı e11bab73; değişen/yeni bloklar ve Δ5 "Yeniden/Yeni" |
+
+**Bulgu → satır eşlemesi.**
+
+| Bulgu | Eski satır | Yeni satır | Değişiklik |
+|---|---|---|---|
+| R-D-7ZFOLDER (zorunlu) | L1258–L1262, L1265–L1272, L1276, L4685–L4687 | L1352–L1365, L1368–L1377, L1381–L1387, L4845–L4857 | Klasör = klasör işareti (`Folder = +` veya `Attributes`'ta büyük `D`) **ve** `Size`/`Packed Size` 0 veya boş; diğer her girdi dosya, her dosya `Encrypted = +` ve `7zAES`; `SEVENZIP_FOLDER_ENTRY_COUNT` bilgi satırı; küçük `d` (Unix) → tanınmaz → `STOP`; §32/30 sınır cümlesi |
+| R-D-7ZPROMPT (zorunlu) | L1249 sonrası, L1258–L1262, L1265, L4685–L4687 | L1313–L1324, L1352–L1365, L1368, L4845–L4857 | `7z l -slt` standart girdisi `$null` borusu ile boş; listelemede parola istenmez; başlıkları şifreli arşiv → `STOP`; gönderen kuralı (başlık açık, tek PDF, klasörsüz, nötr ad; karar kanalında teknik not); dönmezse DUR (K-R2-2); §32/30 |
+| R-D-TRKBDPW (zorunlu) | L1249 sonrası, L1283–L1289, L3720, L3818, L4492–L4494 | L1325–L1343, L1394–L1411, L3871, L3969, L4648–L4652 | Parola alfabesi/uzunluğu/okuma; yalnız kâğıt ve elle yazma (yapıştırma kural gereği yok); alfabe dışı karakter → yeni parola + yeni arşiv; kâğıt imhası; açma bloğu `attempt` + `X_ENTRY_COUNT`; tek ek deneme kuralı (K-R2-5); Y5, §26.2 E2, §30/13 |
+| R-D-E18PENDING (zorunlu) | L3363 sonrası, L3400 sonrası, L3991 | L3499–L3508, L3546–L3551, L4142–L4147 | Durum bloğu yalnız approval öncesi kapı; approval pending'i silmez (`src/deadline_approval.py` L46, L50, L283–L342, L1408, L1476); bayt eşitliği yalnız deadline katmanında (O-2); kalıcı pending'ler §28.2 beklenen yollarında |
+| L-1 kanal süreçleri (zorunlu) | L376–L378, L838 sonrası, L3699, L3813 | L381–L384, L881–L901, L3850, L3964 | §1.6/5 listesine `ChatGPT`; §4.3 (a) kapatma prosedürü (tepsi "Çık", "OneDrive'ı kapat", Görev Yöneticisi; iki tarama ≥ 2 dk); sistem ayarı değişikliği yok; H40; §26.2 Kanal |
+| R-D-EOPTICAL (önerilen) | L747 sonrası, L3699, L3720, L3817, L4492–L4494 | L763–L789, L3850, L3871, L3968, L4648–L4652 | Yerleşik optik sürücü medya-yok kuralı ve yeni blok; DUR satırları (Y5, H40); §26.2 Kapsayıcı; §30/13 |
+| R-D-IMGPDF (önerilen) | L646, L1795 sonrası, L1798 sonrası, L1830, L3702, L3822 | L652–L653, L1918, L1922–L1932, L1964–L1965, L3853, L3973 | `TEXT_VISIBLE` satırı (en az 1 görünür karakter); `STOP TEXT_VISIBLE=EMPTY` → H43; §4.2/3, §11.2/6, §26.2 Intake |
+| F-0.8-CMDLINE-AUDIT (önerilen) | L707, L3811 | L714–L722, L3962 | `CMDLINE_AUDIT_KEY=PRESENT` bulgudur; bu cihazda ölçüldü; yazılı beyan zorunlu; `CMDLINE_AUDIT_DECLARATION sha256=`; §26.2 Başlangıç |
+| O-3 (açıklama) | L3991 | L4142–L4147 | `facts_llm_…` adı tarihsel sabit (§15.1, §22.1); kod değişikliği yok, ayrı backlog |
+| K-R2-10 (kayıt) | L13–L14, L31, L4531–L4533, L5002 sonrası, L5035 sonrası, — | L13–L18, L35–L36, L4689–L4693, L5173–L5183, L5217–L5222, §34.8 | Üst uyarı; §0 e11bab73 pinleri; §32/1; §34.4 devralma tabanı ve revizyon 2 satırları; bu bölüm |
+
+**Kod blokları.** Numara, son prova planının kod bloğu ekindeki
+numaralandırmadır (§1.5 bloğu = N0); SHA-256 blok gövdesinin (çit
+satırları hariç, LF ile birleştirilmiş, sonda LF) baytları üzerindedir.
+
+| Eski | Yeni | Bölüm | Eski SHA-256 | Yeni SHA-256 | `ParseInput` |
+|---|---|---|---|---|---|
+| — | N3 | §4.2/10 | — | `6bbb9e0c0422baa967edb15d56e94b350a078de37ab6de8f3d5fc892c455a1d4` | 0 hata |
+| N3 | N4 | §4.3 (a) | `c8699639a33af810b73064c7cbdd378175996580618ae87d5f4754c5c3cefe8d` | `53c05a95ca3560b98d4a1381624e241017c3a3e6507bba834cb5eb61021443b1` | 0 hata |
+| N13 | N14 | §4.4/6 | `2938bf33bc3d83c335584fe62534c534761fed6594fdf295aa2815e096454f91` | `60fe475b9308a068dac695533e8b7dfaf00aab7b339b7ff39541fba12f681403` | 0 hata |
+| N15 | N16 | §6.4 | `d35981072b3fa8c5e4c547c26083541d77a82cc61bc98be7baddd5dbb3c3980c` | `3f17c6eb77097217f5ee780c3b304266d0b1c3189827b1b9d92b488e1b96e4eb` | 0 hata |
+| N16 | N17 | §6.4 | `9f938954e69168215027476377d3129e519dc4bbad658cefc7bfca3f1e5c75d9` | `e4e3552154c7f8488b103c0ab381708eb634325bcda523af1c06b2640580c091` | 0 hata |
+| N23 | N24 | §11.2 | `420cedb044e981601da4127bee2c2501419686ca70bf03d7ca6e2b69699acbc7` | `f0db8ae3037fcfea9dd07ad202d27635bb03fe8e4cbbddfbfd06a4a084805c54` | 0 hata |
+
+Blok sayısı 104 → 105 (5 değişen + 1 yeni). Kalan 99 blok `4f5c37e` ile bayt-bayt aynıdır ve
+aynı sırada durur (blok hash'leriyle ölçüldü); eski N3 ve sonrasındaki her
+blok numarası yeni optik blok nedeniyle bir artar. (Remediasyondan önceki
+taslakta yeni N3 `d2fc34dc…`, N4 ve N14 değişmemişti; remediasyon bu üç
+bloğu değiştirdi, aşağıda.)
+
+**Uygulama notları.**
+
+- **Kapı yönü.** Hiçbir kapı gevşetilmedi. Klasör tanıma yalnız boyutu
+  sıfır girdileri atlar; her dosya girdisi yine `Encrypted = +` ve
+  `7zAES` taşımalıdır. İstem bastırıldığında başlıkları şifreli arşiv
+  fail-closed `STOP` verir. Parola, alfabe, kâğıt ve elle yazma kuralları
+  sıkılaştırmadır; kâğıt yeni bir fiziksel kopya yaratır ve imhası
+  kayda bağlıdır (K-R2-4). Tek ek deneme (K-R2-5) şifreleme kapısını
+  değil, yalnız "ilk `SEVENZIP_RC` ≠ 0 → DUR" kuralını üç koşulla bir kez
+  yumuşatır; bilinçli bir kullanıcı kararıdır. Optik sürücü kuralı
+  (K-R2-7), yerleşik ve çıkarılamayan bir sürücü için harici disk
+  çiftinin yerine "medya takılı değil" ölçümünü koyan kapsamlı bir
+  istisnadır; ölçülemeyen değer `STOP`'tur.
+- **Kapsam dışı.** İncelemenin M-1, L-2…L-8 bulguları prova planı ve ajan
+  disiplini maddeleridir; runbook değişikliği gerektirmez. O-1, O-2 (§18.4
+  notunda kullanıldı) ve O-4…O-11 runbook değişikliği gerektirmez. O-3'ün
+  kod tarafı (pending adı) ayrı backlog maddesidir.
+- **Delta prova.** Δ1–Δ5 (§34.4 revizyon 2 satırları) ayrı bir turda ve
+  ayrı kullanıcı yetkisiyle yapılır; bu tur onları yetkilendirmez.
+
+**Remediasyon (rev2).** Revizyon 2 taslağının (SHA-256 `3eb5e745…5975`)
+bağımsız incelemesi `READY_FOR_NARROW_REMEDIATION` verdi; kullanıcı dar
+remediasyonu onayladı. Aşağıdaki kimlikler (M-1, L-1…L-5, O-1, O-2, O-6,
+O-7) **bu incelemeye** aittir; e11bab73 incelemesinin aynı adlı
+kimlikleriyle karıştırılmaz. Yalnız bunlar işlendi; kapsam genişletilmedi.
+"Eski satır" `3eb5e745` taslağındaki, "yeni satır" bu sürümdeki satır
+numarasıdır.
+
+| Bulgu | Eski satır | Yeni satır | Değişiklik |
+|---|---|---|---|
+| M-1 — parola hatası gözlemi | L1403–L1411, L3969 | L1466–L1487, L4045 | Operatörün ekran gözlemi boolean olarak kayda girer: `SEVENZIP_WRONG_PASSWORD_SHOWN=True/False attempt=<k>`; ölçüt `Wrong password` alt dizesi; mesaj metni ve girdi adı evidence'a yazılmaz; ek deneme yalnız `SEVENZIP_RC=2` + `SEVENZIP_WRONG_PASSWORD_SHOWN=True` + `X_ENTRY_COUNT=0`; §26.2 E2 |
+| L-1 — başarı tanımı ve DUR dalı | L1403–L1411, L3871 | L1466–L1487, L3947 | Başarı = `SEVENZIP_RC=0` **ve** `X_ENTRY_COUNT=1`; DUR cümlesi ve Y5 yalnız hata dalına uygulanacak biçimde; başka her birleşim DUR |
+| L-2 — optik sürücü teknik kaydı | L768–L787, L1130–L1134, L3871, L3968 | L773–L797, L1146–L1162, L3947, L4044 | Teknik kayıt bloğu (§4.4/6) `CDROM_DRIVE_COUNT` ve `OPTICAL_DRIVE_LETTERS` yazar (bu cihazda `1`, `E:`; farklıysa DUR, Y5); optik blok her ölçümde kayıtla birebir eşleşmeyi denetler (`OPTICAL_DRIVES_MATCH_RECORD`; eşleşmezse DUR, Y5); USB optik sürücü harici disk kuralına tabi; §26.2 Kapsayıcı |
+| L-3 — kanal taraması zaman damgası | L871 sonrası, L895, L3964 | L882, L906–L911, L4040 | Tarama bloğu `AI_CHANNEL_SCAN at=<zaman-damgası>` basar; iki tarama damgalarıyla kaydedilir; aradaki ≥ 2 dk kayıttan doğrulanır; damga eksik → DUR (H40); §26.2 Kanal |
+| L-4 — alfabe dışı karakter | L1337–L1343, L3871, L3969, L4652 | L1390–L1406, L3947, L4045, L4728–L4729 | Eski kâğıt hemen imha (`reason=rejected`); eski `transfer.7z` exact-path silinir; yeniden gönderim en fazla bir kez; ikinci arşivde de alfabe dışı/geri okuma tutmazsa DUR (Y5); kâğıt imhası `reason=used/rejected/stopped`; ek deneme pilot boyunca toplam bir kez; §26.2 E2, §30/13 |
+| L-5 — §34.4 optik satırı | L5218–L5219, L5221 | L5295–L5297, L5299 | Optik blok satırı "Yeni, tek-çalışım"; teknik kayıt bloğu için yeni "Yeniden, tek-çalışım" satırı; açma ve kanal satırları güncellendi |
+| O-1 — gönderen kuralı | L1314–L1315 | L1342–L1347 | "Kabul edilen tek biçim" → "Gönderen kuralı"; kapı daha geniş biçimi geçirebilir, `SEVENZIP_FOLDER_ENTRY_COUNT` yalnız bilgi |
+| O-2 — `$null` borusu çekincesi | L1323 | L1355–L1357 | "Δ1'de doğrulanır; doğrulanana kadar varsayımdır" |
+| O-6 — revizyon 1/2 ayrımı | L112–L115, L338–L340 | L112–L117, L340–L345 | §1.4 ve §1.6/3 D13 paragrafı revizyon 1 (e11bab73'te prova edildi) ile revizyon 2'yi (henüz prova edilmedi) ayırır |
+| O-7 — telefon alfabesi | L1331 | L1365–L1384 | 29 sembol için Türk telefon alfabesi tablosu; harf harf okuma ve geri okuma |
+| Low-A — geçersiz ikinci tarama (ikinci inceleme) | `85e67f0c` L886, L909–L911, L3926 | L892–L895, L918–L922, L3937 | Genel "kapat ve yeniden tara" kuralı yalnız ilk taramadan önceki kapatma için; kısa aralıklı (< 2 dk) ikinci tarama geçersiz sayılır ve yeniden yapılır, **ancak** geçersiz taramada da `AI_CHANNEL_PROCESS_COUNT` > 0 → DUR (H40), kapatılıp yeniden taranmaz; H40 satırı hizalandı |
+| Low-B — optik sürücü pencere öncesi/içi (ikinci inceleme) | `85e67f0c` L789–L793, L795–L799, L3926, L3947 | L789–L791, L793–L805, L3937, L3958 | Pencere öncesinde `OPTICAL_DRIVES_MATCH_RECORD=False` veya `OPTICAL_MEDIA_LOADED=True` → sanal sürücü/medya çıkarılır, optik blok **bir kez** yeniden çalıştırılır, ikinci ölçüm de eşleşmezse DUR (Y5); `CDROM_QUERY=FAIL`/`UNKNOWN` → yeniden çalıştırma yok, DUR (Y5); pencere içinde her uyuşmazlık doğrudan DUR (H40); "Beklenen" paragrafı ile DUR satırları arasındaki çelişki kaldırıldı; Y5 ve H40 satırları hizalandı |
+
+Remediasyonda değişen bloklar: yeni N3 (`d2fc34dc…` → `6bbb9e0c…`), N4
+(`c8699639…` → `53c05a95…`), N14 (`2938bf33…` → `60fe475b…`); üçü de
+`ParseInput` 0 hata. Taslağın diğer 102 bloğu bayt-bayt aynı kaldı
+(ölçüldü).
+
+- **Kapı yönü (remediasyon).** M-1 ek deneme koşulunu ölçülebilir bir
+  gözleme bağlar (daraltır). L-1 başarıyı `X_ENTRY_COUNT=1` ile daraltır.
+  L-2 optik sürücüye kayıtla eşleşme şartı ekler. L-3 ikinci taramanın
+  zamanını kayıttan doğrulanabilir kılar; 2 dakikadan kısa aralıklı ikinci
+  tarama yalnız yeniden yapılır, kabul edilmez. L-4 yeniden gönderimi bir
+  kezle sınırlar. O-1/O-2/O-6/O-7 metindir; kapıyı değiştirmez.
