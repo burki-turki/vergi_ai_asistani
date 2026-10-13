@@ -15,10 +15,14 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > provasında (e11bab73, §0) çalıştırılmıştır. Revizyon 2'nin (§34.8) değişen ve yeni
 > blokları delta2 provasında (709b329c, §0) ölçülmüş, prova
 > `STOPPED_ON_UNEXPECTED_RESULT` ile bitmiş ve bulguları revizyon 3'e
-> (§34.9) işlenmiştir. **Revizyon 3'ün değişen ve yeni blokları (N4, N16,
-> N17 ve Ek R3) henüz çalıştırılmamıştır**; yalnız PowerShell
-> ayrıştırıcısıyla (`ParseInput`) denetlenmiştir ve delta3 provasına
-> tabidir (§32/1).
+> (§34.9) işlenmiştir. Revizyon 3'ün değişen ve yeni blokları (N4, N16,
+> N17 ve Ek R3) için delta3 provasının Faz A'sı (86c4a7da, §0) A.0–A.9'u
+> geçmiş, A.10'da `STOPPED_ON_UNEXPECTED_RESULT` ile durmuştur; kök neden
+> N105 (`ac.ps1`) temizlik satırıdır ve revizyon 4'te (§34.10)
+> düzeltilmiştir. **Revizyon 4'ün kiti henüz uçtan uca
+> çalıştırılmamıştır**; revizyon 4'te değişen N105 yalnız PowerShell
+> ayrıştırıcısıyla (`ParseInput`) denetlenmiştir ve revizyon 3/4 blokları
+> delta3 provasına tabidir (§32/1).
 
 ---
 
@@ -38,7 +42,9 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Delta prova (revizyon 1) | `vergi_step10_delta_e11bab73` (repo dışı), runbook `4f5c37e` (blob SHA-256 `1397ea07ad0c56e689d073ccbfc0b74177edc39847c5895f69596b1bf9f08699`; `c2a7dbc` ile aynı) üzerinde. Plan v7 SHA-256 `237990f4e6585ad567c02080c5e37183faa196a4c9a94471a2b12d8dd4378d08`; özet `run\summary-r2.md` SHA-256 `97df1d1f5e3e7a19cda95a37d8b94d90a4d11b72aa7a3bfcbd38af19b8f3ce86`; inceleme `run\review\20261012-161035-independent-review.md` SHA-256 `29d0038d4b4d65b39679b1cdceb69f1c04fa3e48436ba60c0060563cba4e6352` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; 270 dosyanın tam hash manifesti) |
 | Delta2 prova (revizyon 2) | `vergi_step10_delta2_709b329c` (repo dışı), runbook `977a5e7` üzerinde. Plan `vergi_step10_delta2_plan_3612696e\plan_v4.md` SHA-256 `7a85200d6ae92872e09f949308cc3b7548102f4efc2bf095037365e72ea2651c`; `run\findings.md` SHA-256 `ac1638fe796e5eb6f57b8403bf2eaffff9763850c3d49e1bad73503bffdab5e1`; `run\summary.md` SHA-256 `fdae7cba84fbdc4e8141f8231ee254935ae26adf96df77f42fee4fbcadbca587` (sonuç `STOPPED_ON_UNEXPECTED_RESULT`); inceleme `run\review\20261013-002359-independent-evidence-review.md` SHA-256 `94eb7299a9e4c5f74391c3edcd24b1ac5c5eea641762dec46386314cf41bfd51` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H1/M2/L4/O6) |
 | Revizyon 3 kapsamı | `vergi_step10_rev3_scope_e358b2d8\scope.md` SHA-256 `ed7fc1188e36438078dcbd8ec7b9975893bb3dbb4b78fc779c2fd503bcb5774a` ve `scope_addendum.md` SHA-256 `ed0b9792d992b4ecff9b0ee6583283af9e11713aca05ce735bc0c0eec37486e9` (repo dışı; çelişkide ek geçerli) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir ve delta2 provası (709b329c) bulgularıyla revizyon 3'tür; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9) |
+| Delta3 prova Faz A (revizyon 3) | `C:\vd3_86c4a7da` (repo dışı; kök `86c4a7da`), runbook `fae0347` üzerinde; plan `plan_v4.md` SHA-256 `8fb46355fa032b99b0941d90833278f6719c780b9c64cd0dae356bd418436140`. Kapanış notu `run\close-delta3-run-a.txt` SHA-256 `90dfc08558978b80dce8ebb5981aaff8b783782e1c410597722b36420e318d13`; A.10 kaydı `run\stages\A\A.10.txt` SHA-256 `ae62bcb1d0e2cc6ef17b97b0c7f83a1bf9f823bfc6458a34c55e4cebbb161f5a`. Sonuç: A.0–A.9 PASS, A.10 `STOPPED_ON_UNEXPECTED_RESULT`; A.11–A.16 ve insan penceresi çalıştırılmadı; kök neden N105 (§34.10) |
+| Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür ve delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -114,12 +120,16 @@ geçerli olduğunu formun **A1** sorusunda ayrıca teyit eder (§6.2).
   sonradan bir model çağrısına "yükseltilerek" kullanılamaz; dış yol
   yalnız temel runbook ve Bölüm 6-D kapanışıyla mümkündür.
 - **Production-ready iddiası değildir.**
-- **Revizyon 3'ün provası yapılmış değildir.** `13f19d0` sürümü sentetik
+- **Revizyon 4'ün provası yapılmış değildir.** `13f19d0` sürümü sentetik
   olarak prova edilmiştir (§0, prova ae129016); revizyon 1'in (`4f5c37e`)
   yeniden yazılan ve yeni eklenen blokları delta provasından (§0, prova
   e11bab73) geçmiştir. Revizyon 2'nin (§34.8) blokları delta2 provasında
   (§0, prova 709b329c) ölçülmüş; prova `STOPPED_ON_UNEXPECTED_RESULT` ile
-  bitmiş ve bulguları revizyon 3'e işlenmiştir. Revizyon 3'te (§34.9)
+  bitmiş ve bulguları revizyon 3'e işlenmiştir. Delta3 provasının Faz A'sı (§0,
+  prova 86c4a7da) A.10'da `STOPPED_ON_UNEXPECTED_RESULT` ile durmuş; kök
+  neden (N105 `ac.ps1` temizlik satırı) revizyon 4'te (§34.10)
+  düzeltilmiştir. Revizyon 4'ün kiti henüz uçtan uca çalıştırılmamıştır.
+  Revizyon 3'te (§34.9)
   yeniden yazılan ve yeni eklenen bloklar (N4, N16, N17 ve Ek R3 kiti)
   delta3 provasından geçmeden gerçek veriyle kullanılamaz (§34.4, §32/1).
 
@@ -361,7 +371,11 @@ Gerçek veri alınmadan **önce**, aşağıdakilerin hepsi sağlanmış olmalıd
    yeniden yazılan veya yeni eklenen her blok yeniden prova edilir.
    Revizyon 3'te (§34.9) yeniden yazılan bloklar (N4, N16, N17) ve yeni
    Ek R3 kiti (N105–N114) delta3 provasında prova edilir; devralma tabanı
-   revizyon 2 ve delta2 kanıtıdır (§34.4). §4.2/10, §4.4, §13.8 ve §28 **tek-çalışımlık** olarak yeniden
+   revizyon 2 ve delta2 kanıtıdır (§34.4). Delta3 Faz A (86c4a7da, §0)
+   A.10'da `STOPPED_ON_UNEXPECTED_RESULT` ile durdu; kök neden (N105)
+   revizyon 4'te düzeltildi (§34.10) ve revizyon 4'ün kiti henüz uçtan
+   uca çalıştırılmadı. Delta3'ün yeni bir kökte yeniden koşulması ayrı
+   kullanıcı kararıdır. §4.2/10, §4.4, §13.8 ve §28 **tek-çalışımlık** olarak yeniden
    prova edilir. Ortam değiştiği için (kapsayıcı birimi, TEMP) ayrıca
    kapsayıcı içinde **bir** hafif uçtan uca sentetik geçiş (intake →
    `manual-fact` → promotion → verification → timeline → deadline →
@@ -5870,7 +5884,7 @@ LF) baytları üzerindedir. Kit dosyalarının baytları bu gövdeye **eşittir*
 | N4 | N4 | §4.3 (a) | `53c05a95ca3560b98d4a1381624e241017c3a3e6507bba834cb5eb61021443b1` | `b216d82434a36e5b79963cedfff578c7bd065fb13fe03c2b5ca9557a480e520d` | 0 hata |
 | N16 | N16 | §6.4 | `3f17c6eb77097217f5ee780c3b304266d0b1c3189827b1b9d92b488e1b96e4eb` | `326c9216f8eeedd922b1d7fca8b8584e87ccb29b2c21e2151a23b4199449b609` | 0 hata |
 | N17 | N17 | §6.4 | `e4e3552154c7f8488b103c0ab381708eb634325bcda523af1c06b2640580c091` | `1ea37c4b84d31a24c1e938892a35c6375546d0461e8b89a9fb18c76fe0380cbb` | 0 hata |
-| — | N105 | Ek R3 (`ac.ps1`) | — | `635e0767513a562eff2734ea67f8fe8a2ee4737a941f8e3cdb4d27208c57bd0d` | 0 hata |
+| — | N105 | Ek R3 (`ac.ps1`) | — | `fdb0e55502e70ed3f54969291b2f4d2ebaa2a46456bed3169311f4357c7f6ca5` | 0 hata |
 | — | N106 | Ek R3 (`a2.ps1`) | — | `4cda7f064c96b7fb38cadd44088e473ab83901875dce852e85ae50a90cba6b5b` | 0 hata |
 | — | N107 | Ek R3 (`a3.ps1`) | — | `790e247cdafe671321033c559adff15b7a2360d963dc6d7610cad71e07c351c1` | 0 hata |
 | — | N108 | Ek R3 (`a4.ps1`) | — | `92888495ca90b009cd65ee1808c0a96cdfff531d909bff3af4307125cf0a98c1` | 0 hata |
@@ -5881,9 +5895,10 @@ LF) baytları üzerindedir. Kit dosyalarının baytları bu gövdeye **eşittir*
 | — | N113 | Ek R3 (`a9.ps1`) | — | `9193eab4b4ba28472c624ef54a5d2464c8821abdbef2950ed7236c49c91c3ea4` | 0 hata |
 | — | N114 | Ek R3/5 (tek sayfa, `text`) | — | `77a2186ff9bc6f0ff1304599095d95887ebe2f5d305d02e9533b95d130a916da` | — (PowerShell değil) |
 
-Tablodaki "Yeni SHA-256" değerleri R3 düzeltme turundan ve R3 son dar
-düzeltmeden sonraki değerlerdir (N16, N105, N112, N114 R3 düzeltme
-turunda, N110 ve N114 R3 son dar düzeltmede değişti; aşağıda).
+Tablodaki "Yeni SHA-256" değerleri R3 düzeltme turundan, R3 son dar
+düzeltmeden ve revizyon 4'ten sonraki değerlerdir (N16, N105, N112, N114
+R3 düzeltme turunda, N110 ve N114 R3 son dar düzeltmede, N105 revizyon
+4'te değişti; aşağıda ve §34.10).
 
 Blok sayısı 105 → 115 (3 değişen + 10 yeni). Kalan 102 blok (N0–N3,
 N5–N15, N18–N104) `977a5e7` ile bayt-bayt aynıdır ve aynı sırada durur
@@ -6011,6 +6026,125 @@ N6, N14–N17 ve N51 kopyalarında `DUR` dizgesi yoktur.
 
 Diğer 113 blok bu düzeltmede değişmedi. Ek R3/1 N114'ü listelemez (tek sayfa bir kit dosyası değildir); `a6.ps1` için Ek R3/1 bu tabloya atıf yapar.
 
+### 34.10 Revizyon 4
+
+YENİ (kullanıcı kararı `SCOPE_APPROVED at=2026-10-13T21:30+03:00`; dar
+düzeltme). Girdi: `fae0347` runbook'u (SHA-256
+`267e197e1e36a62acaab1a42efaf4d9692d5e36deb7042bb96d6f42a2aa00783`,
+diskten doğrulandı). Yalnız bu dosya değişti; hiçbir runbook komutu, kit
+betiği, 7z, PostgreSQL, CLI veya test çalıştırılmadı; yalnız blok
+ayrıştırma (`ParseInput`), AST tabanlı statik tarama ve hash yapıldı.
+
+**Neden.** Delta3 Faz A (kök `C:\vd3_86c4a7da`, revizyon 3 / `fae0347`)
+A.10'da `STOPPED_ON_UNEXPECTED_RESULT` ile durdu: G-20 `KIT_EXCEPTION`
+`ok=False`. Kanıt (salt-okunur): `C:\vd3_86c4a7da\run\stages\A\A.10.txt`
+ve kapanış notu `C:\vd3_86c4a7da\run\close-delta3-run-a.txt`
+(`DIAG_ERR1`, `DIAG_ERR2`, `ROOT_CAUSE`; tanı koşusu `<R>\en\diag1`).
+
+**Tanı.** N105 (`ac.ps1`) Ek R3/3 gereği genel kapsamda dot-source
+edilir; bu kapsamda `$kitPins` ile `$global:KitPins` ve `$kitVal` ile
+`$global:KitVal` **aynı değişkendir** (PowerShell değişken adları
+büyük-küçük harfe duyarsızdır). Bloğun son satırındaki `Remove-Variable
+… kitPins, … kitVal, …` bu nedenle başarılı yüklemeden hemen sonra
+`$global:KitPins`'i ve `$global:KitVal`'ı siler (bu silme mekanizması
+kod okumasıyla ve PowerShell'in statik kapsam semantiğiyle çıkarılmıştır;
+çalışma anında ölçülmedi); `a2` →
+`Get-KitHeader`/`Get-KitScript` "Cannot index into a null array" →
+`KIT_EXCEPTION`, `a2.txt` yazılmaz. `KitPins`'in null olduğu tanı
+koşusunda ölçüldü; `KitVal` çakışması bu revizyonda **statik olarak**
+doğrulandı (çalışma anında ölçülmedi). İnsan penceresi kiti aynı yolla
+yüklediğinden `a2`'nin orada da düşmesi beklenir (ölçülmedi). G-20 dışındaki
+A.10 satırlarının (G-21, G-23–G-26, `PRESIGNAL_*`) aynı nedene bağlı olup
+olmadığı bu revizyonda ölçülmedi.
+
+**Karar ve değişiklik.** Çakışan iki yerel değişken yeniden adlandırıldı:
+`$kitPins` → `$kitPinsTbl`, `$kitVal` → `$kitValTbl` (oluşturma,
+`ContainsKey`, dizinleyiciler, `.Count`, `ac.txt` kaydındaki
+`$kitPinsTbl['ac.ps1']`, iki `$global:` devri ve `Remove-Variable`
+listesi; 15 satır). Temizlik listesinden yalnız iki adı çıkarmak da
+başarılı yolu düzeltirdi, ama yükleme denetimi DUR'unda
+(`KIT_LOAD_<kod>`) `$global:KitPins`/`$global:KitVal` yarım kurulmuş
+tablolarla kalır ve bloğun başındaki `= $null` ilklendirmeleri ile
+`$global:KitPins = $kitPins` devri anlamsız öz-atamalar olurdu. Yeniden
+adlandırma yazarın amaçladığı ayrımı geri getirir: yükleme geçerse genel
+değişkenler doldurulur ve korunur; yükleme denetimi DUR'unda `$null`
+kalır. `KIT_SESSION_CREATE_FAIL` dalı iki `$global:` devrinden sonra
+geldiği için o dalda genel tablolar dolu kalır. Revizyon 3'te iki dalda
+da genel değişkenler silinirdi; iki dalda da hiçbir komut
+tanımlanmadığından bu farkın etkisi yoktur. Başka hiçbir davranış
+değişmedi.
+
+**Statik tarama (mekanik; N105–N113).** Yöntem: her blok
+`Parser.ParseInput` ile ayrıştırıldı; genel ad kümesi N105–N113'teki bütün
+`$global:<ad>` başvurularından türetildi: `KitSess`, `KitDir`, `KitEvid`,
+`KitVal`, `KitPins`, `KitSessDir`, `KitE2Dir`, `KitTeardown`, `KitRx`.
+Her blokta (a) `Remove-`/`Clear-`/`Set-`/`New-Variable` ile adı geçen her
+ad ve (b) atanan veya döngü değişkeni olan her nitelendirilmemiş yerel ad
+bu kümeyle büyük-küçük harf duyarsız karşılaştırıldı (`$null =`
+sözde-atamaları ve `$env:` atamaları değişken değildir, dışarıda tutuldu).
+
+| Blok | Yürütme kapsamı | (a) Değişken cmdlet'i ile adı geçen | (b) Atanan yerel adlar | Çakışma (rev. 3 → rev. 4) |
+|---|---|---|---|---|
+| N105 üst düzey (`ac.ps1`) | **Genel kapsamda dot-source** (Ek R3/3) | `Remove-Variable`: 18 ad (`kitWhy`, `kitNames`, `kitValNames`, `kitPinBytes`, `kitPins`→`kitPinsTbl`, `kitL`, `kitM`, `kitN`, `kitItems`, `kitI`, `kitVal`→`kitValTbl`, `kitUp`, `kitV`, `kitDurP`, `kitSteps`, `kitK`, `kitS`, `kitDurOn`) | Aynı 18 ad | **2 → 0** (`kitPins`↔`KitPins`, `kitVal`↔`KitVal`; hem atama hem silme) |
+| N105 fonksiyon gövdeleri | Fonksiyon kapsamı | — | `b`, `c`, `fs`, `h`, `i`, `k`, `kitEr`, `kitLn`, `kitNs`, `l`, `noStop`, `ok`, `p`, `q`, `r`, `rec`, `retry`, `s`, `sb`, `succ`, `t`, `w`, `x` | 0 → 0 |
+| N106 (`a2.ps1`) | `Invoke-KitStep` içinde `& $sb` (çocuk kapsam) | — | `kitRec`, `kitR` | 0 → 0 |
+| N107 (`a3.ps1`) | Aynı | — | `kitA2`, `kitFmt`, `kitInv`, `kitD1`, `kitWait`, `kitRec`, `kitT2`, `kitSec` | 0 → 0 |
+| N108 (`a4.ps1`) | Aynı; N51 ve N14 satır 1 bu çocuk kapsama dot-source edilir | — | `kitRec`, `kitTmp`, `kitDef51`, `kitDef14` | 0 → 0 |
+| N109 (`a5.ps1`) | Aynı | — | `kitRec` | 0 → 0 |
+| N110 (`a6.ps1`) | Aynı | — | `kitRb`, `kitAns` | 0 → 0 |
+| N111 (`a7.ps1`) | Aynı | — | `kitA6` | 0 → 0 |
+| N112 (`a8.ps1`) | Aynı | — | `kitRb`, `kitRec`, `kitWhy`, `kitLast`, `kitL` | 0 → 0 |
+| N113 (`a9.ps1`) | Aynı | — | `kitRec` | 0 → 0 |
+| Bilgi: kit kopyaları N3, N4, N6, N14, N15, N16, N17, N51 (kapsam dışı; değişmedi) | `Invoke-KitBlock` içinde `& $sb`; N51 ve N14 satır 1 `a4` çocuk kapsamına dot-source | N3 5, N4 4, N6 2, N14 5, N15 2, N16 17, N17 6 ad (`cd…`, `channel…`, `hh`/`defaultHistoryHandler`, `popSha`/`szSha`/`cdRec…`, `tr`/`toolOk`, `sz…`, `x…`, `n`) | Aynı adlar ve N6 `extraModules`, `m`, `rl`; N14/N51 fonksiyon yerelleri | 0 → 0 |
+
+Sonuç: çakışan adlar yalnız N105'teki bu ikisidir; revizyon 4'ten sonra
+N105–N113'te ve kit kopyalarında büyük-küçük harf duyarsız çakışma
+**0**'dır. Değişen blok `ParseInput` 0 hata verdi; yalnız ASCII, CR yok
+(LF).
+
+**Revizyon 4 inceleme düzeltme turu (bağımsız inceleme `9ab9e8ba…9c7`;
+kullanıcı kararı `USER_DECISION at=2026-10-13T23:10+03:00`).** Girdi:
+ara sürüm `b9de07df…b720` ve inceleme dosyası (`READY_FOR_COMMIT=YES`,
+0C/0H/0M/2L/3O), ikisi de diskten doğrulandı. Yalnız bu dosya değişti;
+hiçbir şey çalıştırılmadı (yalnız `ParseInput`, AST taraması ve hash).
+
+| Bulgu | Karar | Değişiklik | Bölüm / blok |
+|---|---|---|---|
+| L-1 — `Get-KitScript` pin denetimi `$global:KitPins` null iken açık başarısız (fail-open) | Fail-closed denetim | `Get-KitScript` artık ilk iş olarak `$global:KitPins`'in yokluğunu veya boşluğunu (`Count` 0) denetler; öyleyse `$null` döner ve betik yüklenmez. Çağıranların mevcut DUR yolları uygulanır: `Invoke-KitStep` → `KIT_SCRIPT_LOAD_FAIL` kilidi; `Invoke-KitBlock` → `STOP KIT_SCRIPT_LOAD=FAIL file=<ad>`; `a4` → `STOP KIT_SCRIPT_LOAD=FAIL file=n051,n014`. Revizyon 3'te null tabloda pin karşılaştırması ölümcül olmayan bir hatayla atlanmış ve betik pin denetimi olmadan çalışmıştı (delta3 kanıtında DUR nedeni `KIT_EXCEPTION`, `KIT_SCRIPT_LOAD_FAIL` değil; inceleme L-1). Başka davranış değişmedi; yeni yerel ad yok | N105 (1 yeni satır) |
+| L-2 — üst uyarı, §0 ve §1.6 delta3 Faz A'yı ve revizyon 4'ü yansıtmıyor | Güncellenir | Üst uyarı, §0 (delta3 Faz A ve revizyon 4 incelemesi pin satırları; "Revizyon" satırı), §1.4 "Bu belge ne DEĞİLDİR" maddesi (inceleme L-2'nin andığı L117–L125; başlığı "Revizyon 4'ün provası yapılmış değildir") ve §1.6/3 delta prova paragrafı: A.10'da durdu, kök neden N105, revizyon 4 ile düzeltildi, kit henüz uçtan uca çalıştırılmadı. "delta3 provasından geçmeden gerçek veriyle kullanılamaz" bağlayıcı cümlesi aynen korundu | Üst uyarı; §0; §1.4; §1.6/3 |
+| O-1 — "DUR dalında `$null` kalır" `KIT_SESSION_CREATE_FAIL` dalını kapsamıyor | Düzeltilir | Yukarıdaki "Karar ve değişiklik" paragrafı iki dalı ayrı anlatır | §34.10 |
+| O-2 — silme mekanizması ölçülmüş gibi | Düzeltilir | "Tanı" paragrafına: mekanizma kod okumasıyla çıkarıldı, çalışma anında ölçülmedi | §34.10 |
+| O-3 — N105 ilk satırı "revizyon 3" | Düzeltilir | Yorum "runbook revizyon 4" oldu | N105 (1 satır) |
+
+Düzeltme turundan sonra statik tarama yeniden yapıldı: genel ad kümesi
+ve yukarıdaki tablo değişmedi (çakışma 0; yeni satır yalnız
+`$global:KitPins` okur). N105'te revizyon 3'e göre toplam değişiklik:
+15 yeniden adlandırma satırı, 1 yorum satırı, 1 yeni satır (187 → 188
+satır).
+
+**Bu revizyonda hash'i değişen bloklar.**
+
+| Blok | Eski SHA-256 | Yeni SHA-256 | `ParseInput` |
+|---|---|---|---|
+| N105 (`ac.ps1`) | `635e0767513a562eff2734ea67f8fe8a2ee4737a941f8e3cdb4d27208c57bd0d` | `fdb0e55502e70ed3f54969291b2f4d2ebaa2a46456bed3169311f4357c7f6ca5` | 0 hata |
+
+İncelenen ara sürümde (`b9de07df…b720`) N105 hash'i
+`5788dda15245f17d649641a9a2eb79a5396340aa449f1ffa62a635712c62340e` idi;
+düzeltme turu onu yukarıdaki son değere değiştirdi.
+
+Blok sayısı 115'tir; diğer 114 blok `fae0347` ile bayt-bayt aynıdır (blok
+hash'leriyle ölçüldü). §34.9 ana tablosundaki N105 satırı ve Ek R3/1'deki
+`ac.ps1` satırı yeni değere güncellendi; §34.9 R3 düzeltme turu
+tablosundaki N105 satırı tarihsel kayıttır, değişmedi. Revizyon 4 delta3
+yeniden koşusunu yetkilendirmez; o ayrı bir kullanıcı kararıdır (yeni
+kök).
+
+**Ders.** Revizyon 3 incelemeleri kit kodunu büyük-küçük harfe duyarsız
+**dizge operatörleri** için taradı (§34.9, R3 düzeltme turu son
+paragrafı); bu hata ise büyük-küçük harfe duyarsız **değişken adlarının**
+genel kapsamda dot-source ile birleşmesidir. Statik incelemeler bu sınıfı
+yakalayamadı; delta3 PS-1 kapısı yakaladı.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -6029,7 +6163,7 @@ SHA-256 değerleri §34.9 ve aşağıdaki tablodadır.
 
 | Kit dosyası | Kaynak blok | SHA-256 |
 |---|---|---|
-| `ac.ps1` | N105 (Ek R3/3) | `635e0767513a562eff2734ea67f8fe8a2ee4737a941f8e3cdb4d27208c57bd0d` |
+| `ac.ps1` | N105 (Ek R3/3) | `fdb0e55502e70ed3f54969291b2f4d2ebaa2a46456bed3169311f4357c7f6ca5` |
 | `a2.ps1` … `a9.ps1` | N106 … N113 (Ek R3/4) | §34.9 tablosu |
 | `n003.ps1` | N3 (§4.2/10 optik sürücü) | `6bbb9e0c0422baa967edb15d56e94b350a078de37ab6de8f3d5fc892c455a1d4` |
 | `n004.ps1` | N4 (§4.3 a tarama) | `b216d82434a36e5b79963cedfff578c7bd065fb13fe03c2b5ca9557a480e520d` |
@@ -6105,7 +6239,7 @@ Oturum sayısına sınır yoktur (R3 düzeltme turu; kullanıcı kararı
 M-1: oturum adını operatör yazmaz).
 
 ```powershell
-# ac.ps1 - Ek R3 kit onyukleyicisi (runbook revizyon 3). ASCII. Yalniz dot-source ile yuklenir (Ek R3/3).
+# ac.ps1 - Ek R3 kit onyukleyicisi (runbook revizyon 4). ASCII. Yalniz dot-source ile yuklenir (Ek R3/3).
 # Pinleri, kit-values.txt'yi ve DUR kilidini denetler; kit fonksiyonlarini ve a2..a9 komutlarini tanimlar.
 # Icerik okumaz, 7z veya baska arac cagirmaz.
 if ($null -ne $global:KitSess) { Write-Host 'KIT zaten yuklu. Yeni oturum icin pencereyi kapatip kagittaki komutla yeniden acin.'; return }
@@ -6156,6 +6290,7 @@ function global:Test-KitPass([string]$Path, [bool]$SameSession) {
 }
 function global:Get-KitHeader([string]$Name) { $h = @("STEP=$Name", "KIT_SESSION=$($global:KitSess)", "KIT_FILE_SHA256=$Name.ps1 $($global:KitPins[$Name + '.ps1'])", "STARTED_AT=$(Get-KitNow)"); if ($global:KitTeardown) { $h += 'KIT_TEARDOWN_SESSION=True' }; return $h }
 function global:Get-KitScript([string]$Name, [hashtable]$Subst, [string]$FirstLine) {
+    if (($null -eq $global:KitPins) -or ($global:KitPins.Count -eq 0)) { return $null }
     try { $b = [System.IO.File]::ReadAllBytes((Join-Path $global:KitDir "$Name.ps1")) } catch { return $null }
     if ((Get-KitSha $b) -cne [string]$global:KitPins[$Name + '.ps1']) { return $null }
     foreach ($x in $b) { if ($x -gt 127) { return $null } }
@@ -6228,35 +6363,35 @@ $kitNames = @('ac.ps1', 'a2.ps1', 'a3.ps1', 'a4.ps1', 'a5.ps1', 'a6.ps1', 'a7.ps
 $kitValNames = @('repo-root', 'intake-dir', 'container-temp', '7z', 'sevenzip-root', 'poppler-bin-dir')
 try {
     $kitPinBytes = [System.IO.File]::ReadAllBytes((Join-Path $global:KitDir 'pins.txt'))
-    $kitPins = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
+    $kitPinsTbl = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
     foreach ($kitL in [System.Text.Encoding]::ASCII.GetString($kitPinBytes).Split([char]10)) {
         if ($kitL -ceq '') { continue }
         $kitM = [regex]::Match($kitL, '^([a-z0-9.-]+) ([0-9a-f]{64})$')
-        if ((-not $kitM.Success) -or $kitPins.ContainsKey($kitM.Groups[1].Value)) { $kitWhy = 'PINS_FORMAT'; break }
-        $kitPins[$kitM.Groups[1].Value] = $kitM.Groups[2].Value
+        if ((-not $kitM.Success) -or $kitPinsTbl.ContainsKey($kitM.Groups[1].Value)) { $kitWhy = 'PINS_FORMAT'; break }
+        $kitPinsTbl[$kitM.Groups[1].Value] = $kitM.Groups[2].Value
     }
     if (($kitWhy -ceq '') -and ($global:KitEvid -cnotmatch '^[A-Za-z]:\\[A-Za-z0-9 ._()\\-]*$')) { $kitWhy = 'EVID_CHARS' }
-    if (($kitWhy -ceq '') -and ($kitPins.Count -ne $kitNames.Count)) { $kitWhy = 'PINS_COUNT' }
-    if ($kitWhy -ceq '') { foreach ($kitN in $kitNames) { if (-not $kitPins.ContainsKey($kitN)) { $kitWhy = 'PINS_NAME' } } }
+    if (($kitWhy -ceq '') -and ($kitPinsTbl.Count -ne $kitNames.Count)) { $kitWhy = 'PINS_COUNT' }
+    if ($kitWhy -ceq '') { foreach ($kitN in $kitNames) { if (-not $kitPinsTbl.ContainsKey($kitN)) { $kitWhy = 'PINS_NAME' } } }
     if ($kitWhy -ceq '') {
         $kitItems = @(Get-ChildItem -LiteralPath $global:KitDir -Force -ErrorAction Stop)
         if ($kitItems.Count -ne ($kitNames.Count + 1)) { $kitWhy = 'KIT_DIR_COUNT' }
         foreach ($kitI in $kitItems) { if ($kitI.PSIsContainer -or (($kitNames -cnotcontains $kitI.Name) -and ($kitI.Name -cne 'pins.txt'))) { $kitWhy = 'KIT_DIR_ITEM' } }
     }
-    if ($kitWhy -ceq '') { foreach ($kitN in $kitNames) { if ((Get-KitSha ([System.IO.File]::ReadAllBytes((Join-Path $global:KitDir $kitN)))) -cne $kitPins[$kitN]) { $kitWhy = 'PIN_MISMATCH' } } }
+    if ($kitWhy -ceq '') { foreach ($kitN in $kitNames) { if ((Get-KitSha ([System.IO.File]::ReadAllBytes((Join-Path $global:KitDir $kitN)))) -cne $kitPinsTbl[$kitN]) { $kitWhy = 'PIN_MISMATCH' } } }
     if ($kitWhy -ceq '') {
-        $kitVal = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
+        $kitValTbl = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
         $kitUp = [System.IO.Path]::GetFullPath($env:USERPROFILE).TrimEnd('\') + '\'
         foreach ($kitL in [System.IO.File]::ReadAllLines((Join-Path $global:KitDir 'kit-values.txt'), (New-Object System.Text.UTF8Encoding($false)))) {
             $kitM = [regex]::Match($kitL, '^([a-z0-9-]+)=(.+)$')
-            if ((-not $kitM.Success) -or ($kitValNames -cnotcontains $kitM.Groups[1].Value) -or $kitVal.ContainsKey($kitM.Groups[1].Value)) { $kitWhy = 'VALUES_FORMAT'; break }
+            if ((-not $kitM.Success) -or ($kitValNames -cnotcontains $kitM.Groups[1].Value) -or $kitValTbl.ContainsKey($kitM.Groups[1].Value)) { $kitWhy = 'VALUES_FORMAT'; break }
             $kitV = $kitM.Groups[2].Value
             if ($kitV -cnotmatch '^[A-Za-z]:\\[A-Za-z0-9 ._()\\-]*$') { $kitWhy = 'VALUES_CHARS'; break }
             if ([System.IO.Path]::GetFullPath($kitV).TrimEnd('\') -cne $kitV.TrimEnd('\')) { $kitWhy = 'VALUES_CANONICAL'; break }
             if (($kitV.TrimEnd('\') + '\').StartsWith($kitUp, [System.StringComparison]::OrdinalIgnoreCase)) { $kitWhy = 'VALUES_USERPROFILE'; break }
-            $kitVal[$kitM.Groups[1].Value] = $kitV
+            $kitValTbl[$kitM.Groups[1].Value] = $kitV
         }
-        if (($kitWhy -ceq '') -and ($kitVal.Count -ne $kitValNames.Count)) { $kitWhy = 'VALUES_COUNT' }
+        if (($kitWhy -ceq '') -and ($kitValTbl.Count -ne $kitValNames.Count)) { $kitWhy = 'VALUES_COUNT' }
     }
 } catch { if ($kitWhy -ceq '') { $kitWhy = 'LOAD_EXCEPTION' } }
 if ($kitWhy -cne '') {
@@ -6265,9 +6400,9 @@ if ($kitWhy -cne '') {
     Write-Host "DUR. KIT YUKLENEMEDI (KIT_LOAD_$kitWhy). Hicbir adim calismaz."
     Write-Host 'Parola kagidi varsa yirtin; saati kagida not edin. Pencereyi kapatin.'
 } else {
-    $global:KitPins = $kitPins
-    $kitVal['evidence-dir'] = $global:KitEvid
-    $global:KitVal = $kitVal
+    $global:KitPins = $kitPinsTbl
+    $kitValTbl['evidence-dir'] = $global:KitEvid
+    $global:KitVal = $kitValTbl
     $kitSteps = Join-Path $global:KitEvid 'steps'
     $null = [System.IO.Directory]::CreateDirectory($kitSteps)
     $global:KitE2Dir = Join-Path $kitSteps 'e2'
@@ -6279,7 +6414,7 @@ if ($kitWhy -cne '') {
     } else {
         $kitDurOn = Test-Path -LiteralPath (Join-Path $global:KitEvid 'DUR.txt')
         $global:KitTeardown = $kitDurOn
-        $null = New-KitRecord (Join-Path $global:KitSessDir 'ac.txt') @('STEP=ac', "KIT_SESSION=$($global:KitSess)", "KIT_FILE_SHA256=ac.ps1 $($kitPins['ac.ps1'])", "KIT_PINS_SHA256=$(Get-KitSha $kitPinBytes)", "KIT_DUR_PRESENT=$kitDurOn", "KIT_TEARDOWN_SESSION=$kitDurOn", 'KIT_LOAD=OK', "LOADED_AT=$(Get-KitNow)")
+        $null = New-KitRecord (Join-Path $global:KitSessDir 'ac.txt') @('STEP=ac', "KIT_SESSION=$($global:KitSess)", "KIT_FILE_SHA256=ac.ps1 $($kitPinsTbl['ac.ps1'])", "KIT_PINS_SHA256=$(Get-KitSha $kitPinBytes)", "KIT_DUR_PRESENT=$kitDurOn", "KIT_TEARDOWN_SESSION=$kitDurOn", 'KIT_LOAD=OK', "LOADED_AT=$(Get-KitNow)")
         function global:a2 { Invoke-KitStep 'a2' $global:KitTeardown }
         function global:a3 { Invoke-KitStep 'a3' $global:KitTeardown }
         function global:a4 { Invoke-KitStep 'a4' $false }
@@ -6291,7 +6426,7 @@ if ($kitWhy -cne '') {
         if ($kitDurOn) { Write-Host "KIT YUKLENDI, ama DUR kilidi var: SILME OTURUMU $($global:KitSess). Yalniz a2, a3 (kanal kapisi), a8 ve a9 calisir; a4-a7 calismaz." } else { Write-Host "KIT YUKLENDI. Oturum $($global:KitSess). Siradaki: a2 yazip Enter." }
     }
 }
-Remove-Variable kitWhy, kitNames, kitValNames, kitPinBytes, kitPins, kitL, kitM, kitN, kitItems, kitI, kitVal, kitUp, kitV, kitDurP, kitSteps, kitK, kitS, kitDurOn -ErrorAction SilentlyContinue
+Remove-Variable kitWhy, kitNames, kitValNames, kitPinBytes, kitPinsTbl, kitL, kitM, kitN, kitItems, kitI, kitValTbl, kitUp, kitV, kitDurP, kitSteps, kitK, kitS, kitDurOn -ErrorAction SilentlyContinue
 ```
 
 ### Ek R3/4 Adımlar ve ortak kurallar
