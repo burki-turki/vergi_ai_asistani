@@ -12,10 +12,13 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > repo kaynağının **okunmasıyla** türetilmiştir. `13f19d0` sürümünün
 > komutları ayrı bir sentetik provada çalıştırılmıştır (§0); revizyon
 > 1'in (`4f5c37e`) yeni ve değişen blokları §34.4 eşlemesine göre delta
-> provasında (e11bab73, §0) çalıştırılmıştır. **Revizyon 2'nin (§34.8) değişen ve yeni
-> blokları henüz çalıştırılmamıştır**; yalnız PowerShell ayrıştırıcısıyla
-> (`ParseInput`) denetlenmiştir ve delta provasına (Δ1–Δ5) tabidir
-> (§32/1).
+> provasında (e11bab73, §0) çalıştırılmıştır. Revizyon 2'nin (§34.8) değişen ve yeni
+> blokları delta2 provasında (709b329c, §0) ölçülmüş, prova
+> `STOPPED_ON_UNEXPECTED_RESULT` ile bitmiş ve bulguları revizyon 3'e
+> (§34.9) işlenmiştir. **Revizyon 3'ün değişen ve yeni blokları (N4, N16,
+> N17 ve Ek R3) henüz çalıştırılmamıştır**; yalnız PowerShell
+> ayrıştırıcısıyla (`ParseInput`) denetlenmiştir ve delta3 provasına
+> tabidir (§32/1).
 
 ---
 
@@ -33,7 +36,9 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Sentetik prova | `vergi_step10_local_rehearsal_ae129016` (repo dışı; plan v3 SHA-256 `587b45d953a1a018ac8783aa6362e3890b68277ab7085389a8f80cbe2de7df6e`), runbook `13f19d0` üzerinde. Özet `run\summary.md` SHA-256 `30c630c7bbb83caf7e882c8371b00b6b29a1db6babd814d0f697f03ad6ddeac0` |
 | Prova incelemesi | Aynı kökte `run\review\20261010-independent-review.md`, SHA-256 `62e80d52d563c23c0b3bd459c8383f2989d1a6dc9f1bbe9ffa5578392bfbe640` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; 207 dosyanın tam hash manifesti) |
 | Delta prova (revizyon 1) | `vergi_step10_delta_e11bab73` (repo dışı), runbook `4f5c37e` (blob SHA-256 `1397ea07ad0c56e689d073ccbfc0b74177edc39847c5895f69596b1bf9f08699`; `c2a7dbc` ile aynı) üzerinde. Plan v7 SHA-256 `237990f4e6585ad567c02080c5e37183faa196a4c9a94471a2b12d8dd4378d08`; özet `run\summary-r2.md` SHA-256 `97df1d1f5e3e7a19cda95a37d8b94d90a4d11b72aa7a3bfcbd38af19b8f3ce86`; inceleme `run\review\20261012-161035-independent-review.md` SHA-256 `29d0038d4b4d65b39679b1cdceb69f1c04fa3e48436ba60c0060563cba4e6352` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; 270 dosyanın tam hash manifesti) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1) ve e11bab73 delta provası bulgularıyla revizyon 2'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8) |
+| Delta2 prova (revizyon 2) | `vergi_step10_delta2_709b329c` (repo dışı), runbook `977a5e7` üzerinde. Plan `vergi_step10_delta2_plan_3612696e\plan_v4.md` SHA-256 `7a85200d6ae92872e09f949308cc3b7548102f4efc2bf095037365e72ea2651c`; `run\findings.md` SHA-256 `ac1638fe796e5eb6f57b8403bf2eaffff9763850c3d49e1bad73503bffdab5e1`; `run\summary.md` SHA-256 `fdae7cba84fbdc4e8141f8231ee254935ae26adf96df77f42fee4fbcadbca587` (sonuç `STOPPED_ON_UNEXPECTED_RESULT`); inceleme `run\review\20261013-002359-independent-evidence-review.md` SHA-256 `94eb7299a9e4c5f74391c3edcd24b1ac5c5eea641762dec46386314cf41bfd51` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H1/M2/L4/O6) |
+| Revizyon 3 kapsamı | `vergi_step10_rev3_scope_e358b2d8\scope.md` SHA-256 `ed7fc1188e36438078dcbd8ec7b9975893bb3dbb4b78fc779c2fd503bcb5774a` ve `scope_addendum.md` SHA-256 `ed0b9792d992b4ecff9b0ee6583283af9e11713aca05ce735bc0c0eec37486e9` (repo dışı; çelişkide ek geçerli) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir ve delta2 provası (709b329c) bulgularıyla revizyon 3'tür; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -109,12 +114,14 @@ geçerli olduğunu formun **A1** sorusunda ayrıca teyit eder (§6.2).
   sonradan bir model çağrısına "yükseltilerek" kullanılamaz; dış yol
   yalnız temel runbook ve Bölüm 6-D kapanışıyla mümkündür.
 - **Production-ready iddiası değildir.**
-- **Revizyon 2'nin provası yapılmış değildir.** `13f19d0` sürümü sentetik
+- **Revizyon 3'ün provası yapılmış değildir.** `13f19d0` sürümü sentetik
   olarak prova edilmiştir (§0, prova ae129016); revizyon 1'in (`4f5c37e`)
   yeniden yazılan ve yeni eklenen blokları delta provasından (§0, prova
-  e11bab73) geçmiştir. Revizyon 2'de (§34.8) yeniden yazılan ve yeni
-  eklenen bloklar §1.6/3'teki delta provadan (Δ1–Δ5) geçmeden gerçek
-  veriyle kullanılamaz (§34.4, §32/1).
+  e11bab73) geçmiştir. Revizyon 2'nin (§34.8) blokları delta2 provasında
+  (§0, prova 709b329c) ölçülmüş; prova `STOPPED_ON_UNEXPECTED_RESULT` ile
+  bitmiş ve bulguları revizyon 3'e işlenmiştir. Revizyon 3'te (§34.9)
+  yeniden yazılan ve yeni eklenen bloklar (N4, N16, N17 ve Ek R3 kiti)
+  delta3 provasından geçmeden gerçek veriyle kullanılamaz (§34.4, §32/1).
 
 ### 1.5 Yazım kuralları (bağlayıcı)
 
@@ -216,6 +223,15 @@ $env:PYTHONIOENCODING = "utf-8"
   bağlantı dizesi, kimlik bilgisi dosyası, anahtar, kişi/kurum adı, iletişim
   bilgisi, kimlik veya vergi numarası **bulunmaz** ve operatör de bunları bu
   belgeye, commit'e veya evidence dizinine **yazmaz**.
+- **Dar istisna — kit ayar dosyası (revizyon 3; kullanıcı kararı S-1=A).**
+  `<evidence-dir>\kit\kit-values.txt` (Ek R3/2) mutlak yol taşır; yalnız
+  şu altı değeri: `<repo-root>`, `<intake-dir>`, `<container-temp>`,
+  `<7z>`, `<sevenzip-root>` ve `<poppler-bin-dir>`. Hiçbiri kullanıcı
+  profili (`%USERPROFILE%`) altında olamaz; `<evidence-dir>` yolu bu
+  dosyaya yazılmaz. Bu koşul kit kurulurken ajan tarafından ve her
+  yüklemede `ac.ps1` tarafından mekanik olarak denetlenir; denetim
+  başarısızsa kit **kurulmaz/yüklenmez** ve **DUR** — sessiz düzeltme
+  yoktur. İstisna başka hiçbir evidence dosyasına uzanmaz.
 - Bölüm numarası tek başına yazıldığında (ör. "§13") **bu runbook'un**
   bölümü kastedilir. Temel runbook "Temel §N", `CLAUDE.md` belge adıyla
   yazılır. "Zincir adım N" ifadesi §2.1 tablosundaki satır numarasıdır.
@@ -342,7 +358,10 @@ Gerçek veri alınmadan **önce**, aşağıdakilerin hepsi sağlanmış olmalıd
    provasında prova edilmiştir (§0); revizyon 2'de (§34.8) yeniden
    yazılan veya yeni eklenen her blok, devralma tabanı e11bab73 olmak
    üzere (§34.4, K-R2-10) yeniden prova edilir. Her iki revizyonda da
-   yeniden yazılan veya yeni eklenen her blok yeniden prova edilir; §4.2/10, §4.4, §13.8 ve §28 **tek-çalışımlık** olarak yeniden
+   yeniden yazılan veya yeni eklenen her blok yeniden prova edilir.
+   Revizyon 3'te (§34.9) yeniden yazılan bloklar (N4, N16, N17) ve yeni
+   Ek R3 kiti (N105–N114) delta3 provasında prova edilir; devralma tabanı
+   revizyon 2 ve delta2 kanıtıdır (§34.4). §4.2/10, §4.4, §13.8 ve §28 **tek-çalışımlık** olarak yeniden
    prova edilir. Ortam değiştiği için (kapsayıcı birimi, TEMP) ayrıca
    kapsayıcı içinde **bir** hafif uçtan uca sentetik geçiş (intake →
    `manual-fact` → promotion → verification → timeline → deadline →
@@ -386,7 +405,18 @@ Gerçek veri alınmadan **önce**, aşağıdakilerin hepsi sağlanmış olmalıd
      `claude`, `Code`, `ChatGPT`, `copilot-runtime`, `M365Copilot`,
      `OneDrive`, `OneDrive.Sync.Service` ve desene uyan her süreç §4.3
      (a)'daki kapatma prosedürüyle kapatılır; kapatılamayan veya ikinci
-     taramada yeniden görünen → **DUR** (H40).
+     taramada yeniden görünen → **DUR** (H40). Revizyon 3'ten itibaren
+     iki tarama Ek R3 kitinin `a2` ve `a3` adımlarıyla, her içerik
+     oturumunun kapanış taraması `a9` ile yapılır (§4.3 a).
+   - **İnsan adım kiti (revizyon 3; Ek R3; kullanıcı kararları K-R3-1,
+     K-R3-12).** Zincir adım 4'ten önce, içerik penceresinin dışında ve
+     hiçbir gerçek içerik yokken, ayrı bir ajan oturumu kiti Ek R3/2'ye
+     göre `<evidence-dir>\kit\` altına kurar ve `KIT_BUILD=OK` yazar; bu
+     oturum kurulumdan sonra kapatılır (§4.3 a). Kit bloklardan bayt-bayt
+     kopyalanır, yeniden üretilmez; hash'i Ek R3/1 tablosuyla eşit değilse
+     veya `kit-values.txt` denetimi (§1.5) geçmezse kit kurulmaz: **DUR**.
+     Değerleri doldurulmuş tek sayfalık adım listesi (Ek R3/5) kâğıda
+     basılmıştır.
    - **Tek yazan oturum.** İçerik penceresi boyunca **sıfır** AI oturumu
      bulunur. Pencere dışındaki ajan işlerinde aynı repo, kapsayıcı ve
      evidence alanında tek yazan oturum kuralı (`CLAUDE.md` §14.4)
@@ -837,7 +867,9 @@ Remove-Variable cdr, cdTr, cdL, cd, cdMl -ErrorAction SilentlyContinue
 Kaynak: Temel L473–L613. **Sapmalar:** içerik penceresinin bitiş adımı
 zincir adım 26–27'ye bağlandı; handler sınıflandırmasındaki maskeleme
 cümlesi çıkarıldı; (a)'ya Claude Code/VS Code ve IDE klon kuralı
-paragrafı eklendi (revizyon, §34). Komut blokları **birebirdir**.
+paragrafı eklendi (revizyon, §34). Komut blokları **birebirdir**; tek
+istisna (a) Adım 1 tarama bloğudur: revizyon 3'te kültürden bağımsız
+eşleşmeye geçirilmiştir (F-D2-TRCULTURE; §34.9).
 
 **İçerik penceresi**, gerçek belgenin teslim alındığı andan (zincir adım 5)
 gerçek verinin, geçici kopyaların ve kapsayıcının silinmesinin veya
@@ -879,13 +911,19 @@ Adım 1 — yardımcı süreç adı taraması (yalnız süreç **adı** basar; l
 tarama güvenlik garantisi **değildir**: `node`, `Code - Insiders`,
 `python`, `powershell` veya tarayıcı gibi genel taşıyıcı süreçler AI
 araçlarını veya eklentilerini barındırabilir ve bu desenle **ayırt
-edilemez**. `0` sonucu tek başına kanalların kapalı olduğunu kanıtlamaz:
+edilemez**. `0` sonucu tek başına kanalların kapalı olduğunu kanıtlamaz.
+Eşleşme büyük-küçük harfe duyarsız ve **kültürden bağımsızdır**
+(revizyon 3; F-D2-TRCULTURE): tr-TR kültüründe `-match` ile `(?i)`
+büyük `I`'yı küçük `i` ile eşleştirmez (delta2 kaydı 0.6: tr-TR 0/3,
+CultureInvariant 3/3):
 
 ```powershell
-$channelPattern = '(?i)claude|chatgpt|copilot|cursor|windsurf|^code$|pycharm|idea|webstorm|rider|teams|zoom|anydesk|teamviewer|quickassist|onedrive|dropbox|googledrive'
-$channelNames = @(Get-Process | Select-Object -ExpandProperty ProcessName -Unique | Where-Object { $_ -match $channelPattern } | Sort-Object)
+$channelPattern = 'claude|chatgpt|copilot|cursor|windsurf|^code$|pycharm|idea|webstorm|rider|teams|zoom|anydesk|teamviewer|quickassist|onedrive|dropbox|googledrive'
+$channelOptions = [System.Text.RegularExpressions.RegexOptions]'IgnoreCase, CultureInvariant'
+$channelNames = @(Get-Process | Select-Object -ExpandProperty ProcessName -Unique | Where-Object { [regex]::IsMatch($_, $channelPattern, $channelOptions) } | Sort-Object)
 "AI_CHANNEL_PROCESS_COUNT=$($channelNames.Count)"; foreach ($n in $channelNames) { "AI_CHANNEL_PROCESS=$n" }
 "AI_CHANNEL_SCAN at=$([DateTimeOffset]::Now.ToString('yyyy-MM-ddTHH:mm:sszzz', [System.Globalization.CultureInfo]::InvariantCulture))"
+Remove-Variable channelPattern, channelOptions, channelNames, n -ErrorAction SilentlyContinue
 ```
 
 Beklenen: `AI_CHANNEL_PROCESS_COUNT=0`. Eşleşen her araç kapatılır ve tarama
@@ -921,6 +959,40 @@ içerik oturumunun başında (yeniden başlatmadan sonra dahil):
    (H40) — süreç kapatılıp yeniden taranmaz. Zaman damgası eksik veya
    okunamıyorsa **DUR** (H40).
 
+**Kit ile yürütme (bağlayıcı; revizyon 3; kullanıcı kararları K-R3-4,
+K-R3-8, K-R3-9; Ek R3).** Her içerik oturumu Ek R3/3'teki tek komutla
+açılır. Madde 1–2'deki kapatma **`a2`'den önce** yapılır; insan
+penceresinde "kapat ve yeniden tara" dalı **yoktur**. Tarama 1 `a2`,
+tarama 2 `a3` ile yapılır. `a3`, tarama 1'in `at=` damgasından 120
+saniye geçmeden **tarama yapmaz ve kayıt yazmaz**, yalnız kalan süreyi
+basar; bu yüzden kit modunda kısa aralıklı (geçersiz) ikinci tarama
+oluşmaz. İki taramadan birinde sayı ≠ 0 → `<evidence-dir>\DUR.txt` ve
+**DUR** (H40); DUR kilidinden sonra kanal ve E2 adımlarının hiçbiri
+çalışmaz (tek istisna aşağıdaki silme oturumunda `a2`/`a3`'tür). Her içerik oturumu `a9` ile biter: `a9`, kullanıcıdan ek işlem
+istemeden otomatik bir **kapanış taraması** yapar; sayı ≠ 0 → `STOP
+CLOSING_SCAN_OK=False`, bulgu kaydı ve `DUR.txt` (H40). Pencere boyunca
+hiçbir sohbet, planlayıcı oturumu veya yardım sayfası açılmaz; tek yardım
+pencereden önce basılmış tek sayfalık adım listesidir (Ek R3/5). Operatör
+pencereye fare ile tıklamaz; başlıkta "Seç"/"Select" görünürse Esc'e
+basar (konsol seçim kipi yazımı durdurabilir; kanıtlanmış bir neden
+değildir, sertleştirmedir). Runbook'un kendisinin yapay zekâ özelliği
+taşımayan yerel bir metin görüntüleyicide salt-okunur açık tutulması
+yardım sayfası sayılmaz (R3 düzeltme turu; inceleme L-3).
+
+**Silme (teardown) oturumu (R3 düzeltme turu; kullanıcı kararı
+H-1=A).** `<evidence-dir>\DUR.txt` varken açılan pencere bir
+**silme oturumudur**; `ac.ps1` bunu yükleme anında belirler ve
+`KIT_TEARDOWN_SESSION=True` satırını `ac.txt`'ye ve o oturumun her adım
+kaydına yazar. Silme oturumunda `a2` ve `a3` kilitte de çalışır ve
+normal oturumla aynı denetimleri yapar (`CONTENT_SESSION_EP`, N6, iki
+kanal taraması, 120 sn aralık; hiçbir kapı gevşemez); `a4`–`a7` bu
+pencerede, kilit sonradan kaldırılmış olsa bile, çalışmaz; `a8` ve `a9`
+değişmez. Silme oturumu yalnız §25.2/8–9 ve §28 işleri içindir ve
+onların yazılı karar ve ayrı `REAL_ACTION_APPROVED` şartlarını
+değiştirmez. Kilit bir pencerenin içinde oluşursa o pencere silme
+oturumu olmaz: orada `a2`/`a3` çalışmaz; pencere kapatılır ve tek
+sayfadaki komutla yeniden açılır.
+
 Bu prosedür yalnız pencere boyunca kapatmadır; **hiçbir sistem ayarı
 değiştirilmez**. Başlangıç öğelerinin kalıcı olarak devre dışı bırakılması
 (Görev Yöneticisi → Başlangıç) bir sistem ayarı değişikliğidir; bu runbook
@@ -945,7 +1017,15 @@ doğrulanamıyorsa: **DUR.** Kapı, içerik taşıyan her yeni oturumun başınd
 yeniden ölçülür.
 
 **(b) İçerik oturumunun açılması.** İçerik taşıyan her PowerShell oturumu
-`powershell.exe -NoProfile` komutuyla (bayrak kısaltılmadan) açılır. Oturumun
+`powershell.exe -NoProfile` komutuyla (bayrak kısaltılmadan) açılır.
+Revizyon 3'ten itibaren (kullanıcı kararı K-R3-2) oturum Ek R3/3'teki
+komutla açılır: `powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit
+-Command ". '<evidence-dir>\kit\ac.ps1'"`. `-ExecutionPolicy Bypass` yalnız
+bu süreç içindir; sistem ayarı değişmez (bu cihazda tanımsız ilke
+`Restricted` demektir ve `.ps1` dosyaları bayraksız çalışmaz). `ac.ps1`
+yalnız pin, ayar ve kilit denetimi yapar ve kit komutlarını tanımlar;
+içerik okumaz, araç çağırmaz. Aşağıdaki blok kit modunda `a2` içinde,
+değişmeden çalışır; `a2` ayrıca `CONTENT_SESSION_EP=Bypass` yazar. Oturumun
 ilk komutları (Temel L546–L561 birebir):
 
 ```powershell
@@ -968,7 +1048,8 @@ $env:PYTHONIOENCODING = "utf-8"
 Beklenen, hepsi birlikte: `CONTENT_SESSION_NOPROFILE=True`,
 `TRANSCRIPT_ACTIVE=False`, `EXTRA_MODULE_COUNT=0`,
 `HISTORY_HANDLER_STATE=NONE` veya `HISTORY_HANDLER_STATE=DEFAULT`,
-`COMMAND_VALIDATION_HANDLER_STATE=NONE`, `HISTORY_SAVE_STYLE=SaveNothing`.
+`COMMAND_VALIDATION_HANDLER_STATE=NONE`, `HISTORY_SAVE_STYLE=SaveNothing`
+(kit modunda ayrıca `CONTENT_SESSION_EP=Bypass`).
 Başka her çıktı veya doğrulanamayan bir durum: **DUR** (H53).
 
 **Handler sınıflandırması (bağlayıcı).** Yalnız varsayılan bir geçmiş
@@ -1363,10 +1444,10 @@ yazılır: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
   kuralı dosya avukatına, kanal belirlemesiyle birlikte, karar kanalında
   içeriksiz bir teknik not olarak iletilir (`OUTBOUND_NOTICE_SENT`; §21/4).
   Başlıkları şifreli bir arşiv aşağıdaki yöntem kontrolünde **her zaman**
-  `STOP` verir (parola istenmez; bu davranış — `$null |` bağlamasında
-  7z'nin istem göstermeden ve beklemeden dönmesi — **Δ1'de doğrulanır**,
-  doğrulanana kadar varsayımdır); dosya avukatından bu biçimde yeni bir
-  arşiv istenir.
+  `STOP` verir (parola istenmez; revizyon 3'ten itibaren 7z konsolsuz,
+  standart girdisi kapalı ve 10 saniyelik bekçiyle çağrılır; bu davranış
+  **delta3'te ölçülür**, ölçülene kadar varsayımdır); dosya avukatından
+  bu biçimde yeni bir arşiv istenir.
 - **Parola biçimi ve girişi (revizyon 2; R-D-TRKBDPW; kullanıcı kararları
   K-R2-3, K-R2-4).** Parolayı dosya avukatı **rastgele** üretir (sözcük,
   ad, tarih kullanılmaz) ve **yalnız** şu 29 sembolü kullanır: büyük harf
@@ -1396,7 +1477,10 @@ yazılır: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
   - Operatör parolayı görüşme sırasında **yalnız kâğıda** yazar (dosya,
     pano, ekran, fotoğraf yok). Giriş **yalnız elle yazmadır**: parola
     panoya veya dosyaya yazılamadığı için yapıştırma bu runbook'ta
-    mümkün değildir. Operatör Caps Lock açık yazar.
+    mümkün değildir. Operatör Caps Lock açık yazar. Kit (Ek R3) Caps
+    Lock kapalıyken 7z'yi **çağırmaz** ve deneme **harcamaz**; durum her
+    denemede `CAPS_LOCK=True attempt=<k>` olarak kayda girer (revizyon
+    3; kullanıcı kararı K-R3-7).
   - Operatör alfabe dışı bir karakter duyarsa veya geri okuma tutmazsa
     parola **kullanılmaz** (revizyon 2; L-4): o parolanın kâğıdı **hemen**
     imha edilir (`E2_PASSWORD_PAPER_DESTROYED=True at=<zaman-damgası>
@@ -1409,12 +1493,28 @@ yazılır: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
     **DUR** (Y5); üçüncü arşiv istenmez. İkinci arşiv aşağıdaki yöntem
     kontrolü ve açma kurallarına aynen tabidir; açmadaki tek ek deneme
     pilot boyunca toplam **bir** kezdir (birinci arşivde kullanıldıysa
-    ikinci arşivde yoktur).
+    ikinci arşivde yoktur). **Kit modunda (revizyon 3; kullanıcı kararı
+    S-2):** geri okuma tutmazsa veya alfabe dışı bir karakter duyulursa
+    `a6` `STOP HP_READBACK=fail` yazar ve **DUR** olur (Y5); kâğıt hemen
+    imha edilir ve `a8` `reason=rejected` yazar. Bu maddedeki tek
+    yeniden gönderim yolu kit ile **yürütülmez**; ancak yeni bir yazılı
+    karar ve runbook revizyonu/provası ile açılabilir. Bu bir
+    sıkılaştırmadır; hiçbir kapı gevşetilmez.
   - Kullanılan parolanın kâğıdı, açmada başarı (`SEVENZIP_RC=0` ve
     `X_ENTRY_COUNT=1`) alındıktan sonra **aynı gün** imha edilir;
     evidence: `E2_PASSWORD_PAPER_DESTROYED=True at=<zaman-damgası>
     reason=used`. Pilot DUR ile biterse kâğıt yine aynı gün imha edilir:
-    `… reason=stopped`.
+    `… reason=stopped`. **Kit modunda `reason` operatörden alınmaz**
+    (revizyon 3; L-3; kullanıcı kararı K-R3-8): `a8` onu kayıtlardan
+    türetir — geri okuma tutmadıysa `rejected`; son deneme kaydında
+    (`a7` varsa o, yoksa `a6`) `ATTEMPT_OUTCOME=SUCCESS` ve
+    `STEP_RESULT=PASS` varsa `used`; başka her durumda `stopped`. `a8`
+    yalnız `steps\e2\a5.txt` `STEP_RESULT=PASS` taşıyorsa kayıt yazar
+    (kâğıt ancak `a5` PASS'ten sonra oluşur); geri okuma kaydı yoksa
+    `reason=stopped` (R3 düzeltme turu; inceleme M-3; onaylı E3.1 metninin
+    kullanıcı onaylı değişikliği). `a8` DUR
+    kilidinde de çalışır ve 7z çağırmaz; `a8`'den sonra `a6`/`a7`
+    çalışmaz.
 - **Kaydetme.** Dosya tarayıcının veya istemcinin "Farklı kaydet"
   iletişim kutusuyla **doğrudan** `<intake-dir>` içine, sabit
   `transfer.7z` adıyla kaydedilir; indirme dizinine veya kapsayıcı dışına
@@ -1424,35 +1524,77 @@ yazılır: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
   §4.4/6 `TOOL_MANIFEST_MATCH=True` alındıktan sonra, içerik oturumunda,
   arşiv **açılmadan önce** `7z l -slt` çıktısı yalnız bellekte okunur ve
   yalnız klasör sayısı ile sonuç satırı basılır (girdi adları basılmaz).
-  7z'nin standart girdisi boş bağlanır (`$null |`); böylece listelemede
-  **hiçbir zaman** parola istenmez ve komut satırına `-p` yazılmaz.
-  Başlıkları şifreli bir arşiv listelenemez: `Type = 7z` satırı ve çıkış
-  `0` gelmez, sonuç `STOP`'tur (revizyon 2; R-D-7ZPROMPT, K-R2-1).
-  **`$null |` bağlamasında 7z'nin beklemeden döndüğü delta provasında
-  (Δ1) ölçülür; 7z asılırsa (dönmezse) DUR — önceden onaylanmış bir yedek
-  yöntem yoktur, ayrı kullanıcı kararı gerekir (K-R2-2).** Arşiv türü
+  **Revizyon 3 (H-1, M-1; kullanıcı kararları K-R3-5, K-R3-6):** 7z
+  konsolsuz bir süreç olarak çağrılır; standart girdisi açılır açılmaz
+  **kapatılır**, stdout ve stderr'i yakalanır. Böylece 7z operatörün
+  konsoluna hiç bağlanmaz, ekrana hiçbir 7z metni düşmez, Ctrl+C 7z'ye
+  ulaşmaz ve listelemede **hiçbir zaman** parola istenmez; komut satırına
+  `-p` yazılmaz. Çağrıdan **önce** `SEVENZIP_PROC_COUNT_BEFORE` ve
+  `LIST_CALL_AT`, dönüşten **sonra** `LIST_RETURN_AT`, `LIST_ELAPSED_MS`,
+  `SEVENZIP_LIST_RC`, `SEVENZIP_TYPE_7Z_SEEN`,
+  `SEVENZIP_STDERR_LINE_COUNT`, `SEVENZIP_STDERR_BREAK_SEEN`,
+  `SEVENZIP_STDERR_ENC_OPEN_FAIL_SEEN` ve `SEVENZIP_PROC_COUNT_AFTER`
+  yazılır (yalnız sayı ve boolean; 7z metni ve girdi adları yazılmaz).
+  Kit, her satırı basıldığı anda hem dosyaya hem ekrana yazar; böylece
+  kayıt ile ekran arasında görünmeyen bölge kalmaz. **Duvar saati
+  bekçisi:** 7z 10 saniye içinde dönmezse süreç sonlandırılır
+  (sonlandırmanın tamamlanması en çok 2 saniye beklenir) ve `STOP
+  SEVENZIP_LIST_TIMEOUT=True` → **DUR** (Y5; K-R2-2: önceden onaylanmış
+  yedek yöntem yoktur, ayrı kullanıcı kararı gerekir). 7z döndükten
+  sonra çıktısının okunması da en çok 2 saniyeyle sınırlıdır; aşılırsa
+  aynı `STOP` yazılır (R3 düzeltme turu; inceleme L-1). Asılma artık insan
+  gözlemiyle değil bekçiyle ölçülür; "on saniye bekle, Ctrl+C bas" kuralı
+  yoktur. Başlıkları şifreli bir arşiv listelenemez: `Type = 7z` görülmez
+  ve çıkış `0` olmaz, sonuç `STOP`'tur (revizyon 2; R-D-7ZPROMPT,
+  K-R2-1). Kesin çıkış kodu bu runbook'a **yazılmaz**; bağlayıcı kural
+  yalnız "çıkış ≠ 0 → `STOP`"tur ve kesin değer delta3'te ölçülür
+  (K-R3-6). Bu yöntemin insan konsolunda asılmadığı **varsayımdır**;
+  delta3'te ölçülür (delta2 kanıt incelemesi §6/10).
+  **"Break signaled" hipotezi (HK-1; kaynak okuması, ölçülmedi).** 7-Zip
+  açık kaynak kodunun okunmasına göre (§34.9) standart girdisi boş veya
+  kapalı bir 7z, başlıkları şifreli bir arşivi açarken parola okumada
+  EOF görür ve **Ctrl+C olmadan** stderr'e "Break signaled" basıp
+  milisaniyeler içinde, sıfır olmayan bir kodla çıkabilir. Bu, delta2
+  H2'deki kullanıcı beyanının "Break signaled" kısmını açıklayabilir;
+  **kanıtlanmış değildir** ve delta3'te `SEVENZIP_STDERR_BREAK_SEEN` ile
+  ölçülür. Hiçbir kapı bu hipoteze dayanmaz. Arşiv türü
   `7z` olmalıdır. Bir girdi **yalnız** klasör işareti taşıyorsa (`Folder
   = +` satırı veya `Attributes` değerinin ilk sözcüğünde büyük `D`)
   **ve** `Size` ile `Packed Size` değerleri `0` veya boşsa klasör sayılır;
   diğer **her** girdi dosyadır, en az bir dosya bulunur ve **her** dosya
   `Encrypted = +` ve `7zAES` yöntemini taşımalıdır (revizyon 2;
-  R-D-7ZFOLDER):
+  R-D-7ZFOLDER). 7-Zip 26.04, 7z arşivlerindeki klasörler için `Folder =
+  +` satırını **basmaz**; bu sürümde klasör tanıma fiilen `Attributes`
+  değerindeki büyük `D`'ye dayanır (delta2 D1.3: A2, A3 ve A5 kayıtları
+  `SEVENZIP_FOLDER_ENTRY_COUNT=1`; revizyon 3). `Folder = +` alternatifi
+  zararsız olduğu için blokta kalır; klasör sayımı başka bir satıra
+  dayandırılmaz:
 
 ```powershell
-$szL = @($null | & "<7z>" l -slt "<intake-dir>\transfer.7z"); $szLRc = $LASTEXITCODE
+$szAt = { [DateTimeOffset]::Now.ToString('yyyy-MM-ddTHH:mm:ss.fffzzz', [System.Globalization.CultureInfo]::InvariantCulture) }
+"SEVENZIP_PROC_COUNT_BEFORE=$(@(Get-Process -Name 7z -ErrorAction SilentlyContinue).Count)"
+"LIST_CALL_AT=$(& $szAt)"
+$szSw = [System.Diagnostics.Stopwatch]::StartNew(); $szTimeout = $null; $szLRc = $null; $szL = @(); $szE = @(); $szP = $null
+try { $szPsi = New-Object System.Diagnostics.ProcessStartInfo; $szPsi.FileName = "<7z>"; $szPsi.Arguments = 'l -slt "' + "<intake-dir>\transfer.7z" + '"'; $szPsi.UseShellExecute = $false; $szPsi.CreateNoWindow = $true; $szPsi.RedirectStandardInput = $true; $szPsi.RedirectStandardOutput = $true; $szPsi.RedirectStandardError = $true; $szP = [System.Diagnostics.Process]::Start($szPsi); $szP.StandardInput.Close(); $szOutT = $szP.StandardOutput.ReadToEndAsync(); $szErrT = $szP.StandardError.ReadToEndAsync(); if ($szP.WaitForExit(10000)) { $szP.WaitForExit(); if ($szOutT.Wait(2000) -and $szErrT.Wait(2000)) { $szLRc = $szP.ExitCode; $szL = @($szOutT.Result -csplit "`r?`n"); $szE = @($szErrT.Result -csplit "`r?`n" | Where-Object { $_ -cne '' }); $szTimeout = $false } else { $szTimeout = $true } } else { $szTimeout = $true; try { $szP.Kill(); $null = $szP.WaitForExit(2000) } catch { } } } catch { $szTimeout = $null }
+$szSw.Stop()
+"LIST_RETURN_AT=$(& $szAt)"
+"LIST_ELAPSED_MS=$($szSw.ElapsedMilliseconds)"
+if ($szTimeout -eq $true) { "STOP SEVENZIP_LIST_TIMEOUT=True" } elseif ($null -eq $szTimeout) { "STOP SEVENZIP_LIST_START=FAIL" } else { "SEVENZIP_LIST_TIMEOUT=False"; "SEVENZIP_LIST_RC=$szLRc"; "SEVENZIP_TYPE_7Z_SEEN=$($szL -ccontains 'Type = 7z')"; "SEVENZIP_STDERR_LINE_COUNT=$($szE.Count)"; "SEVENZIP_STDERR_BREAK_SEEN=$(@($szE | Where-Object { $_.Contains('Break signaled') }).Count -gt 0)"; "SEVENZIP_STDERR_ENC_OPEN_FAIL_SEEN=$(@($szE | Where-Object { $_.Contains('Cannot open encrypted archive') }).Count -gt 0)" }
 $szAfter = $false; $szEnt = @(); $szCur = $null
 foreach ($szLn in $szL) { if ($szLn -ceq '----------') { $szAfter = $true; continue }; if (-not $szAfter) { continue }; if ($szLn -cmatch '^Path = ') { if ($null -ne $szCur) { $szEnt += ,$szCur }; $szCur = @{ DirMark = $false; Size0 = $false; Pack0 = $false; Enc = $false; Aes = $false } } elseif ($null -ne $szCur) { if (($szLn -ceq 'Folder = +') -or ($szLn -cmatch '^Attributes = \S*D')) { $szCur.DirMark = $true }; if (($szLn -ceq 'Size = 0') -or ($szLn -ceq 'Size = ')) { $szCur.Size0 = $true }; if (($szLn -ceq 'Packed Size = 0') -or ($szLn -ceq 'Packed Size = ')) { $szCur.Pack0 = $true }; if ($szLn -ceq 'Encrypted = +') { $szCur.Enc = $true }; if ($szLn -cmatch '^Method = .*7zAES') { $szCur.Aes = $true } } }
 if ($null -ne $szCur) { $szEnt += ,$szCur }
 $szDirs = @($szEnt | Where-Object { $_.DirMark -and $_.Size0 -and $_.Pack0 })
 $szFiles = @($szEnt | Where-Object { -not ($_.DirMark -and $_.Size0 -and $_.Pack0) })
-$szOk = ($szLRc -eq 0) -and ($szL -ccontains 'Type = 7z') -and ($szFiles.Count -ge 1) -and (@($szFiles | Where-Object { -not ($_.Enc -and $_.Aes) }).Count -eq 0)
+$szOk = ($szTimeout -eq $false) -and ($szLRc -eq 0) -and ($szL -ccontains 'Type = 7z') -and ($szFiles.Count -ge 1) -and (@($szFiles | Where-Object { -not ($_.Enc -and $_.Aes) }).Count -eq 0)
 "SEVENZIP_FOLDER_ENTRY_COUNT=$($szDirs.Count)"
 if ($szOk) { "SEVENZIP_ALL_ENTRIES_7ZAES=True" } else { "STOP SEVENZIP_ALL_ENTRIES_7ZAES=False" }
-Remove-Variable szL, szLRc, szAfter, szEnt, szCur, szLn, szDirs, szFiles, szOk -ErrorAction SilentlyContinue
+"SEVENZIP_PROC_COUNT_AFTER=$(@(Get-Process -Name 7z -ErrorAction SilentlyContinue).Count)"
+Remove-Variable szAt, szSw, szTimeout, szLRc, szL, szE, szP, szPsi, szOutT, szErrT, szAfter, szEnt, szCur, szLn, szDirs, szFiles, szOk -ErrorAction SilentlyContinue
 ```
 
-  `SEVENZIP_ALL_ENTRIES_7ZAES=True` dışındaki her sonuç: arşiv
-  **açılmaz**, `E2_CARRIER_ENCRYPTED=False` → **DUR**. Klasör işareti
+  `SEVENZIP_ALL_ENTRIES_7ZAES=True` dışındaki her sonuç (`STOP
+  SEVENZIP_LIST_TIMEOUT=True` ve `STOP SEVENZIP_LIST_START=FAIL` dahil):
+  arşiv **açılmaz**, `E2_CARRIER_ENCRYPTED=False` → **DUR**. Klasör işareti
   taşıyıp boyutu sıfır olmayan bir girdi dosya sayılır; şifreli değilse
   sonuç `STOP`'tur. macOS/Linux'ta oluşturulmuş bir arşivde klasör
   yalnız küçük `d` ile (ör. `drwxr-xr-x`) basılabilir; bu durumda klasör
@@ -1464,13 +1606,28 @@ Remove-Variable szL, szLRc, szAfter, szEnt, szCur, szLn, szDirs, szFiles, szOk -
   (komut satırına `-p` yazılmaz):
 
 ```powershell
-& "<7z>" x "<intake-dir>\transfer.7z" "-o<intake-dir>\x"
-"SEVENZIP_RC=$LASTEXITCODE attempt=<attempt>"
-$xDir = "<intake-dir>\x"; try { $xCnt = if (Test-Path -LiteralPath $xDir) { @(Get-ChildItem -LiteralPath $xDir -Recurse -Force -ErrorAction Stop).Count } else { 0 }; "X_ENTRY_COUNT=$xCnt" } catch { "STOP X_ENTRY_COUNT=UNKNOWN" }
-Remove-Variable xDir, xCnt -ErrorAction SilentlyContinue
+$xCaps = [Console]::CapsLock
+"CAPS_LOCK=$xCaps attempt=<attempt>"
+if ($xCaps -ne $true) { "STOP CAPS_LOCK_ON=False attempt=<attempt>" } else {
+"EXTRACT_CALL_AT=$([DateTimeOffset]::Now.ToString('yyyy-MM-ddTHH:mm:sszzz', [System.Globalization.CultureInfo]::InvariantCulture)) attempt=<attempt>"
+$xRc = 'UNKNOWN'
+try { $xPsi = New-Object System.Diagnostics.ProcessStartInfo; $xPsi.FileName = "<7z>"; $xPsi.Arguments = 'x "' + "<intake-dir>\transfer.7z" + '" "-o' + "<intake-dir>\x" + '"'; $xPsi.UseShellExecute = $false; $xP = [System.Diagnostics.Process]::Start($xPsi); $xP.WaitForExit(); $xRc = [string]$xP.ExitCode } catch { $xRc = 'UNKNOWN' }
+if ($xRc -ceq 'UNKNOWN') { "STOP SEVENZIP_RC=UNKNOWN attempt=<attempt>" } else { "SEVENZIP_RC=$xRc attempt=<attempt>" }
+"EXTRACT_RETURN_AT=$([DateTimeOffset]::Now.ToString('yyyy-MM-ddTHH:mm:sszzz', [System.Globalization.CultureInfo]::InvariantCulture)) attempt=<attempt>"
+$xDir = "<intake-dir>\x"; try { $xCnt = if (Test-Path -LiteralPath $xDir) { @(Get-ChildItem -LiteralPath $xDir -Recurse -Force -ErrorAction Stop).Count } else { 0 }; "X_ENTRY_COUNT=$xCnt attempt=<attempt>" } catch { "STOP X_ENTRY_COUNT=UNKNOWN attempt=<attempt>" }
+}
+Remove-Variable xCaps, xRc, xPsi, xP, xDir, xCnt -ErrorAction SilentlyContinue
 ```
 
-  `<attempt>` ilk çalıştırmada `1`'dir. `E2_CARRIER_ENCRYPTED=True` yalnız
+  `<attempt>` ilk çalıştırmada `1`'dir. **Revizyon 3 (kullanıcı kararı
+  K-R3-7):** blok önce Caps Lock'u okur ve `CAPS_LOCK=True/False
+  attempt=<k>` yazar; `False` ise 7z'yi çağırmaz (`STOP
+  CAPS_LOCK_ON=False`). Kit (`a6`/`a7`) Caps Lock'u bloktan **önce** de
+  denetler; kapalıysa kayıt açmaz ve deneme harcanmaz. 7z, konsolu
+  operatörle paylaşan bir süreç olarak çağrılır (parola istemi ekranda
+  görünür; standart girdi konsoldur); `EXTRACT_CALL_AT`, `SEVENZIP_RC`,
+  `EXTRACT_RETURN_AT` ve `X_ENTRY_COUNT=<n> attempt=<k>` satırları yazılır.
+  Çıkış kodu okunamazsa `STOP SEVENZIP_RC=UNKNOWN`. `E2_CARRIER_ENCRYPTED=True` yalnız
   `SEVENZIP_ALL_ENTRIES_7ZAES=True` **ve** 7z'nin açmada parola
   istemesinin ekran gözlemiyle birlikte yazılır. Parola istenmeden açılan
   bir arşiv `E2_CARRIER_ENCRYPTED=False` → **DUR**.
@@ -1480,10 +1637,21 @@ Remove-Variable xDir, xCnt -ErrorAction SilentlyContinue
   `SEVENZIP_WRONG_PASSWORD_SHOWN=True/False attempt=<k>` yazar. Mesaj
   metni kopyalanmaz; 7-Zip 26.04'te mesaj `ERROR: Data Error in encrypted
   file. Wrong password? : <ad>` biçimindedir ve `<ad>` (girdi adı)
-  evidence'a **yazılmaz**.
+  evidence'a **yazılmaz**. **Kit modunda** (revizyon 3) operatör, 7z
+  döndükten sonra iki soruyu **E/H tuşuyla** cevaplar: parola istemi
+  ("Enter password") göründü mü ve `Wrong password` göründü mü. Kit
+  `SEVENZIP_PASSWORD_PROMPT_SHOWN=True/False attempt=<k>` ve
+  `SEVENZIP_WRONG_PASSWORD_SHOWN=True/False attempt=<k>` satırlarını
+  kendisi yazar; iki geçersiz tuş → `STOP …=UNKNOWN`. İstem görülmediyse
+  `STOP E2_CARRIER_ENCRYPTED=False` → **DUR**.
   **Sonuçlar (revizyon 2; R-D-TRKBDPW; kullanıcı kararı K-R2-5; L-1).**
   - **Başarı** yalnız `SEVENZIP_RC=0` **ve** `X_ENTRY_COUNT=1` (tek PDF)
-    birleşimidir.
+    birleşimidir. Kit modunda başarı ayrıca
+    `SEVENZIP_PASSWORD_PROMPT_SHOWN=True` ve
+    `SEVENZIP_WRONG_PASSWORD_SHOWN=False` ister ve
+    `ATTEMPT_OUTCOME=SUCCESS` olarak kaydedilir; ek deneme koşulu da
+    `SEVENZIP_PASSWORD_PROMPT_SHOWN=True` ister ve
+    `ATTEMPT_OUTCOME=RETRY_ALLOWED` olarak kaydedilir (ek deneme `a7`).
   - **Tek ek deneme:** yalnız `<attempt>` = `1` iken `SEVENZIP_RC=2`,
     `SEVENZIP_WRONG_PASSWORD_SHOWN=True attempt=1` ve `X_ENTRY_COUNT=0`
     **birlikte** gözlenirse blok, aynı oturumda ve aynı kâğıttan elle
@@ -3934,7 +4102,7 @@ intake düzeltmesi, §14.6 — ikisi de ayrı yazılı kararla).
 | H37 | Herhangi bir komutta sıfır olmayan çıkış kodu, traceback veya yetkilendirme reddi | Genel, §14.5.3 |
 | H38 | **Kaldırıldı** (auth probe; §29) | — |
 | H39 | Güvenli DUR/abort veya teardown adımı başarısız ya da belirsiz | §25.2 |
-| H40 | Gerçek içerik güven sınırının ihlali veya şüphesi; kanal kapısı geçmedi; kapsayıcı dışında gerçek içerik; içerik penceresi içinde çıkarılmış bir harici sürücünün yeniden takılması veya **yeni** bir harici/çıkarılabilir sürücünün takılması; içerik penceresi içinde yerleşik optik sürücüye medya takılması, görüntü bağlanması veya optik sürücünün kayıtla eşleşmemesi (bu olayların **tek** kodu; §4.2/10; optik sürücü revizyon 2); §4.3 (a) kapatma prosedürünün ikinci (veya kısa aralıklı, geçersiz) taramasında görünen süreç (revizyon 2) | §4.2, §4.3, §4.4 |
+| H40 | Gerçek içerik güven sınırının ihlali veya şüphesi; kanal kapısı geçmedi; kapsayıcı dışında gerçek içerik; içerik penceresi içinde çıkarılmış bir harici sürücünün yeniden takılması veya **yeni** bir harici/çıkarılabilir sürücünün takılması; içerik penceresi içinde yerleşik optik sürücüye medya takılması, görüntü bağlanması veya optik sürücünün kayıtla eşleşmemesi (bu olayların **tek** kodu; §4.2/10; optik sürücü revizyon 2); §4.3 (a) kapatma prosedürünün ikinci (veya kısa aralıklı, geçersiz) taramasında görünen süreç (revizyon 2); kit modunda `a2`/`a3` taramalarında sayı ≠ 0 veya `a9` kapanış taramasında `STOP CLOSING_SCAN_OK=False` (revizyon 3; Ek R3) | §4.2, §4.3, §4.4 |
 | H41 | Bağımsız inceleme, commit veya sentetik prova ön koşulu eksik | §1.6 |
 | H42 | Form G'de "Hayır" veya boş | §8 |
 | H43 | Intake alanlarından birinin avukat onayı eksik; `unverified` dışı `verification_state`; JSON'da BOM; metin uzunluğu sınır dışı; metinde görünür karakter yok (`STOP TEXT_VISIBLE=EMPTY`; revizyon 2) | §11.2, §11.4 |
@@ -3946,7 +4114,7 @@ intake düzeltmesi, §14.6 — ikisi de ayrı yazılı kararla).
 | H49, H50 | **Kaldırıldı** (sonuçsuz POST tüketimi, pano/anahtar; §29) | — |
 | H51 | `tax_type` sözlük kontrolü başarısız veya Form G8 ile eşleşmiyor; `manual-fact` çalıştırılmaz | §8, §11.3 |
 | H52 | Yol kapısı başarısız; `<external-root>` sözleşmesi ihlali (`<evidence-dir>` dışında öğe veya eksik `<evidence-dir>` dahil); `<container-root>`, `<pilot-root>` sözleşmesi (izinli dört çocuk dışında öğe dahil) veya `<container-file>` kapısının iki aşamasından biri (`container-file-parent`, `container-file`) başarısız; `SYSTEM_TEMP_RECORDED=True`, `SYSTEM_TEMP_MATCH=True` veya `TEMP_IN_CONTAINER=True` yok; `<python>`/`<psql>`/`<pdftotext>`/`<7z>` beklenen dizin dışında; `<archive-dir>` kapısı başarısız | §4.4, §13.8, §28.5 |
-| H53 | İçerik oturumu `-NoProfile` değil; aktif transcript; beklenmeyen modül; handler `UNKNOWN`; `SaveNothing` değil | §4.3 |
+| H53 | İçerik oturumu `-NoProfile` değil; aktif transcript; beklenmeyen modül; handler `UNKNOWN`; `SaveNothing` değil; kit modunda `CONTENT_SESSION_EP=Bypass` yok (revizyon 3) | §4.3 |
 | H54 | Salt-okunur SQL sözleşmesi ihlali; düzeltici SQL gereği | §13.5 |
 | H55 | Eksik veya belirsiz veri akıbeti kararı intake'ten sonra fark edildi: veri silinmez, arşivlenmez, korunur | §28.1 |
 | H56 | `<restricted-dir>` içerik sözleşmesi ihlali (kayıt/hash, izinli küme dışı öğe, alt dizin, reparse point, manifest yazılamadı) | §10.5, §28.2 |
@@ -3955,7 +4123,7 @@ intake düzeltmesi, §14.6 — ikisi de ayrı yazılı kararla).
 | Y2 | Form B1–B3 veya B5 kapısı; dosya avukatının bu dosya için işleme şartı teyidi yok veya hiçbir işleme şartını adıyla belirtmiyor (`PROCESSING_BASIS_CONFIRMED=True` yok; pilot başlamaz); B5 "Evet" iken Ek 2 yok veya operatör/dosya avukatı imzalarından biri eksik | §6.3 |
 | Y3 | Kullanılmıyor (Form C kapısı H3 satırındadır) | — |
 | Y4 | İki kişi kuralı: B4 boş; aynı kişi iken B4 "Hayır" veya dosya avukatının ayrı yazılı kabulü yok; `TWO_PERSON_CONTROL=SEPARATE` veya `=WAIVED_B4` kaydından tam biri yok | §4.1, §14.3 |
-| Y5 | Form E kapısı: E1 kapsayıcı seçeneği değil veya E1'e §4.4'te karşılığı olmayan ek koşul yazılmış; kapsayıcı doğrulanamadı (`CONTAINER_VERIFIED=True` yok) veya teknik kayıt yok/uyuşmuyor (`TOOL_MANIFEST_MATCH=True` yok); harici disk çifti kabul edilen tek birleşim değil (`EXTERNAL_DISK_REMOVED=False`, okunamıyor, ikisi de `True` veya `EXTERNAL_DISK_ENCRYPTED=True`; §4.2/10); içerik penceresinden önce yerleşik optik sürücü kaydı alınamadı veya tek yeniden ölçümden sonra da medya takılı ya da kayıtla eşleşmiyor (`STOP CDROM_QUERY=FAIL`, `STOP OPTICAL_MEDIA_LOADED=UNKNOWN`, ikinci ölçümde `OPTICAL_MEDIA_LOADED=True` veya `STOP OPTICAL_DRIVES_MATCH_RECORD=False`; §4.2/10, revizyon 2); E2 kanalı veya taşıyıcı kontrolü (`ENCRYPTED_TRANSFER` dışı tür, `E2_CARRIER_ENCRYPTED=False`, parola aynı kanaldan veya sesli görüşme dışında bir kanaldan (ayrıca Y15), kapsayıcıya doğrudan kaydedilmedi, e-posta eki için hukuki cevap yok, `SEVENZIP_ALL_ENTRIES_7ZAES=True` yok); `PDFTOTEXT_RC` ≠ 0; açmada başarı birleşimi (`SEVENZIP_RC=0` ve `X_ENTRY_COUNT=1`) dışındaki her sonuç — tek istisna, ilk denemede `SEVENZIP_RC=2` + `SEVENZIP_WRONG_PASSWORD_SHOWN=True` + `X_ENTRY_COUNT=0` birleşiminden sonraki tek ek denemedir; ek denemede de başarı yoksa Y5 (§6.4, revizyon 2); alfabe dışı parola veya tutmayan geri okumadan sonra eski parolanın kullanılması, ya da ikinci arşivin parolasının da alfabe dışı olması veya geri okumasının tutmaması (§6.4, revizyon 2); optik sürücü sayısı veya harfleri teknik kayıtla eşleşmiyor (pencere öncesinde, tek yeniden ölçümden sonra; `STOP OPTICAL_DRIVES_MATCH_RECORD=False`; §4.2/10, §4.4/6, revizyon 2); `$null` borusu bağlamasında 7z'nin dönmemesi (§6.4, K-R2-2); E3 bildirim yolu veya E4 aracı/onayı eksik. **Pencere içinde yeniden takılan veya yeni takılan sürücü Y5 değil, H40'tır** | §4.2, §4.4, §6.4, §11.2/6 |
+| Y5 | Form E kapısı: E1 kapsayıcı seçeneği değil veya E1'e §4.4'te karşılığı olmayan ek koşul yazılmış; kapsayıcı doğrulanamadı (`CONTAINER_VERIFIED=True` yok) veya teknik kayıt yok/uyuşmuyor (`TOOL_MANIFEST_MATCH=True` yok); harici disk çifti kabul edilen tek birleşim değil (`EXTERNAL_DISK_REMOVED=False`, okunamıyor, ikisi de `True` veya `EXTERNAL_DISK_ENCRYPTED=True`; §4.2/10); içerik penceresinden önce yerleşik optik sürücü kaydı alınamadı veya tek yeniden ölçümden sonra da medya takılı ya da kayıtla eşleşmiyor (`STOP CDROM_QUERY=FAIL`, `STOP OPTICAL_MEDIA_LOADED=UNKNOWN`, ikinci ölçümde `OPTICAL_MEDIA_LOADED=True` veya `STOP OPTICAL_DRIVES_MATCH_RECORD=False`; §4.2/10, revizyon 2); E2 kanalı veya taşıyıcı kontrolü (`ENCRYPTED_TRANSFER` dışı tür, `E2_CARRIER_ENCRYPTED=False`, parola aynı kanaldan veya sesli görüşme dışında bir kanaldan (ayrıca Y15), kapsayıcıya doğrudan kaydedilmedi, e-posta eki için hukuki cevap yok, `SEVENZIP_ALL_ENTRIES_7ZAES=True` yok); `PDFTOTEXT_RC` ≠ 0; açmada başarı birleşimi (`SEVENZIP_RC=0` ve `X_ENTRY_COUNT=1`) dışındaki her sonuç — tek istisna, ilk denemede `SEVENZIP_RC=2` + `SEVENZIP_WRONG_PASSWORD_SHOWN=True` + `X_ENTRY_COUNT=0` birleşiminden sonraki tek ek denemedir; ek denemede de başarı yoksa Y5 (§6.4, revizyon 2); alfabe dışı parola veya tutmayan geri okumadan sonra eski parolanın kullanılması, ya da ikinci arşivin parolasının da alfabe dışı olması veya geri okumasının tutmaması (§6.4, revizyon 2); optik sürücü sayısı veya harfleri teknik kayıtla eşleşmiyor (pencere öncesinde, tek yeniden ölçümden sonra; `STOP OPTICAL_DRIVES_MATCH_RECORD=False`; §4.2/10, §4.4/6, revizyon 2); 7z listelemesinin bekçi süresi içinde dönmemesi (`STOP SEVENZIP_LIST_TIMEOUT=True`) veya başlatılamaması (`STOP SEVENZIP_LIST_START=FAIL`; §6.4, K-R2-2, revizyon 3); kit modunda geri okumanın tutmaması (`STOP HP_READBACK=fail`, kullanıcı kararı S-2), parola isteminin görülmemesi (`STOP E2_CARRIER_ENCRYPTED=False`) veya kitin kurulamaması/yüklenememesi (`KIT_LOAD_*`; Ek R3); E3 bildirim yolu veya E4 aracı/onayı eksik. **Pencere içinde yeniden takılan veya yeni takılan sürücü Y5 değil, H40'tır** | §4.2, §4.4, §6.4, §11.2/6 |
 | Y6 | Form F1, F4–F7 kapısı; F4 kapsayıcı yöntemi değil; silme günü kapsayıcı yeniden doğrulanamadı; F1 kopyası kapsayıcı dışında; F1 süresi aşıldı; kapsayıcı imhası veya anahtar imhası kaydı yok; imha kaydı yazılmadı | §1.6/4, §23, §28 |
 | Y7 | G0 boş veya kişisel veri taşıyor; G8 boş; G10/G11 eksik veya imza §6.6/1 biçiminde değil; G10 tarihi bağlayıcı I3'ten önce veya avukatın sıra beyanı yok; A–F yeniden imzalandı ve G yeniden imzalanmadı | §6.6, §8 |
 | Y8 | `PAGE_COUNT=OK` alınamadı (`file.page_count` boş, tamsayı değil veya < 1) | §11.2/5 |
@@ -4023,6 +4191,14 @@ kaydedilir. Journal satırları, mutation resource satırı ve security event'le
 abort'ta da **silinmez** (§28.4). Veri diskte kaldığı sürece §4.3 içerik
 penceresi **açıktır**.
 
+**Kit modunda DUR sonrası içerik penceresi (R3 düzeltme turu;
+kullanıcı kararı H-1=A).** Kit `DUR.txt` kilidini yazdıktan sonra 8.
+ve 9. adımlar için gereken içerik penceresi, kilit kaldırılmadan, §4.3
+(a)'daki **silme oturumu** olarak açılır: kanal kapısı `a2`/`a3` ile
+aynen yapılır, `a4`–`a7` çalışmaz, oturum `a9` ile biter. Kilit yalnız
+yazılı kullanıcı kararından sonra Ek R3/4 kural 1'deki yeniden
+adlandırmayla kaldırılır.
+
 ---
 
 ## 26. Audit / evidence sözleşmesi
@@ -4033,7 +4209,15 @@ Kaynak: Temel L3080–L3087. **Sapma:** probe ve inference dizinleri
 çıkarıldı.
 
 `<evidence-dir>` repo ve kapsayıcı dışında, erişimi kısıtlı bir dizindir
-ve **yalnız metadata** taşır; kapsayıcı imhasından sonra da kalır. Gerçek belge baytları, metin, girdi dosyası, alıntı, tarih,
+ve **yalnız metadata** taşır; kapsayıcı imhasından sonra da kalır.
+Revizyon 3'ten itibaren (kullanıcı kararı K-R3-12) `<evidence-dir>\kit\`
+(kit betikleri, `pins.txt`, `kit-values.txt`), `<evidence-dir>\steps\`
+(adım kayıtları), `<evidence-dir>\kit-build.txt`,
+`<evidence-dir>\DUR.txt` ve kilit kaldırıldıysa
+`<evidence-dir>\DUR-lifted-<n>.txt` ile `<evidence-dir>\dur-lift-<n>.txt`
+(Ek R3/4 kural 1) de metadata'dır; gerçek içerik taşımaz.
+`kit-values.txt`'nin dar yol istisnası §1.5'tedir; §26.4 tam manifesti
+bu dosyaları da kapsar. Gerçek belge baytları, metin, girdi dosyası, alıntı, tarih,
 sayfa numarası, ham stdout/stderr, traceback, deadline raporu veya kişisel
 veri buraya **yazılmaz**. Dava-türevi içerik yalnız `<restricted-dir>`
 içinde durur.
@@ -4048,12 +4232,13 @@ yardımcısı, probe ve inference satırları çıkarıldı; form, manuel girdi,
 |---|---|
 | Başlangıç | Branch, HEAD, temiz ağaç, runbook'un tracked olduğu, ignored görünüm, küme durumu, `pip check`, kayıt/telemetri ön kontrolü; `CMDLINE_AUDIT_KEY=PRESENT` ise `CMDLINE_AUDIT_DECLARATION sha256=<64-küçük-hex>` (§4.2/9; revizyon 2) |
 | İçerik oturumu | §4.3 (b) çıktıları (her içerik oturumu için) |
-| Kanal kapısı | §4.3 (a): süreç adı taraması sonucu (kapatma prosedürünün iki taraması, her biri kendi `AI_CHANNEL_SCAN at=<zaman-damgası>` satırıyla, ikisi de `AI_CHANNEL_PROCESS_COUNT=0`, iki zaman damgası arası en az 2 dakika; revizyon 2), altı sınıf boolean'ı ve `AI_CONTENT_CHANNELS_CLOSED=True` |
+| Kanal kapısı | §4.3 (a): süreç adı taraması sonucu (kapatma prosedürünün iki taraması, her biri kendi `AI_CHANNEL_SCAN at=<zaman-damgası>` satırıyla, ikisi de `AI_CHANNEL_PROCESS_COUNT=0`, iki zaman damgası arası en az 2 dakika; revizyon 2), altı sınıf boolean'ı ve `AI_CONTENT_CHANNELS_CLOSED=True`; kit modunda her içerik oturumu için `<evidence-dir>\steps\s<k>\a2.txt`, `a3.txt` (`SCAN_INTERVAL_SEC`, `SCAN_INTERVAL_OK=True`) ve `a9.txt` (`CLOSING_SCAN_OK=True`) (revizyon 3) |
+| Kit | `<evidence-dir>\kit-build.txt` (`KIT_BUILD=OK`, her kit dosyası için SHA-256, `kit-values.txt` denetim sonucu), her oturumun `steps\s<k>\ac.txt`'si (`KIT_LOAD=OK`, `KIT_PINS_SHA256`, `KIT_DUR_PRESENT`, `KIT_TEARDOWN_SESSION`) ve varsa `<evidence-dir>\DUR.txt` (`KIT_DUR step=<adım> at=<zaman-damgası>`, `KIT_DUR_REASON=<kod>`), kilit kaldırıldıysa `DUR-lifted-<n>.txt` ve `dur-lift-<n>.txt` (`KIT_DUR_LIFTED …`, karar SHA-256'sı) (revizyon 3; Ek R3) |
 | Yol kapısı | §13.8: her yer tutucu adı için `PATH_OK`, `PATH_OK=external-root-contract`, `PATH_OK=container-root`, `PATH_OK=pilot-root-contract`, `PATH_OK=container-file-parent` (oluşturmadan önce) ve `PATH_OK=container-file` (oluşturduktan sonra) |
 | Ön koşullar | Bağımsız inceleme sonucu, commit kimliği, sentetik prova evidence'ının hash'i (`13f19d0` provası ve bu revizyonun delta provası); §1.6/5 kapıları: `AI_CONTENT_CHANNELS_CLOSED=True`, tek yazan oturum beyanı, PR-NOPROFILE sonuç satırları, `CONTAINER_RESIDUAL_NOTICE_SENT=True` ve bildirim/cevap hash'leri, E2 kanal belirlemesinin ve (gerekiyorsa) hukuki cevabın hash'i |
 | Avukat formu | Form v5 hash'i (§0) ve ölçülen `FORM_HASH unit=AF seq=1` ile eşliği; §6.6/7 biçimindeki bütün `FORM_HASH` ve `FORM_BINDING` satırları (her imzalı sürüm ve her ek — `ATT1` Ek 1, `ATT2` Ek 2 — ayrı satır) ve her `FORM_HASH_RECHECK` sonucu; imza biçimi (taranmış PDF / e-imza); her e-imzalı birim için `UDF_SIGN_PART_PRESENT=True` ve `UDF_SIGNATURE_VALID=True unit=<birim> seq=<n>` ile UYAP editörü ağ erişimi onayının zamanı; I3–G10 sıra kontrolü ve dosya avukatı beyanının hash'i; Ek 1 teslim teyidinin hash'i; redakte kapsam özeti; `TWO_PERSON_CONTROL=SEPARATE` veya `TWO_PERSON_CONTROL=WAIVED_B4` (ikincisinde kullanıcı onayının zamanı); girdi düzenleyicisinin adı |
 | Kapsayıcı ve teknik kayıt | `technical-record.txt` ve SHA-256'sı; `system-temp.txt`, `SYSTEM_TEMP_RECORDED=True` ve her içerik oturumunda `SYSTEM_TEMP_MATCH=True` (§4.4/5); her ölçüm için (zincir adım 4, her içerik oturumu, her silme günü): `CONTAINER_MOUNTED_AS_DRIVE_LETTER=True`, `CONTAINER_VERIFIED=True`, `TEMP_IN_CONTAINER=True`, `PILOT_ACL_PRINCIPALS_OK=True`, `TOOL_MANIFEST_MATCH=True`; oluşturmada `CONTAINER_ONE_TIME_KEY=True`, `CONTAINER_FILE_BYTES`, `CONTAINER_FILE_NOT_CLOUD_SYNCED=True`, `ICACLS_RC=0`; harici disk için sürücü harfiyle `EXTERNAL_DISK_ENCRYPTED=False` / `EXTERNAL_DISK_REMOVED=True`; teknik kayıtta `CDROM_DRIVE_COUNT=<n>` ve `OPTICAL_DRIVE_LETTERS=<harfler>` (§4.4/6); yerleşik optik sürücü için her ölçümde `CDROM_DRIVE_COUNT=<n>`, `OPTICAL_DRIVES_MATCH_RECORD=True` ve her sürücü için `OPTICAL_MEDIA_LOADED=False drive=<sürücü-harfi>` (§4.2/10; revizyon 2); kurulum ve UYAP editörü için `PRE_PILOT_NETWORK_ACTION` satırları ve onay zamanları. Provadan: `CONTAINER_TOOL_PRESENT`, `CONTAINER_MOUNTED_AS_DRIVE_LETTER`, `PATH_OK=container-root`, `EXTERNAL_DISK_PRESENT` (§1.6/3) |
-| E2 taşıyıcısı | `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`, `SEVENZIP_ALL_ENTRIES_7ZAES`, `E2_CARRIER_ENCRYPTED`, `E2_KEY_SEPARATE_CHANNEL`, `E2_KEY_CHANNEL=VOICE_CALL at=<zaman-damgası>` (parola veya türevi yok; §21/5), `E2_SAVED_DIRECTLY_TO_CONTAINER`, `E2_INBOUND_TRANSFER_RECEIVED=True` (§21/2), `SEVENZIP_RC=<n> attempt=<k>`, `X_ENTRY_COUNT` ve `SEVENZIP_WRONG_PASSWORD_SHOWN=True/False attempt=<k>` (her deneme ayrı satır; mesaj metni ve girdi adı yok), `SEVENZIP_FOLDER_ENTRY_COUNT` (bilgi), her parola için `E2_KEY_CHANNEL=VOICE_CALL at=<zaman-damgası>` ve `E2_PASSWORD_PAPER_DESTROYED=True at=<zaman-damgası> reason=<neden>` (`<neden>` ∈ `used`, `rejected`, `stopped`; §6.4; revizyon 2); `PDFTOTEXT_RC` (§11.2/6) |
+| E2 taşıyıcısı | `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`, `SEVENZIP_ALL_ENTRIES_7ZAES`, `E2_CARRIER_ENCRYPTED`, `E2_KEY_SEPARATE_CHANNEL`, `E2_KEY_CHANNEL=VOICE_CALL at=<zaman-damgası>` (parola veya türevi yok; §21/5), `E2_SAVED_DIRECTLY_TO_CONTAINER`, `E2_INBOUND_TRANSFER_RECEIVED=True` (§21/2), `SEVENZIP_RC=<n> attempt=<k>`, `X_ENTRY_COUNT` ve `SEVENZIP_WRONG_PASSWORD_SHOWN=True/False attempt=<k>` (her deneme ayrı satır; mesaj metni ve girdi adı yok), `SEVENZIP_FOLDER_ENTRY_COUNT` (bilgi), her parola için `E2_KEY_CHANNEL=VOICE_CALL at=<zaman-damgası>` ve `E2_PASSWORD_PAPER_DESTROYED=True at=<zaman-damgası> reason=<neden>` (`<neden>` ∈ `used`, `rejected`, `stopped`; §6.4; revizyon 2); `PDFTOTEXT_RC` (§11.2/6); kit modunda `<evidence-dir>\steps\e2\` altındaki `a4`–`a8` kayıtları: `KIT_TEMP_IN_CONTAINER`, listeleme ölçüm satırları (`LIST_CALL_AT`, `LIST_RETURN_AT`, `LIST_ELAPSED_MS`, `SEVENZIP_LIST_TIMEOUT`, `SEVENZIP_LIST_RC`, `SEVENZIP_TYPE_7Z_SEEN`, stderr sayı ve boolean'ları, `SEVENZIP_PROC_COUNT_BEFORE/AFTER`), `HP_READBACK`, `CAPS_LOCK`, `SEVENZIP_PASSWORD_PROMPT_SHOWN`, `ATTEMPT_OUTCOME` ve kayıtlardan türetilmiş `reason` (revizyon 3) |
 | Olay bildirimi | Varsa `INCIDENT_PHONE_NOTIFIED=True`, `INCIDENT_NOTICE_CHANNEL=VOICE_CALL at=<zaman-damgası>` (§21/5), `INCIDENT_WRITTEN_NOTICE_SAME_DAY=True`, olay kaydının SHA-256'sı (§4.2/11) |
 | Karar kanalı | Her gelen yazılı karar için `INBOUND_DECISION_RECEIVED seq=<n> sha256=<64-küçük-hex>`, her giden bildirim için `OUTBOUND_NOTICE_SENT seq=<n> sha256=<64-küçük-hex>` (§21); `PROCESSING_BASIS_CONFIRMED=True` (§6.3 B3) |
 | Restricted kümesi | `restricted-allowed-files.txt`, `ALLOWED_FILE_HASH_RECORDED=True`, hash kaydının bayt sayısı ve SHA-256'sı, her envanterde `ALLOWED_FILE_HASH_OK=True`, `RESTRICTED_INVENTORY=OK` ve dosya sayısı |
@@ -4777,10 +4962,13 @@ taşır.
    prova ae129016, inceleme `REHEARSAL_EVIDENCE_VERIFIED`). Revizyon 1'in
    (`4f5c37e`) yeniden yazılan ve yeni eklenen blokları delta provasında
    (e11bab73) prova edildi (inceleme `REHEARSAL_EVIDENCE_VERIFIED`; §0).
-   Revizyon 2'de (§34.8) değişen ve yeni eklenen bloklar **henüz
-   çalıştırılmamıştır**; §1.6/3 delta provası (Δ1–Δ5) zorunludur ve provada
-   yazıldığı gibi çalışmayan bir komut runbook düzeltmesi ve yeniden
-   inceleme gerektirir. Prova veritabanı kararı kapanmıştır (§1.6/3).
+   Revizyon 2'de (§34.8) değişen ve yeni eklenen bloklar delta2
+   provasında (709b329c) ölçüldü; prova `STOPPED_ON_UNEXPECTED_RESULT` ile
+   bitti (inceleme `REHEARSAL_EVIDENCE_VERIFIED`; §0) ve bulguları revizyon
+   3'e işlendi. Revizyon 3'te (§34.9) değişen ve yeni eklenen bloklar (N4,
+   N16, N17, Ek R3) **henüz çalıştırılmamıştır**; delta3 provası
+   zorunludur ve provada yazıldığı gibi çalışmayan bir komut runbook
+   düzeltmesi ve yeniden inceleme gerektirir. Prova veritabanı kararı kapanmıştır (§1.6/3).
    Runtime paket kümesi karşılaştırmasının komutu §13.3'te sabitlenmiştir.
 2. **L-E — tanınmayan hata ham traceback verir.** Writer yalnız motor
    hatalarını, `OSError`, `ValueError` ve containment hatasını tanınan
@@ -4937,12 +5125,22 @@ taşır.
     olduğundan **girdi adları aktarım kanalında görünür** — bu yüzden
     gönderen kuralı nötr dosya adı ister (§6.4). Nötr adın gerçekten
     kişisel veri taşımadığı gönderenin beyanına dayanır; mekanik olarak
-    doğrulanmaz. `$null |` bağlamasının 7z'yi beklemeden döndürdüğü delta provasında
-    (Δ1) ölçülür. Klasör tanıma, 7-Zip'in `Attributes` satırındaki büyük
-    `D` karakterine ve boyut-sıfır koşuluna dayanır; büyük `D`'nin
+    doğrulanmaz. Revizyon 3'ten itibaren listeleme konsolsuz, standart
+    girdisi kapalı ve 10 saniyelik bekçiyle yapılır; bekçinin ve kapalı
+    girdinin insan konsolundaki davranışı ile başlıkları şifreli arşivde
+    7z'nin kesin çıkış kodu delta3'te ölçülür ("Break signaled"
+    hipotezi HK-1 dahil; 7-Zip kaynak okuması bu runbook'ta doğrulanmış
+    sayılmaz). Stderr boolean'ları 7-Zip'in İngilizce ileti metnine
+    dayanır; sürüm değişirse ölçülmeden güvenilmez. Klasör tanıma, 7-Zip'in `Attributes` satırındaki büyük
+    `D` karakterine ve boyut-sıfır koşuluna dayanır (7-Zip 26.04 7z
+    klasörleri için `Folder = +` basmaz; delta2 D1.3); büyük `D`'nin
     yalnız dizin bitine karşılık geldiği 7-Zip kaynağıyla bu runbook'ta
     doğrulanmamıştır (boyut-sıfır koşulu bu belirsizliği güvenli tarafta
-    tutar).
+    tutar). Bekçi yalnız 7z'nin çıkışını ve çıktısının okunmasını
+    sınırlar; ekran donması (PowerShell'in ekrana yazarken bloklanması)
+    satır başına damga olmadığından yalnız adım düzeyi damgalardan
+    (`STARTED_AT`, `LIST_CALL_AT`, `LIST_RETURN_AT`, `ENDED_AT`) dolaylı
+    çıkarılır (R3 düzeltme turu; inceleme L-1).
 31. **D9 bildirim listesinde olmayan işletim sistemi izleri.** §1.6/5 ve
     §4.4/8'deki liste sayfa dosyası, hazırda bekletme dosyası, Windows
     Search indeksi ve antivirüs karantinasıyla sınırlıdır. Dosya
@@ -4981,6 +5179,34 @@ taşır.
     taşımadığı operatörün ve dosya avukatının beyanıdır; mesaj metni
     mekanik olarak taranmaz. Kanalın kendisi (e-posta, mesajlaşma) bu
     runbook'un dışında bir sistemdir ve onun saklama davranışı ölçülmez.
+39. **İnsan adım kitinin sınırları (revizyon 3; Ek R3).** (a) Bir adım
+    çalışırken Ctrl+C basılırsa adım yarıda kalır; kayıtta `STEP_RESULT`
+    satırı olmaz ve sonraki adımlar sıra kapısı yüzünden çalışmaz, ama
+    `DUR.txt` **yazılmayabilir**; bu durum yalnız eksik `STEP_RESULT`
+    satırından anlaşılır. `a5` sırasında Ctrl+C basılırsa konsolsuz 7z
+    Ctrl+C'yi almaz ve bekçi de çalışmadığı için süreç yetim kalabilir;
+    kayıtta `LIST_RETURN_AT` ve `STEP_RESULT` olmaz ve böyle bir süreç
+    ancak sonraki bir `SEVENZIP_PROC_COUNT_BEFORE` ölçümünde görünür
+    (R3 düzeltme turu; inceleme L-4). (b) Kit bütünlüğü yükleme ve her adım anında
+    `pins.txt`'ye göre denetlenir; `pins.txt`'nin kendisi yalnız
+    `kit-build.txt` ve her oturumun `KIT_PINS_SHA256` satırıyla
+    sabitlenir — aynı kullanıcı hesabıyla iki dosyayı birlikte
+    değiştirebilen bir süreç mekanik olarak dışlanmaz (kanal kapısı bu
+    yüzden ilk adımdır). (c) Pencerenin Çalıştır (Win+R) kutusundan
+    açılması komutu (yol dahil, içerik hariç) Windows'un son komutlar
+    listesine yazar. (d) E/H cevapları operatörün ekran gözlemidir; kit
+    onları doğrulayamaz. (e) Caps Lock denetimden sonra, yazma sırasında
+    değiştirilirse yakalanmaz; ek deneme kuralı bu yüzden korunur. (f)
+    `ac.ps1` yüklenemezse `a8`/`a9` da yoktur; kâğıt imhası ve saat
+    kâğıda not edilir ve sonraki ajan oturumunda beyan olarak kayda
+    geçer. (g) Kit modunda E2 adımlarının (`a4`–`a7`) tamamı aynı içerik
+    oturumunda yürür; pencere kapanırsa zincir yeni oturumda devam
+    etmez (fail-closed). (h) Adım bittikten sonra yazılmaya devam edilen
+    tuşlar istem satırında ekranda görünebilir; diske/geçmişe gitmez; tek
+    sayfadaki "istem yoksa hiçbir şey yazmayın" kuralı (Ek R3/5, madde 7:
+    ekranda 7z'nin `Enter password` istemi yoksa hiçbir şey yazılmaz ve
+    Enter'a basılmaz) bunun içindir (R3 son dar düzeltme; inceleme Obs-7;
+    kullanıcı kararı Obs-7=ii).
 
 ---
 
@@ -5309,6 +5535,11 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 2:** §11.2/4 uzunluk bloğu (`TEXT_VISIBLE`) | e11bab73 T.2, E.4 (eski blok) | Değişti | **Yeniden** (Δ4: metinli PDF → `TEXT_VISIBLE=OK`; görüntü PDF → `STOP TEXT_VISIBLE=EMPTY`) |
 | **Revizyon 2:** §4.3 (a) kapatma prosedürü ve tarama bloğu (`AI_CHANNEL_SCAN at=` satırı eklendi) | e11bab73 E.0, R.4 (eski blok) | Değişti | **Yeniden, insan-only** (Δ5: ajan kapalıyken iki tarama, `at=` damgaları arası en az 2 dakika, ikisi de `AI_CHANNEL_PROCESS_COUNT=0`) |
 | **Revizyon 2:** §4.2/9, §18.2, §18.4, §28.2 metinleri | e11bab73 0.8, E.16, Z | Yalnız metin; bloklar bayt-bayt aynı | Devralınır |
+| **Revizyon 3:** §4.3 (a) tarama bloğu N4 (kültürden bağımsız eşleşme) | delta2 0.6 (eski blok; kültür bulgusu), H1 | Değişti | **Yeniden** (delta3: ajan bağlamında tr-TR altında büyük `I` taşıyan sentetik adlar 3/3; insan penceresinde `a2`, `a3`, `a9`) |
+| **Revizyon 3:** §6.4 listeleme bloğu N16 (konsolsuz, kapalı stdin, 10 sn bekçi, ölçüm satırları) | delta2 D1.2, D1.3 (eski blok), H2 (BELİRSİZ) | Yeniden yazıldı | **Yeniden** (delta3 ajan fazı: A0, A0z, A1, A2, A2b, A3, A5, A6; A1'de kesin çıkış kodu ve `SEVENZIP_STDERR_BREAK_SEEN` ölçülür; bekçi testi; büyük çıktılı bir arşivde `SEVENZIP_TYPE_7Z_SEEN` ve çıktı okumasının tamlığı (addendum E3.2; R3 düzeltme turu, inceleme L-2); insan penceresinde `a5`, tek çalışım) |
+| **Revizyon 3:** §6.4 açma bloğu N17 (Caps Lock, damgalar, `X_ENTRY_COUNT … attempt`) | delta2 H4, H5 (eski blok; Δ2 FAIL) | Değişti | **Yeniden, insan-only** (`a6`, `a7`; Caps Lock kapalıyken deneme harcanmaması dahil) |
+| **Revizyon 3:** Ek R3 kiti (N105–N113) ve tek sayfa (N114) | — | Yeni | **Yeni, tek-çalışım** (kit kurulumu; negatif kontroller: `DUR.txt` varken adım araç çağırmadan çıkar, sıra atlama reddi, pin uyuşmazlığı, `kit-values.txt` profil yolu reddi, erken `a3`; R3 düzeltme turu: silme oturumu — kilitte `a2`/`a3` çalışır, `a4`–`a7` reddedilir —, `a5` PASS sonrası geri okuma kaydı yokken `a8` `reason=stopped`, oturum sınırı yok; insan penceresi tek sayfayla) |
+| **Revizyon 3:** N3, N6, N14 (yalnız satır 1), N15, N51 | e11bab73 / delta2 kanıtı | Bayt-bayt aynı; kit içinde kopya olarak çalışır | Blok **devralınır**; kit içinden çağrılmaları delta3'te yeniden prova edilir |
 
 ### 34.5 Yazım sınırları
 
@@ -5529,3 +5760,754 @@ Remediasyonda değişen bloklar: yeni N3 (`d2fc34dc…` → `6bbb9e0c…`), N4
   zamanını kayıttan doğrulanabilir kılar; 2 dakikadan kısa aralıklı ikinci
   tarama yalnız yeniden yapılır, kabul edilmez. L-4 yeniden gönderimi bir
   kezle sınırlar. O-1/O-2/O-6/O-7 metindir; kapıyı değiştirmez.
+
+### 34.9 Revizyon 3
+
+YENİ. Kaynak sürüm: `977a5e7` (revizyon 2; SHA-256
+`b4f4f53f0d8f93166b015f5c2ef40fad8b23adee549ae2a7485a87e8dd7ce802`, 5531
+satır). Girdi: delta2 provası (709b329c) ve onun bağımsız kanıt
+incelemesi (§0; SHA-256 `94eb7299…fd51`; verdict
+`REHEARSAL_EVIDENCE_VERIFIED`; Critical 0, High 1, Medium 2, Low 4,
+Observation 6), aynı kökteki `run\findings.md` ve bağlı kayıtlar, ve
+revizyon 3 kapsam önerisi (§0; `scope.md` + `scope_addendum.md`; çelişkide
+ek geçerli). Yalnız bu dosya değişti; kod, şema, veri, test, başka runbook
+veya `CLAUDE.md` değişmedi; LOCKED bir sözleşmeye dokunulmadı. Yazılırken
+hiçbir runbook komutu, kit betiği, 7z, PostgreSQL, CLI veya test
+çalıştırılmadı; değişen ve yeni bloklar yalnız `ParseInput` ile denetlendi
+ve büyük-küçük harfe duyarsız karşılaştırma operatörleri için mekanik
+olarak tarandı (bulgu yok).
+
+**Karar günlüğü.**
+
+| Kayıt | İçerik |
+|---|---|
+| `SCOPE_APPROVED at=2026-10-13T09:40+03:00` | Kullanıcı onayı (planlayıcı önerisiyle): kapsam `scope.md` (`ed7fc118…774a`) + `scope_addendum.md` (`ed0b9792…86e9`); iki hash diskten doğrulandı |
+| Zaman damgası düzeltmesi | Onay mesajındaki `SCOPE_APPROVED at=2026-10-13T01:00+03:00 (yaklaşık)` yanlıştı; kullanıcının düzeltmesiyle doğru değer `at=2026-10-13T09:40+03:00`'dır (onayın ve mesajın gönderildiği an) |
+| `USER_DECISION S-1=A, S-2=öneri at=2026-10-13T09:50+03:00` | Yazım sırasında açılan iki açık soru (planlayıcı önerisiyle, kullanıcı onayı). S-1 notu: `kit-values.txt`'nin `%USERPROFILE%` altında yol taşımadığı mekanik denetimi başarısız olursa kit kurulmaz ve **DUR** olur; sessiz düzeltme yoktur |
+| `USER_DECISION at=2026-10-13T10:30+03:00` | Bağımsız inceleme (`review\20261013-101756-independent-runbook-rev3-review.md`, `565039ea…c4c6`; `READY_FOR_NARROW_REMEDIATION`) sonrası kararlar (planlayıcı önerisiyle, kullanıcı onayı): H-1=A, M-1 (sınır kaldırılır), M-3 (`a8` ön koşulu `a5` PASS), M-2/L-1/L-2/L-3/L-4/O-3 incelemenin dar düzeltmeleriyle, O-1/O-2/O-4…O-9 değişiklik yok; ayrıntı aşağıda "R3 düzeltme turu" |
+| `USER_DECISION at=2026-10-13T17:10+03:00` | Bağımsız yeniden inceleme (`review\20261013-170139-independent-runbook-rev3-rereview.md`, `16af7b62…bbf`; `READY_FOR_COMMIT=YES`, 0C/0H/0M/1L/9O) sonrası kararlar (planlayıcı önerisiyle, kullanıcı onayı): Obs-1 — "K-R3-3 yalnız operatörün yazdığı adlara uygulanır" yorumu onaylandı, K-R3-3 satırı bu kapsamı açıkça söyler; Low-1 — `a6`'daki DUR iletisi `Write-KitDur 'a6' 'READBACK_RECORD_INVALID'` ile değiştirildi; Obs-7 — §32/39'a tek cümle; diğer gözlemler değişiklik yok; ayrıntı aşağıda "R3 son dar düzeltme" |
+| `USER_DECISION Obs-7=ii at=2026-10-13T17:20+03:00` | Obs-7 cümlesinin atıf yaptığı kural tek sayfada yoktu (açık soru). Karar (planlayıcı önerisiyle, kullanıcı onayı): tek sayfaya (N114) parola adımlarının yanına "Ekranda 7z'nin 'Enter password' istemi yoksa HİÇBİR ŞEY yazmayın ve Enter'a basmayın." kuralı eklenir; §32/39'daki Obs-7 cümlesi bu kurala atıf yapar. Bu değişiklik liste dışı değildir, bu kullanıcı kararıyla yapılır |
+
+**Kullanıcı kararları.**
+
+| Karar | İçerik |
+|---|---|
+| K-R3-1 | **EVET, değişiklikle:** adım betiklerinin tam metni bu runbook'ta hash'i sabitlenmiş kod blokları olarak yer alır (Ek R3); her koşuda ajan onları bayt-bayt kopyalar ve hash'i doğrular, **yeniden üretmez**. Betikler repoya ayrı dosya olarak girmez |
+| K-R3-2 | Pencere kâğıttaki tek komutla açılır (`-NoProfile -ExecutionPolicy Bypass -NoExit -Command`), pinli önyükleyici `ac.ps1` yalnız `a2`…`a9` komutlarını tanımlar; `$hk`, `iex` yükleyici satırı ve değişken ataması yoktur (§4.3 b, Ek R3/3) |
+| K-R3-3 | Adlar `a2`…`a9`: küçük `a` + 2–9; `0`, `1`, `O`, `I`, `l`, `i`, `ı`, `İ` operatörün yazdığı hiçbir komut veya kayıt adında yok. Kural **yalnız operatörün yazdığı adlara** uygulanır; kitin ve ajanın kendisinin oluşturduğu adlar (oturum dizini `s<k>`, `pins.txt`, `kit-values.txt`, `DUR-lifted-<n>.txt`, `dur-lift-<n>.txt` vb.) kapsam dışıdır (kullanıcı kararı `at=2026-10-13T17:10+03:00`) |
+| K-R3-4 | **EVET, ekle:** iki kanal taraması pencere başında (`a2`, `a3`; 120 sn mekanik bekleme, erken `a3` kayıt yazmaz); ayrıca son adım `a9` kullanıcıdan ek işlem istemeden otomatik bir kapanış taraması yapar ve sonuç sıfır değilse bulgu/DUR kaydı yazar (§4.3 a) |
+| K-R3-5 | N16: konsolsuz süreç, kapalı stdin, stdout/stderr yakalama, 10 sn duvar saati bekçisi, öncesi/sonrası damgaları ve süreç sayıları (§6.4) |
+| K-R3-6 | Runbook'a yalnız "çıkış ≠ 0 → STOP" ve yeni boolean'lar yazılır; A1'in kesin çıkış kodu delta3 ajan fazında ölçülüp prova beklentisine sabitlenir |
+| K-R3-7 | 7z'nin kendi parola istemi korunur; Caps Lock kapalıyken 7z çağrılmaz, deneme harcanmaz; `CAPS_LOCK` her denemede kayda girer |
+| K-R3-8 | `<evidence-dir>\DUR.txt` küresel kilidi (CreateNew), sıra kapısı (her adım öncekinin `STEP_RESULT=PASS`'ini ister), pin uyuşmazlığı da kilitler; `a8` ve `a9` kilitliyken de çalışır; kâğıt imhası `reason`'u kayıtlardan türetilir |
+| K-R3-9 | Konsol seçim kipine karşı yalnız talimat ("fare ile tıklamayın; 'Seç' görürseniz Esc"); süreç içi QuickEdit kapatma yok |
+| K-R3-10 | Tek sayfalık, sade Türkçe, yazdırılabilir adım listesi şablonu (Ek R3/5, N114); değerler kit kurulumunda doldurulup kâğıda basılır |
+| K-R3-11 | Kapsam yalnız pencere açılışı (kanal kapısı) ve E2 aktarım/listeleme/açma/kâğıt; kanal adımları (`a2`, `a3`, `a9`) her içerik oturumunda yeniden, E2 adımları (`a4`–`a8`) bir kez; zincirin geri kalanı (§11–§28) revizyon 2 bloklarıyla |
+| K-R3-12 | Kit `<evidence-dir>\kit\`, kayıtlar `<evidence-dir>\steps\s<k>\` ve `<evidence-dir>\steps\e2\`, kilit `<evidence-dir>\DUR.txt`; §10.5 ve §13.8 değişmez (kontrol edildi: `<external-root>` altında yeni çocuk yok, `<restricted-dir>`'e dosya girmez) |
+| S-1 = A | §1.5'e dar istisna: `kit-values.txt` yalnız kapsayıcı ve araç yollarını taşır, `%USERPROFILE%` altında yol taşımaz; ajan (kurulumda) ve `ac.ps1` (her yüklemede) mekanik denetler; başarısız → **DUR** |
+| S-2 = öneri | Kit modunda geri okuma tutmazsa veya alfabe dışı karakter duyulursa **DUR** ve `reason=rejected`; revizyon 2'nin tek yeniden gönderim yolu kit ile yürütülmez (sıkılaştırma) |
+
+**Bulgu → değişiklik eşlemesi (delta2 kanıt incelemesi, `94eb7299…`).**
+
+| Bulgu | Değişiklik (bölüm) |
+|---|---|
+| H-1 — H2 enstrümantasyonu asılma / ekran donması / ikinci süreç ayrımını yapamıyor | N16 yeniden yazıldı: konsolsuz 7z, kapalı stdin, stdout/stderr yakalama, 10 sn bekçi (`STOP SEVENZIP_LIST_TIMEOUT=True` → DUR), `LIST_CALL_AT`/`LIST_RETURN_AT`, `SEVENZIP_PROC_COUNT_BEFORE/AFTER`; kit her satırı anında dosya + ekrana yazar (§6.4, Ek R3/4) |
+| M-1 — A1 beklenen sonucu ayırt edici değil | `SEVENZIP_LIST_RC`, `SEVENZIP_TYPE_7Z_SEEN`, `SEVENZIP_STDERR_LINE_COUNT`, `SEVENZIP_STDERR_BREAK_SEEN`, `SEVENZIP_STDERR_ENC_OPEN_FAIL_SEEN`; kesin RC delta3'te (K-R3-6) |
+| M-2 — Pencere H prosedürü insan tarafında üç kez kırıldı | Ek R3 kiti: tek açılış komutu, `a2`…`a9`, küresel `DUR.txt` kilidi, sıra kapısı, kanal kapısı ilk adım, kapanış taraması `a9`, tek sayfa (§4.3, Ek R3) |
+| L-1 — A-DEV-D1.0-DIR anlatıda yok | Prova disiplini maddesi; runbook değişikliği gerektirmez (delta3 planı: her sapma `findings.md`'de ayrı satır ve mekanik sayım) |
+| L-2 — `PAPER_AFTER_SUCCESS` başarıyı aramıyor | Prova planı kuralıdır (Faz B); runbook karşılığı `a8`'in `reason` türetmesidir (başarı = `ATTEMPT_OUTCOME=SUCCESS` + `STEP_RESULT=PASS`); delta3 planında kurala son denemenin `SEVENZIP_RC=0` ve `X_ENTRY_COUNT=1` koşulu eklenir |
+| L-3 — H6 `reason` serbest girdi | `a8` `reason`'u türetir; operatörden almaz (§6.4) |
+| L-4 / F-D2-TRCULTURE — N4 tr-TR'de büyük `I` | N4: `[regex]::IsMatch(…, 'IgnoreCase, CultureInvariant')` (§4.3 a) |
+| 7ZFOLDER sayım dersi (A-DEV-D1.0-DIR) — 7-Zip 26.04 `Folder = +` basmıyor | Metin: klasör tanıma fiilen `Attributes` büyük `D`'ye dayanır; blok mantığı değişmedi (§6.4, §32/30) |
+| O-1 — günlük/geçmiş okunamadı; H2 BELİRSİZ | Planlayıcı kararı gereği geriye dönük inceleme yok; çözüm ölçüm aracının düzeltilmesi ve delta3'te yeniden ölçümdür |
+| O-2 — Δ5 FAIL nedeni U-2'nin yapılmaması | Kapatma `a2`'den önce; `a2` sayı ≠ 0 → kilit (§4.3 a) |
+| O-3, O-4 — Oturum B betikleri ve Oturum A yazıcı kodu kökte pinli değil | Prova disiplini (delta3 planı: her fazın betikleri kök içinde pinli) |
+| O-5 — `$LASTEXITCODE` alma yeri | N17 artık çıkış kodunu süreç nesnesinden alır (`SEVENZIP_RC` veya `STOP SEVENZIP_RC=UNKNOWN`) |
+| O-6 — `pw.txt`, arşivler ve boş `x\` delta2 kökünde | Kapsam dışı; silme ayrı kullanıcı kararıdır |
+| İnceleme §6/1–4, 7, 8 | Ek R3 kiti, §4.3 a, §6.4 |
+| İnceleme §6/5 | N16 (H-1, M-1) |
+| İnceleme §6/6 | Yalnız talimat (K-R3-9) |
+| İnceleme §6/9 | N4 (L-4) |
+| İnceleme §6/10 | Runbook "asılmaz" demez; davranış delta3'te ölçülür, o zamana kadar varsayımdır (§6.4, §32/30) |
+
+**"Break signaled" hipotezi (HK-1; kaynak okuması, ölçülmedi).** Kapsam
+oturumunda 7-Zip açık kaynak kodu (GitHub `ip7z/7zip`, `main` dalı;
+26.04 ile birebir aynı olduğu doğrulanmadı) okundu:
+`OpenCallbackConsole.cpp` parolayı yalnız tanımlı değilse ister;
+`UserInputUtils.cpp` boş girdide EOF'ta `E_ABORT` döndürür; `List.cpp`
+`E_ABORT`'u yukarı taşır; `MainAr.cpp` `E_ABORT`'ta stderr'e "Break
+signaled" basar ve kullanıcı kesmesi koduyla çıkar. Buna göre delta2
+H2'deki "Break signaled" iletisi, kaydın 55 ms dönüşüyle çelişmeden, 7z'nin
+kendisi tarafından Ctrl+C olmadan basılmış olabilir. Bu **kanıtlanmış
+değildir**; delta2 için olay günlüğü ve geçmiş dosyası okunmamıştır
+(planlayıcı kararı). Delta3 bunu A1 listelemesinde
+`SEVENZIP_STDERR_BREAK_SEEN`, `SEVENZIP_LIST_RC` ve bekçi satırlarıyla
+ölçer. Hiçbir kapı bu hipoteze dayanmaz.
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| Üst uyarı, §0, §1.4, §1.6/3, §32/1 | Delta2 pinleri, revizyon 3 kapsam pinleri, prova durumu |
+| §1.5 | Dar istisna: `kit-values.txt` (S-1) |
+| §1.6/5 | Kanal kapısının kitle yürütülmesi; yeni "İnsan adım kiti" maddesi |
+| §4.3 (a) | N4 kültür düzeltmesi; "Kit ile yürütme" paragrafı (`a2`, `a3`, `a9`, kilit, yardım yok, fare uyarısı) |
+| §4.3 (b) | Açılış komutu (`-ExecutionPolicy Bypass`, `ac.ps1`), `CONTENT_SESSION_EP=Bypass`; N6 değişmedi |
+| §6.4 | Listeleme metni ve N16; HK-1 notu; `Folder = +` notu; Caps Lock; N17; E/H gözlem soruları; kit başarı/ek deneme koşulları; S-2; `reason` türetme |
+| §25.1 | H40, H53, Y5 satırları |
+| §26.1, §26.2 | Kit ve adım kayıtları metadata'dır; Kanal, Kit (yeni satır) ve E2 satırları |
+| §32/30, §32/39 (yeni) | Yöntem sınırı; kit sınırları |
+| §34.4 | Revizyon 3 devralma satırları |
+| §34.9, Ek R3 | Bu bölüm; kit blokları ve tek sayfa |
+
+**Kod blokları.** Numara, §34.8'deki numaralandırmadır (§1.5 bloğu = N0);
+SHA-256 blok gövdesinin (çit satırları hariç, LF ile birleştirilmiş, sonda
+LF) baytları üzerindedir. Kit dosyalarının baytları bu gövdeye **eşittir**
+(Ek R3/1).
+
+| Eski | Yeni | Bölüm | Eski SHA-256 | Yeni SHA-256 | `ParseInput` |
+|---|---|---|---|---|---|
+| N4 | N4 | §4.3 (a) | `53c05a95ca3560b98d4a1381624e241017c3a3e6507bba834cb5eb61021443b1` | `b216d82434a36e5b79963cedfff578c7bd065fb13fe03c2b5ca9557a480e520d` | 0 hata |
+| N16 | N16 | §6.4 | `3f17c6eb77097217f5ee780c3b304266d0b1c3189827b1b9d92b488e1b96e4eb` | `326c9216f8eeedd922b1d7fca8b8584e87ccb29b2c21e2151a23b4199449b609` | 0 hata |
+| N17 | N17 | §6.4 | `e4e3552154c7f8488b103c0ab381708eb634325bcda523af1c06b2640580c091` | `1ea37c4b84d31a24c1e938892a35c6375546d0461e8b89a9fb18c76fe0380cbb` | 0 hata |
+| — | N105 | Ek R3 (`ac.ps1`) | — | `635e0767513a562eff2734ea67f8fe8a2ee4737a941f8e3cdb4d27208c57bd0d` | 0 hata |
+| — | N106 | Ek R3 (`a2.ps1`) | — | `4cda7f064c96b7fb38cadd44088e473ab83901875dce852e85ae50a90cba6b5b` | 0 hata |
+| — | N107 | Ek R3 (`a3.ps1`) | — | `790e247cdafe671321033c559adff15b7a2360d963dc6d7610cad71e07c351c1` | 0 hata |
+| — | N108 | Ek R3 (`a4.ps1`) | — | `92888495ca90b009cd65ee1808c0a96cdfff531d909bff3af4307125cf0a98c1` | 0 hata |
+| — | N109 | Ek R3 (`a5.ps1`) | — | `81f7fc797ea98052143b8ab74d32473ca29bf865cb3ec9326c0cf4a212e6dfe4` | 0 hata |
+| — | N110 | Ek R3 (`a6.ps1`) | — | `cd45441ad65352cba263415d8fd99432f1b3502fed7a645226b3218d9f53a0ef` | 0 hata |
+| — | N111 | Ek R3 (`a7.ps1`) | — | `0e2da5ebefb7a94eaaae627b7f93d59cb7a8ba5d0f4b038877d3c8c559d00011` | 0 hata |
+| — | N112 | Ek R3 (`a8.ps1`) | — | `73ed1b599c22e52dbb4c065f76cb11723f6da1e17d6d0a370a45b1307b57f940` | 0 hata |
+| — | N113 | Ek R3 (`a9.ps1`) | — | `9193eab4b4ba28472c624ef54a5d2464c8821abdbef2950ed7236c49c91c3ea4` | 0 hata |
+| — | N114 | Ek R3/5 (tek sayfa, `text`) | — | `77a2186ff9bc6f0ff1304599095d95887ebe2f5d305d02e9533b95d130a916da` | — (PowerShell değil) |
+
+Tablodaki "Yeni SHA-256" değerleri R3 düzeltme turundan ve R3 son dar
+düzeltmeden sonraki değerlerdir (N16, N105, N112, N114 R3 düzeltme
+turunda, N110 ve N114 R3 son dar düzeltmede değişti; aşağıda).
+
+Blok sayısı 105 → 115 (3 değişen + 10 yeni). Kalan 102 blok (N0–N3,
+N5–N15, N18–N104) `977a5e7` ile bayt-bayt aynıdır ve aynı sırada durur
+(blok hash'leriyle ölçüldü); yeni bloklar dosyanın sonundadır, mevcut
+numaralar kaymaz.
+
+**Uygulama notları.**
+
+- **Kapı yönü.** Hiçbir kapı gevşetilmedi. Bekçi yeni bir `STOP` ekler;
+  Caps Lock denetimi 7z'yi çağırmaz ve deneme harcamaz; kilit, sıra kapısı
+  ve kapanış taraması yalnız durdurur; kit başarısı ve ek deneme koşulu
+  revizyon 2'ye ek olarak parola isteminin görülmesini ister; S-2
+  yeniden gönderim yolunu kit modunda kapatır. §1.5 istisnası (S-1) dar
+  ve adlıdır, mekanik denetime bağlıdır.
+- **Kapsam dışı.** §11–§28 bloklarının kite bağlanması; delta2 kökündeki
+  sentetik artıkların silinmesi; QuickEdit'in süreç içi kapatılması;
+  istem açmayan sahte `-p` yöntemi (kullanılmadı).
+- **Delta3.** Revizyon 3'ün değişen ve yeni blokları ayrı bir turda ve
+  ayrı kullanıcı yetkisiyle prova edilir (§34.4 revizyon 3 satırları);
+  bu revizyon onları yetkilendirmez. Taslak kapsam: ajan fazı (kit
+  kurulumu, N4 kültür ölçümü, N16'nın sekiz sentetik arşivde ve bekçi
+  testinde ölçülmesi, A1'in kesin çıkış kodu ve HK-1, negatif
+  kontroller), insan penceresi (tek sayfayla `a2`…`a9`, gerçek kapatma
+  prosedürü), yeni ajan oturumunda kayıt ve ayrı bağımsız inceleme.
+
+**R3 düzeltme turu (bağımsız revizyon 3 incelemesi `565039ea…c4c6`;
+kullanıcı kararı `at=2026-10-13T10:30+03:00`).** Bu turun adı §34.6'daki
+"remediasyon turu 1" ile karışmasın diye "R3 düzeltme turu"dur; bu
+bölümdeki ve gövdedeki "inceleme H-1/M-1…/O-9" kodları bu incelemenin
+bulgularıdır, yukarıdaki delta2 kanıt incelemesinin aynı adlı
+bulguları değildir. Girdi: runbook SHA-256
+`2683d088…56fa` (diskten doğrulandı) ve inceleme dosyası (diskten
+doğrulandı). Yalnız bu dosya değişti; hiçbir runbook komutu, kit
+betiği, 7z, PostgreSQL, CLI veya test çalıştırılmadı; değişen bloklar
+yalnız `ParseInput` ile denetlendi ve hash'lendi.
+
+| Bulgu | Karar | Değişiklik | Bölüm / blok |
+|---|---|---|---|
+| H-1 — kilitte silme oturumu tanımsız | A | `DUR.txt` varken açılan pencere **silme oturumudur** (yükleme anında belirlenir; `KIT_TEARDOWN_SESSION=True` `ac.txt`'ye ve her adım başlığına yazılır); `a2`/`a3` bu oturumda kilitte çalışır, `a4`–`a7` oturum bayrağıyla reddedilir (kilit sonradan kaldırılsa bile), `a8`/`a9` değişmez. Kilidin kaldırılması: yazılı kullanıcı kararından sonra ajan `DUR.txt`'yi silmeden yeniden adlandırır ve kayda yazar (tek cümle). Yorum notu: karardaki "yalnız taramayı yapan" ifadesi E2 ve ilerletme adımlarına karşıtlık olarak okundu; silme oturumu da bir içerik oturumu olduğundan (§4.3 b, §25.2) `a2` N6 ve `CONTENT_SESSION_EP` denetimlerini aynen yapar — kapı gevşemez | §4.3 (a) yeni paragraf ve "tek istisna" eki; §25.2 yeni paragraf; Ek R3/3; Ek R3/4 tablo (`a2`, `a3`) ve kural 1; N105 |
+| M-1 — onaysız 9 oturum sınırı | Kaldırılır | Oturum numarası `s1, s2, …` üst sınırsız; `KIT_SESSION_LIMIT` dalı kaldırıldı. **K-R3-3 yalnız operatörün yazdığı adlara uygulanır** (oturum adı `s<k>`'yı operatör yazmaz) | Ek R3/3; N105 |
+| M-2 — parola tuşlarının istemine taşması | İnceleme önerisi | `Clear-KitKeys` (tuş tamponu boşaltma) `Read-KitYesNo` başında, `Invoke-KitAttempt` sonunda ve `Invoke-KitStep` çıkışında | N105 |
+| M-3 — kâğıt varken `a8` kayıt yazmayabiliyor | Ön koşul `a5` PASS | `a8` ön koşulu `steps\e2\a5.txt` `STEP_RESULT=PASS` (herhangi bir oturumda); geri okuma kaydı yoksa `reason=stopped`, varsa türetme değişmedi. **Bu, onaylı addendum E3.1 metninin kullanıcı onaylı değişikliğidir.** Yan etki: `a8` `a5` PASS ile `a6` arasında yazılırsa `a6` artık çalışmaz (kâğıt imha edilmiştir; doğru davranış) | §6.4; Ek R3/4 tablo (`a8`); N112 |
+| L-1 — N16 bekçisinin iki zayıflığı | İnceleme önerisi | `Kill()` sonrası en çok 2 sn `WaitForExit`; çıkıştan sonra stdout/stderr okuması en çok 2'şer sn, aşılırsa `STOP SEVENZIP_LIST_TIMEOUT=True`; ekran donmasının yalnız adım düzeyi damgalardan dolaylı çıkarıldığı cümlesi | §6.4 bekçi metni; §32/30; N16 |
+| L-2 — addendum E1 ve E3.2 eksik | İnceleme önerisi | Ek R3/2'ye yeni madde 6 (`Get-Command a2,…,a9` yeni `-NoProfile` alt süreçte boş olmalı; değilse DUR) ve `kit-build.txt`'ye `KIT_NAME_COLLISION_COUNT=0`; eski 6–8 → 7–9, Ek R3/5'teki atıf "madde 8" oldu. §34.4 N16 satırına büyük çıktılı arşiv ölçümü | Ek R3/2, Ek R3/5 giriş metni, §34.4 |
+| L-3 — tek sayfa tek başına izlenebilir değil | İnceleme önerisi | §4.3 (a): runbook'un yapay zekâ özelliği taşımayan yerel bir görüntüleyicide salt-okunur açık tutulması yardım sayfası sayılmaz. Tek sayfa madde 3'e altı sınıf beyanı (§4.3 a Adım 2'nin mevcut kaydı; yeni kit adımı değildir) ve aynı görüntüleyici notu | §4.3 (a); N114 |
+| L-4 — Ctrl+C ile yetim 7z | İnceleme önerisi | §32/39(a)'ya bir cümle (yetim süreç, eksik `LIST_RETURN_AT`/`STEP_RESULT`, sonraki `SEVENZIP_PROC_COUNT_BEFORE`) | §32/39 |
+| O-3 — `<evidence-dir>` karakter denetimi yok | İnceleme önerisi | `ac.ps1` `KitEvid`'e `kit-values.txt` ile aynı karakter kümesi regex'ini uygular; geçmezse `KIT_LOAD_EVID_CHARS` → DUR | Ek R3/3; N105 |
+| O-1, O-2, O-4…O-9 | Değişiklik yok | — | — |
+
+**Liste dışı değişiklikler (zorunlu sonuç olarak yapıldı).**
+
+1. Tek sayfaya (N114) silme oturumu satırı: "DUR GÖRÜRSENİZ: başka adım
+   çalışmaz" ifadesi H-1 sonrası silme oturumuyla çelişeceği için
+   (H-1'in tek sayfadaki karşılığı). Aynı nedenle tek sayfanın DUR
+   tetikleyicisi "bir satır `DUR` ile başlıyorsa" oldu: silme
+   oturumunun yükleme iletisi `KIT YUKLENDI, ama DUR kilidi var …`
+   ile başlar ve pencerenin kapatılmasını tetiklememelidir; kitin
+   bütün DUR iletileri `DUR` ile başlar.
+2. §34.4 kit satırının negatif kontrollerine silme oturumu, `a5` PASS
+   sonrası `a8` `reason=stopped` ve oturum sınırının yokluğu (H-1, M-3,
+   M-1'in delta3 karşılığı).
+3. N105'te sınır dalının yerine oturum dizini oluşturulamazsa
+   `KIT_SESSION_CREATE_FAIL` ile DUR (M-1 sonrası döngü artık sınırsız
+   olduğundan, dizin oluşturma hatasında komut tanımlanmaması için).
+4. `ac.ps1`'in DUR kilidindeki yükleme iletisi ("SILME OTURUMU …";
+   eski ileti yalnız `a8`/`a9` diyordu) ve §4.3 (a)'daki "DUR
+   kilidinden sonra … hiçbiri çalışmaz" cümlesine "tek istisna" eki.
+5. §26.1 ve §26.2: kilit kaldırma dosyaları (`DUR-lifted-<n>.txt`,
+   `dur-lift-<n>.txt`) ve `KIT_TEARDOWN_SESSION` satırı metadata
+   listesine eklendi (H-1'in evidence sözleşmesindeki karşılığı). Bu iki
+   dosyanın adları yazıcının seçimidir; kullanıcı kararı yalnız "silmeden
+   yeniden adlandır ve kayda yaz" der.
+
+**Kabul edilen kalıntılar (bu turda değiştirilmedi).** (a) Silme
+oturumunda `a3`'ün PASS iletisi hâlâ "siradaki adim a4" der; N107
+daralık için değiştirilmedi, `a4` ise "SILME OTURUMU: a4-a7 bu pencerede
+calismaz" diyerek reddeder. (b) N16'da 7z çıktıktan sonra okuma görevi
+hata verirse `Wait()` istisnası dış `catch`'e düşer ve satır `STOP
+SEVENZIP_LIST_START=FAIL` olur (`…TIMEOUT` değil); sonuç yine `STOP`'tur,
+yalnız etiket kesin değildir.
+
+**Bu turda hash'i değişen bloklar (revizyon 3 → R3 düzeltme turu).**
+
+| Blok | Eski SHA-256 | Yeni SHA-256 | `ParseInput` |
+|---|---|---|---|
+| N16 (`n016.ps1`) | `38cfb35ea97727e7234656ba099b2fbf34dc1fd78f1e76c62e9b8af55a8767ae` | `326c9216f8eeedd922b1d7fca8b8584e87ccb29b2c21e2151a23b4199449b609` | 0 hata |
+| N105 (`ac.ps1`) | `9275aa7d4b4d685107da00020aa94a70168f54f6d6dce47d2c83ad3700c4d599` | `635e0767513a562eff2734ea67f8fe8a2ee4737a941f8e3cdb4d27208c57bd0d` | 0 hata |
+| N112 (`a8.ps1`) | `0ab9214e5c36999cea9ac633d6ba0827ea2bca849b19b4991e8fa42fcf473431` | `73ed1b599c22e52dbb4c065f76cb11723f6da1e17d6d0a370a45b1307b57f940` | 0 hata |
+| N114 (tek sayfa) | `fb48f3cb22daba605b5e6831841343e28efe765b0749db021ee7ff0f589f81c6` | `08af40a6702b7cbd6259abcbce0675ffd3fabd8cbf21e355b8b1ebc6fc6c36d3` | — |
+
+N4, N17 ve N106–N111, N113 bu turda değişmedi (hash'leri yukarıdaki
+tabloyla aynı); kalan 102 blok `977a5e7` ile bayt-bayt aynıdır. Yeni kit
+kodu büyük-küçük harfe duyarsız dizge operatörü taşımaz (yalnız `-c…`
+biçimleri; kalan `-eq/-ne/-gt` sayı, bool veya `$null` karşılaştırması).
+
+**R3 son dar düzeltme (bağımsız yeniden inceleme `16af7b62…bbf`;
+kullanıcı kararı `at=2026-10-13T17:10+03:00`).** Girdi runbook
+`3b1cf29d…ff40` ve inceleme dosyası diskten doğrulandı. Yalnız bu dosya
+değişti; hiçbir şey çalıştırılmadı, değişen blok yalnız `ParseInput` ile
+denetlendi ve hash'lendi.
+
+| Bulgu | Karar | Değişiklik | Bölüm / blok |
+|---|---|---|---|
+| Obs-1 — K-R3-3'ün kapsamı | Yorum onaylandı | K-R3-3 karar satırı "yalnız operatörün yazdığı adlar" kapsamını ve kapsam dışı adları açıkça söyler | §34.9 kullanıcı kararları tablosu |
+| Low-1 — `a6`'nın DUR iletisi `DUR` ile başlamıyor, kilit yazmıyor | İnceleme önerisi (a) | `a6`'da geçersiz geri okuma kaydı dalı artık `Write-KitDur 'a6' 'READBACK_RECORD_INVALID'`: kilit yazılır, ileti `DUR.` ile başlar. Bununla liste dışı değişiklik 1'deki "kitin bütün DUR iletileri `DUR` ile başlar" iddiası doğru hâle gelir | N110 |
+| Obs-7 — son boşaltmadan sonra yazılan tuşlar ekrana düşebilir | Obs-7=ii (kullanıcı kararı `at=2026-10-13T17:20+03:00`; liste dışı değil) | Tek sayfa madde 7'ye kural: "Ekranda 7z'nin "Enter password" istemi yoksa HİÇBİR ŞEY yazmayın ve Enter'a basmayın." (tek sayfanın tırnak biçimine uyuldu); §32/39'a (h) cümlesi, bu kurala atıfla | N114; §32/39 |
+| Diğer gözlemler | Değişiklik yok | — | — |
+
+**DUR iletisi taraması (mekanik; N105–N113 dizge sabitleri).** `DUR`
+içerip `DUR` ile başlamayan iki sabit vardı: N110'daki eski ileti (bu
+düzeltmeyle kalktı) ve N105'in silme oturumu yükleme iletisi `KIT
+YUKLENDI, ama DUR kilidi var: SILME OTURUMU …` (kasıtlıdır; tek sayfanın
+"satır `DUR` ile başlıyorsa" kuralı onu tetiklememelidir). `DUR` ile
+başlayıp kilit yazmayan iletiler yalnız şunlardır: `Test-KitLock`'un
+`DUR - devam yok …` iletisi (kilit zaten vardır) ve kilit yazılamadığında
+`STOP KIT_DUR_WRITE=FAIL` satırının ardından gelen `DUR.` iletisi. N3, N4,
+N6, N14–N17 ve N51 kopyalarında `DUR` dizgesi yoktur.
+
+**Bu düzeltmede hash'i değişen bloklar.**
+
+| Blok | Eski SHA-256 | Yeni SHA-256 | `ParseInput` |
+|---|---|---|---|
+| N110 (`a6.ps1`) | `281969b6ab654310682bdc954c1b456adf78b7aedd11f939795ea25544e0d659` | `cd45441ad65352cba263415d8fd99432f1b3502fed7a645226b3218d9f53a0ef` | 0 hata |
+| N114 (tek sayfa) | `08af40a6702b7cbd6259abcbce0675ffd3fabd8cbf21e355b8b1ebc6fc6c36d3` | `77a2186ff9bc6f0ff1304599095d95887ebe2f5d305d02e9533b95d130a916da` | — (PowerShell değil) |
+
+Diğer 113 blok bu düzeltmede değişmedi. Ek R3/1 N114'ü listelemez (tek sayfa bir kit dosyası değildir); `a6.ps1` için Ek R3/1 bu tabloya atıf yapar.
+
+---
+
+## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
+
+YENİ (revizyon 3; kullanıcı kararları K-R3-1…K-R3-12, S-1, S-2; §34.9).
+Bu ekteki bloklar yazılırken **çalıştırılmadı**; yalnız `ParseInput` ile
+denetlendi ve delta3 provasına tabidir. Kit gerçek içerik okumaz; ekrana ve
+kayda yalnız durum satırları (`^(STOP )?[A-Z0-9_]+(=| )`) yazar.
+
+### Ek R3/1 Kit dosyaları
+
+Kit `<evidence-dir>\kit\` altında **tam olarak** şu 19 dosyadan oluşur.
+`.ps1` dosyalarının baytları, kaynak bloğun gövdesine (çit satırları
+hariç, LF ile birleştirilmiş, sonda LF; BOM yok, yalnız ASCII) **eşittir**;
+SHA-256 değerleri §34.9 ve aşağıdaki tablodadır.
+
+| Kit dosyası | Kaynak blok | SHA-256 |
+|---|---|---|
+| `ac.ps1` | N105 (Ek R3/3) | `635e0767513a562eff2734ea67f8fe8a2ee4737a941f8e3cdb4d27208c57bd0d` |
+| `a2.ps1` … `a9.ps1` | N106 … N113 (Ek R3/4) | §34.9 tablosu |
+| `n003.ps1` | N3 (§4.2/10 optik sürücü) | `6bbb9e0c0422baa967edb15d56e94b350a078de37ab6de8f3d5fc892c455a1d4` |
+| `n004.ps1` | N4 (§4.3 a tarama) | `b216d82434a36e5b79963cedfff578c7bd065fb13fe03c2b5ca9557a480e520d` |
+| `n006.ps1` | N6 (§4.3 b oturum denetimi) | `0fed2f837dc22f54f28b556021394d14fb5f85138cc9f6d1cab21e69233cd0e8` |
+| `n014.ps1` | N14 (§4.4/6 teknik kayıt; kit **yalnız satır 1**'i, `Get-PilotBinManifestSha` tanımını çalıştırır) | `60fe475b9308a068dac695533e8b7dfaf00aab7b339b7ff39541fba12f681403` |
+| `n015.ps1` | N15 (§4.4/6 araç yeniden doğrulaması) | `6ddbb71576078e321864ca5b145996849df3e15f4eee4aec7ec970deefa98e59` |
+| `n016.ps1` | N16 (§6.4 listeleme) | `326c9216f8eeedd922b1d7fca8b8584e87ccb29b2c21e2151a23b4199449b609` |
+| `n017.ps1` | N17 (§6.4 açma) | `1ea37c4b84d31a24c1e938892a35c6375546d0461e8b89a9fb18c76fe0380cbb` |
+| `n051.ps1` | N51 (§13.8 ortak yardımcılar) | `3204b405edadff06f14619bcff3f143750557fbba2a59c6654cd8c60d5f27e3f` |
+| `kit-values.txt` | Koşuya özgü; tam altı satır `<ad>=<değer>`: `repo-root`, `intake-dir`, `container-temp`, `7z`, `sevenzip-root`, `poppler-bin-dir` (§1.5 dar istisna) | Kurulumda `pins.txt`'ye yazılır |
+| `pins.txt` | Koşuya özgü; yukarıdaki 18 dosya için birer satır `<ad> <64-küçük-hex>`, LF | `kit-build.txt` ve her `ac.txt` (`KIT_PINS_SHA256`) |
+
+Blok kopyaları içindeki yer tutucular (`<repo-root>`, `<evidence-dir>`,
+`<intake-dir>`, `<7z>`, `<sevenzip-root>`, `<poppler-bin-dir>`,
+`<attempt>`) dosyada **değiştirilmez**; kit onları çalıştırmadan hemen önce
+yalnız bellekte `kit-values.txt` değerleriyle ve `<evidence-dir>` için
+kitin kendi konumuyla doldurur. Doldurmadan sonra `<…>` biçiminde bir yer
+tutucu kalırsa blok çalıştırılmaz: `STOP KIT_SCRIPT_LOAD=FAIL`.
+
+### Ek R3/2 Kitin kurulumu (ajan; zincir adım 4'ten önce; tek-çalışım)
+
+1. İçerik penceresinin **dışında**, hiçbir gerçek içerik yokken, tek
+   yazan bir ajan oturumunda yapılır; `<evidence-dir>` §13.8
+   `PATH_OK=evidence-dir` vermiş olmalıdır.
+2. `<evidence-dir>\kit\` **yoksa** oluşturulur; varsa kurulum yapılmaz:
+   **DUR** (kit yeniden kurulmaz, üzerine yazılmaz).
+3. 17 `.ps1` dosyası Ek R3/1'deki bloklardan bayt-bayt kopyalanır
+   (CreateNew); her birinin SHA-256'sı tabloyla eşit ve baytları yalnız
+   ASCII olmalıdır. Biri eşit değilse: **DUR**.
+4. `kit-values.txt` tam altı satırla yazılır (CreateNew). Her değer köklü
+   ve canonical bir yoldur, yalnız sürücü harfi, `\` ve `[A-Za-z0-9 ._()-]`
+   karakterlerini taşır, `%USERPROFILE%` altında **değildir**. Denetim
+   başarısızsa kit **kurulmaz**: **DUR**; değer sessizce düzeltilmez
+   (kullanıcı kararı S-1 notu).
+5. `pins.txt` 18 satırla yazılır (CreateNew).
+6. Komut adı çakışma ölçümü (addendum E1; R3 düzeltme turu, inceleme L-2):
+   ajanın kendi kabuğunda değil, yeni bir `powershell.exe -NoProfile`
+   alt sürecinde `Get-Command a2,a3,a4,a5,a6,a7,a8,a9 -ErrorAction
+   SilentlyContinue` çalıştırılır ve hiçbir sonuç döndürmemelidir
+   (takma ad, fonksiyon, cmdlet veya `PATH`'teki uygulama). Sonuç
+   dönerse kit kullanılmaz: **DUR**.
+7. `<evidence-dir>\kit-build.txt` (CreateNew; yol yok): `KIT_BUILD=OK`,
+   her dosya için `KIT_FILE_SHA256=<ad> <64-küçük-hex>`,
+   `KIT_VALUES_USERPROFILE_FREE=True`, `KIT_NAME_COLLISION_COUNT=0`,
+   `KIT_PINS_SHA256=<64-küçük-hex>`, `KIT_BUILT_AT=<zaman-damgası>`.
+8. Tek sayfa (N114) `<case-id>`, `<evidence-dir>` ve `<intake-dir>` doldurularak kâğıda
+   basılır; doldurulmuş sayfa evidence'a ve bu belgeye yazılmaz.
+9. Ajan oturumu kapatılır; içerik penceresinden önce §4.3 (a) kapatma
+   prosedürü uygulanır. Kit pilot boyunca değişmez; değişiklik gereği
+   **DUR** ve runbook revizyonudur.
+
+### Ek R3/3 Pencerenin açılması ve kitin yüklenmesi
+
+Operatör Win+R kutusuna kâğıttaki tek satırı yazar:
+
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit\ac.ps1'"`
+
+`ac.ps1` (N105) şunları denetler: kit dizininde tam olarak 19 dosya ve
+hiç alt dizin; `pins.txt` biçimi ve 18 adın her biri; her dosyanın
+SHA-256'sı; `kit-values.txt` biçimi ve §1.5 koşulları. Hepsi geçerse
+`<evidence-dir>\steps\s<k>\` (k = 1, 2, 3, …; ilk var olmayan; üst
+sınır yok) oturum dizinini ve `ac.txt` kaydını (`KIT_LOAD=OK`,
+`KIT_PINS_SHA256`, `KIT_DUR_PRESENT`, `KIT_TEARDOWN_SESSION`) yazar ve
+`a2`…`a9` komutlarını tanımlar. Herhangi bir denetim geçmezse (kitin
+kendi konumundan türetilen `<evidence-dir>`'in `kit-values.txt` ile aynı
+karakter kümesi denetimi dahil: `KIT_LOAD_EVID_CHARS`; R3 düzeltme
+turu, inceleme O-3) `<evidence-dir>\DUR.txt` (`KIT_DUR_REASON=KIT_LOAD_<kod>`)
+yazılır ve hiçbir komut tanımlanmaz. Oturum dizini oluşturulamazsa
+`KIT_SESSION_CREATE_FAIL` ile **DUR** olur ve hiçbir komut tanımlanmaz.
+`DUR.txt` zaten varsa kit yüklenir ve pencere bir **silme oturumudur**
+(§4.3 a): yalnız `a2`, `a3`, `a8` ve `a9` çalışır, `a4`–`a7` çalışmaz.
+Oturum sayısına sınır yoktur (R3 düzeltme turu; kullanıcı kararı
+M-1: oturum adını operatör yazmaz).
+
+```powershell
+# ac.ps1 - Ek R3 kit onyukleyicisi (runbook revizyon 3). ASCII. Yalniz dot-source ile yuklenir (Ek R3/3).
+# Pinleri, kit-values.txt'yi ve DUR kilidini denetler; kit fonksiyonlarini ve a2..a9 komutlarini tanimlar.
+# Icerik okumaz, 7z veya baska arac cagirmaz.
+if ($null -ne $global:KitSess) { Write-Host 'KIT zaten yuklu. Yeni oturum icin pencereyi kapatip kagittaki komutla yeniden acin.'; return }
+$global:KitDir = $PSScriptRoot
+$global:KitEvid = Split-Path -Parent $PSScriptRoot
+$global:KitVal = $null
+$global:KitPins = $null
+$global:KitSessDir = $null
+$global:KitE2Dir = $null
+$global:KitTeardown = $false
+$global:KitRx = '^(STOP )?[A-Z0-9_]+(=| )'
+function global:Get-KitNow { return [DateTimeOffset]::Now.ToString('yyyy-MM-ddTHH:mm:sszzz', [System.Globalization.CultureInfo]::InvariantCulture) }
+function global:Get-KitSha([byte[]]$Bytes) { $s = [System.Security.Cryptography.SHA256]::Create(); try { return ([System.BitConverter]::ToString($s.ComputeHash($Bytes))).Replace('-', '').ToLowerInvariant() } finally { $s.Dispose() } }
+function global:Write-KitBytes([string]$Path, [string[]]$Lines, [System.IO.FileMode]$Mode) {
+    $fs = [System.IO.File]::Open($Path, $Mode, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
+    try { foreach ($l in $Lines) { $b = [System.Text.Encoding]::UTF8.GetBytes($l + "`n"); $fs.Write($b, 0, $b.Length) } } finally { $fs.Dispose() }
+}
+function global:Write-KitDur([string]$Step, [string]$Reason) {
+    $p = Join-Path $global:KitEvid 'DUR.txt'
+    if (-not (Test-Path -LiteralPath $p)) { try { Write-KitBytes $p @("KIT_DUR step=$Step at=$(Get-KitNow)", "KIT_DUR_REASON=$Reason") ([System.IO.FileMode]::CreateNew) } catch { Write-Host 'STOP KIT_DUR_WRITE=FAIL' } }
+    Write-Host "DUR. Adim $Step durdu ($Reason). Kalan adimlari yapmayin."
+    Write-Host 'Parola kagidi varsa yirtin ve a8 yazin. Sonra a9 yazin ve pencereyi kapatin.'
+}
+function global:Test-KitLock {
+    if (Test-Path -LiteralPath (Join-Path $global:KitEvid 'DUR.txt')) { Write-Host 'DUR - devam yok. Parola kagidi varsa yirtin ve a8 yazin. Sonra a9 yazin ve pencereyi kapatin.'; return $true }
+    return $false
+}
+function global:New-KitRecord([string]$Path, [string[]]$Lines) {
+    if (Test-Path -LiteralPath $Path) { Write-Host "Bu adim zaten calisti: $(Split-Path -Leaf $Path). Tekrar calismaz."; return $false }
+    try { Write-KitBytes $Path $Lines ([System.IO.FileMode]::CreateNew) } catch { Write-Host 'STOP KIT_RECORD_CREATE=FAIL'; return $false }
+    foreach ($l in $Lines) { Write-Host $l }
+    return $true
+}
+function global:Add-KitLine([string]$Path, [string]$Line) { Write-KitBytes $Path @($Line) ([System.IO.FileMode]::Append); Write-Host $Line }
+function global:Read-KitRecord([string]$Path) {
+    try { if (Test-Path -LiteralPath $Path -PathType Leaf) { [string[]][System.IO.File]::ReadAllLines($Path, (New-Object System.Text.UTF8Encoding($false))) } } catch { }
+}
+function global:Get-KitField([string[]]$Lines, [string]$Prefix) {
+    foreach ($l in $Lines) { if ($l.StartsWith($Prefix, [System.StringComparison]::Ordinal)) { return $l.Substring($Prefix.Length) } }
+    return $null
+}
+function global:Test-KitPass([string]$Path, [bool]$SameSession) {
+    $r = @(Read-KitRecord $Path)
+    if ($r.Count -eq 0) { return $false }
+    if ($r -cnotcontains 'STEP_RESULT=PASS') { return $false }
+    if ($SameSession -and ($r -cnotcontains "KIT_SESSION=$($global:KitSess)")) { return $false }
+    return $true
+}
+function global:Get-KitHeader([string]$Name) { $h = @("STEP=$Name", "KIT_SESSION=$($global:KitSess)", "KIT_FILE_SHA256=$Name.ps1 $($global:KitPins[$Name + '.ps1'])", "STARTED_AT=$(Get-KitNow)"); if ($global:KitTeardown) { $h += 'KIT_TEARDOWN_SESSION=True' }; return $h }
+function global:Get-KitScript([string]$Name, [hashtable]$Subst, [string]$FirstLine) {
+    try { $b = [System.IO.File]::ReadAllBytes((Join-Path $global:KitDir "$Name.ps1")) } catch { return $null }
+    if ((Get-KitSha $b) -cne [string]$global:KitPins[$Name + '.ps1']) { return $null }
+    foreach ($x in $b) { if ($x -gt 127) { return $null } }
+    $t = [System.Text.Encoding]::ASCII.GetString($b)
+    if ($FirstLine -cne '') { $t = $t.Split([char]10)[0]; if (-not $t.StartsWith($FirstLine, [System.StringComparison]::Ordinal)) { return $null } }
+    if ($null -ne $Subst) { foreach ($k in $Subst.Keys) { $t = $t.Replace('<' + $k + '>', [string]$Subst[$k]) } }
+    if ($t -cmatch '<[a-z][a-z0-9-]*>') { return $null }
+    try { return [scriptblock]::Create($t) } catch { return $null }
+}
+function global:Invoke-KitBlock([string]$Rec, [string]$Name, [hashtable]$Subst) {
+    $sb = Get-KitScript $Name $Subst ''
+    if ($null -eq $sb) { Add-KitLine $Rec "STOP KIT_SCRIPT_LOAD=FAIL file=$Name"; return }
+    Add-KitLine $Rec "--- $Name"
+    $kitNs = 0; $kitEr = 0
+    & $sb 2>&1 | ForEach-Object { if ($_ -is [System.Management.Automation.ErrorRecord]) { $kitEr++ } else { $kitLn = [string]$_; if ($kitLn -cmatch $global:KitRx) { Add-KitLine $Rec $kitLn } else { $kitNs++ } } }
+    if ($kitNs -eq 0) { Add-KitLine $Rec 'KIT_NONSTATUS_LINE_COUNT=0' } else { Add-KitLine $Rec "STOP KIT_NONSTATUS_LINE_COUNT=$kitNs" }
+    if ($kitEr -gt 0) { Add-KitLine $Rec "STOP KIT_ERROR_RECORD_COUNT=$kitEr" }
+}
+function global:Complete-KitStep([string]$Rec, [string]$Name, [string[]]$Required, [string]$PassMsg) {
+    $r = @(Read-KitRecord $Rec)
+    $ok = ($r.Count -gt 0) -and (@($r | Where-Object { $_.StartsWith('STOP ', [System.StringComparison]::Ordinal) }).Count -eq 0)
+    foreach ($q in $Required) { if ($r -cnotcontains $q) { $ok = $false } }
+    if ($ok) { Add-KitLine $Rec 'STEP_RESULT=PASS' } else { Add-KitLine $Rec 'STEP_RESULT=STOP' }
+    Add-KitLine $Rec "ENDED_AT=$(Get-KitNow)"
+    if ($ok) { Write-Host $PassMsg } else { Write-KitDur $Name 'STEP_STOP' }
+    return $ok
+}
+function global:Clear-KitKeys { try { while ([Console]::KeyAvailable) { $null = [Console]::ReadKey($true) } } catch { } }
+function global:Read-KitYesNo([string]$Question) {
+    Clear-KitKeys
+    for ($i = 0; $i -lt 2; $i++) {
+        Write-Host "$Question   Evet: E tusu   Hayir: H tusu"
+        $c = [string]([Console]::ReadKey($true).KeyChar)
+        if (($c -ceq 'E') -or ($c -ceq 'e')) { Write-Host 'E'; return 'E' }
+        if (($c -ceq 'H') -or ($c -ceq 'h')) { Write-Host 'H'; return 'H' }
+        Write-Host 'Gecersiz tus.'
+    }
+    return 'X'
+}
+function global:Invoke-KitAttempt([int]$Attempt, [string]$Name) {
+    if (-not [Console]::CapsLock) { Write-Host "CAPS LOCK KAPALI. Caps Lock tusuna basin ve yeniden $Name yazin. Deneme harcanmadi."; return }
+    $rec = Join-Path $global:KitE2Dir "$Name.txt"
+    if (-not (New-KitRecord $rec (@(Get-KitHeader $Name) + @("ATTEMPT=$Attempt")))) { return }
+    Write-Host 'Parolayi kagittan, YALNIZ ekranda Enter password istemi gorunurken yazin. Istem yoksa hicbir sey yazmayin.'
+    Invoke-KitBlock $rec 'n017' @{ '7z' = $global:KitVal['7z']; 'intake-dir' = $global:KitVal['intake-dir']; 'attempt' = [string]$Attempt }
+    $p = Read-KitYesNo 'Ekranda parola istemi (Enter password) gorundu mu?'
+    if ($p -ceq 'E') { Add-KitLine $rec "SEVENZIP_PASSWORD_PROMPT_SHOWN=True attempt=$Attempt" } elseif ($p -ceq 'H') { Add-KitLine $rec "STOP SEVENZIP_PASSWORD_PROMPT_SHOWN=False attempt=$Attempt"; Add-KitLine $rec 'STOP E2_CARRIER_ENCRYPTED=False' } else { Add-KitLine $rec "STOP SEVENZIP_PASSWORD_PROMPT_SHOWN=UNKNOWN attempt=$Attempt" }
+    $w = Read-KitYesNo 'Ekranda Wrong password yazisi gorundu mu?'
+    if ($w -ceq 'E') { Add-KitLine $rec "SEVENZIP_WRONG_PASSWORD_SHOWN=True attempt=$Attempt" } elseif ($w -ceq 'H') { Add-KitLine $rec "SEVENZIP_WRONG_PASSWORD_SHOWN=False attempt=$Attempt" } else { Add-KitLine $rec "STOP SEVENZIP_WRONG_PASSWORD_SHOWN=UNKNOWN attempt=$Attempt" }
+    $r = @(Read-KitRecord $rec)
+    $noStop = (@($r | Where-Object { $_.StartsWith('STOP ', [System.StringComparison]::Ordinal) }).Count -eq 0)
+    $succ = $noStop -and ($r -ccontains "SEVENZIP_RC=0 attempt=$Attempt") -and ($r -ccontains "X_ENTRY_COUNT=1 attempt=$Attempt") -and ($r -ccontains "SEVENZIP_PASSWORD_PROMPT_SHOWN=True attempt=$Attempt") -and ($r -ccontains "SEVENZIP_WRONG_PASSWORD_SHOWN=False attempt=$Attempt")
+    $retry = ($Attempt -eq 1) -and $noStop -and ($r -ccontains 'SEVENZIP_RC=2 attempt=1') -and ($r -ccontains 'X_ENTRY_COUNT=0 attempt=1') -and ($r -ccontains 'SEVENZIP_PASSWORD_PROMPT_SHOWN=True attempt=1') -and ($r -ccontains 'SEVENZIP_WRONG_PASSWORD_SHOWN=True attempt=1')
+    if ($succ) { Add-KitLine $rec 'ATTEMPT_OUTCOME=SUCCESS'; Add-KitLine $rec 'E2_CARRIER_ENCRYPTED=True'; $null = Complete-KitStep $rec $Name @('ATTEMPT_OUTCOME=SUCCESS') 'Acma basarili. Parola kagidini BUGUN yirtin, sonra a8 yazin.' }
+    elseif ($retry) { Add-KitLine $rec 'ATTEMPT_OUTCOME=RETRY_ALLOWED'; $null = Complete-KitStep $rec $Name @('ATTEMPT_OUTCOME=RETRY_ALLOWED') 'Tek ek deneme hakki var. Caps Lock acik olsun, sonra a7 yazin.' }
+    else { Add-KitLine $rec 'STOP ATTEMPT_OUTCOME=FAIL'; $null = Complete-KitStep $rec $Name @('ATTEMPT_OUTCOME=SUCCESS') '' }
+    Clear-KitKeys
+}
+function global:Invoke-KitStep([string]$Name, [bool]$LockExempt) {
+    if ($global:KitTeardown -and (@('a4', 'a5', 'a6', 'a7') -ccontains $Name)) { Write-Host 'SILME OTURUMU: a4-a7 bu pencerede calismaz.'; return }
+    if ((-not $LockExempt) -and (Test-KitLock)) { return }
+    $sb = Get-KitScript $Name $null ''
+    if ($null -eq $sb) { Write-KitDur $Name 'KIT_SCRIPT_LOAD_FAIL'; return }
+    try { & $sb } catch { Write-KitDur $Name 'KIT_EXCEPTION' }
+    Clear-KitKeys
+    Write-Host 'Bu ekrani hicbir yere yapistirmayin, fotografini cekmeyin.'
+}
+$kitWhy = ''
+$kitNames = @('ac.ps1', 'a2.ps1', 'a3.ps1', 'a4.ps1', 'a5.ps1', 'a6.ps1', 'a7.ps1', 'a8.ps1', 'a9.ps1', 'n003.ps1', 'n004.ps1', 'n006.ps1', 'n014.ps1', 'n015.ps1', 'n016.ps1', 'n017.ps1', 'n051.ps1', 'kit-values.txt')
+$kitValNames = @('repo-root', 'intake-dir', 'container-temp', '7z', 'sevenzip-root', 'poppler-bin-dir')
+try {
+    $kitPinBytes = [System.IO.File]::ReadAllBytes((Join-Path $global:KitDir 'pins.txt'))
+    $kitPins = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
+    foreach ($kitL in [System.Text.Encoding]::ASCII.GetString($kitPinBytes).Split([char]10)) {
+        if ($kitL -ceq '') { continue }
+        $kitM = [regex]::Match($kitL, '^([a-z0-9.-]+) ([0-9a-f]{64})$')
+        if ((-not $kitM.Success) -or $kitPins.ContainsKey($kitM.Groups[1].Value)) { $kitWhy = 'PINS_FORMAT'; break }
+        $kitPins[$kitM.Groups[1].Value] = $kitM.Groups[2].Value
+    }
+    if (($kitWhy -ceq '') -and ($global:KitEvid -cnotmatch '^[A-Za-z]:\\[A-Za-z0-9 ._()\\-]*$')) { $kitWhy = 'EVID_CHARS' }
+    if (($kitWhy -ceq '') -and ($kitPins.Count -ne $kitNames.Count)) { $kitWhy = 'PINS_COUNT' }
+    if ($kitWhy -ceq '') { foreach ($kitN in $kitNames) { if (-not $kitPins.ContainsKey($kitN)) { $kitWhy = 'PINS_NAME' } } }
+    if ($kitWhy -ceq '') {
+        $kitItems = @(Get-ChildItem -LiteralPath $global:KitDir -Force -ErrorAction Stop)
+        if ($kitItems.Count -ne ($kitNames.Count + 1)) { $kitWhy = 'KIT_DIR_COUNT' }
+        foreach ($kitI in $kitItems) { if ($kitI.PSIsContainer -or (($kitNames -cnotcontains $kitI.Name) -and ($kitI.Name -cne 'pins.txt'))) { $kitWhy = 'KIT_DIR_ITEM' } }
+    }
+    if ($kitWhy -ceq '') { foreach ($kitN in $kitNames) { if ((Get-KitSha ([System.IO.File]::ReadAllBytes((Join-Path $global:KitDir $kitN)))) -cne $kitPins[$kitN]) { $kitWhy = 'PIN_MISMATCH' } } }
+    if ($kitWhy -ceq '') {
+        $kitVal = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
+        $kitUp = [System.IO.Path]::GetFullPath($env:USERPROFILE).TrimEnd('\') + '\'
+        foreach ($kitL in [System.IO.File]::ReadAllLines((Join-Path $global:KitDir 'kit-values.txt'), (New-Object System.Text.UTF8Encoding($false)))) {
+            $kitM = [regex]::Match($kitL, '^([a-z0-9-]+)=(.+)$')
+            if ((-not $kitM.Success) -or ($kitValNames -cnotcontains $kitM.Groups[1].Value) -or $kitVal.ContainsKey($kitM.Groups[1].Value)) { $kitWhy = 'VALUES_FORMAT'; break }
+            $kitV = $kitM.Groups[2].Value
+            if ($kitV -cnotmatch '^[A-Za-z]:\\[A-Za-z0-9 ._()\\-]*$') { $kitWhy = 'VALUES_CHARS'; break }
+            if ([System.IO.Path]::GetFullPath($kitV).TrimEnd('\') -cne $kitV.TrimEnd('\')) { $kitWhy = 'VALUES_CANONICAL'; break }
+            if (($kitV.TrimEnd('\') + '\').StartsWith($kitUp, [System.StringComparison]::OrdinalIgnoreCase)) { $kitWhy = 'VALUES_USERPROFILE'; break }
+            $kitVal[$kitM.Groups[1].Value] = $kitV
+        }
+        if (($kitWhy -ceq '') -and ($kitVal.Count -ne $kitValNames.Count)) { $kitWhy = 'VALUES_COUNT' }
+    }
+} catch { if ($kitWhy -ceq '') { $kitWhy = 'LOAD_EXCEPTION' } }
+if ($kitWhy -cne '') {
+    $kitDurP = Join-Path $global:KitEvid 'DUR.txt'
+    if (-not (Test-Path -LiteralPath $kitDurP)) { try { Write-KitBytes $kitDurP @("KIT_DUR step=ac at=$(Get-KitNow)", "KIT_DUR_REASON=KIT_LOAD_$kitWhy") ([System.IO.FileMode]::CreateNew) } catch { Write-Host 'STOP KIT_DUR_WRITE=FAIL' } }
+    Write-Host "DUR. KIT YUKLENEMEDI (KIT_LOAD_$kitWhy). Hicbir adim calismaz."
+    Write-Host 'Parola kagidi varsa yirtin; saati kagida not edin. Pencereyi kapatin.'
+} else {
+    $global:KitPins = $kitPins
+    $kitVal['evidence-dir'] = $global:KitEvid
+    $global:KitVal = $kitVal
+    $kitSteps = Join-Path $global:KitEvid 'steps'
+    $null = [System.IO.Directory]::CreateDirectory($kitSteps)
+    $global:KitE2Dir = Join-Path $kitSteps 'e2'
+    $null = [System.IO.Directory]::CreateDirectory($global:KitE2Dir)
+    try { for ($kitK = 1; $null -eq $global:KitSess; $kitK++) { $kitS = Join-Path $kitSteps "s$kitK"; if (-not (Test-Path -LiteralPath $kitS)) { $null = [System.IO.Directory]::CreateDirectory($kitS); $global:KitSessDir = $kitS; $global:KitSess = "s$kitK" } } } catch { }
+    if ($null -eq $global:KitSess) {
+        $global:KitSess = 'none'
+        Write-KitDur 'ac' 'KIT_SESSION_CREATE_FAIL'
+    } else {
+        $kitDurOn = Test-Path -LiteralPath (Join-Path $global:KitEvid 'DUR.txt')
+        $global:KitTeardown = $kitDurOn
+        $null = New-KitRecord (Join-Path $global:KitSessDir 'ac.txt') @('STEP=ac', "KIT_SESSION=$($global:KitSess)", "KIT_FILE_SHA256=ac.ps1 $($kitPins['ac.ps1'])", "KIT_PINS_SHA256=$(Get-KitSha $kitPinBytes)", "KIT_DUR_PRESENT=$kitDurOn", "KIT_TEARDOWN_SESSION=$kitDurOn", 'KIT_LOAD=OK', "LOADED_AT=$(Get-KitNow)")
+        function global:a2 { Invoke-KitStep 'a2' $global:KitTeardown }
+        function global:a3 { Invoke-KitStep 'a3' $global:KitTeardown }
+        function global:a4 { Invoke-KitStep 'a4' $false }
+        function global:a5 { Invoke-KitStep 'a5' $false }
+        function global:a6 { Invoke-KitStep 'a6' $false }
+        function global:a7 { Invoke-KitStep 'a7' $false }
+        function global:a8 { Invoke-KitStep 'a8' $true }
+        function global:a9 { Invoke-KitStep 'a9' $true }
+        if ($kitDurOn) { Write-Host "KIT YUKLENDI, ama DUR kilidi var: SILME OTURUMU $($global:KitSess). Yalniz a2, a3 (kanal kapisi), a8 ve a9 calisir; a4-a7 calismaz." } else { Write-Host "KIT YUKLENDI. Oturum $($global:KitSess). Siradaki: a2 yazip Enter." }
+    }
+}
+Remove-Variable kitWhy, kitNames, kitValNames, kitPinBytes, kitPins, kitL, kitM, kitN, kitItems, kitI, kitVal, kitUp, kitV, kitDurP, kitSteps, kitK, kitS, kitDurOn -ErrorAction SilentlyContinue
+```
+
+### Ek R3/4 Adımlar ve ortak kurallar
+
+| Komut | İş | Ön koşul | Kayıt | DUR kilidinde |
+|---|---|---|---|---|
+| `a2` | `CONTENT_SESSION_EP`, N6, kanal taraması 1 (N4) | Yeni oturum | `steps\s<k>\a2.txt` | Yalnız silme oturumunda (kilitle açılmış pencere) çalışır |
+| `a3` | Kanal taraması 2 (N4); 120 sn dolmadan tarama ve kayıt yok | Aynı oturumda `a2` PASS | `steps\s<k>\a3.txt` | Yalnız silme oturumunda çalışır |
+| `a4` | `KIT_TEMP_IN_CONTAINER`, optik sürücü (N3), araç manifesti (N51, N14 satır 1, N15) | Aynı oturumda `a3` PASS; zincir adım 4'ün elle çalıştırılan blokları (TEMP yönlendirmesi N13, teknik kayıt N14 dahil) tamam | `steps\e2\a4.txt` | Çalışmaz |
+| `a5` | `transfer.7z` listeleme yöntem kontrolü (N16) | Aynı oturumda `a4` PASS | `steps\e2\a5.txt` | Çalışmaz |
+| `a6` | Geri okuma sorusu (E/H), açma denemesi 1 (N17), iki gözlem sorusu (E/H) | Aynı oturumda `a5` PASS; `a8` yok | `steps\e2\a6-readback.txt`, `steps\e2\a6.txt` | Çalışmaz |
+| `a7` | Tek ek deneme (N17, deneme 2) | Aynı oturumda `a6` `ATTEMPT_OUTCOME=RETRY_ALLOWED`; `a8` yok | `steps\e2\a7.txt` | Çalışmaz |
+| `a8` | Kâğıt imhası; `reason` türetilir (geri okuma kaydı yoksa `stopped`) | `steps\e2\a5.txt` `STEP_RESULT=PASS` (herhangi bir oturumda); operatör "imha ettim" için E | `steps\e2\a8.txt` | **Çalışır** |
+| `a9` | Otomatik kapanış taraması (N4) | Aynı oturumda `a2` kaydı var | `steps\s<k>\a9.txt` | **Çalışır** |
+
+Ortak kurallar (hepsi kitin içinde mekaniktir):
+
+1. **Kilit.** Herhangi bir `STOP` satırı adımı `STEP_RESULT=STOP` ile
+   bitirir ve `<evidence-dir>\DUR.txt`'yi CreateNew ile yazar
+   (`KIT_DUR step=<adım> at=<zaman-damgası>`, `KIT_DUR_REASON=<kod>`).
+   `a2`…`a7` ilk iş olarak bu dosyaya bakar; varsa hiçbir araç çağırmadan
+   çıkar (istisna: silme oturumunda `a2`/`a3`, §4.3 a; orada `a4`–`a7`
+   oturum bayrağıyla reddedilir). Kilidi kaldıran bir kit komutu yoktur.
+   Kilit yalnız yazılı kullanıcı kararından sonra kaldırılır: ajan
+   `DUR.txt`'yi **silmeden** `DUR-lifted-<n>.txt` (n = ilk var olmayan
+   sıra numarası) olarak yeniden adlandırır ve bunu CreateNew ile
+   `<evidence-dir>\dur-lift-<n>.txt` kaydına (`KIT_DUR_LIFTED
+   from=DUR.txt to=DUR-lifted-<n>.txt at=<zaman-damgası>` ve kararın
+   SHA-256'sı) yazar (R3 düzeltme turu; kullanıcı kararı H-1=A).
+2. **Sıra ve tek çalışım.** Her adım ön koşul kaydını ve onun
+   `STEP_RESULT=PASS` satırını ister; `a4`–`a7` ayrıca aynı oturumu
+   (`KIT_SESSION=s<k>`) ister (`a8` istemez: kâğıt kaydı sonraki bir
+   pencerede de yazılabilir). Kaydı zaten var olan adım yeniden
+   çalışmaz. İstisnalar yalnız kayıt yazmayan dallardır: `a3`'ün erken
+   çağrısı ve `a6`/`a7`'nin Caps Lock kapalı dalı.
+3. **Ekran = kayıt.** Her durum satırı basıldığı anda önce dosyaya
+   (Append), sonra ekrana yazılır; 7z gibi uzun sürebilecek bir çağrıdan
+   önceki satırlar çağrıdan önce dosyadadır. Durum satırı olmayan çıktı
+   kayda girmez, yalnız sayılır; sayı ≠ 0 → `STOP
+   KIT_NONSTATUS_LINE_COUNT`. PowerShell hata kaydı → `STOP
+   KIT_ERROR_RECORD_COUNT`. Her adım "Bu ekranı hiçbir yere
+   yapıştırmayın, fotoğrafını çekmeyin" satırıyla biter.
+4. **Pin.** Her adım ve her blok kopyası çalıştırılmadan hemen önce
+   yeniden hash'lenir; uyuşmazlık → `STOP KIT_SCRIPT_LOAD=FAIL` veya
+   `KIT_SCRIPT_LOAD_FAIL` kilidi.
+5. **Oturum ve E2.** `a2`, `a3`, `a9` her içerik oturumunda yeniden çalışır
+   (`steps\s<k>\`); `a4`–`a8` pilot boyunca bir kez çalışır
+   (`steps\e2\`).
+
+```powershell
+# a2.ps1 - Ek R3: oturum acilis denetimi (N6) ve kanal taramasi 1 (N4). ASCII. Yalniz a2 komutuyla calisir.
+$kitRec = Join-Path $global:KitSessDir 'a2.txt'
+if (-not (New-KitRecord $kitRec @(Get-KitHeader 'a2'))) { return }
+Add-KitLine $kitRec "CONTENT_SESSION_EP=$(Get-ExecutionPolicy -Scope Process)"
+Invoke-KitBlock $kitRec 'n006' @{ 'repo-root' = $global:KitVal['repo-root'] }
+$kitR = @(Read-KitRecord $kitRec)
+if (($kitR -ccontains 'HISTORY_HANDLER_STATE=NONE') -or ($kitR -ccontains 'HISTORY_HANDLER_STATE=DEFAULT')) { Add-KitLine $kitRec 'KIT_HISTORY_HANDLER_OK=True' } else { Add-KitLine $kitRec 'STOP KIT_HISTORY_HANDLER_OK=False' }
+Invoke-KitBlock $kitRec 'n004' $null
+if ($null -eq (Get-KitField @(Read-KitRecord $kitRec) 'AI_CHANNEL_SCAN at=')) { Add-KitLine $kitRec 'STOP KIT_SCAN_AT=MISSING' }
+$null = Complete-KitStep $kitRec 'a2' @('CONTENT_SESSION_EP=Bypass', 'CONTENT_SESSION_NOPROFILE=True', 'TRANSCRIPT_ACTIVE=False', 'EXTRA_MODULE_COUNT=0', 'KIT_HISTORY_HANDLER_OK=True', 'COMMAND_VALIDATION_HANDLER_STATE=NONE', 'HISTORY_SAVE_STYLE=SaveNothing', 'AI_CHANNEL_PROCESS_COUNT=0') 'a2 TAMAM. En az 2 dakika bekleyin, sonra a3 yazin.'
+```
+
+```powershell
+# a3.ps1 - Ek R3: kanal taramasi 2 (N4), taramadan en az 120 saniye sonra. ASCII. Yalniz a3 komutuyla calisir.
+$kitA2 = @(Read-KitRecord (Join-Path $global:KitSessDir 'a2.txt'))
+if ($kitA2 -cnotcontains 'STEP_RESULT=PASS') { Write-Host 'Once bu oturumda a2 TAMAM olmali.'; return }
+$kitFmt = 'yyyy-MM-ddTHH:mm:sszzz'
+$kitInv = [System.Globalization.CultureInfo]::InvariantCulture
+$kitD1 = [DateTimeOffset]::ParseExact((Get-KitField $kitA2 'AI_CHANNEL_SCAN at='), $kitFmt, $kitInv)
+$kitWait = 120 - [int][Math]::Floor(([DateTimeOffset]::Now - $kitD1).TotalSeconds)
+if ($kitWait -gt 0) { Write-Host "BEKLEYIN: $kitWait saniye daha. Sonra yeniden a3 yazin. (Kayit yazilmadi.)"; return }
+$kitRec = Join-Path $global:KitSessDir 'a3.txt'
+if (-not (New-KitRecord $kitRec @(Get-KitHeader 'a3'))) { return }
+Invoke-KitBlock $kitRec 'n004' $null
+$kitT2 = Get-KitField @(Read-KitRecord $kitRec) 'AI_CHANNEL_SCAN at='
+if ($null -eq $kitT2) { Add-KitLine $kitRec 'STOP KIT_SCAN_AT=MISSING' } else {
+    $kitSec = [int][Math]::Floor(([DateTimeOffset]::ParseExact($kitT2, $kitFmt, $kitInv) - $kitD1).TotalSeconds)
+    Add-KitLine $kitRec "SCAN_INTERVAL_SEC=$kitSec"
+    if ($kitSec -ge 120) { Add-KitLine $kitRec 'SCAN_INTERVAL_OK=True' } else { Add-KitLine $kitRec 'STOP SCAN_INTERVAL_OK=False' }
+}
+$null = Complete-KitStep $kitRec 'a3' @('AI_CHANNEL_PROCESS_COUNT=0', 'SCAN_INTERVAL_OK=True') 'a3 TAMAM. Kanal kapisi gecti. Aktarim gununde siradaki adim a4; oturum sonunda a9.'
+```
+
+```powershell
+# a4.ps1 - Ek R3: TEMP, optik surucu (N3) ve arac manifesti (N51, N14 satir 1, N15). ASCII. Yalniz a4 komutuyla calisir.
+if (-not (Test-KitPass (Join-Path $global:KitSessDir 'a3.txt') $true)) { Write-Host 'Once bu oturumda a3 TAMAM olmali.'; return }
+$kitRec = Join-Path $global:KitE2Dir 'a4.txt'
+if (-not (New-KitRecord $kitRec @(Get-KitHeader 'a4'))) { return }
+$kitTmp = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd('\')
+if ([string]::Equals($kitTmp, ([string]$global:KitVal['container-temp']).TrimEnd('\'), [System.StringComparison]::OrdinalIgnoreCase)) { Add-KitLine $kitRec 'KIT_TEMP_IN_CONTAINER=True' } else { Add-KitLine $kitRec 'STOP KIT_TEMP_IN_CONTAINER=False' }
+Invoke-KitBlock $kitRec 'n003' @{ 'evidence-dir' = $global:KitEvid }
+if (@(Read-KitRecord $kitRec | Where-Object { $_.StartsWith('OPTICAL_MEDIA_LOADED=True', [System.StringComparison]::Ordinal) }).Count -gt 0) { Add-KitLine $kitRec 'STOP KIT_OPTICAL_MEDIA_LOADED=True' }
+$kitDef51 = Get-KitScript 'n051' $null ''
+$kitDef14 = Get-KitScript 'n014' $null 'function Get-PilotBinManifestSha('
+if (($null -eq $kitDef51) -or ($null -eq $kitDef14)) { Add-KitLine $kitRec 'STOP KIT_SCRIPT_LOAD=FAIL file=n051,n014' } else {
+    . $kitDef51
+    . $kitDef14
+    Add-KitLine $kitRec 'KIT_DEFS=n051,n014:1'
+    Invoke-KitBlock $kitRec 'n015' @{ 'evidence-dir' = $global:KitEvid; 'poppler-bin-dir' = $global:KitVal['poppler-bin-dir']; 'sevenzip-root' = $global:KitVal['sevenzip-root'] }
+}
+$null = Complete-KitStep $kitRec 'a4' @('KIT_TEMP_IN_CONTAINER=True', 'OPTICAL_DRIVES_MATCH_RECORD=True', 'TOOL_MANIFEST_MATCH=True') 'a4 TAMAM. Dosyayi Farkli kaydet ile intake klasorune transfer.7z adiyla kaydedin, sonra a5 yazin.'
+```
+
+```powershell
+# a5.ps1 - Ek R3: transfer.7z listeleme yontem kontrolu (N16, bekcili). ASCII. Yalniz a5 komutuyla calisir.
+if (-not (Test-KitPass (Join-Path $global:KitE2Dir 'a4.txt') $true)) { Write-Host 'Once bu oturumda a4 TAMAM olmali.'; return }
+$kitRec = Join-Path $global:KitE2Dir 'a5.txt'
+if (-not (New-KitRecord $kitRec @(Get-KitHeader 'a5'))) { return }
+Invoke-KitBlock $kitRec 'n016' @{ '7z' = $global:KitVal['7z']; 'intake-dir' = $global:KitVal['intake-dir'] }
+$null = Complete-KitStep $kitRec 'a5' @('SEVENZIP_LIST_TIMEOUT=False', 'SEVENZIP_ALL_ENTRIES_7ZAES=True') 'a5 TAMAM. Simdi dosya avukatini arayin; parolayi YALNIZ kagida yazin ve geri okuyun. Sonra a6 yazin.'
+```
+
+```powershell
+# a6.ps1 - Ek R3: geri okuma kaydi ve acma denemesi 1 (N17). ASCII. Yalniz a6 komutuyla calisir.
+if (-not (Test-KitPass (Join-Path $global:KitE2Dir 'a5.txt') $true)) { Write-Host 'Once bu oturumda a5 TAMAM olmali.'; return }
+if (Test-Path -LiteralPath (Join-Path $global:KitE2Dir 'a8.txt')) { Write-Host 'Parola kagidi imha edilmis; deneme yapilamaz.'; return }
+$kitRb = Join-Path $global:KitE2Dir 'a6-readback.txt'
+if (-not (Test-Path -LiteralPath $kitRb)) {
+    if (-not (New-KitRecord $kitRb @(Get-KitHeader 'a6'))) { return }
+    $kitAns = Read-KitYesNo 'Kagittan geri okuma tuttu mu? (Her karakter alfabede ve geri okumada ayni)'
+    Add-KitLine $kitRb "HP_READBACK_AT=$(Get-KitNow)"
+    if ($kitAns -ceq 'E') { Add-KitLine $kitRb 'HP_READBACK=ok' } elseif ($kitAns -ceq 'H') { Add-KitLine $kitRb 'STOP HP_READBACK=fail' } else { Add-KitLine $kitRb 'STOP HP_READBACK=invalid' }
+    if (-not (Complete-KitStep $kitRb 'a6' @('HP_READBACK=ok') 'Geri okuma kaydedildi.')) { return }
+} elseif (-not (Test-KitPass $kitRb $true)) { Write-KitDur 'a6' 'READBACK_RECORD_INVALID'; return }
+Invoke-KitAttempt 1 'a6'
+```
+
+```powershell
+# a7.ps1 - Ek R3: tek ek acma denemesi (N17, deneme 2). ASCII. Yalniz a7 komutuyla calisir.
+$kitA6 = @(Read-KitRecord (Join-Path $global:KitE2Dir 'a6.txt'))
+if (-not (($kitA6 -ccontains 'ATTEMPT_OUTCOME=RETRY_ALLOWED') -and ($kitA6 -ccontains 'STEP_RESULT=PASS') -and ($kitA6 -ccontains "KIT_SESSION=$($global:KitSess)"))) { Write-Host 'Ek deneme hakki yok (a6 bu oturumda RETRY_ALLOWED yazmadi).'; return }
+if (Test-Path -LiteralPath (Join-Path $global:KitE2Dir 'a8.txt')) { Write-Host 'Parola kagidi imha edilmis; deneme yapilamaz.'; return }
+Invoke-KitAttempt 2 'a7'
+```
+
+```powershell
+# a8.ps1 - Ek R3: parola kagidi imha kaydi; gerekce kayitlardan turetilir. DUR kilidinde de calisir. ASCII.
+if (-not (Test-KitPass (Join-Path $global:KitE2Dir 'a5.txt') $false)) { Write-Host 'a5 hic TAMAM olmadi; parola kagidi olusmadi. a8 kaydi gerekmez.'; return }
+$kitRb = @(Read-KitRecord (Join-Path $global:KitE2Dir 'a6-readback.txt'))
+$kitRec = Join-Path $global:KitE2Dir 'a8.txt'
+if (Test-Path -LiteralPath $kitRec) { Write-Host 'a8 zaten kaydedildi.'; return }
+if ((Read-KitYesNo 'Parola kagidini yirtarak imha ettiniz mi?') -cne 'E') { Write-Host 'Once kagidi yirtin, sonra yeniden a8 yazin. (Kayit yazilmadi.)'; return }
+$kitWhy = 'stopped'
+if ($kitRb.Count -eq 0) { $kitWhy = 'stopped' } elseif ($kitRb -cnotcontains 'HP_READBACK=ok') { $kitWhy = 'rejected' } else {
+    $kitLast = Join-Path $global:KitE2Dir 'a7.txt'
+    if (-not (Test-Path -LiteralPath $kitLast)) { $kitLast = Join-Path $global:KitE2Dir 'a6.txt' }
+    $kitL = @(Read-KitRecord $kitLast)
+    if (($kitL -ccontains 'ATTEMPT_OUTCOME=SUCCESS') -and ($kitL -ccontains 'STEP_RESULT=PASS')) { $kitWhy = 'used' }
+}
+if (New-KitRecord $kitRec (@(Get-KitHeader 'a8') + @("E2_PASSWORD_PAPER_DESTROYED=True at=$(Get-KitNow) reason=$kitWhy", 'STEP_RESULT=PASS', "ENDED_AT=$(Get-KitNow)"))) { Write-Host "a8 kaydedildi (reason=$kitWhy). Oturum sonunda a9 yazin." }
+```
+
+```powershell
+# a9.ps1 - Ek R3: otomatik kapanis taramasi (N4). DUR kilidinde de calisir. ASCII. Yalniz a9 komutuyla calisir.
+if (@(Read-KitRecord (Join-Path $global:KitSessDir 'a2.txt')).Count -eq 0) { Write-Host 'Bu oturumda a2 calismamis; a9 kaydi yok.'; return }
+$kitRec = Join-Path $global:KitSessDir 'a9.txt'
+if (-not (New-KitRecord $kitRec @(Get-KitHeader 'a9'))) { return }
+Invoke-KitBlock $kitRec 'n004' $null
+if (@(Read-KitRecord $kitRec) -ccontains 'AI_CHANNEL_PROCESS_COUNT=0') { Add-KitLine $kitRec 'CLOSING_SCAN_OK=True' } else { Add-KitLine $kitRec 'STOP CLOSING_SCAN_OK=False' }
+$null = Complete-KitStep $kitRec 'a9' @('CLOSING_SCAN_OK=True') 'a9 TAMAM. Pencereyi kapatabilirsiniz.'
+```
+
+### Ek R3/5 Tek sayfalık adım listesi (şablon; K-R3-10)
+
+Kâğıda basılır; ekranda açık tutulmaz. `<case-id>`, `<evidence-dir>` ve
+`<intake-dir>` kit kurulumunda doldurulur (Ek R3/2 madde 8). Rehearsal'a özgü talimatlar
+(ör. bilinçli hatalı parola) bu sayfaya değil, prova planına yazılır.
+
+```text
+İÇERİK PENCERESİ — ADIM LİSTESİ (tek sayfa; yazdırın, ekranda açık tutmayın)
+Dosya: <case-id>     Tarih: ____________     Oturum (ekranda yazar): s__
+
+0. ÖNCE KAPATIN: Claude Code, VS Code, Claude masaüstü, ChatGPT, Copilot
+   (M365Copilot, copilot-runtime), OneDrive ("OneDrive'ı kapat"), başka her
+   yapay zekâ, paylaşım veya eşitleme aracı. Kapanmayan: Görev Yöneticisi >
+   Ayrıntılar > Görevi sonlandır. Harici diskleri çıkarın. Optik sürücü boş.
+1. Win+R tuşlarına basın, kutuya aşağıdaki satırı AYNEN yazın, Enter:
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit\ac.ps1'"
+   Beklenen: "KIT YUKLENDI" (silme oturumunda ayrıca "SILME OTURUMU").
+   Bir satır "DUR" ile BAŞLIYORSA pencereyi kapatın, saati yazın.
+2. a2 yazın, Enter.                      Beklenen: "a2 TAMAM".
+3. 2 dakika bekleyin, a3 yazın.          Beklenen: "a3 TAMAM".
+   "BEKLEYIN" yazarsa söylenen süre kadar bekleyip yeniden a3 yazın.
+   Altı sınıf beyanını runbook §4.3 (a) Adım 2'deki gibi kayda yazın
+   (altı satır ve AI_CONTENT_CHANNELS_CLOSED=True).
+   Sonra runbook zincir adım 4'ün kalan bloklarını elle çalıştırın
+   (kapsayıcı, TEMP yönlendirmesi, teknik kayıt, yol kapısı). Aktarım
+   günü değilse: runbook adımlarına devam edin; oturum sonunda madde 10.
+4. Aktarım günü: a4 yazın.               Beklenen: "a4 TAMAM".
+   Sonra dosyayı tarayıcıda "Farklı kaydet" ile şu klasöre,
+   transfer.7z adıyla kaydedin: <intake-dir>
+5. a5 yazın.                             Beklenen: "a5 TAMAM".
+   (En fazla 10 saniye sürer; hiçbir tuşa basmayın.)
+6. Dosya avukatını arayın. Parolayı harf harf YALNIZ kâğıda yazın;
+   her 4'lü grubu geri okuyun. Caps Lock'u AÇIN.
+7. a6 yazın. "Geri okuma tuttu mu?" sorusuna E (evet) veya H (hayır).
+   "Enter password" istemi görününce parolayı kâğıttan yazın, Enter.
+   Ekranda 7z'nin "Enter password" istemi yoksa HİÇBİR ŞEY yazmayın
+   ve Enter'a basmayın.
+   Sonra iki soruya E/H: istem göründü mü; "Wrong password" göründü mü.
+   "CAPS LOCK KAPALI" yazarsa: Caps Lock'u açıp yeniden a6 (deneme harcanmaz).
+8. Yalnız ekran "a7 yazin" derse: a7 (tek ek deneme; aynı kurallar).
+9. Kâğıdı yırtın. a8 yazın, soruya E. Neden kendiliğinden yazılır.
+10. Oturum sonunda HER ZAMAN: a9 yazın.  Beklenen: "a9 TAMAM". Pencereyi kapatın.
+
+BİR SATIR "DUR" İLE BAŞLIYORSA: başka adım çalışmaz. Kâğıt varsa yırtın ve a8 yazın;
+sonra a9; pencereyi kapatın. SİLME OTURUMU (DUR'dan sonra, yalnız ajan
+söylerse): madde 0–3 aynı, ekran "SILME OTURUMU" der; a4–a7 çalışmaz;
+runbook §25.2/§28 adımları; sonunda madde 10. Pencere açıkken hiçbir
+sohbet, yardım sayfası veya yapay zekâ aracı açılmaz (runbook, yapay
+zekâ özelliği olmayan yerel bir görüntüleyicide açık olabilir). Pencereye fare ile tıklamayın; başlıkta
+"Seç" görürseniz Esc. Ekranı hiçbir yere yapıştırmayın, fotoğraflamayın.
+Parola yalnız 7z'nin "Enter password" istemine yazılır.
+
+ALFABE (29 sembol): A Adana  B Bolu  C Ceyhan  D Denizli  E Edirne  F Fatsa
+G Giresun  H Hatay  J Jandarma  K Kars  L Lüleburgaz  M Muş  N Niğde
+P Polatlı  R Rize  S Sinop  T Tokat  U Uşak  V Van  Y Yozgat  Z Zonguldak
+2 iki  3 üç  4 dört  5 beş  6 altı  7 yedi  8 sekiz  9 dokuz
+```
