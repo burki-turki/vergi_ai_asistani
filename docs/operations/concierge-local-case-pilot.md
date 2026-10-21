@@ -34,6 +34,12 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > üzerinde çalıştırıldı); revizyon 6 blokları ve hiçbir insan provasında
 > gösterilmemiş gerçek koşu adımları son kısa provaya tabidir (§32/1,
 > §34.4).
+> Revizyon 7 (§34.13) işleme kitinin (kit2) **sözleşme metnini** (Ek R4)
+> ve ilgili metin değişikliklerini ekler; kit2 kodu henüz yoktur (dilim
+> 1–5). Mevcut 118 blok bayt-bayt aynıdır; eklenen N118–N134 yalnız
+> `ParseInput`, AST taraması ve hash ile denetlendi. Yazılırken yalnız
+> okuma, hash, ayrıştırma, sayım ve passfile açılmadan iki boolean'lık bir
+> konum ölçümü yapıldı.
 
 ---
 
@@ -57,7 +63,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir ve delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -218,6 +224,10 @@ eklendi; `-m` istisnası (harness zinciri) kaldırıldı.
 | `<pg-bin-dir>` | PostgreSQL 16 `bin` dizini; `<psql>` bunun doğrudan altındadır (§13.8) |
 | `<report-produced>` | Zincir adım 22 çıkış `0` ile tamamlandıysa `$true`, aksi hâlde `$false` (§28.2) |
 | `<page-file>` | Değerleri doldurulmuş kullanıcı sayfasının (Ek R3/5) mutlak ve canonical dosya yolu; yerel, bulut senkronizasyonu olmayan bir klasörde; `%USERPROFILE%` altında **değildir**; `<repo-root>`, `<source-repo-root>`, `<container-root>`, `<external-root>` ve `<evidence-dir>` ile örtüşmez (revizyon 6; kullanıcı kararı S1=A); §13.8 kapısından değil, Ek R3/2 madde 9'un kendi konum denetiminden geçer |
+| `<kb-secure-file>` | Kit2'nin güvenli değer dosyası: evidence ve repo dışında, Adım 8 passfile'ıyla aynı ACL'li güvenli dizinde, kullanıcı profili altında; kit2'nin mutlak yollarını ve iki DSN'i taşır; değerleri bu belgeye, evidence'a ve commit'e yazılmaz (revizyon 7; Ek R4/2) |
+| `<kb-secure-relative>` | `<kb-secure-file>`'ın `%USERPROFILE%`'a göre sabit göreli adı; kullanıcı adı taşımaz; evidence'a yalnız `kit-build2.txt`'deki `KB_SECURE_FILE_RELATIVE` satırıyla girer (revizyon 7; Ek R4/2 madde 4) |
+| `<emergency-page>` | Değerleri doldurulmuş acil silme sayfası; `<kb-secure-file>` ile aynı dizinde; evidence'a yalnız SHA-256'sı ve göreli adı girer (revizyon 7; Ek R4/13) |
+| `<pg-ctl>`, `<pg-data-dir>` | Adım 8 kümesinin `pg_ctl.exe` yolu ve veri dizini; yalnız `<kb-secure-file>`'da durur ve yalnız KÜME penceresinde kullanılır (revizyon 7; Ek R4/2) |
 
 - **Dizin ve dosya yer tutucuları mutlak, canonical ve önceden çözümlenmiş
   yollardır**: `<repo-root>`, `<case-root>`, `<python>`, `<psql>`,
@@ -280,6 +290,22 @@ $env:PYTHONIOENCODING = "utf-8"
   mekanik olarak denetlenir; geçmezse sayfa yazılmaz: **DUR**. Operatör
   dosyayı yalnız Not Defteri'nde açar, değiştirmez ve "Kaydetme" ile
   kapatır. Pilot sonunda silinmesi ayrı bir kullanıcı kararıdır.
+- **Dar istisnalar — işleme kiti (revizyon 7; KD-4, KD-21 b değiştirilmiş;
+  Ek R4).** (a) `<kb-secure-file>` ve `<emergency-page>` evidence ve repo
+  dışında, kullanıcı profili altındaki güvenli dizinde duran iki dosyadır;
+  mutlak yol, iki DSN (port ve veritabanı adı dahil) ve acil sayfada
+  sistem Temp yolları taşırlar; değerleri bu belgeye, evidence'a,
+  commit'e ve hiçbir rapora yazılmaz; evidence'a yalnız SHA-256'ları ve
+  profil-göreli adları (`KB_SECURE_FILE_RELATIVE`,
+  `KB_EMERGENCY_PAGE_RELATIVE`; kullanıcı adı taşımaz, mutlak yol
+  değildir) girer. (b) `<evidence-dir>\kit2\kit2-case.txt` yalnız opak
+  kimlik, tamsayı, sürücü harfi ve sözlük değeri taşır. (c)
+  `kit-build2.txt`'deki `NOTEPAD_RELATIVE` `%SystemRoot%`'a göre göreli
+  yazılır. (d) Kit ayar dosyası istisnası (yukarıda) genişletilmez; aynı
+  anahtar güvenli dosyada da bulunursa kit2 yüklenmez. Bu istisnalar başka
+  hiçbir evidence dosyasına uzanmaz; koşulları kurulumda ve her yüklemede
+  mekanik olarak denetlenir; denetim geçmezse kit2 yüklenmez (içerik
+  öncesi kilitsiz, içerik sonrası kilitli; Ek R4/2, R4/3, R4/13).
 - Bölüm numarası tek başına yazıldığında (ör. "§13") **bu runbook'un**
   bölümü kastedilir. Temel runbook "Temel §N", `CLAUDE.md` belge adıyla
   yazılır. "Zincir adım N" ifadesi §2.1 tablosundaki satır numarasıdır.
@@ -616,7 +642,8 @@ deneme yoludur (ikisi de ayrı onaylıdır).
   tarihinden önce olamaz. A–F sonradan yeniden imzalanırsa G bölümü de
   yeniden imzalanmadıkça **DUR** (Y1, Y7; §6.6).
 - **Zincir adım 27** yalnız zincir adım 23'e (veya §25.2 abort yolunun
-  başlamasına) bağlıdır; 24–26'yı **beklemez** ve onlardan bağımsız olarak,
+  başlamasına; Ek R4 ile yürütülen koşuda ayrıca erken kapanış kaydının
+  `WORK_ENDED_AT` anına, revizyon 7, Ek R4/14) bağlıdır; 24–26'yı **beklemez** ve onlardan bağımsız olarak,
   F1 süresi içinde çalıştırılır. Bu adımın F1 süresini aşması **DUR**'dur
   (Y6); 24–26'nın sürmesi bu süreyi uzatmaz.
 - **Zincir adım 26'nın son alt adımı (kapsayıcı imhası ve anahtar imhası,
@@ -1186,6 +1213,29 @@ mekanik iz **yoktur**, yalnız operatörün DUR OLURSA D7 gereği dosya
 avukatına bildirmesiyle bilinir (§34.12 yorum 6). Prova sayfaları silme
 oturumu için ajan yetkisini kullanmaya devam edebilir (§34.12 yorum 18).
 
+**Kit2 ile yürütme (revizyon 7; Ek R4; kit2 kodu dilim 1–5'te yazılıp
+provadan geçmeden gerçek koşuda kullanılmaz).** Ek R4 ile yürütülen
+koşuda aktarım günü dahil her içerik günü önce KÜME penceresi, sonra
+kit1'i ve kit2'yi aynı satırla yükleyen KİT penceresi açılır (Ek R4/1);
+kanal kapısı (`a2`, `a3`, `a9`) ve altı sınıf beyanı (`b0` = N117'nin
+aynı baytları) değişmez. İçerik sınırı ve DUR anı kuralları yukarıdaki
+gibidir: kit2 de tarafı `steps\e2\a4.txt`'ye göre kit1
+`Write-KitDurRule` ile seçer ve kilidi asla kaldırmaz (Ek R4/5). Ek
+olarak: (1) içerik alındıktan sonra da, kullanıcının düzeltebileceği ve
+hiçbir kayıt açılmamış giriş hataları **kilitsizdir**: DUR değildir ve
+sayfanın DUR OLURSA bölümünü tetiklemez; kit ne yapılacağını söyler ve
+tek bir red dosyası bırakır; kayıt açıldıktan sonraki her beklenmeyen
+sonuç kilitlidir (Ek R4/5; errata-3 §10.6); (2) avukatın "bu dosya bu
+pilota uygun değil" kararıyla erken kapanış (`k uygunsuz` + `u`) DUR
+değildir; silme aynı ziyarette §25.2'nin 3–12. adımlarıyla, DUR
+yazılmadan yapılır (Ek R4/14; KD-23); (3) runbook işleme günlerinde
+açılmaz ve Not Defteri'ni yalnız kit açar; bu, yukarıdaki "aktarım günü
+dışındaki içerik oturumlarında runbook iş bitene kadar açık kalır"
+cümlesinin kit2 koşusundaki karşılığıdır; (4) içerik sonrası kit2
+yüklenemezse veya silme komutları tamamlanamazsa silme acil silme yoluyla
+(Ek R4/13) veya AÇIK-25 (b) dalıyla yapılır; ikisi de aşağıdaki silme
+oturumu yetkisi kurallarına (yazılı karar + her hedef için ayrı onay)
+tabidir; (5) silme oturumunda kit2'nin izin kümesi Ek R4/8.4'tedir.
 Kapatma prosedürü yalnız pencere boyunca kapatmadır; **hiçbir sistem
 ayarı değiştirmez**. Kalıcı ayar değişikliği yalnız yukarıdaki bir
 kerelik bilgisayar hazırlığıdır (revizyon 5; kullanıcı kararı D3); o
@@ -1447,7 +1497,10 @@ Remove-Variable stRec, stOk -ErrorAction SilentlyContinue
    intake'ten önce, **bir kez** `<evidence-dir>\technical-record.txt`
    dosyasına exclusive-create ile yazılır. Sürümler araçların kendi
    çıktısından okunur (`& "<pdftotext>" -v`; `& "<7z>"` çıktısının ilk
-   satırı; VeraCrypt "Hakkında" ekranı) ve elle yazılır. Yardımcı fonksiyon
+   boş olmayan satırı — revizyon 7, inceleme O2 b: ilk satır boş değilse
+   iki tanım aynıdır; VeraCrypt "Hakkında" ekranı) ve elle yazılır; Ek R4
+   ile yürütülen koşuda değerleri `b1` türetir ve VeraCrypt dizgesini
+   Hakkında ekranıyla E/H teyit ettirir (Ek R4/8.2). Yardımcı fonksiyon
    ve kayıt (§10.5 ve §13.8 yardımcıları önce tanımlanmış olmalıdır):
 
 ```powershell
@@ -1497,6 +1550,11 @@ Remove-Variable tr, toolOk -ErrorAction SilentlyContinue
    sürücüsünde kalabilir; bu runbook bunları mekanik olarak denetleyemez
    (§32/18, §32/25). Bu çelişki gerçek dosyadan önce §1.6/5'teki yazılı
    bildirim ve dosya avukatının `LEGAL_APPROVED` cevabıyla kapılanır.
+   Revizyon 7'den itibaren, Ek R4 ile yürütülen koşuda bu sınıfa Not
+   Defteri'nin "son kullanılanlar" kaydı da (açılan dosyanın sürücü harfi
+   ve genel adı; içerik değil) eklenir; gerçek dosyadan önce güncellenmiş
+   D9 bildirimi (Ek R4/17) ve dosya avukatının yazılı cevabı gerekir
+   (AÇIK-19; errata-3 §8).
 
 ---
 
@@ -2241,7 +2299,10 @@ tek adına indirildi (Temel L965'teki `$allowedNames`); harness çıktı adları
    dosyalar** taşır. Alt dizin, reparse point veya normal dosya dışında
    herhangi bir öğe bulunursa: **DUR** (H56).
 2. **Genel ve sabit ad.** İzinli tek dosya adı `deadline-report.txt`'dir
-   (§19).
+   (§19). Ek R4 (kit2) ile yürütülen koşuda izinli küme 15 sabit addır ve
+   N20 yerine türetilmiş N118 ile yazılır (revizyon 7; Ek R4/11; KD-24;
+   avukat cevabına bağlı: soru 4, 6, 7, 8 ve 11; cevap olumsuzsa yeniden
+   açılır).
 3. **Önceden kayıt.** İzinli küme, intake'ten önce (zincir adım 4),
    `<restricted-dir>` **boşken** `<evidence-dir>\restricted-allowed-files.txt`
    dosyasına exclusive-create ile yazılır. Hemen ardından aynı oturumda hash
@@ -2325,7 +2386,9 @@ if (($allowedHashOk -eq $true) -and ($allowedLines.Count -ge 2) -and ($allowedLi
 
 Beklenen: her envanterde `ALLOWED_FILE_HASH_OK=True` ve
 `RESTRICTED_INVENTORY=OK`. Rapor yazılmadan önce `RESTRICTED_FILE_COUNT=0`,
-sonra `1`.
+sonra `1`. Ek R4 ile yürütülen koşuda sayı, o ana kadar yazılmış karar
+dosyaları, `blind-calc.txt` ve (yazıldıysa) rapor kadardır; beklenen küme
+kit kayıtlarından türetilir; N22'nin kodu değişmez (revizyon 7; Ek R4/11).
 
 ---
 
@@ -3907,7 +3970,11 @@ Kaynak: Temel L2775–L2812. Sapma yok.
    kapsamı (uygulanan kural, adli tatil ve mali tatil değerlendirmesi) ve
    kaydın zamanı.
 3. Kayıt dosyasının SHA-256'sı ve kayıt zamanı evidence'a yazılır; kaydın
-   kendisi repo dışında, avukatın kontrolünde saklanır.
+   kendisi repo dışında, avukatın kontrolünde saklanır. Ek R4 ile
+   yürütülen koşuda (revizyon 7) kayıt `<restricted-dir>\blind-calc.txt`'dir:
+   avukat onu cihaz başında yazar, kapsayıcının içinde durur ve silmeyle
+   imha olur; evidence'a yalnız SHA-256'sı ve zamanı girer (Ek R4/12.2;
+   avukat cevabına bağlı: soru 6 ve 7; cevap olumsuzsa yeniden açılır).
 4. Ancak bundan **sonra** §18.1'deki deadline generation apply çalıştırılır.
 
 Hash evidence'a yazılmadan deadline generation apply çalıştırılırsa:
@@ -4059,6 +4126,8 @@ Remove-Variable r -ErrorAction SilentlyContinue
 
 Evidence'a **yalnız** çıkış kodu, rapor dosyasının SHA-256'sı ve iki
 boolean yazılır. Ardından §10.5 envanteri alınır (`RESTRICTED_FILE_COUNT=1`).
+Ek R4 ile yürütülen koşuda (revizyon 7) sayı Ek R4/11'e göre birden büyük
+olabilir ve iki satırlık denetim N89 yerine türetilmiş N122 ile yapılır.
 
 ---
 
@@ -4213,7 +4282,7 @@ eklendi.
 
 | Soru | Kabul edilen cevap | DUR | Uygulandığı yer |
 |---|---|---|---|
-| F1 | "24 saat", "72 saat" veya açıklamalı "Diğer" (form v5: "24 saat") | Boş | §28.6: kapsayıcı içindeki geçici kopyalar (`<intake-dir>` içindeki aktarım dosyası ve açılmış içerik, `<container-temp>`) "iş bitince"den itibaren bu süre içinde silinir. "İş bitince" bu runbook'ta zincir adım 23'ün tamamlanması veya §25.2 abort yolunun başlaması anıdır |
+| F1 | "24 saat", "72 saat" veya açıklamalı "Diğer" (form v5: "24 saat") | Boş | §28.6: kapsayıcı içindeki geçici kopyalar (`<intake-dir>` içindeki aktarım dosyası ve açılmış içerik, `<container-temp>`) "iş bitince"den itibaren bu süre içinde silinir. "İş bitince" bu runbook'ta zincir adım 23'ün tamamlanması, §25.2 abort yolunun başlaması veya — Ek R4 ile yürütülen koşuda — erken kapanış kaydının `WORK_ENDED_AT` anıdır (revizyon 7; Ek R4/14). Ek R4 yalnız F1 = "24 saat" için tanımlıdır: pencere öncesi ajan formun F1 cevabını `kit2-case.txt`'ye `FORM_F1=24_SAAT` olarak yazar; başka cevapta kit2 içerik almadan reddeder (Ek R4/3) |
 | F2 | "Silinsin" veya "Şifreli arşivlensin" | Boş; iki kutu birden | §28.1, §28.3, §28.5 |
 | F3 | F2 arşiv ise beş unsurun **hepsi** dolu | F2 arşiv iken bir unsur boş (H4) | §28.5 |
 | F4 | **"Şifreli kapsayıcı yöntemi"** (form v5) — **yalnız** E1 = "Tek dosyalık pilot alternatifi" ve §4.4 doğrulaması (`CONTAINER_VERIFIED=True`, yürütme günü, zincir adım 4) ile birlikte | Boş; birden fazla kutu; E1 kapsayıcı seçeneği değil veya kapsayıcı doğrulanamadı. **"Tam disk şifrelemesi açıkken standart silme"**: bu revizyonda tanımlı değildir (§1.6/4) → **DUR**. **"Diğer"**: **DUR** (runbook'ta karşılığı yok; §6.1) (Y6) | §1.6/4, §4.2/10, §4.4, §28.3, §28.6 |
@@ -4441,6 +4510,11 @@ itibaren `steps\s<k>\six-class.txt` (N117) de bu kapsamdadır; pencere sonu
 öz beyanı (Ek R3/6) ayrı dosya değil, `steps\s<k>\a9.txt` içindeki
 `SELF_REPORT*` satırlarıdır; kullanıcı sayfası `<page-file>` evidence
 dışındadır (§1.5).
+Revizyon 7'den itibaren (Ek R4) `<evidence-dir>\kit2\` (kit2 dosyaları,
+`pins2.txt`, `kit-build2.txt`, `kit2-case.txt`, `ev.ps1`), `steps\c\`,
+`steps\d\`, `steps\x\`, red dosyaları (`refusal-<nnn>.txt`),
+`approval-method.txt` ve `deletion-record.txt` de bu kapsamdadır; güvenli
+değer dosyası ve acil silme sayfası evidence dışındadır (§1.5).
 `kit-values.txt`'nin dar yol istisnası §1.5'tedir; §26.4 tam manifesti
 bu dosyaları da kapsar. Gerçek belge baytları, metin, girdi dosyası, alıntı, tarih,
 sayfa numarası, ham stdout/stderr, traceback, deadline raporu veya kişisel
@@ -4515,6 +4589,70 @@ SHA-256'sı kaydedilir. Özet, `<evidence-dir>` içindeki özet dışındaki
 **bütün** dosyaların göreli yol, bayt ve SHA-256 manifestini taşır;
 yalnız bir alt kümeyi sabitleyen özet yeterli değildir. Özet yoksa veya
 manifest eksikse pilot kapanmış sayılmaz (H26).
+
+### 26.5 Ek R4 ile yazılan kayıtlar ve 46 yazarsız anahtar (revizyon 7; rev6 son kontrol L5 b)
+
+YENİ. Ek R4 (kit2) ile yürütülen koşuda kayıt yerleri ve biçimi Ek
+R4/4'tedir; yalnız ekrana basılan satırların kayda alınması (§26.2'nin
+"evidence'a yazılır" dediği her satır) Ek R4/9'un izinli listeleriyle
+yapılır. Aşağıdaki tablo, düz metinde zorunlu olup bugün hiçbir bloğun
+yazmadığı **42** anahtar ile kurulum ajanının yazdığı **4** `KIT_*`
+anahtarının her biri için yazanı verir (tasarım v2 §3.2; errata-3 §7 ve
+§11.1 ile güncel). Sınıflar: **KY** kit2 mekanik ölçümden yazar; **KE**
+kit2 E/H cevabından yazar (`basis=project-owner-E-at-kit` veya
+`basis=lawyer-E`); **KK** kit2 avukatın karar dosyasından yazar (hash +
+sözlük değerleri + eşleşme boolean'ları); **AÖ** ajan pencere öncesinde
+yazar; **GZ** gerçek koşuda yazılmaz (KD-19).
+
+| # | Anahtar | Bölüm | Sınıf | Yazan |
+|---|---|---|---|---|
+| 1 | `CONTAINER_MOUNTED_AS_DRIVE_LETTER` | §4.4/7 | KE | `b1` |
+| 2 | `CONTAINER_VERIFIED` | §4.4/7 | KY | `b1` |
+| 3 | `CONTAINER_ONE_TIME_KEY` | §4.4/2 | AÖ | Kapsayıcı oluşturma oturumu |
+| 4 | `CONTAINER_FILE_BYTES` | §4.4/2 | AÖ | `container-record.txt` |
+| 5 | `CONTAINER_FILE_NOT_CLOUD_SYNCED` | §13.8 | AÖ | Kapsayıcı oluşturma oturumu |
+| 6 | `CONTAINER_DISMOUNTED` | §28.3.3/1 | KE | `z1` |
+| 7 | `CONTAINER_KEY_DESTROYED` | §28.3.3/4 | KE | `z1` (`s29b` okur; H'de kilitsiz `False`, Ek R4/14 madde 4) |
+| 8 | `CONTAINER_RESIDUAL_NOTICE_SENT` | §1.6/5 | AÖ | Pencere öncesi (güncellenmiş D9 dahil; Ek R4/17) |
+| 9 | `CONTAINER_TOOL_PRESENT` | §1.6/3 | GZ | Prova kaydı |
+| 10 | `EXTERNAL_DISK_PRESENT` | §1.6/3 | GZ | Prova kaydı |
+| 11 | `EXTERNAL_DISK_ENCRYPTED` | §4.2/10 | KE | `b1` (R3) |
+| 12 | `EXTERNAL_DISK_REMOVED` | §4.2/10 | KY + KE | `b1` (harfler `kit2-case.txt`'den ve canlı ölçümden; R3) |
+| 13 | `E2_CARRIER_KIND` | §6.4 | KE | `b2` |
+| 14 | `E2_KEY_SEPARATE_CHANNEL` | §6.4 | KE | `b2` |
+| 15 | `E2_KEY_CHANNEL … at=` | §6.4 | KE | `b2`; `at=` = `a6` kaydındaki `HP_READBACK_AT` (AÇIK-12) |
+| 16 | `E2_SAVED_DIRECTLY_TO_CONTAINER` | §6.4 | KE | `b2` |
+| 17 | `E2_INBOUND_TRANSFER_RECEIVED` | §21/2 | KY | `b2` |
+| 18 | `INCIDENT_PHONE_NOTIFIED` | §4.2/11 | KE | `o` |
+| 19 | `INCIDENT_NOTICE_CHANNEL … at=` | §4.2/11 | KE | `o` |
+| 20 | `INCIDENT_WRITTEN_NOTICE_SAME_DAY` | §4.2/11 | KE + KK | `o` + `n` |
+| 21 | `DELETION_RECORD_WRITTEN` | §28.7 | KY | `s29b` |
+| 22 | `DELETION_RECORD_COPY_TO_FILE_LAWYER` | §28.7 | KE | **Yalnız** `s29b` (`basis=lawyer-E`; H'de kilitsiz `False`, Ek R4/14 madde 4) |
+| 23 | `TEMP_COPIES_PATH` | §28.6 | KY | `s27` (`CONTAINER_DESTRUCTION`; KD-16 b) |
+| 24 | `TEMP_COPIES_INSIDE_CONTAINER` | §28.6 | KY | `s27` |
+| 25 | `TEMP_COPIES_DELETED_WITHIN_F1` | §28.6 | KY | `s29b` (F1 başlangıcı `b23` `ENDED_AT`, `u` `WORK_ENDED_AT` veya §25.2 abort yolunda `DUR.txt`'nin `at=` değeri; birden fazlaysa en erkeni; Ek R4/14 madde 3) |
+| 26 | `PILOT_API_KEY_CREATED` | §21 | AÖ | Pencere öncesi |
+| 27 | `PRE_PILOT_NETWORK_ACTION` | §21/3 | AÖ | Pencere öncesi |
+| 28 | `PREVIEW_DATE_MATCHES_LAWYER` | §14.4 | KE | `b10` (`basis=lawyer-E`) |
+| 29 | `PREVIEW_PAGE_MATCHES_LAWYER` | §14.4 | KE | `b10` (`basis=lawyer-E`) |
+| 30 | `PROCESSING_BASIS_CONFIRMED` | §6.3 | AÖ | Zincir adım 3 |
+| 31 | `TWO_PERSON_CONTROL` | §4.1 | AÖ | Zincir adım 2 (değeri avukat cevabına bağlı: soru 5; cevap olumsuzsa yeniden açılır) |
+| 32 | `UDF_SIGNATURE_VALID` | §6.6/1 | AÖ | Zincir adım 2–3 |
+| 33 | `FORM_HASH` | §6.6/7 | AÖ | Zincir adım 2–3 |
+| 34 | `FORM_BINDING` | §6.6/7 | AÖ | Zincir adım 2–3 |
+| 35 | `FORM_HASH_RECHECK` | §6.6/7 | KY | (a) `b5`; (b) `s26a`, `s26b`, `z1`; (c) `s29a` |
+| 36 | `INBOUND_DECISION_RECEIVED seq= sha256=` | §21/4 | KK | `k` (`channel=at-device`); pencere öncesi kararlar AÖ; acil silme yolunda elle (`channel=decision-channel`) |
+| 37 | `OUTBOUND_NOTICE_SENT seq= sha256=` | §21/4 | KK | `n` |
+| 38 | `PENDING_MATCH` | §18.3 | KY + KE | `b20` |
+| 39 | `MATCH` | §20 | KY + KE | `b23` |
+| 40 | `ARCHIVE_VERIFIED_WORKING_COPY_RETAINED` | §30 | GZ | F2 = "Silinsin" (arşiv kapsam dışı) |
+| 41 | `CMDLINE_AUDIT_DECLARATION sha256=` | §4.2/9 | AÖ | Pencere öncesi |
+| 42 | `FREEZE_DIFF_COUNT` | §13.3 | GZ | Tarihsel |
+| +1–4 | `KIT_BUILD`, `KIT_PAGE_LOCATION_OK`, `KIT_PAGE_SHA256`, `KIT_VAR_CHECK_TOOL_SHA256` | Ek R3/2 | AÖ | Kurulum ajanı |
+
+Satır 9, 10, 40 ve 42 gerçek koşuda yazılmaz (KD-19 kabul). Kit2'nin
+kendi kurulum ve oturum anahtarları (`KIT2_*`, `KB_*`, `EMERGENCY_*`,
+`VERACRYPT_*`, `FORM_F1_OK` vb.) Ek R4/3, R4/8 ve R4/13'tedir.
 
 ---
 
@@ -4673,6 +4811,15 @@ Komutlar yalnız sabit durum satırı ve dosya sayısı basar. Dosya
 SHA-256'ları, içeriğe sahip biri için bir parmak izidir; bu kalıcı iz Form
 F6 ile kabul edilmiş olmalıdır. Tarih taşıyan dosyaların hash'ine ilişkin
 sınır §32'dedir.
+
+**Ek R4 ile yürütülen koşuda (revizyon 7)** restricted manifesti bu blok
+yerine türetilmiş N119 ile yazılır: dosya sayısı koşulu yerine
+`decision-deletion.txt`'nin varlığı aranır; karar dosyaları,
+`blind-calc.txt` ve (üretildiyse) rapor manifeste girer; PASS kaydı
+olmayan karar dosyaları `s25` kaydında `RESTRICTED_FILE_STATE … state=incomplete`
+satırıyla işaretlenir (Ek R4/8.3, R4/11). Acil silme yolunda N120 çalışır
+(Ek R4/13). Elle yürütülen yolda yukarıdaki blok ve beklenti aynen
+geçerlidir.
 
 ### 28.3 Silme
 
@@ -5079,7 +5226,7 @@ yazılır.
 | §29 (L3607–L3628) | API anahtarı revoke ve ortam temizliği | Anahtar yoktur; kapanış ad taraması §13.6 (b) ve zincir adım 28'de kalır |
 | §6.1/2, /3, /7 (L656–L664) | Sağlayıcı DPA, yurt dışı aktarım, kamu kurumu adının maskesiz aktarımı | Veri yurt dışına ve bir sağlayıcıya gitmez (form, "Bu yolda sorulmayan konular") |
 | §7.1/2–/5 (L691–L717) | Dış aktarım veri kategorileri ve maskeleme sınırları | Aktarım yoktur; müvekkil bilgilendirmesi Form C ile yapılır (§7) |
-| §10.5 izinli küme: `mask-terms.txt`, `egress-deny-values.txt`, harness çıktıları (L965) | `<restricted-dir>` dosyaları | Bu dosyalar oluşturulmaz; izinli küme yalnız rapordur |
+| §10.5 izinli küme: `mask-terms.txt`, `egress-deny-values.txt`, harness çıktıları (L965) | `<restricted-dir>` dosyaları | Bu dosyalar oluşturulmaz; elle yürütülen yolda izinli küme yalnız rapordur; Ek R4 (kit2) ile yürütülen koşuda rapor, kör hesap ve 13 karar dosyasıdır (revizyon 7; Ek R4/11) |
 | §13.8 probe/inference dizinleri (L1629–L1630, L1664) | `<external-root>` çocukları | Bu evidence dizinleri yalnız ağ turları içindi |
 | §25.1 H10–H12, H14, H15, H32, H33, H38, H44, H49, H50, H57–H59 | Ağ, anahtar, maskeleme ve süreç yardımcısı DUR satırları | Tetikleyicileri bu yolda yoktur (§25.1'de "kaldırıldı" olarak işaretli) |
 | §25.2/2–3 (L3036–L3040) | Process anahtarı ve Console revoke | Anahtar yoktur |
@@ -5565,6 +5712,44 @@ taşır.
     yapılırsa sonraki her içerik penceresinden önce hazırlık yeniden
     yapılır. Delta3 provasından kalan devre dışı görevler bu cihazda
     hâlâ devre dışıdır (findings F-B9; bu revizyonda ölçülmedi).
+41. **İşleme kiti (kit2) yalnız sözleşmedir (revizyon 7; Ek R4).** Kit2
+    kodu dilim 1–5'te yazılır; yazılıp bağımsız incelemeden ve sentetik
+    provadan geçmeden Ek R4 gerçek koşuda kullanılamaz. Ek R4'ün avukat
+    cevabına bağlı maddeleri (Ek R4/17) cevap gelene kadar taslaktır.
+42. **Kit içerik okur (KD-2).** Kit2 belge metnini, form ve karar
+    dosyalarını ve CLI çıktısını bellekte okur; evidence'a yalnız izinli
+    anahtarlar girer. Sızıntı riski süzgecin doğruluğuna bağlıdır; her
+    dilimin sızıntı negatif testi (Ek R4/16.6) bunu ölçer, kanıtlamaz.
+43. **`&` yolunda bekçi yoktur (AÇIK-23).** Python CLI'leri, `psql`,
+    `pdftotext`, `git` askıda kalırsa tek çare KİT penceresinde Ctrl+C'dir
+    ("YARIDA KALDI" → DUR OLURSA); stdin kapatılamaz (Ek R4/6 madde 11).
+44. **`g8`, `g14`, `g16` kayıt üretmez.** Kit ekranın gösterildiğini
+    kanıtlayamaz; kanıt avukatın sonraki yazılı kararıdır (bugünkü modelle
+    aynı).
+45. **Not Defteri.** "Farklı kaydet" dosyayı kapsayıcı dışına yazabilir;
+    kit bunu tespit edemez (sayfa "yalnız Ctrl+S" der). "Son kullanılanlar"
+    izi D9 sınıfındadır (§4.4/8).
+46. **Form ve JSON hash'leri tuzsuzdur** (Ek R4/12.3 madde 11); karar
+    dosyaları ve kör hesap tuzludur.
+47. **Acil silme yolu.** `ev.ps1`'in kendisini kullanım anında mekanik
+    olarak doğrulayan bir şey yoktur (kit1 `ac.ps1` sınıfı); AÇIK-25 (b)
+    guard'sız bir silmedir ve gizliliği anahtar imhasına dayanır; acil
+    dalda operatör sistem Temp yolunu görür (R1 istisnası) (Ek R4/13).
+48. **Acil sayfa yolunda adım kaydı yoktur.** Bloklar yalnız iki
+    manifesti yazar; ekran satırları kayda geçmez; postcondition'lar veri
+    silindikten sonra ajan oturumunda ölçülür (Ek R4/13 madde 3).
+49. **Intake JSON'larının üzerine yazılması atomik değildir** (Ek R4/12.3
+    madde 7); yarım dosya hiçbir kayda girmez ve sonraki turda üzerine
+    yazılır.
+50. **Kilitsiz redlerin izi.** Kit2'nin her kilitsiz reddi bir red dosyası
+    bırakır; kit1'in kilitsiz redleri (kit1 baytı değişmediği için)
+    bırakmaz.
+51. **Tuşa kim basar beyandır** (Ek R4/8.5; §32/39 d).
+52. **Açık sorular.** AÇIK-26 (intake formunun tam anahtar listesi; dilim
+    2'den önce) kapanmadan dilim 2 yazılmaz (§34.13). AÇIK-27 kapandı
+    (kullanıcı kararı `at=2026-10-21T15:19:11+03:00`): karar dosyalarında
+    kilitli "içerik belirtisi" sınıfı yoktur; şablon dışı satır ve değer
+    kilitsiz reddedilir (Ek R4/12.1 madde 3 ve 8).
 
 ---
 
@@ -5912,6 +6097,16 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 6:** N117 altı sınıf kanal beyanı (Ek R3/8) | delta4 `m3.ps1` vekili (`9c258e5f…`; P1 ve P2'de PASS) | Yeni (türetilmiş; yapıştırılan blok) | **Yeni, tek-çalışım:** son kısa provada runbook'tan kopyalanıp yapıştırılması, altı E/H, `six-class.txt` kaydı; ajan bağlamında negatifler (`a3` PASS yokken kayıtsız red, ikinci çalıştırma reddi, H cevabında `STOP` + `DUR.` iletisi, geçersiz tuş) |
 | **Revizyon 6 (dar düzeltme turu, karar 4):** N109 (`a5.ps1`: kayıttan önce `<intake-dir>\transfer.7z` dosya olarak yoksa kayıtsız, kilitsiz red; başlık yorumu) | delta4 (eski blok `81f7fc79…`; P1 `a5` PASS, P2 kasıtlı `a5` DUR'u) | Değişti | **Yeniden:** dosya kaydedilmeden `a5` yazılınca kayıtsız, kilitsiz `a5 BASLAMADI` ve kayıttan sonra aynı pencerede `a5`'in temiz devamı; dosya varken PASS dalı ve N16'nın kilit dalları (N109 bayt değiştiği için delta4 kanıtı devralınmaz); son kısa provada |
 | **Revizyon 6:** N107, N110–N112, N116 ve kit kopyaları N3, N4, N6, N14, N15, N16, N17, N51 | delta4 (69f37b8a) ve önceki provalar | Bayt-bayt aynı | Blok **devralınır**; N105 değiştiği için kit adımlarının insan akışı son kısa provada yeniden görünür |
+| **Revizyon 7:** mevcut 118 blok (N0–N117) | Önceki provalar | Bayt-bayt aynı (§34.13'te ölçüldü) | Blok **devralınır**; kit2 içinden çağrılmaları (Ek R4/8) ilgili dilimin sentetik provasında yeniden çalışır |
+| **Revizyon 7:** N118 (türetilmiş N20), N119 (türetilmiş N96), N120 (türetilmiş N96y) | — | Türetilmiş (yeni blok; Ek R4/11, R4/13) | **Yeni:** N118 dilim 1 (`b1` ilk oturum), N119 ve N120 dilim 4 (Ek R4/16.5 (2), (6), (8)) |
+| **Revizyon 7:** N121 (türetilmiş N35), N122 (türetilmiş N89) | — | Türetilmiş (yeni blok; M2) | **Yeni:** dilim 1 kabul ölçütü (11): canlı N35 ve N89 ile aynı çıktı |
+| **Revizyon 7:** N123–N134 karar ve kör hesap şablonları (`text`) | — | Yeni (avukat cevabına bağlı) | **Yeni:** dilim 1 (`k`), dilim 3 (`b18`, `TUZ=`) |
+| **Revizyon 7:** satır parçası `N57/2` | — | Türetilmiş parça (Ek R4/11) | **Yeni:** dilim 1 (`b1` işleme dalı) |
+| **Revizyon 7:** kit2 dosyaları (`bc.ps1`, `pins2.txt`, `kit-build2.txt`, `kit2-case.txt`, `t0`, `kume`, `b0`, `b1`, `b2`, `k`, `n`, `o`, motor ve süzgeç) | — | Henüz yazılmadı | **Yeni, dilim 1** (Ek R4/16.2) |
+| **Revizyon 7:** `b5`, `b5d`, `b6`, `b7`, `g8`, `b8`, `u` (kayıt) | — | Henüz yazılmadı | **Yeni, dilim 2** |
+| **Revizyon 7:** `b9`–`b23`, `adm.ps1` (`y1`), `g14`, `g16` | — | Henüz yazılmadı | **Yeni, dilim 3** |
+| **Revizyon 7:** `b24`, `adm.ps1` (`y2`), `s25`–`s29a`, `z1.ps1` (`z1`, `s29b`), `r1`–`r7`, acil sayfa ve `ev.ps1` | — | Henüz yazılmadı | **Yeni, dilim 4** |
+| **Revizyon 7:** kullanıcı sayfası (N114'ün yerini alacak kit2 sayfası) | — | Henüz yazılmadı (N114 değişmedi) | **Yeni, dilim 5**; son tam insan provası ayrı kullanıcı kararı |
 
 ### 34.5 Yazım sınırları
 
@@ -7645,6 +7840,497 @@ ayrı kullanıcı kararıdır. Dar düzeltme turunun açık kalıntıları R1–
 (kalıntı j–l) son provadan ve gerçek koşudan önce ayrı bir kapsamda
 kapatılmalıdır.
 
+### 34.13 Revizyon 7
+
+YENİ (`SCOPE_APPROVED at=2026-10-20T23:19:53+03:00`; planlayıcı
+önerisiyle, kullanıcı onayı; oturum KIT2-DILIM0; Adım 10 B yolu, işleme
+kiti (kit2) dilim 0). Girdi: `bb3e5b4` runbook'u (SHA-256
+`1ec61af99cff92c28b987c074e0bc7d0658de6c5fbff976fe7f7be0d7fa9102e`, 8866
+satır, 118 blok; HEAD = `origin/claude-dev` = `bb3e5b4`; çalışma ağacı
+temiz; diskten doğrulandı) ve tasarım zinciri (Ek R4 giriş tablosu; dokuz
+belgenin SHA-256'sı diskten doğrulandı). Yalnız bu dosya değişti; kod,
+şema, veri, test, kit1 dosyaları, başka runbook veya `CLAUDE.md`
+değişmedi; LOCKED bir sözleşmeye dokunulmadı. Yazılırken yalnız okuma,
+hash, `ParseInput`/AST, sayım ve L1 ölçümü yapıldı; hiçbir runbook
+komutu, kit betiği, 7z, PostgreSQL, CLI veya test çalıştırılmadı;
+passfile okunmadı. Commit ve push yapılmadı. Bu revizyon **yalnız
+sözleşme metnidir**: kit2 kodu yazılmadı (dilim 1–5; Ek R4/16).
+
+**Karar günlüğü** (`at=` değerleri her mesajın ilgili oturumda alındığı
+andır; o oturumda `Get-Date` ile ölçüldü).
+
+| Kayıt | İçerik |
+|---|---|
+| `SCOPE_APPROVED at=2026-10-20T12:59:43+03:00` | Oturum ISLEME-KITI-TASARIM: kit2 tasarım sürüm 1 (`design.md`) ve düzeltme notu 1; planlayıcı önerisiyle, kullanıcı onayı |
+| `USER_DECISION at=2026-10-20T19:10:41+03:00` | KD-1…KD-20 cevapları (KD-4, KD-12, KD-17 değiştirildi; diğerleri kabul, KD-2/6/13 ekli), AÇIK-1…AÇIK-13 cevapları, Temp `x` dosyasının hash'e bağlı silinmesi → `design-v2.md`, `design-errata-2.md` |
+| `USER_DECISION at=2026-10-20T19:50:31+03:00` | Bağımsız tasarım incelemesi oturumunda (`54943339…c11f`; 0C/1H/6M/11L/10O): KD-21 (b) değiştirilmiş (profil-göreli sabit ad), KD-22 (a), KD-23 (a), KD-24/25/26 kabul, AÇIK-16 avukatı bekler, AÇIK-17 evet, AÇIK-19 evet, AÇIK-21 menü korunur |
+| `USER_DECISION at=2026-10-20T20:49:05+03:00` | H1 ve M1–M6 kabul; M3 için karar 3 (pinli blok motoru + `&`); O10(1) KD-12'nin yerine; L1–L11, O3, O4, O5, O8 kabul → `design-errata-3.md` |
+| `USER_DECISION at=2026-10-20T21:41:59+03:00` | Hedefli yeniden kontrol oturumunda (`31423873…99bc`; 0C/0H/1M/6L/9O): AÇIK-22 (b), AÇIK-23 kabul, AÇIK-24 (a); errata-3'ün dört seçimi kabul |
+| `USER_DECISION at=2026-10-20T22:11:34+03:00` | M-Y1 (beş madde), L-Y1–L-Y6 ve O-Y gözlemleri kabul → `design-errata-4.md` |
+| `USER_DECISION at=2026-10-20T22:51:52+03:00` | Sınırlı son kontrol oturumunda (`c57117ef…033d`; 0C/0H/0M; "Dilim 0'a not" 5L/5O; `DESIGN_READY_FOR_SLICE_0`): errata-4'ün yazar seçimi 1 **değiştirildi** (`K_TEMPLATE_IDENTITY` kilitsiz + şablonu baştan oluşturma), seçim 2–9 kabul (seçim 2 eki: PASS'ten sonra karar değişikliği için ayrı yol yok; yeni RED veya DUR), AÇIK-25 = (b) |
+| `SCOPE_APPROVED at=2026-10-20T23:19:53+03:00` | Bu oturum: dilim 0 sözleşme metni. Recheck-2 "Dilim 0'a not" kararları: not 6 (değiştirilmiş seçim 1; ilk yazımın ayrıştırmasında da), not 1 (içerik sonrası acil sayfa / `ev.ps1` uyuşmazlığı kilit değil uyarı; kit2'nin guard'lı silme yolu kapanmaz), not 2, 3, 4, 5, 7, 8, 9, 10 kabul; errata-4 §4.1'deki N96 aralığının doğrusu L4661–L4669. Avukata 11 soru; her cevaba bağlı madde işaretlenir. Yazma kapsamı yalnız bu dosya; hiçbir şey çalıştırılmaz (izinli: okuma, hash, `ParseInput`/AST, sayım, L1 ölçümü); geçici dosya yalnız oturuma özel scratchpad dizininde; commit/push yok; belirsizlikte açık soru ve DUR |
+| Açık soru (intake formu) | Yazımdan önce (hiçbir dosya değişmeden) soruldu: intake formunun anahtar listesi tasarımca dilim 0'a bırakılmıştı; iki şemadaki 12 dizi alanından yalnız ikisinin sayısı soruluyordu |
+| `USER_DECISION at=2026-10-21T11:57:09+03:00` | Planlayıcı önerisiyle, kullanıcı onayı: intake formu = **A (AÇIK-26)**, şu ek kuralla: süre hesabını etkileyen hiçbir alan boş bırakılamaz ve kit sabitiyle doldurulamaz; bu alanlar formda zorunludur ve eksikse `b5d` kilitsiz döngüde reddeder; AÇIK-26 önerisi süreye giren alanları kaynaktan göstererek yazar; dizi sayıları, boş değer gösterimi ve sabit değerler önerinin içindedir; karar dilim 2'den önce verilir. Önceki "something." mesajı yanlışlıkla gönderildi, dikkate alınmadı. **Uygulama:** Ek R4/12.3 madde 8–9 ve AÇIK-26 |
+| `USER_DECISION at=2026-10-21T15:19:11+03:00` | Bağımsız inceleme oturumunda (KIT2-DILIM0-REVIEW; rapor `<profile>\vergi_step10_rev7_review_7c54e28f\independent-runbook-rev7-dilim0-review.md`, SHA-256 `c4dcbc34d05990dd4f4400ea0e88a3ad342804101d1b0bfbf8fdbbf417068e65`; 0C/0H/4M/9L/6O; `READY_FOR_NARROW_REMEDIATION`; taban `8fef7cf4…02f6`): **AÇIK-27** = kilitli "içerik belirtisi" sınıfı kaldırılır; şablon dışı her satır veya değer kilitsiz reddedilir; karar dosyaları kapsayıcı içindedir; evidence'a yalnız sözlük değerleri, boolean'lar ve uzunluklar girer |
+| `USER_DECISION at=2026-10-21T17:22:12+03:00` | Bu oturum (KIT2-DILIM0), planlayıcı önerisiyle, kullanıcı onayı: raporun §3 dar düzeltme listesindeki D-1…D-15'in **hepsi** uygulanır (isteğe bağlı D-15 dahil); O5: acil yol onay cümlesi yöntem kararının **zorunlu** parçasıdır; D-1 teyidi (O3): dosya düzeyi tuzlu SHA-256, `seq`, `DECISION_KIND` ve `DECISION_FILE` kayıtta kalır, AÇIK-27 kararı yalnız dosyanın **içinden** okunan değerler için geçerlidir; `b18` için aynı satır kuralı, `KAPSAM_*` serbest metin, kayda yalnız hash ve zaman; AÇIK-27 kapandı. Kurallar önceki turla aynı (yalnız bu dosya; 118 blok bayt-bayt aynı; değişen veya eklenen blok yalnız dosya sonundaki aralıkta; hiçbir şey çalıştırılmaz; commit/push yok). **Uygulama:** aşağıda "Dar düzeltme turu" |
+
+**L1 ölçümü (KD-21 b; errata-3 §10.1/8).** Bu oturumda, kapsam onayından
+sonra ve yazımdan önce, oturuma özel scratchpad dizinindeki bir
+PowerShell betiğiyle ölçüldü: aday güvenli dizin Adım 8 kaydındaki
+göreli addan profil yoluna eklenerek kuruldu; passfile **açılmadı ve
+okunmadı** (yalnız `Test-Path -PathType Leaf`); dizinin reparse point
+olmadığı, ebeveyninin profil dizini olduğu ölçüldü; göreli adda kullanıcı
+adı, profil dizininin adı, profilin kısa (8.3) adı ve `<ilk-6-harf>~`
+kalıbı `OrdinalIgnoreCase` ile arandı. Yalnız iki boolean basıldı; yol ve
+içerik hiçbir yere yazılmadı:
+
+- `SECURE_DIR_UNDER_PROFILE=True`
+- `SECURE_RELATIVE_NAME_HAS_USERNAME=False`
+
+Sonuç: KD-21 (b) değiştirilmiş biçimiyle kapalı kalır; göreli ad bu
+belgede `<kb-secure-relative>` yer tutucusuyla anılır.
+
+**Eşleme tablosu** (her KD, AÇIK cevabı, errata maddesi, inceleme
+bulgusu ve recheck-2 notu → bu revizyondaki yeri). "R4/x" = Ek R4/x.
+
+| Kimlik | Karar / cevap | Yer |
+|---|---|---|
+| KD-1 | Kabul; E3: kit2 aktarım gününde de yüklenir | R4/1 madde 1–3; R4/8.6 madde 1 |
+| KD-2 | Kabul + her dilimde sızıntı negatif testi | R4/6 madde 7; R4/9; R4/16.6 |
+| KD-3 | Kabul (komut + anahtar başına izinli liste; asla kaydedilmez listesi) | R4/9 |
+| KD-4 | Değiştirildi: `kit-values.txt` genişletilmez; kit2 değerleri tek güvenli dosyada | R4/2 madde 1–2, 7; §1.5 dar istisnalar (a), (d) |
+| KD-5 | Kabul; errata-3 §5.3 ile `t0` N12'yi pinli baytlarla çalıştırır | R4/8.1 `t0` |
+| KD-6 | Kabul + VeraCrypt dizgesi ve eşleşme yöntemi | R4/8.2 "VeraCrypt sürümü"; R4/3 |
+| KD-7 | Kabul (a): ayrı KÜME penceresi | R4/1 madde 2; R4/8.1 `kume`; R4/6 madde 10 |
+| KD-8 | Kabul: ayrı ADMIN penceresi; ölçümler APP'de | R4/1 madde 2; R4/8.1 `y1`/`y2`; R4/8.3 `b9`/`b24` |
+| KD-9 | Kabul (iii) | R4/8.7 |
+| KD-10 | Kabul: sabit karar şablonu; hash = dosya baytları | R4/12.1; N123–N133 |
+| KD-11 | Kabul (a): avukat `blind-calc.txt`'yi cihazda yazar | R4/12.2; N134; §17.2/3 |
+| KD-12 | İki kez değiştirildi: O10(1) düz `ANAHTAR=DEĞER` formu | R4/12.3 |
+| KD-13 | Kabul + aday yoksa elle alıntı yok; "uygun değil" yolu | R4/15; R4/14; R4/8.3 `u` |
+| KD-14 | Kabul: girdi döngüsü dilim 2, reconciliation dilim 4 | R4/16.3; R4/16.5 |
+| KD-15 | Kabul; içerik sonrası genişlemesi (L6) | R4/5 madde 1; §4.3 (a) revizyon 7 paragrafı |
+| KD-16 | Kabul (b): F1 kapsayıcı imhasıyla; son gün = adım 23 + silme | R4/8.6 madde 3; R4/14 madde 3–4; R4/8.3 `s27` |
+| KD-17 | Değiştirildi: her kilitsiz red için ayrı CreateNew dosyası | R4/5 madde 3 |
+| KD-18 | Kabul: kit1 baytı değişmez | R4/1 madde 1; mevcut 118 blok bayt-bayt aynı (aşağıda) |
+| KD-19 | Kabul: dört anahtar gerçek koşuda yazılmaz | §26.5 satır 9, 10, 40, 42 |
+| KD-20 | Kabul: pencere öncesi ajan işleri | R4/16.7 |
+| KD-21 | (b) değiştirilmiş: profil-göreli sabit ad | R4/2 madde 4; R4/1 madde 3; L1 ölçümü (yukarıda) |
+| KD-22 | (a): pencere öncesi ajan yazar; ACL ayrı onayla | R4/2 madde 6 |
+| KD-23 | (a): DUR'suz erken kapanış | R4/14 madde 1–2; R4/8.4 madde 3; §4.3 (a) |
+| KD-24 | Kabul: 15 sabit ad; N20/N96 türetilmiş | R4/11; N118–N120 |
+| KD-25 | Kabul: önek kitçe doldurulur, yan yana gösterilir | R4/12.1 madde 2, 5; N125 |
+| KD-26 | Kabul: validator'lar `b5d`'de kayıtsız | R4/12.3 madde 5–6 |
+| AÇIK-1 | Avukat cihaz başında (varsayım; teyit dilim 2–4'ten önce) | R4/17 soru 1 ve harita; R4/16 ön koşullar |
+| AÇIK-2 | Operatör = proje sahibi | R4/8.5; R4/8.7 |
+| AÇIK-3 | Yollar profil altında, taşınmaz | R4/2 |
+| AÇIK-4 | KD-11 (a) | R4/12.2 |
+| AÇIK-5 | Hash = kaydedilen dosyanın baytları; kapsayıcı içinde | R4/12.1 madde 5; R4/11 |
+| AÇIK-6 | Her içerik günü KÜME → KİT, aktarım günü dahil | R4/1 madde 2; R4/8.6 |
+| AÇIK-7 | `b1` ilk oturum dalı | R4/8.2 `b1` |
+| AÇIK-8 | Dilim 1'de ölçülür | R4/16.2 (12) |
+| AÇIK-9 | Dilim 2'de ölçülür | R4/15 madde 1 |
+| AÇIK-10 | Tarayıcı/e-posta yok; avukat `k` ile yazar | R4/12.1 madde 1 |
+| AÇIK-11 | İşleme 1–2 gün; adım 23 + silme aynı ziyaret | R4/8.6 madde 2–3 |
+| AÇIK-12 | `at=` = `HP_READBACK_AT` | R4/8.2 `b2`; §26.5 satır 15 |
+| AÇIK-13 | Kimlikler pencere öncesinde | R4/3; R4/16.7 |
+| AÇIK-14 | Dilim 1'de ölçülür | R4/8.2 "VeraCrypt sürümü" (6); R4/16.2 (17) |
+| AÇIK-15 | Düştü (L5 ile kaynaktan cevaplandı) | R4/11 "kodu değişmeyen ama beklentisi değişen bloklar" |
+| AÇIK-16 | Avukatı bekler (soru 8) | R4/12.1 madde 9; R4/17 |
+| AÇIK-17 | Evet: RED kararlarından erken kapanış | R4/8.4 madde 5; R4/14 madde 1 |
+| AÇIK-18 | Dilim 1'de ölçülür | R4/12.3 madde 4; R4/16.2 (19) |
+| AÇIK-19 | Evet: Not Defteri izi D9 sınıfına | R4/12.1 madde 10; §4.4/8; R4/17 (güncellenmiş D9) |
+| AÇIK-20 | Düştü (Win+R satırı yol taşımaz) | R4/1 madde 3 |
+| AÇIK-21 | Menü korunur | R4/7 madde 5; R4/12.3 madde 3 |
+| AÇIK-22 | (b), silme kararı istisnasıyla | R4/8.3 `s25`; R4/12.1 madde 2; N119 |
+| AÇIK-23 | Kabul | R4/6 madde 11; §32/43 |
+| AÇIK-24 | (a): acil silme sayfası | R4/13 |
+| AÇIK-25 | (b) | R4/13 madde 8 |
+| AÇIK-26 | Yeni (bu oturum): A; süreye giren alanlar bağlayıcı | R4/12.3 madde 8–9 ve AÇIK-26 önerisi; karar dilim 2'den önce |
+| AÇIK-27 | **Kapandı** (`USER_DECISION at=2026-10-21T15:19:11+03:00`, teyit 17:22:12): kilitli "içerik belirtisi" sınıfı kaldırıldı; şablon dışı satır ve değer kilitsiz | R4/12.1 madde 3 (satır kuralı, `K_TEMPLATE_LINE`) ve madde 8; R4/12.2 madde 2 (`B18_TEMPLATE_LINE`); R4/16.2 (7); R4/16.6 madde 2 (e); §32/52 |
+| errata-2 (Temp `x`) | Hash eşleşti, silindi; not §34'e | Aşağıda "Notlar" |
+| İnceleme H1 | `k silme` `s25`'ten önce; manifest sonrası dondurma | R4/8.3 `k silme`, `s25`; R4/8.4 madde 4; R4/8.6 madde 3; R4/16.5 (6) |
+| İnceleme M1 | Kültürden bağımsız karşılaştırma; pozitif kontrollü test | R4/7 madde 1, 6; R4/16.6 madde 4 |
+| İnceleme M2 | Yalnız ASCII; N35/N89 türetilmiş | R4/7 madde 3–4; N121, N122 |
+| İnceleme M3 | Karar 3: pinli blok motoru + `&` | R4/6 |
+| İnceleme M4 | `s29a` + `s29b` | R4/8.1 `s29b`; R4/8.3 `s29a`; R4/14 madde 4 |
+| İnceleme M5 | `g8`, `g14`, `g16`; D9 ön koşulu | R4/8.3; R4/8.5; R4/17 soru 3, 9 |
+| İnceleme M6 | Kayda yalnız sözlük değerleri; `REFERANS` daraltıldı | R4/12.1 madde 5–6 |
+| İnceleme L1 | KD-21 (b) yerleri; konum ölçümü | R4/2 madde 4; L1 ölçümü |
+| İnceleme L2 | AÇIK-17 ile `u` ön koşulu; F1 üçüncü an | R4/8.3 `u`; R4/14; §2.1 adım 27; §23 F1 |
+| İnceleme L3 | Güvenli dosya ACL'si ADOPT §F.1 ile | R4/2 madde 5 |
+| İnceleme L4 | Silme oturumu izin kümesi (`r1`–`r5` dahil) | R4/8.4 madde 2 |
+| İnceleme L5 | Türetilmiş: yalnız N20 ve N96; N22 beklenti metni | R4/11; §10.5, §19, §28.2, §29 |
+| İnceleme L6 | 12:30 ilkesinin içerik sonrası genişlemesi | R4/5 madde 1; §4.3 (a) |
+| İnceleme L7 | Kit1 iletilerinin sayfayla eşlenmesi | R4/16.5 dilim 5 (6) |
+| İnceleme L8 | Kör hesap tuzu | R4/12.2 madde 1; N134 |
+| İnceleme L9 | İçerik sonrası kit2 yüklenemezse | R4/13 |
+| İnceleme L10 | Avukat cevabına bağlı işaretleme | Ek R4 giriş; R4/11; R4/17 |
+| İnceleme L11 | Başlatıcı red dosyaları `steps\x\` | R4/5 madde 3 |
+| İnceleme O1 | Anahtar başına izinli liste | R4/6 madde 7; R4/9 |
+| İnceleme O2 | (a) N14 tam blok; (b) 7z ilk boş olmayan satır | R4/8.2 `b1`; R4/11; §4.4/6; R4/6 madde 10 |
+| İnceleme O3 | Tuşa kim basar | R4/8.5 |
+| İnceleme O4 | İki kişi kuralı | R4/15 madde 3; R4/17 soru 5 |
+| İnceleme O5 | Not Defteri pini | R4/3; R4/16.2 (19) |
+| İnceleme O6 | `ConvertTo-Json` kullanılmaz | R4/12.3 madde 7 |
+| İnceleme O7 | Sayılar; 46 anahtar | §26.5 |
+| İnceleme O8 | Geçici çalışma alanı = oturuma özel scratchpad | Bu bölüm "Yazma hesabı" |
+| İnceleme O9 | Büyüklük; her dilim provası en az bir tekrar varsayımıyla | R4/16 (dilim planı); bu bölüm yorum 15 |
+| İnceleme O10 | (1) düz form; (2) pinli blok motoru | R4/12.3; R4/6 |
+| Yeniden kontrol M-Y1 | `k` devam yolu; `K_ALREADY_DECIDED`; `STEP_RESULT=PASS`; silme kararı istisnası | R4/12.1 madde 2, 5; R4/12.2 madde 3; R4/8.3 `s25`; R4/16.2 (22); R4/16.5 (9) |
+| Yeniden kontrol L-Y1 | Yalnız Ordinal sözlük; AST sayımları | R4/7 madde 2, 6 |
+| Yeniden kontrol L-Y2 | Acil sayfa, N96y, `ev.ps1`, yaşam döngüsü | R4/13; N120 |
+| Yeniden kontrol L-Y3 | Form modeli; denetim sırası; JSON'ların üzerine yazılması | R4/12.3 madde 3–5, 7 |
+| Yeniden kontrol L-Y4 | `REFERANS` kalıbı, `[0-9]{6,}`, `TUZ=`, `REFERANS_SHA256` yok | R4/12.1 madde 3, 5, 6; N123–N134 |
+| Yeniden kontrol L-Y5 | Bayat atıflar | Ek R4 tek bağlayıcı metindir (giriş "Öncelik") |
+| Yeniden kontrol L-Y6 | Avukata bağlı adım listesi | R4/17 harita satır 1 |
+| Yeniden kontrol O-Y1 | Manifest sırası `Get-PilotRestrictedState` | R4/11; N119, N120 |
+| Yeniden kontrol O-Y2 | `pg_ctl start` üst düzeyde, borusuz | R4/6 madde 10; R4/16.2 (18) |
+| Yeniden kontrol O-Y3 | Blok başına `CLI_RC` | R4/10 |
+| Yeniden kontrol O-Y4 | stdin taraması alt komut düzeyinde | R4/16.2 (14) |
+| Yeniden kontrol O-Y5 | Silme kararı istisnası | R4/12.1 madde 2; R4/8.3 `s25` |
+| Yeniden kontrol O-Y6 | Sayfanın "ilerleme yoksa" kuralı | R4/6 madde 11; R4/16.5 dilim 5 (7) |
+| Yeniden kontrol O-Y7 | `FORM_F1=24_SAAT` | R4/3; §23 F1 |
+| Yeniden kontrol O-Y8 | Soru 8'in geç cevabı riski | R4/17 harita satır 8 |
+| Yeniden kontrol O-Y9 | Kodlamanın `finally` ile geri alınması | R4/6 madde 6 |
+| errata-4 yazar seçimleri (recheck-2'nin "seçim 1–9" numaralandırması) | Seçim 1 değiştirildi; 2–9 kabul. Kaynaklar 2–9 numaralarının hangi seçime karşılık geldiğini tek tek söylemez; errata-4'ün metinde "seçim" diye işaretlenen bütün kararları burada içerikleriyle eşlendi | Seçim 1 (`K_TEMPLATE_IDENTITY`): R4/12.1 madde 4. Diğerleri: `K_ALREADY_DECIDED` (R4/12.1 madde 2), `K_SALT_LINE` sıfırlaması (madde 4), `b18`'in aynı sınıfta olması (R4/12.2 madde 3), validator sonrası JSON'ların üzerine yazılması (R4/12.3 madde 7), `FORM_F1` ön koşulu (R4/3), N96y (R4/13; N120), `ev.ps1` güven modeli (R4/13 madde 4), acil sayfanın silinmesi (R4/13 madde 6); seçim 2 eki (PASS sonrası değişiklik yolu yok) R4/8.4 madde 5 |
+| Recheck-2 not 1 | İçerik sonrası acil sayfa uyuşmazlığı uyarıdır | R4/13 madde 5; R4/8.2 `b1`; R4/16.2 (23) |
+| Recheck-2 not 2 | AÇIK-25 (b) guard'sızdır | R4/13 madde 8; §32/47 |
+| Recheck-2 not 3 | Tetik: silme komutları tamamlanamıyorsa da | R4/13 madde 1; R4/16.5 (8a) |
+| Recheck-2 not 4 | Acil sayfanın zorunlu blokları | R4/13 madde 2.2 |
+| Recheck-2 not 5 | (b) dalında sayfanın silinmesi | R4/13 madde 7 |
+| Recheck-2 not 6 | Değiştirilmiş seçim 1 (ilk yazımda da) | R4/12.1 madde 4; R4/16.2 (7) |
+| Recheck-2 not 7 | Acil dalda R1 istisnası | R4/13 madde 9; §32/47 |
+| Recheck-2 not 8 | Seçim 2 ekinin sınırı; son karar DUR'la geri alınır | R4/8.4 madde 5; R4/16.5 (10) |
+| Recheck-2 not 9 | `ev.ps1` canonical ve reparse denetimi | R4/13 madde 4 |
+| Recheck-2 not 10 | JSON yazımı atomik değil | R4/12.3 madde 7; R4/16.3 (2b); §32/49 |
+| Recheck-2 yazar düzeltmesi | N96 aralığı L4661–L4669 | R4/11 (kaynak N96'nın hash'i); N119, N120 |
+| Rev6 R1 | Hiçbir insan sistem Temp yolunu görmez | R4/8.1 `t0`; R4/9 (4); R4/8.2 `b1` (N13 canlı değerle); acil dal istisnası R4/13 madde 9. Kapanış dilim 1'de (kod) |
+| Rev6 R2 | Hiçbir blok elle doldurulmaz | R4/2, R4/3, R4/6 madde 2, 5. Kapanış dilim 1–4 |
+| Rev6 R3 | Harici disk çifti | R4/8.2 `b1`; R4/3 `known-external-drive-letters`; §26.5 satır 11–12. Kapanış dilim 1 |
+| Rev6 son kontrol L1 | O7 istisnası ve tamamlanma | Kit2: R4/4 "Üç ileti"; kit1 sayfası: R4/16.5 dilim 5 (9) |
+| Rev6 son kontrol L2 | Sayfada düz `<...>` | R4/16.5 dilim 5 (4) |
+| Rev6 son kontrol L3 | Satır içi üçlü ters tırnak | Madde 3b `b0` ile kalkar (R4/8.6 madde 1); R4/16.5 dilim 5 (4) |
+| Rev6 son kontrol L4 | Erken kayıt + kilitsiz `a4` reddi → D7 | R4/16.5 dilim 5 (9) |
+| Rev6 son kontrol L5 | (a) yer tutucu kaynakları; (b) yazarsız anahtarlar | (a) R4/2, R4/3, R4/6 madde 5; (b) §26.5 |
+| Rev6 son kontrol O1 | Ön denetimlerin istisnası | Kit2: R4/5 madde 5 (ön koşul eksikleri kayıttan önce kilitsiz); kit1 N109 ayrı karar (KD-18; değişmedi) |
+| Rev6 son kontrol O3 | `t0` ilk `STOP`'ta durur | R4/8.1 `t0` |
+| Rev6 son kontrol O7 | Şablon hash'leri kurulumda karşılaştırılır | R4/3 `KIT2_FILE_SHA256`; R4/18 |
+| `USER_DECISION at=2026-10-21T11:57:09+03:00` | Intake = A + süreye giren alanlar kuralı | R4/12.3 madde 8–9; AÇIK-26 önerisi; R4/16.3 (2c) |
+| Tasarım v2 §5 / §11 dilim 0: sayfa iskeleti | Biçim N114 ile aynı; metin dilim 5'te | R4/8.6 "Sayfa iskeleti"; R4/8.5; R4/13 madde 2; R4/16.5 dilim 5 |
+| Rev7 inceleme M1 (D-2) | Başlatıcılarda DUR, E/H, zaman, oturum kimliği | R4/1 madde 1, 6; R4/2 madde 8; R4/4 "Biçim"; R4/5 madde 4, 6; R4/8.1 tablo notu; R4/16.2 (24) |
+| Rev7 inceleme M2 (D-3) | Erken kapanışta `k silme` çalışır | R4/8.4 madde 3 |
+| Rev7 inceleme M3 (D-4) | K6 denetimi `k silme` döngüsünde; sözdizimi; acil yol | R4/12.1 madde 3 ve "K6 denetimi"; şablon tablosu `silme` satırı; N132; R4/8.3 `k silme`, `s26a`; R4/13 madde 2.4; R4/16.2 (7) |
+| Rev7 inceleme M4 (D-5) | R4/9 biçimleri ve "Zorunlu" sütunu | R4/9 (giriş, "Biçimlerin dayanağı", tablo); R4/6 madde 9; R4/16.2 (25); yorum 18 ve 21 |
+| Rev7 inceleme L1 (D-6) | Acil sayfada iki N120 kopyası | R4/13 madde 2.5 |
+| Rev7 inceleme L2 (D-7) | `s27` silme oturumunda; abort F1 kaynağı | R4/8.3 `s27`; R4/14 madde 3; §26.5 satır 25; R4/16.5 (3) |
+| Rev7 inceleme L3 (D-8) | F1'in tek yazanı `s29b`; aşım sırası | R4/8.1 `z1`, `s29b`; R4/14 madde 4; R4/16.5 (3) |
+| Rev7 inceleme L4 (D-9) | Pencere öncesi işlerin sırası | R4/3 `kit-build2.txt`; R4/16.7 |
+| Rev7 inceleme L5 (D-10) | `k uyari` kabulü yöntem kararında | R4/8.7 madde 2; R4/12.1 madde 5 |
+| Rev7 inceleme L6 (D-11) | Soru 1/3/6 işaretleri; soru 11 genişletildi; giriş cümlesi | Ek R4 giriş; R4/8.3 `g8`, `g14`, `g16`, `b18`; R4/8.4 madde 6; R4/17 soru 11, "Soru 11'in genişletilmesi", harita satır 3 ve 11 |
+| Rev7 inceleme L7 (D-12) | `\d` yerine `[0-9]`; `TEBLIG_TARIHI` kalıbı | R4/12.2 madde 2; R4/12.3 madde 5 ve AÇIK-26 para alanları |
+| Rev7 inceleme L8 (D-13) | `KALEM_<n>_VERGI_TURU`; kapsam reddi iletisi; tablo dosya adları | R4/12.3 madde 3 ve madde 8 tablosu; R4/16.3 (8) |
+| Rev7 inceleme L9 (D-14) | §0 "Revizyon" satırı | §0 |
+| Rev7 inceleme O1, O2, O5 (D-15) | O1 ifadesi; O2 yorumlara; O5 zorunlu | Bu bölüm "Statik denetimler" ve yorum 16; R4/11; R4/8.7 madde 2; R4/13 madde 2.5; yorum 6 |
+| Rev7 inceleme O3 | Dosya düzeyi satırlar kayıtta kalır (kullanıcı teyidi) | R4/12.1 madde 8 |
+| Rev7 inceleme O4, O6 | Değişiklik gerektirmez | — |
+| Dar yeniden kontrol N-M1 | K6 insan denetimi acil sayfada her durumda; `k silme`'den sonraki pencereler; `s26a` kilidinin ulaşılabilirliği; düzeltilmiş kararın yerine geçmesi | R4/12.1 "K6 denetimi" madde 3–4; R4/8.3 `s26a`; R4/13 madde 1 ve 2.4; R4/16.5 (11) |
+| Dar yeniden kontrol N-L1 | `z1` anahtar ve `s29b` kopya sorularında H: kilitsiz `False`, ekran iletisi, "tamamlanmadı" | R4/5 madde 6 (`Read-KbYesNo`); R4/8.1 `z1`, `s29b`; R4/14 madde 4 ve 6; §26.5 satır 7 ve 22; R4/16.5 (12); yorum 20 ve 22 |
+| Dar yeniden kontrol N-L2 | `kbl.ps1` yüklemeden önce pin, ASCII, aynı baytlardan yürütme; iki dal | R4/5 madde 6 "Yükleme bütünlüğü"; R4/16.2 (26); yorum 23 |
+| Dar yeniden kontrol N-L3 | Rapor kopyası seçimi ve `s25` için tek ölçüt `REPORT_WRITTEN_LINE_SEEN=True` | R4/13 madde 2.5; R4/8.3 `s25`; R4/16.5 (13); yorum 25 |
+| Dar yeniden kontrol O1 | Erken kapanışta `EARLY_CLOSE_MODE` önce | R4/8.4 madde 3; yorum 24 |
+| Dar yeniden kontrol O2 | Başlatıcıda `<evidence-dir>` türetmesi | R4/5 madde 6 "Yükleme bütünlüğü" |
+| Dar yeniden kontrol O3, O4 | Değişiklik gerektirmez | — |
+
+**Dar düzeltme turu** (`USER_DECISION at=2026-10-21T17:22:12+03:00`;
+bağımsız inceleme `c4dcbc34…8e65`). Taban: bu bölümün ilk yazımı,
+runbook SHA-256 `8fef7cf4c42c36bb407ba6728ab16bb6a389f73c17f873d9faf8bb35f1bd02f6`
+(diskten doğrulandı; HEAD = `origin/claude-dev` = `bb3e5b4`). D-1…D-15'in
+yerleri yukarıdaki eşleme tablosunda ("AÇIK-27" ve "Rev7 inceleme …"
+satırları). Bloklardan yalnız **N132** değişti (`k silme` şablonunun iki
+açıklama satırı yeni `SILME_OTURUMU_DALLARI` sözdizimini gösterir; satır
+sayısı aynı); diğer 16 yeni blok ve eski 118 blok bayt-bayt aynıdır.
+
+**İkinci dar düzeltme turu** (`USER_DECISION at=2026-10-21T19:24:14+03:00`;
+dar yeniden kontrol `c3fd1b946c6c24cbf8715bf0b49406a3d460f9e0b117a70583db00489758f1a4`,
+0C/0H/1M/3L/4O). Taban: dar düzeltme turundan sonraki runbook, SHA-256
+`6e30f093b79ce42379649c7070c5ba85acfcf847662df8dbe5ed6be56f7f0d05`
+(diskten doğrulandı; HEAD = `origin/claude-dev` = `bb3e5b4`). N-M1,
+N-L1, N-L2, N-L3, O1 ve O2'nin yerleri yukarıdaki eşleme tablosunda
+("Dar yeniden kontrol …" satırları); O3 ve O4 değişiklik gerektirmedi.
+Bu turda **hiçbir blok değişmedi**; değişiklikler yalnız Ek R4 metni,
+§26.5 satır 7 ve 22 ile bu bölümdedir.
+D-5 yazılırken kaynakta incelemenin saymadığı aynı sınıftan bir uyuşmazlık
+daha görüldü ve aynı maddede düzeltildi: deterministik `generation`
+önizlemesi bekleyen dosya yokken `pending_sha256=None` basar (yorum 21).
+Hiçbir şey çalıştırılmadı; yalnız okuma, hash, `ParseInput`/AST ve sayım
+yapıldı; commit ve push yapılmadı.
+
+**Bu revizyonda eklenen bloklar** (hepsi dosyanın sonunda, Ek R4/18; mevcut
+numaralar kaymaz):
+
+| Blok | İçerik | Tür | Satır | SHA-256 | `ParseInput` |
+|---|---|---|---|---|---|
+| N118 | Türetilmiş N20 (Ek R4/11) | `powershell` | 9 | `46b69150faa0e78e3ec44e1f8f66cc203fcebed80f93c6bbb2d100777eb834ff` | 0 hata; yalnız ASCII |
+| N119 | Türetilmiş N96 (Ek R4/11) | `powershell` | 14 | `1df5f2881af439aefa4ce0372f1d029cefb14d620a4de250b8d12ccf49f1dca5` | 0 hata; yalnız ASCII |
+| N120 | Türetilmiş N96y (Ek R4/13) | `powershell` | 14 | `a52e27088618aa6a8eccdd7b95014d203fea41330cecafa6b55180b132bad3d4` | 0 hata; yalnız ASCII |
+| N121 | Türetilmiş N35 (Ek R4/11) | `powershell` | 11 | `e22b6c64ad9e8e4bdcb7a8e477540448115fadd6b73f3f8eec3a32c4b0f4952a` | 0 hata; yalnız ASCII |
+| N122 | Türetilmiş N89 (Ek R4/11) | `powershell` | 7 | `9db88afed3b0a81198a03bbca38c95a3a8caa48d9ef8b4a311ee92aacf0bacfd` | 0 hata; yalnız ASCII |
+| N123 | Şablon `k intake` | `text` | 21 | `d43c869fae4c768b4e4362402d4f2f7917869516515ee333b85a942a1c1c89f2` | — (`text`; yalnız ASCII) |
+| N124 | Şablon `k uyari` | `text` | 11 | `a32cc9370b08a38dda4fb4420d07fe6b3771a1eaa6f64799178c1a2d35fb2be7` | — (`text`; yalnız ASCII) |
+| N125 | Şablon `k girdi` | `text` | 12 | `896abb0f3957f10e1683c98c08c4203243e4816ab62f142c68026e246cbb89dc` | — (`text`; yalnız ASCII) |
+| N126 | Şablon `k fact` | `text` | 10 | `c729d5b9579642b1d42f55752f5803a3a612f3c5c5dd24f975ddb51c8943f1c8` | — (`text`; yalnız ASCII) |
+| N127 | Şablon `k dogrulama` | `text` | 10 | `bf2a96a2c50ddf836eb0e685993965b5bf79d3ecbd3225f04457a656d4a46c5b` | — (`text`; yalnız ASCII) |
+| N128 | Şablon `k zamancizelgesi` | `text` | 10 | `298c3e8104c2710569d5be841c50da58e1ca4f4ddc67e3abe5bbdc8fe385ee00` | — (`text`; yalnız ASCII) |
+| N129 | Şablon `k durdurucu` | `text` | 14 | `5d9f83e6de37bef17bd8ddaa71802610655c22591d416857eeed3361e1fc9340` | — (`text`; yalnız ASCII) |
+| N130 | Şablon `k adlitatil` | `text` | 10 | `bd8779a8049a83af4f7377eb0b8a2617741400b814646d786e651dac7c43b7a8` | — (`text`; yalnız ASCII) |
+| N131 | Şablon `k sure` | `text` | 10 | `48b4961d92491ae09c10dda9b1a52b69e80f856e49a9630e3107b2b0b548a3b8` | — (`text`; yalnız ASCII) |
+| N132 | Şablon `k silme` (dar düzeltme turunda değişti; ilk yazım `0981cfecbd04793d29604034b53c220a1cef8e78bde6935ab5b80cee32d7d196`) | `text` | 15 | `6efdf5eadb3e28c4b2ef59b7ef7d2546ed0b4ca4d8d32bbc2b76b5bfde9a605a` | — (`text`; yalnız ASCII) |
+| N133 | Şablon `k uygunsuz` | `text` | 13 | `21f04dfc226fde2d9ddda986133f64010c78998610602adecaefb517ccc8ef22` | — (`text`; yalnız ASCII) |
+| N134 | Şablon `b18` kör hesap | `text` | 12 | `da5b6cf545882e5ef41aca48c16d4d46f87b1f0d8e7e1282ea7e16be67f918b1` | — (`text`; yalnız ASCII) |
+
+**Mevcut blokların değişmezliği.** Bu revizyonun runbook'u 135 blok taşır. İlk 118 blok (N0–N117) `bb3e5b4` ile **bayt-bayt aynıdır** ve aynı sırada durur: §34.8 kuralıyla hesaplanan blok SHA-256'ları ve blok dilleri sırayla karşılaştırıldı, 118/118 eşit (örnekler: N0 `f2afb41a…`, N105 `3ba56906…`, N114 `d8b7c8e9…`, N116 `a8524ff9…`, N117 `6a4f4f40…`). Yeni bloklar yalnız dosyanın sonundadır; mevcut numaralar kaymaz; kit1 dosyaları ve pinleri (§34.9, Ek R3/1) değişmedi.
+
+**Statik denetimler (mekanik; yalnız scratchpad'deki kopyalar
+üzerinde).**
+
+- Blok ayırma aracı (satır başında üç ters tırnak; gövde LF ile birleştirilip sona LF eklenerek
+  hash) önce tabana göre ayarlandı: `bb3e5b4` runbook'u → 118 blok, N0 `f2afb41a…`, N115
+  `fa38e12e…`, N116 `a8524ff9…`, N117 `6a4f4f40…` (§34.12 ile eşit); CR baytı 0; kapanmamış çit yok.
+- Bu revizyon (ikinci dar düzeltme turundan sonra): 135 blok; ilk 118 blok yukarıdaki gibi
+  eşit; N118–N131, N133, N134 ilk yazımla eşit, N132 yukarıdaki yeni hash (ikinci turda
+  blok değişmedi; N118–N134 dar düzeltme turundaki hâlleriyle eşit); CR baytı 0; kapanmamış
+  çit yok; satır sayısı 11969.
+- `ParseInput` (Windows PowerShell 5.1): N118–N122 0 hata. Yalnız ASCII ve sekmesiz: N118–N134.
+- Ek R4/7 madde 6 sayımları N118–N122'de: duyarsız işleç belirteci 0, `HashtableAst` 0, `[ordered]`/
+  `[hashtable]` tür ifadesi 0, `-Unique` parametresi 0, `Compare-Object` 0, `switch` 0.
+- N121 ve N122: `[char]` kaçışları geri çözüldü ve işleç değişiklikleri geri alındı; satırlar kaynak
+  N35 ve N89 ile birebir aynı çıktı (yorum 14).
+- §1.5 taraması (eklenen 3111 satır): sürücü harfli mutlak yol 0; yerel ana bilgisayar adı
+  ve loopback adresi 0; port benzeri sayı 0; passfile dosya adı 0; bağlantı dizesi öneki 0; Windows
+  kullanıcı adı ve profil dizini adı 0 (büyük-küçük harf duyarsız); Adım 8 veritabanı ve rol adları
+  kalıbı yalnız `VERGI_IAM_DATABASE_URL` ortam değişkeni adında (4 satır; veritabanı adı
+  değildir ve runbook'ta zaten geçer); L1 ölçümünün gerçek göreli dizin adı 0.
+- Eklenen metindeki 39 farklı 64-hex değerin hepsi bu oturumda ölçülmüş değerlerdir (tasarım
+  belgeleri, taban runbook, bağımsız inceleme raporu ve dar yeniden kontrol raporu, ilk yazımın
+  ve dar düzeltme turunun runbook'u, blok ve satır parçası hash'leri); ölçülmemiş değer 0.
+- Eklenen metinde satır içi üçlü ters tırnak 0 (rev6 son kontrol L3).
+- Kaldırılan satırlar yalnız metni değişen 8 taban satırıdır (§0 "Revizyon" satırı, §2.1
+  adım 27, §4.4/6, §10.5 iki satır, §17.2/3, §23 F1, §29). Altısı satır içine ekleme
+  (§0'da bir "ve" virgüle döndü); ikisi beyan edilmiş, anlamı değiştiren yeniden yazımdır:
+  §4.4/6 ("ilk satırı" → "ilk boş olmayan satırı"; O2 b) ve §23 F1 (üç anlı liste; L2)
+  (inceleme O1). Hiçbir kod bloğu satırı kaldırılmadı.
+- N116 bu turda çalıştırılmadı: kit kodu yazılmadı ve kit1 blokları değişmedi.
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| Üst uyarı | Revizyon 7 cümlesi |
+| §0 | "Revizyon" satırına revizyon 7 ve kit2 tasarım dizini (dar düzeltme turu D-14; inceleme L9) |
+| §1.5 | Dört yeni yer tutucu satırı; "Dar istisnalar — işleme kiti" maddesi |
+| §2.1 | Zincir adım 27: erken kapanışta `WORK_ENDED_AT` (L2) |
+| §4.3 (a) | "Kit2 ile yürütme" paragrafı (L6; KD-23; G9/DUR ilişkisi; acil yol) |
+| §4.4/6 | 7z sürümü: "ilk boş olmayan satır" (O2 b); kit2'de `b1` türetmesi |
+| §4.4/8 | Not Defteri izi ve güncellenmiş D9 (AÇIK-19) |
+| §10.5 | Madde 2 ve envanter beklentisi (KD-24; L5) |
+| §17.2/3 | Kör hesap kaydının yeri (KD-11 a; avukat cevabına bağlı) |
+| §19 | `RESTRICTED_FILE_COUNT` beklentisi ve N122 (L5) |
+| §23 | F1 satırı: üçüncü an `WORK_ENDED_AT`; `FORM_F1=24_SAAT` (L2, O-Y7) |
+| §26.1, §26.5 (yeni) | Kit2 evidence kapsamı; 46 anahtarın yazanı (L5 b); satır 25'te abort yolunun F1 başlangıcı (dar düzeltme turu D-7); satır 7 ve 22'de H sonucu (ikinci dar düzeltme turu, N-L1) |
+| §28.2 | N119 / N120 notu (L5) |
+| §29 | İzinli küme satırı (L5) |
+| §32 | Madde 41–52 (yeni sınırlar; madde 52 dar düzeltme turunda AÇIK-27'nin kapanışıyla güncellendi) |
+| §34.4 | Revizyon 7 satırları |
+| §34.13 | Bu bölüm |
+| Ek R4 (yeni; dosya sonu) | Kit2 sözleşmesi ve N118–N134 |
+
+**Yorumlar** (sessizce seçilmedi; inceleyicinin değerlendirmesi için).
+
+1. **`at=` değerleri.** Her kayıt mesajın ilgili oturumda alındığı an
+   olarak `Get-Date` ile ölçüldü; bu oturumun dördü 23:19:53, 11:57:09,
+   17:22:12 (dar düzeltme turu) ve 19:24:14'tür (ikinci dar düzeltme
+   turu); 15:19:11 inceleme oturumunda ölçüldü ve raporda kayıtlıdır.
+2. **Satır parçaları.** Tasarım `N57/1`, `N57/2` ve git blokları için
+   parça önerebiliyordu. Git bloklarının birleşik çıktısı runbook'un
+   beklenen listesiyle tek anlamlı karşılaştırılabildiği için (R4/10) tek
+   türetilmiş parça `N57/2`'dir.
+3. **Kayıt adları** `b09a`/`b09b`, `b24a`/`b24b`: aynı komutun önce/sonra
+   iki koşusu tek-çalışım kaydıyla karşılanamaz (R4/4).
+4. **Intake RED.** Tasarım `INTAKE_APPROVED` RED'ini tanımlamaz; bu metin
+   `b7`'nin kilitsiz reddini ve mevcut iki yolu (erken kapanış, `OTHER`;
+   veya §11.4 DUR'u) yazar, yeni bir yol açmaz (R4/8.4 madde 6). Dar
+   düzeltme turunda (D-11) erken kapanış yolu avukatın soru 11'ine
+   bağlandı ve soru 11 intake reddini ve kapsam dışı belge türünü
+   (`B5D_DOCUMENT_TYPE_SCOPE`; D-13) kapsayacak biçimde genişletildi.
+   İncelemenin seçenekli önerisinden ("soru 11'e ekle" veya "yalnız §11.4
+   DUR'a bağla") onaylı listenin metni ("soru 11'e intake RED") uygulandı;
+   olumsuz cevapta yol §11.4 DUR'udur.
+5. **`k uyari`.** `decision-warnings.txt` tasarımın ad listesindedir ama
+   türü tanımsızdı; §11.3 (d)'nin "avukat ile kullanıcı yazılı kabul"
+   kuralından `VALIDATOR_WARNINGS_ACCEPTED` ve proje sahibinin ikinci E/H'si
+   türetildi (R4/12.1 madde 5).
+6. **Acil yol onayları.** §7c yöntem metni acil silme sayfası yolunu
+   kapsamaz. İlk yazımda öneriydi; **kullanıcı kararıyla**
+   (`USER_DECISION at=2026-10-21T17:22:12+03:00`; inceleme O5) şu cümle
+   pencere öncesi yöntem kararının **zorunlu** parçasıdır: "Acil silme
+   sayfası yolunda sayfadaki her silme hedefinin onay satırını okuyup o
+   hedefin bloğunu çalıştırmam, o hedef için ayrı ve açık
+   `REAL_ACTION_APPROVED` onayımdır." (R4/8.7 madde 2; R4/13 madde 2.5).
+   Aynı turda `k uyari` kabul cümlesi de zorunlu yapıldı (inceleme L5).
+7. **`approval-method.txt`.** Tasarım yöntem kararının "kaydedileceğini"
+   söyler, yerini söylemez; evidence'ta CreateNew dosya ve
+   `APPROVAL_METHOD_SHA256` seçildi (R4/3; R4/8.7 madde 3).
+8. **`document_type`.** Errata-3 §6/2 onu "kitçe dolu" sayıyordu; 11:57:09
+   kararı gereği formda zorunludur ve yalnız `vergi_ceza_ihbarnamesi` kabul
+   edilir (§2, Form G4, M-05). `tax_type`'ın kalem başına ayrı menüyle
+   sorulması ve forma `KALEM_<n>_VERGI_TURU` satırı olarak yazılması dar
+   düzeltme turunda bağlayıcı yazıldı (D-13; R4/12.3 madde 3).
+9. **Doğrulayıcı ayrıştırıcısı.** İki validator `anahtar=değer` basmaz;
+   kit2 başlık ve bölüm işaretlerini dilim 2'de pinler (R4/9).
+10. **Yeni red kodları** (`K_ORDER`, `APPROVAL_METHOD_MISSING`,
+    `K_K6_BRANCH_NOT_NAMED`, `K_TEMPLATE_LINE`, `B18_TEMPLATE_LINE`,
+    `B5D_VOCAB`, `B5D_DEADLINE_FIELD`, `B5D_DOCUMENT_TYPE_SCOPE` vb.) var
+    olan runbook kurallarının ve kullanıcı kararlarının mekanik
+    karşılığıdır; yeni hukuki kural değildir. İlk yazımdaki
+    `S26A_K6_BRANCH_NOT_NAMED` dar düzeltme turunda kaldırıldı (D-4;
+    `s26a`'da yalnız kilitli `STOP K6_BRANCH_NOT_NAMED` kalır).
+11. **`k silme` şablonu.** `F2` yalnız `SILINSIN` (arşiv bu kitte yok) ve
+    `SILME_OTURUMU_DALLARI` (§4.3 a K6 dalları; sözdizimi R4/12.1 "K6
+    denetimi" madde 1); avukat cevabına bağlıdır (soru 10). K6 denetimi
+    tasarım belgelerinde yoktur, bu ekin eklemesidir (inceleme M3).
+12. **Kör hesap şablonu** §17.2/2'nin içeriğini (tebliğ tarihi, son gün,
+    üç kapsam satırı) taşır; tasarım yalnız `SON_GUN` ve "sabit kapsam
+    satırları" diyordu; kaydın zamanı dosyaya değil kayda yazılır.
+13. **Türetilmiş bloklarda M1.** `$null -ne` → `$null -cne`; sayı
+    karşılaştırmaları `-c…`; `[char]` ile başlayan kaçışlı dizgeler `''`
+    ile başlar (PowerShell'de `[char]` ile başlayan `+` sayı toplamıdır).
+    N96'daki tırnaksız `<report-produced>` yer tutucusu, yer tutucu
+    doldurulmadan ayrıştırıldığında iki hata verir (`<` yönlendirme
+    sayılır; kaynak N96'da da ölçüldü: 2 hata, değer konunca 0). N119 ve
+    N120'de değer tek tırnaklı dizgede karşılaştırılır
+    (`$reportProduced = ('<report-produced>' -ceq '$true')`); değer kuralı
+    yalnız `$true`/`$false`'tur (R4/6 madde 5) ve geçersiz bir değer
+    `$false` sayılır (rapor varsa manifest koşulu düşer: fail-closed).
+14. **N121/N122 denkliği çalıştırılarak değil, statik olarak**
+    doğrulandı: kaçışlı ifadeler kaynak dizgelere geri çözüldü ve
+    işleç değişiklikleri geri alınınca kaynak satırlarla birebir aynı
+    çıktı; canlı denklik dilim 1 kabul ölçütü (11)'dedir.
+15. **Büyüklük (inceleme O9).** Dilim planı her dilim provasının en az
+    bir tekrar gerektirebileceği varsayımıyla okunmalıdır.
+16. **Reconciliation karar adı (rev7 inceleme O2; D-15).** Errata-3 §10.9
+    bu kararı dilim 0'a bırakmıştı; "ad yok, §14.6'nın her adımı
+    kullanıcı kararı ve ayrı `REAL_ACTION_APPROVED`, avukat kararı yok"
+    seçimi bu ekindir (R4/11), errata-3'ün değil.
+17. **`K_TEMPLATE_LINE`'da sıfırlama yok (D-1).** 22:51:52 kararı
+    sıfırlamayı `K_TEMPLATE_IDENTITY` ve `K_SALT_LINE` ile sınırlar; bu
+    kapsam genişletilmedi. Avukat düzeltebilsin diye ileti satırın
+    numarasını ve şablondaki beklenen satırı (pinli, ASCII, içeriksiz)
+    gösterir; dosyadaki satırı göstermez. Avukatın değerini bilemediği
+    kitçe doldurulan satırlar (ör. `CASE_ID=`) silinir veya bozulursa
+    döngü kilitsiz ama çıkışsız kalmasın diye bu satırlar yapı
+    denetiminden **önce** anahtar önekiyle aranır ve `K_TEMPLATE_IDENTITY`
+    (sıfırlamalı) verir; sıfırlama kapsamı böylece yine iki koddur.
+    Satırların yalnız LF ile bölünmesi, sondaki tek LF'nin satır
+    sayılmaması ve CR baytının reddi bu ekin seçimidir.
+18. **R4/9 biçimleri `bb3e5b4` kaynağına pinlidir (D-5).** Biçimler o
+    commit'teki yazım satırlarından okundu (R4/9 "Biçimlerin dayanağı");
+    `EXPECTED_HEAD` değişirse aynı satırlar yeniden okunur; canlı
+    eşleştirme dilim 1 kabul ölçütü (25)'tedir. "Zorunlu" sütunu bu ekin
+    seçimidir: CLI'nin başarıda her zaman bastığı anahtarlar zorunlu,
+    yalnız bir dalda basılanlar (`document` yalnız `fact`'te, `anchor`
+    yalnız `deadline`'da, `STALE_DOWNSTREAM_SEEN`) isteğe bağlıdır.
+19. **F1'in en erken anı (D-7).** Birden fazla F1 başlangıç anı varsa en
+    erkeninin geçerli olması (R4/14 madde 3) bu ekin seçimidir; F1'i
+    kısaltır, uzatmaz (fail-closed).
+20. **`kbl.ps1` ve iki geçersiz tuş (D-2).** Başlatıcı yardımcılarının
+    ayrı tek bir pinli dosyada durması ve kit1 `Read-KitYesNo`'nun iki
+    geçersiz tuştan sonraki sonucunun başlatıcılarda H gibi işlenmesi
+    bu ekin seçimidir (R4/5 madde 6). Onay sorularında sonuç kilitsiz
+    reddir (CLI veya silme çağrılmaz); veri silindikten sonraki iki imha
+    sorusunda kilitsiz `False`'tur (yorum 22; dar yeniden kontrol N-L1).
+21. **İncelemenin saymadığı biçim farkı (D-5).** Deterministik
+    `generation` önizlemesi (`b15`, `b19`) bekleyen dosya yokken
+    `pending_sha256=None` basar (`ui/services/generation_mutation_facade.py`
+    L1169, `ui/services/common.py` L294); ilk yazımın "h64" biçimi bu
+    yüzden geçerli bir koşuyu kilitlerdi. M4 ile aynı sınıftır ve aynı
+    maddede düzeltildi (R4/9).
+22. **İki imha sorusunda H (ikinci dar düzeltme turu, N-L1).** Kural
+    kullanıcı kararıdır (`at=2026-10-21T19:24:14+03:00`; planlayıcı
+    önerisi): H kilit üretmez, kayıt `False` yazar, ekran ne yapılacağını
+    söyler, ajan özeti "tamamlanmadı" der (R4/14 madde 4). Dar yeniden
+    kontrolün önerisi `STOP` önekli kilitli satırdı; kilitsiz kural şu
+    gerekçeyle seçildi: `z1`'de kilit `s29b`'yi engeller ve imha kaydı
+    (§28.7; Y6) hiç yazılmazdı; `s29b`'de kilit veri silindikten sonra
+    yalnız `DUR.txt` ekler, silinecek bir şey kalmamıştır. `basis`
+    değerleri (`project-owner-H-at-kit`, `lawyer-H`, `no-valid-answer`)
+    ve aşım yokken (a), (b) sırası bu ekin seçimidir. F1 aşımı §2.1 adım
+    27 gereği kilitli kalır.
+23. **`kbl.ps1`'in güvenilir yükleyicisi (N-L2).** Başlatıcının kendisi
+    güvenilir koddur; kit1 `ac.ps1` ve kit2 `bc.ps1` ile aynı sınıftır
+    (Win+R satırıyla doğrudan yüklenir, `pins2.txt`/`kit-build2.txt`'de
+    pinlidir). Hata kodu `KB_LOADER_PIN`, ileti metinleri, `DUR.txt`
+    yazımının başlatıcının içinde kopyalanması ve tarafın başlatıcıda
+    `a4.txt`'den seçilmesi bu ekin seçimidir (R4/5 madde 6).
+24. **Erken kapanışta kod sırası (O1).** `EARLY_CLOSE_MODE`'un
+    `K_ALREADY_DECIDED`'den önce gelmesi bu ekin seçimidir; iki kod da
+    kilitsizdir, sıra yalnız dilim 1 testinin beklediği kodu belirler
+    (R4/8.4 madde 3).
+25. **Rapor ölçütü (N-L3).** `s25` ve acil sayfa artık aynı ölçütü
+    (`REPORT_WRITTEN_LINE_SEEN=True`) kullanır. §1.5'teki
+    `<report-produced>` tanım satırı ve §28.2'deki cümle ("zincir adım 22
+    çıkış `0` ile tamamlandıysa") tabandan gelir ve bu turda
+    değiştirilmedi; kit2 koşusunda bağlayıcı olan Ek R4/8.3 `s25` ve Ek
+    R4/13 madde 2.5'tir.
+
+**Notlar.**
+
+1. **Temp `x` dosyası (tasarım düzeltme notu 2; kullanıcı kararı).**
+   Delta4 ajanının `<profile>\AppData\Local\Temp\x` dosyası (12193 bayt,
+   `2189b03e…5c9d`; delta4 inceleme L1) 2026-10-20 kit2 tasarım
+   oturumunda bir kabuk yönlendirmesiyle (`> /tmp/x`) üzerine yazıldı
+   (3204 bayt, blok numarası listesi; içeriksiz) ve kullanıcının hash'e
+   bağlı `REAL_ACTION_APPROVED` kararıyla 2026-10-20T19:10:53+03:00'te
+   silindi (silmeden önceki SHA-256 `fe97fb77…94e8`, beklenenle aynı).
+   Özgün içerik ve tam hash kayıptır. Ders: ajan oturumlarında `/tmp`
+   yönlendirmesi kullanılmaz; geçici çıktı yalnız oturumun kendi
+   çalışma alanına yazılır. (§34.12 "Sonraki prova planına notlar" madde
+   3'ün kapanışıdır.)
+2. **Tasarım belgelerine atıf** `<profile>\vergi_step10_kit2_design_aa6d5422\…`
+   biçimiyle ve SHA-256 ile yapılır (Ek R4 giriş); kullanıcı adı içeren
+   yol yazılmaz.
+
+**Açık sorular** (kapanmadan ilgili dilim yazılmaz).
+
+- **AÇIK-26 — intake formunun tam anahtar listesi.** Kullanıcı kararı A
+  (`at=2026-10-21T11:57:09+03:00`); öneri R4/12.3'te; karar dilim 2'den
+  önce.
+- **AÇIK-27 — "içerik belirtisi" sınıfı: KAPANDI.** İlk yazımda açık
+  soruydu (seçenekler: (a) sınıfın kaldırılması; (b) `#` satırlarında dar
+  tanım). Kullanıcı kararı `USER_DECISION at=2026-10-21T15:19:11+03:00`
+  (bağımsız inceleme oturumunda) ve teyidi `USER_DECISION
+  at=2026-10-21T17:22:12+03:00` (bu oturum): sınıf **kaldırıldı**; kilitli
+  küme yalnız "kayıt açıldıktan sonra dosya değişti" ve kitin kendi
+  yazma hatasıdır; şablon dışı her satır veya değer kilitsiz reddedilir
+  (`K_TEMPLATE_LINE`, `B18_TEMPLATE_LINE`); kayda dosyanın içinden yalnız
+  sözlük değerleri, boolean'lar ve uzunluklar girer; dosya düzeyi tuzlu
+  SHA-256, `seq`, `DECISION_KIND`, `DECISION_FILE` kalır (R4/12.1 madde 3
+  ve 8; R4/12.2 madde 2).
+- **Kalanlar:** AÇIK-14 ve AÇIK-18 (dilim 1 ölçümleri), AÇIK-16 (avukat,
+  soru 8).
+
+**Yazma hesabı.** Taslak oturuma özel scratchpad dizininde hazırlandı
+(`%TEMP%` kökü ve `/tmp` kullanılmadı); türetilmiş bloklar kaynak
+bloklardan mekanik olarak üretildi; doğrulamalar kopya üzerinde yapıldı;
+dosya sonra bu yola bayt bayt kondu. Dar düzeltme turunda dosya
+yerinde, metin düzenlemesiyle değiştirildi; değişiklik öncesi kopya
+(`8fef7cf4…02f6`) ve denetim betikleri oturuma özel scratchpad
+dizinindedir. İkinci dar düzeltme turunda da aynı yöntem kullanıldı;
+değişiklik öncesi kopya (`6e30f093…0d05`) aynı dizindedir. Alt ajan
+kullanılmadı. Bu revizyon
+gerçek koşuyu, son provayı veya herhangi bir dilimin uygulanmasını
+yetkilendirmez; her biri ayrı kullanıcı kararıdır.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -8863,4 +9549,2421 @@ sınıf satırı (`=True/False`), sonra ya `AI_CONTENT_CHANNELS_CLOSED=True` ve
         Write-SixStop
     }
 }
+```
+
+---
+
+## Ek R4 — İşleme kiti (kit2) sözleşmesi (revizyon 7)
+
+YENİ (revizyon 7; `SCOPE_APPROVED at=2026-10-20T23:19:53+03:00`, planlayıcı
+önerisiyle, kullanıcı onayı; Adım 10 B yolu, kit2 dilim 0). Bu ek, zincir
+adım 4–29'un (işleme, silme ve kapanış) **ikinci bir insan adım kitiyle**
+(kit2) yürütülmesinin **sözleşme metnidir**. Kit2'nin kodu (pinli `.ps1`
+dosyaları) bu revizyonda **yazılmadı**; dilim 1–5'te yazılır (Ek R4/16).
+Kit2 kodu yazılıp provadan geçmeden bu ek gerçek koşuda kullanılamaz
+(§32/41).
+
+**Kaynaklar** (hepsi salt-okunur okundu; SHA-256'lar bu oturumda diskten
+ölçüldü; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`):
+
+| Belge | SHA-256 |
+|---|---|
+| `design-v2.md` | `e01662e96a6fe5e8124522b0f4ededb3fe50431f14f3ef5d120e15d6d0f67b10` |
+| `design-errata-2.md` | `0125c794e0e8820dd7fd110babd6f8ec768c61b2b14a5ac3f4134793f86400c2` |
+| `design-errata-3.md` | `88d4b420fb24a7354863a47a6f6808e931ea1c8d92b883747bf83b2e044a97ba` |
+| `design-errata-4.md` | `05b110a6049481281d165503bdafe90d7a65790d86fade23b8278cf9cf484733` |
+| `review\independent-design-recheck-2.md` ("Dilim 0'a not" 1–10) | `c57117efc0c832f6f23465e0478a5e0fec7fff05fde64ddb6d358f60c08b033d` |
+| `review\independent-design-review.md` (bağlam) | `54943339e332537f4a9c4079d986d87a96b304f4ed6aa6f2f515422b560cc11f` |
+| `review\independent-design-recheck.md` (bağlam) | `31423873bcf4f08af3a5374a751bfb4f42eb029cb2c38fdd0b59f1fcbbb599bc` |
+| `design.md`, `design-errata-1.md` (v2'nin içine işlendi) | `dcbf7da8cd9759c85d6f14715b1061bea49ed5d26e9fe0f5f47057a2cd92f51e`, `b86ea1cc94bffe13482652774a1213469887fb973b5fe02c4d8db559b797e233` |
+
+**Öncelik.** Tasarım zincirinde sonraki belge öncekinin yerine geçer
+(recheck-2 notları > errata-4 > errata-3 > errata-2 > v2). Bu ek o zincirin
+**tek ve bağlayıcı metnidir**; bu ek ile tasarım belgeleri arasında fark
+varsa bu ek ve §34.13'teki karar kaydı geçerlidir. Bu ek runbook'un geri
+kalanını yalnız açıkça adlandırdığı yerlerde değiştirir (§34.13 "Bölüm →
+değişiklik"); başka her yerde runbook kuralları aynen geçerlidir.
+
+**Terimler.** "Kit1" Ek R3'teki aktarım kitidir (`ac.ps1`, `a2`–`a9`;
+N105–N113). "Kit2" bu ekin tanımladığı işleme ve silme kitidir. "Blok N"
+runbook'un §34.8 numaralandırmasıdır (dosyadaki satır başında üç ters
+tırnakla açılan çitler, sırayla; §1.5 bloğu N0). "Zincir adım N" §2.1 tablosunun
+satırıdır. "Kilitsiz red" ve "kilitli" Ek R4/5'te tanımlıdır.
+"TUŞA AVUKAT BASAR" ve "TUŞA PROJE SAHİBİ BASAR" E/H sorusundan önce
+ekrana basılan satırdır (Ek R4/8.5).
+
+**Avukat cevabına bağlı maddeler.** Hangi maddenin Ek R4/17'deki 11
+sorudan hangisine bağlı olduğunu **bağlayıcı olarak** Ek R4/17'nin
+bağımlılık haritası söyler; metindeki "(avukat cevabına bağlı: soru n;
+cevap olumsuzsa yeniden açılır)" işaretleri yardımcıdır (dar düzeltme
+turu D-11). Bu maddeler cevap gelene kadar **taslaktır**; cevap olumsuzsa
+ilgili kararlar yeniden açılır ve bu ek değişir.
+
+### Ek R4/1 Mimari ve iki kitin aynı pencerede yüklenmesi
+
+1. **Ayrı dizin, ayrı yükleyici.** Kit2 `<evidence-dir>\kit2\` altında
+   kurulur: yükleyici `bc.ps1`, pin dosyası `pins2.txt`, kurulum kaydı
+   `kit-build2.txt`, dosya kimlikleri `kit2-case.txt`, acil sayfa
+   doğrulayıcısı `ev.ps1`, komut dosyaları, runbook bloklarının bayt-bayt
+   kopyaları (`nNNN.ps1`), türetilmiş bloklar ve satır parçaları
+   (Ek R4/11), karar ve kör hesap şablonları (Ek R4/12), pencere dışı
+   başlatıcılar (`t0.ps1`, `kume.ps1`, `adm.ps1`, `z1.ps1`) ve
+   başlatıcıların ortak yardımcı dosyası `kbl.ps1` (Ek R4/5 madde 6). Kit1'in
+   **hiçbir baytı değişmez** (KD-1, KD-18); kit1 dosyalarının SHA-256'ları
+   `pins.txt` ve §34.9 tablosuyla aynı kalır.
+2. **Pencereler.**
+
+   | Pencere | Ne zaman | Yüklenen | Kullanılan DSN |
+   |---|---|---|---|
+   | ÖN | İlk içerik gününden önce, bir kez (`t0`) | Yalnız `t0.ps1` | Yok |
+   | KÜME | Aktarım günü dahil **her içerik günü**, KİT'ten önce (KD-7 a; AÇIK-6) | Yalnız `kume.ps1` | Yok (`pg-ctl`, `pg-data-dir`) |
+   | KİT | Her içerik günü | Kit1 **ve** kit2 (aynı pencerede, aynı satırla; KD-1, E3) | Yalnız `app-dsn` |
+   | ADMIN | Zincir adım 9 ve 24 (`y1`, `y2`) | Yalnız `adm.ps1` | Yalnız `admin-dsn` |
+   | İMHA | Kapsayıcı VeraCrypt'te ayrıldıktan sonra (`z1`, `s29b`) | Yalnız `z1.ps1` | Yok |
+
+   KÜME penceresi açılır, simge durumuna küçültülür ve gün boyunca
+   **kapatılmaz**; gün sonunda küme durdurulmaz; bilgisayar kapandıysa
+   ertesi gün `kume` yeniden başlatır (§13.4; ADOPT §D). Pencereler
+   fareyle sağ üstteki X'ten kapatılır; Alt+F4 kullanılmaz (§4.3 a).
+3. **Win+R satırları** (kullanıcı sayfasında değerleri doldurulmuş
+   olarak; **hiçbiri güvenli dosyanın yolunu taşımaz**, KD-21 b
+   değiştirilmiş):
+   - KİT: `powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit\ac.ps1'; . '<evidence-dir>\kit2\bc.ps1'"`
+   - KÜME, ADMIN, ÖN, İMHA: aynı biçimde, yalnız ilgili başlatıcıyı
+     (`kume.ps1`, `adm.ps1`, `t0.ps1`, `z1.ps1`) dot-source eder; kit1
+     yüklenmez. ADMIN satırı komut adı (`y1` veya `y2`) parametresi
+     taşır.
+4. **Yükleme sırası.** `bc.ps1`, kit1 yüklenmediyse (`$global:KitSess`
+   yoksa) **hiçbir komut tanımlamaz** ve ekrana "Kit1 yuklenmedi; pencereyi
+   kapatin" basar. Kit1 DUR kilidiyle (silme oturumu) yüklendiyse kit2
+   yalnız Ek R4/8.4'teki silme oturumu kümesini tanımlar.
+5. **Ad alanı.** Kit2'nin genel değişkenleri `$global:Kb…`, fonksiyonları
+   `…-Kb…` biçimindedir. Komutlar: başlatıcılar `t0`, `kume`, `y1`, `y2`,
+   `z1`, `s29b`; KİT penceresi `b0`, `b1`, `b2`, `b5`, `b5d`, `b6`, `b7`,
+   `g8`, `b8`–`b16`, `g14`, `g16`, `b18`–`b24`, `u`, `s25`–`s28`, `s29a`,
+   `k`, `n`, `o`, `r1`–`r7`. `ev.ps1` bir komut değildir; yalnız `MATCH`
+   veya `NO_MATCH` basar (Ek R4/13). Kurulumda kit1 + kit2 birleşimi
+   üzerinde genişletilmiş N116 (değişken adı çakışması) ve `Get-Command`
+   ile komut adı çakışması ölçülür (dilim 1).
+6. **Kit1 araçları yalnız okunarak kullanılır.** Kit2 `Write-KitDur`,
+   `Write-KitDurRule`, `Test-KitLock`, `Read-KitYesNo`, `Read-KitRecord`,
+   `Get-KitNow` ve `Get-KitSha`'yı çağırır, değiştirmez. Kit1'in
+   `Get-KitHeader`, `New-KitRecord`, `Get-KitScript` ve
+   `Invoke-KitBlock`'u **kullanılmaz** (kit1 pinlerine ve kit1 dizinine
+   bağlıdır; kit2 kendi eşdeğerlerini taşır, Ek R4/4 ve R4/6). DUR kilidi
+   ortaktır: `<evidence-dir>\DUR.txt`. Bu madde yalnız kit1'in yüklendiği
+   KİT penceresi içindir; kit1'i yüklemeyen başlatıcılar (`t0`, `kume`,
+   `adm.ps1`, `z1.ps1`) kit1 fonksiyonlarını **çağıramaz** ve aynı işleri
+   `kbl.ps1`'deki pinli eşdeğerlerle yapar (Ek R4/5 madde 6; inceleme
+   M1).
+7. **İçerik sınırı.** Kit2 içerik sınırını kit1 gibi
+   `<evidence-dir>\steps\e2\a4.txt`'nin `STEP_RESULT=PASS` taşıyıp
+   taşımadığıyla seçer (§4.3 a; Ek R3/4 kural 1). Kit2'nin içerik sonrası
+   yeni bir sınır tanımı yoktur.
+8. **Runbook ekranda.** Ek R4 ile yürütülen koşuda runbook işleme
+   günlerinde **açılmaz**; tek yardım değerleri doldurulmuş kullanıcı
+   sayfasıdır (dilim 5). Not Defteri'ni yalnız kit açar (`b5d`, `k`,
+   `b18`). Bu, §4.3 (a)'nın "aktarım günü dışındaki içerik oturumlarında
+   runbook iş bitene kadar açık kalır" cümlesinin kit2 koşusundaki
+   karşılığıdır (§4.3 a, revizyon 7 paragrafı).
+
+### Ek R4/2 Güvenli değer dosyası ve profil-göreli konumu
+
+1. **Ne.** `<kb-secure-file>`: kit2'nin bütün mutlak yollarını ve iki
+   DSN'ini taşıyan **tek** dosya (KD-4 değiştirilmiş). Evidence
+   **dışındadır**; Adım 8 passfile'ıyla aynı ACL'li güvenli dizinde,
+   kullanıcı profilinin altındadır. Bu belgeye, evidence'a, commit'e ve
+   hiçbir rapora değerleri yazılmaz (§1.5).
+2. **Anahtarlar (sabit liste; fazla veya eksik anahtar yükleme reddidir).**
+
+   | Anahtar | Değer | Kullanan |
+   |---|---|---|
+   | `pilot-root`, `restricted-dir`, `container-root`, `external-root` | §1.5 yer tutucularının değerleri | KİT, İMHA |
+   | `python`, `python-runtime-root`, `psql`, `pg-bin-dir`, `pdftotext` | aynı | KİT, ADMIN (yalnız `python`) |
+   | `source-repo-root`, `container-file` | aynı | KİT, İMHA |
+   | `form-af`, `form-g`, `form-att1`, `form-att2` | Dört `<form-file>` değeri (§6.6/7; olmayan birim için anahtar yazılmaz ve kurulum kaydı bunu söyler) | KİT (form hash yeniden ölçümü), İMHA |
+   | `veracrypt-exe` | VeraCrypt programının mutlak yolu (yalnız `b1` sürüm türetmesi) | KİT |
+   | `app-dsn`, `admin-dsn` | ADOPT L445–L457 biçiminde iki DSN (loopback, parolasız, passfile parametreli) | `app-dsn` yalnız KİT; `admin-dsn` yalnız ADMIN |
+   | `pg-ctl`, `pg-data-dir` | `pg_ctl.exe` yolu ve küme veri dizini | Yalnız KÜME |
+
+   Kit1'in altı değeri (`repo-root`, `intake-dir`, `container-temp`, `7z`,
+   `sevenzip-root`, `poppler-bin-dir`) **yalnız** `kit-values.txt`'den
+   okunur; aynı anahtar güvenli dosyada da varsa kit2 yüklenmez (kilitsiz
+   red `KB_DUPLICATE_KEY`; ileti "a9 yazin, pencereyi kapatin, ajana
+   donun" — içerik öncesi). Böylece iki kaynak birbirinden ayrılamaz.
+3. **Biçim.** UTF-8 BOM'suz, LF; her satır `anahtar=değer`; anahtar
+   `^[a-z][a-z0-9-]*$`. Yol değerleri köklü, canonical, `..` yok,
+   karakterleri `[A-Za-z0-9 ._()\\:-]`; ayrıca sonda `\`, `"`, `$`,
+   `` ` ``, `<` ve `>` yok (Ek R4/6 madde 5). §1.5'in evidence için
+   koyduğu `%USERPROFILE%` yasağı bu dosyaya uygulanmaz, çünkü dosya
+   evidence değildir.
+4. **Konum (KD-21 b, değiştirilmiş; kullanıcı kararı
+   `at=2026-10-20T19:50:31+03:00`).** Dosyanın yolu
+   `%USERPROFILE%`'a göre **sabit bir göreli addır** ve
+   `<evidence-dir>\kit2\kit-build2.txt` içinde
+   `KB_SECURE_FILE_RELATIVE=<kb-secure-relative>` satırıyla durur. Bu satır
+   evidence'a girer (kullanıcı kabul etti); göreli ad mutlak yol ve
+   kullanıcı adı taşımaz. Göreli ad kurulumdan kuruluma değişebildiği
+   için (ADOPT `«SECURE_DIR»`) kod dosyasında değil, kurulum kaydındadır.
+   Kit tam yolu `[Environment]::GetFolderPath('UserProfile')` ile
+   birleştirerek türetir; tam yolun canonical olduğunu (`GetFullPath` ile
+   ordinal aynı, `..` yok) ve profil dizininden dosyaya kadar hiçbir
+   bileşenin reparse point olmadığını (`Test-PilotNoReparse` kalıbı)
+   denetler. Hata iletileri tam yolu değil yalnız anahtar adını söyler.
+   **Ölçüm (dilim 0; bu revizyon):** gerçek güvenli dizinin profilin
+   altında olduğu ve göreli adın kullanıcı adını taşımadığı iki boolean ile
+   ölçüldü (§34.13 "L1 ölçümü"); yol hiçbir yere yazılmadı.
+5. **ACL (errata-3 §10.3).** Kit dosyanın ve dizininin her erişim
+   kuralının (a) geçerli kullanıcının SID'sine ait olduğunu, (b)
+   `IsInherited=False`, (c) `AccessControlType=Allow` olduğunu ve ayrıca
+   `AreAccessRulesProtected=True` (miras kapalı) olduğunu ölçer (ADOPT
+   §F.1, L348–L356). Başka herhangi bir ilke (SYSTEM ve Administrators
+   dahil) veya miras alınmış kural → ölçüm başarısız. Güvenli dizin
+   `(OI)(CI)` ile verildiği için içinde yeni oluşturulan dosya kuralı miras
+   alır; bu yüzden dosyanın kendisine `/inheritance:r` uygulanır (ADOPT
+   L352).
+6. **Yazan (KD-22 a).** Dosyayı pencere öncesi ajan oturumu, Adım 8
+   kayıtlarındaki değerlerden ve içerik yokken yazar (DSN'de parola
+   yoktur). ACL değişikliği hedefi adlandıran **ayrı kullanıcı onayıyla**
+   (`CLAUDE.md` §14.7) ve ADOPT L352 kalıbıyla yapılır. Ajan evidence'a
+   yalnız `KB_SECURE_FILE_SHA256`, `KB_SECURE_FILE_RELATIVE` ve ACL ölçüm
+   boolean'ını yazar.
+7. **Okuyan.** `bc.ps1`, `kume.ps1`, `adm.ps1`, `t0.ps1` ve `z1.ps1`
+   dosyayı açılışta bir kez okur: önce SHA-256'sını `kit-build2.txt`'deki
+   `KB_SECURE_FILE_SHA256` ile karşılaştırır, sonra ACL'sini ölçer;
+   ikisi de geçerse değerleri bellekte tutar. **Hiçbir değer ekrana,
+   kayda veya hata iletisine basılmaz.** `bc.ps1` yalnız `app-dsn`'i
+   süreç ortamına (`$env:VERGI_IAM_DATABASE_URL`) koyar ve `admin-dsn`'i
+   hiç okumaz; `adm.ps1` yalnız `admin-dsn`'i koyar. `ev.ps1` güvenli
+   dosyayı **okumaz**.
+8. **Hash veya ACL uyuşmazlığı.** İçerik alınmadan önce: kilitsiz red
+   (`KB_SECURE_FILE_HASH`, `KB_SECURE_FILE_ACL`), ileti "a9 yazin,
+   pencereyi kapatin, kiti yeniden acmayin; icerik henuz alinmadi, ajana
+   donebilirsiniz". İçerik alındıktan sonra: kit2 DB'li ve yollu
+   komutların hiçbirini tanımlamaz; `Write-KitDur` ile (başlatıcılarda
+   `Write-KbDur` ile; Ek R4/5 madde 6) kilitli DUR (sayfanın D7'si) ve
+   acil silme yolu (Ek R4/13).
+9. **Her oturum.** `b1` dosyanın hash'ini ve ACL'sini yeniden ölçer ve
+   `KB_SECURE_FILE_SHA256_MATCH=True`, `KB_SECURE_FILE_ACL_OK=True` yazar
+   (değer değil, boolean).
+
+### Ek R4/3 `kit2-case.txt` ve `kit-build2.txt`
+
+**`kit2-case.txt`** (`<evidence-dir>\kit2\`; pinli; pencere öncesi ajan
+oturumunda yazılır; AÇIK-13). Biçim Ek R4/2 madde 3 ile aynı. Anahtarlar
+(sabit liste):
+
+| Anahtar | Değer | Not |
+|---|---|---|
+| `case-id`, `document-id` | Opak kimlikler (§10.3) | |
+| `actor-user-id`, `admin-user-id` | `iam.users.id` tamsayıları | |
+| `file-name` | Sabit kalıp `<document-id>.pdf` | |
+| `known-external-drive-letters` | Virgüllü sürücü harfleri; boş olabilir | `b1` harici disk ölçümü (R3) |
+| `FORM_F1` | Sözlük: `24_SAAT`, `72_SAAT`, `DIGER` | O-Y7: pencere öncesi ajan imzalı formun F1 cevabından yazar |
+
+Hepsi opak kimlik, tamsayı, harf veya sözlük değeridir; kişisel veri
+taşımaz. **F1 ön koşulu (O-Y7):** kit2 kurulumu ve aktarım günündeki ilk
+`b1` (içerik alınmadan, `a4`'ten önce) değeri `-ceq '24_SAAT'` ile
+denetler; değilse kilitsiz red `B1_F1_NOT_24` (ileti: "Form F1 24 saat
+degil; bu kit yalniz 24 saat icin tasarlandi. Icerik alinmadi; ayri karar
+gerekir."). 72 saat veya "Diğer" için ayrı tasarım kararı gerekir.
+
+**`kit-build2.txt`** (`<evidence-dir>\kit2\`; kurulum ajanı CreateNew ile
+bir kez yazar; `pins2.txt` ile birlikte pencere öncesi işlerin **en
+sonunda**, dayandığı bütün dosyalar — `kit2-case.txt`, güvenli dosya, acil
+sayfa, `ev.ps1`, `approval-method.txt` — yazılıp ölçüldükten sonra; sıra
+Ek R4/16.7). Satırlar:
+
+- `KIT2_BUILD=OK`; her kit2 dosyası için `KIT2_FILE_SHA256=<ad> <64 hex>`
+  (`pins2.txt` ile aynı küme; şablonlar dahil, O7);
+- `KB_SECURE_FILE_SHA256=<64 hex>`, `KB_SECURE_FILE_RELATIVE=<kb-secure-relative>`,
+  `KB_SECURE_FILE_ACL_OK=True`;
+- `KB_EMERGENCY_PAGE_SHA256=<64 hex>`, `KB_EMERGENCY_PAGE_RELATIVE=<göreli ad>`,
+  `KB_EMERGENCY_PAGE_ACL_OK=True`, `EV_PS1_SHA256=<64 hex>` (Ek R4/13);
+- `VERACRYPT_FILE_VERSION_EXPECTED=1.26.29.3` (kurulum kaydından; Ek R4/8.2 `b1`);
+- `NOTEPAD_RELATIVE=System32\notepad.exe` (`%SystemRoot%`'a göre),
+  `NOTEPAD_FILE_VERSION=<sürüm>`, `NOTEPAD_SHA256=<64 hex>` (errata-3
+  §11.3; dilim 1'de ölçülür);
+- `CASE_SCHEMA_SHA256`, `CASE_DOCUMENT_SCHEMA_SHA256` (intake formunun
+  anahtar listesinin dayandığı şemalar; Ek R4/12);
+- `EXPECTED_HEAD=<40 hex>` (yürütme yetkisindeki onaylı commit; `b1`
+  git ölçümü);
+- `APPROVAL_METHOD_SHA256=<64 hex>`: Ek R4/8.7'deki yöntem kararının,
+  pencere öncesi ajanın kullanıcının mesajından aynen CreateNew ile
+  yazdığı `<evidence-dir>\approval-method.txt` dosyasının SHA-256'sı
+  (dosya kişisel veri taşımaz);
+- `KIT2_VAR_COLLISIONS=0`, `KIT2_CMD_COLLISIONS=0` ve Ek R4/7'deki AST
+  sayımlarının her biri `=0`.
+
+Mutlak yol ve kullanıcı adı taşımaz.
+
+### Ek R4/4 Kayıt yerleri ve biçimi
+
+| Kayıt | Yer | Yazan |
+|---|---|---|
+| Oturum kayıtları | `steps\s<k>\b0.txt`, `b1.txt`, `six-class.txt` (N117 biçimi) | KİT |
+| Aktarım günü E2 kaydı | `steps\e2\b2.txt` | KİT |
+| Zincir kayıtları | `steps\c\b05.txt`, `b05d.txt`, `b06.txt`, `b07-r<n>.txt`, `b08-r<n>.txt`, `b09a.txt`, `b09b.txt`, `b10.txt` … `b23.txt`, `b24a.txt`, `b24b.txt`, `u.txt`, `s25.txt`, `s26a.txt`, `s26b.txt`, `s27.txt`, `s28.txt`, `s29a.txt`, `r<n>.txt` | KİT |
+| ADMIN kayıtları | `steps\c\y1.txt`, `steps\c\y2.txt` | ADMIN |
+| İMHA kayıtları | `steps\c\z1.txt`, `steps\c\s29b.txt`, `<evidence-dir>\deletion-record.txt` (imha kaydı) | İMHA |
+| Karar kayıtları | `steps\d\k<seq>.txt`, `n<seq>.txt`, `o<seq>.txt` | KİT |
+| Başlatıcı kayıtları | `steps\t0.txt`, `steps\kume-<n>.txt` | ÖN, KÜME |
+| Kilitsiz red dosyaları | KİT: `steps\s<k>\refusal-<nnn>.txt`; başlatıcılar: `steps\x\refusal-<nnn>.txt` | Ek R4/5 |
+| Runbook kayıtları (değişmeyen biçim) | `system-temp.txt` (`t0`), `technical-record.txt` (`b1`), `restricted-allowed-files.txt` ve `.sha256.txt` (`b1`), `intake-hashes.tsv` (`b6`), `manual-input-r<n>.sha256.txt` (`b7`), iki kapanış manifesti (`s25`) | İlgili komut, runbook bloğuyla |
+
+`steps\c\b09a.txt`/`b09b.txt` ve `b24a.txt`/`b24b.txt` adları bu ekin
+seçimidir: tasarımın `b09.txt`/`b24.txt` tek kaydı, aynı komutun önce ve
+sonra iki kez çalışmasını karşılamaz (§34.13 yorum 3).
+
+**Biçim.** Bütün kit2 kayıtları ASCII, LF, CreateNew'dür. Başlık: `STEP=<komut>`,
+`KIT_SESSION=<oturum>` (kit1'in `$global:KitSess`'i; kit1'i yüklemeyen
+başlatıcılarda sabit `KIT_SESSION=none`, Ek R4/5 madde 6), `KIT2_FILE_SHA256=<dosya> <64 hex>`,
+`STARTED_AT=<zaman>`; silme oturumunda `KIT_TEARDOWN_SESSION=True`;
+erken kapanış kipinde `KIT2_EARLY_CLOSE_MODE=True`. Gövde yalnız izinli
+anahtarlardır (Ek R4/9). Son satırlar `STEP_RESULT=PASS` veya
+`STEP_RESULT=STOP` ve `ENDED_AT=<zaman>`. Zaman biçimi kit1 `Get-KitNow`
+ile aynıdır (başlatıcılarda `Get-KbNow`). Zincir kayıtları tek-çalışımdır: kayıt varsa aynı komut
+yeniden çalışmaz (kilitsiz red `<KOMUT>_ALREADY`; Ek R4/5).
+
+**Üç ileti.** Her komut sonunda tam olarak biri basılır: `TAMAMLANDI
+(PASS)`, `DURDU (STOP) -> sayfadaki DUR OLURSA`, `YARIDA KALDI (sonuc
+satiri yok) -> sayfadaki DUR OLURSA` (rev6 son kontrol L1'in kit2
+karşılığı). Ardından kit1 kuralı: "Bu ekrani hicbir yere yapistirmayin,
+fotografini cekmeyin."
+
+### Ek R4/5 Kilitsiz red, kilitli sonuç ve red dosyası
+
+1. **İlke (errata-3 §10.6; 12:30 ilkesinin içerik sonrası genişlemesi).**
+   **İçerik sonrası da, kullanıcının düzeltebileceği ve hiçbir kayıt
+   açılmamış giriş hataları kilitsizdir (KD-12, KD-13, KD-26; RED
+   kararları için AÇIK-17); kayıt açıldıktan sonraki her beklenmeyen sonuç
+   kilitlidir.**
+2. **Kilitsiz red.** Adım kaydı yok, `DUR.txt` yok; ekrandaki ileti eksiği
+   adlandırır ve ne yapılacağını söyler; ayrıca **tek** bir red dosyası
+   yazılır. Red dosyası adımın tek-çalışım kaydı **değildir** ve adımı
+   "zaten çalıştı" yapmaz.
+3. **Red dosyası (KD-17 değiştirilmiş; L11).** KİT penceresinde
+   `<evidence-dir>\steps\s<k>\refusal-<nnn>.txt`; pencere dışı
+   başlatıcılarda (`t0`, `kume`, `adm.ps1`, `z1.ps1`/`s29b`)
+   `<evidence-dir>\steps\x\refusal-<nnn>.txt`. `nnn` dizindeki ilk var
+   olmayan üç haneli sıradır (çakışmada sonraki). İçerik yalnız iki satır:
+   `REFUSAL_CODE=<KOD>` ve `AT=<zaman>`; kod komut adını taşır (ör.
+   `B10_CLUSTER_DOWN`, `B5D_MARKER_LEFT`, `KUME_SECURE_FILE_HASH`). Yol,
+   değer ve alan içeriği yoktur. `<evidence-dir>` doğrulanamıyorsa
+   (yükleme reddi) dosya yazılmaz, yalnız ekran. Kit1'in kendi kilitsiz
+   redleri dosya bırakmaz (kit1 baytı değişmez; beyan).
+4. **Kilitli.** `STEP_RESULT=STOP` + kit1 `Write-KitDur` ile `DUR.txt`
+   (kit1'i yüklemeyen başlatıcılarda `Write-KbDur` ile; madde 6);
+   ileti tarafı (içerik öncesi/sonrası) kit1 `Write-KitDurRule`'un
+   kuralıyla seçilir. Kit2 kilidi **asla kaldırmaz** (Ek R3/4 kural 1).
+5. **Ön koşul eksikleri** (önceki adım yok, karar yok, küme kapalı, yanlış
+   sıra) kayıt açılmadan saptandığı için her zaman kilitsizdir. Bir apply
+   komutunda `REAL_ACTION_APPROVED` sorusuna H cevabı da kilitsizdir
+   (CLI çağrılmaz). CLI çağrısı başladıktan sonraki her beklenmeyen sonuç
+   kilitlidir (Ek R4/6 madde 9).
+6. **Kit1'i yüklemeyen başlatıcılar (inceleme M1).** `t0`, `kume`,
+   `adm.ps1` (`y1`, `y2`) ve `z1.ps1` (`z1`, `s29b`) pencerelerinde kit1
+   fonksiyonları yoktur. Bu başlatıcılar kit2'nin pinli ortak yardımcı
+   dosyası `<evidence-dir>\kit2\kbl.ps1`'i dot-source eder (`pins2.txt` ve
+   `kit-build2.txt`'de pinli; yalnız ASCII; Ek R4/7). `bc.ps1` bu dosyayı
+   yüklemez; KİT penceresi kit1'in kendi fonksiyonlarını kullanır.
+
+   **Yükleme bütünlüğü (dar yeniden kontrol N-L2 ve O2; ikinci dar
+   düzeltme turu).** Başlatıcı `<evidence-dir>`'i kit1 gibi kendi
+   konumundan türetir (`Split-Path -Parent $PSScriptRoot`; başlatıcılar ve
+   `kbl.ps1` `<evidence-dir>\kit2\` altındadır). `kbl.ps1`'i yüklemeden
+   **önce** ve güvenli dosyayı okumadan önce (Ek R4/2 madde 7) başlatıcının
+   **kendi kodu** kit1 `Get-KitScript` kalıbını (N105) uygular: `kbl.ps1`'in
+   baytlarını okur; SHA-256'sını `<evidence-dir>\kit2\pins2.txt`'deki
+   `kbl.ps1` satırıyla ordinal karşılaştırır; 127'den büyük bayt varsa
+   reddeder; geçerse **aynı baytlardan** `[scriptblock]::Create` ile blok
+   kurar ve onu dot-source eder (dosya ikinci kez okunmaz). Bu denetimin
+   güvenilir kodu başlatıcının kendisidir (`t0.ps1`, `kume.ps1`, `adm.ps1`,
+   `z1.ps1`): her biri `pins2.txt` ve `kit-build2.txt`'de pinlidir ve kit1
+   `ac.ps1` ile kit2 `bc.ps1` gibi Win+R satırıyla doğrudan yüklenir
+   (Ek R4/1 madde 3). `pins2.txt` okunamazsa, `kbl.ps1` satırı yoksa veya
+   bir koşul tutmazsa başlatıcı **hiçbir komut tanımlamaz** ve hiçbir
+   adıma geçilmez. Taraf, `Write-KbDurRule` henüz yüklenmediği için
+   başlatıcının kendi kodunda aynı kuralla seçilir (`steps\e2\a4.txt`
+   `STEP_RESULT=PASS` taşıyorsa veya var ama okunamıyorsa içerik sonrası):
+   - **İçerik öncesi:** kilitsiz; yalnız ekran, red dosyası yazılmaz
+     (yükleme reddi; madde 3). İleti: `kbl.ps1 dogrulanamadi
+     (KB_LOADER_PIN). Pencereyi kapatin; icerik henuz alinmadi, ajana
+     donun.`
+   - **İçerik sonrası:** kilitli. Başlatıcı `Write-KbDur`'un dosya
+     kısmının kendi içindeki kopyasıyla `<evidence-dir>\DUR.txt` yoksa
+     CreateNew ile aynı iki satırı yazar: `KIT_DUR step=<komut>
+     at=<zaman>` ve `KIT_DUR_REASON=KB_LOADER_PIN` (zaman `Get-KbNow`'un
+     biçimiyle satır içinde alınır; UTF-8 BOM'suz, her satır LF ile).
+     Dosya varsa dokunmaz; yazamazsa `STOP KIT_DUR_WRITE=FAIL` basar.
+     Ardından `DUR. Adim <komut> durdu (KB_LOADER_PIN). Kalan adimlari
+     yapmayin. Sayfadaki DUR OLURSA bolumune gecin.` basar. `<komut>`
+     `t0`, `kume`, ADMIN satırının parametresi (`y1` veya `y2`) ya da
+     `z1`'dir. Yol Ek R4/13 madde 1 (a)'dır (kit2 yüklenemiyor).
+   İletilerin ve satır içi kopyanın metni dilim 1'de pinlenir; kabul
+   ölçütü Ek R4/16.2 (26).
+
+   `kbl.ps1` dört fonksiyon taşır:
+   - `Get-KbNow`: kit1 `Get-KitNow` ile aynı biçim (`[DateTimeOffset]::Now`,
+     `yyyy-MM-ddTHH:mm:sszzz`, `InvariantCulture`).
+   - `Read-KbYesNo`: kit1 `Read-KitYesNo` ile aynı davranış ve aynı ekran
+     metni (tuş tamponu temizlenir; `E`/`e` → E, `H`/`h` → H; en çok iki
+     deneme, her geçersiz tuşta `Gecersiz tus.`; iki geçersiz tuştan sonra
+     sonuç E de H de değildir ve komut onu H gibi işler: H'nin o ekrandaki
+     sonucu neyse o olur; H her E/H ekranında tanımlıdır, `z1` anahtar
+     sorusu ve `s29b` kopya sorusu için Ek R4/14 madde 4).
+   - `Write-KbDurRule`: kit1 `Write-KitDurRule`'un ekran satırlarının
+     **bayt bayt** kopyası ve aynı karar kuralı: taraf
+     `<evidence-dir>\steps\e2\a4.txt`'nin `STEP_RESULT=PASS` taşıyıp
+     taşımadığıyla seçilir (dosya var ama okunamıyorsa içerik sonrası).
+     Başlatıcı penceresinde `a9` komutu ve kit1 oturum dizini olmadığı
+     için kit1 kuralının "Bu pencerede a8 ve a9 yok; saati aklinizda
+     tutun." dalı basılır.
+   - `Write-KbDur(<komut>, <neden>)`: kit1 `Write-KitDur` ile aynı biçim.
+     `<evidence-dir>\DUR.txt` yoksa CreateNew ile tam iki satır yazar:
+     `KIT_DUR step=<komut> at=<Get-KbNow>` ve `KIT_DUR_REASON=<neden>`
+     (UTF-8 BOM'suz, her satır LF ile). Dosya varsa dokunmaz; yazamazsa
+     ekrana `STOP KIT_DUR_WRITE=FAIL` basar. Ardından ekrana `DUR. Adim
+     <komut> durdu (<neden>). Kalan adimlari yapmayin.` basar ve
+     `Write-KbDurRule`'u çağırır.
+
+   Kit1 sonraki yüklemesinde bu kilidi yalnız `DUR.txt`'nin **varlığıyla**
+   tanır (`ac.ps1`: `KIT_TEARDOWN_SESSION=True`). Biçim eşitliği, ajanın
+   ve insanın kilidi aynı biçimde okuması ve §25.2 abort yolunda F1
+   başlangıcının hangi pencere yazmış olursa olsun aynı satırdan okunması
+   içindir (Ek R4/14 madde 3). Başlatıcı kayıtlarının başlığında
+   `KIT_SESSION=none` yazılır (Ek R4/4); kayıt yerleri değişmez. Ek R4/8.1
+   tablosundaki E/H'ler `Read-KbYesNo` ile sorulur, "Kilitli" sütunu
+   `Write-KbDur` ile yazılır, zamanlar `Get-KbNow` ile alınır.
+
+### Ek R4/6 Çalıştırıcı: pinli blok motoru, `&`, süzgeç, kodlama ve çıkış kodu
+
+1. **Yol (errata-3 §5, karar 3).** Kit2 runbook bloklarını kit1 kalıbında
+   pinli dosyadan çalıştırır; bloklar içindeki yerel araç çağrıları
+   runbook'taki gibi PowerShell `&` iledir. Tek fark: çıktı ekrana
+   dökülmez, anahtar başına süzgeçten geçer (madde 7).
+2. **`Get-KbScript`** kit1 `Get-KitScript`'in (Ek R3, N105) kit2 pinleri
+   ve dizini ile aynı kalıbıdır: dosya baytlarını okur; SHA-256'yı
+   `pins2.txt` ile karşılaştırır; 127'den büyük bayt varsa reddeder;
+   istenirse yalnız ilk satırı alır (`FirstLine`; satırın verilen önekle
+   başladığı ordinal denetlenir); `<anahtar>` yer tutucularını değerlerle
+   doldurur; doldurulmamış `<[a-z][a-z0-9-]*>` kalırsa reddeder;
+   `[scriptblock]::Create`. Kit1'in fonksiyonu doğrudan kullanılmaz.
+3. **Blok kopyaları.** Kit2 dizinindeki her `nNNN.ps1` runbook bloğunun
+   bayt-bayt kopyasıdır; kurulum her kopyanın SHA-256'sını kurulumda
+   kullanılan runbook sürümünden §34.8 kuralıyla hesaplanan blok
+   hash'iyle karşılaştırır (kit1 kurulum kalıbı). Türetilmiş bloklar ve
+   satır parçaları Ek R4/11'deki hash'leriyle pinlenir.
+4. **`Invoke-KbBlocks`** (komut başına): tek bir çocuk kapsamda
+   (`& { … }`) önce yardımcı bloklar (§13.8 ortak yardımcıları N48 ve
+   N51, §10.5 yardımcıları N19, gerekiyorsa N12'deki `Get-PilotStringSha`
+   ve N14'teki `Get-PilotBinManifestSha`) **dot-source** edilir, sonra
+   işlem blokları sırayla dot-source edilir; runbook'ta operatörün aynı
+   oturuma sırayla yapıştırdığı durum aynen kurulur. Bütün çıktı `2>&1`
+   ile süzgece borulanır. Genişletilmiş N116 bu birleşimleri modeller.
+5. **Değer kuralı.** Değer blok metnine doğrudan girdiği için her değer
+   yükleme anında sınıfına göre denetlenir; uymayan değer metne girmeden
+   reddedilir: yollar Ek R4/2 madde 3; opak kimlikler `^[a-z0-9_-]{3,}$`
+   (şema kalıbı); hash'ler `^[0-9a-f]{64}$`; önek `^[0-9a-f]{12}$`;
+   tamsayılar `^[1-9][0-9]{0,9}$` (veya `0` olabilen sayaçlar için
+   `^(0|[1-9][0-9]{0,9})$`); `<report-produced>` yalnız `$true`/`$false`;
+   avukat değerleri yalnız sözlük (`none`, `yes`, `no`) ve `REFERANS` için
+   Ek R4/12 kalıbı. Red kilitsizdir (`<KOMUT>_VALUE_RULE`; ileti yalnız
+   anahtar adını söyler).
+6. **Kodlama (errata-3 §5.2/6).** Kit2 yalnız kendi blok çalıştırması
+   süresince `[Console]::OutputEncoding`'i BOM'suz UTF-8'e alır ve
+   `finally` içinde eski değere döndürür; `$env:PYTHONIOENCODING='utf-8'`
+   süreç kapsamındadır (N0). Pencere genelinde kalıcı değişiklik yapılmaz,
+   çünkü aktarım gününde kit1 `a5`–`a7`'nin 7z süreç çağrıları da aynı
+   penceredir.
+7. **Süzgeç (anahtar başına; inceleme O1).** Her stdout satırı
+   `anahtar=değer` belirteçlerine ayrılır (tek istisna
+   `allowed_evidence_documents=` satırı; Ek R4/9 giriş); izinli liste satır başına değil
+   **komut + anahtar** başınadır (Ek R4/9). Yalnız izinli anahtarlar,
+   biçimleri doğrulanarak kayda girer; diğer belirteçler düşer
+   (`DROPPED_TOKEN_COUNT`). `anahtar=değer` olmayan satırlar düşer
+   (`NONSTATUS_LINE_COUNT`; CLI blokları için tek başına `STOP` değildir).
+   Runbook'un kendi durum satırları (`[A-Z0-9_]+=…`, `STOP …`) komutun
+   izinli listesindeyse kayda girer; `STOP` ile başlayan satırlar **her
+   zaman** kayda girer ve adımı kilitler. stderr satırları: `ERROR:
+   <Sınıf>: …` → yalnız `CLI_ERROR_CLASS=<Sınıf>` (sınıf
+   `^[A-Za-z][A-Za-z0-9_]{0,63}$` ise) ve varsa `M-xx` kural kodu
+   (`CLI_RULE_CODE=M-xx`); `Traceback` → `TRACEBACK_SEEN=True`; diğerleri
+   yalnız `STDERR_LINE_COUNT`. Ekrana yalnız kayda giren satırlar ve
+   komutun "yalnız ekran" listesi (Ek R4/9) basılır.
+8. **Hata akışı.** Motor kapsamında `$ErrorActionPreference='Continue'`;
+   yerel aracın stderr satırları PowerShell 5.1'de `ErrorRecord` olarak
+   gelir; kit2 metnini (`[string]$_`) alır ve süzgece stderr satırı olarak
+   verir (kit1 bunları yalnız sayar).
+9. **Çıkış kodu.** Kit2 her işlem bloğundan **önce**
+   `$global:LASTEXITCODE`'a sabit bir nöbetçi değer koyar ve bloktan
+   **hemen sonra**, başka hiçbir yerel araç çağrılmadan okur. Değer
+   nöbetçiyse `CLI_CALLED=False`; değilse `CLI_RC=<n>` kayda girer —
+   **yalnız** Ek R4/10 tablosunun o blok için "CLI_RC yazılır" dediği
+   durumda. Beklenmeyen sonuç: `CLI_RC` ≠ 0, `TRACEBACK_SEEN=True`,
+   `CLI_ERROR_CLASS` var, Ek R4/9'un "Zorunlu" sütunundaki bir anahtar
+   eksik veya biçimine uymuyor, ya da `STOP` satırı → kilitli.
+10. **Araç başına çağrı biçimi (errata-3 §5.5).**
+
+    | Araç | Pencere | Biçim | Kayda giren |
+    |---|---|---|---|
+    | Python CLI'leri (`ui.cli_mutate`, `ui.deadline_report`, `ui.reconciliation_operator`, `src.case_validator`, `src.case_document_validator`, `scripts.iam_admin`, `pip`) | KİT / ADMIN | Runbook bloğu pinli motorla; içinde `& "<python>" -m …` | Ek R4/9 |
+    | `psql` | KİT | N40 bloğu pinli motorla, `<select-statement>` kitin sabit SQL listesinden (N41–N45, N66, N67, N72, N90–N92) | `PSQL_*` sayaçları; ham `PSQL_ROW` satırları yalnız bellekte ayrıştırılır, kaydedilmez |
+    | `pdftotext` (çıkarım) | KİT | N26 pinli motorla | `PDFTOTEXT_RC`, `CLI_RC` |
+    | `pdftotext -v` | KİT (`b1` ilk oturum) | `&` + `2>&1`; stderr'in ilk satırı | Yalnız N14'e değer olarak; `b1` kaydına `PDFTOTEXT_VERSION_READ=True` |
+    | `7z` sürümü | KİT (`b1` ilk oturum) | Kit2'nin kendi küçük bloğu, N16 süreç kalıbının aynısı (argümansız; konsolsuz; kapalı stdin; 10 sn bekçi; `Kill`); stdout'un **ilk boş olmayan** satırı (O2 b; §4.4/6) | Yalnız N14'e değer olarak |
+    | VeraCrypt sürümü | KİT (`b1` ilk oturum) | Süreç yok; `FileVersionInfo` ve PE başlığı (Ek R4/8.2 `b1`) | `VERACRYPT_*` satırları |
+    | `pg_ctl start` | KÜME | `& "<pg-ctl>" --pgdata="<pg-data-dir>" --log="<pg-data-dir>\server.log" start` — **borusuz**, değişkene atanmadan, bir fonksiyonun içinden değil, `kume.ps1`'in **üst düzeyinde**, KÜME penceresinin konsolunda (ADOPT L190; O-Y2) | Hiçbiri; sonuç aşağıdaki dört boolean'la |
+    | `pg_ctl status`, `pg_isready` | KÜME ve KİT | `&`, çıktı değişkene alınır | Yalnız `PG_STATUS_RUNNING`, `PG_ISREADY_ACCEPTING`, `PG_LISTEN_LOOPBACK_ONLY`, `PG_LOG_READY_LINE_SEEN` (ADOPT L239–L242'nin dört koşulu) |
+    | `git` | KİT | Runbook bloğu veya satır parçası (Ek R4/10–R4/11) | Yalnız sayı ve boolean |
+    | Not Defteri | KİT | `Start-Process -FilePath <pinli notepad.exe> -ArgumentList <dosya> -Wait` | Ek R4/12 kayıtları |
+
+11. **Bekçi yok (AÇIK-23 kabul).** `&` ile çağrılan araçlarda bekçi yoktur;
+    stdin kapatılamaz. Bir komut askıda kalırsa operatör **yalnız KİT
+    penceresinde** Ctrl+C'ye basar; kit "YARIDA KALDI" der, adım PASS
+    yazılmaz ve sayfanın DUR OLURSA bölümü uygulanır. KÜME penceresi
+    kapatılmaz (küme ayrı konsoldadır; ADOPT L213–L219). Sayfanın bekleme
+    süresi dilim 1 ve 3 provalarındaki ölçümlerden dilim 5'te yazılır
+    (O-Y6).
+12. **Dar yedek: `Process` çalıştırıcı (errata-3 §5.7).** Yalnız dilim 1
+    ölçümü belirli bir Python CLI'si için `&` yolunun yetmediğini
+    gösterirse ve kullanıcı o CLI için ayrıca onaylarsa: `UseShellExecute=$false`,
+    `CreateNoWindow=$true`, üç akış yönlendirilir, iki akış BOM'suz UTF-8
+    ve `ReadToEndAsync` ile okunur, stdin başlatmadan hemen sonra kapatılır,
+    `WaitForExit(<ms>)` bekçisi, süre aşımında `Kill` ve kilitli sonuç;
+    argüman dizgesi tek tırnaklama fonksiyonuyla kurulur ve `"` içeren
+    veya `\` ile biten değer reddedilir. `pg_ctl start` için **asla**.
+
+### Ek R4/7 Türkçe karakter, kültür ve sözlük kuralları (M1, M2, L-Y1)
+
+Bu makinenin kültürü `tr-TR`'dir; büyük-küçük harf duyarsız karşılaştırma
+`I`/`ı` eşlemesi yüzünden yanlış sonuç verir (§4.3 a, F-D2-TRCULTURE).
+Kurallar kit2'nin **kendi kodu, şablonları ve testleri** içindir; kit2'nin
+değiştirmeden çalıştırdığı pinli runbook blokları kural dışıdır (davranışları
+elle yürütülen yolla aynıdır; beyan). Türetilmiş bloklar (N118–N122)
+kurala uyar.
+
+1. **M1 — kültürden bağımsız karşılaştırma.** Büyük-küçük harf duyarsız
+   (varsayılan veya `-i` önekli) işleçler kullanılmaz: `-eq`, `-ne`,
+   `-lt`, `-le`, `-gt`, `-ge`, `-like`, `-notlike`, `-match`, `-notmatch`,
+   `-replace`, `-split`, `-contains`, `-notcontains`, `-in`, `-notin` ve
+   `-i…` biçimleri; yerine `-c…` biçimleri (`-ceq` sayılarla ve
+   boolean'larla da doğru çalışır). `switch` yalnız `-CaseSensitive` ile.
+   `Sort-Object`, `Group-Object`, duyarsız `Select-String` yerine
+   `[Array]::Sort($x, [System.StringComparer]::Ordinal)` ve `-cmatch`.
+   `.ToLower()`/`.ToUpper()` yerine `.ToLowerInvariant()`/`.ToUpperInvariant()`.
+   `.StartsWith`, `.EndsWith`, `.IndexOf`, `.LastIndexOf`,
+   `[string]::Compare`, `[string]::Equals` her zaman açık
+   `StringComparison.Ordinal` veya `OrdinalIgnoreCase` ile. Duyarsız
+   düzenli ifade yalnız `RegexOptions.IgnoreCase -bor RegexOptions.CultureInvariant`
+   ile.
+2. **L-Y1 — sözlükler.** Sözlük ve küme yalnız
+   `New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)`
+   ile kurulur (değer türü gerekirse başka olabilir; karşılaştırıcı her
+   zaman `Ordinal`); üyelik bu sözlükle veya diziler üzerinde `-ccontains`
+   ile. PowerShell hashtable'ı (`@{}`), `[ordered]`, `[hashtable]`,
+   `System.Collections.Hashtable`, parametre splatting'i ve
+   `[pscustomobject]@{…}` kullanılmaz; `Select-Object -Unique` ve
+   `Compare-Object` kullanılmaz.
+3. **M2 — yalnız ASCII.** Kit2'nin bütün dosyaları (`.ps1`, şablonlar,
+   pinli runbook kopyaları, türetilmiş bloklar) **yalnız ASCII**'dir (her
+   bayt ≤ 127); yükleyici 127'den büyük her baytı reddeder (Windows
+   PowerShell 5.1 BOM'suz `.ps1`'i ANSI kod sayfasıyla okur). Türkçe
+   sabitler `[char]0x…` kaçışlarıyla yazılır; kaçışlı ifade bir dizgeyle
+   başlar (`'' + [char]0x00F6 + …`), çünkü `[char]` ile başlayan toplama
+   dizge değil sayı toplamıdır. N35 ve N89 bu yüzden türetilmiş bloktur
+   (N121, N122). Kit2 iletileri kit1 gibi ASCII Türkçe yazılır
+   ("alaninda", "isaret").
+4. **Kullanıcı dosyaları.** Kullanıcının veya avukatın yazdığı dosyalar
+   (intake formu, karar dosyaları, kör hesap) **açıkça UTF-8** okunur
+   (`New-Object System.Text.UTF8Encoding($false, $true)`); geçersiz UTF-8
+   kilitsiz reddir (`B5D_ENCODING`, `K_ENCODING`, `B18_ENCODING`; ileti:
+   "Dosya UTF-8 degil. Not Defteri'nde Farkli kaydet degil, yalniz Ctrl+S
+   kullanin.").
+5. **`tax_type` menüsü** (AÇIK-21 = menü korunur) terimleri N121'in sözlük
+   dizilerinden alır; ikinci bir kopya yazılmaz.
+6. **Mekanik denetim (dilim 1 kabul ölçütü (10), (20)).** Kit2 dosyalarının
+   AST taramasında: duyarsız işleç belirteci (`TokenKind` `Ieq`, `Ine`,
+   `Ilt`, `Ile`, `Igt`, `Ige`, `Ilike`, `Inotlike`, `Imatch`,
+   `Inotmatch`, `Ireplace`, `Isplit`, `Icontains`, `Inotcontains`, `Iin`,
+   `Inotin`) = 0; `StringComparison` argümanı olmadan çağrılan madde 1
+   yöntemleri = 0; yasaklı cmdlet'ler = 0; `HashtableAst` = 0; `[ordered]`
+   veya `[hashtable]` tür ifadesi = 0; `System.Collections.Hashtable` tür
+   adı = 0; `Select-Object -Unique` = 0; `Compare-Object` = 0; 127'den
+   büyük bayt = 0.
+### Ek R4/8 Komut haritası
+
+Tablolarda "Bloklar" sütunu runbook blok numaralarını (N), türetilmiş
+blokları (N118–N122), satır parçalarını (`N57/2` biçiminde; Ek R4/11) ve
+kit2'nin kendi kodunu ("kit kodu") adlandırır. "E/H" sütunu soruyu ve
+tuşa kimin bastığını (AV = avukat, PS = proje sahibi; Ek R4/8.5) verir.
+"Kilitsiz" sütunu red kodlarını (Ek R4/5) verir; her komut ayrıca kayıt
+varsa `<KOMUT>_ALREADY`, ön koşul eksikse `<KOMUT>_PRECONDITION` ve değer
+kuralı ihlalinde `<KOMUT>_VALUE_RULE` kodlarını kullanabilir.
+"Kilitli" sütununda ayrıca her zaman: süzgeçte görülen her `STOP` satırı,
+Ek R4/6 madde 9'daki beklenmeyen CLI sonuçları ve kayıt açıldıktan sonraki
+yazma hatası kilitlidir.
+
+#### Ek R4/8.1 Pencere dışı başlatıcılar
+
+| Komut | Ne zaman | Ön koşul | Bloklar | E/H | Kayıt | Kilitsiz | Kilitli |
+|---|---|---|---|---|---|---|---|
+| `t0` (ÖN) | İlk içerik gününden önce, bir kez | `system-temp.txt` yok; kit2 pinleri ve güvenli dosya hash'i tutuyor; TEMP yönlendirilmemiş | N51, N19, N48, N50 (`external-root`, `evidence-dir`), N12 pinli baytlarla; `SYSTEM_TEMP_USER=` ve `SYSTEM_TEMP_WINDOWS=` satırları izinli listede **ve** ekran listesinde yoktur → yol ne kayda ne ekrana gider (R1; errata-3 §5.3) | Yok | `system-temp.txt` (N12'nin kendi yazımı; bayt uyumu Ek R4/16 dilim 1 (1)) ve `steps\t0.txt` | `T0_ALREADY` (`system-temp.txt` var), `T0_SECURE_FILE_*` | İlk `STOP`'ta durur, sonraki blok çalışmaz (rev6 son kontrol O3) |
+| `kume` (KÜME) | Aktarım günü dahil her içerik günü, KİT'ten önce | Güvenli dosya hash'i ve ACL'si | `pg_ctl status`; kapalıysa `start` (Ek R4/6 madde 10); `pg_isready` | Yok | `steps\kume-<n>.txt` (`<n>` ilk boş sıra): dört `PG_*` boolean'ı, `KUME_STARTED_BY_KIT=True/False` | `KUME_SECURE_FILE_HASH`, `KUME_SECURE_FILE_ACL` | Dört koşuldan biri `False` (pencere başlığı "KUME — KAPATMAYIN"; kayıttan sonra "Bu pencereyi kapatmayin; kucultun") |
+| `y1` (ADMIN) | Zincir adım 9 | `b09a` PASS (aktif assignment 0) | N36 | `REAL_ACTION_APPROVED` (PS; Ek R4/8.7) | `steps\c\y1.txt`: `IAM_ADMIN_OK_LINE_SEEN=True`, `CLI_RC=0`, onay satırı | `Y1_PRECONDITION`, onay H (`Y1_NOT_APPROVED`; CLI çağrılmaz) | `OK` satırı yok, traceback, `CLI_RC` ≠ 0; **tekrar yok** |
+| `y2` (ADMIN) | Zincir adım 24 | `b24a` PASS (aktif assignment tam 1) | N93 | `REAL_ACTION_APPROVED` (PS) | `steps\c\y2.txt` (aynı satırlar) | `Y2_PRECONDITION`, `Y2_NOT_APPROVED` | Aynı; tekrar yok |
+| `z1` (İMHA) | Kapsayıcı VeraCrypt'te ayrıldıktan sonra | `s29a`, `s26a` ve `s26b` PASS; `k silme` PASS kaydı var (dosya `s26b` ile silindiği için hash eşliği `s25` ve `s26a`'da doğrulanmıştır; `z1` dosyayı yeniden hash'lemez); `<container-root>` yok (ayrıldı). F1 aşımı `z1`'i **durdurmaz** (veri diskte kalmasın diye) ve `z1` F1 için hiçbir satır yazmaz; F1'i **yalnız** `s29b` ölçer ve yazar (Ek R4/14 madde 4; dar düzeltme turu D-8) | Form hash yeniden ölçümü (b; kit kodu), N102, N103 (`<system-temp-*>` canlı okunur ve `system-temp.txt` hash'iyle eşleşir; `<container-file-bytes>` pencere öncesi `container-record.txt`'den) | "Kapsayıcı VeraCrypt'te ayrıldı mı?" (PS) → `CONTAINER_DISMOUNTED=True basis=project-owner-E-at-kit`; `REAL_ACTION_APPROVED` (PS); "Anahtar kâğıdı ve tek kullanımlık anahtar imha edildi mi?" (PS; kapsayıcı silindikten sonra) → `CONTAINER_KEY_DESTROYED=True basis=project-owner-E-at-kit`; H → `CONTAINER_KEY_DESTROYED=False basis=project-owner-H-at-kit` (iki geçersiz tuşta `basis=no-valid-answer`), kilit yok, ekranda "kâğıdı şimdi imha edin" (Ek R4/14 madde 4; dar yeniden kontrol N-L1) | `steps\c\z1.txt`: `FORM_HASH_RECHECK part=<part> match=True`, `CONTAINER_FILE_GUARD=PASS`, `CONTAINER_DELETE_RESULT=COMPLETED`, `CONTAINER_FILE_ABSENT=True`, iki E/H satırı | `Z1_CONTAINER_MOUNTED`, `Z1_PRECONDITION`, onay H | Guard FAIL, silme FAIL, form hash farkı |
+| `s29b` (İMHA) | `z1`'den sonra, aynı pencerede | `z1` PASS | Kit kodu: §30/11 ve §30/12 (Ek R4/14) | "İmha kaydının kopyası dosya avukatına verildi mi?" (AV) → `DELETION_RECORD_COPY_TO_FILE_LAWYER=True basis=lawyer-E`; H → `…=False basis=lawyer-H` (iki geçersiz tuşta `basis=no-valid-answer`), kilit yok (Ek R4/14 madde 4; dar yeniden kontrol N-L1) | `steps\c\s29b.txt` + `<evidence-dir>\deletion-record.txt` (CreateNew; yalnız kodlar, zamanlar, hash'ler; yol yok) | `S29B_PRECONDITION` | FAIL; imha kaydı yazılamadı; F1 aşımı (`TEMP_COPIES_DELETED_WITHIN_F1=False`; yazım sırası Ek R4/14 madde 4). `z1`'den gelen `CONTAINER_KEY_DESTROYED=False` ve kopya sorusundaki H FAIL sayılmaz (Ek R4/14 madde 4) |
+
+`kume`, `adm.ps1`, `z1.ps1` ve `t0.ps1` kit1'i yüklemez; red dosyaları
+`steps\x\`'tedir (Ek R4/5). Bu tablodaki E/H'ler `Read-KbYesNo`, kilitli
+sonuçlar `Write-KbDur`, zamanlar `Get-KbNow` ile (`kbl.ps1`; Ek R4/5
+madde 6); kayıt başlığında `KIT_SESSION=none`. `z1` ve `s29b` veritabanı kullanmaz;
+evidence kapsayıcı dışındadır.
+
+#### Ek R4/8.2 KİT penceresi: oturum açılışı
+
+Her KİT oturumu: kit1 `a2` → (en az 2 dakika) `a3` → `b0` → `b1`;
+aktarım gününde ardından kit1 `a4`–`a8`, `b2`, `a9`; işleme ve silme
+günlerinde o günün zincir komutları, sonra `a9`.
+
+| Komut | İş | Ön koşul | Bloklar | E/H | Kayıt | Kilitsiz | Kilitli |
+|---|---|---|---|---|---|---|---|
+| `b0` | Altı sınıf beyanı | Bu oturumda kit1 `a3` PASS; bu oturumda `six-class.txt` yok | N117'nin **aynı baytları**, `<evidence-dir>\kit2\n117.ps1` olarak pinli; N117 kendi kaydını yazar | N117'nin altı sorusu (PS) | `steps\s<k>\six-class.txt` (N117 biçimi) + `steps\s<k>\b0.txt` (`SIX_CLASS_RECORD_SHA256`, N117'nin sonucu) | `B0_NO_A3`, `B0_ALREADY` | Yok: H cevabında N117'nin kendi kuralı geçerlidir (`STOP` ve `DUR.` iletisi; N117 kilit yazmaz; Ek R3/8); `b0.txt` `STEP_RESULT=STOP` taşır |
+| `b1` | Oturum başı ölçümü | `b0` PASS (bu oturum); kapsayıcı bağlı; küme ayakta (`kume` kaydı bugün PASS) | Ortak: güvenli dosya hash + ACL (Ek R4/2/9); acil sayfa ve `ev.ps1` hash + ACL (Ek R4/13; içerik sonrası uyumsuzluk kilit değil uyarı); `FORM_F1` denetimi; harici disk ölçümü (kit kodu: `Win32_DiskDrive`/`Win32_LogicalDisk`, `known-external-drive-letters`). **Aktarım günü dalı** (`steps\e2\a4.txt` PASS değil): N51, N19, N48, N49, N50, N52, N53, N56, N57 (`FirstLine`, yalnız satır 1), N11, N3, N1, N2, N37, N38, N39, N46, N47, N40 × (N41–N45); `technical-record.txt` yoksa N14 (tam blok; altı yer tutucu; aşağıda "VeraCrypt sürümü"); `restricted-allowed-files.txt` yoksa N118 + N21; TEMP'e dokunmaz. **İşleme/silme dalı** (`a4` PASS): aynı kapılar + `<case-root>` varsa N57/2, N13 (canlı sistem Temp değerleriyle; yönlendirme), N15, N22 | "Kapsayıcı `<container-root>` harfine bağlı mı?" (PS) → `CONTAINER_MOUNTED_AS_DRIVE_LETTER=True basis=project-owner-E-at-kit`; her harici sürücü için "Bu sürücü çıkarıldı mı?" ve "Şifreli mi?" (PS); ilk oturumda VeraCrypt Hakkında sorusu (PS) | `steps\s<k>\b1.txt`: `PATH_OK=…` satırları, `PILOT_ACL_PRINCIPALS_OK`, optik satırları, `ENV_*`, `RUNTIME_PACKAGE_SET`, git boolean'ları (Ek R4/10), `PSQL_*` sayaçları, `CONTAINER_VERIFIED=True`, `EXTERNAL_DISK_ENCRYPTED=False drive=<harf>`, `EXTERNAL_DISK_REMOVED=True drive=<harf>`, `KB_SECURE_FILE_*`, `EMERGENCY_*`, `FORM_F1_OK=True`; işleme dalında `SYSTEM_TEMP_MATCH`, `TEMP_IN_CONTAINER`, `TOOL_MANIFEST_MATCH`, `ALLOWED_FILE_HASH_OK`, `RESTRICTED_INVENTORY`, `RESTRICTED_FILE_COUNT` | `B1_NO_B0`, `B1_CONTAINER_NOT_MOUNTED`, `B1_CLUSTER_DOWN` ("once KUME satiri"), `B1_TEMP_ALREADY_CHANGED`, `B1_F1_NOT_24`, içerik öncesi `B1_SECURE_FILE_HASH`/`_ACL`, `B1_EMERGENCY_PAGE`, `B1_EMERGENCY_VERIFIER`, `B1_VERACRYPT_PIN` (dosya sürümü pinle uyuşmuyor; teknik kayıt yazılmaz) | Her `STOP` satırı; VeraCrypt Hakkında H (`STOP CONTAINER_TOOL_VERSION_CONFIRMED=False`; içerik öncesi olduğu için DUR kuralının "içerik henüz alınmadı" dalı); harici sürücü E/H'de H; içerik sonrası güvenli dosya hash/ACL farkı |
+| `b2` | E2 kayıtları (aktarım günü, `a8`'den sonra) | Kit1 `a5` PASS, `a8` kaydı var | Kit kodu: `a5`–`a8` kayıtlarından türetme | "Aktarım şifreli 7z dosyasıyla mı geldi?" (PS); "Parola ayrı kanaldan (telefonla) mı geldi?" (PS); "Aktarım dosyası doğrudan intake klasörüne mi kaydedildi?" (PS) | `steps\e2\b2.txt`: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER basis=project-owner-E-at-kit` (`a5` kaydındaki `SEVENZIP_ALL_ENTRIES_7ZAES=True` ile çapraz denetlenir; uyuşmazlık kilitli), `E2_KEY_SEPARATE_CHANNEL=True basis=project-owner-E-at-kit`, `E2_KEY_CHANNEL=VOICE_CALL at=<HP_READBACK_AT>` (`a6` kaydındaki geri okuma anı; AÇIK-12), `E2_SAVED_DIRECTLY_TO_CONTAINER=True basis=project-owner-E-at-kit`, `E2_INBOUND_TRANSFER_RECEIVED=True` (`a6`/`a7`'de `SEVENZIP_RC=0` ve `X_ENTRY_COUNT=1`'den) | `B2_NO_A5`, `B2_NO_A8` | H cevabı |
+
+**VeraCrypt sürümü (KD-6; `b1` ilk oturum dalı).** (1) Kayda giden dizge
+`CONTAINER_TOOL_VERSION=1.26.29 (64-bit)` biçimindedir (Hakkında ekranı
+biçimi). (2) `b1`, güvenli dosyadaki `veracrypt-exe`'nin
+`FileVersionInfo.FileVersion` değerini okur ve `kit-build2.txt`'deki
+`VERACRYPT_FILE_VERSION_EXPECTED` ile karşılaştırır; eşleşirse dizge =
+ilk üç bileşen + PE başlığı makine türü x64 (`0x8664`) ise ` (64-bit)`.
+(3) "VeraCrypt'te Yardım > Hakkında'yı açın. Orada `<dizge>` yazıyor mu?"
+(PS). E → N14 bu değerle çalışır. (4) `b1` kaydına
+`VERACRYPT_FILE_VERSION=<sürüm>`, `VERACRYPT_FILE_VERSION_PIN_MATCH=True`,
+`CONTAINER_TOOL_VERSION_DERIVED=True`,
+`CONTAINER_TOOL_VERSION_CONFIRMED=True basis=project-owner-E-at-kit`
+yazılır. (5) `PDFTOTEXT_VERSION` `pdftotext -v` stderr'inin ilk satırıdır;
+`SEVENZIP_VERSION` 7z stdout'unun **ilk boş olmayan** satırıdır (§4.4/6).
+Değer `'`, `<`, `>` taşırsa veya ASCII dışıysa teknik kayıt yazılmaz
+(`STOP`; içerik öncesi). (6) Üç bileşen + `(64-bit)` kuralının, 7z ilk
+satırının ve `pdftotext -v`'nin stderr'e yazmasının doğruluğu dilim 1
+provasında ölçülür (AÇIK-14).
+
+**Bayt uyumu (dilim 1 kabul ölçütü).** `t0`'ın yazdığı `system-temp.txt`
+N12 ile, `b1`'in yazdığı `technical-record.txt` N14 ile **bayt bayt**
+aynıdır (ikisi de aynı pinli kodla yazılır; zaman damgası yoktur);
+`b0`'ın yazdığı `six-class.txt` N117 ile `STARTED_AT=` ve `ENDED_AT=`
+dışında aynıdır. Bu üç kayıtla **değişmemiş** kit1 `a4` (N108) PASS verir.
+
+#### Ek R4/8.3 KİT penceresi: zincir komutları
+
+| Komut | Zincir adımı / iş | Ön koşul | Bloklar | E/H | Kayıt (başlıca satırlar) | Kilitsiz | Kilitli |
+|---|---|---|---|---|---|---|---|
+| `b5` | 5: form hash (a), belge teslimi, `pdftotext` | Bu oturumda `b1` PASS (işleme dalı); `a6` veya `a7` başarılı; `<case-root>` yok | Kit kodu: form hash yeniden ölçümü (a) (güvenli dosyadaki `form-*` yolları; `FORM_BINDING` kayıtları); `<intake-dir>\x` içindeki **tek** dosyanın adına bakmadan `<case-root>\documents\<document-id>\<file-name>` olarak kopyalanması; N15, N26 | Yok | `steps\c\b05.txt`: `FORM_HASH_RECHECK part=<part> match=True`, `X_FILE_COUNT=1`, `TOOL_MANIFEST_MATCH=True`, `PDFTOTEXT_RC=0`, `CLI_RC=0` | `B5_X_EMPTY` | `x`'te iki veya daha fazla dosya; form hash farkı; `PDFTOTEXT_RC` ≠ 0 |
+| `b5d` | 5': intake formu ve JSON üretimi (Ek R4/12) | `b05` PASS; `b05d` yok | Kit kodu (form, denetim, JSON şablonları, geri okuma); KD-26 validator'ları (N32, N33) kayıtsız | İlk çalıştırmada sayı soruları ve menüler (PS); her hatadan sonra "Not Defteri yeniden acilsin mi?" (PS); "Form bastan olusturulsun mu?" (PS) | `steps\c\b05d.txt`: `B5D_FORM_OK=True`, `B5D_MARKERS_LEFT=0`, `B5D_REQUIRED_OK=True`, `B5D_DEADLINE_FIELDS_OK=True`, `B5D_VALIDATORS_OK=True`, `B5D_ROUNDTRIP_OK=True`, `FORM_SHA256`, `CASE_JSON_SHA256`, `DOCUMENT_JSON_SHA256` | Ek R4/12 madde 6'daki her kod (**asla DUR değil**) | Kayıt açıldıktan sonra yazma hatası; `B5D_ROUNDTRIP_MISMATCH` |
+| `b6` | 6: mekanik kontroller | `b05d` PASS | Üç hash yeniden ölçülür; N23, N24, N25, N27–N34, N121; sonunda avukat için alan özeti (yalnız ekran) | Yok | `steps\c\b06.txt`: `JSON_BOM=NONE`, `TEXT_LENGTH=OK`, `TEXT_VISIBLE=OK`, `PAGE_COUNT=OK`, `INTAKE_HASH=MATCH`, `TEXT_DATE_TOKEN_PRESENT=True`, `INTAKE_HASHES_RECORDED=True`, `SOURCE_HASHES_MATCH=True`, `VALIDATOR_CASE_RESULT=PASS`, `VALIDATOR_DOCUMENT_RESULT=PASS`, `VALIDATOR_ERROR_COUNT=0`, `VALIDATOR_WARNING_COUNT=<n>`, git sayıları, `TAX_TYPE_VOCAB=OK` | — | Her `STOP`; üç hash'ten biri `b05d` ile farklı (dosya kayıttan sonra değişti); validator hatası (b5d döngüsü geçtiği için beklenmeyen sonuçtur) |
+| `k intake`, gerekiyorsa `k uyari` | 6: avukatın alan-alan intake onayı; validator uyarılarının kabulü (§11.3 c–d) | `b06` PASS | Ek R4/12 | Ek R4/12 | `steps\d\k<seq>.txt` | Ek R4/12 | Ek R4/12 |
+| `b7` | 7: manuel girdi (O4: satırı operatör tek başına seçer) | `b06` PASS; `INTAKE_APPROVED` PASS ve her maddesi `KABUL`; `VALIDATOR_WARNING_COUNT` > 0 ise `VALIDATOR_WARNINGS_ACCEPTED` PASS ve `KABUL`; revizyon `r<n>`: n = 1 ilk; sonraki revizyon yalnız önceki `k girdi` `RED` ise; n ≤ 3 | Kit kodu: aday listesi (Ek R4/15), girdi dosyasının kitçe yazılması (N58 biçimi), N59, N60 | Numara seçimi, `0` = hiçbiri (PS); "Bu satir teblig tarihini tasiyan cumle mi?" (PS) | `steps\c\b07-r<n>.txt`: `MANUAL_INPUT_ENCODING=OK`, `MANUAL_INPUT_HASH_RECORDED=True`, `INPUT_REVISION=r<n>`, `CANDIDATE_SELECTED=True` | `B7_NO_INTAKE_APPROVAL`, `B7_WARNINGS_NOT_ACCEPTED`, `B7_NO_CANDIDATE`, `B7_NONE_SELECTED`, `B7_CANDIDATE_REJECTED`, `B7_REVISION_LIMIT` | `MANUAL_INPUT_*` `STOP` |
+| `g8` | 8: girdi dosyasının orijinal belgeyle karşılaştırılması (yalnız ekran; errata-3 §8; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b07-r<n>` PASS | Kit kodu: girdi dosyası açıkça UTF-8 okunur; `date`, `page`, `text_excerpt`, iki opak kimlik, `r<n>` ve 12 karakterlik önek **yalnız** `Write-Host` ile | Yok | **Yok** | Erken kapanışta ve silme oturumunda: `G8_NOT_ALLOWED` | — |
+| `k girdi` | 8: avukatın girdi kararı (`MANUAL_INPUT_COMPARED`) | `b07-r<n>` PASS | Ek R4/12 (KD-25: önek kitçe doldurulur, ekranda girdi kaydının önekiyle yan yana) | Ek R4/12 | `steps\d\k<seq>.txt` | Ek R4/12 | Ek R4/12 |
+| `b8` | 8: avukat kararının eşleştirilmesi | `MANUAL_INPUT_COMPARED` PASS, `REVIZYON=r<n>` ve `SONUC=KABUL` | N61 (`<lawyer-cited-prefix>` karar dosyasının `HASH_ONEK`'inden; `<input-revision>` = n) | Yok | `steps\c\b08-r<n>.txt`: `MANUAL_INPUT_MATCHES_LAWYER_REVISION=True`, `LAWYER_DECISION_CITES_RECORD=True` | `B8_NO_DECISION`, `B8_WRONG_REVISION`, `B8_DECISION_RED` (ileti: "Avukat bu surumu reddetti; duzeltilmis surum icin b7") | N61 `STOP` (önek/hash farkı); karar dosyası hash'i kayıttakinden farklı |
+| `b9` (`b09a`/`b09b`) | 9: assignment ölçümü önce / sonra | `b09a`: `b08` PASS; `b09b`: `y1` PASS | N40 × (N43, N44, N45) | Yok | `steps\c\b09a.txt` / `b09b.txt`: `ACTIVE_ASSIGNMENT_COUNT=<n>` (önce 0, sonra 1), `ASSIGNMENT_TOTAL_COUNT=<n>`, `USERS_ENABLED=True` | `B9_CLUSTER_DOWN`, `B9_PRECONDITION` | Sayaç beklenmeyen |
+| `b10` | 10: `manual-fact` preview | `y1` PASS, `b09b` PASS | N31, N61, N47, N40 × (N41–N45), N62 | Ekranda tarih ve sayfa → "Avukatın kararındaki tarih ve sayfa ile aynı mı?" (AV) | `steps\c\b10.txt`: Ek R4/9 N62 satırları, `PREVIEW_DATE_MATCHES_LAWYER=True basis=lawyer-E`, `PREVIEW_PAGE_MATCHES_LAWYER=True basis=lawyer-E`, `FACT_ID_DERIVED=True`, journal sayıları | Ortak ön denetim kodları | `CLI_RC` ≠ 0; H cevabı |
+| `b11` | 11: `manual-fact` apply | `b10` PASS | N90, N63 (`<attempt>`=1), N64, N65, N91 | `REAL_ACTION_APPROVED` (PS) | `steps\c\b11.txt`: onay satırı (CLI'den önce), Ek R4/9 N63 satırları, §14.5.2 boolean'ları, `JOURNAL_NEW_ROW_COUNT=1`, `JOURNAL_NEW_ROW_STATE=completed`, `JOURNAL_FAMILY_MATCH=True`, `JOURNAL_ACTOR_MATCH=True` | Onay H (`B11_NOT_APPROVED`) | `CLI_RC` ≠ 0, `replayed=True`, journal ≠ 1; §14.6 sınıfı hatalar (→ `r1`…) |
+| `b12` | 12: pending içerik kontrolü | `b11` PASS | N73; tek fact yalnız ekranda | Yok | `steps\c\b12.txt`: §15.1'in altı boolean'ı | — | §15.1 `STOP` |
+| `k fact` | 12: fact kabulü (`FACT_ACCEPTED`) | `b12` PASS | Ek R4/12 | | | | |
+| `b13` | 13: fact promotion | `b12` PASS; `FACT_ACCEPTED` PASS ve `SONUC=KABUL` | N74, N90, N75, N91 | `REAL_ACTION_APPROVED` (PS) | `steps\c\b13.txt`: Ek R4/9 N74/N75 satırları, journal satırları | `B13_NO_DECISION`, `B13_LAWYER_REJECTED` (ileti: "Avukat reddetti. Dosya pilot disi ise avukat 'k uygunsuz' yazsin, sonra 'u'."), onay H | `CLI_RC` ≠ 0; `validation_ready=False` |
+| `g14` | 14: locator'ın gösterdiği yerin karşılaştırılması (yalnız ekran; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b13` PASS | Kit kodu: canonical fact'in locator'ı (sayfa, alıntı) yalnız `Write-Host` | Yok | **Yok** | `G14_NOT_ALLOWED` | — |
+| `k dogrulama` | 14: `VERIFICATION_VERIFIED` | `b13` PASS | Ek R4/12 | | | | |
+| `b14` | 14: verification | `b13` PASS; `VERIFICATION_VERIFIED` PASS ve `SONUC=KABUL` | N76, N90, N77, N91 | `REAL_ACTION_APPROVED` (PS) | `steps\c\b14.txt` | `B14_NO_DECISION`, `B14_LAWYER_REJECTED`, onay H | `CLI_RC` ≠ 0 |
+| `b15` | 15: timeline generation | `b14` PASS | N78, N90, N79, N91 | Yok (pending üretimi; §2.1) | `steps\c\b15.txt` | — | `CLI_RC` ≠ 0 |
+| `g16` | 16: timeline incelemesi (yalnız ekran; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b15` PASS | Kit kodu: pending timeline olayları (tür, tarih, kaynak locator'ı) yalnız `Write-Host` | Yok | **Yok** | `G16_NOT_ALLOWED` | — |
+| `k zamancizelgesi` | 16: `TIMELINE_APPROVED` | `b15` PASS | Ek R4/12 | | | | |
+| `b16` | 16: timeline promotion | `b15` PASS; `TIMELINE_APPROVED` PASS ve `SONUC=KABUL` | N80, N90, N81, N91; kit kodu: canonical `timeline.json`'da `notification_date` olayının **tek** olduğu ve `event_id`'si (bellekte; `<anchor-event-id>`) | `REAL_ACTION_APPROVED` (PS) | `steps\c\b16.txt`: `ANCHOR_EVENT_COUNT=1` (kimlik kaydedilmez) | `B16_NO_DECISION`, `B16_LAWYER_REJECTED`, onay H | `CLI_RC` ≠ 0; tebliğ olayı sayısı ≠ 1 |
+| `k durdurucu`, `k adlitatil` | 17: stopping-event ve adli tatil kararları | `b16` PASS | Ek R4/12 | | | | |
+| `b18` | 18: kör hesabın sabitlenmesi (Ek R4/12; avukat cevabına bağlı: soru 1 ve 6; cevap olumsuzsa yeniden açılır) | `b16` PASS; `STOPPING_EVENT` ve `JUDICIAL_RECESS` PASS; `b18` kaydı yok; `s25` PASS yok | Kit kodu: `<restricted-dir>\blind-calc.txt` şablonu (N134; tuzlu) yoksa yazılır, varsa aynı dosya açılır; Not Defteri; biçim denetimi | "Kör hesabı sistem sonucunu görmeden yazdınız mı?" (AV) | `steps\c\b18.txt`: `BLIND_CALC_SHA256=<64 hex>`, `BLIND_CALC_AT=<zaman>`, `BLIND_CALC_CONFIRMED basis=lawyer-E` (**tarih yazılmaz**) | `B18_NO_DECISIONS`, `B18_ALREADY_DONE`, `B18_SALT_LINE` (sıfırlama seçeneği), `B18_ENCODING`, `B18_TEMPLATE_LINE` (AÇIK-27 satır kuralı; Ek R4/12.2), `B18_MARKER_LEFT`, `B18_DATE_FORMAT`, `B18_NOT_CONFIRMED`, `RESTRICTED_FROZEN` | `DURUM=present` veya `unknown` (H20; §17.1) |
+| `b19` | 19: deadline generation | `b18` PASS; iki karar dosyasının hash'i kayıttakiyle aynı | N82, N90, N83 (`none` + `<attestation-ref>` = karar dosyasındaki `REFERANS`, bellekten; adli tatil `yes`/`no`), N91 | Yok | `steps\c\b19.txt` | — | `CLI_RC` ≠ 0; karar dosyası hash farkı |
+| `b20` | 20: pending kabulü ve kör hesapla karşılaştırma | `b19` PASS | N84, N85; `blind-calc.txt` hash'i yeniden ölçülür; `SON_GUN` ile pending tarih bellekte karşılaştırılır ve ekranda yan yana gösterilir | "Ekrandaki iki tarih aynı mı?" (AV) | `steps\c\b20.txt`: `DL_*` boolean'ları, `BLIND_CALC_HASH_MATCH=True`, `PENDING_MATCH=True basis=lawyer-E` | — | `DL_*` `False`; kör hesap hash'i değişmiş; H |
+| `k sure` | 21: `DEADLINE_APPROVED` | `b20` PASS (kararın kaydı `b20`'nin `ENDED_AT`'inden sonra) | Ek R4/12 | | | | |
+| `b21` | 21: deadline approval | `b20` PASS; `DEADLINE_APPROVED` PASS, `SONUC=KABUL` ve kaydı `b20`'den sonra | N86, N90, N87, N91 | `REAL_ACTION_APPROVED` (PS) | `steps\c\b21.txt` | `B21_NO_DECISION`, `B21_ORDER`, `B21_LAWYER_REJECTED`, onay H | `CLI_RC` ≠ 0 |
+| `b22` | 22: salt-okunur rapor | `b21` PASS; `s25` PASS yok | N88, N122, N22 | Yok | `steps\c\b22.txt`: `REPORT_EXIT=0`, `REPORT_WRITTEN_LINE_SEEN=True`, `REPORT_SHA256=<64 hex>`, `EXPIRY_LINE_PRESENT=True`, `DISCLAIMER_LINE_PRESENT=True`, `RESTRICTED_INVENTORY=OK`, `RESTRICTED_FILE_COUNT=<n>` | `RESTRICTED_FROZEN` | Rapor reddi (`REPORT_REFUSAL_CODE=<kod>`; H22); iki boolean'dan biri `False` |
+| `b23` | 23: rapor tarihinin son karşılaştırması | `b22` PASS | Kit kodu: rapordaki son gün ile kör hesap bellekte karşılaştırılır, ekranda yan yana | "Ekrandaki iki tarih aynı mı?" (AV) | `steps\c\b23.txt`: `MATCH=True basis=lawyer-E`; `ENDED_AT` = **F1 başlangıcı** (§23) | — | H |
+| `b24` (`b24a`/`b24b`) | 24: revoke ölçümü önce / sonra | `b24a`: `b23` PASS, veya `u` PASS ve `y1` PASS, veya silme oturumu (§25.2/4); `b24b`: `y2` PASS | N40 × N92 | Yok | `steps\c\b24a.txt` / `b24b.txt`: `ACTIVE_ASSIGNMENT_COUNT=<n>` (önce 1, sonra 0) | `B24_PRECONDITION`, `B24_CLUSTER_DOWN` | Önce sayısı ≠ 1 (§25.2/7: > 1 veya belirsiz → DUR; 0 ise `y2` çalışmaz ve `b24a` bunu `REVOKE_NOT_NEEDED=True` ile yazar) |
+| `k silme` | 26 (karar): Form F silme kararı | Normal yolda `b24b` PASS (veya `REVOKE_NOT_NEEDED=True`); erken kapanışta `u` PASS; silme oturumunda yazılı karar; `s25` PASS yok | Ek R4/12; K6 dal denetimi teyitten önce, denetim döngüsünde (Ek R4/12.1 "K6 denetimi"; kilitsiz `K_K6_BRANCH_NOT_NAMED`) | | | | |
+| `u` | Erken kapanış ("bu dosya bu pilota uygun değil"; Ek R4/14) | `b05` PASS; (`b11` yok **veya** Ek R4/12'deki dört türden birinde `SONUC=RED` PASS kaydı var); `PILOT_UNSUITABLE` PASS | Kit kodu: kayıtlardan türetme; assignment var mı (`y1` kaydı) | "Avukatin karariyla bu dosyanin islemesi burada bitiyor ve silme bu ziyarette yapilacak. Onayliyor musunuz?" (AV) | `steps\c\u.txt`: `EARLY_CLOSE=True`, `EARLY_CLOSE_REASON=<kod>`, `EARLY_CLOSE_DECISION_SEQ=<n>`, `EARLY_CLOSE_DECISION_SHA256=<64 hex>`, `ASSIGNMENT_PRESENT=True/False`, `WORK_ENDED_AT=<zaman>` (F1 başlangıcı), `EARLY_CLOSE_CONFIRMED basis=lawyer-E` | `U_NO_DECISION`, `U_AFTER_B11_NO_RED` (ileti: "b11 calisti ve avukatin RED karari yok: normal DUR yolu"), `U_NOT_CONFIRMED` | Yazma hatası |
+| `s25` | 25: iki kapanış manifesti | (`y2` PASS ve `b24b` PASS; **veya** `b24a` `REVOKE_NOT_NEEDED=True`; **veya** `u` PASS ve `ASSIGNMENT_PRESENT=False`; veya silme oturumunda §25.2/4–7 tamam) **ve** `DELETION_DECISION` PASS ve `decision-deletion.txt`'nin SHA-256'sı o kayıttakiyle aynı (H1) | N22, N94 (göreli yollar yalnız ekranda), N95, N119 (`<report-produced>` `b22` kaydından: `$true` yalnız `steps\c\b22.txt` varsa ve satırlarından biri ordinal olarak `REPORT_WRITTEN_LINE_SEEN=True` ise, `b22` sonra `STOP` ile bitmiş olsa da; aksi hâlde ve erken kapanışta `$false`; acil sayfanın seçicisiyle aynı ölçüt, Ek R4/13 madde 2.5; dar yeniden kontrol N-L3. `b22` bu satırı görüldüğü anda kayda yazar. Rapor dosyası satır görülmeden oluştuysa iki yol da kilitlenir ve veri korunur) | "Ekrandaki goreli yollarda ad veya numara var mi?" (PS) | `steps\c\s25.txt`: `CASE_MANIFEST=WRITTEN`, `CASE_FILE_COUNT`, `RESTRICTED_MANIFEST=WRITTEN`, `RESTRICTED_FILE_COUNT`, PASS kaydı olmayan her karar dosyası ve `blind-calc.txt` için `RESTRICTED_FILE_STATE name=<sabit ad> state=incomplete` (AÇIK-22 b) | `S25_NO_DELETION_DECISION` (ileti: "Once avukat 'k silme' ile silme kararini yazsin.") | Manifest yazılamadı; E cevabı (yolda ad/numara var; H36); karar dosyası hash farkı |
+| `s26a` | 26: case silme | `s25` PASS; bu oturumda `b1` PASS; `decision-deletion.txt` hash'i kayıttakiyle aynı | Form hash yeniden ölçümü (b); K6 dal denetiminin yeniden ölçümü (Ek R4/12.1); N97, N98, N99 | `REAL_ACTION_APPROVED` (PS) | `steps\c\s26a.txt`: `FORM_HASH_RECHECK … match=True`, `CASE_DELETE_GUARD=PASS`, `CASE_DELETE_RESULT=COMPLETED`, `CASE_DIR_ABSENT=True` | `S26A_PRECONDITION`, onay H | Guard FAIL; silme FAIL; hash farkı; K6 dal farkı (`STOP K6_BRANCH_NOT_NAMED`; `k silme`'den sonraki bir pencerede dal yaşanırsa ulaşılır; yol Ek R4/13 madde 1 (b) ve 2.4; Ek R4/12.1 "K6 denetimi" madde 3) |
+| `s26b` | 26: restricted silme | `s26a` PASS | Form hash yeniden ölçümü (b), N100, N101 | `REAL_ACTION_APPROVED` (PS) | `steps\c\s26b.txt`: `RESTRICTED_DELETE_GUARD=PASS`, `RESTRICTED_DELETE_RESULT=COMPLETED`, `RESTRICTED_DIR_ABSENT=True`, `RESTRICTED_RESIDUE_COUNT=0`, `PILOT_ROOT_RESIDUE_OK=True`, `EXTERNAL_ROOT_RESIDUE_OK=True` | onay H | Guard FAIL |
+| `s27` | 27: F1 geçici kopyalar | `b23` PASS veya `u` PASS veya silme oturumu (§25.2 abort yolu; Ek R4/14 madde 3) | Kit kodu: `<intake-dir>` ve `<container-temp>` altındaki öğe sayısı (ad basmadan) | Yok | `steps\c\s27.txt`: `TEMP_COPIES_PATH=CONTAINER_DESTRUCTION`, `TEMP_COPIES_INSIDE_CONTAINER=True`, `TEMP_COPY_ITEM_COUNT=<n>` | — | Kapsayıcı dışında kopya beyanı |
+| `s28` | 28: kapanış ortam ölçümü | `s26b` PASS | N46, N47 | Yok | `steps\c\s28.txt` | — | Eşleşme |
+| `s29a` | 29 (kapsayıcıya bağlı kısım): §30/1–10 ve 13 | `s28` PASS; kapsayıcı bağlı | N34, N37 (git çıktısı Ek R4/10 kuralıyla), N40 × (N72, N42, N92), form hash yeniden ölçümü (c), §21 tablosunun ölçülebilen satırları (kit kodu) | Yok | `steps\c\s29a.txt` (§30 madde başına `POSTCONDITION_<n>=PASS`) | — | FAIL |
+| `n` | Giden bildirim | Her an (silme oturumu dahil) | Kit kodu: sabit, içeriksiz bildirim metni yalnız ekranda; `<restricted-dir>`'e ve kapsayıcıya **hiçbir dosya yazmaz** (errata-3 §2/7); metin dilim 1'de pinlenir | "Gonderdiniz mi?" (PS) | `steps\d\n<seq>.txt`: `OUTBOUND_NOTICE_SENT seq=<n> sha256=<sabit metnin UTF-8 baytlarının SHA-256'sı>`; olay bildirimi ise `INCIDENT_WRITTEN_NOTICE_SAME_DAY=True` (aynı gün `o` kaydı varsa) | — | — |
+| `o` | Olay kaydı (§4.2/11) | Her an | Yok | "Dosya avukatina telefonla bildirdiniz mi?" (PS) | `steps\d\o<seq>.txt`: `INCIDENT_PHONE_NOTIFIED=True basis=project-owner-E-at-kit`, `INCIDENT_NOTICE_CHANNEL=VOICE_CALL at=<zaman>` | — | Her olay DUR'dur: kayıttan sonra `Write-KitDur` |
+| `r1`…`r7` | §14.6 reconciliation ve yeniden deneme | Kilitli DUR (§14.6 sınıfı hata) + kullanıcı kararı (her adım ayrı) | `r1`: N40 × (N66, N67) (§14.6/2); `r2`: N68 (/3); `r3`: N69 (/4, dry-run); `r4`: N70 + N40 × N42 (/5; `<reconcile-actor-ref>` sabit); `r5`: N71 (/6); `r6`: §14.6/7 ön koşulları + N61, N31, N62 (yeni preview); `r7`: N90, N63 (`<attempt>`=2), N64, N65, N91 | `r4`, `r5`, `r7`: `REAL_ACTION_APPROVED` (PS) | `steps\c\r<n>.txt` | `R_PRECONDITION`, onay H | §14.6 DUR satırları; `r7` ikinci başarısızlık |
+
+**Ortak ön denetim (her DB'li komut).** Küme dört koşulla ölçülür
+(`kume` kaydı bugün PASS ve canlı `pg_isready`); bu oturumun `b1`'inden
+`PATH_OK` satırları; §13.6 (b) ad taraması 0; `VERGI_IAM_DATABASE_URL`
+kit2 tarafından bu oturumda `app-dsn` ile ayarlanmış. Biri yoksa kilitsiz
+red (`<KOMUT>_CLUSTER_DOWN`, `<KOMUT>_SESSION_GATE`).
+
+**Ortak apply çerçevesi** (`b11`, `b13`, `b14`, `b16`, `b21`, `r4`, `r5`,
+`r7`): (1) ön denetim; (2) hash yeniden doğrulamaları (kaynak hash'leri,
+karar dosyası hash'i, preview değerleri); (3) `REAL_ACTION_APPROVED`
+kapısı (Ek R4/8.7); (4) N90; (5) CLI; (6) süzgeç; (7) N91: tam 1 yeni
+`completed` satır, doğru aile ve aktör (§26.3); (8) disk kontrolleri;
+(9) `STEP_RESULT`. (3)'ten önceki her red kilitsizdir; (5) başladıktan
+sonraki her beklenmeyen sonuç kilitlidir.
+
+#### Ek R4/8.4 İzin kümeleri ve kipler
+
+1. **Normal oturum.** `b0` ve `b1` PASS'ten sonra zincir komutları
+   yukarıdaki ön koşullarla.
+2. **Silme oturumu** (`DUR.txt` var; Ek R3, `KIT_TEARDOWN_SESSION=True`;
+   L4): KİT penceresi yalnız `b0`, `b1`, `b24` (`b24a`/`b24b`), `k` (yalnız
+   `s25`'ten önce), `s25`, `s26a`, `s26b`, `s27`, `s28`, `s29a`, `n`, `o`
+   ve — §25.2/3 gereği **ayrı kullanıcı onayıyla** — `r1`…`r5`
+   komutlarına izin verir (yeniden deneme `r6`–`r7` hariç). `y2` (ADMIN)
+   ile `z1` ve `s29b` (İMHA) kendi pencerelerindedir. Silme oturumu §25.2
+   ve §4.3 (a) "Silme oturumu yetkisinin biçimi" kurallarına tabidir
+   (dosya avukatının Form F'ye uygun yazılı silme kararı, kullanıcının o
+   hedef için ayrı onayı, K6 dalları).
+3. **Erken kapanış kipi** (`u.txt` PASS; DUR yok; KD-23): aynı küme
+   `r1`…`r5` hariç uygulanır. Kilitsiz reddedilenler (`EARLY_CLOSE_MODE`;
+   ileti: "Bu dosya pilot disi; yalniz silme adimlari") iki gruptur:
+   (a) `b2`–`b23` aralığındaki komutlar (`b24` bu aralıkta **değildir**;
+   kümededir), `b5d`, `g8`, `g14` ve `g16`; (b) **`k silme` dışındaki
+   bütün `k` türleri**. `k silme` bu kipte çalışır (Ek R4/8.6 madde 4).
+   `k uygunsuz` `u`'dan önce PASS olduğu için `K_ALREADY_DECIDED`
+   koşulunu da taşır (inceleme M2; dar düzeltme turu D-3). **Sıra (dar
+   yeniden kontrol O1):** bu kipte `EARLY_CLOSE_MODE` denetimi, `k`'nın
+   türe özgü denetimlerinden (`K_ALREADY_DECIDED` dahil) **önce** yapılır;
+   `k uygunsuz` için beklenen kod `EARLY_CLOSE_MODE`'dur (dilim 1 testi
+   bunu bekler).
+4. **Manifest sonrası dondurma** (H1; errata-3 §2/6): `s25` PASS
+   olduktan sonra kit2 `<restricted-dir>` içinde dosya oluşturabilecek
+   veya değiştirebilecek **hiçbir** komutu çalıştırmaz: `k` (bütün
+   türler), `b18`, `b22` kilitsiz reddedilir (`RESTRICTED_FROZEN`); kit
+   `s25`'ten sonra restricted içindeki hiçbir dosyayı Not Defteri'nde
+   açmaz. `b20`/`b23` dosyaları yalnız okur.
+5. **RED kararları (AÇIK-17 = evet).** `FACT_ACCEPTED`,
+   `VERIFICATION_VERIFIED`, `TIMELINE_APPROVED` veya `DEADLINE_APPROVED`
+   için `SONUC=RED` PASS kaydı varken ilgili apply komutu (`b13`, `b14`,
+   `b16`, `b21`) bugünkü runbook'taki DUR yerine **kilitsiz** reddeder
+   (`B13_LAWYER_REJECTED` vb.). Yol: avukat `k uygunsuz` (neden kodu
+   `LAWYER_REJECTED_FACT` / `_VERIFICATION` / `_TIMELINE` /
+   `_DEADLINE`), sonra `u` (avukat cevabına bağlı: soru 11; cevap
+   olumsuzsa yeniden açılır — o durumda RED bugünkü gibi DUR'dur). Bir tür
+   `KABUL` ile PASS olduktan sonra aynı tür için `RED` yazılamaz
+   (`K_ALREADY_DECIDED`); karar değişikliği için ayrı yol yoktur. Bu
+   yüzden son karar (`DEADLINE_APPROVED`) KABUL'den sonra geri alınmak
+   istenirse tek yol **DUR**'dur ve DUR silme oturumuna bağlanır
+   (recheck-2 not 8; ayrıntı dilim 4).
+6. **Intake RED.** `INTAKE_APPROVED` maddelerinden biri `RED` ise `b7`
+   kilitsiz reddeder (`B7_NO_INTAKE_APPROVAL`). `b05d` kaydı açıldığı için
+   form yeniden açılmaz; kalan yollar (`b11`'den önce olduğu için) erken
+   kapanış (`k uygunsuz`, neden `OTHER`, sonra `u`) veya §11.4 gereği
+   DUR'dur; seçim avukatın ve kullanıcınındır (§34.13 yorum 4). Erken
+   kapanış yolu avukat cevabına bağlıdır: soru 11 (dar düzeltme turunda
+   intake reddini ve kapsam dışı belge türünü de kapsayacak biçimde
+   genişletildi; inceleme L6, D-11); cevap olumsuzsa intake RED yalnız
+   §11.4'ün DUR'udur ("bir alan onaysızsa: DUR"; H9, H43).
+
+#### Ek R4/8.5 Tuşa kim basar (O3)
+
+Her E/H sorusundan önce kit tek satırla kimin basacağını söyler:
+`TUSA AVUKAT BASAR` veya `TUSA PROJE SAHIBI BASAR`. Kayıttaki niteleyici
+**yalnız iki değerlidir**: `basis=lawyer-E` ve
+`basis=project-owner-E-at-kit` (operatör = proje sahibi; AÇIK-2).
+
+| Ekran | Basan |
+|---|---|
+| `b0`, `b1`, `b2`, `b5d` (sayılar, menüler, yeniden aç, sıfırla), `b7` (numara, "tebliğ cümlesi mi?"), `s25`, `n`, `o`, `z1` (`CONTAINER_DISMOUNTED`, `CONTAINER_KEY_DESTROYED`) | Proje sahibi |
+| Bütün `REAL_ACTION_APPROVED` ekranları (`b11`, `b13`, `b14`, `b16`, `b21`, `y1`, `y2`, `s26a`, `s26b`, `z1`, `r4`, `r5`, `r7`) | Proje sahibi |
+| `b10`, `b18`, `b20`, `b23`, `u`, her `k` ("Bu sizin kararınız mı?", KD-25 önek teyidi, sıfırlama soruları), `s29b` | Avukat (avukat cevabına bağlı: soru 2; cevap olumsuzsa yeniden açılır) |
+
+Kit tuşa kimin bastığını bilemez (§32/39 d); satır beyandır.
+
+#### Ek R4/8.6 Günlerin sırası ve kullanıcı sayfasının iskeleti
+
+**Sayfa iskeleti** (tasarım v2 §5; metin dilim 5'te yazılır, N114
+değişmez): biçim N114 ile aynıdır — G1–G9, HAZIRLIK, gün bölümleri
+(AKTARIM GÜNÜ, İŞLEME GÜNÜ 1, gerekirse İŞLEME GÜNÜ 2, SON GÜN, ERKEN
+KAPANIŞ, SİLME OTURUMU), DUR OLURSA D1–D7 (ve Ek R4/13'ün `ev.ps1`
+satırı ile iki tetiği), BİTİŞ. Her YAP hücresinde tek eylem; GÖRMEZSEN
+yanlış anda görülen başarıyı da kapsar; kapatma kuralı aynen (fareyle X,
+Alt+F4 yok). Kopyalanacak satırlar gün başına KÜME, KİT ve gerekirse
+ADMIN ile İMHA Win+R satırlarıdır (değerleri doldurulmuş; güvenli dosya
+yolu yok). **AVUKAT EKRANA BAKAR** hücreleri: `b6` sonu, `g8`, `b10`,
+`b12`, `g14`, `g16`, `b18`, `b20`, `b23`, `u`, `s29b` ve her `k` (`b7`
+operatörün hücresidir; O4). **ONAY — proje sahibi** hücreleri: `b11`,
+`b13`, `b14`, `b16`, `b21`, `y1`, `y2`, `s26a`, `s26b`, `z1` (ve
+gerekirse `r4`, `r5`, `r7`). Günlerin sırası:
+
+1. **Aktarım günü** (E3): HAZIRLIK → KÜME → KİT (iki kit birlikte) → `a2`
+   → en az 2 dk → `a3` → `b0` → `b1` (ilk oturum dalı: teknik kayıt,
+   restricted izinli küme, VeraCrypt Hakkında sorusu, `FORM_F1`) → `a4`
+   → "Farklı kaydet" → `a5` → telefon → `a6`/`a7` → `a8` → `b2` → `a9` →
+   kapat. Bugünkü sayfa madde 3b (N117 yapıştırması) ile 3c ve 3d (§13.8
+   kapıları ve teknik kayıt) `b0` ve `b1` ile kalkar (dilim 5).
+2. **İşleme günü 1** (tipik bölünme; ölçülmedi): KÜME → KİT → `a2` → `a3`
+   → `b0` → `b1` → `b5` → `b5d` → `b6` → `k intake` (gerekirse `k uyari`)
+   → `b7` → `g8` → `k girdi` → `b8` → `b9` (`b09a`) → ADMIN `y1` → `b9`
+   (`b09b`) → `b10` → `b11` → `b12` → `k fact` → `b13` → `g14` →
+   `k dogrulama` → `b14` → `b15` → `g16` → `k zamancizelgesi` → `b16` →
+   `a9` → kapat.
+3. **Son gün** (adım 18–23 + silme; aynı ziyaret; KD-16 b, AÇIK-11):
+   KÜME → KİT → `a2` → `a3` → `b0` → `b1` → `k durdurucu` → `k adlitatil`
+   → `b18` → `b19` → `b20` → `k sure` → `b21` → `b22` → `b23` → `b24`
+   (`b24a`) → ADMIN `y2` → `b24` (`b24b`) → **`k silme`** → **`s25`** →
+   `s26a` → `s26b` → `s27` → `s28` → `s29a` → `a9` → VeraCrypt'te ayır →
+   İMHA penceresi: `z1` → `s29b` → BİTİŞ. Sayfa açıkça yazar: "Adım 23 ile
+   silme aynı ziyarettedir. Silme, `b23` bittikten sonraki 24 saat (F1)
+   içinde, `z1` dahil, bitmelidir. Avukat silme kararını bu ziyarette
+   eksiksiz verir; yarım kalırsa silme başlamaz ve avukat `k silme` ile
+   kaldığı yerden devam eder. Bu sürede bitmeyecekse `b23`'e başlamayın."
+   (avukat cevabına bağlı: soru 10; cevap olumsuzsa yeniden açılır)
+4. **Erken kapanış** (Ek R4/14): `k uygunsuz` → `u` → (assignment varsa)
+   `b24a` → ADMIN `y2` → `b24b` → `k silme` → `s25`
+   (`<report-produced>`=`$false`) → `s26a` → `s26b` → `s27` → `s28` →
+   `s29a` → `a9` → VeraCrypt'te ayır → `z1` → `s29b`.
+5. **Kararların sırası.** Kit karar kayıtlarının sırasını kayıtlardan
+   denetler: `k girdi` `b07-r<n>`'den sonra; `k fact` `b12`'den sonra;
+   `k dogrulama` `b13`'ten sonra; `k zamancizelgesi` `b15`'ten sonra;
+   `k sure` `b20`'den sonra; `k silme` normal yolda `b24b`'den (veya
+   `REVOKE_NOT_NEEDED`'den) sonra. Sıra dışı karar kilitsiz reddedilir
+   (`K_ORDER`) ve dosya yazılmaz.
+
+#### Ek R4/8.7 `REAL_ACTION_APPROVED` yöntemi (KD-9 iii; AÇIK-2)
+
+1. **Model.** Pencere öncesinde yazılı yöntem kararı + her apply, silme
+   ve revoke için kit ekranında hedef ve digest'e bağlı E/H. Kayıt
+   CLI'den veya silmeden **önce**, adımın kendi kaydına:
+   `REAL_ACTION_APPROVED step=<komut> target=<aile>:<case-id>/<hedef> digest=<64 hex> at=<zaman> basis=project-owner-E-at-kit`.
+   H → apply çağrılmaz, kilitsiz red. Hedef ve digest ekranda **onaydan
+   önce** gösterilir (CLAUDE.md §14.9 "hedefi belirterek"). Silmede
+   digest, ilgili manifestin (`s26a`: case manifesti; `s26b`: restricted
+   manifesti; `z1`: `container-record.txt`) SHA-256'sıdır.
+2. **Pencere öncesi `USER_DECISION` metni** (pencere öncesi ajan
+   oturumunda kullanıcı yazar, ajan kaydeder; tasarım v2 §7c):
+
+   > USER_DECISION approval-method at=<an>: Gerçek koşuda operatör ve
+   > proje sahibi aynı kişidir (ben). Kit2'nin `b11`, `b13`, `b14`, `b16`,
+   > `b21`, `y1`, `y2`, `s26a`, `s26b`, `z1` ve gerekirse `r` uygulama
+   > adımlarında ekranda gösterdiği hedef ve digest için verdiğim E cevabı,
+   > CLAUDE.md §14.9 anlamında o hedefe ait ayrı ve açık
+   > `REAL_ACTION_APPROVED` onayımdır. Bu karar yöntemi sabitler; onayın
+   > kendisi her adımda kit ekranındaki E'dir. H cevabı o adımın
+   > yapılmaması demektir. Kit2'nin `k uyari` ekranında validator
+   > uyarılarının kabulü sorusuna verdiğim E, runbook §11.3 (d) anlamında
+   > o uyarıları kabul edilebilir saydığıma dair yazılı kabulümdür. Acil
+   > silme sayfası yolunda sayfadaki her silme hedefinin onay satırını
+   > okuyup o hedefin bloğunu çalıştırmam, o hedef için ayrı ve açık
+   > `REAL_ACTION_APPROVED` onayımdır.
+
+   Son iki cümle yöntem kararının **zorunlu** parçasıdır (kullanıcı kararı
+   `USER_DECISION at=2026-10-21T17:22:12+03:00`; inceleme L5 ve O5; dar
+   düzeltme turu D-10, D-15). Biri eksikse metin yöntem kararı sayılmaz:
+   ajan `approval-method.txt`'yi yazmaz ve kit hiçbir onay sormaz
+   (`APPROVAL_METHOD_MISSING`).
+
+3. Bu metin kaydedildikten sonra sonraki incelemeler kit ekranındaki E'yi
+   eksik yetki saymaz (kullanıcı kararı). Metin kaydedilmeden kit hiçbir
+   apply, silme veya revoke onayı sormaz (`APPROVAL_METHOD_MISSING`;
+   kurulum `kit-build2.txt`'ye kararın SHA-256'sını yazar).
+4. **Dürüst sınır.** Kit tuşa kimin bastığını bilemez (§32/39 d).
+5. **Silme.** Her silme hedefi ayrı E/H ve kayıt; yazılı silme kararı
+   (`k silme` PASS) olmadan kit silme onayı sormaz. Yazılı silme kararı
+   avukatındır (`LEGAL_APPROVED`, Form F); E/H onu **yerine koymaz**.
+### Ek R4/9 CLI izinli anahtar listeleri ve "asla kaydedilmez" listesi
+
+Süzgeç (Ek R4/6 madde 7) bir satırdaki `anahtar=değer` belirteçlerinden
+**yalnız** aşağıdaki listede o blok için adı geçen anahtarları, verilen
+biçimle doğrulayarak kayda alır (CLI'nin kendi küçük harfli anahtar
+adıyla). Biçim kısaltmaları: **h64** `^[0-9a-f]{64}$`; **bool**
+`^(True|False)$` (Python'un `bool` yazımı); **kbool** `^(true|false)$`
+(CLI'nin kendisinin küçük harfle bastığı değer); **int**
+`^(0|[1-9][0-9]{0,9})$`; **kimlik** `^[a-z0-9_-]{3,64}$`; **söz** verilen
+sabit değerler (büyük-küçük harf dahil, `-ceq`). Kimlik değerleri kayda
+girmeden önce `kit2-case.txt` ile ordinal karşılaştırılır. Süzgeç satırı
+boşlukla belirteçlere böler; tek istisna `allowed_evidence_documents=`
+satırıdır (aşağıda).
+
+**Biçimlerin dayanağı (inceleme M4; dar düzeltme turu D-5).** Biçimler
+`bb3e5b4` kaynağındaki yazım satırlarından okunmuştur: `excerpt_found`
+küçük harf (`ui/cli_mutate.py` L1884); `allowed_evidence_documents` bir
+Python listesinin metni, ör. `['doc_a', 'doc_b']` (`ui/cli_mutate.py`
+L1840; `ui/services/fact_verification_mutation_facade.py` L595
+`sorted(...)`); `observed_post_hash` değer yoksa Python'un `None`'u
+(`ui/reconciliation_operator.py` L307); deterministik `generation`
+önizlemesinde `pending_sha256` bekleyen dosya yoksa `None`
+(`ui/services/common.py` L294 `sha256_file`;
+`ui/services/generation_mutation_facade.py` L1169); `journal_id` tamsayı
+(`ui/cli_mutate.py` L1900); `replayed`, `pending_exists`,
+`canonical_exists`, `validation_ready`, `source_locator_present` Python
+`bool`'u. `EXPECTED_HEAD` değişirse bu satırlar yeniden okunur ve tablo
+yeniden pinlenir (§34.13 yorum 18).
+
+**"Zorunlu" sütunu.** Komutun PASS'i için kayıtta bulunması gereken
+anahtarlardır; biri yoksa veya biçimine uymuyorsa sonuç kilitlidir (Ek
+R4/6 madde 9). "İzinli" sütununda olup "Zorunlu"da olmayan anahtarlar
+varsa kayda girer, yoksa eksiklik değildir.
+
+| Blok (komut) | CLI | İzinli anahtarlar | Zorunlu |
+|---|---|---|---|
+| N26 (`b5`) | `pdftotext` | Bloğun kendi `PDFTOTEXT_RC` (int) | `PDFTOTEXT_RC` |
+| N32, N33 (`b6`; `b5d` kayıtsız) | `src.case_validator`, `src.case_document_validator` | CLI `anahtar=değer` basmaz; kit2'nin doğrulayıcı ayrıştırıcısı (kit kodu) türetilmiş satırları yazar: `VALIDATOR_CASE_RESULT` / `VALIDATOR_DOCUMENT_RESULT` (söz `PASS`/`FAIL`), `VALIDATOR_PATH_MATCH` (bool: başta basılan yol `<case-root>` altını gösteriyor), `VALIDATOR_CASE_ID_MATCH` (bool: `Case ID:` satırı `<case-id>`), `VALIDATOR_ERROR_COUNT`, `VALIDATOR_WARNING_COUNT` (int). Ayrıştırıcının tanıdığı başlık ve bölüm işaretleri (`CASE GEÇERLİ`, `UYARILAR:` vb.) iki modülün bb3e5b4'teki `main` çıktısından dilim 2'de pinlenir | Ayrıştırıcının o blok için tanımladığı türetilmiş satırların hepsi (hangilerinin hangi modüle ait olduğu dilim 2'de, işaretlerle birlikte pinlenir); ayrıştırıcı bir satırı türetemezse kilitli |
+| N36, N93 (`y1`, `y2`) | `scripts.iam_admin` | Tam bir `OK` satırı → `IAM_ADMIN_OK_LINE_SEEN=True` | `IAM_ADMIN_OK_LINE_SEEN` |
+| N38 (`b1`) | `pip check` | Tam bir `No broken requirements found.` satırı → `PIP_CHECK_CLEAN=True` (dizge dilim 1'de pinlenir) | `PIP_CHECK_CLEAN` |
+| N39 (`b1`) | `pip freeze` | Bloğun kendi `RUNTIME_PACKAGE_SET` (söz `MATCH`) | `RUNTIME_PACKAGE_SET` |
+| N40 (her `psql` ölçümü) | `psql` | Bloğun `PSQL_EXIT`, `PSQL_READ_ONLY`, `PSQL_ROW_COUNT`; `PSQL_ROW=` **asla**; satır değerleri yalnız bellekte ayrıştırılır ve sorguya göre türetilmiş satırlar yazılır: `ACTIVE_ASSIGNMENT_COUNT`, `ASSIGNMENT_TOTAL_COUNT`, `USERS_ENABLED` (N43–N45, N92), `JOURNAL_BASELINE_MAX_ID` (N90), `JOURNAL_NEW_ROW_COUNT`, `JOURNAL_NEW_ROW_STATE`, `JOURNAL_FAMILY_MATCH`, `JOURNAL_ACTOR_MATCH` (N91), `JOURNAL_UNRESOLVED_COUNT` (N42, N66), `JOURNAL_ROW_COUNT` (N41), `FACT_EXTRACTION_ROW_COUNT` (N72) | `PSQL_EXIT`, `PSQL_READ_ONLY`, `PSQL_ROW_COUNT` ve o sorgunun parantez içinde adı geçen türetilmiş satırlarının hepsi |
+| N62 (`b10`, `r6`) | `cli_mutate manual-fact` preview | `case_id`, `document` (kimlik), `target_ref` (`^fact\.[a-z0-9_-]+\.pending$`), `input_digest`, `pending_sha256`, `text_excerpt_sha256` (h64), `excerpt_found` (**kbool**), `verification_state` (söz `unverified`; satırın geri kalanı düşer) | Hepsi |
+| N63 (`b11`, `r7`) | `manual-fact` apply | `case_id`, `document`, `pending_sha256` (h64), `audit_file` (`^[A-Za-z0-9._-]{1,128}\.json$`, yalnız dosya adı), `journal_id` (int), `attempt` (int), `replayed` (bool) | Hepsi |
+| N74 / N75 (`b13`), N80 / N81 (`b16`) | `promotion` | Preview: `row_key` (söz `fact`, `timeline`), `case_id`, `document`, `pending_hash` (h64), `canonical_exists`, `validation_ready` (bool). Apply: `row_key`, `document`, `canonical_hash` (h64), `replayed` (bool) | Preview: `row_key`, `case_id`, `pending_hash`, `canonical_exists`, `validation_ready`; `document` yalnız `fact`'te. Apply: `row_key`, `canonical_hash`, `replayed`; `document` yalnız `fact`'te |
+| N76 / N77 (`b14`) | `verification` | Preview: `case_id`, `document`, `fact_id` (`^fact_[a-z0-9_-]{1,120}$`), `from_state` (söz `unverified`, `partially_verified`, `verified`, `disputed`, `rejected`), `source_locator_present` (bool), `canonical_sha256` (h64). `allowed_evidence_documents` **kayda girmez**: değeri `=`'den sonra satırın geri kalanıdır, bellekte `^\[(?:'[a-z0-9_-]{3,64}'(?:, '[a-z0-9_-]{3,64}')*)?\]$` (`-cmatch`) ile ayrıştırılır (uymazsa kilitli) ve kayda yalnız türetilmiş `ALLOWED_EVIDENCE_DOCUMENT_COUNT` (int) ve `ALLOWED_EVIDENCE_INCLUDES_DOCUMENT` (bool; listede `kit2-case.txt`'deki `document-id` ordinal olarak var mı) girer. Apply: ayrıca `target_state` (aynı sözlük), `canonical_hash` (h64), `replayed` (bool); stale-downstream bloğu → yalnız `STALE_DOWNSTREAM_SEEN=True` | Preview: hepsi (iki türetilmiş satır dahil). Apply: `case_id`, `document`, `fact_id`, `from_state`, `target_state`, `canonical_hash`, `replayed`; `STALE_DOWNSTREAM_SEEN` isteğe bağlı |
+| N78 / N79 (`b15`), N82 / N83 (`b19`) | `generation` | Preview: `row_key` (söz `timeline`, `deadline`), `case_id`, `anchor` (kimlik; yalnız deadline), `target_ref` (`^[a-z_]+\.[a-z0-9_.-]{1,128}$`), `input_digest` (h64), `pending_sha256` (h64 veya söz `None`; `None` yalnız `pending_exists=False` iken), `pending_exists` (bool). Apply: `row_key`, `anchor`, `pending_sha256` (h64), `replayed` (bool) | Preview: `row_key`, `case_id`, `target_ref`, `input_digest`, `pending_sha256`, `pending_exists`; `anchor` yalnız `deadline`'da. Apply: `row_key`, `pending_sha256`, `replayed`; `anchor` yalnız `deadline`'da |
+| N86 / N87 (`b21`) | `approval` | Preview: `row_key` (söz `deadline`), `case_id`, `pending_hash` (h64), `validation_valid` (bool; `None` biçime uymaz → kilitli). Apply: `row_key`, `canonical_hash` (h64) | Hepsi |
+| N88 (`b22`) | `ui.deadline_report` | stdout'ta `RAPOR YAZILDI: ` ile başlayan tek satır → yalnız `REPORT_WRITTEN_LINE_SEEN=True`; stderr'de `RAPOR REDDEDİLDİ: <kod>` → `REPORT_REFUSAL_CODE` (`^[A-Z0-9_]{1,64}$`) | `REPORT_WRITTEN_LINE_SEEN` (`REPORT_REFUSAL_CODE` yalnız red yolunda; varsa kilitli) |
+| N122 (`b22`) | — | `EXPIRY_LINE_PRESENT`, `DISCLAIMER_LINE_PRESENT` (bool); bloğun yalın hash satırı `^[0-9a-f]{64}$` → `REPORT_SHA256` | Hepsi |
+| N69 (`r3`), N70 (`r4`) | `ui.reconciliation_operator` | `journal_id` (int; `DRY RUN journal_id=` ve `APPLIED journal_id=` satırlarından), `new_state` (söz `completed`, `failed`, `reconciliation_required`), `resolution_code` (`^[A-Za-z0-9_]{1,64}$`), `observed_post_hash` (h64 veya söz `None`), `resolved_by_actor_type` (söz `cli_service`), `resolved_by_actor_ref` (söz `local-pilot-operator`) | N69: `journal_id`, `new_state`, `resolution_code`, `observed_post_hash`. N70: bunlar ve `resolved_by_actor_type`, `resolved_by_actor_ref` |
+| N71 (`r5`) ve CLI'siz runbook blokları | — | Bloğun runbook metninde beklenen kendi durum anahtarları (`[A-Z0-9_]+=`; ör. `PATH_OK`, `SYSTEM_TEMP_MATCH`, `TOOL_MANIFEST_MATCH`, `ALLOWED_FILE_HASH_OK`, `CASE_DELETE_GUARD`); istisnalar aşağıda | Runbook'un o blok için PASS saydığı durum satırlarının hepsi |
+
+**Asla kaydedilmeyenler** (ne kayda ne red dosyasına; ilk dördü ekranda
+da gösterilmez): (1) `notification_date=`, `page=` ve her tarih, sayfa
+numarası ve alıntı; (2) `canonical_path=`, `audit_path=`, `pending_path=`,
+`RAPOR YAZILDI: <yol>` ve her mutlak yol; (3) ipucu satırları (`Uygulamak
+için:`, `Onaylamak için:`, `Üretmek için:`, `Sonraki adım:`); (4)
+`SYSTEM_TEMP_USER=`, `SYSTEM_TEMP_WINDOWS=` (N12; R1); (5) `ERROR:`
+ileti gövdesi (yalnız sınıf adı ve `M-xx` kodu); (6) traceback gövdesi
+(yalnız `TRACEBACK_SEEN=True`); (7) validator gövdesi; (8)
+`STALE_DOWNSTREAM`/`RERUN_ORDER`/`NO_COORDINATED_PATH` blokları (yalnız
+"blok görüldü"); (9) `PSQL_ROW=` satırları; (10) git çıktı satırları
+(Ek R4/10); (11) N94'ün göreli yol satırları (yalnız ekran; `s25`
+E/H'si için); (12) karar dosyalarından sözlük değerleri dışındaki her
+şey (kimlikler yalnız eşleşme boolean'ı, `REFERANS` yalnız uzunluk);
+(13) `TUZ=` değerleri (ne kayıt ne ekran); (14) kör hesabın, intake
+formunun ve JSON'ların içeriği (yalnız SHA-256); (15) güvenli dosyanın
+ve acil sayfanın değerleri; (16) `allowed_evidence_documents`'ın ham
+liste değeri (yalnız iki türetilmiş satır; dar düzeltme turu D-5).
+
+**Yalnız ekran listesi** (içerik gösteren adımlar; süzgece ve hiçbir
+dosyaya verilmez; ardından "Bu ekrani hicbir yere yapistirmayin,
+fotografini cekmeyin."): `b6` sonu alan özeti, `b7` aday listesi, `g8`,
+`b10` tarih ve sayfa, `b12` tek fact, `g14`, `g16`, `b20` ve `b23` iki
+tarih, `s25` göreli yollar.
+
+### Ek R4/10 Blok başına `CLI_RC` kuralı (O-Y3)
+
+Kural: `CLI_RC` **yalnız** bloğun son yerel çağrısı bir CLI ise (Python
+modülü, `psql`, `pdftotext`) yazılır. Son yerel çağrı `git` olan bloklarda
+`CLI_RC` yazılmaz; başarı (a) bloğun kendi durum satırlarından ve (b)
+bloğun `anahtar=değer` olmayan çıktı satırlarının **sıralı** listesinin,
+runbook'un o blok için yazdığı beklenen listeyle bellekte ordinal olarak
+**birebir** aynı olmasından okunur. Kayda yalnız `GIT_OUTPUT_MATCH=True`,
+`GIT_OUTPUT_LINE_COUNT=<n>` ve `GIT_STDERR_LINE_COUNT=0` girer; satırların
+kendisi girmez. Fark → `STOP GIT_OUTPUT_MATCH=False` (kilitli).
+
+| Blok | Yerel çağrılar (sıra) | Son çağrı | Kural |
+|---|---|---|---|
+| N26 | `pdftotext` | `pdftotext` | `CLI_RC` yazılır; bloğun `PDFTOTEXT_RC`'si ile aynı olmalı |
+| N32, N33 | `python` | `python` | `CLI_RC` yazılır |
+| N34 | 3 × `git` | `git` | `CLI_RC` yok. Beklenen liste: intake'ten sonra `!! data/cases/<case-id>/` ve `.gitignore`'daki `/data/cases/` kuralını gösteren tek `check-ignore` satırı (§11.3 e); `s29a`'da (silmeden sonra) yalnız `check-ignore` satırı (§30/2) |
+| N36, N93 | `python` | `python` | `CLI_RC` yazılır |
+| N37 | 5 × `git` | `git` | `CLI_RC` yok. Beklenen liste (§13.2): `claude-dev`; `EXPECTED_HEAD`; (çalışma ağacı temiz: satır yok); intake'ten önce ignored satırı yok, intake'ten sonra yalnız `!! data/cases/<case-id>/`; `docs/operations/concierge-local-case-pilot.md`. `s29a`'da (§30/3): ignored satırı yok |
+| N38 | `python` | `python` | `CLI_RC` yazılır |
+| N39 | `python` (`pip freeze`), sonra yalnız PowerShell | `python` | `CLI_RC` yazılır ve bloğun `RUNTIME_PACKAGE_SET=MATCH` satırı gerekir |
+| N40 | `psql`, sonra yalnız PowerShell | `psql` | `CLI_RC` yazılır; bloğun `PSQL_EXIT=0` satırı gerekir |
+| N49 | `git` (değişkene alınır), sonra yalnız PowerShell | `git` | `CLI_RC` yok; başarı `PATH_OK=repo-root`; çıktı satırı yok |
+| N62, N69, N70, N74, N76, N78, N80, N82, N86, N88 | `python` | `python` | `CLI_RC` yazılır |
+| N63, N75, N77, N79, N81, N83, N87 | Argüman denetimi, sonra (geçerse) `python` | `python` | Denetim geçmezse `CLI_CALLED=False` ve bloğun `STOP …=INVALID` satırı (kilitli); geçerse `CLI_RC` yazılır |
+| N71 | `psql`, sonra yalnız PowerShell | `psql` | `CLI_RC` yazılır ve bloğun beklenen durum satırları (§14.6/6) gerekir |
+| N98 | 2 × `git`, sonra guard | `git` | `CLI_RC` yok; başarı `CASE_DELETE_GUARD=PASS`; beklenen liste yalnız `!! data/cases/<case-id>/` (§28.3.1) |
+| N99 | Silme, sonra 2 × `git` | `git` | `CLI_RC` yok; başarı `CASE_DELETE_RESULT=COMPLETED`, `CASE_DIR_ABSENT=True`; beklenen liste boş (§28.3.1) |
+| N101 | Silme, sonra 3 × `git` | `git` | `CLI_RC` yok; başarı §28.3.2'nin beş durum satırı; beklenen liste boş |
+| Kit2'nin 7z sürüm bloğu | 7z (süreç nesnesi) | 7z | Çıkış kodu süreç nesnesinden (N16 kalıbı); `LASTEXITCODE` kullanılmaz |
+
+Kit2'nin **çalıştırmadığı** yerel çağrılı bloklar: N9 (`git clone`;
+§4.4/3 kurulum), N10 (`icacls`; §4.4/4 kurulum), N16 ve N17 (7z; kit1
+`a5`–`a7`).
+
+### Ek R4/11 Restricted sabit ad listesi, türetilmiş bloklar ve satır parçaları
+
+**Sabit ad listesi (KD-24; 15 ad; aktarım günündeki ilk `b1`'de N118 ile
+bir kez dondurulur, sonradan eklenemez; §10.5/3)** (avukat cevabına bağlı:
+soru 4, 6, 7, 8 ve 11; cevap olumsuzsa yeniden açılır — bu yüzden cevaplar
+aktarım gününden önce gelmelidir):
+
+| Ad | Yazan | Tür / içerik |
+|---|---|---|
+| `deadline-report.txt` | `b22` (N88) | Deadline raporu (§19) |
+| `blind-calc.txt` | `b18` (şablon N134; avukat) | Kör hesap (§17.2) |
+| `decision-intake.txt` | `k intake` (N123) | `INTAKE_APPROVED` (§11.4) |
+| `decision-warnings.txt` | `k uyari` (N124) | `VALIDATOR_WARNINGS_ACCEPTED` (§11.3 c–d) |
+| `decision-input-r1.txt`, `-r2.txt`, `-r3.txt` | `k girdi` (N125) | `MANUAL_INPUT_COMPARED` (§14.3; en çok 3 sürüm, §14.5.3) |
+| `decision-fact.txt` | `k fact` (N126) | `FACT_ACCEPTED` (§15) |
+| `decision-verification.txt` | `k dogrulama` (N127) | `VERIFICATION_VERIFIED` (§15.3) |
+| `decision-timeline.txt` | `k zamancizelgesi` (N128) | `TIMELINE_APPROVED` (§16) |
+| `decision-stopping-event.txt` | `k durdurucu` (N129) | `STOPPING_EVENT` (§17.1) |
+| `decision-judicial-recess.txt` | `k adlitatil` (N130) | `JUDICIAL_RECESS` (§17.1) |
+| `decision-deadline.txt` | `k sure` (N131) | `DEADLINE_APPROVED` (§18.4) |
+| `decision-deletion.txt` | `k silme` (N132) | `DELETION_DECISION` (Form F; §28.1) |
+| `decision-unsuitable.txt` | `k uygunsuz` (N133) | `PILOT_UNSUITABLE` (Ek R4/14) |
+
+**Reconciliation kararı için ad yoktur** (bu ekin seçimi: errata-3
+§10.9 bu kararı dilim 0'a bırakmıştı; §34.13 yorum 16; inceleme O2).
+§14.6'nın her adımı kullanıcı kararı ve ayrı `REAL_ACTION_APPROVED`
+ister; avukat kararı istemez. Kit2 bu kararları `r4`, `r5`, `r7`
+ekranlarındaki proje sahibi E'si olarak alır (Ek R4/8.7); restricted'a
+dosya yazılmaz.
+
+**Türetilmiş bloklar** (§34 türetilmiş blok kuralı; dosya sonunda, Ek
+R4/18; her biri ilk satırlarında kaynak bloğu, kaynağın SHA-256'sını ve
+değişen satırları söyler; hepsi M1, M2 ve L-Y1'e uyar):
+
+| Yeni blok | Kaynak | Değişen | Kullanan |
+|---|---|---|---|
+| N118 | N20 | `$allowedNames` 15 ad; tekillik denetimi Ordinal sözlükle | `b1` (ilk oturum) |
+| N119 | N96 | `$rSetOk` son koşulu yerine `decision-deletion.txt` varlığı; `<report-produced>` tek tırnaklı dizgede karşılaştırılır | `s25` |
+| N120 | N96 | `$rSetOk` son koşulu çıkarıldı (karar dosyaları için koşul yok); `<report-produced>` aynı biçimde | Acil silme sayfası (Ek R4/13) |
+| N121 | N35 | ASCII dışı karakterler `[char]0x…` kaçışıyla | `b6`, `b5d` menüsü |
+| N122 | N89 | Aynı | `b22` |
+
+Elle yürütülen runbook yolunun N20, N35, N89 ve N96'sı **değişmez**; o
+yolda bugünkü beklentiler (izinli tek ad, dosya sayısı 1 veya 0) aynen
+geçerlidir. Bir koşu kit2 ile başladıysa (izinli küme N118 ile yazıldıysa)
+o koşuda elle N96 kullanılamaz; yedek yol N120'dir (Ek R4/13). **Kodu
+değişmeyen ama beklentisi değişen bloklar** (errata-3 §10.5; L5): N22
+(envanter; izinli küme 15 ad olduğu için `RESTRICTED_FILE_COUNT` beklentisi
+değişir: §10.5, §19, §28.2, §29 metinleri), N95 (case manifesti;
+restricted'a bakmaz), N100 ve N101 (restricted guard'ı ve silmesi; kayıtlı
+izinli kümeyi okur, yeni adlarla değişmeden çalışır).
+
+**Satır parçası** (bir bloğun yalnız bir kısmının çalışması; errata-3
+§5.6). Kit1'in `FirstLine` mekanizması yalnız ilk satırı çalıştırabildiği
+için başka bir satır gereken yerde parça, kaynak blokla **bayt bayt aynı
+satırlardan** oluşan türetilmiş parça olarak pinlenir (hash = satırların
+LF ile birleştirilip sona LF eklenmiş UTF-8 baytları; §34.8 kuralı):
+
+| Parça | Kaynak | Satırlar | SHA-256 | Kullanan |
+|---|---|---|---|---|
+| `N57/1` | N57 (`25bbbc148519ccbb60cb8c30549632bc837732a31a3c9d0f7568d1d4e15684c6`) | 1 (`FirstLine`; parça dosyası gerekmez) | `672ef93e0024bee3f6123c2fc25ec167c24696ed3d44dc6e8356c61348e63b6e` | `b1` (intake'ten önce) |
+| `N57/2` | N57 | 2 | `1888f4616b31fd5c4abaf77b0e36e2e28d6085211df57649f94947ff93d72216` | `b1` (intake'ten sonra), `b5` sonrası her oturum |
+
+Başka parça yoktur: git bloklarının (N34, N37, N98, N99, N101) çıktıları
+birleşik hâlde Ek R4/10 kuralıyla tek anlamlı karşılaştırılır; N14
+(kit1'de yalnız satır 1) kit2'de tam blok olarak çalışır (inceleme O2 a).
+
+### Ek R4/12 Karar dosyaları, kör hesap ve intake formu
+
+#### Ek R4/12.1 Karar dosyaları (`k <tür>`)
+
+1. **Yazım (AÇIK-10, KD-10).** İçerik penceresinde tarayıcı veya e-posta
+   açılmaz. Avukat cihaz başında kararını `k <tür>` ile kitin açtığı Not
+   Defteri'ne kendisi yazar (avukat cevabına bağlı: soru 1 ve 4; cevap
+   olumsuzsa yeniden açılır). Türler ve şablonlar Ek R4/11 tablosundadır
+   (N123–N133).
+2. **Ön koşul (M-Y1).** Tür argümanı geçerli; o tür için (girdi
+   kararlarında o revizyon için) **PASS kaydı yok**; `s25` PASS yok
+   (`RESTRICTED_FROZEN`); türün sıra koşulu sağlanmış (Ek R4/8.6 madde 5;
+   `K_ORDER`). Üç durum:
+   - **Dosya yok** → kit şablonu yazar (`<tuz>` her dosya için
+     `RandomNumberGenerator` ile 32 küçük hex; `<case-id>`; girdi
+     kararlarında `<revizyon>` ve `<girdi-hash-onek>` (KD-25); uyarı
+     kararında `<uyari-sayisi>`) ve Not Defteri'nde açar.
+   - **Dosya var, PASS kaydı yok** → kit şablonu **yeniden yazmaz**; önce
+     kitçe doldurulan satırları denetler (madde 4), sonra **aynı dosyayı**
+     açar. Girilenler ve `TUZ=` korunur.
+   - **PASS kaydı var** → kilitsiz red `K_ALREADY_DECIDED` ("Bu karar
+     zaten kaydedildi."); dosya yeniden açılmaz (PASS'ten sonra kitin
+     dosyayı yeniden açması `s25`/`s26a` hash denetimini delinebilir
+     yapardı).
+3. **Denetim (Not Defteri kapanınca; kilitsiz döngü).** Sırayla: BOM yok
+   (`K_BOM`); UTF-8 geçerli (`K_ENCODING`); ilk satır `^TUZ=[0-9a-f]{32}$`
+   (`K_SALT_LINE`); **kimlik satırları, yapı denetiminden önce** (madde
+   4): kit her kitçe doldurulan anahtarı (`KARAR_TURU`, `CASE_ID`, girdi
+   kararlarında `REVIZYON` ve `HASH_ONEK`, uyarı kararında `UYARI_SAYISI`)
+   dosyanın herhangi bir satırında `ANAHTAR=` önekiyle arar; satır yoksa,
+   birden fazlaysa veya değeri kitin durumundan ordinal farklıysa
+   `K_TEMPLATE_IDENTITY` (sıfırlama seçeneği sunulur; avukat bu değerleri
+   bilmediği için elle onaramaz); **satır kuralı** (AÇIK-27; madde 8; dar
+   düzeltme turu D-1): metin yalnız LF ile satırlara bölünür; dosyanın
+   sonundaki tek bir LF satır sayılmaz (yoksa da kabul edilir); herhangi
+   bir CR baytı, şablonla farklı satır sayısı, şablonda olmayan herhangi
+   bir satır (yabancı `#` satırı ve boş satır dahil), şablondaki `#`
+   açıklama satırından ordinal farklı bir satır veya kimlik satırının
+   şablondaki yerinde olmaması → `K_TEMPLATE_LINE`; avukatın dolduracağı
+   satırlar (şablonda `ANAHTAR=BURAYA_…`) aynı sırada aynı `ANAHTAR=`
+   önekiyle başlar, yalnız `=`'den sonraki değer kısmı değişir (önek farkı
+   da `K_TEMPLATE_LINE`); hiçbir değerde `BURAYA_` kalmamış
+   (`K_MARKER_LEFT`); sözlük alanları **tam** sözlük
+   değeri, `-ceq` ile (`K_VALUE`; değere eklenmiş metin de buraya düşer);
+   `REFERANS` kuralı (madde 6; `K_REFERENCE_FORMAT`); `k silme`'de K6
+   denetimi (aşağıda "K6 denetimi"; `K_K6_BRANCH_NOT_NAMED`). Satır kuralı
+   eski `K_LINE_FORMAT`, `K_UNKNOWN_KEY`, `K_DUPLICATE_KEY` ve
+   `K_MISSING_KEY` kodlarının yerine geçer (dosyanın şablonla satır satır
+   aynı yapıda olması bu dördünü kapsar). Hata iletisi yalnız anahtar
+   adını söyler, değeri asla yazmaz; `K_TEMPLATE_LINE`'da satırın
+   numarasını ve **şablondaki** beklenen satırı (pinli, ASCII, içeriksiz)
+   gösterir, dosyadaki satırı göstermez. Sıfırlama seçeneği
+   `K_TEMPLATE_LINE`'da **sunulmaz** (madde 4'teki iki kodla sınırlıdır;
+   `USER_DECISION at=2026-10-20T22:51:52+03:00`). Sonra "Not Defteri
+   yeniden acilsin mi? E / Simdilik birak: H" (AV).
+4. **Kimlik satırları (recheck-2 not 6; `USER_DECISION
+   at=2026-10-20T22:51:52+03:00`; errata-4'ün "kilitli
+   `K_TEMPLATE_IDENTITY`" seçiminin yerine).** Kitin doldurduğu satırlar
+   (`KARAR_TURU`, `CASE_ID`, girdi kararlarında `REVIZYON` ve `HASH_ONEK`,
+   uyarı kararında `UYARI_SAYISI`) kitin durumuyla ordinal aynı değilse
+   **kilitsiz** red `K_TEMPLATE_IDENTITY` (red dosyası yalnız kod ve
+   zaman) ve tek seçenek: "Sablon bastan olusturulsun mu? Girdikleriniz
+   silinir. E / Simdilik birak: H" (AV). E → kimlik satırları kitin kendi
+   durumundan yeniden yazılır, avukat alanları `BURAYA_` işaretlerine
+   döner, yeni `TUZ=` üretilir. Aynı kural **ilk yazımın ayrıştırmasında
+   da** geçerlidir. `TUZ=` satırı silinmiş veya bozulmuşsa (`K_SALT_LINE`)
+   aynı sıfırlama seçeneği sunulur (avukat tuzu bilmez, elle onaramaz).
+   Sıfırlama yalnız bu iki kodda sunulur; diğer hatalarda dosya korunur.
+5. **Teyit ve kayıt.** Denetim geçince kit ayrıştırılmış sözlük
+   değerlerini (ve KD-25 için şablondaki öneki girdi kaydının önekiyle yan
+   yana) ekranda gösterir: "Ekrandaki ozet sizin karariniz mi?" (AV). H →
+   kayıt yazılmaz, dosya kalır, aynı `k <tür>` dosyayı yeniden açar
+   (`K_NOT_CONFIRMED`). E → `steps\d\k<seq>.txt` (CreateNew; `<seq>` =
+   en büyük mevcut `k` numarası + 1):
+
+   | Satır | Kaynak |
+   |---|---|
+   | `INBOUND_DECISION_RECEIVED seq=<n> sha256=<64 hex> channel=at-device` | Dosyanın baytları, olduğu gibi (AÇIK-5; normalleştirme yok; tuz dahil) |
+   | `DECISION_KIND=<tür>` | Sözlük |
+   | `DECISION_FILE=<sabit ad>` | Ek R4/11 listesi |
+   | `CASE_ID_MATCH=True` | Şablondaki kimlik = `kit2-case.txt` |
+   | `REVIZYON=r1`/`r2`/`r3`, `HASH_ONEK_MATCH=True` | Yalnız girdi kararlarında |
+   | `UYARI_SAYISI_MATCH=True` | Yalnız uyarı kararında |
+   | Türün sözlük alanları (`SONUC=`, `INTAKE_ITEM_<AD>=`, `DURUM=`, `UYGULANIR=`, `NEDEN=`, `F2=`, `SILME_BU_ZIYARETTE=`, `SILME_OTURUMU_DALLARI=`) | Sözlük değerleri |
+   | `REFERANS_UZUNLUK=<n>` | Yalnız durdurucu kararda; `REFERANS`'ın kendisi ve hash'i yazılmaz |
+   | `DECISION_CONFIRMED basis=lawyer-E` | E/H |
+   | `STEP_RESULT=PASS` | Kayıt tamamlanınca |
+
+   `INBOUND_DECISION_RECEIVED` adı §21/4'ten korunur; `channel=at-device`
+   satırlarının `seq` dizisi pencere öncesi karar kanalı dizisinden
+   (`channel=decision-channel`) ayrıdır. Uyarı kararında ayrıca, §11.3
+   (d)'nin "avukat ile kullanıcı" kuralı gereği, proje sahibinin ikinci
+   E/H'si `WARNINGS_ACCEPTED_BY_PROJECT_OWNER=True basis=project-owner-E-at-kit`
+   satırıyla yazılır; bu E, yöntem kararının zorunlu cümlesi gereği
+   §11.3 (d) anlamında proje sahibinin yazılı kabulüdür (Ek R4/8.7 madde
+   2; inceleme L5).
+6. **`REFERANS` (durdurucu karar; M6, L-Y4).** Değer
+   `^[A-Za-z0-9](?:[A-Za-z0-9 ._-]{0,62}[A-Za-z0-9._-])?$` kalıbına
+   (`-cmatch`) uyar: 1–64 karakter, harf veya rakamla başlar, boşlukla
+   bitmez. Ayrıca şu iki kalıptan birini taşıyan değer reddedilir: tarih
+   benzeri `[0-9]{1,4}[ ._/-][0-9]{1,2}[ ._/-][0-9]{1,4}` ve art arda altı
+   veya daha fazla rakam `[0-9]{6,}`. Bu, §17.1'in 1–200 yazdırılabilir
+   karakter sınırının daraltılmış alt kümesidir; değer N83'ün çift tırnaklı
+   dizgesine metin olarak girdiği için `"`, `\`, `$` ve `` ` `` kapsam
+   dışıdır. Kayda yalnız uzunluk girer. `DURUM` `present` veya `unknown`
+   ise de `REFERANS` bu kalıba uyar (ör. `YOK`). (Avukat cevabına bağlı:
+   soru 4; cevap olumsuzsa yeniden açılır.)
+7. **Her kullanımda yeniden hash.** Bir karar kullanıldığı her adımda
+   (`b7`, `b8`, `b13`, `b14`, `b16`, `b18`, `b19`, `b21`, `u`, `s25`,
+   `s26a`) dosya yeniden hash'lenir ve kayıttaki `sha256` ile ordinal
+   karşılaştırılır. `s26b`'den sonra karar dosyaları yoktur; `z1` yalnız
+   PASS kayıtlarının varlığını denetler.
+8. **Kilitli sonuçlar (AÇIK-27 kapandı: kullanıcı kararı
+   `USER_DECISION at=2026-10-21T15:19:11+03:00`, teyit
+   `USER_DECISION at=2026-10-21T17:22:12+03:00`).** Kilitli küme **yalnız**
+   iki durumdur: kayıt açıldıktan sonra dosya değişti (madde 7'de hash
+   farkı) ve kitin kendi yazma hatası. v2'nin kilitli "içerik belirtisi"
+   sınıfı **kaldırıldı**; recheck-2 not 6'nın o sınıfı kilitli tutan kısmı
+   bu kararla geçersizdir. Şablon dışı her satır veya değer madde 3'ün
+   satır kuralıyla **kilitsiz** reddedilir; red dosyası yalnız kod ve zaman
+   taşır (Ek R4/5 madde 3). Karar dosyaları kapsayıcı içindedir; kayda
+   dosyanın **içinden okunan** değerlerden yalnız sözlük değerleri,
+   boolean'lar ve uzunluklar girer. **Dosya düzeyi** satırlar kayıtta
+   kalır (kullanıcı teyidi; inceleme O3): dosyanın tuzlu SHA-256'sı
+   (`INBOUND_DECISION_RECEIVED … sha256=`; `b19`, `s25`, `s26a` ve H1
+   zinciri buna dayanır), `seq`, `DECISION_KIND` ve `DECISION_FILE`. Bunlar
+   dosyanın içinden okunan değer değildir: hash bütün baytların parmak
+   izidir, diğer üçü kitin kendi durumundandır.
+9. **Avukatın kendi kopyası.** Dosyalar silmeyle (kapsayıcıyla) imha
+   olur; elektronik kopya bu tasarımda yoktur (avukat cevabına bağlı: soru
+   8; cevap olumsuzsa yeniden açılır; AÇIK-16).
+10. **Not Defteri izleri (AÇIK-19 = evet).** Not Defteri açılan dosyanın
+    yerini (sürücü harfi ve genel dosya adı; içerik değil) Windows'un "son
+    kullanılanlar" kaydında tutabilir; bu iz §4.4/8 sınıfına eklenir ve
+    güncellenmiş D9 bildirimi gerektirir (Ek R4/17; soru 9).
+
+**Şablon alanları** (her şablonun ilk üç satırı `TUZ=<tuz>`,
+`KARAR_TURU=<tür>`, `CASE_ID=<case-id>`; ardından ASCII açıklama satırları;
+tam metin N123–N133):
+
+| `k` | Sözlük alanları |
+|---|---|
+| `intake` | `METIN`, `TARAFLAR`, `SAYFA_SAYISI`, `SURE_ALANLARI`, `DIGER_ALANLAR`, `DOGRULAMA_DURUMU`: her biri `KABUL`/`RED` (§11.4'ün maddeleri; kayda `INTAKE_ITEM_<AD>=`) |
+| `uyari` | `UYARI_SAYISI` (kit), `SONUC`: `KABUL`/`RED` |
+| `girdi` | `REVIZYON`, `HASH_ONEK` (kit), `SONUC`: `KABUL`/`RED` |
+| `fact`, `dogrulama`, `zamancizelgesi`, `sure` | `SONUC`: `KABUL`/`RED` |
+| `durdurucu` | `DURUM`: `none`/`present`/`unknown`; `REFERANS` (madde 6) |
+| `adlitatil` | `UYGULANIR`: `yes`/`no` |
+| `silme` | `F2`: `SILINSIN` (bu kit yalnız "Silinsin" içindir; arşiv kapsam dışıdır, §28.5); `SILME_BU_ZIYARETTE`: `EVET`; `SILME_OTURUMU_DALLARI`: `YOK` veya `G5`, `MADDE1`, `MADDE5`, `MADDE6`'nın bu sırayla, boşluksuz virgülle yazılan alt kümesi (§4.3 a, K6; sözdizimi aşağıdaki "K6 denetimi" madde 1) |
+| `uygunsuz` | `NEDEN`: `NO_SINGLE_DATE_LINE`, `LAWYER_REJECTED_ALL_CANDIDATES`, `LAWYER_REJECTED_FACT`, `LAWYER_REJECTED_VERIFICATION`, `LAWYER_REJECTED_TIMELINE`, `LAWYER_REJECTED_DEADLINE`, `OTHER`; `SILME_BU_ZIYARETTE`: `EVET` |
+
+**K6 denetimi (`k silme`; inceleme M3; dar düzeltme turu D-4).** §4.3
+(a) K6 kuralının mekanik karşılığıdır ve `k silme`'nin denetim döngüsünde
+(madde 3), teyitten **önce** çalışır; böylece avukat kararı PASS'ten ve
+`s25` dondurmasından önce düzeltebilir.
+
+1. **Sözdizimi.** `SILME_OTURUMU_DALLARI` değeri ya tek başına `YOK`
+   ya da `G5`, `MADDE1`, `MADDE5`, `MADDE6` kümesinin boş olmayan,
+   tekrarsız, bu sırayla dizilmiş ve boşluksuz virgülle ayrılmış alt
+   kümesidir: `^(YOK|G5(,MADDE1)?(,MADDE5)?(,MADDE6)?|MADDE1(,MADDE5)?(,MADDE6)?|MADDE5(,MADDE6)?|MADDE6)$`
+   (`-cmatch`); uymazsa `K_VALUE`.
+2. **Mekanik dallar.** Kit yalnız **önceki** KİT oturumlarının
+   kayıtlarını okur (o anki oturumun `a9`'u henüz yoktur): G5 = önceki bir
+   `steps\s<k>\a9.txt`'de `SELF_REPORT_AI_HELP_SHARE` değeri `E` veya
+   `yanit_yok`; madde 1 = aynı pencere zamanında açılmış ikinci bir
+   `steps\s<k>\ac.txt`. Görülen dal `SILME_OTURUMU_DALLARI`'nda adıyla
+   yoksa (değer `YOK` dahil) kilitsiz `K_K6_BRANCH_NOT_NAMED`; ileti
+   yalnız dal kodunu söyler ("Silme kararinda G5 dali adlandirilmali
+   (runbook 4.3 a, K6)."); Not Defteri yeniden açılır. Madde 5 ve 6'nın
+   mekanik izi yoktur (kalıntı g); onları avukat operatörün D7
+   bildiriminden bilir.
+3. **`s26a`.** `s26a` aynı mekanik denetimi kayıttaki
+   `SILME_OTURUMU_DALLARI` değeriyle, kendi oturumundan önceki **bütün**
+   KİT oturumları üzerinde yeniden yapar; `k silme` oturumu ve ondan
+   sonraki oturumlar da buna girer. Fark görülürse kilitlidir
+   (`STOP K6_BRANCH_NOT_NAMED`). Bu kilit **ulaşılabilir** (dar yeniden
+   kontrol N-M1; ikinci dar düzeltme turu): `k silme` ile `s26a`
+   arasında bir pencere kapanırsa (ör. `k silme` → `s25` → `s26a` onayına
+   H → `a9`) ve o pencerenin ya da sonraki bir pencerenin `a9`'unda
+   `SELF_REPORT_AI_HELP_SHARE` `E` veya `yanit_yok` ise (ya da aynı pencere
+   zamanında ikinci bir `ac.txt` açılmışsa), sonraki oturumdaki `s26a`
+   kilitlenir. Bu K6 gereği doğrudur: dal `k silme` kararından sonra
+   yaşanmıştır ve kararda adı yoktur. `k` artık değiştirilemez
+   (`RESTRICTED_FROZEN`, `K_ALREADY_DECIDED`); düzeltme yolu Ek R4/13
+   madde 1 (b) ve 2.4'tür (karar kanalından düzeltilmiş karar). Eski
+   kilitsiz `S26A_K6_BRANCH_NOT_NAMED` kodu kaldırıldı (`k silme` PASS ve
+   `s25` sonrasında düzeltme yolu olmadığı için gerçekte kalıcıydı).
+4. **Acil yol.** Ek R4/13 madde 2.4'teki insan adımı; karar `k silme`
+   kaydından gelse de **her durumda** uygulanır.
+
+(Avukat cevabına bağlı: soru 10; cevap olumsuzsa yeniden açılır.)
+
+#### Ek R4/12.2 Kör hesap (`b18`; KD-11 a, L8)
+
+1. `b18` `<restricted-dir>\blind-calc.txt`'yi N134 şablonuyla (ilk satır
+   `TUZ=`; errata-3 §10.7) oluşturur ve Not Defteri'nde açar; avukat
+   sistem sonucunu görmeden (`b19` henüz çalışmadı) yazar (avukat cevabına
+   bağlı: soru 6; cevap olumsuzsa yeniden açılır).
+2. Şablon §17.2/2'nin içeriğini taşır: `TEBLIG_TARIHI` ve `SON_GUN`
+   (ikisi de `^[0-9]{4}-[0-9]{2}-[0-9]{2}$`, `-cmatch`; `B18_DATE_FORMAT`;
+   inceleme L7: `\d` .NET'te Unicode rakamlarını da eşlediği için
+   kullanılmaz), `KAPSAM_KURAL`, `KAPSAM_ADLI_TATIL`, `KAPSAM_MALI_TATIL`
+   (tek satır serbest metin; UTF-8; boş ve `BURAYA_` olamaz). Kaydın zamanı
+   dosyaya değil kayda yazılır (`BLIND_CALC_AT`). **Satır kuralı (AÇIK-27;
+   dar düzeltme turu D-1):** `k` madde 3'ün satır kuralı aynen uygulanır
+   (`B18_TEMPLATE_LINE`): dosya N134'ün satırlarını aynı sırada ve aynı
+   sayıda taşır; `#` satırları ordinal aynıdır; yabancı satır (yabancı `#`
+   ve boş satır dahil) yoktur; yalnız `BURAYA_` ile gelen değerler değişir.
+   `KAPSAM_*` değerleri serbest metin kalır (kapsayıcı içinde); kayda
+   dosyanın içinden **hiçbir** değer girmez, yalnız dosya düzeyi
+   `BLIND_CALC_SHA256` ve `BLIND_CALC_AT` (ve E/H teyidi
+   `BLIND_CALC_CONFIRMED basis=lawyer-E`).
+3. Devam yolu `k` ile aynıdır (errata-4 §2.2/2): dosya varsa ve `b18`
+   kaydı yoksa aynı dosya açılır ve `TUZ=` korunur (bozuksa
+   `B18_SALT_LINE` sıfırlama seçeneği); kimlik satırları farklıysa `k`
+   madde 4'ün kuralı; `b18` PASS varsa `B18_ALREADY_DONE`. Yarım
+   `blind-calc.txt` `b19`'u bekletir; silmeyi bekletmez.
+4. Kayda **tarih yazılmaz**; yalnız `BLIND_CALC_SHA256` (bütün baytlar,
+   tuz dahil), `BLIND_CALC_AT` ve teyit. `b20` ve `b23` tarihi bellekte
+   karşılaştırır ve hash'i yeniden ölçer; fark kilitlidir.
+5. **Sözleşme değişikliği (§17.2/3; errata-3 §8).** Kayıt artık "repo
+   dışında, avukatın kontrolünde" değil, kapsayıcının içinde
+   `<restricted-dir>`'dedir ve silmeyle imha olur (avukat cevabına bağlı:
+   soru 7; cevap olumsuzsa yeniden açılır).
+
+#### Ek R4/12.3 Intake formu (`b5d`; O10(1), KD-12 iki kez değiştirildi)
+
+1. **Ayrım.** `b5` mekaniktir ve kaydını yazar; doldurma ayrı komut
+   `b5d`'dir ve kaydı yalnız bütün denetimler geçince açılır. Yarım kalan
+   doldurma hiçbir kayıt bırakmaz.
+2. **Form yeri ve biçimi.** Tek form dosyası
+   `<container-temp>\intake-form.txt`: kapsayıcı içindedir, `<case-root>`'u
+   ve `<restricted-dir>`'i değiştirmez, F1 geçici kopya alanıdır
+   (`s27` öğe sayısına girer) ve kapsayıcı imhasıyla yok olur. Biçim karar
+   dosyalarıyla aynıdır: UTF-8 BOM'suz, LF, `ANAHTAR=DEĞER`
+   (`^[A-Z][A-Z0-9_]*$`), değer ilk `=`'den sonraki her şey (tek satır),
+   `#` satırları ASCII Türkçe açıklama. Diziler numaralı anahtarlarla
+   (`TARAF_1_AD`, `KALEM_1_…`). Kullanıcının dolduracağı her değer
+   `BURAYA_…` işaretiyle gelir. Kullanıcı JSON yazmaz.
+3. **İlk çalıştırma.** Kit sayı sorularını (tek tuş) ve menüleri sorar
+   (AÇIK-21: `tax_type` menüsü korunur; terimler N121'den) ve formu yazar.
+   `tax_type` menüsü **kalem başına ayrı** sorulur; her cevap forma
+   `KALEM_<n>_VERGI_TURU=<değer>` satırı olarak yazılır ve formun geri
+   kalanı gibi madde 5'te denetlenir (sözlük dışı → `B5D_VOCAB`); tek bir
+   menü cevabı birden çok kaleme kopyalanmaz (madde 8'in "kit sabitiyle
+   doldurulamaz" kuralı; inceleme L8; dar düzeltme turu D-13).
+   Form varsa ve `b05d` yoksa sorular **yeniden sorulmaz**, aynı form
+   açılır (errata-4 §2.1/2). **Formu sıfırlama:** bir hatadan sonra "Form
+   bastan olusturulsun mu? Girdikleriniz silinir. E/H" (PS); E → sorular
+   yeniden sorulur, form yeniden yazılır (kapsayıcı içi; kayıt yok).
+4. **Not Defteri.** Kit yalnız `intake-form.txt`'yi açar ve kapanmasını
+   bekler (`Start-Process -Wait`; pinli `notepad.exe`; AÇIK-18 dilim 1'de
+   ölçülür). İleti: "Doldurun, Ctrl+S, sonra pencereyi X ile kapatin."
+5. **Denetim sırası (errata-4 §5).** (1) Biçim: BOM, UTF-8, satır biçimi,
+   bilinmeyen/tekrar eden/eksik anahtar, numaralı anahtarların seçilen
+   sayılarla tutarlılığı, `BURAYA_` kalmaması, zorunlu değerlerin boş
+   olmaması, tarih değerlerinin `^[0-9]{4}-[0-9]{2}-[0-9]{2}$` (`-cmatch`)
+   olması, **süreye
+   giren alanların kuralı (madde 8)**; (2) JSON üretimi; (3) geri okuma;
+   (4) KD-26 validator'ları (N32, N33) üretilen JSON'lar üzerinde,
+   kayıtsız. Bir aşama başarısızsa sonrakiler çalışmaz.
+6. **Kilitsiz red kodları** (hiçbiri DUR değildir; ileti yalnız anahtar
+   adını söyler, değeri tekrar etmez; sonra "Not Defteri yeniden acilsin
+   mi? E / Simdilik birak: H"; H → kilitsiz çıkış, form yerinde kalır):
+   `B5D_BOM`, `B5D_ENCODING`, `B5D_LINE_FORMAT`, `B5D_UNKNOWN_KEY`,
+   `B5D_DUPLICATE_KEY`, `B5D_MISSING_KEY`, `B5D_COUNT_MISMATCH`,
+   `B5D_MARKER_LEFT`, `B5D_EMPTY`, `B5D_DATE_FORMAT`, `B5D_VOCAB`,
+   `B5D_DEADLINE_FIELD`, `B5D_DOCUMENT_TYPE_SCOPE`, `B5D_VALIDATOR`.
+   Validator iletisi yalnız hata sayısını ve — hata metninin başındaki alan
+   yolu `^[a-z_]+(\[[0-9]+\])?(\.[a-z_]+(\[[0-9]+\])?)*` kalıbına uyuyorsa
+   — alan yolunu gösterir; aksi hâlde genel ileti (alan yolundan form
+   anahtarına eşleme dilim 2'de).
+7. **JSON üretimi ve geri okuma (errata-3 §6/5).** Kit `case.json` ve
+   `document.json`'u runbook §11 yollarında **pinli sabit metin
+   şablonundan** üretir; değerler kitin JSON kaçış fonksiyonuyla yazılır
+   (`\` → `\\`, `"` → `\"`, U+0000–U+001F → `\u00XX`; diğerleri UTF-8
+   aynen); `ConvertTo-Json` kullanılmaz (O6). BOM'suz UTF-8, LF. Kit
+   dosyayı `ConvertFrom-Json` ile geri okur ve her değerin formdakiyle
+   ordinal aynı olduğunu doğrular; fark kitin kendi hatasıdır → kilitli
+   `B5D_ROUNDTRIP_MISMATCH`. Validator reddettiğinde iki JSON yerlerinde
+   kalır ve sonraki turda formdan yeniden üretilip **üzerine yazılır**;
+   döngü içinde `<case-root>`'tan hiçbir dosya silinmez; yazma atomik
+   değildir, yarım kalan dosya sonraki turda üzerine yazılır ve hiçbir
+   kayda girmez (errata-4 §5; recheck-2 not 10). Bu dosyalar kanıt değil
+   taslaktır; `CLAUDE.md` §14.12'nin CreateNew kuralı kanıt içindir.
+8. **Süreye giren alanlar (bağlayıcı; `USER_DECISION
+   at=2026-10-21T11:57:09+03:00`).** Süre hesabını veya kural seçimini
+   etkileyen hiçbir alan boş bırakılamaz ve kit sabitiyle doldurulamaz; bu
+   alanlar **formda zorunludur**; eksik, boş veya `BOS` ise `b5d` kilitsiz
+   döngüde reddeder (`B5D_DEADLINE_FIELD`). Kaynaktan çıkarılan liste
+   (bb3e5b4; §11.4 tablosuyla aynı):
+
+   | Alan | Dosya | Okuyan kod (bb3e5b4) | Etkisi | Form kuralı |
+   |---|---|---|---|---|
+   | `document_type` | `document.json` | `src/deadline_rule_selection_policy.py` `load_case_document_types` (L346), `get_anchor_document_types` (L395) | Anchor olayının kaynak belgesinin türü kuralın `applicability.document_types` filtresine girer (`data/deadline_rules/deadline_rules.json`); ayrıca `manual-fact` M-05 | Zorunlu; değer `vergi_ceza_ihbarnamesi` değilse `B5D_DOCUMENT_TYPE_SCOPE` (§2 pilot kapsamı, Form G4; ileti: "Belge turu pilot kapsami disinda. Avukatla karar verin: uygun degilse 'k uygunsuz' (NEDEN=OTHER), sonra 'u'."; avukat cevabına bağlı: soru 11; cevap olumsuzsa ileti "sayfadaki DUR OLURSA" olur). Errata-3 §6/2'nin "kitçe dolu" listesinden bu karar gereği çıkar |
+   | `dispute_items[].tax_type` | `case.json` | `src/deadline_rule_selection_policy.py` `get_case_tax_types` (L197); `src/deadline_calculator.py` `get_case_tax_types_for_mali_tatil` (L955), `classify_mali_tatil_tax_type` (L996) | Kuralın `tax_types` filtresi; mali tatil m.1/7 sınıflandırması (tanınmayan → `needs_review`) | Her kalem için zorunlu; formda `KALEM_<n>_VERGI_TURU` satırı (madde 3; kalem başına ayrı menü cevabı); N121 sözlüğünden (`B5D_VOCAB`) |
+   | `administrative_actions[].issuing_authority` | `case.json` | `src/deadline_calculator.py` `get_case_issuing_authorities` (L914), `classify_mali_tatil_authority` (L1094), anahtar sözcükler (L273: gümrük, belediye, il özel idaresi) | Mali tatil idare istisnası. Kod eksik veya tanınmayan değeri "istisna değil" sayar ve **bloke etmez** (L1099); bu yüzden boş bırakılması sessiz bir hatadır | Her işlem için zorunlu, tek satır, `BOS` olamaz (şemada `null` olabilse de) |
+   | `administrative_actions[].action_category` | `case.json` | `src/deadline_calculator.py` `case_has_stopping_event_signal` (L1531), kategoriler (L1446: `settlement`, `correction_complaint`) | Stopping-event `none` beyanıyla çelişki denetimi | Her işlem için zorunlu; şema sözlüğünden (`B5D_VOCAB`) |
+   | `case_type` | `case.json` | `src/deadline_rule_selection_policy.py` `get_case_types` (L254) | Kuralın `case_types` filtresi | Zorunlu; şema sözlüğünden |
+   | `stage` | `case.json` | `src/deadline_rule_selection_policy.py` `get_case_stages` (L284) | Kuralın `case_stages` filtresi | Zorunlu; şema sözlüğünden |
+
+   Sonuçlar: (a) `administrative_actions` dizisi **en az bir** işlem
+   taşır (boş dizi `issuing_authority`'yi boş bırakmak demektir); (b)
+   `proceedings` kodda yalnız sözlük (`dict`) ise okunur (L308) ve şema
+   onu dizi yaptığı için bugün süreye girmez; (c) kodun okuduğu
+   `dispute_type`, `case_stage`, `procedural_stage` ve üst düzey
+   `tax_type` anahtarları şemada yoktur (`additionalProperties: false`)
+   ve formda bulunmaz; (d) tebliğ tarihi, stopping-event ve adli tatil
+   formdan değil, sırasıyla doğrulanmış manuel fact'ten ve karar
+   dosyalarından gelir. Kural seçimi veya hesabı etkileyen başka bir alan
+   kodda bulunursa (dilim 2 provasında `rule_matches_context`, L559, ile
+   yeniden okunur) aynı kural ona da uygulanır.
+9. **Formun geri kalan anahtarları → AÇIK-26** (aşağıda; karar dilim
+   2'den önce). Errata-3 §6/2'nin tam anahtar listesi bu dilimde
+   pinlenmez.
+10. **Başarı kaydı** (`b05d.txt`; errata-3 §6/6): Ek R4/8.3 `b5d`
+    satırı. `b6` üç hash'i yeniden ölçer; farklıysa kilitli. Erken
+    kapanışta `<case-root>`'ta kalmış JSON'lar case manifestine girer ve
+    `s26a` ile silinir.
+11. **Tuz.** Form ve iki JSON'un hash'leri evidence'a tuzsuz girer
+    (runbook bugün de aynı türde hash kaydeder: `intake-hashes.tsv`, N30);
+    bağımsız inceleme bunu yeterli bulmazsa forma da `TUZ=` satırı eklenir
+    (dilim 2; errata-3 §10.7).
+
+**AÇIK-26 — intake formunun tam anahtar listesi** (`USER_DECISION
+at=2026-10-21T11:57:09+03:00`: seçenek A; karar dilim 2'den önce).
+Öneri (bağlayıcı değil):
+
+- **Dizi sayıları** (ilk çalıştırmada tek tuş): `parties` 1–9;
+  `dispute_items` 1–9; `administrative_actions` 1–9 (en az 1 bağlayıcı,
+  madde 8); `events` 0–9; `proceedings` 0–9; `related_cases` 0–9;
+  `document.dates` 0–9; `document.reference_numbers` 0–9; kalem başına
+  `asserted_legal_basis_refs` 0–9. `tags` (iki dosyada) ve
+  `document.relations` 0 (tek belgeli pilot). `case_document_refs` tam 1
+  (tebliğ belgesi). `recipient_party_ids` taraf numaralarıyla
+  (`ALICI_TARAFLAR=1,2`); kit taraf kimliklerine çevirir.
+  `source_document_ids` ve `source_document_id` alanları kitçe
+  `<document-id>` ile doldurulur (tek belgeli pilot; süreye girmez:
+  anchor'ın kaynak belgesi timeline'dan gelir).
+- **`tax_type`** kalem başına ayrı menüyle sorulur (birden çok kalemde
+  tek cevabın bütün kalemlere kopyalanması madde 8'in "kit sabitiyle
+  doldurulamaz" kuralına yakındır).
+- **Boş değer gösterimi:** yalnız şemada `null` olabilen ve süreye
+  girmeyen alanlarda `BOS` → JSON `null`. Boş dizi sayıyla (0) ifade
+  edilir. `BOS` süreye giren alanlarda ve `null` olamayan alanlarda
+  kilitsiz reddir.
+- **Kit sabitleri** (süreye girmeyen): `schema_version=1`; `case_id`,
+  `document_id`, `party_id`, `dispute_item_id`, `action_id`, `event_id`,
+  `proceeding_id` (opak, sıralı); `active=true`; bütün
+  `verification_state=unverified` (§11.2/7); `jurisdiction=TR`;
+  `language=tr`; `file` nesnesi (`file_name`, `relative_path`,
+  `format=pdf`, `mime_type`, `sha256`, `size_bytes`; `page_count` §11.2/5
+  ile); `processing` nesnesi ve `provenance` nesnesi (§11.2'nin bugün
+  elle yazılan sabitleri; değerler dilim 2'de pinlenir).
+- **Kullanıcının yazdığı sözlük alanları** (`case_status`,
+  `client_side`, `confidentiality_level`, `party.role`, `party_type`,
+  `document_category`, `event_category`, `date_precision`, `level`,
+  `forum_type`, `date_type`, `precision`, `reference_type`, `period.kind`,
+  `relation_type`): şema sözlüğünden, formdaki `#` satırlarında
+  listelenir; sözlük dışı değer `B5D_VOCAB`.
+- **Tek satır serbest metin** (kapsayıcı içinde kalır; hiçbir kayda
+  girmez): `title`, `display_name`, `action_type`, `period.label`,
+  `penalty_type`, `notes` vb.; para alanları `^-?[0-9]+(\.[0-9]{1,2})?$` +
+  `^[A-Z]{3}$` (`-cmatch`).
+- Şemada çok satırlı değer gerektiren alan yoktur (dilim 0'da iki şema
+  okundu; errata-3 §6/2'nin şartı).
+### Ek R4/13 Acil silme yolu: acil sayfa, `ev.ps1` ve AÇIK-25 (b)
+
+1. **Ne zaman (L9; AÇIK-24 a; recheck-2 not 3).** İçerik alındıktan sonra
+   (a) kit2 yüklenemiyorsa (ör. güvenli dosya hash farkı, kit2 pin farkı,
+   yükleyici hatası) **veya** (b) kit2 yükleniyor ama silme komutları
+   tamamlanamıyorsa (ör. PASS sonrası `decision-deletion.txt` değişti ve
+   `s25`/`s26a` kilitlendi; ya da `k silme`'den sonraki bir pencerede
+   K6 dalı yaşandı ve `s26a` `STOP K6_BRANCH_NOT_NAMED` verdi, Ek R4/12.1
+   "K6 denetimi" madde 3; `K_ALREADY_DECIDED` bunları onaramaz): sayfanın
+   DUR OLURSA bölümü önce `ev.ps1`'i çalıştırır. `MATCH` ise acil sayfa
+   kullanılır; başka her çıktıda (boş, hata, `NO_MATCH`) veya sayfa yoksa
+   AÇIK-25 (b) (madde 8). Kit2 sağlamken acil sayfanın bozuk olması bu
+   yolu tetiklemez (madde 5).
+2. **Acil sayfa (`<emergency-page>`).** Pencere öncesi ajan oturumunun
+   yazdığı, değerleri doldurulmuş, güvenli dosyayla **aynı** dizinde
+   duran tek metin dosyası (evidence dışı; repoda değil). Evidence'a
+   yalnız SHA-256'sı ve profil-göreli adı girer (`KB_EMERGENCY_PAGE_SHA256`,
+   `KB_EMERGENCY_PAGE_RELATIVE`; KD-21 b sınıfı). Parola taşımaz
+   (parolalar yalnız passfile'dadır). Sayfanın zorunlu bölümleri (iskelet;
+   metin pencere öncesi ajan oturumunda kullanıcı sayfasıyla aynı YAP /
+   GÖR / GÖRMEZSEN biçiminde yazılır):
+   1. **Kanal kapısı:** yalnız kit1'i yükleyen KİT satırı (silme oturumu;
+      `a2` → en az 2 dk → `a3`), ardından N117'nin yapıştırılması (bugünkü
+      sayfa madde 3b'nin karşılığı); oturum `a9` ile biter.
+   2. **Zorunlu ön bloklar (recheck-2 not 4; §28.3 F4 kapısı):** §13.8
+      ortak yardımcıları (N48, N51) ve §10.5 yardımcıları (N19); N52
+      (`<external-root>` sözleşmesi), N53 (`container-root`, `pilot-root`
+      ve çocukları), N56 (araç kapıları); N13 (sistem Temp eşleşmesi ve
+      yönlendirme); N11 (§4.4/4 ACL ölçümü); N3 (optik sürücü) ve §4.2/10
+      harici disk kuralı (insan adımı; R3 sınıfı, kayıt yok); §4.4/7
+      kapsayıcı doğrulaması (VeraCrypt ekranında okunur). Biri geçmezse bu
+      yol uygulanmaz: §28.3 F4 kapısı gereği DUR ve veri korunur.
+   3. **DB (§25.2/2–7):** `$env:VERGI_IAM_DATABASE_URL`'ın sayfadaki
+      `app-dsn` ile ayarlanması; N40 × (N66, N67) (çözülmemiş journal
+      satırı varsa sayfa reconciliation yapmaz; satır gate'li kalır ve
+      silmeden sonra raporlanır — §25.2/3); N40 × N92 (aktif assignment).
+      Tam 1 ise ayrı ADMIN penceresinde (`admin-dsn`) N93 bir kez; 0 ise
+      revoke yok; birden fazla veya belirsiz → DUR (§25.2/7). Bu, §25.2'nin
+      sırasıdır (revoke veri silmeden önce).
+   4. **Silme kararı (Form F; errata-4 §4.1):** `k silme` PASS kaydı
+      **varsa** (kit2 ondan sonra düştü) o kayıt yazılı karardır;
+      **yoksa** karar runbook §21'in karar kanalından gelir (sayılı,
+      hash'li, içeriksiz) ve kaydı bugünkü elle yürütülen yolla yazılır
+      (`INBOUND_DECISION_RECEIVED … channel=decision-channel`). Yarım
+      `decision-deletion.txt` bu dalda karar sayılmaz; manifestte sıradan
+      bir dosyadır ve silinir. **K6 (inceleme M3; dar düzeltme turu
+      D-4; dar yeniden kontrol N-M1):** sayfada bir K6 YAP satırı
+      bulunur ve **her durumda** uygulanır: operatör yazılı kararın,
+      pencerelerde yaşanan "(silme oturumu yok)" dallarını (G5: bir
+      `a9`'da yapay zekâ/paylaşım öz beyanı `E` veya yanıt yok; madde 1:
+      iç içe ikinci kit yüklemesi; madde 5 ve 6: operatörün D7
+      bildirimiyle bilinen dallar) adıyla andığını görür. Karşılaştırılan
+      pencereler kararın kaynağına göre değişir:
+      - Karar `k silme` kaydından geliyorsa kit yalnız o kayıttan
+        **önceki** pencereleri denetlemiştir (Ek R4/12.1 "K6 denetimi"
+        madde 2). Operatör bu yüzden o kaydın başlığındaki
+        `KIT_SESSION=s<m>` oturumunu ve **sonraki** oturumları
+        karşılaştırır: `steps\s<k>\` (k ≥ m) altındaki `a9` öz beyanları,
+        aynı pencere zamanında açılmış ikinci `ac.txt` ve bu pencerelerdeki
+        D7 bildirimleri.
+      - Karar kanalından geliyorsa bütün önceki pencereler karşılaştırılır.
+      Ölçüm sayfadaki salt-okunur tek satırlık komutla yapılır; komut
+      yalnız oturum adlarını ve dal kodlarını basar (metni dilim 4'te
+      pinlenir). Karar görülen bir dalı adıyla anmıyorsa bu yol uygulanmaz
+      (§4.3 a, K6) ve karar kanalından düzeltilmiş karar istenir; veri o
+      arada korunur. Kanaldan gelen düzeltilmiş karar `k silme` kaydının
+      **yerine geçer**: kaydı bugünkü elle yürütülen yolla yazılır
+      (`INBOUND_DECISION_RECEIVED … channel=decision-channel`), imha
+      kaydındaki silme kararı hash'i onun hash'idir ve K6 YAP satırı bu
+      kararla bütün önceki pencereler üzerinde yeniden uygulanır; `k
+      silme` kaydı ve `decision-deletion.txt` değişmez (manifestte sıradan
+      dosyadır ve silinir).
+   5. **Manifestler ve silmeler:** N94, N95, **N120** (N96 yerine; karar
+      dosyaları ve `blind-calc.txt` için koşul yok); `<report-produced>`
+      pencere öncesinde bilinemediği için (rapor yalnız `b22`'den sonra
+      vardır) sayfada N120'nin **iki** doldurulmuş kopyası bulunur: A
+      (`$true`) ve B (`$false`). Önlerinde tek bir seçim satırı vardır:
+      `<evidence-dir>\steps\c\b22.txt` varsa ve satırlarından biri ordinal
+      olarak `REPORT_WRITTEN_LINE_SEEN=True` ise yalnız `A`, aksi hâlde
+      yalnız `B` basan tek satırlık komut (metni dilim 4'te pinlenir);
+      operatör çıktının adını taşıyan kopyayı çalıştırır (inceleme L1; dar
+      düzeltme turu D-6). Ölçüt `STEP_RESULT=PASS` değildir: `b22` raporu
+      yazıp sonra `STOP` ile bitebilir (iki boolean'dan biri `False` veya
+      süzgeçten sonraki bir kilit) ve rapor yine vardır. `s25`'in
+      `<report-produced>` türetimi aynı ölçütü kullanır (Ek R4/8.3 `s25`;
+      dar yeniden kontrol N-L3). N120 bloğunun kendisi değişmez. N97–N99 (case);
+      N100–N101 (restricted); kit1 `a9` ve pencerenin kapatılması;
+      VeraCrypt'te ayırma; kit yüklenmeyen ayrı bir
+      `powershell.exe -NoProfile` penceresinde N102–N103 (kapsayıcı) ve
+      anahtar imhası (§28.3.3). Her silme hedefi için sayfada hedefi
+      adlandıran bir onay satırı bulunur; o satırı okuyup bloğu
+      çalıştırmak o hedefin `REAL_ACTION_APPROVED` onayıdır (Ek R4/8.7
+      madde 2'deki yöntem kararının **zorunlu** cümlesi; §34.13 yorum 6).
+   6. **F1:** silme, F1 başlangıcından (Ek R4/14 madde 3) itibaren 24 saat
+      içinde biter.
+3. **Kayıt sınırı.** Acil sayfa yolunda kit kaydı yoktur: bloklar yalnız
+   kendi dosyalarını yazar (iki manifest) ve durum satırlarını ekrana
+   basar; ekran satırları kayda geçirilmez. Veri silindikten sonra ajan
+   oturumu (D7) manifestleri ve §30 postcondition'larını ölçer; özet
+   (§26.4) yolu "acil sayfa" olarak işaretler (§32/48).
+4. **`ev.ps1` (L-Y2 b; recheck-2 not 9).** `<evidence-dir>\kit2\ev.ps1`;
+   yalnız ASCII; tek işlevli. Sayfanın profil-göreli sabit adını ve
+   beklenen SHA-256'sını **kendi içinde sabit** taşır (pencere öncesi
+   ajan sayfayı yazdıktan sonra üretir). Göreli adı
+   `[Environment]::GetFolderPath('UserProfile')` ile birleştirir; tam
+   yolun canonical olduğunu ve profil dizininden dosyaya kadar hiçbir
+   bileşenin reparse point olmadığını denetler (Ek R4/2 madde 4 ile
+   aynı); sayfanın SHA-256'sını alır, ordinal karşılaştırır ve **yalnız**
+   `MATCH` veya `NO_MATCH` basar; her istisna `NO_MATCH`'tir. Yol, hash
+   veya başka metin basmaz. Güvenli dosyayı, `pins2.txt`'yi, `bc.ps1`'i ve
+   kit1'i **okumaz**. Kullanıcı sayfasının DUR OLURSA bölümündeki kendi
+   Win+R satırıyla başlatılır; satır güvenli dizinin yolunu taşımaz.
+   SHA-256'sı `pins2.txt`'ye ve `kit-build2.txt`'ye (`EV_PS1_SHA256`)
+   girer. **Güven sınırı (dürüst):** kullanım anında `ev.ps1`'in kendisini
+   mekanik olarak doğrulayan bir şey yoktur; bu kit1 `ac.ps1`'in kendi
+   pinini denetlemesiyle aynı sınıftır (tehdit modeli kazara bozulma, eski
+   veya yanlış sayfadır; kasıtlı değişiklik değil). Elle 64 hex
+   karşılaştırması yoktur.
+5. **Kit2'nin bütünlük denetimi (errata-4 §4.2/2; recheck-2 not 1).** Kit2
+   her başarılı yüklemede ve her `b1`'de `ev.ps1`'in ve sayfanın hash'ini
+   karşılaştırır ve sayfanın ACL'sini ölçer. **İçerik öncesi**
+   uyuşmazlık kilitsiz reddir (`B1_EMERGENCY_PAGE`, `B1_EMERGENCY_VERIFIER`;
+   ajana dönülür). **İçerik sonrası** uyuşmazlık **kilit değil, uyarı
+   satırıdır**: `b1` kaydına `EMERGENCY_PAGE_MATCH=False` veya
+   `EMERGENCY_VERIFIER_MATCH=False` (veya `EMERGENCY_PAGE_ACL_OK=False`)
+   `STOP` öneki olmadan yazılır, ekrana "Acil sayfa kullanilamaz" basılır,
+   `b1` PASS olabilir ve kit2'nin guard'lı silme yolu (`s25`–`s29a`,
+   `z1`, `s29b`) kapanmaz. Uyarı veri silindikten sonra ajanın özetinde
+   raporlanır. Böylece bozuk bir yedek artefakt ana yolu kilitlemez.
+6. **ACL ve yaşam döngüsü (errata-4 §4.3).** Sayfa güvenli dosyayla aynı
+   ACL ölçümünden geçer (Ek R4/2 madde 5); ACL adımı hedefi adlandıran
+   ayrı kullanıcı onayıyla yapılır. Sayfa **normal yolda da** silinir (her
+   zaman canlı yollar taşır): `s29b` PASS'ten sonra, ajan oturumunda,
+   sayfayı adlandıran ve beklenen hash'i anan **ayrı kullanıcı onayıyla**;
+   ajan önce hash'i ölçer, yalnız eşleşirse siler; özete
+   `EMERGENCY_PAGE_DELETED=True` ve `EMERGENCY_PAGE_SHA256_BEFORE=<64 hex>`
+   girer. Eşleşmezse silmez ve durur (`STOPPED_ON_UNEXPECTED_RESULT`).
+   Acil yol kullanıldıysa aynı kural veri silindikten sonra uygulanır.
+   `ev.ps1` evidence'ta kalır.
+7. **AÇIK-25 (b) dalında sayfanın silinmesi (recheck-2 not 5).** Bu dal
+   tam da sayfanın eşleşmediği veya bulunmadığı daldır; madde 6'nın
+   "eşleşmezse silmez" kuralı burada işlemez. Ayrı kural: sayfa varsa,
+   hedefi adlandıran ayrı kullanıcı onayıyla, ajan dosyanın yalnız yol ve
+   değer taşıdığını (içerik taşımadığını) görür ve siler; özete
+   `EMERGENCY_PAGE_DELETED=True` ve `EMERGENCY_PAGE_HASH_MATCHED=False`
+   girer.
+8. **AÇIK-25 = (b) (kullanıcı kararı `at=2026-10-20T22:51:52+03:00`;
+   recheck-2 not 2).** Kit2 yüklenemiyor (veya silme komutları
+   tamamlanamıyor) **ve** acil sayfaya güvenilemiyorsa: dosya avukatının
+   yazılı Form F kararı (madde 2.4'teki kanal) ve ayrı
+   `REAL_ACTION_APPROVED` ile kapsayıcı doğrudan imha edilir. Bu dal
+   **guard'sız bir silmedir**: §28.3.3'ün guard'ı (N102) yer tutucu
+   değerleri ister ve bu dalda değerler güvenilir değildir.
+   - Gizliliğin dayanağı **anahtar imhasıdır** (§28.3.3/4–5: gizlilik
+     anahtarın imhasına dayanır); case, restricted, kapsayıcıdaki klon ve
+     F1 geçici kopyaları kapsayıcı içindedir ve onunla yok olur.
+   - Operatör kapsayıcı dosyasını VeraCrypt'in kendi bağlama ekranındaki
+     yoldan tanır; VeraCrypt'te ayırır; dosyayı Geri Dönüşüm Kutusu'nu
+     kullanmadan siler (Shift+Delete).
+   - `CONTAINER_FILE_ABSENT` ve `CONTAINER_KEY_DESTROYED` sonradan, veri
+     silindikten sonra ajan oturumunda ölçülür veya kaydedilir; assignment
+     revoke ve kalan postcondition'lar da o oturumda yapılır (D7 ile
+     uyumlu).
+   - §30 kaydı case guard'ının, restricted manifestinin ve
+     `RESTRICTED_DELETE_GUARD`'ın çalışmadığını **"yapılamadı"** olarak
+     gösterir; eksik kalan yalnız restricted düzeyindeki kanıttır.
+9. **R1 istisnası (recheck-2 not 7).** Acil sayfa `<system-temp-user>`,
+   `<system-temp-windows>` ve diğer yolları açık metin taşır; bu dalda
+   operatör sistem Temp yolunu görür. Bu, R1'in ("hiçbir insan sistem Temp
+   yolunu görmez") bilinçli ve beyan edilmiş **acil dal istisnasıdır**;
+   değerler yine hiçbir dosyaya kaydedilmez, hiçbir yapay zekâ aracına
+   verilmez, fotoğraflanmaz (§4.4/5).
+
+### Ek R4/14 Erken kapanış, silme, F1 ve imha kaydı
+
+1. **Erken kapanış (KD-23 a; DUR'suz).** Avukatın planlı kararıdır,
+   teknik hata değildir. Karar: `k uygunsuz` (`PILOT_UNSUITABLE`; neden
+   kodu sözlükten; serbest metin yok). `u` komutu (Ek R4/8.3): ön koşul
+   `b05` PASS ve (`b11` yok **veya** dört türden birinde `SONUC=RED`);
+   avukatın E/H'si; `u.txt`. Ardından erken kapanış kipi (Ek R4/8.4/3) ve
+   aynı ziyarette silme sırası (Ek R4/8.6/4). (Avukat cevabına bağlı: soru
+   11; cevap olumsuzsa yeniden açılır.)
+2. **§25.2 ile ilişki.** Erken kapanış §25.2'nin 3–12. adımlarını **DUR
+   yazmadan** uygular: journal ölçümü (`s29a` N72 ve N42; `b11`'den önce
+   çözülmemiş satır beklenmez, varsa kilitli DUR; `b11`'den sonra §30/5
+   beklentisi "yalnız o ana kadar çalışmış ailelerin `completed`
+   satırları; `prepared`/`executing`/`reconciliation_required` 0"),
+   assignment ölçümü ve tek revoke, Form F'ye göre silme, F1, evidence'ta
+   yalnız kodlar, kalan durum raporu (`s29a`/`s29b` + ajan özeti). Kayda
+   yalnız kodlar, hash'ler, zaman ve boolean'lar girer; tarih, sayfa ve
+   aday metni hiçbir kayda girmez; `b07` kaydı açılmadıysa aday sayısı da
+   girmez.
+3. **F1 başlangıcı (§23).** Üç an: `b23`'ün `ENDED_AT`'i (normal yol), `u`
+   kaydının `WORK_ENDED_AT`'i (erken kapanış) veya §25.2 abort yolunun
+   başlaması (DUR anı). DUR anı `<evidence-dir>\DUR.txt`'nin ilk
+   satırındaki `at=` değeridir (`KIT_DUR step=<komut> at=<zaman>`); kit1
+   `Write-KitDur`, kit1'in yükleme kilidi ve başlatıcıların `Write-KbDur`'u
+   bu satırı aynı biçimde yazdığı için kaynak tektir (Ek R4/5 madde 6;
+   inceleme L2; dar düzeltme turu D-7). Birden fazla an varsa (ör. `b23`'ten
+   sonra DUR) **en erkeni** geçerlidir; F1 böylece kısalır, uzamaz. Abort
+   yolunda `s27` silme oturumunda çalışır (Ek R4/8.3). Kit2 yalnız F1 = 24
+   saat için tanımlıdır (`FORM_F1=24_SAAT`; Ek R4/3).
+4. **`s29a` ve `s29b` (M4).** `s29a` kapsayıcıya bağlı postcondition'ları
+   (`z1`'den önce; §30/1–10 ve 13; §30/2–3 kapsayıcıdaki klonda) ölçer.
+   `s29b` İMHA penceresinde, `z1`'den sonra: §30/11 (`CONTAINER_FILE_ABSENT`,
+   `CONTAINER_KEY_DESTROYED` (`z1` kaydından),
+   `TEMP_COPIES_DELETED_WITHIN_F1` = `z1`'in bitiş anı ≤ F1 başlangıcı + 24
+   saat, kanal kapısı kayıtlarının sürekliliği) ve §30/12 (imha kaydının
+   yazımı ve SHA-256'sı; dosya avukatına verilen kopyanın teyidi).
+   `DELETION_RECORD_COPY_TO_FILE_LAWYER` başka hiçbir komutta yazılmaz.
+   **F1'in tek yazanı `s29b`'dir** (`z1` F1 için hiçbir satır yazmaz;
+   inceleme L3; dar düzeltme turu D-8). F1 aşıldığında `s29b` şu sırayla
+   yazar (tek-çalışım kuralı yüzünden sıra sabittir): (a) imha kaydı
+   (madde 5; `TEMP_COPIES_DELETED_WITHIN_F1=False` dahil); (b)
+   `DELETION_RECORD_COPY_TO_FILE_LAWYER` E/H'si (`Read-KbYesNo`); (c)
+   `s29b.txt`'ye `STOP TEMP_COPIES_DELETED_WITHIN_F1=False`; (d)
+   `STEP_RESULT=STOP` ve `ENDED_AT`; (e) `Write-KbDur 's29b'
+   'F1_EXCEEDED'` (§2.1 adım 27'nin DUR'u; Ek R4/5 madde 6). Silme o
+   ana kadar tamamlanmıştır; DUR yalnız aşımın kaydıdır. Aşım yoksa sıra
+   (a), (b), ardından `STEP_RESULT=PASS` ve `ENDED_AT`'tir.
+
+   **İki imha sorusunda H (dar yeniden kontrol N-L1; ikinci dar düzeltme
+   turu, kullanıcı kararı `at=2026-10-21T19:24:14+03:00`).** `z1`'in
+   anahtar imhası sorusu kapsayıcı silindikten (`CONTAINER_FILE_ABSENT=True`
+   yazıldıktan) sonra, `s29b`'nin kopya sorusu imha kaydı (a) yazıldıktan
+   sonra sorulur; ikisinde de veri artık silinmiştir. Bu yüzden H ve
+   `Read-KbYesNo`'nun iki geçersiz tuştan sonraki sonucu **kilit üretmez**:
+   - kayıt ilgili anahtarı `False` yazar: `CONTAINER_KEY_DESTROYED=False
+     basis=project-owner-H-at-kit` veya `DELETION_RECORD_COPY_TO_FILE_LAWYER=False
+     basis=lawyer-H`; iki geçersiz tuşta `basis=no-valid-answer`;
+   - adımın `STEP_RESULT`'ı bu satırdan etkilenmez;
+   - ekran ne yapılacağını söyler: `Anahtar kagidini ve tek kullanimlik
+     anahtari simdi imha edin.` veya `Imha kaydinin kopyasini dosya
+     avukatina verin.` (metin dilim 4'te pinlenir);
+   - `z1` böylece `s29b`'yi engellemez ve imha kaydı her durumda yazılır
+     (`CONTAINER_KEY_DESTROYED=False` dahil); `s29b` §30/11'de `z1`'den
+     gelen `False`'u FAIL saymaz;
+   - sonuç, veri silindikten sonraki ajan özetinde (madde 6) "tamamlanmadı"
+     olarak raporlanır. §28.3.3/4 gereği anahtar imha edilmeden kapsayıcı
+     silmesi tamamlanmış sayılmaz (Y6) ve §30/11 veya §30/12 PASS değildir;
+     kit bunu bir kilitle değil açık bir `False` ile kaydeder.
+
+   F1 aşımı bundan farklı olarak kilitlidir, çünkü §2.1 adım 27 orada DUR
+   ister. Aşımla birlikte (b)'de H gelirse sıra değişmez: (b) `False`
+   yazar, (c)–(e) sürer. Kurala ilişkin seçimler §34.13 yorum 22'dedir.
+5. **İmha kaydı** (`<evidence-dir>\deletion-record.txt`; §28.7; CreateNew;
+   yalnız kodlar, zamanlar ve hash'ler; yol yok): `DELETION_RECORD
+   case=<case-id>`, yol türü (`PATH=NORMAL`, `EARLY_CLOSE`, `ABORT`,
+   `EMERGENCY_PAGE` veya `EMERGENCY_CONTAINER_ONLY`), erken kapanışta
+   `EARLY_CLOSE=True` ve neden kodu, silme kararının kayıt hash'i, üç
+   silme hedefinin sonuç satırları ve zamanları, `CONTAINER_KEY_DESTROYED`,
+   F1 başlangıcı ve bitişi, `TEMP_COPIES_DELETED_WITHIN_F1`. Kopyasının
+   biçimi avukat cevabına bağlıdır (soru 8; cevap olumsuzsa yeniden
+   açılır).
+6. **Ajanın silme sonrası özeti (§26.4).** Erken kapanışı ve neden kodunu
+   pilot bulgusu olarak; acil sayfa uyarılarını (madde Ek R4/13/5);
+   `EMERGENCY_PAGE_DELETED`, `EMERGENCY_PAGE_SHA256_BEFORE` veya
+   `EMERGENCY_PAGE_HASH_MATCHED`; acil yol kullanıldıysa yapılamayan
+   guard'ları raporlar. `z1` veya `s29b` kaydında `False` yazılmış
+   `CONTAINER_KEY_DESTROYED` ve `DELETION_RECORD_COPY_TO_FILE_LAWYER`
+   satırlarını "tamamlanmadı" olarak raporlar (madde 4; dar yeniden
+   kontrol N-L1).
+
+### Ek R4/15 Tebliğ satırı adayları (`b7`; KD-13, O4)
+
+1. **Aday kuralı.** Kit `pdftotext` çıktısını (kapsayıcı içinde) yalnız
+   bellekte okur; metni satır ve cümle sınırlarına göre parçalara böler;
+   içinde **tam olarak bir** tanınan tarih token'ı (`GG.AA.YYYY` veya
+   `GG/AA/YYYY`; §11.4/1, Form G9) bulunan ve M-15 tek satır uzunluk
+   sınırına uyan parçaları numaralı listeler (yalnız ekran). `date`
+   token'dan, `page` sayfa sonu (`\f`) sayımından türetilir. Kural sürümü
+   kit2 pinleriyle sabittir. Sayfa sayımının doğruluğu ve cümle bölmenin
+   uygunluğu dilim 2 provasında ölçülür (AÇIK-9).
+2. **Elle alıntı yoktur** (kullanıcı kararı): hiçbir koşulda kullanıcıya
+   alıntı veya tarih yazdırılmaz.
+3. **İki kişi kuralı (O4).** Satırı **yalnız operatör** seçer; avukat
+   seçime katılmaz; girdi dosyasını kit yazar; avukat `g8`'de sonucu
+   orijinal belgeyle bağımsız karşılaştırır. Bunun §14.3/5'in "girdi
+   dosyasını yazan ile karşılaştıran ayrı kişilerdir" kuralını karşılayıp
+   karşılamadığı hukuki yorumdur (avukat cevabına bağlı: soru 5; cevap
+   "feragat gerekir" ise B4 kabulü ve `TWO_PERSON_CONTROL=WAIVED_B4`
+   pencere öncesinde); cevap gelene kadar `TWO_PERSON_CONTROL` değeri
+   belirlenmez.
+4. **Kilitsiz red durumları.** Aday yok (`B7_NO_CANDIDATE`); operatör
+   `0 = hiçbiri` seçti (`B7_NONE_SELECTED`); "tebliğ cümlesi mi?"
+   sorusuna H (`B7_CANDIDATE_REJECTED`; listeye döner). Üçünde ileti:
+   "Uygun teblig satiri yok. Avukatla karar verin: dosya bu pilota uygun
+   degilse 'k uygunsuz', sonra 'u' yazin. Kayit yazilmadi; DUR kilidi
+   yok."
+
+### Ek R4/16 Dilim planı, kabul ölçütleri ve sızıntı negatif testi
+
+Her dilim: yazım (tek yazan ajan oturumu; runbook revizyonu) →
+`ParseInput`/AST/genişletilmiş N116 statik denetim → bağımsız inceleme
+(ayrı oturum) → dar düzeltme → ajan bağlamında sentetik mekanik prova
+(`MECHANICS_ONLY`; gerçek veri yok) → commit/push kapıları (`CLAUDE.md`
+§14.8). Hiçbir dilim `src/`, `ui/`, `db/` dosyasına dokunmaz. **Her
+dilimin provasında Ek R4/16.6 sızıntı negatif testi zorunludur** (KD-2).
+
+**Ön koşullar.** (a) Avukat cevapları Ek R4/17'deki "hangi cevap hangi
+dilimi bekletir" kuralına göre; (b) AÇIK-26 dilim 2'den önce karara
+bağlanır (AÇIK-27 kapandı: Ek R4/12.1 madde 8); (c) `FORM_F1=24_SAAT` (Ek R4/3);
+(d) güncellenmiş D9 bildiriminin yazılı cevabı (`LEGAL_APPROVED`) gerçek
+dosyadan önce (soru 9).
+
+#### Ek R4/16.1 Dilim 0 (bu revizyon)
+
+(1) Her KD ve AÇIK cevabı için metindeki yeri gösteren eşleme tablosu
+(§34.13); (2) runbook'ta değişen her blok için "türetilmiş blok" beyanı ve
+yeni blok hash'i (mevcut 118 blok bayt-bayt aynıdır; türetilmişler yeni
+blok N118–N122 olarak eklendi; §34.13); (3) bağımsız incelemede 0
+Critical / 0 High / 0 Medium; (4) LOCKED dosya değişikliği 0; (5) §1.5
+yasakları (mutlak yol, port, DB adı, kullanıcı adı) yeni metinde 0. Ek
+olarak (errata-3/4): M1, M2, L-Y1 kuralları (Ek R4/7); türetilmiş blok
+listesi (Ek R4/11); anahtar başına izinli listeler (Ek R4/9); intake
+formunun süreye giren alanları ve AÇIK-26 (Ek R4/12.3); L1 ölçümü ve
+metni (Ek R4/2, §34.13); L2 runbook metinleri (§2.1 adım 27, §23 F1);
+L5 metinleri (§10.5, §19, §28.2, §29); L6 cümlesi (Ek R4/5); O2 b 7z
+metni (§4.4/6); O4 kuralı (Ek R4/15); §17.2/3 sözleşme değişikliği ve
+güncellenmiş D9 bildirim metni (Ek R4/12.2, Ek R4/17); restricted ad
+listesi ve `k` şablonları "avukat cevabına bağlı"; reconciliation karar
+adı (yok; Ek R4/11); M-Y1 kuralları (Ek R4/12.1); acil sayfa, N120,
+`ev.ps1`, ACL ve silinme (Ek R4/13); `REFERANS` ve `TUZ=` (Ek R4/12);
+blok başına `CLI_RC` (Ek R4/10); `FORM_F1` (Ek R4/3); yeni PowerShell
+bloklarında `ParseInput` 0 hata ve yalnız ASCII; dosyada CR yok.
+
+#### Ek R4/16.2 Dilim 1 — altyapı ve oturum açılışı
+
+İçerik: `bc.ps1` (yükleme, pinler, güvenli dosya hash + ACL, kit1 ile
+birlikte yükleme, DUR entegrasyonu), pinli blok motoru ve anahtar başına
+süzgeç (Ek R4/6), `t0`, `kume`, `b0`, `b1` (iki dal), `b2`, `k` (şablon +
+Not Defteri döngüsü), `n`, `o`, red dosyaları, kurulum adımları,
+genişletilmiş N116. Kabul ölçütleri:
+
+1. **Bayt uyumu:** `t0`'ın `system-temp.txt`'si N12 çıktısıyla, `b1`'in
+   `technical-record.txt`'si N14 çıktısıyla bayt bayt aynı; `b0`'ın
+   `six-class.txt`'si N117 çıktısıyla zaman değerleri dışında aynı; bu üç
+   kayıtla **değişmemiş** kit1 `a4` PASS; kit1 dosyalarının SHA-256'ları
+   `pins.txt` ile aynı.
+2. `a4`'ün kilitsiz redleri `b0`/`b1` çalışmadan önce bugünkü gibi
+   tetiklenir.
+3. `b1` aktarım günü dalı TEMP'e dokunmaz.
+4. VeraCrypt dosya sürümü pin uyuşmazlığı ve Hakkında H cevabı teknik
+   kaydı yazdırmaz.
+5. Güvenli dosya hash farkı: içerik öncesi kilitsiz, içerik sonrası
+   kilitli.
+6. Her kilitsiz red tam bir `refusal-<nnn>.txt` bırakır, adım kaydı ve
+   `DUR.txt` bırakmaz; her kilitli red `DUR.txt` + doğru DUR dalı.
+7. `k`: `BURAYA_` kalırsa, `ANAHTAR=DEĞER` biçimi bozuksa, sözlük dışı
+   değer varsa veya UTF-8 geçersizse kilitsiz, Not Defteri yeniden açılır;
+   `K_TEMPLATE_IDENTITY` ve `K_SALT_LINE` kilitsiz ve sıfırlama seçeneği
+   (ilk yazımın ayrıştırmasında da). **AÇIK-27 satır kuralı (D-1):**
+   yabancı `#` satırı, şablon dışı anahtar satırı, araya eklenmiş boş
+   satır, değiştirilmiş veya silinmiş bir şablon `#` satırı, CR baytı ve
+   değere eklenmiş metin ayrı ayrı → kilitsiz (`K_TEMPLATE_LINE` veya
+   `K_VALUE`), sıfırlama seçeneği yok, red dosyası yalnız kod ve zaman;
+   hiçbiri `DUR.txt` üretmez; dosya sonundaki tek LF kabul edilir;
+   `CASE_ID=` satırı silinmiş veya iki kez yazılmış dosya →
+   `K_TEMPLATE_IDENTITY` ve sıfırlama seçeneği (yapı denetiminden önce). `k
+   silme`'de K6: `SILME_OTURUMU_DALLARI` sözdizimi negatifleri (boşluklu,
+   tekrarlı, sırasız, `YOK,G5`) `K_VALUE`; önceki bir oturumun `a9`'unda
+   `SELF_REPORT_AI_HELP_SHARE=E` varken `YOK` → `K_K6_BRANCH_NOT_NAMED`,
+   düzeltilince PASS.
+8. Ek R4/16.6 sızıntı testi: evidence'ta nöbetçi 0, kullanıcı adı 0,
+   `kit-values.txt` dışında mutlak yol 0, sistem Temp yolu 0 (R1); pozitif
+   kontrol her biçimi buldu.
+9. Genişletilmiş N116 taraması 0 çakışma; komut adı çakışması 0.
+10. M1 ve L-Y1 AST taraması (Ek R4/7 madde 6) 0.
+11. M2: kit2 dosyalarında > 127 bayt 0; N121 ve N122, aynı sentetik
+    girdilerle (18 terimin her biri, sözlük dışı bir terim, `Süre aşımı …`
+    satırı olan ve olmayan sentetik rapor) **canlı** N35 ve N89 ile aynı
+    çıktı satırlarını verir (canlı bloklar prova ajanı oturumunda
+    runbook'tan UTF-8 okunup çalıştırılır).
+12. Tek biçim ve Türkçe çözümleme: gerçek CLI'ler sentetik case ile
+    çalıştırıldığında `RAPOR REDDEDİLDİ:`, `DEĞİLDİR`, `Uygulamak için`
+    satırları süzgece bayt bayt doğru ulaşır; kit2 yüklü pencerede kit1
+    `a5`–`a7`'nin 7z kayıtları kit2'siz koşudakiyle aynı satırları verir.
+13. stdout/stderr ve çıkış kodu: sahte betik (prova kökünde, `Invoke-KbBlocks`'a
+    sahte blok olarak verilir) ≥ 1 MB stdout + stderr + sıfırdan farklı
+    çıkış kodu → kilitlenme yok; stderr metin olarak süzgece ulaşır;
+    `CLI_RC` doğru; argüman denetimi CLI'yi çağırmadığında
+    `CLI_CALLED=False`.
+14. stdin: (a) kit2'nin çağırdığı her **alt komutun** kod yolunda (ör.
+    `scripts.iam_admin` için yalnız `assign-case` ve `revoke-assignment`),
+    içe aktarılan modüller dahil, stdin okuması (`input(`, `sys.stdin`,
+    `getpass`) olmadığı kaynaktan salt-okunur taramayla gösterilir; aynı
+    modülde kit2'nin çağırmadığı alt komutlara ait okumalar bulgu sayılmaz,
+    listelenir (O-Y4); (b) stdin bekleyen sahte betik: bekler, Ctrl+C →
+    "YARIDA KALDI", adım PASS yazmaz, kilit kuralı doğru dal; (c) 7z sürüm
+    bloğunda stdin kapalıdır.
+15. Bekçi: 7z sürüm bloğu uzun süren sahte süreçle 10 sn'de öldürülür ve
+    `STOP` verir; `&` ile çağrılan araçlarda bekçi olmadığı kayıtta beyan
+    edilir.
+16. Değer kuralı: boşluklu yol doğru geçer; `"`, sonda `\`, `$`, `` ` ``
+    içeren değerler blok metnine girmeden kilitsiz reddedilir.
+17. Sürüm dizgeleri: `pdftotext -v` stderr'e yazar; 7z'nin ilk satırları;
+    VeraCrypt dosya sürümü (AÇIK-14).
+18. Küme: `pg_ctl start` KÜME penceresinde borusuz çalışır, pencere
+    açıkken küme ayakta kalır; KİT penceresinde Ctrl+C kümeyi düşürmez;
+    yalnız boolean kayda girer; dört koşul ADOPT ile aynı; `kume`,
+    `start`'tan sonra kendiliğinden döner ve kaydını yazar; çağrı motor
+    hattının dışında, betiğin üst düzeyindedir (O-Y2).
+19. Not Defteri: `-Wait` beklemesi, BOM'suz kayıt, LF korunumu, sürüm ve
+    hash pini, oturum durumu özelliğinin yokluğu (AÇIK-18, O5); yoksa
+    dilim 1 durur.
+20. M1 sızıntı testinin pozitif kontrolü her biçimi buldu.
+21. M2 (madde 11) ve L-Y1 sayımları.
+22. M-Y1: `k <tür>`'de H, sonra aynı `k <tür>` aynı dosyayı açar ve PASS
+    ile biter; PASS'ten sonra `K_ALREADY_DECIDED`.
+23. Acil sayfa ve `ev.ps1` denetimi: içerik öncesi uyuşmazlık kilitsiz;
+    içerik sonrası uyuşmazlık uyarı satırı (`STOP` yok), `b1` PASS
+    (recheck-2 not 1).
+24. **Başlatıcı yardımcıları (inceleme M1; D-2):** `kbl.ps1`'in
+    `Write-KbDur`'unun yazdığı `DUR.txt` kit1 `Write-KitDur`'unkiyle
+    zaman değeri dışında bayt bayt aynı biçimdedir; ardından değişmemiş
+    kit1 yüklendiğinde `ac.txt` `KIT_TEARDOWN_SESSION=True` yazar (silme
+    oturumu); `Write-KbDurRule`'un ekran satırları içerik öncesi ve
+    sonrası dallarında kit1 `Write-KitDurRule`'unkilerle bayt bayt aynıdır;
+    `Read-KbYesNo` geçerli ve geçersiz tuşlarda kit1 ile aynı davranır;
+    başlatıcı kayıtlarında `KIT_SESSION=none`.
+25. **İzinli anahtar biçimleri (inceleme M4; D-5):** Ek R4/9'daki her
+    izinli ve zorunlu anahtarın biçimi `bb3e5b4` CLI'lerinin sentetik bir
+    case üzerindeki **gerçek** çıktısıyla en az bir kez eşleştirilir
+    (`excerpt_found=true`, `allowed_evidence_documents=[…]`, deterministik
+    `generation` önizlemesinde `pending_sha256=None`,
+    `observed_post_hash=None` dahil); eşleşmeyen biçim dilimi durdurur ve
+    Ek R4/9 düzeltilir (CLI değişmez).
+26. **`kbl.ps1` yükleme bütünlüğü (dar yeniden kontrol N-L2):** prova
+    kökünde `kbl.ps1`'in bir baytı değiştirilir, ayrı bir koşuda ASCII
+    dışı bir bayt eklenir ve ayrı bir koşuda `pins2.txt`'deki satırı
+    silinir. Her başlatıcıda (`t0`, `kume`, `adm.ps1`, `z1.ps1`):
+    `kbl.ps1` dot-source edilmez, hiçbir komut tanımlanmaz, güvenli dosya
+    okunmaz. İçerik öncesi yalnız ekran iletisi, `DUR.txt` ve red dosyası
+    yok; içerik sonrası `DUR.txt` (24) ile aynı biçimde
+    (`KIT_DUR_REASON=KB_LOADER_PIN`) ve ardından kit1 yüklemesi
+    `KIT_TEARDOWN_SESSION=True` yazar. Ayrıca başlatıcının `kbl.ps1`'i
+    dosyadan ikinci kez okumadığı (aynı baytlardan yürüttüğü) kod
+    okumasıyla gösterilir.
+
+#### Ek R4/16.3 Dilim 2 — intake ve manuel girdi
+
+İçerik: `b5`, `b5d` (Ek R4/12.3), `b6`, `b7` (Ek R4/15), `g8`, `b8`, `u`
+(kayıt kısmı), girdi düzeltme döngüsü (`r1`–`r3` sürümleri). Ön koşul:
+AÇIK-26 kararı. Kabul ölçütleri: (1) Ek R4/12.3 madde 6'daki her hata türü
+ayrı ayrı tetiklenir: hepsi kilitsiz, ileti yalnız anahtar adını söyler,
+değer ekranda tekrar edilmez, Not Defteri yeniden açılır; (2) hiçbir form
+hatası `DUR.txt` üretmez; (2a) JSON kaçışı: `"`, `\`, Türkçe karakter,
+sekme ve diğer kontrol karakterlerini taşıyan sentetik değerler geri
+okumada ordinal aynı çıkar; iç içe `parties[]` nesneleri kesilmeden
+yazılır; (2b) validator hatası sonrası iki JSON yerinde kalır ve `b05d`
+yazılmaz; sonraki tur onları üzerine yazar; `b05d`'deki hash'ler son turun
+dosyalarınındır; döngü içinde `<case-root>`'tan hiçbir dosya silinmez;
+yarım yazımın sonraki turda üzerine yazıldığı bir kez gözlenir (recheck-2
+not 10); (2c) süreye giren her alan (Ek R4/12.3 madde 8) için eksik, boş,
+`BOS` ve sözlük dışı değer ayrı ayrı `B5D_DEADLINE_FIELD`/`B5D_VOCAB`/
+`B5D_DOCUMENT_TYPE_SCOPE` ile kilitsiz reddedilir; (3) başarıda `b05d`
+üç hash'i taşır; `b6` kayıttan sonra değişen dosyayı kilitler; (4) `b7`:
+aday yok / hiçbiri / H → kilitsiz, elle alıntı istenmez; operatör tek
+başına seçer (O4); (5) `u`: karar yoksa kilitsiz; karar varken `u.txt`
+yazılır ve zincir komutları reddedilir; (6) M-04/M-07/M-08 negatifleri;
+sürüm sırası; (7) sızıntı testi (intake alanlarında nöbetçi ad ve tarih;
+`g8` ekranının kayda girmediği); (8) iki kalemli sentetik formda `tax_type`
+menüsü kalem başına ayrı sorulur ve forma iki ayrı
+`KALEM_<n>_VERGI_TURU` satırı yazılır; formda elle değiştirilen sözlük
+dışı değer `B5D_VOCAB` ile reddedilir (D-13).
+
+#### Ek R4/16.4 Dilim 3 — DB zinciri
+
+İçerik: `b9`–`b23`, `adm.ps1` (`y1`), onay kapısı, `g14`, `g16`, kör hesap
+(`b18`), `b20`/`b23` karşılaştırması. Kabul ölçütleri: (1) sentetik case
+üzerinde preview → apply → `calculated` → rapor; her aile için tam 1
+`completed` journal satırı; (2) her apply'da `REAL_ACTION_APPROVED`
+satırı CLI çağrısından önce kayıtta; H cevabında CLI hiç çağrılmaz
+(süreç sayısı 0); (3) `blind-calc.txt` `b19`'dan önce hash'lenir;
+değişirse `b20` kilitli; tarih hiçbir kayıtta yok; (4) ipucu satırları
+ekranda ve kayıtta yok; (5) ADMIN penceresinde `app-dsn`, KİT penceresinde
+`admin-dsn` okunmaz; (6) sızıntı testi (kasıtlı CLI hata yolu dahil);
+(7) her `k` şablonunda ve `blind-calc.txt`'de `TUZ=` satırı var; tuz
+hiçbir kayıtta ve ekranda yok; yeniden açmada değişmez; iki ayrı dosyada
+farklıdır; `REFERANS_SHA256` hiçbir kayıtta yok; (8) RED kararlarında
+`b13`/`b14`/`b16`/`b21` kilitsiz reddeder (AÇIK-17).
+
+#### Ek R4/16.5 Dilim 4 — silme ve kapanış; Dilim 5 — kullanıcı sayfası
+
+Dilim 4 içerik: `b24`, `y2`, `k silme`, `s25`–`s28`, `s29a`, `z1`,
+`s29b`, imha kaydı; erken kapanış silme yolu; §25.2 abort yolu kit2 ile;
+reconciliation `r1`–`r7`; acil silme sayfası ve `ev.ps1`. Kabul
+ölçütleri: (1) normal yol ve erken kapanış yolu (assignment var/yok) ayrı
+ayrı uçtan uca; (2) N119 karar dosyalarıyla doğru sayar; `s26b` restricted
+içindeki bütün izinli dosyaları siler, izinli küme dışını guard reddeder;
+(3) F1: `z1` zamanı `b23` `ENDED_AT` / `u` `WORK_ENDED_AT` / abort
+yolunda `DUR.txt`'nin `at=` değeri + 24 saati aşarsa `s29b` kaydı bunu
+gösterir ve Ek R4/14 madde 4'teki sırayla yazar (imha kaydı ve E/H
+`STOP` ve `Write-KbDur`'dan önce); `z1` F1 için satır yazmaz; abort
+yolunda `s27` silme oturumunda PASS verir (D-7, D-8); (4) kasıtlı writer hatasıyla
+reconciliation; (5) sızıntı testi; (6) manifestten sonra restricted'a
+hiçbir dosya yazılmaz: `s25` ile `s26b` arasında restricted listesi (ad,
+uzunluk, SHA-256) değişmez; `s25` sonrası `k`, `b18`, `b22` kilitsiz
+reddedilir; `n` restricted'a yazmaz; normal, erken kapanış ve §25.2 abort
+yollarının üçünde `RESTRICTED_DELETE_GUARD=PASS`; `k silme` yoksa `s25`
+kilitsiz reddedilir; (7) `s29b` yalnız `z1` PASS'ten sonra çalışır; imha
+kaydı kapsayıcı dosyası ve anahtar imhasını da kapsar;
+`DELETION_RECORD_COPY_TO_FILE_LAWYER` başka hiçbir komutta yazılmaz;
+(8) kit2 içerik sonrası yüklenemez — iki dal ayrı ayrı: (i) `k silme`
+PASS'ten sonra, `s25`'ten önce; (ii) `k silme`'den **önce**
+(`decision-deletion.txt` yok ve, ayrı bir koşuda, yarım). Her dalda:
+kilitli DUR; DUR kuralı yedek yolu gösterir; `ev.ps1` `MATCH`; Form F
+kararı (i) `k silme` kaydından, (ii) karar kanalından; N120 manifesti
+yazar; elle N97–N101; `RESTRICTED_DELETE_GUARD=PASS`. Ayrıca prova
+kökünde değiştirilmiş bir sayfa kopyasıyla `ev.ps1` `NO_MATCH` basar ve
+sayfa yedek yolu durdurur; (8a) kit2 yüklenip silme komutları
+tamamlanamıyor (PASS sonrası `decision-deletion.txt` değiştirilir; `s25`
+kilitlenir) → aynı yedek yol (recheck-2 not 3); (8b) AÇIK-25 (b) dalı
+prova kökünde sentetik bir kapsayıcıyla bir kez; (9) `k silme`'de H →
+`s25` kilitsiz red → `k silme` devam → `s25` PASS →
+`RESTRICTED_DELETE_GUARD=PASS`; (10) `DEADLINE_APPROVED` KABUL'den sonra
+geri alma isteği yalnız DUR ile ve DUR silme oturumuna bağlanır
+(recheck-2 not 8); (11) K6 dalı `k silme`'den sonra (dar yeniden
+kontrol N-M1): oturum N'de `k silme` PASS; N'in `a9`'unda
+`SELF_REPORT_AI_HELP_SHARE=E`; N+1'de `s26a` → `STOP
+K6_BRANCH_NOT_NAMED`; acil sayfa (Ek R4/13 madde 2.4) K6 YAP satırında
+N'yi karşılaştırır ve düzeltilmiş karar olmadan silmez; kanaldan gelen
+ve G5'i adıyla anan düzeltilmiş kararla sürer; (12) imha sorularında H
+(dar yeniden kontrol N-L1): `z1` anahtar sorusunda H ve ayrı bir koşuda
+iki geçersiz tuş → `CONTAINER_KEY_DESTROYED=False` (ilgili `basis`),
+`DUR.txt` yok, `z1` `STEP_RESULT=PASS`, `s29b` çalışır ve imha kaydı
+`False`'u taşır; `s29b` kopya sorusunda H → aynı biçimde `False`, kilit
+yok; F1 aşımıyla birlikte H'de sıra Ek R4/14 madde 4'teki gibidir; ajan
+özeti iki satırı "tamamlanmadı" gösterir; (13) rapor seçimi (dar yeniden
+kontrol N-L3): `b22` raporu yazar ve iki boolean'dan biri `False` olduğu
+için `STOP` ile biter → `s25`'in `<report-produced>`'ı `$true`, acil
+sayfanın seçicisi `A` basar ve N120 `RESTRICTED_MANIFEST=WRITTEN` yazar.
+
+Dilim 5 içerik: kullanıcı sayfasının yeniden yazımı (aktarım + işleme +
+son gün + erken kapanış + silme oturumu + DUR OLURSA'da `ev.ps1` satırı),
+rev6 son kontrol L1–L4 ve KD-18 kararları. Kabul ölçütleri: (1) her YAP
+hücresinde tek eylem; (2) her içerik günü KÜME → KİT; (3) SON GÜN F1
+cümlesi (Ek R4/8.6/3); (4) sayfa yer tutucu kuralı `<[a-z0-9-]+>`, düz
+metin `<...>` yok (L2) ve sayfada satır içi üçlü ters tırnak yok (L3);
+(5) son insan provası planı onaylı; (6) kit1 `a3` ve `a4` iletilerindeki
+"madde 3 blokları", "altı sınıf beyanı", "teknik kayıt" ifadelerinin her
+biri sayfada `b0`/`b1` karşılığına bağlanır (L7); (7) uzun sürebilen her
+komut için "ilerleme yoksa" kuralı: belirtilen süre boyunca KİT
+penceresinde yeni satır yoksa Ctrl+C (yalnız KİT penceresinde) → kit
+"YARIDA KALDI" → DUR OLURSA; KÜME penceresi kapatılmaz (O-Y6; süre dilim 1
+ve 3 ölçümlerinden); (8) SON GÜN bölümü silme kararının aynı ziyarette
+tamamlanması gerektiğini ve yarım kalırsa silmenin başlamayacağını söyler
+(M-Y1/4); (9) G6 ve 2a'daki "sonraki adıma geç" istisnası yalnız GÖR
+satırı görüldüyse geçerlidir (rev6 son kontrol L1); erken kayıttan sonra
+`a4`'ün kilitsiz red iletileri D7'ye götürülür (L4); (10) DUR OLURSA,
+Ek R4/13 madde 1'in iki tetiğini ve AÇIK-25 (b) dalını yazar.
+
+**Son tam insan provası** (ayrı kullanıcı kararı): sentetik tek dosya;
+gerçek koşu sayfasıyla `t0`; aktarım günü; bir işleme günü (`b5d`
+döngüsü, ADMIN, `k` ile avukat rolü — ikinci kişi cihaz başında); son gün
+(F1 süresi ölçülür); bir erken kapanış dalı veya bir kasıtlı DUR ve silme
+oturumu; rev6 son kontrol L1/L4 dalları. Kapsayıcı, yol kapısı, ACL ve
+"Farklı kaydet" muaf tutulmaz.
+
+#### Ek R4/16.6 Sızıntı negatif testi (her dilimde zorunlu; KD-2, M1, M6, L-Y4)
+
+1. **Süzgeç testi.** Süzgeç her komut adı için yapay ham satırlarla
+   beslenir: nöbetçi tarih (`notification_date=2031-04-17`, `17.04.2031`,
+   `17/04/2031`), nöbetçi kişi adı (`ZZTESTAD ZZTESTSOYAD`), sürücü harfi
+   ve `:\ZZSENTINEL\x.json` biçiminde nöbetçi mutlak yol, `RAPOR YAZILDI:`
+   ile başlayıp aynı nöbetçi yolu taşıyan satır, yol taşıyan `ERROR:`
+   satırı, yol taşıyan traceback, Türkçe ipucu satırları. Çıkan izinli
+   satırlarda hiçbir nöbetçi bulunmaz. Gerekirse yapay süreç çıktısı prova
+   kökünde (repo dışında) duran bir sahte betikle üretilir ve
+   `Invoke-KbBlocks`'a sahte blok olarak verilir; LOCKED kod değişmez.
+2. **Karar dosyaları.** (a) `REFERANS=17.04.2031`,
+   `REFERANS=ZZTESTAD ZZTESTSOYAD 17/04/2031`, `REFERANS=17042031` ve sonu
+   boşlukla biten bir değer → kilitsiz red (`K_REFERENCE_FORMAT`), red
+   dosyası yalnız kod ve zaman; (b) `REFERANS=ZZTESTAD-1` → kabul, kayda
+   **yalnız uzunluk** girer; (c) `SONUC` alanına nöbetçi ad → kilitsiz
+   red; (d) `TUZ=` satırı silinmiş dosya → `K_SALT_LINE` ve sıfırlama
+   seçeneği; (e) AÇIK-27 satır kuralı (D-1): araya eklenmiş
+   `# ZZTESTAD ZZTESTSOYAD 17.04.2031` satırı ve şablon dışı
+   `NOT=ZZTESTAD 17/04/2031` satırı → kilitsiz `K_TEMPLATE_LINE`; aynı iki
+   satır `blind-calc.txt`'de → kilitsiz `B18_TEMPLATE_LINE`; red
+   dosyalarında, kayıtlarda ve ekran iletisinde nöbetçi yok (ileti yalnız
+   satır numarasını ve şablondaki beklenen satırı gösterir).
+3. **Uçtan uca tarama.** Sentetik case'in içeriği de nöbetçi ad ve
+   tarihleri taşır; gerçek CLI'ler (sentetik) çalışır; en az bir hata yolu
+   kasıtlı tetiklenir (mutlak yol basan bir CLI hatası). Prova sonunda
+   **bütün evidence dizini** (`steps\c`, `steps\s*`, `steps\d`,
+   `steps\e2`, `steps\x`, kayıt dosyaları, manifestler, red dosyaları)
+   taranır: nöbetçi tarih biçimleri 0; nöbetçi ad parçaları 0; sürücü
+   harfli mutlak yol kalıbı (`[A-Za-z]:\\`) yalnız kit1 `kit-values.txt`
+   satırlarında (bugünkü istisna), başka hiçbir dosyada 0; `ZZSENTINEL` 0;
+   Windows kullanıcı adı 0.
+4. **Kullanıcı adı araması (M1).** `String.IndexOf(<ad>,
+   StringComparison.OrdinalIgnoreCase)` ile (kültürden bağımsız); aranan
+   biçimler: kullanıcı adı (`$env:USERNAME`), profil dizininin adı, profil
+   yolunun sistemin bildirdiği kısa (8.3) biçimi ve `<ilk-6-harf>~1`
+   kalıbı. **Pozitif kontrol (zorunlu):** tarama başlamadan önce prova
+   kökünde (evidence ve repo dışında) bir nöbetçi dosya yazılır; içinde
+   kullanıcı adının tamamen büyük harfli biçimi, `~1` kısa adı taşıyan
+   sentetik bir yol satırı (`<sürücü>:\USERS\<BUYUK-HARF-AD>~1\APPDATA\…`
+   biçiminde) ve tamamen küçük harfli biçim bulunur. Tarayıcı aynı çağrıyla
+   önce bu dosyayı tarar ve **her** biçimi bulmalıdır; biri bulunmazsa test
+   geçersizdir ve evidence taramasının 0 sonucu kanıt sayılmaz.
+5. **Sonuç.** Herhangi bir eşleşme veya geçersiz pozitif kontrol dilimin
+   provasını geçersiz kılar (`STOPPED_ON_UNEXPECTED_RESULT`).
+
+#### Ek R4/16.7 Pencere öncesi ajan işleri (KD-20)
+
+Aktarım gününden önce, içerik yokken, aynı ajan oturumunda (her biri
+kendi kapsam onayıyla; sandbox dışı yazımlar ve ACL adımları hedefi
+adlandıran ayrı kullanıcı onayıyla, `CLAUDE.md` §14.7). **Sıra
+bağlayıcıdır** (inceleme L4; dar düzeltme turu D-9), çünkü `pins2.txt` ve
+`kit-build2.txt` CreateNew ile bir kez yazılır ve diğer dosyaların
+hash'lerini taşır: (1) kit1 kurulumu ve kit2 dosyalarının dizine
+konması (`pins2.txt` ve `kit-build2.txt` henüz yok); (2) `kit2-case.txt`
+(AÇIK-13: kimlikler burada belirlenir; `FORM_F1` imzalı formdan);
+(3) `<kb-secure-file>`, ACL'si ve hash'i (KD-22 a); (4) Ek R4/8.7 yöntem
+kararının kullanıcıdan alınması ve `approval-method.txt`; (5) acil silme
+sayfası, ACL'si ve hash'i (Ek R4/13); (6) `ev.ps1` (sayfanın göreli adını
+ve hash'ini taşıdığı için sayfadan **sonra** üretilir); (7)
+`container-record.txt` (`CONTAINER_FILE_BYTES`); (8) restricted sabit ad
+listesinin son hâli (avukat cevaplarından sonra); (9) karar şablonlarının
+avukata gönderilecek içeriksiz örneği ve güncellenmiş D9 bildirimi (Ek
+R4/17); (10) §26.5'teki AÖ sınıfı anahtarlar; (11) kullanıcı sayfası
+(dilim 5); (12) **en son**, tek seferde CreateNew ile `pins2.txt` ve
+`kit-build2.txt`: genişletilmiş N116, komut adı çakışması, AST sayımları,
+şablon hash'leri ve (2)–(6)'nın ölçülen hash'leri. (12)'den sonra (2)–(6)
+değişirse kit2 yüklenmez (pin farkı; içerik öncesi kilitsiz) ve kurulum
+ayrı kullanıcı kararıyla yeniden yapılır.
+
+### Ek R4/17 Avukat bağımlılık haritası ve sorular
+
+**Sorular** (errata-4 §10; soru 11 dar düzeltme turunda genişletildi,
+aşağıda; içerik taşımayan gönderilecek metin; tek ve tam liste):
+
+1. **Cihaz başında bulunma.** İşleme günlerinde (bir veya iki gün) ve
+   silme gününde (silme ve imha kaydı dahil), işlem süresince operatörün
+   bilgisayarının başında bulunabilir misiniz? Her gün için kaç saat
+   ayırabilirsiniz? (Süre henüz ölçülmedi; deneme provasında ölçülecek.)
+2. **Ekrandaki Evet/Hayır onayları.** Ekranda "TUŞA AVUKAT BASAR" yazan
+   sorularda (ör. ekranda gösterilen tarih ve sayfanın orijinal belgeyle
+   aynı olup olmadığı, kör hesabı sistem sonucunu görmeden yazıp
+   yazmadığınız, son karşılaştırma, imha kaydının kopyasının size verilip
+   verilmediği) Evet/Hayır tuşuna sizin basmanızı kabul eder misiniz?
+3. **Ekranda karşılaştırma (üç an).** Üç ayrı anda bilgi ekranda size
+   gösterilecek ve siz onu orijinal belgeyle karşılaştıracaksınız: (a)
+   tebliğ satırından üretilen girdi (tarih, sayfa, alıntı); (b) doğrulama
+   adımında belgenin ilgili yeri (sayfa ve alıntı); (c) zaman çizelgesi
+   onayında olaylar. Bu ekranlar kayıt üretmez; karşılaştırmanın sonucunu
+   her seferinde yazılı kararınızla bildirirsiniz. Bunu kabul eder
+   misiniz?
+4. **Karar şablonu.** Kararlarınızı (intake onayı, girdi karşılaştırması,
+   fact kabulü, doğrulama, zaman çizelgesi, durdurucu işlem yok beyanı,
+   adli tatil, süre onayı, silme kararı, gerekirse "bu dosya pilota uygun
+   değil") bilgisayarda kitin açtığı Not Defteri'ne `SONUC=KABUL` gibi
+   sabit satırlarla kendiniz yazmayı kabul eder misiniz? Kimlik alanlarını
+   ve girdi sürüm önekini bilgisayar doldurur; siz yalnız `BURAYA_`
+   işaretli alanları yazarsınız. Her şablonun başında bilgisayarın
+   eklediği rastgele bir satır bulunur; o satırı değiştirmezsiniz.
+   Yazmayı yarıda bırakırsanız aynı dosya daha sonra kaldığınız yerden
+   açılır. Durdurucu işlem beyanının referans alanına yalnız harf, rakam,
+   boşluk, nokta, alt çizgi ve kısa çizgi yazılabilir (en çok 64 karakter;
+   boşlukla bitemez); Türkçe karakter, tarih, art arda altı veya daha
+   fazla rakam, tırnak işareti ve ters bölü yazılamaz. Kayıtlara
+   referansın kendisi girmez, yalnız kaç karakter olduğu girer. Bu sınır
+   sizin için uygun mu? Şablon örneğini ayrıca göndereceğiz.
+5. **İki kişi kuralı.** Tebliğ satırını operatör ekrandaki listeden tek
+   başına seçecek, girdi dosyasını bilgisayar yazacak, siz bu dosyayı
+   seçime katılmadan orijinal belgeyle karşılaştıracaksınız. Bunu "girdiyi
+   yazan ile karşılaştıran ayrı kişilerdir" kuralını karşılıyor sayar
+   mısınız, yoksa Form B4'teki açık kabul (feragat) mi gerekir?
+6. **Kör hesap.** Bağımsız süre hesabınızı, sistemin sonucunu görmeden,
+   aynı bilgisayarda kitin açtığı bir dosyaya kendiniz yazmayı kabul eder
+   misiniz? (Kit dosyaya kaydedilmeyen rastgele bir satır ekler; böylece
+   kayıtlardaki parmak izinden tarih tahmin edilemez. O satırı
+   değiştirmezsiniz.)
+7. **Kör hesap kaydının saklanması.** Bugünkü yazılı usulde kör hesap
+   kaydı sizin kontrolünüzde saklanıyor. Yeni usulde kayıt bilgisayarda,
+   kapsayıcının içinde durur ve silmeyle birlikte yok edilir; kayıtlara
+   yalnız parmak izi ve zamanı girer. Bu değişikliği kabul eder misiniz?
+8. **Kendi kopyanız.** Bilgisayarda yazdığınız kararlar ve kör hesap
+   silmeyle yok edilecek. Bunların bir kopyasını kendiniz saklamak ister
+   misiniz; isterseniz hangi biçimde (ör. kendi elinizle kâğıda)?
+   Elektronik kopya şu an tasarımda yok. Silme kaydının (imha kaydı) bir
+   kopyası size zaten verilecek: onu hangi biçimde almak istersiniz?
+   "Kendi kopyanız" ile hangisini kastettiğinizi de belirtir misiniz?
+9. **Not Defteri izleri (güncellenmiş bildirim).** Daha önce size yazılı
+   bildirilen "kapsayıcı dışında kalabilen izler" listesine (sayfa
+   dosyası, arama dizini vb.) bir madde eklenecek: Not Defteri, açılan
+   dosyanın yerini (sürücü harfi ve genel dosya adı; içerik değil)
+   Windows'un "son kullanılanlar" kaydında tutabilir. Güncellenmiş
+   bildirimi gerçek dosyadan önce size yazılı göndereceğiz. Okuyup yazılı
+   cevap (kabul veya ret) verir misiniz?
+10. **Silme penceresi.** Son karşılaştırma (adım 23) ile silmenin (silme
+    ve imha kaydı dahil) aynı ziyarette yapılmasını ve silme kararını
+    (Form F) bu ziyarette eksiksiz tamamlamayı kabul eder misiniz? Silme
+    kararı yarım kalırsa silme başlayamaz. Silme, son karşılaştırmadan
+    sonraki 24 saat içinde biter.
+11. **Uygun olmayan dosya ve ret kararları.** Tebliğ tarihini taşıyan
+    satır otomatik bulunamazsa, belge pilotun kapsadığı türde (vergi/ceza
+    ihbarnamesi) değilse, belgeden girilen bilgilerin alan alan
+    kontrolünde (intake onayı) bir maddeyi reddederseniz **veya**
+    ilerideki bir adımda (fact kabulü, doğrulama, zaman çizelgesi, süre
+    onayı) siz ret kararı verirseniz, dosyanın bu pilotta işlenmeyip aynı
+    ziyarette silinmesini ve bunu sabit bir neden koduyla
+    kararlaştırmayı kabul eder misiniz?
+
+**Soru 11'in genişletilmesi (dar düzeltme turu D-11; inceleme L6).**
+Soru 11'e belge türünün kapsam dışı çıkması ve intake onayında ret
+eklendi; bu soru artık errata-4 §10'daki metinle kelimesi kelimesine aynı
+**değildir** (diğer on soru aynıdır). 11 soruluk ilk metin avukata
+önceden gönderildiyse genişletilmiş soru 11 ayrı bir ek soru olarak
+gönderilir; cevabı dilim 4'ten önce gelir (bağımlılık haritası satır 11).
+
+**Güncellenmiş D9 bildirimi** (soru 9; §1.6/5 bildiriminin revizyon 7
+eki; kişisel veri içermez; karar kanalından gönderilir ve
+`OUTBOUND_NOTICE_SENT` olarak kaydedilir; cevap `INBOUND_DECISION_RECEIVED`
+ve `LEGAL_APPROVED`):
+
+> Daha önce bildirdiğimiz "şifreli kapsayıcının dışında kalabilen izler"
+> listesine (sayfa dosyası, hazırda bekletme dosyası, Windows arama
+> dizini, antivirüs karantinası) bir madde ekliyoruz: Yeni usulde karar
+> dosyalarınızı, kör hesabı ve intake formunu bilgisayarın Not Defteri
+> programında yazacaksınız. Not Defteri, açılan dosyanın yerini (sürücü
+> harfi ve genel dosya adı, ör. "decision-fact.txt"; dosyanın içeriği
+> değil) Windows'un "son kullanılanlar" kaydında, şifreli kapsayıcının
+> dışında tutabilir. Bu kayıt pilot bittikten sonra da kalabilir. Bu
+> eklemeyi kabul ediyor musunuz? Lütfen yazılı olarak "kabul" veya "ret"
+> diye cevap verin. Ret halinde gerçek dosya alınmaz.
+
+**Bağımlılık haritası** (cevap olumsuzsa yeniden açılan):
+
+| Soru | Bağlı maddeler (bu ek) | Olumsuz cevapta | Bekletir |
+|---|---|---|---|
+| 1 | Bütün AV E/H'leri; `k`; `b18`; `g8`/`g14`/`g16`; `s29b`; Ek R4/8.6 | v2 geçerli değildir (avukat uzaktaysa 6, 8, 10, 12, 14, 16, 18, 20, 23 ve 29 (`s29b`). adımlar bu tasarımla yürütülemez) | Dilim 2–4 yazımı |
+| 2 | Ek R4/8.5 AV satırları | E/H tasarımı yeniden açılır | Dilim 2–4 |
+| 3 | `g8`, `g14`, `g16` (Ek R4/8.3 satırlarında işaretli) | `g8`/`g14`/`g16` tasarımı yeniden açılır | Dilim 2–4 |
+| 4 | Ek R4/12.1, şablonlar N123–N133, `REFERANS` kuralı, restricted ad listesi | KD-10 ve M6 kümesi yeniden açılır | Dilim 2–4 |
+| 5 | Ek R4/15 madde 3; `TWO_PERSON_CONTROL` | "Feragat gerekir" → B4 kabulü ve `TWO_PERSON_CONTROL=WAIVED_B4` pencere öncesinde | Dilim 2–4 |
+| 6 | Ek R4/12.2; N134 | KD-11 (a) ve KD-24'ün kör hesap kısmı yeniden açılır | Dilim 2–4 |
+| 7 | §17.2/3 değişikliği; `blind-calc.txt` restricted'da | Aynı | Dilim 2–4 |
+| 8 | Ek R4/12.1 madde 9; imha kaydı kopyası; AÇIK-16 | "Elektronik kopya" → ad listesi ve dilim 4 yeniden açılır (O-Y8 riski) | Gerçek dosya |
+| 9 | Güncellenmiş D9; §4.4/8 | Gerçek dosya alınmaz | Gerçek dosya |
+| 10 | Ek R4/8.6/3; `k silme` istisnası; F1 | KD-16 (b) ve M-Y1'in silme kararı istisnası yeniden açılır | Dilim 4 |
+| 11 | `u`, `k uygunsuz`, Ek R4/8.4/5, Ek R4/8.4/6 (intake RED), Ek R4/12.3 madde 8 (`B5D_DOCUMENT_TYPE_SCOPE` iletisi), Ek R4/14 | AÇIK-17 yeniden açılır (RED → bugünkü gibi DUR; intake RED → yalnız §11.4 DUR; kapsam dışı belge → DUR) | Dilim 4 (`B5D_DOCUMENT_TYPE_SCOPE` iletisi için dilim 2) |
+
+Restricted ad listesi ve `k` şablonları soru 4, 6, 7, 8 ve 11'e bağlıdır
+ve aktarım günündeki ilk `b1`'de dondurulur; cevaplar aktarım gününden
+önce gelmelidir.
+
+### Ek R4/18 Ek R4 blokları (türetilmiş bloklar ve şablonlar)
+
+Bu bölümdeki bloklar dosyanın sonundadır; mevcut 118 bloğun numaraları
+kaymaz. N118–N122 türetilmiş PowerShell bloklarıdır (Ek R4/11); N123–N134
+`text` şablonlarıdır (Ek R4/12). Şablonlardaki `<tuz>`, `<case-id>`,
+`<revizyon>`, `<girdi-hash-onek>` ve `<uyari-sayisi>`'yı kit doldurur;
+şablonlar elle doldurulmaz. Hepsi yalnız ASCII'dir ve kit2 kurulumunda
+pinlenir (O7). Şablonlar avukat cevabına bağlıdır (soru 4, 6; cevap
+olumsuzsa yeniden açılır).
+
+**N118 — Türetilmiş N20.**
+
+```powershell
+# Ek R4/11 turetilmis N20 (runbook revizyon 7). Kaynak: N20, SHA-256 a483c822b2127d4a8cc998ea18da92f4f658e760f0c12af8f6c8ffbd088c5ddb.
+# Degisen: $allowedNames 15 sabit ad (KD-24); tekillik denetimi Sort-Object -Unique yerine Ordinal sozluk (M1, L-Y1);
+# karsilastirmalar -c... bicimi. Cikti satirlari ve yazilan dosyanin bicimi N20 ile ayni. ASCII.
+$allowedNames = @('deadline-report.txt', 'blind-calc.txt', 'decision-intake.txt', 'decision-warnings.txt', 'decision-input-r1.txt', 'decision-input-r2.txt', 'decision-input-r3.txt', 'decision-fact.txt', 'decision-verification.txt', 'decision-timeline.txt', 'decision-stopping-event.txt', 'decision-judicial-recess.txt', 'decision-deadline.txt', 'decision-deletion.txt', 'decision-unsuitable.txt')
+$allowedNameSet = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+$namesOk = $true
+foreach ($allowedName in $allowedNames) { if ($allowedNameSet.ContainsKey($allowedName) -or ($allowedName -cnotmatch '^[a-z0-9][a-z0-9-]{0,62}\.(txt|log|jsonl)$')) { $namesOk = $false } else { $allowedNameSet.Add($allowedName, $allowedName) } }
+$rState = Get-PilotRestrictedState "<restricted-dir>"
+if ($namesOk -and ($null -cne $rState) -and ($rState.Bad -ceq 0) -and ($rState.Files.Count -ceq 0) -and (Write-PilotExclusive "<evidence-dir>\restricted-allowed-files.txt" (@('# kind=restricted-allowed') + $allowedNames))) { "RESTRICTED_ALLOWED_RECORD=WRITTEN" } else { "STOP RESTRICTED_ALLOWED_RECORD=FAIL" }
+```
+
+**N119 — Türetilmiş N96.**
+
+```powershell
+# Ek R4/11 turetilmis N96 (runbook revizyon 7). Kaynak: N96, SHA-256 5a6eb051c3956ec0605b4ec9728b4ee338cddc3028e1ab03de7a62a1050a05ec.
+# Degisen: $rSetOk satirinin son kosulu (dosya sayisi 1 veya 0) yerine decision-deletion.txt varligi (errata-4 2.1/4);
+# <report-produced> tek tirnakli dizgede karsilastirilir (yalniz $true/$false; blok yer tutucuyla da ayristirilir);
+# karsilastirmalar -c... bicimi (M1). Manifest Get-PilotRestrictedState sirasiyla yazilir. Diger satirlar N96 ile ayni. ASCII.
+$rDir = "<restricted-dir>"
+$allowedLines = @([System.IO.File]::ReadAllLines("<evidence-dir>\restricted-allowed-files.txt", (New-Object System.Text.UTF8Encoding($false))))
+$allowedSet = @($allowedLines | Select-Object -Skip 1)
+$rState = Get-PilotRestrictedState $rDir
+$rNames = @($rState.Files | ForEach-Object { $_.Name })
+$reportProduced = ('<report-produced>' -ceq '$true')
+$rSetOk = ($allowedLines.Count -cge 2) -and ($allowedLines[0] -ceq '# kind=restricted-allowed') -and ($null -cne $rState) -and ($rState.Bad -ceq 0) -and (@($rNames | Where-Object { $allowedSet -cnotcontains $_ }).Count -ceq 0) -and (($rNames -ccontains 'deadline-report.txt') -ceq $reportProduced) -and ($rNames -ccontains 'decision-deletion.txt')
+$rLines = @()
+if ($rSetOk) { $rLines = @($rState.Files | ForEach-Object { "{0}`t{1}`t{2}" -f $_.Name, $_.Length, (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }) }
+if ($rSetOk -and (Write-PilotExclusive "<evidence-dir>\closing-restricted-manifest.tsv" (@('# kind=restricted') + $rLines))) { "RESTRICTED_MANIFEST=WRITTEN"; "RESTRICTED_FILE_COUNT=$($rLines.Count)" } else { "STOP RESTRICTED_MANIFEST=FAIL" }
+```
+
+**N120 — Türetilmiş N96y (acil sayfa).**
+
+```powershell
+# Ek R4/13 acil silme sayfasi icin turetilmis N96y (runbook revizyon 7). Kaynak: N96, SHA-256 5a6eb051c3956ec0605b4ec9728b4ee338cddc3028e1ab03de7a62a1050a05ec.
+# Degisen: $rSetOk satirinin son kosulu (dosya sayisi 1 veya 0) cikarildi; karar dosyalari ve blind-calc.txt icin kosul yok
+# (errata-4 4.1); <report-produced> tek tirnakli dizgede karsilastirilir (yalniz $true/$false);
+# karsilastirmalar -c... bicimi (M1). Diger satirlar N96 ile ayni. ASCII.
+$rDir = "<restricted-dir>"
+$allowedLines = @([System.IO.File]::ReadAllLines("<evidence-dir>\restricted-allowed-files.txt", (New-Object System.Text.UTF8Encoding($false))))
+$allowedSet = @($allowedLines | Select-Object -Skip 1)
+$rState = Get-PilotRestrictedState $rDir
+$rNames = @($rState.Files | ForEach-Object { $_.Name })
+$reportProduced = ('<report-produced>' -ceq '$true')
+$rSetOk = ($allowedLines.Count -cge 2) -and ($allowedLines[0] -ceq '# kind=restricted-allowed') -and ($null -cne $rState) -and ($rState.Bad -ceq 0) -and (@($rNames | Where-Object { $allowedSet -cnotcontains $_ }).Count -ceq 0) -and (($rNames -ccontains 'deadline-report.txt') -ceq $reportProduced)
+$rLines = @()
+if ($rSetOk) { $rLines = @($rState.Files | ForEach-Object { "{0}`t{1}`t{2}" -f $_.Name, $_.Length, (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }) }
+if ($rSetOk -and (Write-PilotExclusive "<evidence-dir>\closing-restricted-manifest.tsv" (@('# kind=restricted') + $rLines))) { "RESTRICTED_MANIFEST=WRITTEN"; "RESTRICTED_FILE_COUNT=$($rLines.Count)" } else { "STOP RESTRICTED_MANIFEST=FAIL" }
+```
+
+**N121 — Türetilmiş N35.**
+
+```powershell
+# Ek R4/11 turetilmis N35 (runbook revizyon 7). Kaynak: N35, SHA-256 638003739648683e48762fceeb2b9921066bba1b3f3d3d502e6c5b18feed5bb7.
+# Degisen: ASCII disi karakterler [char]0x kacislariyla (M2); sayi karsilastirmalari -c... bicimi (M1).
+# Sozluk, satir sirasi ve cikti satirlari N35 ile ayni. ASCII.
+$taxIncluded = @(('katma de' + [char]0x011F + 'er vergisi'), 'kdv', 'kurumlar vergisi', 'gelir vergisi', 'damga vergisi', 'veraset ve intikal vergisi', ('motorlu ta' + [char]0x015F + [char]0x0131 + 'tlar vergisi'), 'mtv', ('vergi ziya' + [char]0x0131 + ' cezas' + [char]0x0131), ('usuls' + [char]0x00FC + 'zl' + [char]0x00FC + 'k cezas' + [char]0x0131), ('' + [char]0x00F6 + 'zel usuls' + [char]0x00FC + 'zl' + [char]0x00FC + 'k cezas' + [char]0x0131))
+$taxExcluded = @(('' + [char]0x00F6 + 'zel t' + [char]0x00FC + 'ketim vergisi'), ('' + [char]0x00F6 + 'tv'), 'banka ve sigorta muameleleri vergisi', 'bsmv', ('' + [char]0x00F6 + 'zel ileti' + [char]0x015F + 'im vergisi'), ('' + [char]0x00F6 + 'iv'), ('' + [char]0x015F + 'ans oyunlar' + [char]0x0131 + ' vergisi'))
+$caseDoc = [System.IO.File]::ReadAllText("<case-root>\case.json", [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+$taxItems = @($caseDoc.dispute_items)
+$taxUnknown = @($taxItems | Where-Object { ($taxIncluded + $taxExcluded) -cnotcontains [string]$_.tax_type }).Count
+$taxInc = @($taxItems | Where-Object { $taxIncluded -ccontains [string]$_.tax_type }).Count
+$taxExc = @($taxItems | Where-Object { $taxExcluded -ccontains [string]$_.tax_type }).Count
+if ($taxItems.Count -cge 1 -and $taxUnknown -ceq 0 -and -not ($taxInc -cgt 0 -and $taxExc -cgt 0)) { "TAX_TYPE_VOCAB=OK" } else { "STOP TAX_TYPE_VOCAB=FAIL" }
+```
+
+**N122 — Türetilmiş N89.**
+
+```powershell
+# Ek R4/11 turetilmis N89 (runbook revizyon 7). Kaynak: N89, SHA-256 8b1eb4270c467bc365dbd7ef49a8c6ac6eb93b3ba5f8e2e06c2a30e265773ada.
+# Degisen: ASCII disi karakterler [char]0x kacislariyla (M2). Satir sirasi ve cikti satirlari N89 ile ayni. ASCII.
+$r = [System.IO.File]::ReadAllLines("<restricted-dir>\deadline-report.txt", [System.Text.Encoding]::UTF8)
+"EXPIRY_LINE_PRESENT=$($r -ccontains ('S' + [char]0x00FC + 're a' + [char]0x015F + [char]0x0131 + 'm' + [char]0x0131 + ' (expiry) DE' + [char]0x011E + 'ERLEND' + [char]0x0130 + 'R' + [char]0x0130 + 'LMED' + [char]0x0130 + '.'))"
+"DISCLAIMER_LINE_PRESENT=$($r -ccontains ('Bu ' + [char]0x00E7 + [char]0x0131 + 'kt' + [char]0x0131 + ' hukuki karar de' + [char]0x011F + 'ildir; avukat taraf' + [char]0x0131 + 'ndan do' + [char]0x011F + 'rulanmal' + [char]0x0131 + 'd' + [char]0x0131 + 'r.'))"
+(Get-FileHash -LiteralPath "<restricted-dir>\deadline-report.txt" -Algorithm SHA256).Hash.ToLowerInvariant()
+Remove-Variable r -ErrorAction SilentlyContinue
+```
+
+**N123 — şablon: `k intake` (`decision-intake.txt`; `INTAKE_APPROVED`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=INTAKE_APPROVED
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Her madde icin KABUL veya RED yazin (runbook 11.4).
+# METIN: cikarilan metin belgeyi dogru ve eksiksiz aktariyor; teblig tarihi metinde GG.AA.YYYY veya GG/AA/YYYY.
+METIN=BURAYA_KABUL_VEYA_RED
+# TARAFLAR: taraf kayitlari dogru ve eksiksiz.
+TARAFLAR=BURAYA_KABUL_VEYA_RED
+# SAYFA_SAYISI: belgenin sayfa sayisi dogru.
+SAYFA_SAYISI=BURAYA_KABUL_VEYA_RED
+# SURE_ALANLARI: sure kurali secimini veya hesabini etkileyen alanlar (11.4 tablosu).
+SURE_ALANLARI=BURAYA_KABUL_VEYA_RED
+# DIGER_ALANLAR: 11.4 madde 4-7.
+DIGER_ALANLAR=BURAYA_KABUL_VEYA_RED
+# DOGRULAMA_DURUMU: butun verification_state alanlari unverified.
+DOGRULAMA_DURUMU=BURAYA_KABUL_VEYA_RED
+```
+
+**N124 — şablon: `k uyari` (`decision-warnings.txt`; `VALIDATOR_WARNINGS_ACCEPTED`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=VALIDATOR_WARNINGS_ACCEPTED
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+UYARI_SAYISI=<uyari-sayisi>
+# Dogrulayicilarin verdigi uyarilari kabul edilebilir sayiyor musunuz? (runbook 11.3 c-d)
+SONUC=BURAYA_KABUL_VEYA_RED
+```
+
+**N125 — şablon: `k girdi` (`decision-input-r<n>.txt`; `MANUAL_INPUT_COMPARED`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=MANUAL_INPUT_COMPARED
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+REVIZYON=<revizyon>
+HASH_ONEK=<girdi-hash-onek>
+# Ekranda (g8) gordugunuz girdi dosyasi orijinal belgeyle ayni mi? (runbook 14.3)
+SONUC=BURAYA_KABUL_VEYA_RED
+```
+
+**N126 — şablon: `k fact` (`decision-fact.txt`; `FACT_ACCEPTED`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=FACT_ACCEPTED
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Ekranda (b12) gordugunuz tek fact kabul edilebilir mi? (runbook 15)
+SONUC=BURAYA_KABUL_VEYA_RED
+```
+
+**N127 — şablon: `k dogrulama` (`decision-verification.txt`; `VERIFICATION_VERIFIED`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=VERIFICATION_VERIFIED
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Ekranda (g14) gordugunuz yer orijinal belgeyle ayni; teblig fact kaydi dogrulanabilir mi? (runbook 15.3)
+SONUC=BURAYA_KABUL_VEYA_RED
+```
+
+**N128 — şablon: `k zamancizelgesi` (`decision-timeline.txt`; `TIMELINE_APPROVED`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=TIMELINE_APPROVED
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Ekranda (g16) gordugunuz zaman cizelgesi onaylanabilir mi? (runbook 16)
+SONUC=BURAYA_KABUL_VEYA_RED
+```
+
+**N129 — şablon: `k durdurucu` (`decision-stopping-event.txt`; `STOPPING_EVENT`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=STOPPING_EVENT
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Tebligden sonra sureyi durdurabilecek, kesebilecek veya baslangicini degistirebilecek bir islem var mi? (runbook 17.1)
+# none = yok; present = var; unknown = bilinmiyor.
+DURUM=BURAYA_none_present_unknown
+# Beyaninizin opak referansi: yalniz harf, rakam, bosluk, nokta, alt cizgi, kisa cizgi;
+# en cok 64 karakter; boslukla bitemez; tarih ve art arda 6 rakam yazilamaz. Referans yoksa YOK.
+REFERANS=BURAYA_REFERANS
+```
+
+**N130 — şablon: `k adlitatil` (`decision-judicial-recess.txt`; `JUDICIAL_RECESS`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=JUDICIAL_RECESS
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Adli tatil bu sureye uygulanir mi? yes veya no (runbook 17.1).
+UYGULANIR=BURAYA_yes_no
+```
+
+**N131 — şablon: `k sure` (`decision-deadline.txt`; `DEADLINE_APPROVED`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=DEADLINE_APPROVED
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Ekranda (b20) karsilastirilan pending sure onaylanabilir mi? (runbook 18.4)
+SONUC=BURAYA_KABUL_VEYA_RED
+```
+
+**N132 — şablon: `k silme` (`decision-deletion.txt`; `DELETION_DECISION`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=DELETION_DECISION
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Form F silme karari (runbook 23, 28.1). Bu kit yalniz "Silinsin" icindir; arsiv yoktur.
+F2=BURAYA_SILINSIN
+# Silme bu ziyarette yapilacak.
+SILME_BU_ZIYARETTE=BURAYA_EVET
+# Onceki pencerelerde "(silme oturumu yok)" dali yasandiysa kodlari bu sirayla, virgulle, bosluksuz yazin:
+# G5,MADDE1,MADDE5,MADDE6 (ornek: G5,MADDE6). Yasanmadiysa yalniz YOK (runbook 4.3 a, K6).
+SILME_OTURUMU_DALLARI=BURAYA_YOK_VEYA_DAL_KODLARI
+```
+
+**N133 — şablon: `k uygunsuz` (`decision-unsuitable.txt`; `PILOT_UNSUITABLE`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=PILOT_UNSUITABLE
+CASE_ID=<case-id>
+# KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
+# Turkce karakter, tarih ve kisisel bilgi yazmayin.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+# Neden kodu: NO_SINGLE_DATE_LINE, LAWYER_REJECTED_ALL_CANDIDATES, LAWYER_REJECTED_FACT,
+# LAWYER_REJECTED_VERIFICATION, LAWYER_REJECTED_TIMELINE, LAWYER_REJECTED_DEADLINE, OTHER.
+NEDEN=BURAYA_KOD
+# Silme bu ziyarette yapilacak.
+SILME_BU_ZIYARETTE=BURAYA_EVET
+```
+
+**N134 — şablon: `b18 kor hesap` (`blind-calc.txt`).**
+
+```text
+TUZ=<tuz>
+KARAR_TURU=BLIND_CALC
+CASE_ID=<case-id>
+# KOR HESAP - yalniz avukat, sistemin sonucunu gormeden doldurur (runbook 17.2; Ek R4/12.2).
+# Yalniz BURAYA_ ile baslayan degerleri degistirin; ilk uc satira dokunmayin. Her deger tek satir.
+# Tarihler YYYY-AA-GG biciminde. KAPSAM satirlarina kisa aciklama yazabilirsiniz.
+# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
+TEBLIG_TARIHI=BURAYA_YYYY-AA-GG
+SON_GUN=BURAYA_YYYY-AA-GG
+KAPSAM_KURAL=BURAYA_UYGULANAN_KURAL
+KAPSAM_ADLI_TATIL=BURAYA_DEGERLENDIRME
+KAPSAM_MALI_TATIL=BURAYA_DEGERLENDIRME
 ```
