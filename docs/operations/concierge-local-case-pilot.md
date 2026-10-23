@@ -49,6 +49,18 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > dot-source edildi). Hiçbir kit komutu, motor, yükleyici, başlatıcı,
 > runbook komutu, CLI, PostgreSQL aracı, 7z, VeraCrypt veya Not Defteri
 > çalıştırılmadı; dilim 1 kodu provaya tabidir (Ek R4/16.2).
+> Revizyon 9 (§34.15) kit2 dilim 1 prova planı kontrolünün H1
+> bulgusunu kapatır: N135'in (`bc.ps1`) iki satırlık düzeltmesi
+> (`Get-CimInstance -ClassName Win32_Process` → `Get-WmiObject -Class
+> Win32_Process`; kit1 `a2`'nin `EXTRA_MODULE_COUNT=0` beklentisi), yeni
+> kabul ölçütü (27) ve iki metin düzeltmesi (Ek R4/3 VeraCrypt sürüm
+> dizgesi, Ek R4/4 `KIT2_COMMANDS_DEFINED`). Diğer 147 blok bayt-bayt
+> aynıdır. Denetim: `ParseFile`, yükleme yolunun AST çıkarımı, kopyalar
+> üzerinde `kvc2.ps1` ve pozitif kontrollü dar ölçüm (N135'in süreç
+> sorgusu satırları + N6'nın gerçek satırları, yeni `-NoProfile`
+> süreçte). Hiçbir kit, başlatıcı veya runbook bloğu gerçek kurulum
+> olarak çalıştırılmadı; tam yükleme ölçümü prova kapısına (G13) kaldı;
+> dilim 1 kodu hâlâ provaya tabidir (Ek R4/16.2).
 
 ---
 
@@ -72,7 +84,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -6117,6 +6129,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 7:** `b24`, `adm.ps1` (`y2`), `s25`–`s29a`, `z1.ps1` (`z1`, `s29b`), `r1`–`r7`, acil sayfa ve `ev.ps1` | — | Henüz yazılmadı | **Yeni, dilim 4** |
 | **Revizyon 7:** kullanıcı sayfası (N114'ün yerini alacak kit2 sayfası) | — | Henüz yazılmadı (N114 değişmedi) | **Yeni, dilim 5**; son tam insan provası ayrı kullanıcı kararı |
 | **Revizyon 8:** kit2 dilim 1 kodu N135–N147 (`bc.ps1`, `kbe.ps1`, `kbl.ps1`, `t0.ps1`, `kume.ps1`, `b0`, `b1`, `b2`, `k`, `n`, `o`, `sv7.ps1`; kurulum aracı `kvc2.ps1`); mevcut 135 blok | — | Yeni (yazıldı, hiç çalıştırılmadı); mevcut bloklar bayt-bayt aynı (§34.14) | **Yeni, dilim 1 provası** (Ek R4/16.2; ölçüt → kod → ölçüm eşlemesi §34.14) |
+| **Revizyon 9:** N135 (`bc.ps1`; H1: satır 145 ve 147 `Get-WmiObject -Class Win32_Process`); diğer 147 blok | — (revizyon 8 kodu hiç çalıştırılmamıştı) | Değişti (yalnız N135; diğer bloklar bayt-bayt aynı, §34.15) | **Yeni, dilim 1 provası** (Ek R4/16.2, ölçüt (27) dahil; kit2 yüklü süreçte N6'nın gerçek satırları prova kapısı G13) |
 
 ### 34.5 Yazım sınırları
 
@@ -8403,7 +8416,7 @@ birleştirilmiş, sonda LF); kit2 dosyasının baytları bu gövdeye eşittir.
 
 | Blok | Dosya | Satır | SHA-256 | `ParseInput` |
 |---|---|---|---|---|
-| N135 | `bc.ps1` | 172 | `788a6b58654d6e4027b1dd8a5a377657ba5a1d32673548d47a3b9a4574c3a896` | 0 hata |
+| N135 | `bc.ps1` | 172 | `36da4eca22964b611586f433af1d1e66793be6c65806f43350685e3aeb7fdcc2` | 0 hata |
 | N136 | `kbe.ps1` | 467 | `744aa03799f9b03bf2827daa67e75fd3e96970b412e273e7a12fb40cb30ea2eb` | 0 hata |
 | N137 | `kbl.ps1` | 40 | `d27ca31921592d998e3427dda37490a58afd726b4d3bd6d4ad5d83942a63b096` | 0 hata |
 | N138 | `t0.ps1` | 114 | `8c2a1c7215b2dcb0f4cf992052846b3f7cfacfb42a19587c7a3f199a861fb544` | 0 hata |
@@ -8417,6 +8430,12 @@ birleştirilmiş, sonda LF); kit2 dosyasının baytları bu gövdeye eşittir.
 | N146 | `sv7.ps1` | 25 | `e69834e5d7faff55af2001867e5b86e70d8deb2b654242216b9b3bf24c2d02d0` | 0 hata |
 | N147 | `kvc2.ps1` (kurulum aracı; kit2 dizinine kopyalanmaz) | 159 | `491b50e20ad00fcb031284953cc3cb014228a716442d0b83f1f755e5166c8ed9` | 0 hata |
 
+**Revizyon 9 notu (§34.15).** Yukarıdaki tabloda N135 (`bc.ps1`) satırı
+revizyon 9'da yenilendi (H1 düzeltmesi; satır sayısı 172 değişmedi);
+revizyon 8'in değeri `788a6b58654d6e4027b1dd8a5a377657ba5a1d32673548d47a3b9a4574c3a896`
+idi. Diğer satırlar revizyon 8'deki gibidir; Ek R4/19 madde 1'in
+"§34.14 tablosu" atfı bu tablonun güncel hâlidir.
+
 **Mevcut blokların değişmezliği.** Bu revizyonun runbook'u 148 blok
 taşır. İlk 135 blok (N0–N134) `f09d10d` ile bayt-bayt aynıdır ve aynı
 sırada durur (§34.8 kuralıyla hesaplanan blok SHA-256'ları ve blok dilleri
@@ -8427,7 +8446,7 @@ Ek R3/1) değişmedi.
 
 | Blok | Dosya | Eski SHA-256 | Yeni SHA-256 | Düzeltme |
 |---|---|---|---|---|
-| N135 | `bc.ps1` | `4ab0113bbf15308e70cdc4bc0ce562adc22db4c32c44606be1294b9864c8ccd0` | `788a6b58654d6e4027b1dd8a5a377657ba5a1d32673548d47a3b9a4574c3a896` | L3 (`kit2-case.txt`), L4, L6, O3 |
+| N135 | `bc.ps1` | `4ab0113bbf15308e70cdc4bc0ce562adc22db4c32c44606be1294b9864c8ccd0` | `788a6b58654d6e4027b1dd8a5a377657ba5a1d32673548d47a3b9a4574c3a896` | L3 (`kit2-case.txt`), L4, L6, O3; revizyon 9 (§34.15): bu satırın "Yeni" değeri revizyon 8 dar düzeltme turunun tarihsel kaydıdır, güncel pin `36da4eca22964b611586f433af1d1e66793be6c65806f43350685e3aeb7fdcc2` |
 | N136 | `kbe.ps1` | `8963168bef8c5ddd35fd22e223cc90c95ef8c14c98c6e0bbf9ddbe725d507edd` | `744aa03799f9b03bf2827daa67e75fd3e96970b412e273e7a12fb40cb30ea2eb` | L3 |
 | N138 | `t0.ps1` | `a2843ef5e467f63ce3373701fafe81eed6ed4ae90b98d17aa2d01e057630eb14` | `8c2a1c7215b2dcb0f4cf992052846b3f7cfacfb42a19587c7a3f199a861fb544` | L5 |
 | N139 | `kume.ps1` | `e269739e53b5968a7fd16e35ca20d2467264665b6686c1969907ab647f635f74` | `6834d0e68a1febe1f2d74675db247a6c1881dcec38ee1a1053b8c4427b573684` | L5 |
@@ -8512,6 +8531,7 @@ gerektirmediğini söyler; ajan bağlamı konsol tuşu basamaz.
 | (24) Başlatıcı yardımcıları | N137 | Kısmen: `DUR.txt` biçimi Hayır; `Read-KbYesNo` tuşları Evet | `DUR.txt` kit1 `Write-KitDur`'unkiyle zaman dışında bayt aynı; ardından kit1 yüklemesi `KIT_TEARDOWN_SESSION=True`; iki dalın ekran satırları; `Read-KbYesNo` geçerli/geçersiz tuş; başlatıcı kayıtlarında `KIT_SESSION=none` |
 | (25) R4/9 biçimleri | `Initialize-KbAllow` (N136; R4/9'un her satırı; N32/N33 ayrıştırıcısı dilim 2) | Hayır | Gerçek CLI çıktısı süzgeçten geçirilir; eşleşmeyen biçim dilimi durdurur |
 | (26) `kbl.ps1` yükleme bütünlüğü | N138, N139 (aynı kural `kbe.ps1` için de); `pins2.txt`'de tekrarlanan ad da red | Hayır: yükleme | Üç ayrı bozma (bir bayt, ASCII dışı bayt, `pins2.txt` satırı silinmiş) × `t0`, `kume` (`adm.ps1`, `z1.ps1` dilim 3–4); ikinci okuma olmadığı kod okumasıyla |
+| (27) Kit2 yükleme yolu N6'nın izin listesi dışında modül yüklemez ve `a2`'nin diğer beklentilerini değiştirmez (revizyon 9; plan kontrolü H1) | N135 (`bc.ps1` satır 145 ve 147: `Get-WmiObject -Class Win32_Process`, bu makinede `Microsoft.PowerShell.Management` modülünde); yükleme yolundaki diğer komutlar değişmedi (§34.15 madde 2 denetimi: 10 dış komut, izin listesi dışı 0; `a2`'ye duyarlı komut 0) | Hayır | Yeni `powershell.exe -NoProfile -ExecutionPolicy Bypass` sürecinde N135'in süreç sorgusu satırları, ardından N6'nın gerçek satırları (RB L1290–L1291) birebir → `EXTRA_MODULE_COUNT=0`; pozitif kontrol: aynı düzenekte eski N135 satırları → `EXTRA_MODULE_COUNT=1`, `EXTRA_MODULE=CimCmdlets` (§34.15'te ölçüldü); kit2 yüklü süreçte tam yükleme sonrası aynı ölçüm prova kapısı G13 (plan v2) |
 
 **Avukat cevabına bağlı kısımlar** (Ek R4/17; cevap olumsuzsa yeniden
 açılır): `k` şablonları ve satır kuralı (soru 4); restricted sabit ad
@@ -8739,6 +8759,205 @@ hazırlandı (`%TEMP%` kökü ve `/tmp` kullanılmadı); denetimler kopyalar
 üzerinde yapıldı; dosya sonra bu yola yazıldı. Alt ajan kullanılmadı. Bu
 revizyon gerçek koşuyu, provayı veya sonraki dilimleri yetkilendirmez; her
 biri ayrı kullanıcı kararıdır.
+
+### 34.15 Revizyon 9
+
+YENİ (`SCOPE_APPROVED at=2026-10-23T19:40:34+03:00`; planlayıcı
+önerisiyle, kullanıcı onayı; oturum RUNBOOK-REV9; Adım 10 B yolu, işleme
+kiti (kit2) dilim 1: dar H1 düzeltmesi). Girdi: `a0f9c6c` runbook'u
+(SHA-256 `dbc5d077c1a1585eefdda32d37eb4671c435f19d41e1221598c91fde796b8115`,
+14243 satır, 148 blok; HEAD = `origin/claude-dev` = `a0f9c6c`; çalışma
+ağacı temiz; diskten doğrulandı). Kaynak bulgu: kit2 dilim 1 prova planı
+v1'in bağımsız kontrol raporu
+`<profile>\vergi_step10_kit2_d1prova_plan_41ff8ffd\review\independent-plan-check.md`
+(SHA-256 `662be1e7e309ded1bed4d6f4686603b751f6cce2c80229f18716f5c9361e6b63`),
+bölüm 2 "H1"; rapor diskten okundu, özete güvenilmedi. Yalnız bu dosya
+değişti; kod, şema, veri, test, kit1 dosyaları, başka runbook veya
+`CLAUDE.md` değişmedi; LOCKED bir sözleşmeye dokunulmadı. Commit ve push
+yapılmadı. Bu revizyonda hiçbir kit, başlatıcı veya runbook bloğu gerçek
+kurulum olarak çalıştırılmadı; çalıştırılanlar yalnız kopyalar üzerinde
+N147 (`kvc2.ps1`), AST ayrıştırması ve aşağıdaki ölçüm düzeneğidir
+(yeni `-NoProfile -ExecutionPolicy Bypass` süreçleri). Ağ, gerçek veri,
+`.env`, pilot kümesi ve passfile kullanılmadı; profil dizinine ve
+kullanıcı ayarlarına yazılmadı.
+
+**Bulgu (H1).** N135 (`bc.ps1`) her başarılı yüklemede iç içe pencere
+denetimi için `Get-CimInstance -ClassName Win32_Process` çağırıyordu
+(blok satır 145 ve 147); bu çağrı `CimCmdlets` modülünü yükler. Kit1
+`a2` (N106) N6'nın satırlarını çalıştırır ve `EXTRA_MODULE_COUNT=0`
+satırını zorunlu ister; N6'nın süzgeci yalnız
+`Microsoft.PowerShell.(Management|Utility|Security|Host|Diagnostics)` ve
+`PSReadLine`'ı hariç tutar. Sonuç: kit2'nin yüklendiği her KİT
+penceresinde `a2` `EXTRA_MODULE_COUNT=1` yazar, `Complete-KitStep` STOP
+verir ve `DUR.txt` yazılır. Bulgu bu oturumda doğrudan ölçüldü (aşağıda
+pozitif kontrol).
+
+**Düzeltme.** Yalnız N135'in iki satırı değişti: satır 145 (kendi süreci)
+ve satır 147 (üst süreç) `Get-CimInstance -ClassName Win32_Process` →
+`Get-WmiObject -Class Win32_Process`. `-Filter`, `-ErrorAction Stop`,
+`try`/`catch`, `ParentProcessId`/`Name`/`CommandLine` alanları,
+`KIT2_NESTED_PARENT` True/False/UNKNOWN kuralları, `bc.txt` alanları ve
+iletiler aynı kaldı; `UNKNOWN` dalı ayrıca çalıştırılmadı (kodu
+değişmedi). N0–N134 (N6 dahil) ve kit1 blokları (N105–N117) bayt-bayt
+aynıdır; N136–N147 değişmedi. N6 süzgecine istisna, modül sayısına
+tolerans, çağrıdan sonra `Remove-Module` veya kapsam hilesi
+kullanılmadı (kapıyı gevşetmek sayılırdı).
+
+**Yöntem seçimi ve gerekçesi.** İki aday yeni `-NoProfile
+-ExecutionPolicy Bypass` süreçlerinde (Windows PowerShell 5.1) ölçüldü.
+(a) `Get-WmiObject`: `Get-Command` bu makinede modülünü
+`Microsoft.PowerShell.Management` olarak verdi (varsayılmadı; N6 izin
+listesinde ve `ac.ps1`'in ilk satırlarındaki `Split-Path` yüzünden
+`a2`'den önce zaten yüklü); çağrıdan sonra süzgeçten geçen modül sayısı
+0; `System.Management` derlemesi süreç başında zaten yüklü (ölçüldü);
+dönen nesne `System.Management.ManagementObject`, alan adları
+`Get-CimInstance` ile aynı. (b) .NET
+`System.Management.ManagementObjectSearcher`: tür `Add-Type`'sız
+çözülüyor, modül sayısı yine 0; ancak diff'i büyütür, `-ErrorAction Stop`
+→ `catch` → `UNKNOWN` kalıbını .NET istisnalarına çevirir ve ek bir şey
+kazandırmaz. Seçim: (a) — iki satırlık diff, aynı parametre biçimi, aynı
+alan adları. Sınır: `Get-WmiObject` PowerShell 7'de yoktur; KİT satırı
+Windows PowerShell 5.1 (`powershell.exe`) içindir (Ek R4/1 madde 3).
+
+**Yükleme yolu denetimi (madde 2).** Statik, AST ile
+(`Parser.ParseFile`; runbook'tan çıkarılmış kopyalar üzerinde; hiçbir
+kit kodu çalıştırılmadı). (a) Win+R satırının `a2`'den önce çalıştırdığı
+kök deyimler izlendi: `ac.ps1` (N105), `bc.ps1` (N135, yeni), `kbe.ps1`
+(N136; kökte yalnız fonksiyon tanımı, 0 başka deyim), `n000.ps1` (N0);
+üç dinamik çağrı (`& { }` gövdesi, `kbe.ps1` ve `n000.ps1`'in pinli
+baytlardan dot-source'u) elle eklendi; kök deyimlerden çağrı grafiğiyle
+erişilen 29 kit fonksiyonu (kit1 ve kit2) izlendi. Erişilen dış komut
+10: `Get-Acl` (Security); `Get-ChildItem`, `Get-Item`, `Get-WmiObject`,
+`Join-Path`, `Split-Path`, `Test-Path` (Management); `New-Object`,
+`Remove-Variable`, `Write-Host` (Utility); izin listesi dışı 0. Beş
+dosyanın (`ac.ps1`, `bc.ps1`, `kbe.ps1`, `kbl.ps1`, `n000.ps1`) bütün
+komut envanterinde de izin listesi dışı modül 0 (`Microsoft.PowerShell.Core`
+snap-in'i `Get-Module` listesine girmez; düzenek ölçümleri bunu
+doğrular). `kbl.ps1` KİT penceresinde yüklenmez (yalnız başlatıcılar);
+yine de tarandı. (b) `a2`'nin diğer beklentilerine dokunan komut 0:
+`Set-PSReadLineOption`, `Set-PSReadLineKeyHandler`, `Start-Transcript`,
+`Set-ExecutionPolicy`, `Import-Module`, `Add-Type`, `Start-Process`,
+`Invoke-Expression`, `Set-Alias` ve benzerleri beş dosyada yok. Ortam
+yazımları: `n000.ps1` `PYTHONIOENCODING` (N6 aynı değeri kendisi de
+yazar) ve `bc.ps1` `VERGI_IAM_DATABASE_URL` (Ek R4/2 madde 7; `a2`
+ortamı denetlemez). Tercih değişkeni ataması yalnız `Invoke-KbBlocks`
+içinde (yükleme yolunda değil). `a2`'den SONRA çalışan `Get-CimInstance`
+kullanımları (`a4` N108 optik sürücü; `b1` N141 harici disk) `a2`
+yolunda değildir, dokunulmadı. Aynı sınıftan (a2'den önce modül yükleyen
+çağrı) başka bulgu yok. Başka sınıftan gözlem (düzeltilmedi, yalnız
+kayıt): `Read-KbBuild` (N136) `VERACRYPT_FILE_VERSION_EXPECTED` için
+`^[0-9]{1,5}(\.[0-9]{1,5}){1,3}$` kabul ederken N141 `{2,3}` ister; iki
+bileşenli bir kurulum değeri ilk `b1`'de kilitsiz `B1_VERACRYPT_PIN`
+verir (içerik öncesi; güvenlik etkisi yok).
+
+**Ölçüm (madde 3; pozitif kontrollü).** Düzenek: yeni
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File` süreci; betik
+yalnız N135'in süreç sorgusu satırlarını (blok satır 143–154, birebir;
+dilimin SHA-256'sı bağımsız `sed`/`sha256sum` ile doğrulandı) ve ardından
+N6'nın RB L1290–L1291 satırlarını (birebir, aynı doğrulama) içerir;
+sonunda `KIT2_NESTED_PARENT` basılır. Üç üst süreç bağlamı: (a) `-File`
+doğrudan (üst süreç ajan kabuğu); (b) üst süreç komut satırında
+`\kit\ac.ps1` işareti taşıyan bir `powershell.exe`; (c) işaretsiz
+`powershell.exe`. İlk koşunun dilimi bir satır fazla (kayıt satırı)
+içeriyordu ve o satır beklenen bir parametre bağlama hatası bastı;
+sayımlar aynıydı; düzenek 12 satıra indirilip yeniden koşuldu, aşağıdaki
+değerler ikinci koşudandır.
+
+| Satırlar | Bağlam | Çıktı |
+|---|---|---|
+| Yeni N135 | (a) | `EXTRA_MODULE_COUNT=0`, `KIT2_NESTED_PARENT=False` |
+| Yeni N135 | (b) | `EXTRA_MODULE_COUNT=0`, `KIT2_NESTED_PARENT=True` |
+| Yeni N135 | (c) | `EXTRA_MODULE_COUNT=0`, `KIT2_NESTED_PARENT=False` |
+| Eski N135 (pozitif kontrol) | (a) | `EXTRA_MODULE_COUNT=1`, `EXTRA_MODULE=CimCmdlets`, `KIT2_NESTED_PARENT=False` |
+| Eski N135 (pozitif kontrol) | (b) | `EXTRA_MODULE_COUNT=1`, `EXTRA_MODULE=CimCmdlets`, `KIT2_NESTED_PARENT=True` |
+| Eski N135 (pozitif kontrol) | (c) | `EXTRA_MODULE_COUNT=1`, `EXTRA_MODULE=CimCmdlets`, `KIT2_NESTED_PARENT=False` |
+
+Düzenek eski satırlarla kusuru gerçekten yakalıyor; yeni satırlar üç
+bağlamda da 0 veriyor ve iç içe denetimin sonucu eskiyle aynı. **Tam
+yükleme ölçümü prova kapısına (G13) bırakıldı:** `. ac.ps1; . bc.ps1`
+tam yüklemesi H1 noktasına ancak `Read-KbSecure` geçtikten sonra ulaşır;
+bu da kullanıcı profiline göre konumlanan güvenli değer dosyasını ve
+dosya ile dizininde mirası kaldırılmış, tek SID'li bir ACL'yi gerektirir
+(Ek R4/2 madde 4–5); bu oturumun sınırı profil-göreli dosya ve ACL
+değişikliğine izin vermez (`CLAUDE.md` §14.7). Ölçülmeyenler: tam
+yükleme (G13); `-File` düzeneği ile etkileşimli `-NoExit -Command` KİT
+penceresi farkı (orada `PSReadLine` yüklüdür; izin listesindedir);
+`UNKNOWN` dalı.
+
+**Statik denetimler** (kopyalar üzerinde). `ParseFile` yeni N135 0 hata
+(kit1 17 ve kit2 yükleme dosyaları da 0 hata); N135–N147 yalnız ASCII,
+CR 0. N147 (`kvc2.ps1`; gövde SHA-256'sı §34.14 tablosuyla aynı) kit1
+(17 dosya) + yeni kit2 (59 dosya; `ev.ps1` ve `kit2-case.txt` sentetik
+ASCII yer tutucu) kopyaları üzerinde yeni `-NoProfile -ExecutionPolicy
+Bypass` alt süreçte: `KIT2_VAR_SCAN_FILE_COUNT=58`,
+`KIT2_VAR_COLLISIONS=0`, `KIT2_CMD_COLLISIONS=0`, on `KIT2_AST_*=0`.
+Blok listesi: 148 blok, yalnız N135 değişti. §1.5 taraması (eklenen
+metin): sürücü harfli mutlak yol 0, UNC 0, port 0, veritabanı adı 0,
+kullanıcı adı ve profil dizini adı 0, loopback adresi 0, passfile adı 0.
+
+**Değişen blok.**
+
+| Blok | Dosya | Satır | Eski SHA-256 | Yeni SHA-256 | `ParseInput` |
+|---|---|---|---|---|---|
+| N135 | `bc.ps1` | 172 | `788a6b58654d6e4027b1dd8a5a377657ba5a1d32673548d47a3b9a4574c3a896` | `36da4eca22964b611586f433af1d1e66793be6c65806f43350685e3aeb7fdcc2` | 0 hata |
+
+**Taşınan iki metin düzeltmesi.** (a) Rev8 yeniden kontrol O-R1: Ek R4/4
+"Yükleme kayıtları" satırına `KIT2_COMMANDS_DEFINED=True/False` eklendi
+(alan koddaydı — §34.14 yorum 20 — tabloda yoktu). (b) Plan kontrolü L1
+(F-P1): Ek R4/3'teki `VERACRYPT_FILE_VERSION_EXPECTED` satırı N141'in
+gerçekte karşılaştırdığı `FileVersion` dizgesi biçimiyle uyumlu yazıldı
+(bu makinede salt-okunur `FileVersionInfo` ölçümü: dizge `1.26.29`,
+sayısal `1.26.29.3`); davranış değişmedi; Ek R4/8.2'ye dokunulmadı.
+
+**Yeni ölçüt (27).** Ek R4/16.2'ye (27) eklendi; §34.14 eşleme tablosuna
+(27) satırı yazıldı. "26 ölçüt" sayısı runbook metninde geçmiyordu
+(yalnız plan kontrol raporunda); Ek R4/8.4'ün "(26)" atfı ölçüt
+numarasıdır, değişmedi.
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| N135 (Ek R4/20) | Satır 145 ve 147: `Get-WmiObject -Class Win32_Process` |
+| §34.14 "Yeni bloklar" tablosu | N135 satırı güncel pin; tablonun altına revizyon 9 notu |
+| §34.14 "Dar düzeltme turunda değişen bloklar" tablosu | N135 satırına revizyon 9 işareti; eski/yeni değerler tarihsel kayıt olarak korundu |
+| §34.14 eşleme tablosu | (27) satırı |
+| Ek R4/3 | `VERACRYPT_FILE_VERSION_EXPECTED` satırı (F-P1) |
+| Ek R4/4 | "Yükleme kayıtları" satırına `KIT2_COMMANDS_DEFINED` (O-R1) |
+| Ek R4/16.2 | Ölçüt (27) |
+| §34.15 | Bu bölüm |
+| Üst uyarı | Revizyon 9 paragrafı (ek iş; `USER_DECISION at=2026-10-23T20:26:13+03:00`) |
+| §0 | "Revizyon" satırına revizyon 9 ve eşlemeye "revizyon 9: §34.15" (ek iş; aynı karar) |
+| §34.4 | Revizyon 9 satırı (ek iş; aynı karar) |
+
+**Yorumlar** (sessizce seçilmedi).
+
+1. §34.14 dar düzeltme tablosundaki N135 satırının "Eski"/"Yeni"
+   değerleri revizyon 8'in tarihsel kaydıdır; üzerine yazılmadı, yalnız
+   güncel pine işaret eklendi (bağımsız blok çıkarımı o kaydı doğrular).
+2. Üst uyarı paragrafı, §0 "Revizyon" satırı ve §34.4 tablosu ilk turun
+   listesinde olmadığı için ilk yazımda DOKUNULMAMIŞTI; aynı oturumun ek
+   işinde (`USER_DECISION at=2026-10-23T20:26:13+03:00`; planlayıcı
+   önerisiyle, kullanıcı onayı) önceki revizyonların kuralına göre
+   (§34.13 ve §34.14 "Bölüm → değişiklik" tabloları) üçü de eklendi;
+   hiçbir bloğa ve `bc.ps1` başlık yorumuna dokunulmadı (N135 pini
+   değişmedi).
+3. `Get-WmiObject` için N6'nın izin listesi ölçümle doğrulandı, ad
+   benzerliğiyle varsayılmadı; `Get-Command` çıktısındaki modül adı ve
+   çağrı sonrası `Get-Module` listesi kaydedildi.
+
+**Prova planına not (plan v2, G13).** Kit2 yüklü bir süreçte (sentetik
+kit, `. ac.ps1; . bc.ps1` tam yüklemesi) N6'nın gerçek satırları kit1
+`Invoke-KitBlock` ile ayrı bir kayda çalıştırılır; beklenen
+`EXTRA_MODULE_COUNT=0`; aksi `STOPPED_ON_UNEXPECTED_RESULT`. Planın Ek A
+pinleri N135 için bu revizyonun değeriyle yenilenir.
+
+**Yazma hesabı.** Kod ve metin oturuma özel scratchpad dizininde
+hazırlandı (`%TEMP%` kökü ve `/tmp` kullanılmadı); denetimler kopyalar
+üzerinde yapıldı; dosya sonra bu yola yazıldı ve aynı turda Ek R4/4 satırının
+ifadesi için bir kez yerinde düzeltildi. Alt ajan
+kullanılmadı. Bu revizyon gerçek koşuyu, provayı veya sonraki dilimleri
+yetkilendirmez; her biri ayrı kullanıcı kararıdır.
 
 ---
 
@@ -10204,7 +10423,12 @@ Ek R4/16.7). Satırlar:
   `KB_SECURE_FILE_ACL_OK=True`;
 - `KB_EMERGENCY_PAGE_SHA256=<64 hex>`, `KB_EMERGENCY_PAGE_RELATIVE=<göreli ad>`,
   `KB_EMERGENCY_PAGE_ACL_OK=True`, `EV_PS1_SHA256=<64 hex>` (Ek R4/13);
-- `VERACRYPT_FILE_VERSION_EXPECTED=1.26.29.3` (kurulum kaydından; Ek R4/8.2 `b1`);
+- `VERACRYPT_FILE_VERSION_EXPECTED=<FileVersion dizgesi>` (kurulumda
+  `[System.Diagnostics.FileVersionInfo]::GetVersionInfo(<veracrypt-exe>).FileVersion`
+  dizgesi aynen; bu makinede `1.26.29` — sayısal sürüm `1.26.29.3` bu
+  dizge DEĞİLDİR; `b1` (N141) bu dizgeyi `-cne` ile karşılaştırır ve
+  `^[0-9]{1,5}(\.[0-9]{1,5}){2,3}$` biçimini ister; Ek R4/8.2 `b1`;
+  revizyon 9, plan kontrolü L1/F-P1, davranış değişmedi);
 - `NOTEPAD_RELATIVE=System32\notepad.exe` (`%SystemRoot%`'a göre),
   `NOTEPAD_FILE_VERSION=<sürüm>`, `NOTEPAD_SHA256=<64 hex>` (errata-3
   §11.3; dilim 1'de ölçülür);
@@ -10233,7 +10457,7 @@ Mutlak yol ve kullanıcı adı taşımaz.
 | Karar kayıtları | `steps\d\k<seq>.txt`, `n<seq>.txt`, `o<seq>.txt` | KİT |
 | Başlatıcı kayıtları | `steps\t0.txt`, `steps\kume-<n>.txt` | ÖN, KÜME |
 | Kilitsiz red dosyaları | KİT: `steps\s<k>\refusal-<nnn>.txt`; başlatıcılar: `steps\x\refusal-<nnn>.txt` | Ek R4/5 |
-| Yükleme kayıtları (revizyon 8; karar AÇIK-30) | `steps\s<k>\bc.txt` (`KIT2_LOAD=OK`, `KIT2_PINS_SHA256`, `KIT2_BUILD_SHA256`, `KIT2_NESTED_PARENT=True/False/UNKNOWN`); aynı süreçte ikinci `bc.ps1` yüklemesinde `steps\s<k>\bc-reload-<nnn>.txt` (`KIT2_NESTED_SAME_PROCESS=True`) | KİT (`bc.ps1`) |
+| Yükleme kayıtları (revizyon 8; karar AÇIK-30) | `steps\s<k>\bc.txt` (`KIT2_LOAD=OK`, `KIT2_PINS_SHA256`, `KIT2_BUILD_SHA256`, `KIT2_NESTED_PARENT=True/False/UNKNOWN`, `KIT2_COMMANDS_DEFINED=True/False` — alan revizyon 8 dar düzeltme turunda (O3) koddaydı, tabloya revizyon 9'da eklendi; rev8 yeniden kontrol O-R1); aynı süreçte ikinci `bc.ps1` yüklemesinde `steps\s<k>\bc-reload-<nnn>.txt` (`KIT2_NESTED_SAME_PROCESS=True`) | KİT (`bc.ps1`) |
 | Runbook kayıtları (değişmeyen biçim) | `system-temp.txt` (`t0`), `technical-record.txt` (`b1`), `restricted-allowed-files.txt` ve `.sha256.txt` (`b1`), `intake-hashes.tsv` (`b6`), `manual-input-r<n>.sha256.txt` (`b7`), iki kapanış manifesti (`s25`) | İlgili komut, runbook bloğuyla |
 
 `steps\c\b09a.txt`/`b09b.txt` ve `b24a.txt`/`b24b.txt` adları bu ekin
@@ -11875,6 +12099,19 @@ genişletilmiş N116. Kabul ölçütleri:
     `KIT_TEARDOWN_SESSION=True` yazar. Ayrıca başlatıcının `kbl.ps1`'i
     dosyadan ikinci kez okumadığı (aynı baytlardan yürüttüğü) kod
     okumasıyla gösterilir.
+27. **Yükleme yolu ve kit1 `a2` beklentileri (revizyon 9; plan kontrolü
+    H1):** kit2'nin `a2`'den önceki yükleme yolu (Win+R satırı
+    `. ac.ps1; . bc.ps1`: `bc.ps1`, `kbe.ps1`, `n000.ps1`,
+    `Initialize-KbAllow` ve yüklemede çalışan her şey) N6'nın izin
+    listesi (`Microsoft.PowerShell.Management`/`Utility`/`Security`/
+    `Host`/`Diagnostics`, `PSReadLine`) dışında modül yüklemez ve `a2`'nin
+    diğer beklentilerini (transcript, geçmiş işleyicisi, komut doğrulama
+    işleyicisi, `HistorySaveStyle`, süreç yürütme ilkesi) değiştirmez.
+    Ölçüm N6'nın gerçek satırlarıyla (RB L1290–L1291, birebir), yeni bir
+    `powershell.exe -NoProfile -ExecutionPolicy Bypass` sürecinde ve
+    pozitif kontrollüdür (ek modül yüklediği bilinen bir satır dizisi aynı
+    düzenekte `EXTRA_MODULE_COUNT=1` vermelidir); kit2 yüklü süreçte tam
+    yükleme sonrası aynı ölçüm prova kapısıdır (G13).
 
 #### Ek R4/16.3 Dilim 2 — intake ve manuel girdi
 
@@ -12735,9 +12972,9 @@ hariç: kurulum aracıdır). Hepsi yalnız ASCII'dir ve Ek R4/7'ye uyar.
     Initialize-KbAllow
     $bcxNest = 'False'
     try {
-        $bcxMe = @(Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" -ErrorAction Stop)
+        $bcxMe = @(Get-WmiObject -Class Win32_Process -Filter "ProcessId=$PID" -ErrorAction Stop)
         if ($bcxMe.Count -ceq 1) {
-            $bcxPar = @(Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$($bcxMe[0].ParentProcessId)" -ErrorAction Stop)
+            $bcxPar = @(Get-WmiObject -Class Win32_Process -Filter "ProcessId=$($bcxMe[0].ParentProcessId)" -ErrorAction Stop)
             if (($bcxPar.Count -ceq 1) -and (([string]$bcxPar[0].Name).ToLowerInvariant() -ceq 'powershell.exe')) {
                 $bcxCl = [string]$bcxPar[0].CommandLine
                 if ($bcxCl -ceq '') { $bcxNest = 'UNKNOWN' } elseif ($bcxCl.IndexOf('\kit\ac.ps1', [System.StringComparison]::OrdinalIgnoreCase) -cge 0) { $bcxNest = 'True' }
