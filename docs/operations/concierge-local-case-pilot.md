@@ -8,7 +8,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > komut çalıştırılmamıştır.** Belge ve revizyonu (§34) yazılırken gerçek
 > kurulum veya gerçek veri üzerinde hiçbir CLI, `psql`, Python veya
 > PowerShell betiği çalıştırılmadı (revizyon 10 düzeltmesi, rev9 inceleme
-> O6: revizyon 5, 6, 8, 9, 10 ve 11 kopyalar üzerinde ölçüm düzeneği ve N116/N147
+> O6: revizyon 5, 6, 8, 9, 10, 11 ve 12 kopyalar üzerinde ölçüm düzeneği ve N116/N147
 > çalıştırdı; her revizyonun kendi paragrafı neyin çalıştırıldığını
 > söyler); hiçbir gerçek belge alınmadı; hiçbir veritabanı
 > satırı yazılmadı; hiçbir ağ isteği yapılmadı; hiçbir API anahtarı, `.env`
@@ -106,6 +106,27 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > kusur yeniden üretildi) ve hash. Hiçbir kit, başlatıcı veya runbook
 > bloğu gerçek kurulum olarak çalıştırılmadı; klavyeden gerçek Ctrl+C
 > prova #3'te insan ölçümüdür (Ek R4/16.2 ölçüt (29)).
+> Revizyon 12 (§34.18) kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`)
+> bağımsız kanıt incelemesinin M-1 bulgusunu ve revizyon 11 incelemesinin
+> L1/L2 maddelerini kapatır. (M-1) ÖN penceresi (`t0`) atlandığı için
+> `system-temp.txt` hiç yazılmamıştı; `a4` (N108) `NO_RECORD` ile reddetti
+> ve ileti bu kurtarılabilir durumu `MISMATCH` ile aynı "a9 yazın, kiti
+> yeniden açmayın" yoluna gönderiyordu. `NO_RECORD` artık (yalnız dosya
+> hiç yokken) ayrı bir iletidir: nedeni adlandırır ve KİT penceresi açık
+> kalırken ÖN satırının ayrı bir Win+R penceresinde çalıştırılıp
+> kapatılmasını, ardından `a4`'ün bir kez daha yazılmasını söyler; ÖN'de
+> `TAMAMLANDI (PASS)` görülmezse veya ileti yinelenirse yol yine `a9`'dur.
+> `MISMATCH`, `VERIFY`, `ALREADY` ve `NO_DIR` iletileri bayt-bayt aynıdır;
+> hiçbir kapı gevşemedi (geç ÖN'ün güvenlik analizi §34.18'de). (L1) §26.5
+> tablosuna iki kayıt anahtarı (46 → 48) ve §4.4/2'ye hedef dosya
+> (`container-record.txt`). (L2) `Read-KbYesNo`'nun kanıt durumu ve prova
+> #3'teki Ctrl+C gözlemi §34.18'de; kod değişmedi. Değişen blok yalnız
+> N108; diğer 147 blok bayt-bayt aynıdır. Denetim: `ParseFile`, AST,
+> kopyalar üzerinde N116 ve N147, yeni `-NoProfile` süreçlerde gerçek
+> `ac.ps1` yükleyicisi ve pinli `a4.ps1` ile yedi sentetik durum (eski
+> baytlarla pozitif kontrol dahil), ayrı süreçte `t0`'ın kayıt yolu ve
+> hash. Hiçbir kit, başlatıcı veya runbook bloğu gerçek kurulum olarak
+> çalıştırılmadı; dilim 1 kodu hâlâ provaya tabidir (prova #4).
 
 ---
 
@@ -129,7 +150,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -1464,7 +1485,10 @@ Windows davranışından gelir ve §1.6/3 delta provasında doğrulanır.
    beyanı `CONTAINER_CREATE_UAC_PROMPT_SEEN=False` (UAC penceresi çıktıysa
    `STOP CONTAINER_CREATE_UAC_PROMPT_SEEN=True` ve yukarıdaki DUR).
    Yükseltme satırı bir kapı değil kayıttır (`True` da kaydedilir); prova
-   kayıtları aynı iki satırı aynı anda yazar.
+   kayıtları aynı iki satırı aynı anda yazar. Hedef dosya (revizyon 12;
+   revizyon 11 incelemesi L1): iki satır `CONTAINER_FILE_BYTES` ile aynı
+   kayda, `<evidence-dir>\container-record.txt`'ye yazılır (§26.5 satır 4,
+   43 ve 44; prova #3 de bu dosyaya yazdı, §34.18).
 3. **Düzen.** `<container-root>`'un doğrudan altında yalnız `<pilot-root>`
    oluşturulur. `<pilot-root>` oluşturulur oluşturulmaz, içine başka hiçbir
    şey konmadan madde 4'teki ACL sıkılaştırması uygulanır. Ardından
@@ -1582,7 +1606,17 @@ Remove-Variable stRec, stOk -ErrorAction SilentlyContinue
      pencerede zaten değiştirilmişse `a4` reddeder ve pencere `a9` ile
      kapatılıp yeniden açılır. E2 dışındaki içerik oturumlarında (§11–§28;
      silme oturumu dahil) N13 bu maddede yazıldığı gibi elle çalışır.
-     Sistem Temp kaydı (N12) iki yolda da ön koşuldur. Kitin `container-temp`
+     Sistem Temp kaydı (N12) iki yolda da ön koşuldur; kayıt dosyası hiç
+     yoksa (`NO_RECORD`) `a4` bunu ayrı bir iletiyle adlandırır (revizyon
+     12; §34.18): KİT penceresi açık kalırken ÖN penceresi (`t0`, Ek
+     R4/8.1) ayrı bir Win+R penceresinde çalışıp kapatılır ve `a4` aynı
+     pencerede bir kez daha yazılır. Bu, yukarıdaki "ilk içerik oturumu
+     açılmadan önce" kuralının kit modundaki tek istisnasıdır (içerik henüz
+     alınmamıştır): `t0` kendi penceresinde TEMP'in yönlendirilmediğini
+     denetler, `a4` kaydı KİT penceresinin canlı Temp yoluyla yine
+     karşılaştırır. Kayıt var ama uyuşmuyorsa (`MISMATCH`) veya
+     yönlendirme doğrulanamıyorsa (`VERIFY`) yol değişmedi: `a9`, kit
+     yeniden açılmaz. Kitin `container-temp`
      denetimi §13.8 `PATH_OK=container-temp` kapısının yerine geçmez.
      Yer gerekçesi (`a3` değil `a4`): `a3` içinde yönlendirme, kapsayıcının
      kanal kapısı geçmeden bağlanmasını gerektirirdi; `a4` ise kapı ve
@@ -4696,13 +4730,13 @@ SHA-256'sı kaydedilir. Özet, `<evidence-dir>` içindeki özet dışındaki
 yalnız bir alt kümeyi sabitleyen özet yeterli değildir. Özet yoksa veya
 manifest eksikse pilot kapanmış sayılmaz (H26).
 
-### 26.5 Ek R4 ile yazılan kayıtlar ve 46 yazarsız anahtar (revizyon 7; rev6 son kontrol L5 b)
+### 26.5 Ek R4 ile yazılan kayıtlar ve 48 yazarsız anahtar (revizyon 7; rev6 son kontrol L5 b; revizyon 12: 46 → 48)
 
 YENİ. Ek R4 (kit2) ile yürütülen koşuda kayıt yerleri ve biçimi Ek
 R4/4'tedir; yalnız ekrana basılan satırların kayda alınması (§26.2'nin
 "evidence'a yazılır" dediği her satır) Ek R4/9'un izinli listeleriyle
 yapılır. Aşağıdaki tablo, düz metinde zorunlu olup bugün hiçbir bloğun
-yazmadığı **42** anahtar ile kurulum ajanının yazdığı **4** `KIT_*`
+yazmadığı **44** anahtar (revizyon 12: 42 → 44, satır 43–44) ile kurulum ajanının yazdığı **4** `KIT_*`
 anahtarının her biri için yazanı verir (tasarım v2 §3.2; errata-3 §7 ve
 §11.1 ile güncel). Sınıflar: **KY** kit2 mekanik ölçümden yazar; **KE**
 kit2 E/H cevabından yazar (`basis=project-owner-E-at-kit` veya
@@ -4754,6 +4788,8 @@ yazar; **GZ** gerçek koşuda yazılmaz (KD-19).
 | 40 | `ARCHIVE_VERIFIED_WORKING_COPY_RETAINED` | §30 | GZ | F2 = "Silinsin" (arşiv kapsam dışı) |
 | 41 | `CMDLINE_AUDIT_DECLARATION sha256=` | §4.2/9 | AÖ | Pencere öncesi |
 | 42 | `FREEZE_DIFF_COUNT` | §13.3 | GZ | Tarihsel |
+| 43 | `CONTAINER_CREATE_SESSION_ELEVATED` | §4.4/2 | AÖ | Kapsayıcı oluşturma oturumu → `<evidence-dir>\container-record.txt` (anahtar revizyon 11; satır revizyon 12) |
+| 44 | `CONTAINER_CREATE_UAC_PROMPT_SEEN` | §4.4/2 | AÖ | Aynı (`STOP …=True` ise DUR; §4.4/2) |
 | +1–4 | `KIT_BUILD`, `KIT_PAGE_LOCATION_OK`, `KIT_PAGE_SHA256`, `KIT_VAR_CHECK_TOOL_SHA256` | Ek R3/2 | AÖ | Kurulum ajanı |
 
 Satır 9, 10, 40 ve 42 gerçek koşuda yazılmaz (KD-19 kabul). Kit2'nin
@@ -6217,6 +6253,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 9:** N135 (`bc.ps1`; H1: satır 145 ve 147 `Get-WmiObject -Class Win32_Process`); diğer 147 blok | — (revizyon 8 kodu hiç çalıştırılmamıştı) | Değişti (yalnız N135; diğer bloklar bayt-bayt aynı, §34.15) | **Yeni, dilim 1 provası** (Ek R4/16.2, ölçüt (27) dahil; kit2 yüklü süreçte N6'nın gerçek satırları prova kapısı G13) |
 | **Revizyon 10:** N136 (`kbe.ps1`: `Get-KbToken`, küçük harf red kodu deseni, `STALE_DOWNSTREAM_SEEN`, `Read-KbBuild` `{2,3}` ve `KIT2_PLACEHOLDER_LITERAL_COUNT`), N141 (`b1.ps1`: belirteçler çalışma anında), N143 (`k.ps1`: aynı), N144 (`n.ps1`: yorum), N147 (`kvc2.ps1`: yer tutucu sayacı); diğer 143 blok | Prova #1 (`C:\vd5_3de66d67`): A.0–A.9 PASS (A.1 ve A.5 ilk koşuda STOP; kullanıcı kararlı yeniden koşularla `A.1-r1` ve `A.5-r2` PASS, karar dosyaları `a1-fix-1.txt` ve `a5-fix-1.txt`), A.10 (G12) `KB_SCRIPT_LOAD_FAIL` ile STOP; `b0` ve `bc` yüklemesi o provada gerçekten çalıştı, `b1` hiç yüklenemedi | Değişti (beş blok; diğer bloklar bayt-bayt aynı, §34.16) | **Yeni, dilim 1 provası #2** (Ek R4/16.2, ölçüt (28) dahil; G12 yeniden; prova #1'in A.0–A.9 kanıtı bayt değiştiği için devralınmaz) |
 | **Revizyon 11:** N105 (`ac.ps1`: `Read-KitYesNo` tuş beklemesi), N117 (altı sınıf: `Read-SixYesNo` aynı), N137 (`kbl.ps1`: `Read-KbYesNo` aynı), N057 (iki durum satırı `=True`), N136 (`kbe.ps1`: N057 izin listesi türü `w:True`), N141 (`b1.ps1`: `CASE_ROOT_ABSENT=True` beklentisi); diğer 142 blok | Prova #2 (`C:\vd5_2a3883ec`): Faz A PASS (A.11 ve A.12 `STOP` ile, A.15 `AWAITING_USER_DECISION` ile durdu; kullanıcı kararlı devam betikleri `r1`–`r3`), test penceresi A [7]'de Ctrl+C bir tuşa basılana kadar işlenmedi (`DUR.txt` `KB_INTERRUPTED` 115 sn sonra), ana ve ÖN pencereler açılmadı; `PROVA_DILIM1=FAIL` (C18 ölçüm aracı kusuru); bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H1/M3/L8/O13) | Değişti (altı blok; diğer bloklar bayt-bayt aynı, §34.17) | **Yeni, dilim 1 provası #3** (Ek R4/16.2, ölçüt (29) dahil — klavyeden gerçek Ctrl+C insan ölçümü; N105 değiştiği için kit1 kurulumu, N116 ve kit1 insan akışı yeniden; prova #2'nin kanıtı bayt değişen bloklar için devralınmaz) |
+| **Revizyon 12:** N108 (`a4.ps1`: `NO_RECORD` için ayrı ileti; satır 1 yorumu); diğer 147 blok | Prova #3 (`C:\vd5_e5b58889`): insan penceresinde ÖN penceresi atlandı; KİT'te `a2`, `a3`, `b0`, `b1` PASS, `a4` iki kez `NO_RECORD` reddi (kayıt ve kilit yok), ardından `a9`; test pencerelerinde ölçüt (29) b gözlendi (§34.18); `PROVA_DILIM1=FAIL` (C18 plan kuralı kusuru; doğru kuralla `BELIRSIZ`, çıkarım); bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M2/L7/O14) | Değişti (yalnız N108; diğer bloklar bayt-bayt aynı, §34.18) | **Yeni, dilim 1 provası #4** (Ek R4/16.2, ölçüt (30) dahil; N108 değiştiği için kit1 kurulumu, `pins.txt`, N116 ve kit1 insan akışı yeniden; prova #3'ün kanıtı bayt değişen blok için devralınmaz) |
 
 ### 34.5 Yazım sınırları
 
@@ -7552,7 +7589,7 @@ tarafıdır ve değişmedi.
 | `a4 BASLAMADI` — teknik kayıt okunamıyor/biçimi geçersiz | N108 | ÖNCE | aynı |
 | `a4 BASLAMADI` — optik ("Ayni ileti yine cikarsa…") | N108 | ÖNCE | aynı |
 | `a4 BASLAMADI` — `VERIFY` | N108 | ÖNCE | aynı |
-| `a4 BASLAMADI` — `NO_RECORD`/`MISMATCH` | N108 | ÖNCE | aynı |
+| `a4 BASLAMADI` — `NO_RECORD`/`MISMATCH` (revizyon 12: `system-temp.txt` hiç yokken `NO_RECORD` ayrı iletidir; o da ÖNCE tarafındadır, kayıt ve kilit yazmaz ve aynı son cümleyle biter; §34.18) | N108 | ÖNCE | aynı |
 | `a4 BASLAMADI` — altı sınıf kaydı yok, `NO_DIR`, `ALREADY` | N108 | ÖNCE | Değişmedi ("ajan" ifadesi yok; aynı pencerede düzelt / yeniden aç) |
 | `a2 BASLAMADI` — kapsayıcı bağlı değil (yeni) | N106 | Taraf gerektirmez (kilit yok; aynı pencerede düzeltilir) | Yeni ileti; "ajan" ifadesi yok |
 | `a5 BASLAMADI` — `transfer.7z` yok (dar düzeltme turu, karar 4) | N109 | Taraf gerektirmez (kilit yok, DUR değil; aynı pencerede düzeltilir; yorum 25) | "a5 BASLAMADI: intake klasorunde transfer.7z yok. Dosyayi Farkli kaydet ile intake klasorune transfer.7z adiyla kaydedin, sonra yeniden a5 yazin. (Kayit yazilmadi; DUR kilidi yok.)" |
@@ -7563,7 +7600,7 @@ tarafıdır ve değişmedi.
 | `a6`/`a7`/`a8`/`a9`'un DUR dışı iletileri; N107; N117'nin kendi iletileri; silme oturumu yükleme iletisi | N107, N109–N113, N117 | Taraf gerektirmez | Değişmedi ("ajan" ifadesi yok) |
 
 Kit bloklarında "ajan" sözcüğü D-D'den sonra yalnız ÖNCE tarafının
-"ajana donebilirsiniz" ifadesinde geçer (N105 1, N108 6 satır; mekanik
+"ajana donebilirsiniz" ifadesinde geçer (N105 1, N108 6 satır — revizyon 12'den beri 7, §34.18; mekanik
 tarama). Kullanıcı sayfasında (N114) bütün "ajana dönün" dalları "DUR
 OLURSA"ya bağlandı; sayfa tarafı G9 ve D6/D7 ile seçer. Dar düzeltme
 turundan sonra da aynıdır (yeni `a5` ve `KIT zaten yuklu` iletileri
@@ -7587,7 +7624,7 @@ sınıfındadır; listede olmayan her ileti DUR OLURSA'dır.
 | `Bu oturumda a2 calismamis; a9 kaydi yok.` | N113 | `a2.txt` yok; kayıttan önce dönüş | G6: bulunduğunuz dalın kalan adımları (pencereyi kapatın) |
 | `a2 BASLAMADI: Kapsayici bagli degil …` | N106 | Kilitsiz red (D-C) | 2a GÖRMEZSEN (H5, yeniden `a2`) |
 | `BEKLEYIN: <n> saniye daha. …` | N107 | 120 sn dolmadı | 2b GÖRMEZSEN (bekle, yeniden `a3`) |
-| `a4 BASLAMADI: …` (dokuz ileti) | N108 | Kilitsiz red (revizyon 5, D-B, D-D) | 5 GÖRMEZSEN (ekrandaki talimat) |
+| `a4 BASLAMADI: …` (dokuz ileti; revizyon 12'den beri on — `NO_RECORD` ayrı, §34.18) | N108 | Kilitsiz red (revizyon 5, D-B, D-D) | 5 GÖRMEZSEN (ekrandaki talimat) |
 | `a5 BASLAMADI: intake klasorunde transfer.7z yok. …` | N109 | Kilitsiz red (karar 4) | 7 GÖRMEZSEN (madde 6, yeniden `a5`) |
 | `CAPS LOCK KAPALI. …` | N105 `Invoke-KitAttempt` (`a6`, `a7`) | Kayıttan önce dönüş; deneme harcanmaz | 9, 10 GÖRMEZSEN (Caps Lock, yeniden) |
 | `KIT zaten yuklu. a9 yazin, pencereyi kapatin; sonra sayfadaki DUR OLURSA.` | N105 | Yükleme yapılmaz | **İstisna sınıfında değil:** madde 1 GÖRMEZSEN → DUR OLURSA (iç içe oturum; karar 5) |
@@ -8612,8 +8649,8 @@ gerektirmediğini söyler; ajan bağlamı konsol tuşu basamaz.
 
 | Ölçüt | Karşılayan blok / fonksiyon | İnsan | Provada nasıl ölçülür |
 |---|---|---|---|
-| (1) Bayt uyumu; değişmemiş kit1 `a4` PASS; kit1 hash'leri | `t0` (N138) N12'yi pinli baytlarla (`n012.ps1`); `b1` (N141) N14'ü tam blok (`n014.ps1`); `b0` (N140) N117'nin aynı baytları (`n117.ps1`) | Evet: `b0`'ın altı E/H'si, `b1`'in E/H'leri, kit1 `a5`–`a7` (parola, telefon) | Aynı sentetik değerlerle elle yolun ürettiği `system-temp.txt`, `technical-record.txt` ve `six-class.txt` ile bayt karşılaştırması (`six-class.txt`'te yalnız `STARTED_AT`/`ENDED_AT` farkı); ardından değişmemiş kit1 `a4` PASS; kit1 dosya hash'leri = `pins.txt` |
-| (2) `a4` kilitsiz redleri `b0`/`b1` öncesi | Kit1 değişmedi; kit2 `a4`'e dokunmaz | Hayır (ajan) | `b0`/`b1` olmadan `a4` → bugünkü `a4 BASLAMADI` iletileri, kayıt ve kilit yok |
+| (1) Bayt uyumu; değişmemiş kit1 `a4` PASS (revizyon 12: PASS yolu aynı); kit1 hash'leri | `t0` (N138) N12'yi pinli baytlarla (`n012.ps1`); `b1` (N141) N14'ü tam blok (`n014.ps1`); `b0` (N140) N117'nin aynı baytları (`n117.ps1`) | Evet: `b0`'ın altı E/H'si, `b1`'in E/H'leri, kit1 `a5`–`a7` (parola, telefon) | Aynı sentetik değerlerle elle yolun ürettiği `system-temp.txt`, `technical-record.txt` ve `six-class.txt` ile bayt karşılaştırması (`six-class.txt`'te yalnız `STARTED_AT`/`ENDED_AT` farkı); ardından değişmemiş kit1 `a4` PASS; kit1 dosya hash'leri = `pins.txt` |
+| (2) `a4` kilitsiz redleri `b0`/`b1` öncesi | Kit1 değişmedi (revizyon 12: yalnız N108'in `NO_RECORD` iletisi ayrıldı, ölçüt (30)); kit2 `a4`'e dokunmaz | Hayır (ajan) | `b0`/`b1` olmadan `a4` → bugünkü `a4 BASLAMADI` iletileri, kayıt ve kilit yok |
 | (3) `b1` aktarım dalı TEMP'e dokunmaz | N141: aktarım dalında N13 yok; `B1_TEMP_ALREADY_CHANGED` | Evet: `b1` E/H'leri | `b1` öncesi ve sonrası `GetTempPath()` aynı; ardından `a4` TEMP'i yönlendirir |
 | (4) VeraCrypt pin farkı / Hakkında H | N141: `B1_VERACRYPT_PIN` kayıttan önce (kilitsiz); H → `STOP CONTAINER_TOOL_VERSION_CONFIRMED=False`, N14 çalışmaz | Evet: Hakkında sorusu (H) | İki ayrı koşu; ikisinde de `technical-record.txt` yok |
 | (5) Güvenli dosya hash farkı | N135 `KB_SECURE_FILE_HASH`; N141 `B1_SECURE_FILE_HASH`; N138/N139 `T0_`/`KUME_SECURE_FILE_HASH`; içerik sonrası `Invoke-KbLock`/`Write-KbDur` (N136/N137) | Hayır: yükleme ve `b1` ön koşulu kayıttan önce | `a4.txt` PASS yokken ve varken güvenli dosyada bir bayt değişikliği; red dosyası/`DUR.txt` |
@@ -8641,6 +8678,7 @@ gerektirmediğini söyler; ajan bağlamı konsol tuşu basamaz.
 | (27) Kit2 yükleme yolu N6'nın izin listesi dışında modül yüklemez ve `a2`'nin diğer beklentilerini değiştirmez (revizyon 9; plan kontrolü H1) | N135 (`bc.ps1` satır 145 ve 147: `Get-WmiObject -Class Win32_Process`, bu makinede `Microsoft.PowerShell.Management` modülünde); yükleme yolundaki diğer komutlar değişmedi (§34.15 madde 2 denetimi: 10 dış komut, izin listesi dışı 0; `a2`'ye duyarlı komut 0) | Hayır | Yeni `powershell.exe -NoProfile -ExecutionPolicy Bypass` sürecinde N135'in süreç sorgusu satırları, ardından N6'nın gerçek satırları (N6 blok satırı 3–4: `$extraModules` ve `EXTRA_MODULE_COUNT` satırları; revizyon 10 düzeltmesi, rev9 inceleme L1 — önceki "RB L1290–L1291" atfı runbook'ta tanımsızdı) birebir → `EXTRA_MODULE_COUNT=0`; pozitif kontrol: aynı düzenekte eski N135 satırları → `EXTRA_MODULE_COUNT=1`, `EXTRA_MODULE=CimCmdlets` (§34.15'te ölçüldü); kit2 yüklü süreçte tam yükleme sonrası aynı ölçüm prova kapısı G13 (plan v2) |
 | (28) Her kit2 komut betiği gerçek `Get-KbScript` ile yüklenir; doldurulmamış yer tutucu sayacı 0 (revizyon 10; prova #1 A.10/G12) | N136 (`Get-KbToken`; `Get-KbScript` kuralı değişmedi), N141, N143, N144 (belirteçler dosya metninde değil, çalışma anında), N147 (`KIT2_PLACEHOLDER_LITERAL_COUNT`; `Read-KbBuild` N136 bu anahtarı `=0` ister) | Hayır | Kurulumda N147 (Ek R4/19 madde 2 (12)): `KIT2_PLACEHOLDER_LITERAL_COUNT=0`, `kit-build2.txt`'ye; ayrıca yeni bir `powershell.exe -NoProfile -ExecutionPolicy Bypass` sürecinde pinli `kbe.ps1` dot-source edilip kurulmuş kit2 dizini ve `pins2.txt` ile `b0`, `b1`, `b2`, `k`, `n`, `o` (ve `$null` yer değiştirmeyle yüklenen `n000`, `n117`, `n001`, `n002`, `n019`, `n037`, `n047`, `n048`, `n051`; `n012`/`n014` `FirstLine` ile; `n057` `b1`'in çalışma anında kurduğu `FirstLine` ve `case-root` anahtarlı yer değiştirme sözlüğüyle, `$b1xSub` gibi) `Get-KbScript` ile yüklenir, hiçbiri boş dönmez; pozitif kontrol: pinli sahte bir betik (doldurulmamış `<…>` taşıyan) boş döner; §34.16'da aynı düzenek revizyon 9 baytlarıyla `b1`/`k`/`n` için boş döndü |
 | (29) E/H tuşu beklenirken Ctrl+C anında işlenir (revizyon 11; prova #2 bağımsız kanıt incelemesi H1) | N105 (`Read-KitYesNo`), N137 (`Read-KbYesNo`), N117 (`Read-SixYesNo`): `ReadKey`'den önce `KeyAvailable` + `Start-Sleep -Milliseconds 50`; N135 (`Invoke-KbStep` `finally`; değişmedi) | Evet: klavyeden Ctrl+C (prova #3'te insan ölçümü) | Ajan: ayrı, görünür penceresi olmayan konsollu yeni `-NoProfile` süreçte sentetik konsol Ctrl+C olayı ve tuş enjeksiyonu (§34.17 ölçüm 5; pozitif kontrol revizyon 10 baytları); insan: test penceresinde E/H istemi açıkken Ctrl+C, başka tuş yok → `YARIDA KALDI` ve `DUR.txt` `KB_INTERRUPTED` |
+| (30) `a4` `NO_RECORD` ayrı iletisi ve geç ÖN kurtarması (revizyon 12; prova #3 bağımsız kanıt incelemesi M-1) | N108 (`a4.ps1` satır 40: yalnız `system-temp.txt` yokken; satır 41 `MISMATCH` için değişmedi); N138 (`t0`; değişmedi) | Hayır (ajan); insan dalı isteğe bağlı (prova #4 planının kararı) | Yeni `-NoProfile` süreçte gerçek `ac.ps1` + pinli `a4.ps1`: dosya yokken yeni ileti; kayıt, kilit ve red dosyası yok, TEMP aynı; ayrı süreçte `t0`'ın kayıt yolu → `system-temp.txt`; aynı süreçte ikinci `a4` → `STEP_RESULT=PASS`; pozitif kontrol: revizyon 11 baytları aynı durumda eski ileti (§34.18 ölçüm 3) |
 
 **Avukat cevabına bağlı kısımlar** (Ek R4/17; cevap olumsuzsa yeniden
 açılır): `k` şablonları ve satır kuralı (soru 4); restricted sabit ad
@@ -9614,7 +9652,8 @@ yönlendirilmişse `KeyAvailable` de `ReadKey` gibi istisna verir (ölçüm 7:
 pencereleri gerçek konsoldur. (c) Altı sınıf bloğu (N117) bir `& { … }`
 gövdesidir; Ctrl+C onu durdurduğunda `six-class.txt` sonuç satırsız kalır
 ve kit1 penceresinde kilit yazılmaz (değişmedi; Ek R3/8); kit2'de `b0`
-içinden çağrıldığında N135'in `finally`'si geçerlidir.
+içinden çağrıldığında N135'in `finally`'si geçerlidir. (Revizyon 12:
+`Read-KbYesNo`'nun kanıt durumu ve prova #3'teki insan gözlemi §34.18'dedir.)
 
 **Bulgu L1 (Low) → düzeltme (K1).** N057'nin ilk satırı `CASE_ROOT_ABSENT`
 ve `STOP CASE_ROOT_EXISTS` satırlarını eşittir işaretsiz basıyordu; prova
@@ -9657,7 +9696,7 @@ oturumunda `False`) ve operatör beyanı `CONTAINER_CREATE_UAC_PROMPT_SEEN`
 (§4.4/2 evidence cümlesi, §26.2). Yükseltme satırı kapı değil kayıttır;
 kapı yapmak ayrı bir karardır. §26.5'in "46 yazarsız anahtar" tablosuna
 satır eklenmedi (başlık sayıyı pinler); iki anahtar §4.4/2 ve §26.2'de
-tanımlıdır. §34.16'nın UAC paragrafı tarihsel kayıttır; yalnız bu bölüme
+tanımlıdır (revizyon 12'de eklendi: §26.5 satır 43–44, §34.18). §34.16'nın UAC paragrafı tarihsel kayıttır; yalnız bu bölüme
 gösteren bir cümle eklendi.
 
 **Değişen bloklar** (SHA-256 §34.8 kuralıyla; "eski" = `cde5200`).
@@ -9849,6 +9888,349 @@ blok yaması tabandan yeniden uygulanıp önceki ara dosyayla bayt-bayt aynı
 çıktı. Alt ajan kullanılmadı. Bu revizyon gerçek koşuyu, prova #3'ü veya
 sonraki dilimleri yetkilendirmez; her biri ayrı kullanıcı kararıdır.
 
+### 34.18 Revizyon 12
+
+YENİ (`SCOPE_APPROVED`; planlayıcı önerisiyle, kullanıcı onayı; oturum
+RUNBOOK-REV12; mesajın alındığı an `Get-Date` ile ölçülmedi; Adım 10 B
+yolu, işleme kiti (kit2) dilim 1: prova #3 bağımsız kanıt incelemesinin
+M-1 bulgusu ve §6.G "Kit / runbook" madde 1'i; revizyon 11 incelemesinin
+L1 ve L2 maddeleri). Kapsam bu üç maddedir; başka hiçbir madde bu
+revizyonda değişmedi (aşağıda "Taşınan maddeler"). Girdi: `33e1ffb`
+runbook'u (SHA-256
+`8e2d078707f33dfa6488540083c648e699b72cb5cc092fd87535d22017718c48`, 15505
+satır, 148 blok; HEAD = `origin/claude-dev` = `33e1ffb`; çalışma ağacı
+temiz; diskten doğrulandı). Yalnız bu dosya değişti; kod, şema, veri,
+test, başka runbook veya `CLAUDE.md` değişmedi; LOCKED bir sözleşmeye
+dokunulmadı. Commit ve push yapılmadı. Hiçbir kit, başlatıcı veya runbook
+bloğu gerçek kurulum olarak çalıştırılmadı; çalıştırılanlar yalnız
+oturuma özel scratchpad'deki kopyalar üzerinde `ParseFile`/AST, N116,
+N147 ve gerçek `ac.ps1` yükleyicisiyle `a4` düzeneğidir (hepsi yeni
+`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass`
+süreçlerinde, `TEMP`/`TMP` ve PowerShell modül önbelleği scratchpad'e
+yönlendirilmiş); ayrıca düzenek, N3/N14'ün yaptığı gibi bu makinenin
+optik sürücü listesini salt-okunur WMI sorgusuyla okudu. Ağ, gerçek
+veri, `.env`, pilot kümesi (`<pilot-port>`) ve passfile kullanılmadı;
+prova #3 kökü ve profil altındaki iki inceleme dizini yalnız okundu.
+Yazımlar yalnız bu runbook ve oturuma özel scratchpad dizinidir (profilin
+geçici dizini altında; `%TEMP%` kökü ve `/tmp` kullanılmadı); bunun
+dışında yalnız Claude bellek kayıtları. Alt ajan kullanılmadı.
+
+**Kaynaklar (diskten okundu; özete güvenilmedi).** Prova #3 bağımsız
+kanıt incelemesi
+`<profile>\vergi_step10_kit2_d1prova3_evidence_review_83a7988c\independent-evidence-review.md`
+(SHA-256 `e667bcf493f7cbc9c6b7fa5eb3afff84cb3fd0ba23a8c773981a5da7cd024670`;
+449 satır; Critical 0, High 0, Medium 2, Low 7, Observation 14;
+`REHEARSAL_EVIDENCE_VERIFIED`; özellikle §6.B, §6.F, §6.G, §7 M-1).
+Revizyon 11 bağımsız incelemesi
+`<profile>\vergi_step10_rev11_review_ee3d9ae4\independent-runbook-rev11-review.md`
+(SHA-256 `ee3ba4a6bb69dd326f7fb4495f2cdd58f11a5aceb7841e133e54221396bb3862`;
+`READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/11O; L1, L2). Prova #3 kökü
+`C:\vd5_e5b58889` (yalnız okundu): `ext\ev\` altında `system-temp.txt`,
+`steps\t0.txt` ve `steps\x\` yok; `steps\s1\` altında `a2`, `a3`, `b0`,
+`b1`, `six-class` `STEP_RESULT=PASS`; `steps\e2\` boş; `a9.txt`
+`SELF_REPORT_STUCK=E`; kit kopyası `ext\ev\kit\a4.ps1` SHA-256
+`860931d1e7bf6ac2e878ed49869499b4d6b0269ac32d1254407b13aa7646a720` (= N108,
+revizyon 11); `ext\ev\container-record.txt` (SHA-256
+`316569352b5ea850844024be7e42750ec627eced763cddaff02f2d79bba284c9`)
+`CONTAINER_FILE_BYTES`, `CONTAINER_CREATE_SESSION_ELEVATED=False` ve
+`CONTAINER_CREATE_UAC_PROMPT_SEEN=False` satırlarını taşır. Ctrl+C
+kayıtları: `en\twa\ext\ev\steps\tw-zk.txt` (SHA-256
+`cf67a8d04d7728aee11365eeebef42455de33ecfe516ffa578ac1fc46b26bef7`),
+`en\twa\ext\ev\steps\c\zy.txt` (SHA-256
+`fa428275f0c8e92864ae37c85a2279914fadc581674208e0c9511d0d80e88ceb`),
+`en\twa\ext\ev\DUR.txt` (SHA-256
+`1bfd8b8cf53329c3fad9a27b1731e94cf8d1395399f09299a8c0be6b555d3bbb`);
+prova düzeneği `run\tools\tw.ps1` (SHA-256
+`4956e34af77cfbca9e159ef08c22f8cc90b7b57960c6414b1a3de88b705cb016`; `zk`
+satır 55'te `Read-KbYesNo`'yu düz fonksiyon olarak çağırır) ve sahte komut
+`run\tools\fake\zy.ps1` (`Invoke-KbStep` içinden `Read-KitYesNo`).
+
+**Bulgu M-1 (Medium) — kök neden (kod).** N108 satır 12
+`system-temp.txt`'yi `Read-KitRecord` ile okur (dosya yoksa boş dizi; N105
+satır 53–55); satır 31 boş kaydı `NO_RECORD`, hash farkını `MISMATCH`
+sayar; eski satır 40 ikisini aynı iletiyle ("sistem Temp kaydi yok veya
+uyusmuyor (…). a9 yazin, pencereyi kapatin, kiti yeniden acmayin; …")
+reddeder. Prova #3'te ÖN penceresi (`t0`, N138) atlandı, dosya hiç
+yazılmadı ve `a4` iki denemede de bu iletiyi bastı; kullanıcı `a9` ile
+çıktı. Ret kayıt, kilit ve red dosyası yazmadığı için durum
+kurtarılabilirdi, ama ileti bunu söylemiyordu (inceleme §6.B, §7 M-1).
+Kit kusuru değildir: fail-closed davranış doğru çalıştı.
+
+**Geç ÖN güvenli mi? (koddan; ölçüm 3 ile doğrulandı).**
+
+1. **`t0`'ın ön koşulları KİT penceresinin durumuna bağlı değildir.**
+   Sırayla (N138 satır 63–80): kit2 pinleri, dizini ve `kit-build2.txt`
+   (`Test-KbKitDir`; KİT penceresi ve `b0`/`b1` `kit2\` dizinine yazmaz,
+   kayıtları `steps\` altındadır; disk kanıtı: prova #3'te `a2`, `a3`,
+   `b0`, `b1` koştuktan sonra `ext\ev\kit2\` tam 61 öğedir — 59
+   `Get-KbFileNames` adı + `pins2.txt` + `kit-build2.txt`, alt dizin yok —
+   yani geç `t0`'ın dizin denetimi geçer; N135'te `$global:KbDir`'e yazan
+   satır yok), `system-temp.txt` yok (`T0_ALREADY`),
+   `DUR.txt` yok (`T0_PRECONDITION`), TEMP kapısı (satır 71–74: User
+   kapsamındaki TEMP ile **ÖN penceresinin kendi** Temp yolu aynı; KİT
+   penceresinin TEMP'ine bakmaz) ve güvenli dosya. `a4` PASS olmadıkça
+   `Get-KbAfter` `False`'tur, bu yüzden `t0`'ın redleri kilitsiz kalır;
+   geç ÖN'ün bir `STOP`'u ise yine kilit yazar (satır 95, `Complete-KbStep`
+   kilitli) ve KİT penceresindeki sonraki `a4` bu kilidi `Invoke-KitStep`'in
+   ilk denetiminde görür (N105 satır 131 ve 43).
+2. **`a4` kaydı yine KİT penceresinin canlı değerleriyle karşılaştırır**
+   (N108 satır 13–14 ve 31): geç ÖN'ün yazdığı kayıt ancak iki pencerenin
+   Temp yolları aynıysa geçer, değilse `MISMATCH` (eski ileti, `a9`). KİT
+   penceresinde TEMP `container-temp`'e çevrilmişse `ALREADY`, dizin yoksa
+   `NO_DIR`, yönlendirme tutmazsa `VERIFY` verir; sıra bunların hiçbirini
+   atlatmaz.
+3. **`a4`'ten önce KİT penceresinde koşan hiçbir adım `system-temp.txt`'yi
+   okumaz.** `a2`, `a3` ve `b0` dokunmaz. `b1`'in aktarım günü dalında
+   `<system-temp-*>` kullanan tek blok N52'dir (`external-root-contract`;
+   sistem Temp yolları korunan dizin olarak) ve değeri `b1` kayıttan değil
+   canlı Temp yolundan alır (N141 satır 81–83); aynı canlı değeri `a4` sonra
+   kayıtla karşılaştırır. §4.4/5'in "kapılar bu kayıttan sonra çalışır"
+   sırası elle yürütülen yol içindir (operatör yer tutucuyu kayıt
+   oturumunun ekranından doldurur); kit modunda kapı girdisi kayda bağlı
+   değildir.
+4. **Diğer kapılar değişmez.** Altı sınıf beyanı, kanal taramaları (`a2`,
+   `a3`; kapanışta `a9`), teknik kayıt, DUR kilidi ve TEMP yönlendirmesi
+   aynı kodla çalışır. ÖN penceresi Win+R ile açılan, kit1 yüklemeyen,
+   pinli bir başlatıcıdır; yapay zekâ kanalı değildir. İçerik sınırı (G9)
+   etkilenmez: geç ÖN yalnız `a4` PASS'ten önce mümkündür (PASS'ten sonra
+   kayıt zaten vardır ve `t0` `T0_ALREADY` ile reddeder).
+5. **Sınır.** Kurtarma yalnız dosya **hiç yokken** sunulur. Dosya var ama
+   boş veya okunamıyorsa `t0` `T0_ALREADY` ile reddedeceği için ileti eski
+   biçimde (`(NO_RECORD)`, `a9`) kalır (ölçüm 3, durum `empty`).
+
+Sonuç: kurtarma güvenlidir; görevin 1(b) yolu uygulandı.
+
+**M-1 düzeltmesi.** N108'e satır 40 olarak tek satır eklendi (yeni
+değişken yok): `$kitNo` `NO_RECORD` **ve** `<evidence-dir>\system-temp.txt`
+yoksa yeni ileti basılır ve adım döner. Eski satır 40 (şimdi 41) bayt-bayt
+aynı kaldı ve yalnız `MISMATCH`'i (ve dosya var ama boşken `NO_RECORD`'u)
+karşılar; `NO_DIR`, `ALREADY` ve `VERIFY` satırları (37–39) aynıdır. Satır
+1 yorumuna "revizyon 12" eklendi. Yeni ileti (ASCII; ekranda tek satır;
+blok numaraları kaymasın diye burada çitsiz verilir, bayt kaynağı N108
+satır 40'tır): `a4 BASLAMADI: sistem Temp kaydi (system-temp.txt) hic
+yazilmamis (NO_RECORD): ON penceresi (t0) bu evidence icin calismamis. Bu
+pencereyi KAPATMADAN sayfadaki ON satirini Win+R ile ayri bir pencerede
+calistirin; orada TAMAMLANDI (PASS) gorunce o pencereyi X ile kapatin,
+sonra bu pencerede a4 komutunu bir kez daha yazin. Sayfanizda ON satiri
+yoksa, ON penceresinde TAMAMLANDI (PASS) gormezseniz veya bu ileti yine
+cikarsa: a9 yazin, pencereyi kapatin, kiti yeniden acmayin; icerik henuz
+alinmadi, ajana donebilirsiniz. (Kayit yazilmadi; DUR kilidi yok.)`
+
+"KAPATMADAN": kurtarma aynı KİT oturumunda kalır (`a4` aynı oturumda `a3`
+PASS ister, N108 satır 2); pencere kapatılırsa sayfanın "kiti yeniden
+açmayın" kuralı geçerlidir. `TAMAMLANDI (PASS)` `t0`'ın kendi PASS
+satırıdır (`Complete-KbStep`, N136). İleti ÖNCE tarafının son cümlesiyle
+biter; D-D sınıfı (§34.12) değişmez, N108'de "ajan" geçen satır 6 → 7,
+`a4 BASLAMADI` iletisi 9 → 10.
+
+**Kit1 tek başına (N114 sayfası).** N108 kit1 dosyasıdır; kit2'siz
+akışta sistem Temp kaydı N114'ün H6 adımıdır ve sayfada ÖN satırı yoktur.
+İletinin "Sayfanizda ON satiri yoksa … a9" dalı bu akış içindir: H6 "YALNIZ
+ilk içerik penceresinden önce" dediği için geç H6 önerilmedi ve **N114
+değişmedi**. N114 madde 5 GÖRMEZSEN ("ekrandaki talimatı uygulayın (kayıt
+ve kilit yok); aynı ileti yine çıkarsa: a9 …") ve G6 (O7 listesi) yeni
+iletiyle zaten uyumludur.
+
+**"Aynı komutu iki kez yazma" ile ilişkisi.** Runbook'ta bu ifadeyle bir
+kural yoktur (prova sayfasının, Ek B, kuralıdır; plan konusudur).
+Runbook'taki karşılığı Ek R3/4 ortak kural 2 (kayıt yazmayan dallar
+istisnadır) ile N114 G6 ve madde 5'tir; `NO_RECORD`'dan sonraki ikinci
+`a4` bu istisnaya girer ve Ek R3/4 kural 2'ye adıyla yazıldı.
+
+**Bulgu L1 (Low) → düzeltme.** §26.5 başlığı ve girişi 46 → 48 (düz
+metin anahtarı 42 → 44, ayrıca dört `KIT_*`); yeni satır 43
+`CONTAINER_CREATE_SESSION_ELEVATED` ve satır 44
+`CONTAINER_CREATE_UAC_PROMPT_SEEN` (ikisi de AÖ; kapsayıcı oluşturma
+oturumu; `<evidence-dir>\container-record.txt`). §4.4/2'nin evidence
+cümlesine hedef dosya adıyla eklendi. Dosya adı prova #3'ün gerçek
+yazımıyla aynıdır (yukarıdaki kaynak). Ek R4/16.7'nin (7) maddesi dosyayı
+`CONTAINER_FILE_BYTES` ile anar; değişmedi (dosya aynı). §34.13 ve §34.14
+tablolarındaki "46 anahtar" atıfları tarihsel kayıttır.
+
+**Bulgu L2 (Low) ve prova #3 gözlemi (kod değişmedi).** Dilim 1
+komutlarında `Read-KbYesNo`'nun (N137) hâlâ çağıranı yoktur (N135–N147'de
+yalnız tanım; `t0` ve `kume` gövdeleri çağırmaz); revizyon 11 düzeltmesi
+ileriye dönük simetridir. Prova #3'te iki okuyucu insan penceresinde
+gözlendi (inceleme §6.F; kayıtlar yukarıda): test penceresi A'da prova
+düzeneği pinli `kbl.ps1`'deki `Read-KbYesNo`'yu düz fonksiyon olarak
+çağırdı (`zk`): `ZK_START` 14:22:05 → `ZK_INTERRUPTED` 14:22:10 (5 sn),
+`ZK_KEY_READ` satırı yok; sahte komut `zy` `Invoke-KbStep` içinden
+`Read-KitYesNo`'yu (N105) çağırdı: `STARTED_AT` 14:22:57 → `DUR.txt`
+`KIT_DUR_REASON=KB_INTERRUPTED` 14:23:17 (20 sn); `TEST_KEY=OK` var,
+`ZY_KEY_READ` yok. Süreler insan tepkisini içerir; iki yolda da tuş
+okunmadı ve prova #2 H1'deki "sonraki tuşa kadar bekleme" (115 sn)
+görülmedi. Sınırlar: `Read-KbYesNo` bir dilim 1 komutu üzerinden değil,
+prova düzeneğinin doğrudan çağrısıyla egzersiz edildi; altı sınıf
+okuması `Read-SixYesNo` (N117) Ctrl+C ile egzersiz edilmedi (incelemede
+`C29_N117_CTRL_C_NOT_EXERCISED`; N117 için tek kanıt §34.17 ölçüm 5'in
+ajan ölçümüdür); kesintiler yalnız test pencerelerindedir, ana KİT
+penceresinde Ctrl+C basılmadı (planlı).
+
+**Değişen bloklar** (SHA-256 §34.8 kuralıyla; "eski" = `33e1ffb`).
+
+| Blok | Dosya | Satır | Eski SHA-256 | Yeni SHA-256 | `ParseFile` | Değişiklik |
+|---|---|---|---|---|---|---|
+| N108 | `a4.ps1` (kit1) | 56 → 57 | `860931d1e7bf6ac2e878ed49869499b4d6b0269ac32d1254407b13aa7646a720` | `13358567050d31818a0411c0cdf05c726e1d08dfe53f249c8ddd2c3d2978d2e8` | 0 hata | Satır 1 başlık yorumu; yeni satır 40 (`NO_RECORD`, dosya yok: ayrı ileti) |
+
+Diğer 147 blok (N0–N107, N109–N147) bayt-bayt aynıdır (148 blok, sıra
+aynı). N116 (`kvc.ps1`) ve N147 (`kvc2.ps1`) değişmedi. Yeni satır yalnız
+ASCII; N108'de > 127 bayt 0, CR 0, sekme 0.
+
+**Kit pinleri.** Kit1: `a4.ps1` yeni değerle (Ek R3/1); diğer 16 kit1
+dosyası aynı (`ac.ps1` revizyon 11 değerinde). Kit2: değişmedi (N108 bir
+kit2 dosyası değildir ve kit2 `a4`'e dokunmaz). `pins.txt` ve
+`kit-build.txt` koşuya özgüdür ve prova #4 kurulumunda yeniden üretilir;
+`pins2.txt` ve `kit-build2.txt`'deki kit2 dosya hash'leri değişmez.
+
+**Ölçümler** (hepsi scratchpad kopyalarıyla, yeni `powershell.exe
+-NoProfile -NonInteractive -ExecutionPolicy Bypass -File` süreçlerinde,
+Windows PowerShell 5.1; `TEMP`/`TMP` ve `PSModuleAnalysisCachePath`
+scratchpad'e yönlendirildi, `DIAG_TEMP_IS_SCRATCH=True`; her durum için
+yeni bir sentetik kök: kit1 17 dosya + `kit-values.txt` + `pins.txt`, kit2
+59 dosya + `pins2.txt` (`kit-build2.txt` yok), iki sahte araç dizini,
+`container-temp` dizini).
+
+1. **`ParseFile` ve AST:** N108 eski ve yeni 0 hata; ASCII dışı 0, CR 0,
+   sekme 0. Eklenen tek yeni dizge iletinin kendisi, çıkarılan 0;
+   değişken ve komut kümeleri aynı (`Test-Path`, `Join-Path` zaten
+   vardı); satır 2–39 ve 41–57 (eski 40–56) eskisiyle bayt-bayt aynı.
+2. **Blok kümesi:** 148 blok; `33e1ffb`'ye göre fark yalnız N108 (metin
+   yaması bloklara dokunmadı: metin yamasından önceki ve sonraki 148 blok
+   hash'i aynı).
+3. **Gerçek yükleyici ve `a4` durumları.** Her durum ayrı bir süreç ve
+   ayrı bir köktür. Süreç pinli `ac.ps1`'i dot-source eder (`KIT
+   YUKLENDI`, oturum `s1`), sentetik `a3.txt`, `six-class.txt` ve
+   `technical-record.txt` yazar (araç manifestleri kitin kendi N51/N14
+   tanımlarıyla, optik satırlar makinenin salt-okunur
+   `Win32_CDROMDrive` sorgusuyla) ve kitin `a4` komutunu çağırır
+   (`Invoke-KitStep` → `Get-KitScript` → pinli `a4.ps1`). Her `a4`
+   çağrısından önce ve sonra evidence manifesti (kit dizinleri hariç
+   bütün dosyalar SHA-256'larıyla ve dizinler) alındı. **Düzenek sapması
+   (açıklanır):** scratchpad profil altında olduğu için `ac.ps1`'in
+   `VALUES_USERPROFILE` kuralı (N105 satır 168) her kit değerini
+   reddederdi; KİT sürecinde yalnız o süreç için `USERPROFILE` ortam
+   değişkeni var olmayan bir yola çevrildi ve yüklemeden sonra, hiçbir
+   alt süreç başlamadan geri kondu.
+   - `nr` (dosya yok): yeni ileti; manifest aynı, `a4.txt`, `DUR.txt` ve
+     `steps\x\` yok, TEMP aynı. Ardından **geç ÖN**: ayrı bir `-NoProfile`
+     süreç (aynı kalıtılan TEMP) `kbl.ps1` ve `kbe.ps1`'i `pins2.txt` ile
+     denetleyip yükler, `t0.ps1` satır 53–60'ın genel değişkenlerini kurar
+     ve satır 84–97'nin kayıt yolunu gerçek fonksiyonlarla koşar
+     (N051/N019/N048 yardımcıları, N050 ve N012 blokları,
+     `Complete-KbStep`): `PATH_OK=external-root`, `PATH_OK=evidence-dir`,
+     `SYSTEM_TEMP_RECORDED=True`, `KB_BLOCK=N012 DROPPED_TOKEN_COUNT=2`
+     (iki yol satırı ne kayda ne ekrana girdi), `STEP_RESULT=PASS`,
+     `TAMAMLANDI (PASS)`, `DUR.txt` yok. Aynı KİT sürecinde ikinci `a4`:
+     `SYSTEM_TEMP_MATCH=True`, `KIT_TEMP_REDIRECT=True`,
+     `KIT_TEMP_IN_CONTAINER=True`, `OPTICAL_DRIVES_MATCH_RECORD=True`,
+     `TOOL_MANIFEST_MATCH=True`, `STEP_RESULT=PASS`, `a4 TAMAM`.
+   - `nrold` (pozitif kontrol; revizyon 11 baytları `860931d1…`): aynı
+     durumda eski ileti `… (NO_RECORD). a9 yazin …`; yazım yok.
+   - `empty` (dosya var, 0 bayt): eski ileti `(NO_RECORD)`; yazım yok.
+   - `mm` (hash satırları sıfır): eski ileti `(MISMATCH)`; yazım yok.
+   - `mt` (geç ÖN başka bir TEMP ile): ÖN PASS, `a4` eski ileti
+     `(MISMATCH)`; yazım yok.
+   - `al` (geç ÖN, sonra KİT TEMP'i `container-temp`): eski `ALREADY`
+     iletisi; yazım yok.
+   - `nd` (geç ÖN, `container-temp` dizini silindi): eski `NO_DIR` iletisi;
+     yazım yok.
+   Bütün süreçler çıkış kodu 0; çıktılarda kullanıcı adı 0.
+4. **N116 ve N147 (kopyalar):** yeni kit1 → `KIT_VAR_SCAN_FILE_COUNT=17`,
+   `KIT_VAR_COLLISIONS=0`; yeni kit1 + kit2 →
+   `KIT2_VAR_SCAN_FILE_COUNT=58`, `KIT2_VAR_COLLISIONS=0`, on
+   `KIT2_AST_*=0`, `KIT2_PLACEHOLDER_LITERAL_COUNT=0`,
+   `KIT2_CMD_COLLISIONS=0`; revizyon 11 baytlarında çıktı aynı (genel ad
+   sayıları 9 ve 28, büyük-küçük harf çifti bilgi sayıları 4 ve 6). İlk
+   deneme düzeneğin kabuk döngüsünde bütün dosyaları "eksik" saydı (neden
+   ayrıştırılmadı; dosyalar o anda yerindeydi); aynı iki betik doğrudan
+   çağrıyla yeniden koşuldu ve yukarıdaki sonuç budur.
+5. **§1.5 taraması** (yazımdan sonra bütün dosya ve `33e1ffb`'ye göre
+   eklenen satırlar üzerinde; pozitif kontrollü): sonuç bu oturumun
+   kapanış raporundadır ve bağımsız incelemede yinelenir.
+
+**Ölçülmeyenler.** `VERIFY` dalı (doğal yoldan tetiklenemedi; ileti
+satırı bayt-bayt aynı); gerçek `t0.ps1`'in ön koşul zinciri (satır 63–82:
+`kit-build2.txt`, güvenli dosya ve ACL'si, TEMP kapısı) — profil altında
+güvenli dosya ve yönlendirilmemiş TEMP gerektirdiği için koşulmadı,
+koddan okundu; `DUR.txt` varken geç ÖN (`T0_PRECONDITION`; koddan);
+gerçek konsollarda KİT ve ÖN pencerelerinin aynı anda açık olması ve
+gerçek Win+R Temp yolu (düzenekte iki süreç aynı scratchpad TEMP'ini
+kalıttı); `bc.ps1` ile kit2 yüklü KİT penceresinde `a4` (kit2 `a4`'e
+dokunmaz; Ek R4/16.2 (1)); optik sürücüde medya varken N3 dalı;
+klavyeden gerçek tuşlar.
+
+**Toplu karar (`USER_DECISION at=2026-10-27T18:31:39+03:00`; değer cevap
+alındıktan hemen sonra `Get-Date` ile ölçüldü; yazar önerisiyle,
+kullanıcı onayı):** **K12-1 = ERTELE** — `system-temp.txt` yokken daha
+erken uyarı (`a2` veya `b1`) bu revizyonda uygulanmaz, taşınır; **K12-2
+= KALSIN** — `NO_RECORD` iletisinin metni yukarıdaki gibi kalır (ÖN'ü
+adıyla anar, "ÖN satırı yoksa `a9`" dalı; N114 ve H6 değişmez).
+
+**Taşınan maddeler (bu revizyonda değişmedi).** C18 kuralı (inceleme
+M-2), NON_PLAN kalıbı (L-2), kullanıcı sayfası (Ek B: ÖN penceresinin
+yeri, [22b] GÖRMEZSEN, saat satırları; inceleme §6.G sayfa 1–4), C3
+formu ve B.H sırası (L-5, L-6, L-7) — bunlar prova #4 planının işidir,
+runbook'un değil; inceleme O-11 (kaynak repository'nin izli dosyalarında
+kullanıcı adı; gerçek pilot iz envanteri); dilim 2 izin listesi ve `psql`
+ad eşlemesi boşluğu (N061, N064, N065, N073, N084, N085; N091); K12-1
+(`system-temp.txt` yokken daha erken uyarı; ertelendi); AÇIK-26;
+avukatın e-posta eki cevabı; önceki revizyonlardan taşınan diğer açık
+maddeler (§34.3, §32, §34.17).
+
+**Prova #4 planına notlar.** N108 değiştiği için kit1 kurulumu,
+`pins.txt`, `kit-build.txt`, N116 ve kit1 insan akışı yeniden koşar;
+prova #3'ün kanıtı bayt değişen blok için devralınmaz (§34.4). Sayfa ÖN
+penceresini atlanması zor bir yere koymalı ve `a4` GÖRMEZSEN dalında
+`NO_RECORD`'u kit iletisiyle aynı yazmalıdır (ÖN satırı, X, `a4` bir kez
+daha; yine çıkarsa `a9`); sayfanın "aynı komutu iki kez yazma" kuralı bu
+dalı istisna olarak anmalıdır. Ölçüt (30)'un insan dalı isteğe bağlıdır.
+Ölçüt (29) için N117'nin Ctrl+C'si hâlâ egzersiz edilmedi. Daha erken
+uyarı (ör. `a2`'nin `system-temp.txt` yokluğunu baştan söylemesi) bu
+revizyonda uygulanmadı; ayrı bir kullanıcı kararıdır.
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| Üst uyarı | O6 parantezine "12"; revizyon 12 paragrafı |
+| §0 | "Revizyon" satırına revizyon 12 ve "revizyon 12: §34.18" |
+| §4.4/2 | Evidence cümlesine hedef dosya (`container-record.txt`) (L1) |
+| §4.4/5 | Kit modu paragrafına `NO_RECORD` ve geç ÖN cümleleri |
+| §26.5 | Başlık ve giriş 46 → 48 (42 → 44); satır 43 ve 44 (L1) |
+| §34.4 | Revizyon 12 satırı |
+| §34.12 | D-D tablosunda `NO_RECORD` notu; "ajan" sayımı 6 → 7 notu; O7 listesinde "dokuz ileti" → on notu |
+| §34.14 | Eşleme tablosunda (1) ve (2) notları; yeni (30) satırı |
+| §34.17 | İki gösterici cümle (L2 ve §26.5) |
+| §34.18 | Bu bölüm |
+| Ek R3/1 | `a4.ps1` pini |
+| Ek R3/4 | `a4` satırında ön koşul notu; ortak kural 2'de ikinci `a4` istisnası |
+| Ek R4/8.1 | `t0` "Ne zaman" hücresi |
+| Ek R4/8.2 | "Bayt uyumu" paragrafına not |
+| Ek R4/8.6 | Aktarım günü sırasına `NO_RECORD` dalı |
+| Ek R4/16.2 | Ölçüt 1'e not; yeni ölçüt 30 |
+| N108 | Yukarıdaki tablo |
+
+**Yorumlar** (sessizce seçilmedi).
+
+1. Kurtarma yalnız dosya yokken sunulur (`Test-Path`): `t0`'ın kabul
+   ettiği tek durum budur; dosya var ama boşsa yol `a9`'dur.
+2. İleti ÖN'ü adıyla anar ve kit1 tek başına akış için "ÖN satırı yoksa
+   `a9`" dalını taşır; N114 ve H6 değişmedi.
+3. Eski satır (`MISMATCH` için) bayt-bayt korundu ve yeni satır önüne
+   eklendi; "yok veya uyusmuyor" ifadesi talimat gereği aynen kaldı.
+4. İletide kesme işareti yoktur ("a4 komutunu"): dizge tek tırnaklıdır.
+5. Yeni ileti ÖNCE tarafının son cümlesiyle biter; böylece D-D sınıfı ve
+   sayfa tarafı (G9, D6/D7) değişmez.
+
+**Yazma hesabı.** Kod ve metin oturuma özel scratchpad dizininde
+hazırlandı; önce tek bir Python yamasıyla yalnız N108 değiştirilip
+ölçüldü (iki değişiklik, her biri tek ve benzersiz eşleşme), ardından
+metin ikinci bir Python yamasıyla aynı kuralla eklendi; dosya bu yola LF
+ile yazıldı; yazımdan sonra 148 blok dosyadan yeniden çıkarılıp ölçülen
+baytlarla karşılaştırıldı. Alt ajan kullanılmadı. Bu revizyon gerçek
+koşuyu, prova #4'ü veya sonraki dilimleri yetkilendirmez; her biri ayrı
+kullanıcı kararıdır.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -9881,7 +10263,7 @@ SHA-256 değerleri §34.9 ve aşağıdaki tablodadır.
 | Kit dosyası | Kaynak blok | SHA-256 |
 |---|---|---|
 | `ac.ps1` | N105 (Ek R3/3) | `3e52375fc68963db2834677a947d71520f5f605db56d566ac3dec7d94d60aa6b` (revizyon 11; revizyon 6 değeri `3ba569065b8ddcc936b3da7384f0f64c17463d15241b01252fb1b231520cc753`) |
-| `a2.ps1` … `a9.ps1` | N106 … N113 (Ek R3/4) | §34.9 tablosu (`a3.ps1` revizyon 5, `a2.ps1`, `a4.ps1`, `a5.ps1` ve `a9.ps1` revizyon 6 değerleriyle) |
+| `a2.ps1` … `a9.ps1` | N106 … N113 (Ek R3/4) | §34.9 tablosu (`a3.ps1` revizyon 5, `a2.ps1`, `a4.ps1`, `a5.ps1` ve `a9.ps1` revizyon 6 değerleriyle; `a4.ps1` revizyon 12'de değişti: `13358567050d31818a0411c0cdf05c726e1d08dfe53f249c8ddd2c3d2978d2e8`, §34.18) |
 | `n003.ps1` | N3 (§4.2/10 optik sürücü) | `6bbb9e0c0422baa967edb15d56e94b350a078de37ab6de8f3d5fc892c455a1d4` |
 | `n004.ps1` | N4 (§4.3 a tarama) | `b216d82434a36e5b79963cedfff578c7bd065fb13fe03c2b5ca9557a480e520d` |
 | `n006.ps1` | N6 (§4.3 b oturum denetimi) | `0fed2f837dc22f54f28b556021394d14fb5f85138cc9f6d1cab21e69233cd0e8` |
@@ -10215,7 +10597,7 @@ Remove-Variable kitWhy, kitNames, kitValNames, kitPinBytes, kitPinsTbl, kitL, ki
 |---|---|---|---|---|
 | `a2` | Kayıttan **önce** kapsayıcı ön koşulu: `repo-root` (kapsayıcı içi klon) var ve listelenebilir; değilse kayıt ve kilit yok, `a2 BASLAMADI: Kapsayici bagli degil …` (revizyon 6; kullanıcı kararı D-C); sonra `CONTENT_SESSION_EP`, N6, kanal taraması 1 (N4) | Yeni oturum; kapsayıcı bağlı | `steps\s<k>\a2.txt` | Yalnız silme oturumunda (kilitle açılmış pencere) çalışır |
 | `a3` | Kanal taraması 2 (N4); 120 sn dolmadan tarama ve kayıt yok; PASS iletisi aktarım günü önce kullanıcı sayfası madde 3'ün (revizyon 6; iletideki "kagittaki" ifadesi değişmedi, §34.12 yorum 8) kalan bloklarını, sonra `a4`'ü adlandırır (revizyon 5) | Aynı oturumda `a2` PASS | `steps\s<k>\a3.txt` | Yalnız silme oturumunda çalışır |
-| `a4` | Kayıttan **önce** ön koşul denetimi: bu kit oturumunda altı sınıf kanal beyanı kaydının (`steps\s<k>\six-class.txt`, N117) varlığı ve geçerliliği (revizyon 6; kullanıcı kararı D-B), `technical-record.txt`'nin varlığı ve biçimi (revizyon 5 ek kararı), optik sürücü ön ölçümü (disk/görüntü yok, sürücü kümesi kayıtla aynı; sorgu başarısız veya durum okunamıyorsa ön ölçüm reddetmez, kayıt içindeki N3 kilitler; revizyon 5 madde 7 kararı), TEMP ön denetimi ve yönlendirmesi (sistem Temp kaydıyla eşleşme, `container-temp` dizini, yönlendirme sonrası doğrulama); geçmezse kayıt ve kilit yok, `a4 BASLAMADI: …` iletisi eksiği ve yapılacağı adlandırır; kayıtta `SYSTEM_TEMP_MATCH`, `KIT_TEMP_REDIRECT`, `KIT_TEMP_IN_CONTAINER`, optik sürücü (N3), araç manifesti (N51, N14 satır 1, N15) (revizyon 5; kullanıcı kararı D1). **Optik sürücü yalnız `a4`'te denetlenir** (revizyon 6; kullanıcı kararı K2): `a5`–`a9` ve sonraki adımlar denetlemez; `a4`'ten sonra takılan disk fark edilmez (§32/39 m; kullanıcı sayfası madde 4) | Aynı oturumda `a3` PASS; `<evidence-dir>\system-temp.txt` (§4.4/5, N12) var; zincir adım 4'ün elle çalıştırılan blokları (altı sınıf beyanı N117, kapsayıcı doğrulaması, teknik kayıt N14, yol kapısı) tamam; optik sürücü boş (kullanıcı sayfası madde 4); TEMP bu pencerede elle yönlendirilmemiş (N13 kit modunda elle çalıştırılmaz) | `steps\e2\a4.txt` | Çalışmaz |
+| `a4` | Kayıttan **önce** ön koşul denetimi: bu kit oturumunda altı sınıf kanal beyanı kaydının (`steps\s<k>\six-class.txt`, N117) varlığı ve geçerliliği (revizyon 6; kullanıcı kararı D-B), `technical-record.txt`'nin varlığı ve biçimi (revizyon 5 ek kararı), optik sürücü ön ölçümü (disk/görüntü yok, sürücü kümesi kayıtla aynı; sorgu başarısız veya durum okunamıyorsa ön ölçüm reddetmez, kayıt içindeki N3 kilitler; revizyon 5 madde 7 kararı), TEMP ön denetimi ve yönlendirmesi (sistem Temp kaydıyla eşleşme, `container-temp` dizini, yönlendirme sonrası doğrulama); geçmezse kayıt ve kilit yok, `a4 BASLAMADI: …` iletisi eksiği ve yapılacağı adlandırır; kayıtta `SYSTEM_TEMP_MATCH`, `KIT_TEMP_REDIRECT`, `KIT_TEMP_IN_CONTAINER`, optik sürücü (N3), araç manifesti (N51, N14 satır 1, N15) (revizyon 5; kullanıcı kararı D1). **Optik sürücü yalnız `a4`'te denetlenir** (revizyon 6; kullanıcı kararı K2): `a5`–`a9` ve sonraki adımlar denetlemez; `a4`'ten sonra takılan disk fark edilmez (§32/39 m; kullanıcı sayfası madde 4) | Aynı oturumda `a3` PASS; `<evidence-dir>\system-temp.txt` (§4.4/5, N12) var (yoksa `NO_RECORD`: ayrı ileti; KİT penceresi açık kalırken ÖN penceresi (`t0`) çalışıp kapatıldıktan sonra `a4` bir kez daha yazılır; revizyon 12, §34.18); zincir adım 4'ün elle çalıştırılan blokları (altı sınıf beyanı N117, kapsayıcı doğrulaması, teknik kayıt N14, yol kapısı) tamam; optik sürücü boş (kullanıcı sayfası madde 4); TEMP bu pencerede elle yönlendirilmemiş (N13 kit modunda elle çalıştırılmaz) | `steps\e2\a4.txt` | Çalışmaz |
 | `a5` | Kayıttan **önce** `<intake-dir>\transfer.7z`'nin dosya olarak varlığı (`Test-Path -PathType Leaf`; 7z çağrılmaz, klasör listelenmez); yoksa kayıt ve kilit yok, `a5 BASLAMADI: intake klasorunde transfer.7z yok. …` (revizyon 6 dar düzeltme turu; kullanıcı kararı 4; bağımsız inceleme L1); sonra `transfer.7z` listeleme yöntem kontrolü (N16) | Aynı oturumda `a4` PASS; dosya kullanıcı sayfası madde 6'da kaydedilmiş | `steps\e2\a5.txt` | Çalışmaz |
 | `a6` | Geri okuma sorusu (E/H), açma denemesi 1 (N17), iki gözlem sorusu (E/H) | Aynı oturumda `a5` PASS; `a8` yok | `steps\e2\a6-readback.txt`, `steps\e2\a6.txt` | Çalışmaz |
 | `a7` | Tek ek deneme (N17, deneme 2) | Aynı oturumda `a6` `ATTEMPT_OUTCOME=RETRY_ALLOWED`; `a8` yok | `steps\e2\a7.txt` | Çalışmaz |
@@ -10270,7 +10652,9 @@ Ortak kurallar (hepsi kitin içinde mekaniktir):
    reddi (revizyon 6'dan itibaren altı sınıf
    beyanı kaydı yok veya geçersiz; teknik kayıt yok veya biçimi
    geçersiz, optik sürücüde disk/görüntü veya kayıtla uyuşmayan sürücü
-   kümesi, TEMP ön denetimi; `a4 BASLAMADI: …`; kilit yok; revizyon 5),
+   kümesi, TEMP ön denetimi; `a4 BASLAMADI: …`; kilit yok; revizyon 5;
+   `NO_RECORD` reddinden sonra ÖN penceresiyle kaydı yazdırıp `a4`'ü bir
+   kez daha yazmak bu istisnaya girer, revizyon 12),
    `a5`'in `transfer.7z` yok reddi (`a5 BASLAMADI: …`; revizyon 6 dar
    düzeltme turu, kullanıcı kararı 4) ve `a6`/`a7`'nin Caps Lock kapalı
    dalı. Kayıt ve `DUR.txt` yazmayan bütün iletilerin listesi ve kullanıcı
@@ -10328,7 +10712,7 @@ $null = Complete-KitStep $kitRec 'a3' @('AI_CHANNEL_PROCESS_COUNT=0', 'SCAN_INTE
 ```
 
 ```powershell
-# a4.ps1 - Ek R3: alti sinif beyani on kosulu (revizyon 6), TEMP yonlendirmesi (kit; revizyon 5), optik surucu (N3) ve arac manifesti (N51, N14 satir 1, N15). ASCII. Yalniz a4 komutuyla calisir.
+# a4.ps1 - Ek R3: alti sinif beyani on kosulu (revizyon 6), TEMP yonlendirmesi (kit; revizyon 5), optik surucu (N3) ve arac manifesti (N51, N14 satir 1, N15); revizyon 12: ayri NO_RECORD iletisi. ASCII. Yalniz a4 komutuyla calisir.
 if (-not (Test-KitPass (Join-Path $global:KitSessDir 'a3.txt') $true)) { Write-Host 'Once bu oturumda a3 TAMAM olmali.'; return }
 $kitRec = Join-Path $global:KitE2Dir 'a4.txt'
 if (Test-Path -LiteralPath $kitRec) { Write-Host 'Bu adim zaten calisti: a4.txt. Tekrar calismaz.'; return }
@@ -10367,6 +10751,7 @@ if ($kitNo -ceq '') {
 if ($kitNo -ceq 'NO_DIR') { Write-Host 'a4 BASLAMADI: kapsayici Temp klasoru yok. VeraCrypt kapsayicisini baglayin, sayfadaki madde 3 bloklarini tamamlayin, sonra yeniden a4 yazin. (Kayit yazilmadi; DUR kilidi yok.)'; return }
 if ($kitNo -ceq 'ALREADY') { Write-Host 'a4 BASLAMADI: TEMP bu pencerede zaten degistirilmis. a9 yazin, pencereyi kapatin, sayfadaki madde 1 komutuyla yeniden acin; sonra a2, a3, a4. (Kayit yazilmadi; DUR kilidi yok.)'; return }
 if ($kitNo -ceq 'VERIFY') { Write-Host 'a4 BASLAMADI: TEMP yonlendirmesi dogrulanamadi; eski TEMP/TMP geri kondu. a9 yazin, pencereyi kapatin, kiti yeniden acmayin; icerik henuz alinmadi, ajana donebilirsiniz. (Kayit yazilmadi; DUR kilidi yok.)'; return }
+if (($kitNo -ceq 'NO_RECORD') -and (-not (Test-Path -LiteralPath (Join-Path $global:KitEvid 'system-temp.txt')))) { Write-Host 'a4 BASLAMADI: sistem Temp kaydi (system-temp.txt) hic yazilmamis (NO_RECORD): ON penceresi (t0) bu evidence icin calismamis. Bu pencereyi KAPATMADAN sayfadaki ON satirini Win+R ile ayri bir pencerede calistirin; orada TAMAMLANDI (PASS) gorunce o pencereyi X ile kapatin, sonra bu pencerede a4 komutunu bir kez daha yazin. Sayfanizda ON satiri yoksa, ON penceresinde TAMAMLANDI (PASS) gormezseniz veya bu ileti yine cikarsa: a9 yazin, pencereyi kapatin, kiti yeniden acmayin; icerik henuz alinmadi, ajana donebilirsiniz. (Kayit yazilmadi; DUR kilidi yok.)'; return }
 if ($kitNo -cne '') { Write-Host "a4 BASLAMADI: sistem Temp kaydi yok veya uyusmuyor ($kitNo). a9 yazin, pencereyi kapatin, kiti yeniden acmayin; icerik henuz alinmadi, ajana donebilirsiniz. (Kayit yazilmadi; DUR kilidi yok.)"; return }
 if (-not (New-KitRecord $kitRec @(Get-KitHeader 'a4'))) { return }
 Add-KitLine $kitRec 'SYSTEM_TEMP_MATCH=True'
@@ -11681,7 +12066,7 @@ yazma hatası kilitlidir.
 
 | Komut | Ne zaman | Ön koşul | Bloklar | E/H | Kayıt | Kilitsiz | Kilitli |
 |---|---|---|---|---|---|---|---|
-| `t0` (ÖN) | İlk içerik gününden önce, bir kez | `system-temp.txt` yok; kit2 pinleri ve güvenli dosya hash'i tutuyor; TEMP yönlendirilmemiş | N51, N19, N48, N50 (`external-root`, `evidence-dir`), N12 pinli baytlarla; `SYSTEM_TEMP_USER=` ve `SYSTEM_TEMP_WINDOWS=` satırları izinli listede **ve** ekran listesinde yoktur → yol ne kayda ne ekrana gider (R1; errata-3 §5.3) | Yok | `system-temp.txt` (N12'nin kendi yazımı; bayt uyumu Ek R4/16 dilim 1 (1)) ve `steps\t0.txt` | `T0_ALREADY` (`system-temp.txt` var), `T0_SECURE_FILE_*` | İlk `STOP`'ta durur, sonraki blok çalışmaz (rev6 son kontrol O3) |
+| `t0` (ÖN) | İlk içerik gününden önce, bir kez (revizyon 12: atlandıysa aktarım günü, `a4`'ün `NO_RECORD` reddinden sonra, KİT penceresi açıkken ve içerik alınmadan önce, bir kez; §34.18) | `system-temp.txt` yok; kit2 pinleri ve güvenli dosya hash'i tutuyor; TEMP yönlendirilmemiş | N51, N19, N48, N50 (`external-root`, `evidence-dir`), N12 pinli baytlarla; `SYSTEM_TEMP_USER=` ve `SYSTEM_TEMP_WINDOWS=` satırları izinli listede **ve** ekran listesinde yoktur → yol ne kayda ne ekrana gider (R1; errata-3 §5.3) | Yok | `system-temp.txt` (N12'nin kendi yazımı; bayt uyumu Ek R4/16 dilim 1 (1)) ve `steps\t0.txt` | `T0_ALREADY` (`system-temp.txt` var), `T0_SECURE_FILE_*` | İlk `STOP`'ta durur, sonraki blok çalışmaz (rev6 son kontrol O3) |
 | `kume` (KÜME) | Aktarım günü dahil her içerik günü, KİT'ten önce | Güvenli dosya hash'i ve ACL'si | `pg_ctl status`; kapalıysa `start` (Ek R4/6 madde 10); `pg_isready` | Yok | `steps\kume-<n>.txt` (`<n>` ilk boş sıra): dört `PG_*` boolean'ı, `KUME_STARTED_BY_KIT=True/False` | `KUME_SECURE_FILE_HASH`, `KUME_SECURE_FILE_ACL` | Dört koşuldan biri `False` (pencere başlığı "KUME — KAPATMAYIN"; kayıttan sonra "Bu pencereyi kapatmayin; kucultun") |
 | `y1` (ADMIN) | Zincir adım 9 | `b09a` PASS (aktif assignment 0) | N36 | `REAL_ACTION_APPROVED` (PS; Ek R4/8.7) | `steps\c\y1.txt`: `IAM_ADMIN_OK_LINE_SEEN=True`, `CLI_RC=0`, onay satırı | `Y1_PRECONDITION`, onay H (`Y1_NOT_APPROVED`; CLI çağrılmaz) | `OK` satırı yok, traceback, `CLI_RC` ≠ 0; **tekrar yok** |
 | `y2` (ADMIN) | Zincir adım 24 | `b24a` PASS (aktif assignment tam 1) | N93 | `REAL_ACTION_APPROVED` (PS) | `steps\c\y2.txt` (aynı satırlar) | `Y2_PRECONDITION`, `Y2_NOT_APPROVED` | Aynı; tekrar yok |
@@ -11762,7 +12147,8 @@ her harf için `EXTERNAL_DISK_ENCRYPTED=False drive=<harf>:` ve
 N12 ile, `b1`'in yazdığı `technical-record.txt` N14 ile **bayt bayt**
 aynıdır (ikisi de aynı pinli kodla yazılır; zaman damgası yoktur);
 `b0`'ın yazdığı `six-class.txt` N117 ile `STARTED_AT=` ve `ENDED_AT=`
-dışında aynıdır. Bu üç kayıtla **değişmemiş** kit1 `a4` (N108) PASS verir.
+dışında aynıdır. Bu üç kayıtla **değişmemiş** kit1 `a4` (N108) PASS verir (revizyon 12: N108'de
+yalnız `NO_RECORD` ret iletisi ayrıldı; PASS yolu bayt-bayt aynıdır, §34.18).
 
 #### Ek R4/8.3 KİT penceresi: zincir komutları
 
@@ -11914,7 +12300,10 @@ gerekirse `r4`, `r5`, `r7`). Günlerin sırası:
    restricted izinli küme, VeraCrypt Hakkında sorusu, `FORM_F1`) → `a4`
    → "Farklı kaydet" → `a5` → telefon → `a6`/`a7` → `a8` → `b2` → `a9` →
    kapat. Bugünkü sayfa madde 3b (N117 yapıştırması) ile 3c ve 3d (§13.8
-   kapıları ve teknik kayıt) `b0` ve `b1` ile kalkar (dilim 5).
+   kapıları ve teknik kayıt) `b0` ve `b1` ile kalkar (dilim 5). `a4`
+   `NO_RECORD` ile reddederse (ÖN/`t0` hiç koşmamış): KİT penceresi açık
+   kalır, ÖN satırı Win+R ile çalıştırılıp kapatılır, `a4` bir kez daha
+   yazılır (revizyon 12; dilim 5 sayfası bu dalı yazar; §34.18).
 2. **İşleme günü 1** (tipik bölünme; ölçülmedi): KÜME → KİT → `a2` → `a3`
    → `b0` → `b1` → `b5` → `b5d` → `b6` → `k intake` (gerekirse `k uyari`)
    → `b7` → `g8` → `k girdi` → `b8` → `b9` (`b09a`) → ADMIN `y1` → `b9`
@@ -12911,8 +13300,9 @@ genişletilmiş N116. Kabul ölçütleri:
 1. **Bayt uyumu:** `t0`'ın `system-temp.txt`'si N12 çıktısıyla, `b1`'in
    `technical-record.txt`'si N14 çıktısıyla bayt bayt aynı; `b0`'ın
    `six-class.txt`'si N117 çıktısıyla zaman değerleri dışında aynı; bu üç
-   kayıtla **değişmemiş** kit1 `a4` PASS; kit1 dosyalarının SHA-256'ları
-   `pins.txt` ile aynı.
+   kayıtla **değişmemiş** kit1 `a4` PASS (revizyon 12: N108'in PASS yolu
+   değişmedi, yalnız `NO_RECORD` iletisi ayrıldı; ölçüt 30); kit1
+   dosyalarının SHA-256'ları `pins.txt` ile aynı.
 2. `a4`'ün kilitsiz redleri `b0`/`b1` çalışmadan önce bugünkü gibi
    tetiklenir.
 3. `b1` aktarım günü dalı TEMP'e dokunmaz.
@@ -13069,6 +13459,24 @@ genişletilmiş N116. Kabul ölçütleri:
     sonucu (sahte komutta `ZY_KEY_READ`) yoktur. (c) Kit1 adımlarında
     (`Invoke-KitStep`, N105) `finally`/DUR yolu yoktur: Ctrl+C adımı artık
     anında durdurur ama kayıt ve kilit yazılmaz (değişmedi; §32/39 a).
+30. **`a4` `NO_RECORD` iletisi ve geç ÖN (revizyon 12; prova #3 bağımsız
+    kanıt incelemesi M-1):** `system-temp.txt` hiç yokken `a4` ayrı bir
+    iletiyle reddeder: nedeni adlandırır (ÖN penceresi (`t0`) bu evidence
+    için çalışmamış) ve yolu söyler (KİT penceresi açık kalırken ÖN satırı
+    ayrı bir Win+R penceresinde, `TAMAMLANDI (PASS)`, o pencere X ile
+    kapatılır, `a4` bir kez daha; ÖN'de PASS görülmezse, sayfada ÖN satırı
+    yoksa veya ileti yinelenirse `a9`). Kayıt, `DUR.txt` ve red dosyası
+    yazılmaz; TEMP değişmez. Aynı KİT penceresinde ikinci `a4` TEMP
+    denetimlerini geçer (`SYSTEM_TEMP_MATCH=True`, `KIT_TEMP_REDIRECT=True`,
+    `KIT_TEMP_IN_CONTAINER=True`). Dosya var ama boşsa ileti eski biçimiyle
+    (`(NO_RECORD)`, `a9`) kalır; `MISMATCH`, `VERIFY`, `ALREADY` ve `NO_DIR`
+    iletileri bayt-bayt aynıdır. (a) **Ajan ölçümü:** yeni bir
+    `powershell.exe -NoProfile` sürecinde gerçek `ac.ps1` yükleyicisi ve
+    pinli `a4.ps1`; geç ÖN ayrı bir süreçte `t0`'ın kayıt yoluyla
+    (N051/N019/N048 yardımcıları, N050 ve N012 blokları); pozitif kontrol:
+    revizyon 11 baytları aynı durumda eski iletiyi basar (§34.18 ölçüm 3).
+    (b) **İnsan dalı** (bilinçli atlanmış ÖN penceresi) isteğe bağlıdır;
+    ölçülüp ölçülmeyeceği prova #4 planının kararıdır.
 
 #### Ek R4/16.3 Dilim 2 — intake ve manuel girdi
 
