@@ -8,7 +8,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > komut çalıştırılmamıştır.** Belge ve revizyonu (§34) yazılırken gerçek
 > kurulum veya gerçek veri üzerinde hiçbir CLI, `psql`, Python veya
 > PowerShell betiği çalıştırılmadı (revizyon 10 düzeltmesi, rev9 inceleme
-> O6: revizyon 5, 6, 8, 9, 10, 11 ve 12 kopyalar üzerinde ölçüm düzeneği ve N116/N147
+> O6: revizyon 5, 6, 8, 9, 10, 11, 12 ve 13 kopyalar üzerinde ölçüm düzeneği ve N116/N147
 > çalıştırdı; her revizyonun kendi paragrafı neyin çalıştırıldığını
 > söyler); hiçbir gerçek belge alınmadı; hiçbir veritabanı
 > satırı yazılmadı; hiçbir ağ isteği yapılmadı; hiçbir API anahtarı, `.env`
@@ -127,6 +127,29 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > baytlarla pozitif kontrol dahil), ayrı süreçte `t0`'ın kayıt yolu ve
 > hash. Hiçbir kit, başlatıcı veya runbook bloğu gerçek kurulum olarak
 > çalıştırılmadı; dilim 1 kodu hâlâ provaya tabidir (prova #4).
+> Revizyon 13 (§34.19) kit2 dilim 1 prova #4'ün 2. denemesinin
+> (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulgularını,
+> dosya avukatının e-posta eki cevabını ve revizyon 12 incelemesinin
+> L1–L3 maddelerini işler. Prova #4'te `k uygunsuz` dört kez
+> `K_MARKER_LEFT` ile reddetti: kullanıcının beyanına göre `BURAYA_KOD`
+> silinmeden, boşluk tuşuyla yanına değer yazılmıştı; kit doğru reddetti
+> ama ileti yalnız "BURAYA_ isareti kaldi" diyordu ve red dosyası alanı
+> ve biçimi taşımıyordu. `k`'nın üç değer reddi (`K_MARKER_LEFT`,
+> `K_VALUE`, `K_REFERENCE_FORMAT`) artık alanı adıyla söyler, satırın
+> tam olarak nasıl görünmesi gerektiğini ve düzeltme yolunu (geri silme
+> tuşu, boşluk yok, harf büyüklüğü) gösterir; red dosyasına iki satır
+> eklenir (`REFUSAL_KEY`, `REFUSAL_VALUE_SHAPE`); değer hiçbir yere
+> yazılmaz ve hiçbir kapı gevşemedi. Avukatın imzalı cevabı (imza
+> geçerliliği doğrulanmadı) §6.4'e işlendi: şifreli 7z'nin e-posta eki
+> olarak gönderilmesi aykırı değil, kanal e-posta eki, parola yalnız
+> sesli arama; bu, gerçek gönderime yetki vermez. Değişen bloklar N136
+> (`Write-KbRefusal`'a isteğe bağlı üçüncü parametre) ve N143; diğer 146
+> blok bayt-bayt aynıdır. Denetim: `ParseFile`, AST, kopyalar üzerinde
+> N116 ve N147, yeni `-NoProfile` süreçlerde pinli `kbe.ps1`, gerçek
+> `Get-KbScript` ve `Invoke-KbStep` ile `k`'nın sentetik durumları (Not
+> Defteri açılmadan; eski baytlarla pozitif kontrol dahil) ve hash.
+> Hiçbir kit, başlatıcı veya runbook bloğu gerçek kurulum olarak
+> çalıştırılmadı; dilim 1 kodu hâlâ provaya tabidir (prova #5).
 
 ---
 
@@ -150,7 +173,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -264,7 +287,7 @@ eklendi; `-m` istisnası (harness zinciri) kaldırıldı.
 |---|---|
 | `<repo-root>` | Pilot için `<pilot-root>` altına alınmış repository **klonunun** kök dizininin mutlak yolu (§4.4) |
 | `<container-file>` | VeraCrypt dosya kapsayıcısının mutlak yolu; yerel, bulut senkronizasyonu olmayan bir dizinde; `<source-repo-root>`, `<repo-root>`, `<external-root>`, `<container-root>`, `<system-temp>`, `<container-temp>`, `<python-runtime-root>` ve `<pg-bin-dir>` ile örtüşmez (§4.4, §13.8) |
-| `<system-temp>` | TEMP **yönlendirmesinden önceki** sistem Temp yollarının ortak adı: `<system-temp-user>` ve `<system-temp-windows>`. İçerik oturumu açılmadan önce bir kez okunur; evidence'a §1.5 gereği yolun kendisi değil SHA-256'sı yazılır (§4.4/5). Korunan listelerde `[System.IO.Path]::GetTempPath()` yerine kullanılır, çünkü yönlendirmeden sonra `GetTempPath()` `<container-temp>`'i döndürür |
+| `<system-temp>` | TEMP **yönlendirmesinden önceki** sistem Temp yollarının ortak adı: `<system-temp-user>` ve `<system-temp-windows>`. İçerik oturumu açılmadan önce bir kez okunur (revizyon 13, rev12 incelemesi L1: kit modundaki tek istisna, `a4`'ün `NO_RECORD` reddinden sonra ve içerik alınmadan önce KİT penceresi açıkken çalışan geç ÖN'dür; §4.4/5, Ek R4/8.1); evidence'a §1.5 gereği yolun kendisi değil SHA-256'sı yazılır (§4.4/5). Korunan listelerde `[System.IO.Path]::GetTempPath()` yerine kullanılır, çünkü yönlendirmeden sonra `GetTempPath()` `<container-temp>`'i döndürür |
 | `<system-temp-user>` | Kullanıcının `AppData\Local\Temp` dizini: yönlendirme öncesi `[System.IO.Path]::GetTempPath()` değeri, sondaki `\` olmadan (§4.4/5) |
 | `<system-temp-windows>` | `%SystemRoot%\Temp` dizini, sondaki `\` olmadan (§4.4/5) |
 | `<container-root>` | Kapsayıcının bağlandığı **sürücü harfinin kökü** (ör. `X:\`); klasöre bağlama yoktur (§4.4) |
@@ -638,6 +661,11 @@ Gerçek veri alınmadan **önce**, aşağıdakilerin hepsi sağlanmış olmalıd
    - **E2 kanalı (kullanıcı kararı D6).** Dosya avukatının teslim kanalını
      yazılı olarak belirlemesi ve — kanal şifreli arşivin e-posta eki
      olarak gönderilmesiyse — §6.4'teki hukuki sorunun yazılı cevabı.
+     (Revizyon 13: hukuki soru dosya avukatının imzalı yazılı cevabıyla
+     cevaplandı ve kanal yazılı olarak "şifreli 7z arşivi, e-posta ekiyle"
+     belirlendi; imza geçerliliği doğrulanmadı; §6.4. Kanal belirlemesinin
+     yürütmedeki kaydı (§21/4), imza geçerliliği kaydı ve gerçek
+     gönderimin kendi onayı bu cevapla karşılanmış sayılmaz.)
 
 Bu beş ön koşuldan biri eksikse: **DUR — gerçek belge teslim alınmaz.**
 Madde 1–3 zincir adım 1'de, madde 4 zincir adım 2 (form cevapları) ve
@@ -1799,7 +1827,7 @@ Taahhüdü" içerir).
 | Soru | Kabul edilen cevap | DUR |
 |---|---|---|
 | E1 | "Tek dosyalık pilot alternatifi" (yerel şifreli kapsayıcı) **ve** §4.4 doğrulaması (`CONTAINER_VERIFIED=True`, `PILOT_ACL_PRINCIPALS_OK=True`) ve teknik kayıt | Boş; "Tam disk şifrelemesi" (bu revizyonda yol tanımlı değil, §1.6/4); "Kabul değil"; kapsayıcı doğrulanamadı; E1'e yazılmış, §4.4'te karşılığı olmayan araç adı veya koşul (§6.1, §4.2/10) |
-| E2 | "Uzaktan şifreli dosya aktarımı; parola/anahtar ayrı iletişim kanalından" **ve** aşağıdaki taşıyıcı kontrolü; "ayrı iletişim kanalı" bu runbook'ta **yalnız** dosya avukatından operatöre sesli telefon görüşmesidir (`E2_KEY_CHANNEL=VOICE_CALL`; §21/5) | Boş; "Elden / şifreli USB" veya "Diğer" (bu revizyonda tanımlı değil); açık e-posta/mesajlaşma uygulaması eki (form E2 notu); parola sesli görüşme dışında bir kanaldan geldi (Y15); taşıyıcı kontrolü geçmedi |
+| E2 | "Uzaktan şifreli dosya aktarımı; parola/anahtar ayrı iletişim kanalından" **ve** aşağıdaki taşıyıcı kontrolü; "ayrı iletişim kanalı" bu runbook'ta **yalnız** dosya avukatından operatöre sesli telefon görüşmesidir (`E2_KEY_CHANNEL=VOICE_CALL`; §21/5) | Boş; "Elden / şifreli USB" veya "Diğer" (bu revizyonda tanımlı değil); açık (şifresiz) e-posta/mesajlaşma uygulaması eki (form E2 notu; AES-256 şifreli 7z arşivinin e-posta eki DUR değildir, aşağıdaki "Hukuki soru", revizyon 13); parola sesli görüşme dışında bir kanaldan geldi (Y15); taşıyıcı kontrolü geçmedi |
 | E3 | "Kabul" **ve** bildirim yolu yazılı (form v5: dosya avukatına hemen telefon + aynı gün kişisel veri içermeyen yazılı bildirim; §4.2/11) | Boş; yol yazılmamış |
 | E4 | "Bu koşulla onaylıyorum" işaretli; araç Poppler `pdftotext`; kesin sürüm teknik kayıtta (§4.4/6) | Boş; onaysız; bulut tabanlı araç; teknik kayıtta sürüm yok |
 
@@ -1828,12 +1856,32 @@ yazılır: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
   operatör kanal seçmez. Yazılı kanal belirlemesi bir karar kanalı
   kaydıdır: evidence'a `INBOUND_DECISION_RECEIVED seq=<n>
   sha256=<64-küçük-hex>` yazılır (§21).
-- **Hukuki soru (`EXTERNAL LEGAL VERIFICATION REQUIRED`).** "AES-256 ile
-  şifrelenmiş bir 7z arşivinin **e-posta eki** olarak gönderilmesi,
-  formun E2 cevabındaki 'açık e-posta veya WhatsApp eki kullanılmaz'
-  ifadesine aykırı mıdır?" sorusu dosya avukatına yazılı olarak sorulur.
-  Yazılı cevap gelmeden e-posta eki kanalı **kullanılmaz** (**DUR**).
-  Operatör ve ajan bu soruyu yorumlamaz veya cevaplamaz.
+- **Hukuki soru (`EXTERNAL LEGAL VERIFICATION REQUIRED`; revizyon 13:
+  cevaplandı).** "AES-256 ile şifrelenmiş bir 7z arşivinin **e-posta
+  eki** olarak gönderilmesi, formun E2 cevabındaki 'açık e-posta veya
+  WhatsApp eki kullanılmaz' ifadesine aykırı mıdır?" sorusu dosya
+  avukatına yazılı olarak soruldu. Operatör ve ajan bu soruyu yorumlamaz
+  veya cevaplamaz. **Cevap (revizyon 13; §34.19):** dosya avukatının
+  imzalı cevabı `AVUKAT_EKSİKLİK1.udf` (repo dışında; `content.xml` +
+  `sign.sgn`), SHA-256
+  `1284577de3dc6c6bda00195a942e7ae84b737f0dbb6dbfff180e0ec35a7acc62`;
+  **imza geçerliliği doğrulanmadı** (yalnız `sign.sgn`'nin varlığı
+  görüldü; §6.6/1 kuralı yürütmede uygulanır). Belgenin 4. bölümü (dosya
+  avukatı sıfatıyla): **4.1** "Aykırı değildir; şifreli 7z arşivi e-posta
+  eki olarak gönderilebilir"; **4.2** "Şifreli 7z arşivi, e-posta ekiyle";
+  **4.3** arşivin parolası her durumda yalnız sesli telefon görüşmesiyle
+  iletilir, e-posta, mesajlaşma uygulaması veya SMS ile gönderilmez —
+  "Kabul ediyorum". Bu soru artık DUR nedeni değildir; teslim kanalı
+  e-posta ekidir (4.2 yazılı kanal belirlemesidir; yürütmede yukarıdaki
+  "Kanal" kuralıyla, §21/4, kayda girer — bu revizyon evidence yazmaz) ve
+  aşağıdaki "Biçim" maddesinin parola kuralı aynen geçerlidir. Cevap yalnız
+  AES-256 şifreli 7z arşivinin e-posta eki olarak gönderilmesini kapsar;
+  şifresiz e-posta veya mesajlaşma uygulaması eki yine **DUR**'dur. **Bu
+  cevap gerçek veri gönderimine yetki vermez:** gerçek belgenin
+  gönderilmesi ve alınması kendi onay kapısında kalır
+  (`REAL_ACTION_APPROVED`, `CLAUDE.md` §14.9; §1.6/5'in diğer ön
+  koşulları; form birimlerinin imza geçerliliği; G bölümü, B3, Ek 1,
+  Ek 2).
 - **Biçim.** Aktarım dosyası **AES-256 ile şifrelenmiş bir 7z arşividir**.
   Parola/anahtar aktarım kanalından **ayrı** bir iletişim kanalıyla gelir.
   Bu runbook'ta ayrı kanal **yalnız** dosya avukatından operatöre **sesli
@@ -5885,7 +5933,8 @@ taşır.
     yazılır.
 50. **Kilitsiz redlerin izi.** Kit2'nin her kilitsiz reddi bir red dosyası
     bırakır; kit1'in kilitsiz redleri (kit1 baytı değişmediği için)
-    bırakmaz.
+    bırakmaz. Revizyon 13'ten itibaren `k`'nın değer redleri dosyaya alan
+    adı ve biçim sınıfını da yazar (Ek R4/5 madde 3); değer yazılmaz.
 51. **Tuşa kim basar beyandır** (Ek R4/8.5; §32/39 d).
 52. **Açık sorular.** AÇIK-26 (intake formunun tam anahtar listesi; dilim
     2'den önce) kapanmadan dilim 2 yazılmaz (§34.13). AÇIK-27 kapandı
@@ -6121,7 +6170,7 @@ tabidir.
 | D2 | Kullanıcı | §1.5, §10.2, §13.8, §28.3.2, §33.1/22 | Evidence dışarıda, restricted içeride |
 | D3 | Kullanıcı | §4.4/1–2 | VeraCrypt dosya kapsayıcısı, NTFS, sürücü harfi; kurulum ayrı onay |
 | D5 | Kullanıcı | §4.4/5 | TEMP/TMP yalnız içerik oturumunda kapsayıcıya |
-| D6 | Kullanıcı | §6.4, §1.6/5 | 7z AES-256; e-posta eki sorusu `EXTERNAL LEGAL VERIFICATION REQUIRED` |
+| D6 | Kullanıcı | §6.4, §1.6/5 | 7z AES-256; e-posta eki sorusu `EXTERNAL LEGAL VERIFICATION REQUIRED` (revizyon 13: dosya avukatının imzalı yazılı cevabı alındı, imza geçerliliği doğrulanmadı; §6.4, §34.19) |
 | D7 | Kullanıcı | §11.2/6 | Ayrı görüntüleyici yok |
 | D8 | Kullanıcı | §4.2/3, §4.4/6, §11.2/6, §1.6/3 | `pdftotext` pinleri; sentetik PDF provası |
 | D9, D9a | Kullanıcı | §1.6/5, §4.4/8, §32/25, Y19 | Kapsayıcı dışı izlerin yazılı bildirimi ve `LEGAL_APPROVED` kapısı |
@@ -6156,6 +6205,10 @@ tabidir.
 - **Günlük dosyası (D1=A):** Adım 8 §D (LOCKED) değişmeden; §32/26.
 - **E-posta eki hukuki sorusu (D6):** `EXTERNAL LEGAL VERIFICATION
   REQUIRED`; cevap gelene kadar e-posta eki kanalı DUR (§6.4).
+  **Revizyon 13: kapandı.** Dosya avukatının imzalı yazılı cevabı (imza
+  geçerliliği doğrulanmadı) şifreli 7z arşivinin e-posta eki olarak
+  gönderilmesini aykırı saymadı; kanal e-posta eki, parola yalnız sesli
+  arama (§6.4, §34.19). Gerçek gönderim kendi onay kapısındadır.
 - **Kapsayıcı dışı izler (D9):** hukuki kapı; mühendislikle kapanmaz
   (§32/25).
 
@@ -6254,6 +6307,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 10:** N136 (`kbe.ps1`: `Get-KbToken`, küçük harf red kodu deseni, `STALE_DOWNSTREAM_SEEN`, `Read-KbBuild` `{2,3}` ve `KIT2_PLACEHOLDER_LITERAL_COUNT`), N141 (`b1.ps1`: belirteçler çalışma anında), N143 (`k.ps1`: aynı), N144 (`n.ps1`: yorum), N147 (`kvc2.ps1`: yer tutucu sayacı); diğer 143 blok | Prova #1 (`C:\vd5_3de66d67`): A.0–A.9 PASS (A.1 ve A.5 ilk koşuda STOP; kullanıcı kararlı yeniden koşularla `A.1-r1` ve `A.5-r2` PASS, karar dosyaları `a1-fix-1.txt` ve `a5-fix-1.txt`), A.10 (G12) `KB_SCRIPT_LOAD_FAIL` ile STOP; `b0` ve `bc` yüklemesi o provada gerçekten çalıştı, `b1` hiç yüklenemedi | Değişti (beş blok; diğer bloklar bayt-bayt aynı, §34.16) | **Yeni, dilim 1 provası #2** (Ek R4/16.2, ölçüt (28) dahil; G12 yeniden; prova #1'in A.0–A.9 kanıtı bayt değiştiği için devralınmaz) |
 | **Revizyon 11:** N105 (`ac.ps1`: `Read-KitYesNo` tuş beklemesi), N117 (altı sınıf: `Read-SixYesNo` aynı), N137 (`kbl.ps1`: `Read-KbYesNo` aynı), N057 (iki durum satırı `=True`), N136 (`kbe.ps1`: N057 izin listesi türü `w:True`), N141 (`b1.ps1`: `CASE_ROOT_ABSENT=True` beklentisi); diğer 142 blok | Prova #2 (`C:\vd5_2a3883ec`): Faz A PASS (A.11 ve A.12 `STOP` ile, A.15 `AWAITING_USER_DECISION` ile durdu; kullanıcı kararlı devam betikleri `r1`–`r3`), test penceresi A [7]'de Ctrl+C bir tuşa basılana kadar işlenmedi (`DUR.txt` `KB_INTERRUPTED` 115 sn sonra), ana ve ÖN pencereler açılmadı; `PROVA_DILIM1=FAIL` (C18 ölçüm aracı kusuru); bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H1/M3/L8/O13) | Değişti (altı blok; diğer bloklar bayt-bayt aynı, §34.17) | **Yeni, dilim 1 provası #3** (Ek R4/16.2, ölçüt (29) dahil — klavyeden gerçek Ctrl+C insan ölçümü; N105 değiştiği için kit1 kurulumu, N116 ve kit1 insan akışı yeniden; prova #2'nin kanıtı bayt değişen bloklar için devralınmaz) |
 | **Revizyon 12:** N108 (`a4.ps1`: `NO_RECORD` için ayrı ileti; satır 1 yorumu); diğer 147 blok | Prova #3 (`C:\vd5_e5b58889`): insan penceresinde ÖN penceresi atlandı; KİT'te `a2`, `a3`, `b0`, `b1` PASS, `a4` iki kez `NO_RECORD` reddi (kayıt ve kilit yok), ardından `a9`; test pencerelerinde ölçüt (29) b gözlendi (§34.18); `PROVA_DILIM1=FAIL` (C18 plan kuralı kusuru; doğru kuralla `BELIRSIZ`, çıkarım); bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M2/L7/O14) | Değişti (yalnız N108; diğer bloklar bayt-bayt aynı, §34.18) | **Yeni, dilim 1 provası #4** (Ek R4/16.2, ölçüt (30) dahil; N108 değiştiği için kit1 kurulumu, `pins.txt`, N116 ve kit1 insan akışı yeniden; prova #3'ün kanıtı bayt değişen blok için devralınmaz) |
+| **Revizyon 13:** N136 (`kbe.ps1`: `Write-KbRefusal` isteğe bağlı üçüncü parametre), N143 (`k.ps1`: değer redlerinin iletisi; red dosyasına `REFUSAL_KEY` ve `REFUSAL_VALUE_SHAPE`); diğer 146 blok | Prova #4: 1. deneme (`C:\vd5_54fba6f4`) Test penceresi A'nın `a2`'si bildirim alanındaki Claude masaüstü uygulamasını buldu (`AI_CHANNEL_PROCESS_COUNT=1`), DUR; `PROVA_DILIM1=FAIL` (C27, plan kuralı; 13/3/1/13); 2. deneme (`C:\vd5_cff7fa22`) pencere ilk kez sonuna kadar koştu; `k uygunsuz` dört kez `K_MARKER_LEFT` (kullanıcı beyanı: `BURAYA_KOD` silinmeden boşluk tuşuyla değer eklendi); `PROVA_DILIM1=BELIRSIZ` (20/7/0/3); iki bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M1/L4/O12 ve C0/H0/M2/L5/O9) | Değişti (iki blok; diğer bloklar bayt-bayt aynı, §34.19) | **Yeni, dilim 1 provası #5** (Ek R4/16.2, ölçüt (31) dahil; N136 ve N143 değiştiği için kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147, A.8, G12, G14 ve `k` ajan ikizleri yeniden; prova #4'ün kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
 
 ### 34.5 Yazım sınırları
 
@@ -8541,14 +8595,14 @@ birleştirilmiş, sonda LF); kit2 dosyasının baytları bu gövdeye eşittir.
 | Blok | Dosya | Satır | SHA-256 | `ParseInput` |
 |---|---|---|---|---|
 | N135 | `bc.ps1` | 172 | `36da4eca22964b611586f433af1d1e66793be6c65806f43350685e3aeb7fdcc2` | 0 hata |
-| N136 | `kbe.ps1` | 469 | `30082af0a2a5ce5d63ed542eadc217cbb16028590c52b5d27c00a3e9b1b03c23` | 0 hata |
+| N136 | `kbe.ps1` | 469 | `91d9bbcf496298cf2489b79567ddcea71ed92680ecbcf14b743996f9dc1466a1` | 0 hata |
 | N137 | `kbl.ps1` | 41 | `8bcdd1e4baff4ee5b0aaa616ab8d64bd86c2599c81ca84fc2a18a12f4710141d` | 0 hata |
 | N138 | `t0.ps1` | 114 | `8c2a1c7215b2dcb0f4cf992052846b3f7cfacfb42a19587c7a3f199a861fb544` | 0 hata |
 | N139 | `kume.ps1` | 151 | `6834d0e68a1febe1f2d74675db247a6c1881dcec38ee1a1053b8c4427b573684` | 0 hata |
 | N140 | `b0.ps1` | 19 | `4f89e58c587ff24b3630440cd1deebe1175249839a4bc4cbd71fc44a21b576e9` | 0 hata |
 | N141 | `b1.ps1` | 165 | `692f07e77366c963326dd5264d23e96cb3f65d8c432f4acaf7e7d26dc1384156` | 0 hata |
 | N142 | `b2.ps1` | 31 | `1a403016efe9502a1d485788d03313da19e8f5fae971f57c0c29d1f74f1f8f68` | 0 hata |
-| N143 | `k.ps1` | 205 | `5c18f0c59c3464f0435557f82216165d41573f995e2c1729b0060c19e7ebd1d5` | 0 hata |
+| N143 | `k.ps1` | 234 | `7a8e83411515998bb24bf851e96c584b8019f64e9ac39460d088c9bd20e9ead8` | 0 hata |
 | N144 | `n.ps1` | 29 | `45dcc0728f47631cdf2f914cd2c3c151bc97119ec760757669a36aa462e2a802` | 0 hata |
 | N145 | `o.ps1` | 12 | `b2c90208f11f5fd1c59ce5747de153d0d6c167cf6c966edb97777166f52b0f78` | 0 hata |
 | N146 | `sv7.ps1` | 25 | `e69834e5d7faff55af2001867e5b86e70d8deb2b654242216b9b3bf24c2d02d0` | 0 hata |
@@ -8580,6 +8634,14 @@ revizyon 8 değeri
 `d27ca31921592d998e3427dda37490a58afd726b4d3bd6d4ad5d83942a63b096`. Diğer
 satırlar revizyon 10'daki gibidir.
 
+**Revizyon 13 notu (§34.19).** Yukarıdaki tabloda N136 ve N143 satırları
+revizyon 13'te yenilendi (N143 205→234 satır; N136'nın satır sayısı
+değişmedi). Revizyon 11/12'deki değerler: N136
+`30082af0a2a5ce5d63ed542eadc217cbb16028590c52b5d27c00a3e9b1b03c23`, N143
+`5c18f0c59c3464f0435557f82216165d41573f995e2c1729b0060c19e7ebd1d5`
+(revizyon 10 değeri; revizyon 11 ve 12'de değişmemişti). Diğer satırlar
+revizyon 11'deki gibidir (revizyon 12 kit2'ye dokunmadı).
+
 **Mevcut blokların değişmezliği.** Bu revizyonun runbook'u 148 blok
 taşır. İlk 135 blok (N0–N134) `f09d10d` ile bayt-bayt aynıdır ve aynı
 sırada durur (§34.8 kuralıyla hesaplanan blok SHA-256'ları ve blok dilleri
@@ -8591,11 +8653,11 @@ Ek R3/1) değişmedi.
 | Blok | Dosya | Eski SHA-256 | Yeni SHA-256 | Düzeltme |
 |---|---|---|---|---|
 | N135 | `bc.ps1` | `4ab0113bbf15308e70cdc4bc0ce562adc22db4c32c44606be1294b9864c8ccd0` | `788a6b58654d6e4027b1dd8a5a377657ba5a1d32673548d47a3b9a4574c3a896` | L3 (`kit2-case.txt`), L4, L6, O3; revizyon 9 (§34.15): bu satırın "Yeni" değeri revizyon 8 dar düzeltme turunun tarihsel kaydıdır, güncel pin `36da4eca22964b611586f433af1d1e66793be6c65806f43350685e3aeb7fdcc2` |
-| N136 | `kbe.ps1` | `8963168bef8c5ddd35fd22e223cc90c95ef8c14c98c6e0bbf9ddbe725d507edd` | `744aa03799f9b03bf2827daa67e75fd3e96970b412e273e7a12fb40cb30ea2eb` | L3; revizyon 10 (§34.16): bu satırın "Yeni" değeri tarihsel kayıttır, revizyon 10 pini `01fae48ab307a96264406650102268aa993113094debc799d4a8645471e5e738`; revizyon 11 (§34.17): güncel pin `30082af0a2a5ce5d63ed542eadc217cbb16028590c52b5d27c00a3e9b1b03c23` |
+| N136 | `kbe.ps1` | `8963168bef8c5ddd35fd22e223cc90c95ef8c14c98c6e0bbf9ddbe725d507edd` | `744aa03799f9b03bf2827daa67e75fd3e96970b412e273e7a12fb40cb30ea2eb` | L3; revizyon 10 (§34.16): bu satırın "Yeni" değeri tarihsel kayıttır, revizyon 10 pini `01fae48ab307a96264406650102268aa993113094debc799d4a8645471e5e738`; revizyon 11 (§34.17): pin `30082af0a2a5ce5d63ed542eadc217cbb16028590c52b5d27c00a3e9b1b03c23`; revizyon 13 (§34.19): güncel pin `91d9bbcf496298cf2489b79567ddcea71ed92680ecbcf14b743996f9dc1466a1` |
 | N138 | `t0.ps1` | `a2843ef5e467f63ce3373701fafe81eed6ed4ae90b98d17aa2d01e057630eb14` | `8c2a1c7215b2dcb0f4cf992052846b3f7cfacfb42a19587c7a3f199a861fb544` | L5 |
 | N139 | `kume.ps1` | `e269739e53b5968a7fd16e35ca20d2467264665b6686c1969907ab647f635f74` | `6834d0e68a1febe1f2d74675db247a6c1881dcec38ee1a1053b8c4427b573684` | L5 |
 | N141 | `b1.ps1` | `570591b7666d6d4852ef893a85028a5c985e019fe614635261241c430df61bbe` | `dff5fa83ac08d0ffd1475d8afe3d1cf6e2348d7327b0a5def18d4ef8bed3e0ce` | O6 (yalnız yorum); revizyon 10 (§34.16): revizyon 10 pini `02ebab8ea332babc0c16d75880969dcfebc918d4a914495f754464a19e2ecb69`; revizyon 11 (§34.17): güncel pin `692f07e77366c963326dd5264d23e96cb3f65d8c432f4acaf7e7d26dc1384156` |
-| N143 | `k.ps1` | `c570db40b576831ee49e8daa488fc26918e66934953e478a5c5561e07ddb5d6f` | `6ab9f706d8353bd0238f7a5ea1b5b6a7d21586e385f666b96fd130f877056259` | L2 (D4); revizyon 10 (§34.16): güncel pin `5c18f0c59c3464f0435557f82216165d41573f995e2c1729b0060c19e7ebd1d5` |
+| N143 | `k.ps1` | `c570db40b576831ee49e8daa488fc26918e66934953e478a5c5561e07ddb5d6f` | `6ab9f706d8353bd0238f7a5ea1b5b6a7d21586e385f666b96fd130f877056259` | L2 (D4); revizyon 10 (§34.16): pin `5c18f0c59c3464f0435557f82216165d41573f995e2c1729b0060c19e7ebd1d5`; revizyon 13 (§34.19): güncel pin `7a8e83411515998bb24bf851e96c584b8019f64e9ac39460d088c9bd20e9ead8` |
 
 N137, N140, N142, N144–N147 değişmedi (revizyon 8 dar düzeltme turunda; N144 ve N147 revizyon 10'da değişti, §34.16; N137 revizyon 11'de değişti, §34.17).
 
@@ -8679,6 +8741,7 @@ gerektirmediğini söyler; ajan bağlamı konsol tuşu basamaz.
 | (28) Her kit2 komut betiği gerçek `Get-KbScript` ile yüklenir; doldurulmamış yer tutucu sayacı 0 (revizyon 10; prova #1 A.10/G12) | N136 (`Get-KbToken`; `Get-KbScript` kuralı değişmedi), N141, N143, N144 (belirteçler dosya metninde değil, çalışma anında), N147 (`KIT2_PLACEHOLDER_LITERAL_COUNT`; `Read-KbBuild` N136 bu anahtarı `=0` ister) | Hayır | Kurulumda N147 (Ek R4/19 madde 2 (12)): `KIT2_PLACEHOLDER_LITERAL_COUNT=0`, `kit-build2.txt`'ye; ayrıca yeni bir `powershell.exe -NoProfile -ExecutionPolicy Bypass` sürecinde pinli `kbe.ps1` dot-source edilip kurulmuş kit2 dizini ve `pins2.txt` ile `b0`, `b1`, `b2`, `k`, `n`, `o` (ve `$null` yer değiştirmeyle yüklenen `n000`, `n117`, `n001`, `n002`, `n019`, `n037`, `n047`, `n048`, `n051`; `n012`/`n014` `FirstLine` ile; `n057` `b1`'in çalışma anında kurduğu `FirstLine` ve `case-root` anahtarlı yer değiştirme sözlüğüyle, `$b1xSub` gibi) `Get-KbScript` ile yüklenir, hiçbiri boş dönmez; pozitif kontrol: pinli sahte bir betik (doldurulmamış `<…>` taşıyan) boş döner; §34.16'da aynı düzenek revizyon 9 baytlarıyla `b1`/`k`/`n` için boş döndü |
 | (29) E/H tuşu beklenirken Ctrl+C anında işlenir (revizyon 11; prova #2 bağımsız kanıt incelemesi H1) | N105 (`Read-KitYesNo`), N137 (`Read-KbYesNo`), N117 (`Read-SixYesNo`): `ReadKey`'den önce `KeyAvailable` + `Start-Sleep -Milliseconds 50`; N135 (`Invoke-KbStep` `finally`; değişmedi) | Evet: klavyeden Ctrl+C (prova #3'te insan ölçümü) | Ajan: ayrı, görünür penceresi olmayan konsollu yeni `-NoProfile` süreçte sentetik konsol Ctrl+C olayı ve tuş enjeksiyonu (§34.17 ölçüm 5; pozitif kontrol revizyon 10 baytları); insan: test penceresinde E/H istemi açıkken Ctrl+C, başka tuş yok → `YARIDA KALDI` ve `DUR.txt` `KB_INTERRUPTED` |
 | (30) `a4` `NO_RECORD` ayrı iletisi ve geç ÖN kurtarması (revizyon 12; prova #3 bağımsız kanıt incelemesi M-1) | N108 (`a4.ps1` satır 40: yalnız `system-temp.txt` yokken; satır 41 `MISMATCH` için değişmedi); N138 (`t0`; değişmedi) | Hayır (ajan); insan dalı isteğe bağlı (prova #4 planının kararı) | Yeni `-NoProfile` süreçte gerçek `ac.ps1` + pinli `a4.ps1`: dosya yokken yeni ileti; kayıt, kilit ve red dosyası yok, TEMP aynı; ayrı süreçte `t0`'ın kayıt yolu → `system-temp.txt`; aynı süreçte ikinci `a4` → `STEP_RESULT=PASS`; pozitif kontrol: revizyon 11 baytları aynı durumda eski ileti (§34.18 ölçüm 3) |
+| (31) `k` değer redlerinin iletisi ve red dosyasının alan adı / biçim sınıfı satırları (revizyon 13; prova #4 2. deneme bağımsız kanıt incelemesi M-1, M-2) | N143 (`k.ps1` ret döngüsü: ileti, biçim sınıfı, `$kxRx`); N136 (`Write-KbRefusal` isteğe bağlı üçüncü parametre; iki argümanlı çağrılar aynı) | Evet: Not Defteri'nde doldurma ve iletinin okunması (prova #5); ajan ölçümü Not Defteri'siz | Yeni `-NoProfile` süreçte pinli `kbe.ps1`, gerçek `Get-KbScript`, `bc.ps1`'in `Invoke-KbStep`'i ve pinli `k.ps1`, Not Defteri taklidi: yedi biçim sınıfı, PASS yolu, `K_ALREADY_DECIDED` ve iki argümanlı red; değer ne red dosyasında ne ekranda; pozitif kontrol: revizyon 12 baytları eski ileti ve iki satır (§34.19 ölçüm 4) |
 
 **Avukat cevabına bağlı kısımlar** (Ek R4/17; cevap olumsuzsa yeniden
 açılır): `k` şablonları ve satır kuralı (soru 4); restricted sabit ad
@@ -10186,7 +10249,9 @@ daha; yine çıkarsa `a9`); sayfanın "aynı komutu iki kez yazma" kuralı bu
 dalı istisna olarak anmalıdır. Ölçüt (30)'un insan dalı isteğe bağlıdır.
 Ölçüt (29) için N117'nin Ctrl+C'si hâlâ egzersiz edilmedi. Daha erken
 uyarı (ör. `a2`'nin `system-temp.txt` yokluğunu baştan söylemesi) bu
-revizyonda uygulanmadı; ayrı bir kullanıcı kararıdır.
+revizyonda uygulanmadı; toplu karar K12-1 = ERTELE ile ertelendi
+(yukarıda; "Taşınan maddeler"). (Bu cümle revizyon 13'te, revizyon 12
+incelemesinin L2 önerisiyle güncellendi; §34.19.)
 
 **Bölüm → değişiklik.**
 
@@ -10230,6 +10295,480 @@ ile yazıldı; yazımdan sonra 148 blok dosyadan yeniden çıkarılıp ölçüle
 baytlarla karşılaştırıldı. Alt ajan kullanılmadı. Bu revizyon gerçek
 koşuyu, prova #4'ü veya sonraki dilimleri yetkilendirmez; her biri ayrı
 kullanıcı kararıdır.
+
+### 34.19 Revizyon 13
+
+YENİ (`SCOPE_APPROVED`; planlayıcı önerisiyle, kullanıcı onayı; oturum
+RUNBOOK-REV13; **`USER_DECISION K1–K4 = EVET
+at=2026-10-29T15:46:43+03:00`** — karar görev mesajındadır; değer bu
+oturumda `Get-Date` ile ölçüldü ve mesajın alındığı an değildir: oturumun
+ilk komutu 15:26:48'de çalıştı, mesaj ondan önce alındı). Adım 10 B yolu,
+işleme kiti (kit2) dilim 1. Kapsam yalnız dört maddedir: (1) `k` karar
+dosyasının değer redleri (prova #4 2. deneme bağımsız kanıt incelemesinin
+M-1 ve M-2 bulguları, §8 "Kit (runbook revizyon 13)" önerisi); (2) dosya
+avukatının e-posta eki cevabı; (3) revizyon 12 incelemesinin L1, L2 ve L3
+maddeleri; (4) prova #4 notu ve prova #5 planına notlar. Başka hiçbir
+madde bu revizyonda değişmedi (aşağıda "Taşınan maddeler"). Girdi:
+`0aeeb28` runbook'u (SHA-256
+`e89d2e5e068ed9f64d2d2a686afac1993a71a4ed848dcf5996e349c24b119fd9`, 15913
+satır, 148 blok; HEAD = `origin/claude-dev` = `0aeeb28`; çalışma ağacı
+temiz; diskten doğrulandı). Yalnız bu dosya değişti; kod, şema, veri,
+test, başka runbook veya `CLAUDE.md` değişmedi; LOCKED bir sözleşmeye
+dokunulmadı. Commit ve push yapılmadı. Hiçbir kit, başlatıcı veya runbook
+bloğu gerçek kurulum olarak çalıştırılmadı; Not Defteri **açılmadı**.
+Çalıştırılanlar yalnız oturuma özel scratchpad'deki kopyalar üzerinde
+`ParseFile`/AST, N116, N147 ve `k` düzeneğidir (hepsi yeni `powershell.exe
+-NoProfile -NonInteractive -ExecutionPolicy Bypass` süreçlerinde,
+`TEMP`/`TMP` ve PowerShell modül önbelleği scratchpad'e yönlendirilmiş);
+ayrıca düzenek, kitin pin denetiminin girdisi olarak bu makinenin
+`%SystemRoot%\System32\notepad.exe` dosyasının baytlarını ve
+`FileVersion`'ını salt-okunur okudu. Ağ, gerçek veri, `.env`, pilot
+kümesi (`<pilot-port>`) ve passfile kullanılmadı; prova #4'ün iki kökü,
+profil altındaki inceleme ve plan dizinleri ve avukat belgesi yalnız
+okundu. Yazımlar yalnız bu runbook ve oturuma özel scratchpad dizinidir
+(profilin geçici dizini altında; `%TEMP%` kökü ve `/tmp` kullanılmadı);
+bunun dışında yalnız Claude bellek kayıtları ve PowerShell'in kendi
+önbelleği (scratchpad'e yönlendirildi). Alt ajan kullanılmadı.
+
+**Kaynaklar (diskten okundu; özete güvenilmedi).** Prova #4 2. deneme
+bağımsız kanıt incelemesi
+`<profile>\vergi_step10_kit2_d1prova4_a2_evidence_review_0885fd0a\independent-evidence-review.md`
+(SHA-256 `717c2806f9e9123b0b10f8402236a6d35fd8ab9146e82ae766410f4119439800`;
+269 satır; Critical 0, High 0, Medium 2, Low 5, Observation 9;
+`REHEARSAL_EVIDENCE_VERIFIED`; özellikle §4, §8 ve §9 M-1, M-2). Revizyon
+12 bağımsız incelemesi
+`<profile>\vergi_step10_rev12_review_65c58728\independent-runbook-rev12-review.md`
+(SHA-256 `65fbb92233bf0dc4926209b3d235e7b58e4d76271061b1fa962669c74efc090a`;
+`READY_FOR_COMMIT=YES`, 0C/0H/0M/3L/9O; L1, L2, L3). Prova #4 planı
+`<profile>\vergi_step10_kit2_d1prova4_plan_1d70ac91\plan_v2.md` (SHA-256
+`eba6e24064055f4df2b21a0be147d426a1082eb4fc5de533f2470b68e155b3f2`; yalnız
+Ek B'nin "ON satiri" tanımı okundu). Prova #4 2. deneme kökü
+`C:\vd5_cff7fa22` (yalnız okundu): `run\summary.md` (SHA-256
+`9cc094774a84e0e1c391f2c8b95d19de3f0c2c0e996753f5492f141964081e41`;
+`KRITER_PASS=20 KRITER_PASS_WITH_LIMIT=7 KRITER_FAIL=0
+KRITER_UNMEASURED=3`, `PROVA_DILIM1=BELIRSIZ`), `run\findings.md`
+(SHA-256 `10922896d361fb0feaea3e4312cba08371679501e2078bfaa91aa4432a3b0d87`;
+F1), `ext\ev\steps\s1\refusal-001…004.txt` (dördü de yalnız iki satır:
+`REFUSAL_CODE=K_MARKER_LEFT` ve `AT=` 22:24:53, 22:28:15, 22:30:16,
+22:33:18), kit kopyaları `ext\ev\kit2\k.ps1` SHA-256
+`5c18f0c59c3464f0435557f82216165d41573f995e2c1729b0060c19e7ebd1d5` (= N143,
+revizyon 10), `n132.txt` `6efdf5eadb3e…` (= N132), `n133.txt`
+`21f04dfc226f…` (= N133), `kbe.ps1` `30082af0a2a5…` (= N136, revizyon 11);
+`pins2.txt` satırları aynı. Prova #4 1. deneme kökü `C:\vd5_54fba6f4`
+(yalnız okundu): `run\summary.md` (SHA-256
+`c87f060d87ba5a9cd4ebadd7cfa409975d09de3715ab139efc2a0d370d02cb35`;
+`KRITER_PASS=13 KRITER_PASS_WITH_LIMIT=3 KRITER_FAIL=1
+KRITER_UNMEASURED=13`, `PROVA_DILIM1=FAIL`); 1. deneme bağımsız kanıt
+incelemesi
+`<profile>\vergi_step10_kit2_d1prova4_a1_evidence_review_70545ed2\independent-evidence-review.md`
+(SHA-256 `292e843a6e7d976e43e1bfbfb59544f10427bb3752b3348f7295b58e4902aca3`;
+0C/0H/1M/4L/12O; `REHEARSAL_EVIDENCE_VERIFIED`; yalnız sonuç satırları
+okundu). Dosya avukatının imzalı cevabı: dosya adı `AVUKAT_EKSİKLİK1.udf`
+(repo dışında, kullanıcı masaüstünde; UDF = zip: `content.xml` +
+`sign.sgn`), SHA-256
+`1284577de3dc6c6bda00195a942e7ae84b737f0dbb6dbfff180e0ec35a7acc62`;
+`content.xml` yalnız bellekte okundu (diske açılmadı; dosya
+değiştirilmedi). **İmza geçerliliği doğrulanmadı** (yalnız `sign.sgn`'nin
+varlığı görüldü; sertifika zinciri, zaman damgası ve iptal durumu
+ölçülmedi; §6.6/1 kuralı yürütmede uygulanır). Belgedeki kişi adı, baro
+sicili, tarih ve imza ayrıntıları bu belgeye yazılmaz (§1.5).
+
+**Kullanıcı kök neden beyanı (prova #4 2. deneme; beyan, disk ölçümü
+değildir).** Kullanıcı `BURAYA_KOD`'u silmedi: satırın sonundan boşluk
+tuşuna 10 kez basıp (Caps Lock açık) `OTHER`, `SILME_BU_ZIYARETTE`
+satırında 11 boşluk ve `EVET` yazdı; sonraki turda Caps Lock kapalı,
+küçük harfle yazdı. Sayfadaki "Backspace" sözcüğü anlaşılmamıştı; satırlar
+`NEDEN=BURAYA_KOD` + boşluklar + `OTHER` biçimine geldi. Bu beyan kanıt
+incelemesinin ayrıştıramadığı (c) "silmeden sonuna ekleme" hipotezine
+uyar ve diskle çelişmez: dört turun dördü `K_MARKER_LEFT`; işaret
+denetimi (N143 satır 40; yeni baytlarda 41) sözlük denetiminden önce çalıştığı için küçük
+harf turu da `K_VALUE` değil `K_MARKER_LEFT` verdi. Kit doğru
+reddetti; kit kusuru yoktur.
+
+**Bulgu M-1 / M-2 (Medium) — kök neden (kod).** (a) N143'ün eski satır 161
+iletisi yalnız `"<ALAN> satirinda BURAYA_ isareti kaldi."` diyordu: satırın
+nasıl görünmesi gerektiğini, izinli değerleri, işaretin silinmesi
+gerektiğini ve geri silme tuşunu söylemiyordu (`K_VALUE` izinli değerleri
+gösteriyordu, `K_MARKER_LEFT` göstermiyordu). (b) Red dosyası (N136
+`Write-KbRefusal`) yalnız iki satırdı; alan adı ve biçim taşımadığı için
+"dokunulmamış" ile "yanına eklenmiş" ayrılamadı (inceleme M-1).
+
+**Madde 1 — düzeltme (N143 ve N136).**
+
+1. **İleti (N143; yalnız ekran).** `K_MARKER_LEFT`, `K_VALUE` ve
+   `K_REFERENCE_FORMAT` artık çok satırlı bir iletidir: (i) eski ilk
+   cümle aynen (`<ALAN> satirinda BURAYA_ isareti kaldi.` /
+   `<ALAN> degeri gecersiz.` / `REFERANS kurala uymuyor: …`) ve biçim
+   sınıfının ekran açıklaması (ör. `BURAYA_KOD yazisi silinmemis;
+   yazdiginiz sey bu yazinin yanina eklenmis.`); `K_VALUE`'da eski
+   `Izinli degerler: …` kısmı aynen; (ii) satırın tam biçimi: sözlük
+   (`w:`) alanında izinli değerlerin **her biri** ayrı bir satırda
+   `ANAHTAR=DEĞER` olarak, sözlük sırasıyla (ör. `NEDEN=NO_SINGLE_DATE_LINE`
+   … `NEDEN=OTHER`; tek değerli alanda `SILME_BU_ZIYARETTE=EVET`); `k6`
+   alanında mevcut sözdizimi (`=YOK` veya sıralı alt küme; örnek biçim
+   şablon yorumundakiyle aynı `G5,MADDE6`); `REFERANS`'ta kural ve
+   `REFERANS=YOK`; (iii) düzeltme yolu: `Duzeltme: imleci bu satirin en
+   sonuna koyun; BURAYA_KOD yazisini geri silme tusuyla (Backspace: Enter
+   tusunun hemen ustundeki tus) tamamen silin, satirda yalniz NEDEN=
+   kalsin; bosluk birakmayin; sonra degeri BUYUK harfle, tam olarak
+   yukaridaki gibi yazin. Bitirince Ctrl+S, sonra X.` (`K_VALUE`'da "=
+   isaretinden sonraki her seyi … silin"). Harf yönergesi izinli
+   değerlerden türetilir: hepsi büyük harfse "BUYUK harfle", hepsi küçük
+   harfse (`adlitatil`, `durdurucu` `DURUM`) "kucuk harfle"; `k6`
+   "BUYUK harfle"; `REFERANS` "referansinizi veya YOK yazin". İzinli
+   değerler ve `BURAYA_…` işaret metni kitin kendi pinli sözlüğünden
+   (`$kxTypes`) ve pinli şablondan gelir; ileti yalnız ASCII'dir ve
+   `<…>` küçük harfli belirteç taşımaz (`Get-KbScript` yer tutucu kuralı
+   aynen; N147 sayacı 0). Dosyadaki değer iletiye **hiçbir zaman** girmez.
+2. **Biçim sınıfı ve red dosyası (N143).** Sınıf yalnız bu üç kodda
+   hesaplanır, kesin öncelik sırasıyla: `K_MARKER_LEFT`'te değer şablondaki
+   işaretle ordinal aynıysa `MARKER_KEPT`, değilse `MARKER_WITH_TEXT`;
+   `K_VALUE`/`K_REFERENCE_FORMAT`'ta değer boşsa `EMPTY`;
+   `K_REFERENCE_FORMAT`'ta aksi hâlde `REFERENCE_RULE` (referansta boşluk
+   kurala göre serbest, sözlük yok; sınıf yalnız "kural tutmadı" der);
+   `K_VALUE`'da değer boşluk (0x20) veya sekme taşıyorsa `SPACES`; sözlük
+   değerlerinden biriyle yalnız harf büyüklüğü farklıysa (`[string]::Equals`
+   + `OrdinalIgnoreCase`; `ToUpper`/`ToLower` ve büyük-küçük harf duyarsız
+   işleç kullanılmaz) `WRONG_CASE`; aksi hâlde `NOT_IN_LIST`. `k6`
+   alanında harf büyüklüğü sınıflanmaz (`g5` → `NOT_IN_LIST`). Kullanıcının
+   örnek adlarından `LOWERCASE` yerine `WRONG_CASE` seçildi, çünkü
+   `adlitatil` ve `durdurucu` izinli değerleri küçük harflidir (`YES` de bu
+   sınıftır). Red dosyası ilk iki satırdan sonra iki satır daha taşır:
+   `REFUSAL_KEY=<ALAN>` (şablondaki alan adı; `^[A-Z][A-Z0-9_]{0,63}$`
+   tutmazsa ek satır yazılmaz) ve `REFUSAL_VALUE_SHAPE=<SINIF>`.
+   **Sızıntı sınırı:** `WRONG_CASE` yalnız "bir izinli değere harf
+   büyüklüğü dışında eşit" der, hangisine olduğunu söylemez;
+   `NOT_IN_LIST`, `SPACES`, `MARKER_WITH_TEXT` değer hakkında başka bilgi
+   vermez; değerin kendisi, uzunluğu ve hash'i red dosyasına girmez (PASS
+   kaydının sözlük değeri ve `REFERANS_UZUNLUK` kuralları değişmedi).
+3. **N136 (`Write-KbRefusal`).** İsteğe bağlı üçüncü parametre
+   `[string[]]$Extra = @()`; dosyaya `[string[]]@("REFUSAL_CODE=$Code",
+   "AT=…") + $Extra` yazılır. Neden N136: red dosyasının adını
+   (`refusal-<nnn>`, ilk boş sıra) ve CreateNew yazımını yalnız bu fonksiyon
+   seçer ve hiçbir şey döndürmez; `k.ps1`'in dosyayı sonradan bulup satır
+   eklemesi ya `nnn` aramasını ikinci bir yerde çoğaltmak ya da iki aşamalı
+   (önce iki, sonra dört satır) ve atomik olmayan bir yazım demekti; ikisi
+   de reddedildi. Kit2'deki 39 `Write-KbRefusal` çağrısının 38'i iki
+   argümanlıdır ve bayt-bayt aynı iki satırı yazar (ölçüm 4, `vii` ve
+   `iii`); üçüncü argümanı yalnız `k`'nın ret döngüsü verir ve değer
+   redi dışındaki döngü kodlarında boş dizidir (iki satır; `viii`). ASCII dışı bir
+   ek satır `Write-KbBytes`'in mevcut `KB_NON_ASCII_LINE` kuralıyla
+   reddedilir ve `REFUSAL_FILE_WRITE=FAIL` basılır (değişmedi). Yeni
+   değişken adı yok; satır 1 başlık yorumuna "13".
+4. **Şablon yorumları (madde 1 c) — eklenmedi.** Ayrıştırma bakımından
+   güvenli olurdu (koddan): `Test-KxFile` her `#` satırını kitin aynı pinli
+   şablon baytlarından kurduğu beklenen satırla ordinal karşılaştırır
+   (yeni N143 satır 20–33: beklenen satırlar `Get-KbText` baytlarından
+   kurulur, `#` satırları satır 31'de karşılaştırılır) ve şablon dosyası da
+   aynı baytlardan yazılır (`$kxNewTpl`, satır 125–133), kimlik satırı
+   araması (satır 17) `KARAR_TURU=` gibi `#` ile başlamayan öneklere bakar; yeni yorum `<…>` taşımadığı sürece
+   `K_TEMPLATE_FILL` (satır 129) da tetiklenmez. Yine de eklenmedi: (i) yeni ileti
+   satırın tam biçimini ve geri silme tuşunu ilk redde zaten gösterir;
+   (ii) bütün şablonlar aynı başlık satırını taşır, yalnız N132/N133'ü
+   değiştirmek dokuz kardeşi tutarsız bırakır, on birini değiştirmek on
+   bir şablon pinini (`n123`…`n133.txt`, §34.13 tablosu) ve plan ajan
+   ikizlerinin `K_TEMPLATE_LINE` satır numaralarını değiştirir; (iii) çok
+   değerli hukuki kararlarda (`SONUC=KABUL`/`RED`) şablona yazılan tek bir
+   "örnek doğru satır" bir seçeneği öne çıkarabilir; (iv) ilk temas sayfa
+   [32b]/[32c] işidir (prova #5 planı). Taşınır.
+5. **Hiçbir kapı gevşemedi.** Denetim sırası, red kodları, kilitsiz/kilitli
+   ayrımı, sıfırlama seçeneğinin yalnız `K_SALT_LINE`/`K_TEMPLATE_IDENTITY`
+   ile sınırlı oluşu, "Not Defteri yeniden açılsın mı?" sorusu ve PASS
+   kaydı değişmedi. `BURAYA_` kalan, harf büyüklüğü farklı, boşluklu veya
+   listede olmayan değer yine kilitsiz reddedilir ve kayıt yazılmaz; kit
+   değeri düzeltmez, kırpmaz, harf büyüklüğünü değiştirmez (ölçüm 4: her
+   red durumunda karar dosyasındaki değer düzenek yazımıyla bayt-bayt aynı
+   kaldı). `K_TEMPLATE_LINE`, `K_TEMPLATE_IDENTITY`, `K_SALT_LINE`, `K_BOM`,
+   `K_ENCODING`, `K_K6_BRANCH_NOT_NAMED` ve diğer bütün kodların iletisi ve
+   iki satırlık dosyası aynıdır.
+
+**Madde 2 — avukatın e-posta eki cevabı.** Soru §6.4'te
+`EXTERNAL LEGAL VERIFICATION REQUIRED` olarak açıktı (§1.6/5 madde 5,
+§6.4 E2 "Hukuki soru", §34.2 D6, §34.3; §34.18 taşınan liste). Belgenin 4.
+bölümü (dosya avukatı sıfatıyla): **4.1** "Aykırı değildir; şifreli 7z
+arşivi e-posta eki olarak gönderilebilir"; **4.2** "Şifreli 7z arşivi,
+e-posta ekiyle"; **4.3** arşivin parolasının her durumda yalnız sesli
+telefon görüşmesiyle iletilmesi (e-posta, mesajlaşma uygulaması veya SMS
+ile gönderilmez) — "Kabul ediyorum". İşlendiği yerler: §6.4 E2 "Hukuki
+soru" maddesi ve tablo satırının DUR hücresi, §1.6/5 madde 5, §34.2 D6
+satırı, §34.3. §34.18'in taşınan listesi tarihsel kayıttır ve
+değiştirilmedi. **Bu cevap gerçek veri gönderimine yetki vermez:** gerçek
+belgenin gönderilmesi ve alınması kendi onay kapısında kalır
+(`REAL_ACTION_APPROVED`, `CLAUDE.md` §14.9; §1.6/5'in diğer ön koşulları;
+form birimlerinin imza geçerliliği kaydı; G bölümü, B3, Ek 1, Ek 2) ve
+yazılı kanal belirlemesinin karar kanalı kaydı (§21/4) yürütmede yazılır.
+Cevap yalnız AES-256 şifreli 7z arşivinin e-posta eki olarak
+gönderilmesini kapsar; şifresiz e-posta ve mesajlaşma uygulaması eki yine
+DUR'dur. Aynı belge başka cevaplar da taşır (süre kurallarının teyidi,
+tablosu kaymış beş örnek, yapay zekâ bileşenleri, dosya seçilince
+istenecek belgelerin notu, sonra gönderilecekler); bunlar K1–K4 kapsamı
+dışındadır ve bu revizyonda **işlenmedi** (taşınan maddeler).
+
+**Madde 3 — revizyon 12 incelemesinin üç Low'u.**
+
+- **L1:** §1.5 `<system-temp>` satırına kit modundaki tek istisna eklendi
+  (`a4`'ün `NO_RECORD` reddinden sonra, içerik alınmadan önce geç ÖN;
+  §4.4/5, Ek R4/8.1).
+- **L2:** §34.18 "Prova #4 planına notlar"ın son cümlesi K12-1 = ERTELE
+  kararını yansıtacak biçimde güncellendi. Bu, önceki bir revizyonun
+  bölümüne yapılan tek değişikliktir ve yalnız revizyon 12 incelemesinin
+  L2 önerisi gereğidir; §34.18'in geri kalanı tarihsel kayıt olarak
+  aynıdır.
+- **L3:** "ÖN satırı" tanımı prova #4 planı Ek B ile aynı anlamda Ek
+  R4/8.1'e (kit2) ve Ek R3/5'e (kit1 sayfası) yazıldı: ÖN satırı yalnız
+  `t0.ps1`'i açan Win+R satırıdır; başka hiçbir Win+R satırı (kit1
+  sayfasının H6 satırı dahil) ÖN satırı değildir; kit1 sayfasında ÖN
+  satırı yoktur ve N108 iletisinin "Sayfanizda ON satiri yoksa … a9" dalı
+  bu sayfa içindir. Tanım blok dışındadır: N108 ve N114 değişmedi (K12-2
+  = KALSIN).
+
+**Madde 4 — prova #4 notu.** Prova #4 (plan `plan_v2.md`, runbook
+revizyon 12) iki denemede koştu:
+
+1. **1. deneme (`C:\vd5_54fba6f4`):** Test penceresi A'nın gerçek `a2`'si
+   bildirim alanında çalışan Claude masaüstü uygulamasını buldu
+   (`AI_CHANNEL_PROCESS_COUNT=1`) ve DUR verdi; ana pencere (ÖN + KİT) ve
+   Test B'ye ulaşılmadı. `PROVA_DILIM1=FAIL` (C27, plan kuralının harfiyle;
+   neden dış ortam), 13 PASS, 3 PASS_WITH_LIMIT, 1 FAIL, 13 UNMEASURED.
+   Kit doğru çalıştı (kanal kapısı tam bunun içindir).
+2. **2. deneme (`C:\vd5_cff7fa22`):** pencere ilk kez sonuna kadar koştu
+   (KÜME, test pencereleri A ve B, ÖN, ana KİT `a2`…`a9`, `b0`, `b1`,
+   `b2`, `k uygunsuz`). `PROVA_DILIM1=BELIRSIZ`: 20 PASS, 7
+   PASS_WITH_LIMIT, 0 FAIL, 3 UNMEASURED (C07, C19, C22; üçü de `k
+   uygunsuz`'un doğru doldurma ve yeniden açma zinciri; `not_reached`).
+   Tek uygunsuzluk `k uygunsuz`: dört tur `K_MARKER_LEFT`, kök neden
+   yukarıdaki beyan (boşluk tuşu). Bağımsız kanıt incelemesi
+   `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M2/L5/O9; C14 için adlandırılmış
+   LIMIT önerisiyle 19/8/0/3, hüküm aynı).
+
+**Prova #5 planına notlar** (plan işidir; runbook bunları uygulamaz).
+
+- **Kit değişti:** N136 ve N143'ün baytları değiştiği için kit2 kurulumu,
+  `pins2.txt`, `kit-build2.txt`, N147, yükleme kapıları (A.8, G12, G14)
+  ve `k` ajan ikizleri (A.11, T-K…) yeniden koşar; prova #4'ün kanıtı bayt
+  değişen bloklar için devralınmaz (§34.4). Ajan ikizlerinin eski
+  `K_MARKER_LEFT` iletisini veya iki satırlık `k` değer reddini bekleyen
+  beklentileri yeni ölçüt (31)'e göre güncellenir. Kit1 değişmedi.
+- **Sayfa [32b]/[32c]:** "geri silme tuşu (Backspace: Enter'ın hemen
+  üstündeki tuş)" adıyla ve son satır örneğiyle (GÖR: "satır tam olarak
+  `NEDEN=OTHER`", altında `SILME_BU_ZIYARETTE=EVET`); boşluk tuşu
+  kullanılmaz; kanıt incelemesi §8'in diğer sayfa önerileri ([32e]'de
+  yanlış pencere uyarısı, karar dosyası penceresinin başlığı) planın
+  kararıdır.
+- **[H2a]/[H2b]:** Claude masaüstü uygulamasının bildirim alanından (saat
+  yanındaki simge, sağ tık) **Çıkış** ile kapatılması ve kapandığının
+  görülmesi (1. denemenin DUR nedeni).
+- **B.0:** tekrar eden `k` redleri beklenen sayılır (ad ve sayı yerine
+  "`refusal-<nnn>.txt`, kod beklenen kümede"); `k`'nın değer redleri artık
+  dört satırdır (`REFUSAL_KEY`, `REFUSAL_VALUE_SHAPE`) — C06'nın "iki
+  satır" sayımı ve B.0 kuralı bunu kabul etmelidir; Faz B alan şeklini
+  artık red dosyasından okuyabilir.
+- **C14:** adlandırılmış LIMIT (ör. `C14B_YARIDA_FROM_CODE_NOT_REPORT`;
+  kanıt incelemesi §3.2).
+- **X_TAG:** beklenen etiket sayısı diskteki kayıtlardan bağımsız olarak
+  türetilebilecek bir sayım kuralıyla tanımlanır (kanıt incelemesi §2,
+  "X etiketleri").
+
+**Değişen bloklar** (SHA-256 §34.8 kuralıyla; "eski" = `0aeeb28`).
+
+| Blok | Dosya | Satır | Eski SHA-256 | Yeni SHA-256 | `ParseFile` | Değişiklik |
+|---|---|---|---|---|---|---|
+| N136 | `kbe.ps1` (kit2) | 469 → 469 | `30082af0a2a5ce5d63ed542eadc217cbb16028590c52b5d27c00a3e9b1b03c23` | `91d9bbcf496298cf2489b79567ddcea71ed92680ecbcf14b743996f9dc1466a1` | 0 hata | Satır 1 başlık yorumu; `Write-KbRefusal` isteğe bağlı `$Extra` |
+| N143 | `k.ps1` (kit2) | 205 → 234 | `5c18f0c59c3464f0435557f82216165d41573f995e2c1729b0060c19e7ebd1d5` | `7a8e83411515998bb24bf851e96c584b8019f64e9ac39460d088c9bd20e9ead8` | 0 hata | Satır 1 ve yeni satır 4 yorum; ret döngüsünde değer redlerinin iletisi, biçim sınıfı ve `$kxRx` (yeni satırlar 157–184; ileti satırları 190–192; çağrı satırı 194) |
+
+Diğer 146 blok (N0–N135, N137–N142, N144–N147) bayt-bayt aynıdır (148
+blok, sıra aynı). N116 (`kvc.ps1`) ve N147 (`kvc2.ps1`) değişmedi. Yeni
+satırlar yalnız ASCII; iki blokta > 127 bayt 0, CR 0, sekme 0, `<…>` küçük
+harfli belirteç 0.
+
+**Kit pinleri.** Kit1: değişmedi (Ek R3/1; 17 dosya). Kit2: `kbe.ps1` ve
+`k.ps1` yeni değerleriyle (§34.14 "Yeni bloklar" tablosu ve "Revizyon 13
+notu"); şablonlar (`n123`…`n133.txt`) ve diğer kit2 dosyaları aynı.
+`pins2.txt` ve `kit-build2.txt` koşuya özgüdür ve prova #5 kurulumunda
+yeniden üretilir (`KIT2_FILE_SHA256=kbe.ps1 …` ve `…=k.ps1 …` satırları
+değişir). Runbook'ta "Ek A" yoktur; blok pin listesi (Ek A) prova planının
+işidir.
+
+**Ölçümler** (hepsi scratchpad kopyalarıyla, yeni `powershell.exe
+-NoProfile -NonInteractive -ExecutionPolicy Bypass -File` süreçlerinde,
+Windows PowerShell 5.1; `TEMP`/`TMP` ve `PSModuleAnalysisCachePath`
+scratchpad'e yönlendirildi).
+
+1. **`ParseFile` ve AST:** N136 ve N143 eski ve yeni 0 hata; ASCII dışı 0,
+   CR 0, sekme 0. N136'da eklenen dizge sabiti 0, yeni değişken adı 0 (`$Extra`
+   N136'da `New-KbSpec`'in parametresi olarak zaten vardı). N143'te 14 yeni
+   değişken, hepsi `kxR` önekli (`kxRa`, `kxRc`, `kxRd`, `kxRe`, `kxRh`,
+   `kxRi`, `kxRk`, `kxRl`, `kxRm`, `kxRs`, `kxRt`, `kxRv`, `kxRw`, `kxRx`);
+   eklenen komut yalnız `ForEach-Object` (kit2'de zaten kullanılıyor),
+   eklenen üye yalnız `Equals` (`[string]::Equals(…, OrdinalIgnoreCase)`);
+   `ToLower`/`ToUpper` 0; çıkarılan iki dizge eski iki iletinin kendisidir.
+2. **Blok kümesi:** 148 blok; `0aeeb28`'e göre fark yalnız N136 ve N143
+   (metin yamasından önceki ve sonraki 148 blok hash'i aynı).
+3. **N116 ve N147 (kopyalar; ad çakışması kuralları):** kit1 →
+   `KIT_VAR_SCAN_FILE_COUNT=17`, `KIT_VAR_COLLISIONS=0`; kit1 + yeni kit2
+   → `KIT2_VAR_SCAN_FILE_COUNT=58`, `KIT2_VAR_COLLISIONS=0`, on
+   `KIT2_AST_*=0`, `KIT2_PLACEHOLDER_LITERAL_COUNT=0`,
+   `KIT2_CMD_COLLISIONS=0`; revizyon 12 baytlarında çıktı aynı (genel ad
+   sayısı 28, büyük-küçük harf çifti bilgi sayısı 6; kit1 9 ve 4).
+   Görevdeki "hc kuralları" bu revizyonda da N116/N147'nin değişken ve
+   komut adı çakışma kuralları olarak okundu (prova planının kendi
+   `hc.ps1`'i bu oturumun girdisi değildi).
+4. **`k` düzeneği.** Her durum ayrı bir süreç ve yeni bir sentetik köktür
+   (kit1 17 + kit2 59 dosya + `pins2.txt`, runbook bloklarından §34.8
+   kuralıyla; `kit-build2.txt` yok). Süreç pinli `kbe.ps1`'i yükleme
+   kuralıyla (SHA-256 = `pins2.txt` satırı, yalnız ASCII, aynı baytlardan
+   blok) dot-source eder, `bc.ps1`'in `Invoke-KbStep` fonksiyonunu AST ile
+   alıp tanımlar, `Read-KbPins` ile 59 pin okur ve `Invoke-KbStep 'k'
+   @('<tür>')` çağırır (gerçek `Get-KbScript` → pinli `k.ps1`; şablon
+   gerçek `Get-KbText` ile). **Düzenek sapmaları (açıklanır):** kit1
+   fonksiyonları taklittir (`Test-KitLock` = `DUR.txt` varlığı,
+   `Read-KitYesNo` = sıralı E/H cevapları, `Write-KitDur` yalnız ekran);
+   `Start-Process` bir taklittir: Not Defteri açılmaz, çağrının pinli Not
+   Defteri yolunu ve `-Wait`'i taşıdığını yazar ve sıradaki "kullanıcı
+   düzeltmesini" karar dosyasına UTF-8 BOM'suz, LF ile yazar; `KbBuild`
+   yalnız Not Defteri satırlarını (gerçek dosyanın SHA-256'sı ve
+   `FileVersion`'ı) taşır. Her durumda önce/sonra kök manifesti alındı.
+   Sonuçlar (hepsi çıkış kodu 0, `DUR.txt` yok, kit uyarısı ve taklit
+   `Write-KitDur` çağrısı yok):
+   - `i` (kullanıcının prova #4 biçimi; önce dokunulmadan kapatılır, E,
+     sonra `NEDEN=BURAYA_KOD` + 10 boşluk + `OTHER` ve
+     `SILME_BU_ZIYARETTE=BURAYA_EVET` + 11 boşluk + `EVET`, H):
+     `refusal-001` dört satır `K_MARKER_LEFT`, `REFUSAL_KEY=NEDEN`,
+     `REFUSAL_VALUE_SHAPE=MARKER_KEPT`; `refusal-002` aynı ama
+     `MARKER_WITH_TEXT`; ileti alanı adlandırır, yedi doğru satırı ve geri
+     silme tuşunu gösterir; kullanıcının değeri (boşluklu dizge) ne red
+     dosyalarında ne kit ekran çıktısında (0/0).
+   - `i_b` (aynı biçim, benzersiz belirteçlerle `ZQXW`/`QWZX`):
+     `MARKER_WITH_TEXT`; belirteçler red dosyasında 0, ekranda 0.
+   - `ii` (küçük harf `other`/`evet`, işaret silinmiş): `K_VALUE` `NEDEN`
+     `WRONG_CASE`; düzeltilip `SILME_BU_ZIYARETTE=evet` kalınca `K_VALUE`
+     `SILME_BU_ZIYARETTE` `WRONG_CASE`; `=other`/`=evet` red dosyasında ve
+     ekranda 0. `ii_c` (işaret kalmış + boşluk + küçük harf):
+     `K_MARKER_LEFT` `MARKER_WITH_TEXT` (işaret denetimi önce gelir;
+     beyanla uyumlu).
+   - `ii_b` (sırayla boş, ` OTHER`, `ZQXFOO`): `EMPTY`, `SPACES`,
+     `NOT_IN_LIST`; değerler red dosyasında ve ekranda 0.
+   - `iii` (doğru doldurma `NEDEN=OTHER`, `SILME_BU_ZIYARETTE=EVET`):
+     özet, E, `steps\d\k1.txt` `STEP_RESULT=PASS` (`NEDEN=OTHER`,
+     `SILME_BU_ZIYARETTE=EVET`; satır kümesi değişmedi); aynı süreçte ikinci
+     `k uygunsuz` → `K_ALREADY_DECIDED`, iki satırlık red dosyası.
+   - `v` (`adlitatil` `UYGULANIR=YES`): `K_VALUE` `WRONG_CASE`, ileti
+     "kucuk harfle"; `durdurucu` (`DURUM=none`, `REFERANS` dokunulmamış):
+     `K_MARKER_LEFT` `REFERANS` `MARKER_KEPT`; ardından `REFERANS=12.03.2026`:
+     `K_REFERENCE_FORMAT` `REFERANS` `REFERENCE_RULE`; `12.03.2026` red
+     dosyasında ve ekranda 0.
+   - `vi` (`k silme`, `SILME_OTURUMU_DALLARI=g5`): `K_VALUE`
+     `SILME_OTURUMU_DALLARI` `NOT_IN_LIST`, ileti `k6` sözdizimini gösterir.
+   - `vii` (iki argümanlı yol, `k foo`): `K_PRECONDITION`, iki satır.
+   - `viii` (döngü içi yapı reddi; üçüncü argüman boş dizi: şablonun bir
+     `#` satırı değiştirildi): `K_TEMPLATE_LINE`, ileti eskisiyle aynı,
+     red dosyası tam iki satır (boş üçüncü satır yok).
+   - **Pozitif kontrol** `iv` (revizyon 12 baytları: N136 `30082af0…`, N143
+     `5c18f0c5…`; `i` ile aynı düzeltmeler): eski ileti `NEDEN satirinda
+     BURAYA_ isareti kaldi.` ve iki satırlık iki dosya; `iv_b` (`k foo`):
+     eski baytlarla iki satır, yeni baytlarla (`vii`) aynı iki satır.
+   - Her red durumunda karar dosyasındaki değer düzenek yazımıyla
+     bayt-bayt aynı kaldı (kit düzeltmedi, kırpmadı); BOM 0, CR 0.
+   Düzenek ilk koşusunda kuyruğu `k` çağrısından sonra doldurduğu için ilk
+   `k` boş kuyrukla koştu (dokunulmadan kapanış, H); aynı sonuç sınıfını
+   verdi (`MARKER_KEPT`) ama senaryo bu değildi; bütün durumlar düzeltilmiş
+   sırayla yeni köklerde yeniden koşuldu ve yukarıdaki sonuç budur.
+5. **§1.5 taraması** (yazımdan sonra bütün dosya ve `0aeeb28`'e göre
+   eklenen satırlar üzerinde; pozitif kontrollü; avukat belgesindeki kişi
+   bilgileri iğne olarak çalışma anında bellekte okundu): sonuç bu
+   oturumun kapanış raporundadır ve bağımsız incelemede yinelenir.
+
+**Ölçülmeyenler.** Gerçek Not Defteri (açılmadı: `-Wait`'in gerçek
+beklemesi, Ctrl+S, "Kaydet" sorusu, gerçek klavye ve geri silme tuşu);
+gerçek kit1 fonksiyonları (`Read-KitYesNo`, `Test-KitLock`,
+`Write-KitDur`; taklit); `bc.ps1`'in tam yüklemesi (gerçek kurulumun
+`pins2.txt`'si, `kit-build2.txt`, güvenli dosya ve ACL'si); `t0`, `kume`,
+`b0`, `b1`, `b2`, `n` ve `o`'nun iki argümanlı red yolları (kod okuması: bu
+çağrılar değişmedi; aynı fonksiyon `vii` ve `iii`'de iki satırı yazdı);
+uzun ileti satırlarının gerçek konsol genişliğinde kırılması; `k6`
+alanında harf büyüklüğü sınıfı (tasarım gereği yok); insanın yeni iletiyi
+okuyup doğru düzeltmeyi yapması (prova #5, ölçüt 31 b).
+
+**Etkilenen kabul ölçütleri ve sayaçlar.** Ek R4/16.2 ölçüt 7 ("red
+dosyası yalnız kod ve zaman" → değer redlerinde ayrıca alan adı ve biçim
+sınıfı); yeni ölçüt **(31)** ve §34.14 eşleme tablosunda (31) satırı.
+Ölçüt 6, 19 ve 22 metni değişmedi (6 "tam bir red dosyası" hâlâ doğrudur;
+19 ve 22 prova #5'te yeniden ölçülür). Blok sayısı 148 (değişen 2). §26.5
+anahtar sayısı 48 değişmedi: yeni iki satır bir blok (`k.ps1`) tarafından
+yazılır ve §26.5 yalnız hiçbir bloğun yazmadığı anahtarları sayar.
+`Write-KbRefusal` çağrıları kit2'de 39 (üç argümanlı 1). `TUSA AVUKAT BASAR`
+satırları ve `k`'nın E/H istemleri değişmedi.
+
+**Taşınan maddeler (bu revizyonda değişmedi).** K12-1 (`system-temp.txt`
+yokken daha erken uyarı; ertelendi); dilim 2 izin listesi ve `psql` ad
+eşlemesi boşluğu (N061, N064, N065, N073, N084, N085; N091); AÇIK-26;
+inceleme O-11 (kaynak repository'nin izli dosyalarında kullanıcı adı;
+gerçek pilot iz envanteri); N117 Ctrl+C'nin egzersiz edilmemesi (ölçüt 29;
+`Read-SixYesNo`); avukattan beklenen G bölümü, B3, Ek 1, Ek 2 (dosya
+seçilince; aynı belgede de not edilmiş); avukat belgesinin K1–K4 dışındaki
+cevapları (süre kuralları teyidi, kaymış beş örnek, yapay zekâ bileşenleri)
+ve belgenin 6. bölümünde anılan, sonra gönderilecek iki iş (güncellenmiş
+D9 bildirimi, `k` şablon örneği; Ek R4/17); şablon yorumlarına örnek satır
+(madde 1 c; yukarıda); kanıt incelemesinin plan ve sayfa önerileri
+(yukarıdaki notlar); önceki revizyonlardan taşınan diğer açık maddeler
+(§34.3, §32, §34.17, §34.18).
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| Üst uyarı | O6 parantezine "13"; revizyon 13 paragrafı |
+| §0 | "Revizyon" satırına revizyon 13 ve "revizyon 13: §34.19" |
+| §1.5 | `<system-temp>` satırına geç ÖN istisnası (L1) |
+| §1.6/5 | Madde 5'e (E2 kanalı) cevap notu |
+| §6.4 | E2 tablo satırının DUR hücresi; "Hukuki soru" maddesi cevapla |
+| §32/50 | Kilitsiz red izine `k` değer redlerinin iki ek satırı |
+| §34.2 | D6 satırına revizyon 13 notu |
+| §34.3 | E-posta eki maddesi kapandı |
+| §34.4 | Revizyon 13 satırı |
+| §34.14 | "Yeni bloklar" tablosunda N136 ve N143; "Revizyon 13 notu"; "Dar düzeltme turunda değişen bloklar" tablosunun N136 ve N143 satırlarında güncel pin notu; eşleme tablosuna (31) satırı |
+| §34.18 | "Prova #4 planına notlar"ın son cümlesi (L2) |
+| §34.19 | Bu bölüm |
+| Ek R3/5 | Giriş paragrafına "ÖN satırı" notu (L3) |
+| Ek R4/5 | Madde 3: red dosyasının ek iki satırı |
+| Ek R4/8.1 | "ÖN satırı" tanımı (L3) |
+| Ek R4/12.1 | Madde 3 ileti kuralı; madde 8 red dosyası; "Değer redlerinin biçim sınıfları" paragrafı |
+| Ek R4/16.2 | Ölçüt 7'ye not; yeni ölçüt 31 |
+| Ek R4/19 | Madde 5: `Write-KbRefusal` üçüncü parametresi |
+| N136, N143 | Yukarıdaki tablo |
+
+**Yorumlar** (sessizce seçilmedi).
+
+1. Red dosyası yazımı N136'da kaldı (tek yazıcı, tek CreateNew); `k.ps1`
+   dosyayı sonradan bulup satır eklemez.
+2. Örnek satır kuralı: sözlük alanında izinli değerlerin **hepsi** tam
+   satır olarak gösterilir (tek bir örnek değer seçilmez; hukuki bir
+   seçeneği öne çıkarmamak için); `k6`'da şablon yorumundaki örnek
+   biçim, `REFERANS`'ta kural ve `=YOK`.
+3. Biçim sınıfının öncelik sırası sabittir (madde 1/2); `K_TEMPLATE_LINE`
+   ve diğer yapı redleri sınıf taşımaz (alan değil satır redleridir;
+   ileti zaten satır numarasını ve şablondaki satırı gösterir).
+   `K_K6_BRANCH_NOT_NAMED` değişmedi (ileti dal kodunu zaten adlandırır).
+4. `WRONG_CASE` adı kullanıcının `LOWERCASE` örneğinin yerine seçildi
+   (küçük harfli sözlükler için de doğru olsun diye).
+5. İleti çok satırlıdır (dizgede LF); ilk satır eski iletiyle başlar, böylece
+   eski ileti metnini arayan bir okuyucu yine bulur.
+6. Şablonlar değişmedi (madde 1/4); sayfa ve şablonun ilk temas
+   yönergesi prova #5 planına bırakıldı.
+7. "ÖN satırı" tanımı blok dışında yazıldı; N108 iletisi ve N114 sayfası
+   değişmedi (K12-2).
+
+**Yazma hesabı.** Kod ve metin oturuma özel scratchpad dizininde
+hazırlandı; önce tek bir Python yamasıyla yalnız N136 ve N143 değiştirilip
+ölçüldü (her değişiklik tek ve benzersiz eşleşme), ardından metin ikinci
+bir Python yamasıyla aynı kuralla eklendi; bağımsız incelemeden önce
+üçüncü, dar bir metin yaması §34.14'teki iki "güncel pin" notunu ve
+ölçüm 4'ün `viii` durumunu ekledi; dosya bu yola LF ile yazıldı;
+yazımdan sonra 148 blok dosyadan yeniden çıkarılıp ölçülen baytlarla
+karşılaştırıldı. Avukat belgesinden runbook'a yalnız dosya adı, SHA-256 ve
+4. bölümün işaretli seçeneklerinin metni girdi. Alt ajan kullanılmadı. Bu
+revizyon gerçek koşuyu, gerçek veri gönderimini, prova #5'i veya sonraki
+dilimleri yetkilendirmez; her biri ayrı kullanıcı kararıdır.
 
 ---
 
@@ -10861,6 +11400,14 @@ aynı değildir; `a3` iletisindeki (N107) "kagittaki madde 3" ifadesi bu
 sayfanın MADDE 3'ünü anlatır; N105 ve N108 iletileri revizyon 6 dar
 düzeltme turunda "sayfadaki madde 3" / "sayfadaki madde 1" oldu (§34.12
 yorum 8).
+
+**ÖN satırı (revizyon 13; rev12 incelemesi L3).** Bu kit1 sayfasında "ÖN
+satırı" **yoktur**. ÖN satırı yalnız kit2 akışında `t0.ps1`'i açan Win+R
+satırıdır (Ek R4/8.1); bu sayfanın H6 adımındaki Win+R satırı ÖN satırı
+**değildir** ve "YALNIZ ilk içerik penceresinden önce" kuralıyla kalır.
+`a4`'ün `NO_RECORD` iletisindeki (N108 satır 40) "Sayfanizda ON satiri
+yoksa … a9 yazin" dalı bu sayfa içindir: kit1 tek başına kullanılıyorsa
+o iletide `a9` yazılır, H6 geç çalıştırılmaz.
 
 ```text
 KULLANICI SAYFASI — İÇERİK PENCERESİ (YAP / GÖR / GÖRMEZSEN)      Dosya: <case-id>
@@ -11776,8 +12323,14 @@ fotografini cekmeyin."
    `<evidence-dir>\steps\x\refusal-<nnn>.txt`. `nnn` dizindeki ilk var
    olmayan üç haneli sıradır (çakışmada sonraki). İçerik yalnız iki satır:
    `REFUSAL_CODE=<KOD>` ve `AT=<zaman>`; kod komut adını taşır (ör.
-   `B10_CLUSTER_DOWN`, `B5D_MARKER_LEFT`, `KUME_SECURE_FILE_HASH`). Yol,
-   değer ve alan içeriği yoktur. `<evidence-dir>` doğrulanamıyorsa
+   `B10_CLUSTER_DOWN`, `B5D_MARKER_LEFT`, `KUME_SECURE_FILE_HASH`). Tek
+   istisna (revizyon 13; §34.19) `k`'nın üç değer reddidir (`K_MARKER_LEFT`,
+   `K_VALUE`, `K_REFERENCE_FORMAT`; Ek R4/12.1): aynı iki satırdan sonra iki
+   satır daha yazılır, `REFUSAL_KEY=<ALAN>` (şablondaki alan adı, ör.
+   `NEDEN`) ve `REFUSAL_VALUE_SHAPE=<SINIF>` (`MARKER_KEPT`,
+   `MARKER_WITH_TEXT`, `EMPTY`, `SPACES`, `WRONG_CASE`, `NOT_IN_LIST` veya
+   `REFERENCE_RULE`). Yol, değer ve alan içeriği yoktur; değerin kendisi,
+   uzunluğu ve hash'i hiçbir red dosyasına girmez. `<evidence-dir>` doğrulanamıyorsa
    (yükleme reddi) dosya yazılmaz, yalnız ekran. Kit1'in kendi kilitsiz
    redleri dosya bırakmaz (kit1 baytı değişmez; beyan).
 4. **Kilitli.** `STEP_RESULT=STOP` + kit1 `Write-KitDur` ile `DUR.txt`
@@ -12078,6 +12631,14 @@ yazma hatası kilitlidir.
 sonuçlar `Write-KbDur`, zamanlar `Get-KbNow` ile (`kbl.ps1`; Ek R4/5
 madde 6); kayıt başlığında `KIT_SESSION=none`. `z1` ve `s29b` veritabanı kullanmaz;
 evidence kapsayıcı dışındadır.
+
+**ÖN satırı (revizyon 13; rev12 incelemesi L3; prova #4 planı Ek B ile
+aynı anlam).** "ÖN satırı", kullanıcı sayfasında **yalnız** `t0.ps1`'i
+açan Win+R satırıdır (Ek R4/19 madde 4'teki `. '<evidence-dir>\kit2\t0.ps1'`
+satırı). `a4`'ün `NO_RECORD` iletisi (N108 satır 40) "ON satirini"
+derken bu satırı kasteder. Başka hiçbir Win+R satırı — KİT ve KÜME
+satırları ile kit1 sayfasının (N114) H6 satırı dahil — ÖN satırı
+değildir. Kit1 sayfasında ÖN satırı yoktur (Ek R3/5).
 
 **`kume` ölçümü (revizyon 8; karar AÇIK-29, `USER_DECISION
 at=2026-10-22T18:56:47+03:00`).** Güvenli dosyada port anahtarı yoktur.
@@ -12599,8 +13160,10 @@ birleşik hâlde Ek R4/10 kuralıyla tek anlamlı karşılaştırılır; N14
    denetimi (aşağıda "K6 denetimi"; `K_K6_BRANCH_NOT_NAMED`). Satır kuralı
    eski `K_LINE_FORMAT`, `K_UNKNOWN_KEY`, `K_DUPLICATE_KEY` ve
    `K_MISSING_KEY` kodlarının yerine geçer (dosyanın şablonla satır satır
-   aynı yapıda olması bu dördünü kapsar). Hata iletisi yalnız anahtar
-   adını söyler, değeri asla yazmaz; `K_TEMPLATE_LINE`'da satırın
+   aynı yapıda olması bu dördünü kapsar). Hata iletisi anahtar adını
+   söyler, değeri asla yazmaz (revizyon 13: değer redlerinde ayrıca
+   satırın tam biçimini, izinli değerleri ve düzeltme yolunu gösterir;
+   aşağıda "Değer redlerinin biçim sınıfları"); `K_TEMPLATE_LINE`'da satırın
    numarasını ve **şablondaki** beklenen satırı (pinli, ASCII, içeriksiz)
    gösterir, dosyadaki satırı göstermez. Sıfırlama seçeneği
    `K_TEMPLATE_LINE`'da **sunulmaz** (madde 4'teki iki kodla sınırlıdır;
@@ -12670,8 +13233,9 @@ birleşik hâlde Ek R4/10 kuralıyla tek anlamlı karşılaştırılır; N14
    farkı) ve kitin kendi yazma hatası. v2'nin kilitli "içerik belirtisi"
    sınıfı **kaldırıldı**; recheck-2 not 6'nın o sınıfı kilitli tutan kısmı
    bu kararla geçersizdir. Şablon dışı her satır veya değer madde 3'ün
-   satır kuralıyla **kilitsiz** reddedilir; red dosyası yalnız kod ve zaman
-   taşır (Ek R4/5 madde 3). Karar dosyaları kapsayıcı içindedir; kayda
+   satır kuralıyla **kilitsiz** reddedilir; red dosyası kod ve zaman
+   taşır, değer redlerinde ayrıca alan adı ve biçim sınıfı (revizyon 13;
+   Ek R4/5 madde 3). Karar dosyaları kapsayıcı içindedir; kayda
    dosyanın **içinden okunan** değerlerden yalnız sözlük değerleri,
    boolean'lar ve uzunluklar girer. **Dosya düzeyi** satırlar kayıtta
    kalır (kullanıcı teyidi; inceleme O3): dosyanın tuzlu SHA-256'sı
@@ -12690,6 +13254,29 @@ birleşik hâlde Ek R4/10 kuralıyla tek anlamlı karşılaştırılır; N14
     yerini (sürücü harfi ve genel dosya adı; içerik değil) Windows'un "son
     kullanılanlar" kaydında tutabilir; bu iz §4.4/8 sınıfına eklenir ve
     güncellenmiş D9 bildirimi gerektirir (Ek R4/17; soru 9).
+
+**Değer redlerinin biçim sınıfları (revizyon 13; §34.19).** `k`'nın üç
+değer reddinde (`K_MARKER_LEFT`, `K_VALUE`, `K_REFERENCE_FORMAT`) ekran
+iletisi (yalnız ASCII) şunları söyler: alanın adı (eski ilk cümle aynen);
+değerin biçim sınıfının açıklaması; satırın tam biçimi (sözlük alanında
+izinli değerlerin **her biri** ayrı bir `ANAHTAR=DEĞER` satırı olarak,
+sözlük sırasıyla — tek bir örnek değer seçilmez; `SILME_OTURUMU_DALLARI`
+alanında madde 1'in sözdizimi ve şablondaki örnek biçim; `REFERANS`'ta
+madde 6 ve `REFERANS=YOK`); düzeltme yolu (`BURAYA_…` yazısını geri silme
+tuşuyla — Backspace, Enter tuşunun hemen üstündeki tuş — tamamen silmek,
+satırda yalnız `ANAHTAR=` bırakmak, boşluk bırakmamak, harf büyüklüğü
+izinli değerlerdeki gibi; Ctrl+S, X). Biçim sınıfı kesin sırayla
+hesaplanır: `K_MARKER_LEFT`'te değer şablondaki `BURAYA_…` işaretiyle
+ordinal aynıysa `MARKER_KEPT`, değilse `MARKER_WITH_TEXT`; diğer iki
+kodda boş değer `EMPTY`; `K_REFERENCE_FORMAT`'ta aksi hâlde
+`REFERENCE_RULE`; `K_VALUE`'da boşluk veya sekme taşıyan değer `SPACES`,
+bir sözlük değerinden yalnız harf büyüklüğüyle ayrılan değer `WRONG_CASE`
+(`SILME_OTURUMU_DALLARI` için hesaplanmaz), aksi hâlde `NOT_IN_LIST`. Red
+dosyasına yalnız alan adı (`REFUSAL_KEY`) ve sınıf (`REFUSAL_VALUE_SHAPE`)
+girer (Ek R4/5 madde 3); değer, uzunluğu ve hash'i girmez. Sınıf yalnız
+tanı içindir: denetim sırası, kodlar ve kilitsiz döngü aynıdır; kit
+değeri düzeltmez, kırpmaz, harf büyüklüğünü değiştirmez ve sınıfı ne olursa
+olsun değer reddedilir.
 
 **Şablon alanları** (her şablonun ilk üç satırı `TUZ=<tuz>`,
 `KARAR_TURU=<tür>`, `CASE_ID=<case-id>`; ardından ASCII açıklama satırları;
@@ -13319,7 +13906,8 @@ genişletilmiş N116. Kabul ölçütleri:
    yabancı `#` satırı, şablon dışı anahtar satırı, araya eklenmiş boş
    satır, değiştirilmiş veya silinmiş bir şablon `#` satırı, CR baytı ve
    değere eklenmiş metin ayrı ayrı → kilitsiz (`K_TEMPLATE_LINE` veya
-   `K_VALUE`), sıfırlama seçeneği yok, red dosyası yalnız kod ve zaman;
+   `K_VALUE`), sıfırlama seçeneği yok, red dosyası kod ve zaman (revizyon
+   13: değer redlerinde ayrıca alan adı ve biçim sınıfı; ölçüt 31);
    hiçbiri `DUR.txt` üretmez; dosya sonundaki tek LF kabul edilir;
    `CASE_ID=` satırı silinmiş veya iki kez yazılmış dosya →
    `K_TEMPLATE_IDENTITY` ve sıfırlama seçeneği (yapı denetiminden önce). `k
@@ -13477,6 +14065,33 @@ genişletilmiş N116. Kabul ölçütleri:
     revizyon 11 baytları aynı durumda eski iletiyi basar (§34.18 ölçüm 3).
     (b) **İnsan dalı** (bilinçli atlanmış ÖN penceresi) isteğe bağlıdır;
     ölçülüp ölçülmeyeceği prova #4 planının kararıdır.
+31. **`k` değer redlerinin iletisi ve red dosyası (revizyon 13; prova #4
+    2. deneme bağımsız kanıt incelemesi M-1, M-2):** `K_MARKER_LEFT`,
+    `K_VALUE` ve `K_REFERENCE_FORMAT` iletisi alanı adıyla söyler, satırın
+    tam olarak nasıl görünmesi gerektiğini gösterir (sözlük alanında izinli
+    değerlerin her biri `ANAHTAR=DEĞER` satırı olarak; `k6` ve `REFERANS`
+    alanında kural), değerin biçim sınıfını ekranda açıklar ve düzeltme
+    yolunu söyler (Ek R4/12.1 "Değer redlerinin biçim sınıfları"). Red
+    dosyası ilk iki satırdan (`REFUSAL_CODE`, `AT`; değişmedi) sonra
+    `REFUSAL_KEY=<ALAN>` ve `REFUSAL_VALUE_SHAPE=<SINIF>` taşır; değerin
+    kendisi ne red dosyasına ne ekrana girer; kit değeri düzeltmez,
+    kırpmaz, harf büyüklüğünü değiştirmez; `BURAYA_` kalan, harf büyüklüğü
+    farklı, boşluklu veya listede olmayan değer yine kilitsiz reddedilir ve
+    kayıt yazılmaz. Diğer bütün kilitsiz redler (bütün kit2 komutlarında)
+    aynı iki satırlık dosyayı yazar. (a) **Ajan ölçümü:** yeni bir
+    `powershell.exe -NoProfile` sürecinde pinli `kbe.ps1`, gerçek
+    `Get-KbScript`, `bc.ps1`'in `Invoke-KbStep`'i ve pinli `k.ps1`; Not
+    Defteri yerine karar dosyasına yazan bir taklit; durumlar:
+    kullanıcının prova #4 biçimi (`NEDEN=BURAYA_KOD` + boşluklar + `OTHER`)
+    → `MARKER_WITH_TEXT`; dokunulmamış → `MARKER_KEPT`; küçük harf →
+    `WRONG_CASE`; boş, boşluklu, listede olmayan; doğru doldurma → PASS ve
+    ardından `K_ALREADY_DECIDED`; iki argümanlı red ve boş üçüncü
+    argümanlı yapı reddi (`K_TEMPLATE_LINE`, iki satır); pozitif kontrol:
+    revizyon 12 baytları aynı durumda eski tek satırlık ileti ve iki
+    satırlık dosya (§34.19 ölçüm 4). (b) **İnsan ölçümü (prova #5):** ana
+    pencerede `k uygunsuz`'un bir red turunda yeni ileti ekranda görülür ve
+    red dosyası alan adını ve biçim sınıfını taşır; doğru doldurma turu
+    PASS ile biter (ölçüt 7, 19, 22).
 
 #### Ek R4/16.3 Dilim 2 — intake ve manuel girdi
 
@@ -14222,7 +14837,9 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    `KUME - KAPATMAYIN` yapar.
 5. **Kayıt ve kilit uygulaması.** Kayıtlar Ek R4/4 biçimindedir
    (`New-KbRecord`, `Add-KbLine`, `Complete-KbStep`; N136). Kilitsiz red
-   `Write-KbRefusal` ile tek bir `refusal-<nnn>.txt` yazar; kilitli sonuç KİT
+   `Write-KbRefusal` ile tek bir `refusal-<nnn>.txt` yazar (revizyon 13:
+   isteğe bağlı üçüncü parametre yalnız `k`'nın değer redlerinde iki satır
+   ekler; iki argümanlı bütün çağrılar aynı dosyayı yazar); kilitli sonuç KİT
    penceresinde kit1 `Write-KitDur`, başlatıcılarda `Write-KbDur` ile yazılır
    (`Invoke-KbLock`). `b1` veritabanı sayaçlarını yalnız `y1` PASS kaydı
    yokken §13.5'in "assign-case öncesi" satırıyla (0/0/0/0, iki kullanıcı
@@ -14424,7 +15041,7 @@ hariç: kurulum aracıdır). Hepsi yalnız ASCII'dir ve Ek R4/7'ye uyar.
 **N136 — `kbe.ps1` (ortak motor, süzgeç, kayıt ve değer yardımcıları).**
 
 ```powershell
-# kbe.ps1 - Ek R4/6: kit2 pinli blok motoru, anahtar basina suzgec, kayit, red ve deger yardimcilari (runbook revizyon 8; revizyon 10 ve 11 duzeltmeleri). ASCII.
+# kbe.ps1 - Ek R4/6: kit2 pinli blok motoru, anahtar basina suzgec, kayit, red ve deger yardimcilari (runbook revizyon 8; revizyon 10, 11 ve 13 duzeltmeleri). ASCII.
 # bc.ps1 ve pencere disi baslaticilar pin ve ASCII denetiminden sonra ayni baytlardan kurulan blokla dot-source eder
 # (Ek R4/5 madde 6 kurali; karar ACIK-28 = a). Kok kapsamda degisken yoktur; yalniz global fonksiyon tanimlar.
 # Baglam: $global:KbEvid, $global:KbDir, $global:KbPins, $global:KbVal, $global:KbSessName, $global:KbRefDir, $global:KbIsLauncher.
@@ -14464,7 +15081,7 @@ function global:New-KbRecord([string]$Path, [string[]]$Lines) {
     return $true
 }
 function global:Add-KbLine([string]$Path, [string]$Line) { Write-KbBytes $Path @($Line) ([System.IO.FileMode]::Append); Write-Host $Line }
-function global:Write-KbRefusal([string]$Code, [string]$Message) {
+function global:Write-KbRefusal([string]$Code, [string]$Message, [string[]]$Extra = @()) {
     Write-Host $Message
     Write-Host '(Kayit yazilmadi; DUR kilidi yok.)'
     $kbeD = [string]$global:KbRefDir
@@ -14473,7 +15090,7 @@ function global:Write-KbRefusal([string]$Code, [string]$Message) {
     for ($kbeN = 1; $kbeN -cle 999; $kbeN++) {
         $kbeP = Join-Path $kbeD ('refusal-' + $kbeN.ToString('000', [System.Globalization.CultureInfo]::InvariantCulture) + '.txt')
         if (Test-Path -LiteralPath $kbeP) { continue }
-        try { Write-KbBytes $kbeP @("REFUSAL_CODE=$Code", "AT=$(Get-KbStamp)") ([System.IO.FileMode]::CreateNew); return } catch { if (-not (Test-Path -LiteralPath $kbeP)) { Write-Host 'REFUSAL_FILE_WRITE=FAIL'; return } }
+        try { Write-KbBytes $kbeP ([string[]]@("REFUSAL_CODE=$Code", "AT=$(Get-KbStamp)") + $Extra) ([System.IO.FileMode]::CreateNew); return } catch { if (-not (Test-Path -LiteralPath $kbeP)) { Write-Host 'REFUSAL_FILE_WRITE=FAIL'; return } }
     }
     Write-Host 'REFUSAL_FILE_WRITE=FAIL'
 }
@@ -15449,9 +16066,10 @@ $null = Complete-KbStep $b2xRec 'b2' @('E2_CARRIER_KIND=ENCRYPTED_TRANSFER basis
 **N143 — `k.ps1` (karar dosyası).**
 
 ```powershell
-# k.ps1 - Ek R4/12.1: avukatin karar dosyasi (k tur; ornek: k fact) (runbook revizyon 8, dilim 1; revizyon 10). ASCII. Yalniz k komutuyla, Invoke-KbStep icinden calisir.
+# k.ps1 - Ek R4/12.1: avukatin karar dosyasi (k tur; ornek: k fact) (runbook revizyon 8, dilim 1; revizyon 10 ve 13). ASCII. Yalniz k komutuyla, Invoke-KbStep icinden calisir.
 # Sablonu (N123-N133, pinli) restricted dizine yazar veya ayni dosyayi acar, pinli Not Defteri'ni -Wait ile acar, kapaninca denetler (kilitsiz dongu),
 # avukat teyidinden sonra steps\d\k(seq).txt kaydini yazar. Kayda dosyanin icinden yalniz sozluk degerleri, boolean'lar ve uzunluk girer.
+# Deger redlerinde (K_MARKER_LEFT, K_VALUE, K_REFERENCE_FORMAT) red dosyasina yalniz alan adi ve bicim sinifi girer, deger girmez (revizyon 13).
 function Get-KxText([byte[]]$Bytes) { try { return (New-Object System.Text.UTF8Encoding($false, $true)).GetString($Bytes) } catch { return $null } }
 function Split-KxLines([string]$Text) { $kxsL = [System.Collections.Generic.List[string]]$Text.Split([char]10); if (($kxsL.Count -cgt 0) -and ($kxsL[$kxsL.Count - 1] -ceq '')) { $kxsL.RemoveAt($kxsL.Count - 1) }; return ,$kxsL }
 function New-KxSalt { $kxnB = New-Object byte[] 16; $kxnR = [System.Security.Cryptography.RandomNumberGenerator]::Create(); try { $kxnR.GetBytes($kxnB) } finally { $kxnR.Dispose() }; return ([System.BitConverter]::ToString($kxnB)).Replace('-', '').ToLowerInvariant() }
@@ -15604,16 +16222,44 @@ while ($true) {
     }
     if ($kxCode -ceq '') { $kxResult = $kxRes; break }
     $kxMsg = 'k: dosya denetimden gecmedi.'
+    $kxRx = [string[]]@()
+    if (($kxCode -ceq 'K_MARKER_LEFT') -or ($kxCode -ceq 'K_VALUE') -or ($kxCode -ceq 'K_REFERENCE_FORMAT')) {
+        $kxRk = [string]$kxRes['key']; $kxRv = [string]$kxRes['v:' + $kxRk]; $kxRc = ''; $kxRm = ''
+        for ($kxRi = 0; $kxRi -clt $kxFields.Count; $kxRi++) { if ($kxFields[$kxRi] -ceq $kxRk) { $kxRc = $kxClasses[$kxRi] } }
+        foreach ($kxRl in (Split-KxLines $kxRaw)) { if ($kxRl.StartsWith($kxRk + '=BURAYA_', [System.StringComparison]::Ordinal)) { $kxRm = $kxRl.Substring($kxRk.Length + 1) } }
+        $kxRa = [string[]]@(); if ($kxRc.StartsWith('w:', [System.StringComparison]::Ordinal)) { $kxRa = [string[]]$kxRc.Substring(2).Split([char]44) }
+        $kxRh = 'degeri tam olarak yukaridaki gibi yazin'
+        if (($kxRc -ceq 'k6') -or (($kxRa.Count -cgt 0) -and (@($kxRa | Where-Object { $_ -cnotmatch '^[A-Z0-9_]+$' }).Count -ceq 0))) { $kxRh = 'degeri BUYUK harfle, tam olarak yukaridaki gibi yazin' }
+        if (($kxRa.Count -cgt 0) -and (@($kxRa | Where-Object { $_ -cnotmatch '^[a-z0-9_]+$' }).Count -ceq 0)) { $kxRh = 'degeri kucuk harfle, tam olarak yukaridaki gibi yazin' }
+        if ($kxRa.Count -cgt 0) { $kxRe = "$kxRk satiri tam olarak su satirlardan biri olmali (satirda baska hicbir sey olmamali):" + (@($kxRa | ForEach-Object { "`n    $kxRk=$_" }) -join '') }
+        elseif ($kxRc -ceq 'k6') { $kxRe = "$kxRk satiri tam olarak $kxRk=YOK olmali ya da = isaretinden sonra yalniz G5,MADDE1,MADDE5,MADDE6 kodlarindan gerekenler bu sirayla, virgulle ve bosluksuz gelmeli (ornek bicim: $kxRk=G5,MADDE6)." }
+        else { $kxRe = "$kxRk satiri $kxRk= ile baslamali ve = isaretinden hemen sonra referansiniz gelmeli; referans yoksa satir tam olarak $kxRk=YOK olmali."; $kxRh = 'referansinizi veya YOK yazin' }
+        if ($kxCode -ceq 'K_MARKER_LEFT') { if ($kxRv -ceq $kxRm) { $kxRs = 'MARKER_KEPT' } else { $kxRs = 'MARKER_WITH_TEXT' } }
+        elseif ($kxRv -ceq '') { $kxRs = 'EMPTY' }
+        elseif ($kxCode -ceq 'K_REFERENCE_FORMAT') { $kxRs = 'REFERENCE_RULE' }
+        elseif (($kxRv.IndexOf([string][char]32, [System.StringComparison]::Ordinal) -cge 0) -or ($kxRv.IndexOf([string][char]9, [System.StringComparison]::Ordinal) -cge 0)) { $kxRs = 'SPACES' }
+        else { $kxRs = 'NOT_IN_LIST'; foreach ($kxRw in $kxRa) { if ([string]::Equals($kxRv, $kxRw, [System.StringComparison]::OrdinalIgnoreCase)) { $kxRs = 'WRONG_CASE' } } }
+        $kxRt = 'Deger izinli degerlerden biri degil.'
+        if ($kxRs -ceq 'MARKER_KEPT') { $kxRt = "Satir sablondaki gibi duruyor: $kxRm yazisi silinmemis, yerine deger yazilmamis (veya dosya Ctrl+S ile kaydedilmemis)." }
+        if ($kxRs -ceq 'MARKER_WITH_TEXT') { $kxRt = "$kxRm yazisi silinmemis; yazdiginiz sey bu yazinin yanina eklenmis." }
+        if ($kxRs -ceq 'EMPTY') { $kxRt = 'Deger bos: = isaretinden sonra hicbir sey yok.' }
+        if ($kxRs -ceq 'SPACES') { $kxRt = 'Degerde bosluk var.' }
+        if ($kxRs -ceq 'WRONG_CASE') { $kxRt = 'Deger izinli degerlerden birine benziyor ama BUYUK/kucuk harfleri farkli.' }
+        if ($kxRs -ceq 'REFERENCE_RULE') { $kxRt = '' }
+        if ($kxCode -ceq 'K_MARKER_LEFT') { $kxRd = "Duzeltme: imleci bu satirin en sonuna koyun; $kxRm yazisini geri silme tusuyla (Backspace: Enter tusunun hemen ustundeki tus) tamamen silin, satirda yalniz $kxRk= kalsin; bosluk birakmayin; sonra $kxRh. Bitirince Ctrl+S, sonra X." }
+        else { $kxRd = "Duzeltme: = isaretinden sonraki her seyi geri silme tusuyla (Backspace: Enter tusunun hemen ustundeki tus) silin, satirda yalniz $kxRk= kalsin; bosluk birakmayin; sonra $kxRh. Bitirince Ctrl+S, sonra X." }
+        if ($kxRk -cmatch '^[A-Z][A-Z0-9_]{0,63}$') { $kxRx = [string[]]@("REFUSAL_KEY=$kxRk", "REFUSAL_VALUE_SHAPE=$kxRs") }
+    }
     if ($kxCode -ceq 'K_BOM') { $kxMsg = 'Dosya BOM ile kaydedilmis. Not Defteri''nde Farkli kaydet degil, yalniz Ctrl+S kullanin.' }
     if ($kxCode -ceq 'K_ENCODING') { $kxMsg = 'Dosya UTF-8 degil. Not Defteri''nde Farkli kaydet degil, yalniz Ctrl+S kullanin.' }
     if ($kxCode -ceq 'K_SALT_LINE') { $kxMsg = 'Ilk satir (TUZ) silinmis veya bozulmus.' }
     if ($kxCode -ceq 'K_TEMPLATE_IDENTITY') { $kxMsg = "Kitin doldurdugu $([string]$kxRes['key']) satiri silinmis, bozulmus veya iki kez yazilmis." }
     if ($kxCode -ceq 'K_TEMPLATE_LINE') { $kxMsg = "Satir $([string]$kxRes['line']) sablonla uyusmuyor. Sablondaki beklenen satir: $([string]$kxRes['expected'])" }
-    if ($kxCode -ceq 'K_MARKER_LEFT') { $kxMsg = "$([string]$kxRes['key']) satirinda BURAYA_ isareti kaldi." }
-    if ($kxCode -ceq 'K_VALUE') { $kxMsg = "$([string]$kxRes['key']) degeri gecersiz. Izinli degerler: $([string]$kxRes['allowed'])" }
-    if ($kxCode -ceq 'K_REFERENCE_FORMAT') { $kxMsg = 'REFERANS kurala uymuyor: yalniz harf, rakam, bosluk, nokta, alt cizgi, kisa cizgi; en cok 64 karakter; boslukla bitemez; tarih ve art arda 6 rakam olamaz. Referans yoksa YOK.' }
+    if ($kxCode -ceq 'K_MARKER_LEFT') { $kxMsg = "$kxRk satirinda BURAYA_ isareti kaldi. $kxRt`n$kxRe`n$kxRd" }
+    if ($kxCode -ceq 'K_VALUE') { $kxMsg = "$kxRk degeri gecersiz. $kxRt Izinli degerler: $([string]$kxRes['allowed'])`n$kxRe`n$kxRd" }
+    if ($kxCode -ceq 'K_REFERENCE_FORMAT') { $kxMsg = 'REFERANS kurala uymuyor: yalniz harf, rakam, bosluk, nokta, alt cizgi, kisa cizgi; en cok 64 karakter; boslukla bitemez; tarih ve art arda 6 rakam olamaz. Referans yoksa YOK.' + "`n$kxRe`n$kxRd" }
     if ($kxCode -ceq 'K_K6_BRANCH_NOT_NAMED') { $kxMsg = "Silme kararinda $([string]$kxRes['key']) dali adlandirilmali (runbook 4.3 a, K6)." }
-    Write-KbRefusal $kxCode $kxMsg
+    Write-KbRefusal $kxCode $kxMsg $kxRx
     Write-Host 'TUSA AVUKAT BASAR'
     if (($kxCode -ceq 'K_SALT_LINE') -or ($kxCode -ceq 'K_TEMPLATE_IDENTITY')) {
         if ((Read-KitYesNo 'Sablon bastan olusturulsun mu? Girdikleriniz silinir. (H = simdilik birak)') -cne 'E') { Write-Host 'Dosya oldugu gibi birakildi. Ayni k komutu ayni dosyayi yeniden acar.'; return }
