@@ -8,7 +8,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > komut çalıştırılmamıştır.** Belge ve revizyonu (§34) yazılırken gerçek
 > kurulum veya gerçek veri üzerinde hiçbir CLI, `psql`, Python veya
 > PowerShell betiği çalıştırılmadı (revizyon 10 düzeltmesi, rev9 inceleme
-> O6: revizyon 5, 6, 8, 9, 10, 11, 12 ve 13 kopyalar üzerinde ölçüm düzeneği ve N116/N147
+> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13 ve 14 kopyalar üzerinde ölçüm düzeneği ve N116/N147
 > çalıştırdı; her revizyonun kendi paragrafı neyin çalıştırıldığını
 > söyler); hiçbir gerçek belge alınmadı; hiçbir veritabanı
 > satırı yazılmadı; hiçbir ağ isteği yapılmadı; hiçbir API anahtarı, `.env`
@@ -150,6 +150,17 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > Defteri açılmadan; eski baytlarla pozitif kontrol dahil) ve hash.
 > Hiçbir kit, başlatıcı veya runbook bloğu gerçek kurulum olarak
 > çalıştırılmadı; dilim 1 kodu hâlâ provaya tabidir (prova #5).
+> Revizyon 14 (§34.20) kit2 dilim 2 kodunu ekler (`b5`, `b5d`, `b6`,
+> `b7`, `g8`, `b8`, `u`; yeni bloklar N148–N156, Ek R4/21) ve AÇIK-26'yı
+> kapatır. Dilim 1 "prova ile doğrulandı, adlı sınırlarla" olarak kapandı
+> (prova #5, `C:\vd5_fa7a5f56`, `PASS_WITH_LIMITS`; §34.20). Dilim 2
+> komutları yalnız sentetik düzenekte ölçüldü: pinli `kbe.ps1`, gerçek
+> `Get-KbScript` ve `Invoke-KbStep`, taklit Not Defteri, taklit
+> `pdftotext`, taklit doğrulayıcı ve taklit `git`. Gerçek doğrulayıcı,
+> gerçek Not Defteri, gerçek klavye ve `bc.ps1`'in tam yüklemesi
+> ölçülmedi. Hiçbir kit, başlatıcı veya runbook bloğu gerçek kurulum
+> olarak çalıştırılmadı; dilim 2 kodu provaya tabidir ve provadan geçmeden
+> gerçek koşuda kullanılamaz (§32/41).
 
 ---
 
@@ -173,7 +184,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -1871,7 +1882,10 @@ yazılır: `E2_CARRIER_KIND=ENCRYPTED_TRANSFER`,
   eki olarak gönderilebilir"; **4.2** "Şifreli 7z arşivi, e-posta ekiyle";
   **4.3** arşivin parolası her durumda yalnız sesli telefon görüşmesiyle
   iletilir, e-posta, mesajlaşma uygulaması veya SMS ile gönderilmez —
-  "Kabul ediyorum". Bu soru artık DUR nedeni değildir; teslim kanalı
+  "Kabul ediyorum". `AVUKAT_EKSİKLİK1.udf` da §6.6/1 imza geçerliliği
+  kapısındadır (`UDF_SIGNATURE_VALID`; Y20): yürütmede `True` kaydı yoksa bu
+  cevap yok sayılır ve soru yeniden DUR nedenidir (revizyon 14; R13-L2).
+  Bu şartla bu soru artık DUR nedeni değildir; teslim kanalı
   e-posta ekidir (4.2 yazılı kanal belirlemesidir; yürütmede yukarıdaki
   "Kanal" kuralıyla, §21/4, kayda girer — bu revizyon evidence yazmaz) ve
   aşağıdaki "Biçim" maddesinin parola kuralı aynen geçerlidir. Cevap yalnız
@@ -5934,10 +5948,11 @@ taşır.
 50. **Kilitsiz redlerin izi.** Kit2'nin her kilitsiz reddi bir red dosyası
     bırakır; kit1'in kilitsiz redleri (kit1 baytı değişmediği için)
     bırakmaz. Revizyon 13'ten itibaren `k`'nın değer redleri dosyaya alan
-    adı ve biçim sınıfını da yazar (Ek R4/5 madde 3); değer yazılmaz.
+    adı ve biçim sınıfını da yazar (Ek R4/5 madde 3), revizyon 14'ten
+    itibaren ayrıca tuzlu dosya SHA-256'sını; değer yazılmaz.
 51. **Tuşa kim basar beyandır** (Ek R4/8.5; §32/39 d).
-52. **Açık sorular.** AÇIK-26 (intake formunun tam anahtar listesi; dilim
-    2'den önce) kapanmadan dilim 2 yazılmaz (§34.13). AÇIK-27 kapandı
+52. **Açık sorular.** AÇIK-26 kapandı (`USER_DECISION
+    at=2026-10-31T09:15:28+03:00`; Ek R4/12.3; §34.20). AÇIK-27 kapandı
     (kullanıcı kararı `at=2026-10-21T15:19:11+03:00`): karar dosyalarında
     kilitli "içerik belirtisi" sınıfı yoktur; şablon dışı satır ve değer
     kilitsiz reddedilir (Ek R4/12.1 madde 3 ve 8).
@@ -6308,6 +6323,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 11:** N105 (`ac.ps1`: `Read-KitYesNo` tuş beklemesi), N117 (altı sınıf: `Read-SixYesNo` aynı), N137 (`kbl.ps1`: `Read-KbYesNo` aynı), N057 (iki durum satırı `=True`), N136 (`kbe.ps1`: N057 izin listesi türü `w:True`), N141 (`b1.ps1`: `CASE_ROOT_ABSENT=True` beklentisi); diğer 142 blok | Prova #2 (`C:\vd5_2a3883ec`): Faz A PASS (A.11 ve A.12 `STOP` ile, A.15 `AWAITING_USER_DECISION` ile durdu; kullanıcı kararlı devam betikleri `r1`–`r3`), test penceresi A [7]'de Ctrl+C bir tuşa basılana kadar işlenmedi (`DUR.txt` `KB_INTERRUPTED` 115 sn sonra), ana ve ÖN pencereler açılmadı; `PROVA_DILIM1=FAIL` (C18 ölçüm aracı kusuru); bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H1/M3/L8/O13) | Değişti (altı blok; diğer bloklar bayt-bayt aynı, §34.17) | **Yeni, dilim 1 provası #3** (Ek R4/16.2, ölçüt (29) dahil — klavyeden gerçek Ctrl+C insan ölçümü; N105 değiştiği için kit1 kurulumu, N116 ve kit1 insan akışı yeniden; prova #2'nin kanıtı bayt değişen bloklar için devralınmaz) |
 | **Revizyon 12:** N108 (`a4.ps1`: `NO_RECORD` için ayrı ileti; satır 1 yorumu); diğer 147 blok | Prova #3 (`C:\vd5_e5b58889`): insan penceresinde ÖN penceresi atlandı; KİT'te `a2`, `a3`, `b0`, `b1` PASS, `a4` iki kez `NO_RECORD` reddi (kayıt ve kilit yok), ardından `a9`; test pencerelerinde ölçüt (29) b gözlendi (§34.18); `PROVA_DILIM1=FAIL` (C18 plan kuralı kusuru; doğru kuralla `BELIRSIZ`, çıkarım); bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M2/L7/O14) | Değişti (yalnız N108; diğer bloklar bayt-bayt aynı, §34.18) | **Yeni, dilim 1 provası #4** (Ek R4/16.2, ölçüt (30) dahil; N108 değiştiği için kit1 kurulumu, `pins.txt`, N116 ve kit1 insan akışı yeniden; prova #3'ün kanıtı bayt değişen blok için devralınmaz) |
 | **Revizyon 13:** N136 (`kbe.ps1`: `Write-KbRefusal` isteğe bağlı üçüncü parametre), N143 (`k.ps1`: değer redlerinin iletisi; red dosyasına `REFUSAL_KEY` ve `REFUSAL_VALUE_SHAPE`); diğer 146 blok | Prova #4: 1. deneme (`C:\vd5_54fba6f4`) Test penceresi A'nın `a2`'si bildirim alanındaki Claude masaüstü uygulamasını buldu (`AI_CHANNEL_PROCESS_COUNT=1`), DUR; `PROVA_DILIM1=FAIL` (C27, plan kuralı; 13/3/1/13); 2. deneme (`C:\vd5_cff7fa22`) pencere ilk kez sonuna kadar koştu; `k uygunsuz` dört kez `K_MARKER_LEFT` (kullanıcı beyanı: `BURAYA_KOD` silinmeden boşluk tuşuyla değer eklendi); `PROVA_DILIM1=BELIRSIZ` (20/7/0/3); iki bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M1/L4/O12 ve C0/H0/M2/L5/O9) | Değişti (iki blok; diğer bloklar bayt-bayt aynı, §34.19) | **Yeni, dilim 1 provası #5** (Ek R4/16.2, ölçüt (31) dahil; N136 ve N143 değiştiği için kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147, A.8, G12, G14 ve `k` ajan ikizleri yeniden; prova #4'ün kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
+| **Revizyon 14:** N135, N136, N143, N147, N123–N133 değişti; yeni N148–N156 (dilim 2); diğer 133 blok | Prova #5 (`C:\vd5_fa7a5f56`) `PASS_WITH_LIMITS`, inceleme `a7f3e523…`: dilim 1 adlı sınırlarla kapandı | Değişti (§34.20) | **Yeni, dilim 2 provası** (Ek R4/16.3; kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147 ve `kbe.ps1`'i yükleyen bütün komutların ajan ikizleri yeniden; prova #5'in kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
 
 ### 34.5 Yazım sınırları
 
@@ -8642,6 +8658,10 @@ değişmedi). Revizyon 11/12'deki değerler: N136
 (revizyon 10 değeri; revizyon 11 ve 12'de değişmemişti). Diğer satırlar
 revizyon 11'deki gibidir (revizyon 12 kit2'ye dokunmadı).
 
+**Revizyon 14 notu (§34.20).** Yukarıdaki tablonun N135, N136, N143 ve N147
+satırları revizyon 13'teki değerlerdir; revizyon 14 pinleri §34.20
+tablosundadır.
+
 **Mevcut blokların değişmezliği.** Bu revizyonun runbook'u 148 blok
 taşır. İlk 135 blok (N0–N134) `f09d10d` ile bayt-bayt aynıdır ve aynı
 sırada durur (§34.8 kuralıyla hesaplanan blok SHA-256'ları ve blok dilleri
@@ -8716,8 +8736,8 @@ gerektirmediğini söyler; ajan bağlamı konsol tuşu basamaz.
 | (3) `b1` aktarım dalı TEMP'e dokunmaz | N141: aktarım dalında N13 yok; `B1_TEMP_ALREADY_CHANGED` | Evet: `b1` E/H'leri | `b1` öncesi ve sonrası `GetTempPath()` aynı; ardından `a4` TEMP'i yönlendirir |
 | (4) VeraCrypt pin farkı / Hakkında H | N141: `B1_VERACRYPT_PIN` kayıttan önce (kilitsiz); H → `STOP CONTAINER_TOOL_VERSION_CONFIRMED=False`, N14 çalışmaz | Evet: Hakkında sorusu (H) | İki ayrı koşu; ikisinde de `technical-record.txt` yok |
 | (5) Güvenli dosya hash farkı | N135 `KB_SECURE_FILE_HASH`; N141 `B1_SECURE_FILE_HASH`; N138/N139 `T0_`/`KUME_SECURE_FILE_HASH`; içerik sonrası `Invoke-KbLock`/`Write-KbDur` (N136/N137) | Hayır: yükleme ve `b1` ön koşulu kayıttan önce | `a4.txt` PASS yokken ve varken güvenli dosyada bir bayt değişikliği; red dosyası/`DUR.txt` |
-| (6) Kilitsiz → tek red dosyası; kilitli → `DUR.txt` + doğru dal | `Write-KbRefusal`, `Invoke-KbLock`, `Complete-KbStep` (N136) | Evet: kilitli dalların çoğu E/H ister | Her red kodu için `steps\s<k>\` ve `steps\x\` sayımı (tam bir `refusal-<nnn>.txt`, iki satır), adım kaydı ve `DUR.txt` yok; her kilitli sonuçta `DUR.txt` ve içerik öncesi/sonrası dalın iletisi |
-| (7) `k` biçim, satır kuralı, sıfırlama, K6 | N143 (`Test-KxFile`, sıfırlama yalnız `K_TEMPLATE_IDENTITY`/`K_SALT_LINE`); `Get-KbK6Branches` (N136) | Evet: Not Defteri ve avukat E/H'leri | Not Defteri ile her negatif ayrı koşu; red dosyasında yalnız kod ve zaman; önceki oturum `a9`'unda `SELF_REPORT_AI_HELP_SHARE=E` iken `YOK` → `K_K6_BRANCH_NOT_NAMED`, `G5` ile PASS |
+| (6) Kilitsiz → tek red dosyası; kilitli → `DUR.txt` + doğru dal | `Write-KbRefusal`, `Invoke-KbLock`, `Complete-KbStep` (N136) | Evet: kilitli dalların çoğu E/H ister | Her red kodu için `steps\s<k>\` ve `steps\x\` sayımı (tam bir `refusal-<nnn>.txt`, iki satır; revizyon 14 notu: `k` değer redlerinde beş satır, ölçüt 31), adım kaydı ve `DUR.txt` yok; her kilitli sonuçta `DUR.txt` ve içerik öncesi/sonrası dalın iletisi |
+| (7) `k` biçim, satır kuralı, sıfırlama, K6 | N143 (`Test-KxFile`, sıfırlama yalnız `K_TEMPLATE_IDENTITY`/`K_SALT_LINE`); `Get-KbK6Branches` (N136) | Evet: Not Defteri ve avukat E/H'leri | Not Defteri ile her negatif ayrı koşu; red dosyasında yalnız kod ve zaman (revizyon 14 notu: değer redlerinde ayrıca `REFUSAL_KEY`, `REFUSAL_VALUE_SHAPE`, `REFUSAL_FILE_SHA256`; ölçüt 31); önceki oturum `a9`'unda `SELF_REPORT_AI_HELP_SHARE=E` iken `YOK` → `K_K6_BRANCH_NOT_NAMED`, `G5` ile PASS |
 | (8) Sızıntı testi | Süzgeç `Submit-KbOut` (N136); Ek R4/16.6 | Hayır: tarama ajandır (taranan kayıtlar insan adımlarından gelir) | R4/16.6 madde 1–5 (bütün evidence taraması, kullanıcı adı pozitif kontrolü) |
 | (9) Genişletilmiş N116 ve komut adı çakışması | N147 (`KIT2_VAR_COLLISIONS`, `KIT2_CMD_COLLISIONS`) | Hayır | Kurulumda (Ek R4/19 madde 2 (12); dar düzeltme turu, inceleme O11 (b)) yeni `-NoProfile` alt süreçte, kurulmuş dizinler üzerinde; sonuç `kit-build2.txt`'ye |
 | (10) M1 ve L-Y1 AST | N147 (`KIT2_AST_*`) | Hayır | Aynı koşuda on sayım `=0` |
@@ -10770,6 +10790,286 @@ karşılaştırıldı. Avukat belgesinden runbook'a yalnız dosya adı, SHA-256 
 revizyon gerçek koşuyu, gerçek veri gönderimini, prova #5'i veya sonraki
 dilimleri yetkilendirmez; her biri ayrı kullanıcı kararıdır.
 
+### 34.20 Revizyon 14
+
+YENİ (`SCOPE_APPROVED`, `USER_DECISION at=2026-10-31T09:15:28+03:00`; oturum
+KIT2-DILIM2; tek yazan oturum). Adım 10 B yolu, işleme kiti (kit2) dilim 2.
+Kapsam yalnız dört maddedir: (1) dilim 2 komutları (Ek R4/16.3); (2) N136
+izin listesi ve `psql` eşlemesinin dilim 2'nin gerektirdiği kısmı, N32/N33
+ayrıştırıcısı; (3) biriken küçük düzeltmeler; (4) bu bölüm. Girdi:
+`d2829e5` runbook'u (SHA-256
+`52a0dfe73fb5a230436a9193d0e4e9e9b2e6d91c683d14a338056f54de4ee5bd`, 16559
+satır, 148 blok; HEAD = `origin/claude-dev`; çalışma ağacı temiz; diskten
+doğrulandı). Yalnız bu dosya değişti; kod, şema, veri, test, başka runbook
+veya `CLAUDE.md` değişmedi; LOCKED bir sözleşmeye dokunulmadı. Commit ve push
+yapılmadı. Kit, başlatıcı, CLI, `psql`, PostgreSQL, 7z, VeraCrypt, Not Defteri
+ve ağ çalıştırılmadı. Çalıştırılanlar yalnız oturuma özel scratchpad'deki
+kopyalar üzerinde `ParseFile`/AST, N147 ve sentetik düzenektir (yeni
+`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass`
+süreçleri; `TEMP`/`TMP` ve `PSModuleAnalysisCachePath` scratchpad'e
+yönlendirildi). Düzenek `%SystemRoot%\System32\notepad.exe` baytlarını ve
+`FileVersion`'ını pin girdisi olarak salt-okunur okudu; dosya çalıştırılmadı.
+`C:\vd5_*` altında yalnız sentetik `document.json`/`case.json` okundu; `sec\`
+açılmadı. `.env`, gerçek veri, pilot kümesi ve passfile kullanılmadı. Alt ajan
+kullanılmadı.
+
+**Kaynaklar (diskten okundu; SHA-256'lar ölçüldü).** Tasarım
+`<profile>\vergi_step10_kit2_design_aa6d5422\`: `design-v2.md`
+`e01662e96a6fe5e8124522b0f4ededb3fe50431f14f3ef5d120e15d6d0f67b10`,
+`design-errata-2.md`
+`0125c794e0e8820dd7fd110babd6f8ec768c61b2b14a5ac3f4134793f86400c2`,
+`design-errata-3.md`
+`88d4b420fb24a7354863a47a6f6808e931ea1c8d92b883747bf83b2e044a97ba`,
+`design-errata-4.md`
+`05b110a6049481281d165503bdafe90d7a65790d86fade23b8278cf9cf484733`. Prova
+#5 bağımsız kanıt incelemesi
+`<profile>\vergi_step10_kit2_d1prova5_evidence_review_e48fcf98\independent-evidence-review.md`
+(`a7f3e523593f416fc33d3eaa1e96870cd91d94ad29e122a930e86d9f5df7840c`;
+`REHEARSAL_EVIDENCE_VERIFIED`, 0C/0H/1M/3L/12O); `C:\vd5_fa7a5f56\run\findings.md`
+(`6e4f5869eb26563f709891fe9b9acc297682c8f7d8150ae67c67efd44b768924`);
+revizyon 13 incelemesi
+`<profile>\vergi_step10_rev13_review_ff129c33\independent-runbook-rev13-review.md`
+(`c20c03faae4e698d325e81dcf9ef954afcf97046f1db5c7e93a1002fe83c30a6`;
+0C/0H/0M/4L/9O). Kaynak okuması: `data/case.schema.json`,
+`data/case_document.schema.json`, `src/case_validator.py`,
+`src/case_document_validator.py`, `src/manual_fact_entry_engine.py`,
+`src/deadline_rule_selection_policy.py`, `src/timeline_engine.py` (HEAD).
+
+**Dilim 1 kapanışı: "prova ile doğrulandı, adlı sınırlarla" (`USER_DECISION
+D1 = EVET at=2026-10-29T22:37:08+03:00`).** Prova #5: kök `C:\vd5_fa7a5f56`,
+`PROVA_DILIM1=PASS_WITH_LIMITS`, 21 PASS, 10 PASS_WITH_LIMIT, 0 FAIL, 0
+UNMEASURED, `LIMIT_UNLISTED=0`; bağımsız inceleme `a7f3e523…`
+`REHEARSAL_EVIDENCE_VERIFIED`. "Tam PASS" denemez. **Hiç egzersiz
+edilmeyenler:** (1) N117 (`Read-SixYesNo`) Ctrl+C'si
+(`C29_N117_CTRL_C_NOT_EXERCISED`); (2) C29'un ajan parçası bu provada
+koşmadı, revizyon 11'den miras; (3) sayfa `[33]` yeniden açıp düzeltme yolu
+(ek red turu 0); (4) C30 insan dalı (geç ÖN `NO_RECORD`); (5) C06/C31 ekran
+tarafı yalnız beyan ve ajan ikizleri; (6) C14 `yarida` değeri tek bir "Evet"e,
+C29 insan alt ölçümü tek sözcüklü cevaba dayanır (inceleme M-1); (7) C12
+`a6`/`a7` anahtar dizisi ve C28 olumsuz kontrol miras, C01 altı sınıf kodu
+türetimi miras. Dilim 1 için başka prova yapılmayacak (D1).
+
+**İki kapsam okuması (sessizce seçilmedi).**
+
+1. **`r1`–`r3`** Ek R4/16.3'te girdi sürümleridir ("sürümleri"; §14.5.3;
+   KD-14: "girdi döngüsü dilim 2, reconciliation dilim 4"). Reconciliation
+   komutları `r1`…`r7` yazılmadı (Ek R4/16.5). Görevdeki "r4+" ifadesi bu
+   yüzden girdi sürümü sınırını değil, reconciliation'ın dilim 4'te
+   kaldığını anlatacak biçimde okundu; Ek R4/16.3 önceliklidir.
+2. **İzin listesi.** "Yalnız dilim 2 komutlarının gerektirdiği kadar" ve
+   "dilim 3–4'e ait bloklar eklenmez" gereği N136'ya yalnız N061 ve dilim 2
+   komutlarının çalıştırdığı bloklar girdi (N023–N025, N027, N029–N031,
+   N059, N060, N121). N064, N065, N073 (`b11`, `b12`), N084, N085 (`b20`)
+   ve `psql` eşlemesindeki N091 **dilim 3'e taşındı**: gerçek blok kitte
+   yokken giriş ölçülemezdi.
+
+**Dilim 2 içeriği.** `b5` (form hash a, tek dosya teslimi, N15, N26), `b5d`
+(Ek R4/12.3: form, kilitsiz döngü, JSON, geri okuma, kayıtsız N32/N33), `b6`
+(üç hash, N23–N25, N27–N34, N121, alan özeti yalnız ekran), `b7` (Ek R4/15;
+`r1`–`r3`), `g8` (yalnız ekran, kayıt yok), `b8` (N61), `u` (erken kapanış
+kaydı; silme sırası dilim 4). Uygulama seçimleri Ek R4/21'dedir. Dilim 3–4
+komutları yazılmadı (`b9` ve sonrası, `adm.ps1`, `s25` ve sonrası, `z1`, gerçek
+`ev.ps1`, reconciliation).
+
+**AÇIK-26 kapandı.** `USER_DECISION at=2026-10-31T09:15:28+03:00`: Ek R4/12.3
+önerisi aynen kabul. Pinli anahtar tablosu ve kit sabitleri Ek R4/12.3'te. Ek
+seçimler: `notification_date` kit sabiti `null` (madde 8 d; runbook errata-3
+§6/2'nin `TEBLIG_TARIHI` örneğinden önceliklidir); `B5D_VALUE_RULE` para,
+sayfa ve taraf numarası için (madde 6 listesi Ek R4/8 girişindeki genel kodla
+birlikte okunur); alan yolu kalıbı gerçek çıktıya göre düzeltildi (madde 6;
+eski kalıp `parties.0.role` biçimini eşlemiyordu).
+
+**Biriken küçük düzeltmeler.**
+
+| Madde | Ne idi | Ne yapıldı |
+|---|---|---|
+| R13-L1 | §34.14 (6) ve (7) hücreleri `k` değer redlerinin ek satırlarını anmıyordu | İki hücreye revizyon 14 notu (beş satır; ölçüt 31) |
+| R13-L2 | "Kapandı" ifadesi ile imza doğrulama kapısının ilişkisi açık değildi | §6.4'e tek cümle: `AVUKAT_EKSİKLİK1.udf` da §6.6/1 kapısındadır; `True` yoksa cevap yok sayılır (Y20). Yeni kapı yok |
+| R13-L3 | İleti yalnız ilk `BURAYA_` kalan alanı adlandırıyordu | Küçük olduğu için yapıldı: N143 `K_MARKER_LEFT` iletisi aynı durumdaki diğer alan adlarını sayar (yalnız ad); denetim sırası ve kodlar aynı. `b5d` aynı kuralı baştan uygular |
+| R13-L4 | Prova #5 notu "`k` ikizleri" dar okunabilirdi | Prova #5 bitti; "Dilim 2 provası planına notlar"da genel kural |
+| R13-O1 | Şablondaki "degerleri degistirin" cümlesi "yanına ekleme"ye yol açmış olabilir | N123–N133 satır 5: `BURAYA_ ile baslayan yaziyi silip yerine degeri yazin`. Satır sayısı ve ayrıştırma aynı; on bir pin değişti. Şablon örneği avukata henüz gönderilmedi. Örnek değer eklenmedi (§34.19 madde 1/4 gerekçesi geçerli). N134 dilim 3'te |
+| R13-O5 | Ret yolunda dosya bütünlük izi yoktu | N143 değer redlerinde beşinci satır `REFUSAL_FILE_SHA256=<64 hex>`: tuzlu karar dosyasının bütün baytları; dosya düzeyi satırdır (Ek R4/12.1 madde 8), değerin hash'i değildir; `K_SALT_LINE` yolunda yazılmaz (yalnız üç değer reddi) |
+| E4a1-L-1 | C27 sınıf sözlüğünde ortam ön koşulu yoktu | Plan işidir; aşağıdaki notlarda |
+
+**Değişen ve yeni bloklar** (SHA-256 §34.8 kuralıyla; "eski" = `d2829e5`).
+
+| Blok | Dosya | Satır | Eski SHA-256 | Yeni SHA-256 | Değişiklik |
+|---|---|---|---|---|---|
+| N135 | `bc.ps1` | 172 → 181 | `36da4eca22964b611586f433af1d1e66793be6c65806f43350685e3aeb7fdcc2` | `293440b043545c1fbf2aff74323989611194b1258548ed8109a092300ae9dd3a` | Yorum; altı komut + `g8` tanımı |
+| N136 | `kbe.ps1` | 469 → 605 | `91d9bbcf496298cf2489b79567ddcea71ed92680ecbcf14b743996f9dc1466a1` | `dd4201369447c8ffcc8288cf45c2580bd0a093d3b4d12e348d6486c4f854f7dc` | Yorum; izin listesi; `validator` türü; dosya listesi; yeni yardımcılar |
+| N143 | `k.ps1` | 234 → 236 | `7a8e83411515998bb24bf851e96c584b8019f64e9ac39460d088c9bd20e9ead8` | `84dc018fd66ea87d207360352f2fa436e148fa46b647525d8c8b7df1ae88f67a` | Yorum; R13-L3 ileti eki; R13-O5 beşinci satır |
+| N147 | `kvc2.ps1 (kurulum aracı)` | 170 → 170 | `8821172afce76439c5e8f487eb9363b16b73ce65dd1cc8965549645b18183784` | `6c97cbcd232da66599e14a6e89f411579c85eaa9c05a18b35fcac27ab827e05f` | Yorum; üç dosya listesi |
+| N123 | `n123.txt` | aynı | `d43c869fae4c768b4e4362402d4f2f7917869516515ee333b85a942a1c1c89f2` | `fbfd3cc41ec97ebc2f89e092c07dccbdfa99bddb81fffe59a8ef16008bbad7e5` | R13-O1 satır 5 |
+| N124 | `n124.txt` | aynı | `a32cc9370b08a38dda4fb4420d07fe6b3771a1eaa6f64799178c1a2d35fb2be7` | `de1b33e299d86c9de8af4d148bb49a8b9c5a173c5575ed5fa523dcdce1a36413` | R13-O1 satır 5 |
+| N125 | `n125.txt` | aynı | `896abb0f3957f10e1683c98c08c4203243e4816ab62f142c68026e246cbb89dc` | `8032d31988ee51d945a34b23fd8515671cad3c9ab9fc26f5116b7828bb247a8c` | R13-O1 satır 5 |
+| N126 | `n126.txt` | aynı | `c729d5b9579642b1d42f55752f5803a3a612f3c5c5dd24f975ddb51c8943f1c8` | `2ffdcb667e195b6cd7e21a94f49f7076a491146f2e81aaaa887bf21ed93af437` | R13-O1 satır 5 |
+| N127 | `n127.txt` | aynı | `bf2a96a2c50ddf836eb0e685993965b5bf79d3ecbd3225f04457a656d4a46c5b` | `0b2781d87d92ff55d1e3e41e1aae936042e7c4a2d43f0f3e1e119c957efee99d` | R13-O1 satır 5 |
+| N128 | `n128.txt` | aynı | `298c3e8104c2710569d5be841c50da58e1ca4f4ddc67e3abe5bbdc8fe385ee00` | `55c7002d6455a077390708d7c93e45639f5a9285269302b9ceac0ba2b4dd6cde` | R13-O1 satır 5 |
+| N129 | `n129.txt` | aynı | `5d9f83e6de37bef17bd8ddaa71802610655c22591d416857eeed3361e1fc9340` | `054f3c184340f2d3f2612315681d97840ccd62ef99833909905047c1ff7acb3b` | R13-O1 satır 5 |
+| N130 | `n130.txt` | aynı | `bd8779a8049a83af4f7377eb0b8a2617741400b814646d786e651dac7c43b7a8` | `b07b4f594933a8a924aebdddf200b54af18a869505cc2a5537fc8952c2a59428` | R13-O1 satır 5 |
+| N131 | `n131.txt` | aynı | `48b4961d92491ae09c10dda9b1a52b69e80f856e49a9630e3107b2b0b548a3b8` | `210a8eb6250dc5abb1f5e6bd75d1de9e7fa35cf22f05b182bc62ad86c8d846ec` | R13-O1 satır 5 |
+| N132 | `n132.txt` | aynı | `6efdf5eadb3e28c4b2ef59b7ef7d2546ed0b4ca4d8d32bbc2b76b5bfde9a605a` | `2d235a8ec7b73874bbbd691cc9f05b40526586837e90d80b2d8d6e8e5b0af43d` | R13-O1 satır 5 |
+| N133 | `n133.txt` | aynı | `21f04dfc226fde2d9ddda986133f64010c78998610602adecaefb517ccc8ef22` | `46b1fa0585b21903696b8e092ecdf8f32a5eb3fdb5510c5de8b40e379d5d2289` | R13-O1 satır 5 |
+| N148 | `b5.ps1` (yeni) | 36 | — | `5bf4e4046ef34467a1f2b54688e045aa85ebf4d02a3ec90585d6d260a1394dfb` | Ek R4/21 |
+| N149 | `b5d.ps1` (yeni) | 440 | — | `8ff4a9914215ba42a6be20afe26f8320632b30599e2f4aac3130a6a7ef6a7e9d` | Ek R4/21 |
+| N150 | `b6.ps1` (yeni) | 73 | — | `c19b4288cb60a45579bec0ce0ad28c7044135240de8671ec0d2e994650aaafa9` | Ek R4/21 |
+| N151 | `b7.ps1` (yeni) | 91 | — | `2ed8537bd7d27ae2744a18456118ad0c43c038ac822675f69b36ff0bdedb572a` | Ek R4/21 |
+| N152 | `g8.ps1` (yeni) | 26 | — | `80457cde7e3b03f5b8efc748818269ad15a3b59cf74d0d415da07d17c153e0f2` | Ek R4/21 |
+| N153 | `b8.ps1` (yeni) | 30 | — | `cb1e74ed8c95bba3e59d9715ae4624b5ea31a9ecb3f5a7b2cf9624198df4fcfe` | Ek R4/21 |
+| N154 | `u.ps1` (yeni) | 31 | — | `0a1c39f254cfd5a174355d6b3b4c2bc5d4681c399997a25867dd5a87d4136431` | Ek R4/21 |
+| N155 | `n155.txt` (yeni) | 113 | — | `dc7427a3e6c9b7b46c187bc6e5b8b4ed40e48564070be61a2948a62349b2a376` | Ek R4/21 |
+| N156 | `n156.txt` (yeni) | 68 | — | `3bd80dd211f15e9b4b8473b748aa8f146c8e2d02eb284370d010be6b9f416920` | Ek R4/21 |
+
+Diğer 133 blok (N0–N122, N134, N137–N142, N144–N146) bayt-bayt aynıdır. Kit1
+değişmedi. N135'te değişiklik yalnız iki yorum satırı ve komut tanımıdır
+(`b2` satırı aynı koşulun `if` bloğuna alındı); N136'da yorum, izin listesi,
+`validator` türü, `Get-KbFileNames` ve yeni yardımcılar
+(`Read-KbValidatorOutput`, `Add-KbValidatorLines`, `Test-KbSessionB1`,
+`Test-KbRecClean`, `Get-KbSubst`, `Read-KbDigits`, `ConvertTo-KbJson`,
+`Write-KbUtf8File`, `Get-KbDecision`, `Test-KbDecisionHash`,
+`Get-KbFormRecheckLines`); N136'da yerine yazılan satır yalnız başlık yorumu ve
+`Get-KbFileNames`'tir, kalan 136 satır eklemedir ve dilim 1 yolları aynıdır
+(ölçüm 1). N147'de yalnız üç liste ve yorum.
+
+**Kabul ölçütleri (Ek R4/16.3) → ölçüm.** Bütün satırlar sentetik düzenektedir
+(`MECHANICS_ONLY`); insan ölçümü prova işidir.
+
+| Ölçüt | Kod | Durum | Sonuç |
+|---|---|---|---|
+| (1) Her `B5D_*` türü ayrı; kilitsiz; ileti anahtar adı; değer yok; Not Defteri yeniden açılır | N149 | `c1` (21 red turu, 15 ayrı kod), `c1h`, `c1r` | PASS; ekranda nöbetçi 0; her red dosyası 2 satır |
+| (2) Form hatası `DUR.txt` üretmez | N149 | `c1`, `c2c`, `c2d` | PASS |
+| (2a) JSON kaçışı, Türkçe, sekme, kontrol, iç içe `parties[]` | N136 `ConvertTo-KbJson`, N149, N155 | `c2a`, `e8` | PASS; dört taraf; ordinal eşit |
+| (2b) Validator hatasında JSON yerinde, `b05d` yok, üzerine yazma, son tur hash'leri, silme yok, yarım yazım | N149 | `c2b` | PASS |
+| (2c) Süreye giren her alan: eksik, boş, `BOS`, sözlük dışı | N149 | `c2c` (23 red) | PASS |
+| (3) `b05d` üç hash; `b6` değişen dosyayı kilitler | N149, N150 | `c3`, `c3f`, `c3c`, `c3d` | PASS |
+| (4) `b7` aday yok / hiçbiri / H kilitsiz; elle alıntı yok; operatör seçer | N151 | `c4`, `c4n` | PASS |
+| (5) `u` karar yok kilitsiz; kayıt; zincir reddi | N154, N135 | `c5`, `c5b`, `e3` | PASS |
+| (6) M-04/M-07/M-08 negatifleri; sürüm sırası | N151, N153 | `c6m` (16 denetim), `c6`, `c6h`, `c6i`, `e1`, `e2` | PASS; M-07 yalnız kit kuralı üzerinden (gerçek `manual-fact` çalıştırılmadı) |
+| (7) Sızıntı: nöbetçi ad ve tarih; `g8` kayda girmez | N136 süzgeç, N149–N152 | `c7`, `c3v`, `e9` | PASS; evidence 0; izinli ekran blokları dışı 0; pozitif kontrol kapsayıcıda bulundu |
+| (8) İki kalem, iki menü, iki satır; elle sözlük dışı | N149 | `c8` | PASS |
+
+Ek durumlar: `b5` negatifleri (`b5x`, `b52`, `b5f`, `b5p`, `b5r`, `b5n`, `e4`,
+`e5`, `e6`), doğrulayıcı (`c3v`, `c3w`, `c3p`), silme oturumu (`td`), şema pini
+(`sp`), `k` düzeltmeleri (`kl3`), dizin pini (`e7`), oturum kapısı (`e10`).
+
+**Ölçümler** (hepsi scratchpad kopyaları; Windows PowerShell 5.1).
+
+1. **`ParseFile` ve AST:** değişen ve yeni 11 kod dosyasında 0 hata, ASCII dışı
+   0, CR 0, `<…>` küçük harfli belirteç 0. `d2829e5`'e göre yerine yazılan
+   satırlar diff ile sayıldı: N135 3, N136 2, N143 4, N147 4.
+2. **N147 (kopyalar):** `KIT2_VAR_SCAN_FILE_COUNT=81`, `KIT2_VAR_COLLISIONS=0`,
+   on `KIT2_AST_*=0`, `KIT2_PLACEHOLDER_LITERAL_COUNT=0`,
+   `KIT2_CMD_COLLISIONS=0`.
+3. **Düzenek.** Her durum yeni süreç ve yeni sentetik köktür. Pinli `kbe.ps1`
+   yükleme kuralıyla, `Invoke-KbStep` `bc.ps1` AST'sinden, gerçek
+   `Get-KbScript` ile pinli 85 dosya. **Sapmalar:** `Read-KitYesNo`,
+   `Test-KitLock`, `Write-KitDur`, `Read-KbDigits` ve `Start-Process` taklit;
+   `pdftotext`, `python` ve `git` taklit `.cmd`. Taklit doğrulayıcı gerçek
+   `main()` metnini kaynaktan alarak basar ve şema denetimini kendi
+   `jsonschema` çağrısıyla yapar; `src.case_validator` Ek R4/6 madde 10'da CLI
+   sayıldığı için çalıştırılmadı. Sonuç: 43 durum, **301 denetim, 301 PASS**.
+4. **Tur sayısı (açıklanır).** İlk üç koşu kit ölçütlerine ulaşmadı: düzenek
+   kurulumu (taklit araç manifesti; `Test-PilotResolved` yüklü değildi) `b5`'i
+   durdurdu. Üç tur sınırı bu yüzden ölçüt başına sayıldı: `b5d` ve sonrası ilk
+   ölçümde 252/252 geçti. Ek dokuz durumun ilk turunda `e7` ve `e8`'de üç test
+   yazım hatası çıktı (kit kodu değil); oturum kapısıyla birlikte ikinci turda
+   43 durum 301/301. Kit kodunda ölçümle bulunan hata 0; oturum kapısı eksiği kod
+   okumasıyla bulundu (Ek R4/8.4 madde 1) ve kapatıldı. Bir düzenek düzeltmesi
+   Write yerine heredoc ile yazıldı (kural sapması; yalnız scratchpad düzenek
+   dosyası).
+5. **§1.5 taraması:** sonuç kapanış raporundadır ve bağımsız incelemede
+   yinelenir.
+
+**Ölçülmeyenler.** Gerçek doğrulayıcılar (hata ve uyarı metni, kit sabitlerinin
+sıfır uyarısı, `relation_type`–`document_category` uyumu); gerçek `pdftotext`
+(`\f` sayımı, cümle bölme; AÇIK-9); gerçek Not Defteri ve klavye; gerçek
+`Read-KbDigits` (hiç çalışmadı; `KeyAvailable` kalıbı kod okumasıyla aynı);
+gerçek kit1 fonksiyonları; `bc.ps1`'in tam yüklemesi (`kit-build2.txt`, güvenli
+dosya, ACL; `Test-KbKitDir` yalnız `Read-KbBuild`'a kadar ölçüldü); gerçek
+`git` (`check-ignore` biçimi kaynak repoda yalnız okunarak görüldü); `b1`'in
+yeni `kbe.ps1` ile koşusu; `manual-fact`; uzun ileti satırlarının konsolda
+kırılması; insanın formu doldurması ve süresi. Bilinen kullanım sınırı:
+doğrulayıcının anlamsal hataları (`client_side` ↔ taraf rolü, tutar toplamı,
+tarih sırası) opak kimlikle başlar veya alan yolu taşımaz; ileti genel kalabilir
+(Ek R4/12.3 madde 6 "aksi hâlde genel ileti").
+
+**Dilim 2 provası planına notlar** (plan işidir; runbook bunları uygulamaz).
+
+- **Kit değişti:** `kbe.ps1`, `bc.ps1`, `k.ps1`, `kvc2.ps1` ve on bir şablon.
+  Kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147 ve yükleme kapıları yeniden
+  koşar; `kbe.ps1`'i yükleyen **bütün** komutların ajan ikizleri yeniden koşar
+  (`b0`, `b1`, `b2`, `k`, `n`, `o`, `t0`, `kume`; R13-L4). Kit1 değişmedi.
+- **Yeni pencere öncesi girdi:** `<evidence-dir>\form-hash-record.txt` (Ek R4/21
+  madde 3); sentetik form birimleri gerekir.
+- **Gerçek doğrulayıcı:** prova, kit sabitlerinin ve örnek formun sıfır uyarı
+  verdiğini ve iki modülün gerçek hata çıktısının ayrıştırıldığını ölçmelidir;
+  parser `UNPARSED` dalı pozitif kontrol olarak korunur.
+- **`Read-KbDigits`:** Ctrl+C ajan ölçümü (`ctrl handler` sıfırlaması gerekir)
+  ve iki haneli menü insan ölçümü.
+- **Sayfa ve aday:** gerçek `pdftotext` ile `\f` sayımı, tek sayfa/çok sayfa
+  ve cümle bölme (AÇIK-9).
+- **`[33]` yolu:** dilim 1'de hiç egzersiz edilmedi; `b5d` veya `k`'da bilerek
+  yanlış doldurup düzeltme adımı eklenebilir.
+- **C27 sınıf sözlüğü (E4a1-L-1):** ortam ön koşulundan doğan N4 `STOP`'u için
+  adlandırılmış bir sınıf; aksi hâlde dış neden `FAIL` yazmaya zorlanır.
+- **C06:** `k` değer redleri beş satırdır; plan satırı `en\K31P` istisnasını
+  adıyla yazar (kanıt incelemesi O-4). **Beyan formu:** madde 9'u üç satıra böl;
+  `wait_s` telefon yerine `DUR.txt` `at=`'ten (inceleme §8).
+- **R4/12.3 madde 11:** form ve JSON hash'leri tuzsuz kalır (kabul edilmiş
+  kalıntı; K-1); forma `TUZ=` eklenmez.
+
+**Bağımsız inceleme ve kullanıcı kararları.** Bağımsız inceleme (ayrı oturum,
+ayrı model; rapor SHA-256
+`c47035485312651174c990d92537a6510451a73da675a752b0c94aa38ab4bc52`) 0 Critical,
+0 High, 0 Medium, 4 Low, 11 Observation buldu ve `READY_FOR_COMMIT=YES` verdi;
+yazarın sekiz kararı kabul edildi, gerçek doğrulayıcı ölçümü ve kit sabitleri
+prova şartına bağlandı. `USER_DECISION at=2026-10-31T11:56:35+03:00`: K-1 (form
+ve JSON hash'lerinin tuzsuz kalması) kabul edilmiş kalıntıdır; K-2 (`b5d`
+içinde doğrulayıcı altyapı hatasının kilitsiz kalması ve "0 hata" iletisi; Ek
+R4/9 N32/N33 satırı ile Ek R4/8.3 arasındaki metin farkı dahil) sonraki
+revizyona taşındı; K-3 (üç tur sınırının ölçüt başına sayılması) kabul edildi.
+L2 ve L4 bu bölümdeki son metin yamasıyla kapatıldı (Ek R4/19 madde 2 (12), Ek
+R4/8.3 `b5d` ve `b7` satırları); çitli bloklara dokunulmadı.
+
+**Taşınan maddeler.** İzin listesinde N064, N065, N073, N084, N085 ve `psql`
+eşlemesinde N091 (dilim 3); `b5d` doğrulayıcı altyapı hatası (K-2; sonraki
+revizyon); N134 şablon cümlesi (dilim 3); K12-1; O-11; N4 süreç
+adı taraması ayrımı (E4a1 §8; isteğe bağlı); klon `.git` izi (E2-L8);
+`Read-KbYesNo`'nun dilim 3–4'e kadar çağıransız olması (R11-L2); N117 Ctrl+C;
+avukata borçlu şablon örneği ve D9 metni (kapsam dışı; R13-O1 şablon metnini
+değiştirdi, örnek bu metinle hazırlanmalıdır); G bölümü, B3, Ek 1, Ek 2.
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| Üst uyarı | Revizyon listesine 14; revizyon 14 paragrafı |
+| §0 | "Revizyon" satırı |
+| §6.4 | R13-L2 cümlesi |
+| §32/50, §32/52 | Beşinci red satırı; AÇIK-26 kapandı |
+| §34.4 | Revizyon 14 satırı |
+| §34.14 | "Yeni bloklar" altına revizyon 14 notu; (6), (7) hücreleri |
+| §34.20 | Bu bölüm |
+| Ek R4/4 | `form-hash-record.txt` satırı |
+| Ek R4/5 | Madde 3: beşinci satır |
+| Ek R4/8.3 | `b5`, `b6`, `g8` satırları |
+| Ek R4/9 | N32/N33 satırı pinlendi; dilim 2 durum blokları satırı |
+| Ek R4/12.1 | Madde 8 ve "Değer redlerinin biçim sınıfları" |
+| Ek R4/12.3 | Madde 6 alan yolu; AÇIK-26 kapanışı; anahtar tablosu; kit sabitleri |
+| Ek R4/15 | Madde 3: soru 5 cevabı |
+| Ek R4/16 | Ön koşul (b) |
+| Ek R4/16.2 | Ölçüt 31 notu |
+| Ek R4/19 | Madde 1 ve yer tutucu listesi notu |
+| Ek R4/21 | Yeni bölüm ve N148–N156 |
+| N123–N133, N135, N136, N143, N147 | Yukarıdaki tablo |
+
+**Yazma hesabı.** Kod ve metin oturuma özel scratchpad dizininde hazırlandı;
+bloklar tek Python yamasıyla (her değişiklik tek ve benzersiz eşleşme)
+değiştirildi, metin aynı kuralla eklendi, dosya LF ile yazıldı; yazımdan sonra
+bloklar dosyadan yeniden çıkarılıp ölçülen baytlarla karşılaştırıldı. Bu revizyon
+gerçek koşuyu, gerçek veri gönderimini, dilim 2 provasını veya sonraki dilimleri
+yetkilendirmez; her biri ayrı kullanıcı kararıdır.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -12284,6 +12584,7 @@ Mutlak yol ve kullanıcı adı taşımaz.
 | Başlatıcı kayıtları | `steps\t0.txt`, `steps\kume-<n>.txt` | ÖN, KÜME |
 | Kilitsiz red dosyaları | KİT: `steps\s<k>\refusal-<nnn>.txt`; başlatıcılar: `steps\x\refusal-<nnn>.txt` | Ek R4/5 |
 | Yükleme kayıtları (revizyon 8; karar AÇIK-30) | `steps\s<k>\bc.txt` (`KIT2_LOAD=OK`, `KIT2_PINS_SHA256`, `KIT2_BUILD_SHA256`, `KIT2_NESTED_PARENT=True/False/UNKNOWN`, `KIT2_COMMANDS_DEFINED=True/False` — alan revizyon 8 dar düzeltme turunda (O3) koddaydı, tabloya revizyon 9'da eklendi; rev8 yeniden kontrol O-R1); aynı süreçte ikinci `bc.ps1` yüklemesinde `steps\s<k>\bc-reload-<nnn>.txt` (`KIT2_NESTED_SAME_PROCESS=True`) | KİT (`bc.ps1`) |
+| Form hash kaydı (revizyon 14) | `<evidence-dir>\form-hash-record.txt` (§6.6/7 `FORM_HASH` ve `FORM_BINDING` satırları; Ek R4/21 madde 3) | Pencere öncesi ajan; `b5` okur |
 | Runbook kayıtları (değişmeyen biçim) | `system-temp.txt` (`t0`), `technical-record.txt` (`b1`), `restricted-allowed-files.txt` ve `.sha256.txt` (`b1`), `intake-hashes.tsv` (`b6`), `manual-input-r<n>.sha256.txt` (`b7`), iki kapanış manifesti (`s25`) | İlgili komut, runbook bloğuyla |
 
 `steps\c\b09a.txt`/`b09b.txt` ve `b24a.txt`/`b24b.txt` adları bu ekin
@@ -12329,8 +12630,11 @@ fotografini cekmeyin."
    satır daha yazılır, `REFUSAL_KEY=<ALAN>` (şablondaki alan adı, ör.
    `NEDEN`) ve `REFUSAL_VALUE_SHAPE=<SINIF>` (`MARKER_KEPT`,
    `MARKER_WITH_TEXT`, `EMPTY`, `SPACES`, `WRONG_CASE`, `NOT_IN_LIST` veya
-   `REFERENCE_RULE`). Yol, değer ve alan içeriği yoktur; değerin kendisi,
-   uzunluğu ve hash'i hiçbir red dosyasına girmez. `<evidence-dir>` doğrulanamıyorsa
+   `REFERENCE_RULE`). Revizyon 14'ten (R13-O5) itibaren bu üç redde beşinci
+   satır `REFUSAL_FILE_SHA256=<64 hex>`: tuzlu karar dosyasının bütün
+   baytlarının SHA-256'sı (dosya düzeyi satır; Ek R4/12.1 madde 8). Yol,
+   değer ve alan içeriği yoktur; değerin kendisi, uzunluğu ve hash'i hiçbir
+   red dosyasına girmez. `<evidence-dir>` doğrulanamıyorsa
    (yükleme reddi) dosya yazılmaz, yalnız ekran. Kit1'in kendi kilitsiz
    redleri dosya bırakmaz (kit1 baytı değişmez; beyan).
 4. **Kilitli.** `STEP_RESULT=STOP` + kit1 `Write-KitDur` ile `DUR.txt`
@@ -12715,12 +13019,12 @@ yalnız `NO_RECORD` ret iletisi ayrıldı; PASS yolu bayt-bayt aynıdır, §34.1
 
 | Komut | Zincir adımı / iş | Ön koşul | Bloklar | E/H | Kayıt (başlıca satırlar) | Kilitsiz | Kilitli |
 |---|---|---|---|---|---|---|---|
-| `b5` | 5: form hash (a), belge teslimi, `pdftotext` | Bu oturumda `b1` PASS (işleme dalı); `a6` veya `a7` başarılı; `<case-root>` yok | Kit kodu: form hash yeniden ölçümü (a) (güvenli dosyadaki `form-*` yolları; `FORM_BINDING` kayıtları); `<intake-dir>\x` içindeki **tek** dosyanın adına bakmadan `<case-root>\documents\<document-id>\<file-name>` olarak kopyalanması; N15, N26 | Yok | `steps\c\b05.txt`: `FORM_HASH_RECHECK part=<part> match=True`, `X_FILE_COUNT=1`, `TOOL_MANIFEST_MATCH=True`, `PDFTOTEXT_RC=0`, `CLI_RC=0` | `B5_X_EMPTY` | `x`'te iki veya daha fazla dosya; form hash farkı; `PDFTOTEXT_RC` ≠ 0 |
-| `b5d` | 5': intake formu ve JSON üretimi (Ek R4/12) | `b05` PASS; `b05d` yok | Kit kodu (form, denetim, JSON şablonları, geri okuma); KD-26 validator'ları (N32, N33) kayıtsız | İlk çalıştırmada sayı soruları ve menüler (PS); her hatadan sonra "Not Defteri yeniden acilsin mi?" (PS); "Form bastan olusturulsun mu?" (PS) | `steps\c\b05d.txt`: `B5D_FORM_OK=True`, `B5D_MARKERS_LEFT=0`, `B5D_REQUIRED_OK=True`, `B5D_DEADLINE_FIELDS_OK=True`, `B5D_VALIDATORS_OK=True`, `B5D_ROUNDTRIP_OK=True`, `FORM_SHA256`, `CASE_JSON_SHA256`, `DOCUMENT_JSON_SHA256` | Ek R4/12 madde 6'daki her kod (**asla DUR değil**) | Kayıt açıldıktan sonra yazma hatası; `B5D_ROUNDTRIP_MISMATCH` |
-| `b6` | 6: mekanik kontroller | `b05d` PASS | Üç hash yeniden ölçülür; N23, N24, N25, N27–N34, N121; sonunda avukat için alan özeti (yalnız ekran) | Yok | `steps\c\b06.txt`: `JSON_BOM=NONE`, `TEXT_LENGTH=OK`, `TEXT_VISIBLE=OK`, `PAGE_COUNT=OK`, `INTAKE_HASH=MATCH`, `TEXT_DATE_TOKEN_PRESENT=True`, `INTAKE_HASHES_RECORDED=True`, `SOURCE_HASHES_MATCH=True`, `VALIDATOR_CASE_RESULT=PASS`, `VALIDATOR_DOCUMENT_RESULT=PASS`, `VALIDATOR_ERROR_COUNT=0`, `VALIDATOR_WARNING_COUNT=<n>`, git sayıları, `TAX_TYPE_VOCAB=OK` | — | Her `STOP`; üç hash'ten biri `b05d` ile farklı (dosya kayıttan sonra değişti); validator hatası (b5d döngüsü geçtiği için beklenmeyen sonuçtur) |
+| `b5` | 5: form hash (a), belge teslimi, `pdftotext` | Bu oturumda `b1` PASS (işleme dalı); `a6` veya `a7` başarılı; `<case-root>` yok | Kit kodu: form hash yeniden ölçümü (a) (güvenli dosyadaki `form-*` yolları; `form-hash-record.txt`; Ek R4/21 madde 3); `<intake-dir>\x` içindeki **tek** dosyanın adına bakmadan `<case-root>\documents\<document-id>\<file-name>` olarak kopyalanması; N15, N26 | Yok | `steps\c\b05.txt`: `FORM_HASH_RECHECK part=<part> match=True`, `X_FILE_COUNT=1`, `TOOL_MANIFEST_MATCH=True`, `PDFTOTEXT_RC=0`, `CLI_RC=0` | `B5_X_EMPTY` | `x`'te iki veya daha fazla dosya; form hash farkı; `PDFTOTEXT_RC` ≠ 0 |
+| `b5d` | 5': intake formu ve JSON üretimi (Ek R4/12) | `b05` PASS; `b05d` yok | Kit kodu (form, denetim, JSON şablonları, geri okuma); KD-26 validator'ları (N32, N33) kayıtsız | İlk çalıştırmada sayı soruları ve menüler (PS); her hatadan sonra "Not Defteri yeniden acilsin mi?" (PS); "Form bastan olusturulsun mu?" (PS) | `steps\c\b05d.txt`: `B5D_FORM_OK=True`, `B5D_MARKERS_LEFT=0`, `B5D_REQUIRED_OK=True`, `B5D_DEADLINE_FIELDS_OK=True`, `B5D_VALIDATORS_OK=True`, `B5D_ROUNDTRIP_OK=True`, `FORM_SHA256`, `CASE_JSON_SHA256`, `DOCUMENT_JSON_SHA256` | Ek R4/12 madde 6'daki her kod (**asla DUR değil**) | Kayıt açıldıktan sonra yazma hatası; `B5D_ROUNDTRIP_MISMATCH`; `B5D_SCHEMA_OR_TEMPLATE_PIN`; `B5D_NOTEPAD_PIN` |
+| `b6` | 6: mekanik kontroller | `b05d` PASS | Üç hash yeniden ölçülür; N23, N24, N25, N27–N34, N121; sonunda avukat için alan özeti (yalnız ekran) | Yok | `steps\c\b06.txt`: `JSON_BOM=NONE`, `TEXT_LENGTH=OK`, `TEXT_VISIBLE=OK`, `PAGE_COUNT=OK`, `INTAKE_HASH=MATCH`, `TEXT_DATE_TOKEN_PRESENT=True`, `INTAKE_HASHES_RECORDED=True`, `SOURCE_HASHES_MATCH=True`, `VALIDATOR_CASE_RESULT=PASS`, `VALIDATOR_DOCUMENT_RESULT=PASS`, modül başına sayılar (Ek R4/21 madde 6), `VALIDATOR_ERROR_COUNT=0`, `VALIDATOR_WARNING_COUNT=<n>`, git sayıları, `TAX_TYPE_VOCAB=OK`; üç hash için `FORM_SHA256_MATCH=True`, `CASE_JSON_SHA256_MATCH=True`, `DOCUMENT_JSON_SHA256_MATCH=True` | `B6_ALREADY`, `B6_PRECONDITION` | Her `STOP`; üç hash'ten biri `b05d` ile farklı (dosya kayıttan sonra değişti); validator hatası (b5d döngüsü geçtiği için beklenmeyen sonuçtur) |
 | `k intake`, gerekiyorsa `k uyari` | 6: avukatın alan-alan intake onayı; validator uyarılarının kabulü (§11.3 c–d) | `b06` PASS | Ek R4/12 | Ek R4/12 | `steps\d\k<seq>.txt` | Ek R4/12 | Ek R4/12 |
-| `b7` | 7: manuel girdi (O4: satırı operatör tek başına seçer) | `b06` PASS; `INTAKE_APPROVED` PASS ve her maddesi `KABUL`; `VALIDATOR_WARNING_COUNT` > 0 ise `VALIDATOR_WARNINGS_ACCEPTED` PASS ve `KABUL`; revizyon `r<n>`: n = 1 ilk; sonraki revizyon yalnız önceki `k girdi` `RED` ise; n ≤ 3 | Kit kodu: aday listesi (Ek R4/15), girdi dosyasının kitçe yazılması (N58 biçimi), N59, N60 | Numara seçimi, `0` = hiçbiri (PS); "Bu satir teblig tarihini tasiyan cumle mi?" (PS) | `steps\c\b07-r<n>.txt`: `MANUAL_INPUT_ENCODING=OK`, `MANUAL_INPUT_HASH_RECORDED=True`, `INPUT_REVISION=r<n>`, `CANDIDATE_SELECTED=True` | `B7_NO_INTAKE_APPROVAL`, `B7_WARNINGS_NOT_ACCEPTED`, `B7_NO_CANDIDATE`, `B7_NONE_SELECTED`, `B7_CANDIDATE_REJECTED`, `B7_REVISION_LIMIT` | `MANUAL_INPUT_*` `STOP` |
-| `g8` | 8: girdi dosyasının orijinal belgeyle karşılaştırılması (yalnız ekran; errata-3 §8; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b07-r<n>` PASS | Kit kodu: girdi dosyası açıkça UTF-8 okunur; `date`, `page`, `text_excerpt`, iki opak kimlik, `r<n>` ve 12 karakterlik önek **yalnız** `Write-Host` ile | Yok | **Yok** | Erken kapanışta ve silme oturumunda: `G8_NOT_ALLOWED` | — |
+| `b7` | 7: manuel girdi (O4: satırı operatör tek başına seçer) | `b06` PASS; `INTAKE_APPROVED` PASS ve her maddesi `KABUL`; `VALIDATOR_WARNING_COUNT` > 0 ise `VALIDATOR_WARNINGS_ACCEPTED` PASS ve `KABUL`; revizyon `r<n>`: n = 1 ilk; sonraki revizyon yalnız önceki `k girdi` `RED` ise; n ≤ 3 | Kit kodu: aday listesi (Ek R4/15), girdi dosyasının kitçe yazılması (N58 biçimi), N59, N60 | Numara seçimi, `0` = hiçbiri (PS); "Bu satir teblig tarihini tasiyan cumle mi?" (PS) | `steps\c\b07-r<n>.txt`: `MANUAL_INPUT_ENCODING=OK`, `MANUAL_INPUT_HASH_RECORDED=True`, `INPUT_REVISION=r<n>`, `CANDIDATE_SELECTED=True` | `B7_NO_INTAKE_APPROVAL`, `B7_WARNINGS_NOT_ACCEPTED`, `B7_NO_CANDIDATE`, `B7_NONE_SELECTED`, `B7_CANDIDATE_REJECTED`, `B7_REVISION_LIMIT` | `MANUAL_INPUT_*` `STOP`; `B7_TEMPLATE_PIN` |
+| `g8` | 8: girdi dosyasının orijinal belgeyle karşılaştırılması (yalnız ekran; errata-3 §8; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b07-r<n>` PASS | Kit kodu: girdi dosyası açıkça UTF-8 okunur; `date`, `page`, `text_excerpt`, iki opak kimlik, `r<n>` ve 12 karakterlik önek **yalnız** `Write-Host` ile | Yok | **Yok** | Silme oturumunda `G8_NOT_ALLOWED`; erken kapanışta `EARLY_CLOSE_MODE` (Ek R4/8.4 madde 3; revizyon 14: iki tablo bu kodla hizalandı); `G8_PRECONDITION` | — |
 | `k girdi` | 8: avukatın girdi kararı (`MANUAL_INPUT_COMPARED`) | `b07-r<n>` PASS | Ek R4/12 (KD-25: önek kitçe doldurulur, ekranda girdi kaydının önekiyle yan yana) | Ek R4/12 | `steps\d\k<seq>.txt` | Ek R4/12 | Ek R4/12 |
 | `b8` | 8: avukat kararının eşleştirilmesi | `MANUAL_INPUT_COMPARED` PASS, `REVIZYON=r<n>` ve `SONUC=KABUL` | N61 (`<lawyer-cited-prefix>` karar dosyasının `HASH_ONEK`'inden; `<input-revision>` = n) | Yok | `steps\c\b08-r<n>.txt`: `MANUAL_INPUT_MATCHES_LAWYER_REVISION=True`, `LAWYER_DECISION_CITES_RECORD=True` | `B8_NO_DECISION`, `B8_WRONG_REVISION`, `B8_DECISION_RED` (ileti: "Avukat bu surumu reddetti; duzeltilmis surum icin b7") | N61 `STOP` (önek/hash farkı); karar dosyası hash'i kayıttakinden farklı |
 | `b9` (`b09a`/`b09b`) | 9: assignment ölçümü önce / sonra | `b09a`: `b08` PASS; `b09b`: `y1` PASS | N40 × (N43, N44, N45) | Yok | `steps\c\b09a.txt` / `b09b.txt`: `ACTIVE_ASSIGNMENT_COUNT=<n>` (önce 0, sonra 1), `ASSIGNMENT_TOTAL_COUNT=<n>`, `USERS_ENABLED=True` | `B9_CLUSTER_DOWN`, `B9_PRECONDITION` | Sayaç beklenmeyen |
@@ -12971,7 +13275,7 @@ varsa kayda girer, yoksa eksiklik değildir.
 | Blok (komut) | CLI | İzinli anahtarlar | Zorunlu |
 |---|---|---|---|
 | N26 (`b5`) | `pdftotext` | Bloğun kendi `PDFTOTEXT_RC` (int) | `PDFTOTEXT_RC` |
-| N32, N33 (`b6`; `b5d` kayıtsız) | `src.case_validator`, `src.case_document_validator` | CLI `anahtar=değer` basmaz; kit2'nin doğrulayıcı ayrıştırıcısı (kit kodu) türetilmiş satırları yazar: `VALIDATOR_CASE_RESULT` / `VALIDATOR_DOCUMENT_RESULT` (söz `PASS`/`FAIL`), `VALIDATOR_PATH_MATCH` (bool: başta basılan yol `<case-root>` altını gösteriyor), `VALIDATOR_CASE_ID_MATCH` (bool: `Case ID:` satırı `<case-id>`), `VALIDATOR_ERROR_COUNT`, `VALIDATOR_WARNING_COUNT` (int). Ayrıştırıcının tanıdığı başlık ve bölüm işaretleri (`CASE GEÇERLİ`, `UYARILAR:` vb.) iki modülün bb3e5b4'teki `main` çıktısından dilim 2'de pinlenir | Ayrıştırıcının o blok için tanımladığı türetilmiş satırların hepsi (hangilerinin hangi modüle ait olduğu dilim 2'de, işaretlerle birlikte pinlenir); ayrıştırıcı bir satırı türetemezse kilitli |
+| N32, N33 (`b6`; `b5d` kayıtsız) | `src.case_validator`, `src.case_document_validator` | CLI `anahtar=değer` basmaz; kit2'nin doğrulayıcı ayrıştırıcısı (kit kodu) türetilmiş satırları yazar: `VALIDATOR_CASE_RESULT` / `VALIDATOR_DOCUMENT_RESULT` (söz `PASS`/`FAIL`), `VALIDATOR_PATH_MATCH` (bool: başta basılan yol `<case-root>` altını gösteriyor), `VALIDATOR_CASE_ID_MATCH` (bool: `Case ID:` satırı `<case-id>`), `VALIDATOR_ERROR_COUNT`, `VALIDATOR_WARNING_COUNT` (int). Revizyon 14: modül başına `VALIDATOR_CASE_ERROR_COUNT`, `VALIDATOR_CASE_WARNING_COUNT`, `VALIDATOR_DOCUMENT_ERROR_COUNT`, `VALIDATOR_DOCUMENT_WARNING_COUNT`; toplamları `b6` yazar. İşaretler Ek R4/21 madde 6'da pinlidir | Ek R4/21 madde 6; ayrıştırıcı sonucu türetemezse (`UNPARSED`) kilitli |
 | N36, N93 (`y1`, `y2`) | `scripts.iam_admin` | Tam bir `OK` satırı → `IAM_ADMIN_OK_LINE_SEEN=True` | `IAM_ADMIN_OK_LINE_SEEN` |
 | N38 (`b1`) | `pip check` | Tam bir `No broken requirements found.` satırı → `PIP_CHECK_CLEAN=True` (dizge dilim 1'de pinlenir) | `PIP_CHECK_CLEAN` |
 | N39 (`b1`) | `pip freeze` | Bloğun kendi `RUNTIME_PACKAGE_SET` (söz `MATCH`) | `RUNTIME_PACKAGE_SET` |
@@ -12985,6 +13289,7 @@ varsa kayda girer, yoksa eksiklik değildir.
 | N88 (`b22`) | `ui.deadline_report` | stdout'ta `RAPOR YAZILDI: ` ile başlayan tek satır → yalnız `REPORT_WRITTEN_LINE_SEEN=True`; stderr'de `RAPOR REDDEDİLDİ: <kod>` → `STOP REPORT_REFUSAL_CODE=<kod>`; `<kod>` CLI'nin **küçük harfli** sabit kodunun kendisidir (`ui/deadline_report.py` `REFUSAL_CODES`, 24 kod, ör. `canonical_missing`, `internal_error`), kayda giren desen `^[a-z][a-z0-9_]{0,63}$`; desene uymayan değer `STOP REPORT_REFUSAL_CODE=UNPARSED` (revizyon 10; prova planı SC-3 / plan kontrolü V5-M1: önceki `^[A-Z0-9_]{1,64}$` deseni CLI'nin hiçbir gerçek kodunu kabul etmiyordu, CLI değişmedi); ASCII yedek satırı `RAPOR REDDEDILDI: internal_error` (noktasız I) ön eki tutmaz ve yalnız `STDERR_LINE_COUNT`'a girer (bilinen sınır) | `REPORT_WRITTEN_LINE_SEEN` (`REPORT_REFUSAL_CODE` yalnız red yolunda; varsa kilitli) |
 | N122 (`b22`) | — | `EXPIRY_LINE_PRESENT`, `DISCLAIMER_LINE_PRESENT` (bool); bloğun yalın hash satırı `^[0-9a-f]{64}$` → `REPORT_SHA256` | Hepsi |
 | N69 (`r3`), N70 (`r4`) | `ui.reconciliation_operator` | `journal_id` (int; `DRY RUN journal_id=` ve `APPLIED journal_id=` satırlarından), `new_state` (söz `completed`, `failed`, `reconciliation_required`), `resolution_code` (`^[A-Za-z0-9_]{1,64}$`), `observed_post_hash` (h64 veya söz `None`), `resolved_by_actor_type` (söz `cli_service`), `resolved_by_actor_ref` (söz `local-pilot-operator`) | N69: `journal_id`, `new_state`, `resolution_code`, `observed_post_hash`. N70: bunlar ve `resolved_by_actor_type`, `resolved_by_actor_ref` |
+| N23–N25, N27, N29–N31, N121 (`b6`), N59, N60 (`b7`), N61 (`b8`) | — | Bloğun kendi durum anahtarları: `JSON_BOM`, `TEXT_LENGTH`, `TEXT_VISIBLE`, `PAGE_COUNT`, `INTAKE_HASH`, `TEXT_DATE_TOKEN_PRESENT`, `INTAKE_HASHES_RECORDED`, `SOURCE_HASHES_MATCH`, `TAX_TYPE_VOCAB`, `MANUAL_INPUT_ENCODING`, `MANUAL_INPUT_HASH_RECORDED`, `MANUAL_INPUT_HASH_RECORD`, `MANUAL_INPUT_REVISION`, `MANUAL_INPUT_SHA256_PREFIX`, `MANUAL_INPUT_MATCHES_LAWYER_REVISION`, `LAWYER_DECISION_CITES_RECORD` (revizyon 14; N136) | `b6`, `b7`, `b8` zorunlu satırları |
 | N71 (`r5`) ve CLI'siz runbook blokları | — | Bloğun runbook metninde beklenen kendi durum anahtarları (`[A-Z0-9_]+=`; ör. `PATH_OK`, `SYSTEM_TEMP_MATCH`, `TOOL_MANIFEST_MATCH`, `ALLOWED_FILE_HASH_OK`, `CASE_DELETE_GUARD`); istisnalar aşağıda | Runbook'un o blok için PASS saydığı durum satırlarının hepsi |
 
 **Asla kaydedilmeyenler** (ne kayda ne red dosyasına; ilk dördü ekranda
@@ -13234,8 +13539,8 @@ birleşik hâlde Ek R4/10 kuralıyla tek anlamlı karşılaştırılır; N14
    sınıfı **kaldırıldı**; recheck-2 not 6'nın o sınıfı kilitli tutan kısmı
    bu kararla geçersizdir. Şablon dışı her satır veya değer madde 3'ün
    satır kuralıyla **kilitsiz** reddedilir; red dosyası kod ve zaman
-   taşır, değer redlerinde ayrıca alan adı ve biçim sınıfı (revizyon 13;
-   Ek R4/5 madde 3). Karar dosyaları kapsayıcı içindedir; kayda
+   taşır, değer redlerinde ayrıca alan adı, biçim sınıfı ve tuzlu dosya
+   SHA-256'sı (revizyon 13 ve 14; Ek R4/5 madde 3). Karar dosyaları kapsayıcı içindedir; kayda
    dosyanın **içinden okunan** değerlerden yalnız sözlük değerleri,
    boolean'lar ve uzunluklar girer. **Dosya düzeyi** satırlar kayıtta
    kalır (kullanıcı teyidi; inceleme O3): dosyanın tuzlu SHA-256'sı
@@ -13263,7 +13568,7 @@ izinli değerlerin **her biri** ayrı bir `ANAHTAR=DEĞER` satırı olarak,
 sözlük sırasıyla — tek bir örnek değer seçilmez; `SILME_OTURUMU_DALLARI`
 alanında madde 1'in sözdizimi ve şablondaki örnek biçim; `REFERANS`'ta
 madde 6 ve `REFERANS=YOK`); düzeltme yolu (`BURAYA_…` yazısını geri silme
-tuşuyla — Backspace, Enter tuşunun hemen üstündeki tuş — tamamen silmek,
+tuşuyla — Backspace, Enter tuşunun hemen üstündeki tuş; boşluk tuşu değil — tamamen silmek,
 satırda yalnız `ANAHTAR=` bırakmak, boşluk bırakmamak, harf büyüklüğü
 izinli değerlerdeki gibi; Ctrl+S, X). Biçim sınıfı kesin sırayla
 hesaplanır: `K_MARKER_LEFT`'te değer şablondaki `BURAYA_…` işaretiyle
@@ -13276,7 +13581,10 @@ dosyasına yalnız alan adı (`REFUSAL_KEY`) ve sınıf (`REFUSAL_VALUE_SHAPE`)
 girer (Ek R4/5 madde 3); değer, uzunluğu ve hash'i girmez. Sınıf yalnız
 tanı içindir: denetim sırası, kodlar ve kilitsiz döngü aynıdır; kit
 değeri düzeltmez, kırpmaz, harf büyüklüğünü değiştirmez ve sınıfı ne olursa
-olsun değer reddedilir.
+olsun değer reddedilir. `K_MARKER_LEFT` iletisi aynı durumdaki diğer alanların
+adlarını da sayar (revizyon 14; R13-L3; yalnız ad). Red dosyasındaki
+`REFUSAL_FILE_SHA256` bütün dosyanın tuzlu hash'idir, alanın değil
+(revizyon 14; R13-O5).
 
 **Şablon alanları** (her şablonun ilk üç satırı `TUZ=<tuz>`,
 `KARAR_TURU=<tür>`, `CASE_ID=<case-id>`; ardından ASCII açıklama satırları;
@@ -13424,10 +13732,13 @@ tam metin N123–N133):
    `B5D_DUPLICATE_KEY`, `B5D_MISSING_KEY`, `B5D_COUNT_MISMATCH`,
    `B5D_MARKER_LEFT`, `B5D_EMPTY`, `B5D_DATE_FORMAT`, `B5D_VOCAB`,
    `B5D_DEADLINE_FIELD`, `B5D_DOCUMENT_TYPE_SCOPE`, `B5D_VALIDATOR`.
-   Validator iletisi yalnız hata sayısını ve — hata metninin başındaki alan
-   yolu `^[a-z_]+(\[[0-9]+\])?(\.[a-z_]+(\[[0-9]+\])?)*` kalıbına uyuyorsa
-   — alan yolunu gösterir; aksi hâlde genel ileti (alan yolundan form
-   anahtarına eşleme dilim 2'de).
+   Ayrıca Ek R4/8 girişindeki `B5D_VALUE_RULE` (para, sayfa sayısı, taraf
+   numarası, ilgili dosya kimliği). Validator iletisi yalnız hata sayısını
+   ve — hata metninin iki nokta öncesi alan yolu
+   `^[a-z_][a-z0-9_-]*(\.[a-z0-9_-]+)*$` kalıbına uyuyorsa (revizyon 14:
+   gerçek biçim `parties.0.role`; eski kalıp eşlemiyordu) — form anahtarı
+   önekini (`TARAF_1`) veya alan yolunu gösterir; aksi hâlde genel ileti
+   (eşleme N149 `Get-XdHint`).
 7. **JSON üretimi ve geri okuma (errata-3 §6/5).** Kit `case.json` ve
    `document.json`'u runbook §11 yollarında **pinli sabit metin
    şablonundan** üretir; değerler kitin JSON kaçış fonksiyonuyla yazılır
@@ -13468,21 +13779,22 @@ tam metin N123–N133):
    dosyalarından gelir. Kural seçimi veya hesabı etkileyen başka bir alan
    kodda bulunursa (dilim 2 provasında `rule_matches_context`, L559, ile
    yeniden okunur) aynı kural ona da uygulanır.
-9. **Formun geri kalan anahtarları → AÇIK-26** (aşağıda; karar dilim
-   2'den önce). Errata-3 §6/2'nin tam anahtar listesi bu dilimde
-   pinlenmez.
+9. **Formun geri kalan anahtarları → AÇIK-26** (aşağıda; revizyon 14:
+   kapandı ve pinlendi).
 10. **Başarı kaydı** (`b05d.txt`; errata-3 §6/6): Ek R4/8.3 `b5d`
     satırı. `b6` üç hash'i yeniden ölçer; farklıysa kilitli. Erken
     kapanışta `<case-root>`'ta kalmış JSON'lar case manifestine girer ve
     `s26a` ile silinir.
 11. **Tuz.** Form ve iki JSON'un hash'leri evidence'a tuzsuz girer
-    (runbook bugün de aynı türde hash kaydeder: `intake-hashes.tsv`, N30);
-    bağımsız inceleme bunu yeterli bulmazsa forma da `TUZ=` satırı eklenir
-    (dilim 2; errata-3 §10.7).
+    (runbook bugün de aynı türde hash kaydeder: `intake-hashes.tsv`, N30).
+    Kabul edilmiş kalıntı (`USER_DECISION at=2026-10-31T11:56:35+03:00`,
+    K-1): forma `TUZ=` satırı eklenmez (§34.20).
 
-**AÇIK-26 — intake formunun tam anahtar listesi** (`USER_DECISION
-at=2026-10-21T11:57:09+03:00`: seçenek A; karar dilim 2'den önce).
-Öneri (bağlayıcı değil):
+**AÇIK-26 — intake formunun tam anahtar listesi: KAPANDI** (`USER_DECISION
+at=2026-10-31T09:15:28+03:00`: aşağıdaki öneri aynen kabul edildi;
+önceki adım `USER_DECISION at=2026-10-21T11:57:09+03:00` seçenek A). Kabul
+edilen metin (dizi sayıları, `BOS` kuralı, kit sabitleri, sözlük alanları,
+serbest metin ve para biçimleri):
 
 - **Dizi sayıları** (ilk çalıştırmada tek tuş): `parties` 1–9;
   `dispute_items` 1–9; `administrative_actions` 1–9 (en az 1 bağlayıcı,
@@ -13522,6 +13834,71 @@ at=2026-10-21T11:57:09+03:00`: seçenek A; karar dilim 2'den önce).
   `^[A-Z]{3}$` (`-cmatch`).
 - Şemada çok satırlı değer gerektiren alan yoktur (dilim 0'da iki şema
   okundu; errata-3 §6/2'nin şartı).
+
+**Pinli form anahtarları (revizyon 14; N149 `New-XdFields`; kit sabitleri
+N155 ve N156).** `<n>` 1'den başlar. Sınıflar: **t** zorunlu tek satır
+metin; **n** tek satır metin veya `BOS`; **d** `YYYY-AA-GG` veya `BOS`;
+**s** şema sözlüğü; **D** süreye giren alan (madde 8); **m** para çifti
+(tutar ve para birimi birlikte dolu veya birlikte `BOS`).
+
+| Form anahtarı | JSON alanı | Sınıf |
+|---|---|---|
+| `SAYI_TARAF`, `SAYI_KALEM`, `SAYI_ISLEM`, `SAYI_OLAY`, `SAYI_YARGILAMA`, `SAYI_ILGILI_DOSYA`, `SAYI_BELGE_TARIH`, `SAYI_BELGE_REFERANS`, `KALEM_<n>_SAYI_DAYANAK` | Dizi uzunlukları (form sonraki turlarda sayıları buradan okur) | Kit yazar; biçim veya alt sınır dışı → `B5D_COUNT_MISMATCH` |
+| `DOSYA_BASLIGI` | `case.title` | t |
+| `DAVA_TURU`, `ASAMA` | `case_type`, `stage` | D + s |
+| `DOSYA_DURUMU`, `MUVEKKIL_TARAFI`, `DOSYA_GIZLILIK` | `case_status`, `client_side`, `confidentiality_level` | s |
+| `BELGE_ILISKI_TURU`, `BELGE_ILISKI_NOTU` | `case_document_refs[0].relation_type`, `.notes` (`primary=true`, tek ref kit sabiti) | s, n |
+| `TARAF_<n>_AD`, `_ROL`, `_TUR`, `_REFERANS`, `_NOT` | `parties[].display_name`, `role`, `party_type`, `reference_code`, `notes` | n, s, s, n, n |
+| `KALEM_<n>_VERGI_TURU` | `dispute_items[].tax_type` | D; menüden kit yazar; N121 sözlüğü |
+| `KALEM_<n>_DONEM_TURU`, `_DONEM_ETIKETI`, `_DONEM_BASLANGIC`, `_DONEM_BITIS` | `period.kind`, `label`, `start_date`, `end_date` | s, t, d, d |
+| `KALEM_<n>_ANA_VERGI_TUTARI`/`_PARA`, `_CEZA_TUTARI`/`_PARA`, `_TOPLAM_TUTARI`/`_PARA` | `principal_tax`, `penalty_amount`, `total_amount` | m |
+| `KALEM_<n>_CEZA_TURU`, `_DAYANAK_<m>`, `_NOT` | `penalty_type`, `asserted_legal_basis_refs[]`, `notes` | n, t, n |
+| `ISLEM_<n>_KATEGORI`, `_IDARE` | `administrative_actions[].action_category`, `issuing_authority` | D + s, D (metin) |
+| `ISLEM_<n>_TURU`, `_TARIHI`, `_NOT` | `action_type`, `action_date`, `notes` | t, d, n |
+| `OLAY_<n>_KATEGORI`, `_TURU`, `_BASLIK`, `_TARIHI`, `_TARIH_HASSASIYETI`, `_ACIKLAMA` | `events[].event_category`, `event_type`, `title`, `event_date`, `date_precision`, `description` | s, t, t, d, s, n |
+| `YARGILAMA_<n>_SEVIYE`, `_FORUM`, `_MAHKEME`, `_ESAS_NO`, `_KARAR_NO`, `_ACILIS_TARIHI`, `_KARAR_TARIHI`, `_DURUM`, `_NOT` | `proceedings[].level`, `forum_type`, `court_name`, `case_number`, `decision_number`, `filing_date`, `decision_date`, `status`, `notes` | s, s, n, n, n, d, d, s, n |
+| `ILGILI_DOSYA_<n>_TUR`, `_KIMLIK`, `_NOT` | `related_cases[].type`, `case_id`, `notes` | s, `^[a-z0-9_-]{3,64}$`, n |
+| `BELGE_BASLIGI`, `BELGE_KATEGORISI`, `BELGE_ALT_TURU`, `BELGE_GIZLILIK` | `document.title`, `document_category`, `document_subtype`, `confidentiality_level` | t, s, n, s |
+| `BELGE_TURU` | `document_type` | D; yalnız `vergi_ceza_ihbarnamesi`; başka değer `B5D_DOCUMENT_TYPE_SCOPE` |
+| `SAYFA_SAYISI` | `file.page_count` | `^[1-9][0-9]{0,5}$` |
+| `BELGEYI_DUZENLEYEN_TARAF` | `issuer_party_id` | Taraf numarası veya `BOS` |
+| `ALICI_TARAFLAR` | `recipient_party_ids` | Virgüllü, tekrarsız taraf numaraları; alıcı yoksa `0` (boş dizi sayıyla ifade edilir) |
+| `BELGE_TARIH_<n>_TUR`, `_DEGER`, `_HASSASIYET`, `_SAYFA` | `dates[].date_type`, `date`, `precision`, `source_page` | s, d, s, sayı veya `BOS` |
+| `BELGE_REFERANS_<n>_TUR`, `_DEGER`, `_KURUM` | `reference_numbers[].reference_type`, `value`, `issuing_body` | s, t, n |
+
+**Pinli kit sabitleri (revizyon 14; öneri "değerler dilim 2'de pinlenir"
+dedi).** Kimlikler `party_<n>`, `item_<n>`, `action_<n>`, `event_<n>`,
+`proceeding_<n>`. `administrative_actions[].notification_date` **her zaman
+`null`**: tebliğ tarihi formdan girmez (madde 8 d). `document.json`:
+`provenance` = `source_origin=other`, `source_description="kit2 sifreli
+aktarim"`, kalan dört alan `null` (`received_at` bir tarihtir,
+`original_file_name` kişisel bilgi taşıyabilir); `processing` =
+`ingest_enabled=false`, `parser="pdftotext"`, `chunk_strategy="none"`,
+`ocr_required=false`, `ocr_completed=false`,
+`text_extraction_status="completed"`, `index_status="not_indexed"`,
+`extracted_text_path=cases/<case-id>/documents/<document-id>/extracted/<document-id>.txt`,
+`parser_version="pdftotext-kit2-technical-record"` (gerçek sürüm
+`technical-record.txt`'dedir; `src/case_document_validator.py`
+`validate_processing_logic` okunarak uyarı üretmeyecek değerler seçildi,
+gerçek doğrulayıcıyla ölçülmedi); `file.format=pdf`,
+`mime_type=application/pdf`, `sha256` ve `size_bytes` `b5`'in kopyaladığı
+dosyadan. `relations`, `tags` boş. Şemada zorunlu olmayan `reference_code`,
+`summary`, `notes` (case üst düzeyi) ve `summary`, `notes` (document üst
+düzeyi) yazılmaz. `document.dates[].date_type` şema sözlüğünün tamamıdır;
+bu alanları okuyan süre kodu yoktur (`timeline_engine.py`,
+`deadline_calculator.py`, `deadline_rule_selection_policy.py` arandı).
+Şema sözlükleri `b5d`'de `<repo-root>\data\case.schema.json` ve
+`case_document.schema.json`'dan okunur; iki dosyanın SHA-256'sı
+`kit-build2.txt`'deki `CASE_SCHEMA_SHA256` ve
+`CASE_DOCUMENT_SCHEMA_SHA256` ile eşit değilse kilitli
+`B5D_SCHEMA_OR_TEMPLATE_PIN` (içerik sonrası yapılandırma farkı; Ek R4/2
+madde 8).
+
+**Kural seçimi yeniden okundu (madde 8 son cümle; `rule_matches_context`,
+L559).** `applicability` yalnız `case_types`, `tax_types`, `document_types`
+ve `case_stages` okur; hepsi tabloda D'dir. `timeline_engine.py` L337
+`document_category`'yi yalnız kaynak belge sınıfı için okur ve kural
+seçimine girmez. Yeni süreye giren alan bulunmadı.
 ### Ek R4/13 Acil silme yolu: acil sayfa, `ev.ps1` ve AÇIK-25 (b)
 
 1. **Ne zaman (L9; AÇIK-24 a; recheck-2 not 3).** İçerik alındıktan sonra
@@ -13829,7 +14206,10 @@ at=2026-10-21T11:57:09+03:00`: seçenek A; karar dilim 2'den önce).
    seçime katılmaz; girdi dosyasını kit yazar; avukat `g8`'de sonucu
    orijinal belgeyle bağımsız karşılaştırır. Bunun §14.3/5'in "girdi
    dosyasını yazan ile karşılaştıran ayrı kişilerdir" kuralını karşılayıp
-   karşılamadığı hukuki yorumdur (avukat cevabına bağlı: soru 5; cevap
+   karşılamadığı hukuki yorumdur (revizyon 14 notu: avukat soru 5'i "bu düzen
+   kuralı karşılıyor; ek bir kabul gerekmez" diye cevapladı, Ek R4/17;
+   `TWO_PERSON_CONTROL` §4.1'e göre zincir adım 2'de yazılır; önceki metin:
+   avukat cevabına bağlı: soru 5; cevap
    "feragat gerekir" ise B4 kabulü ve `TWO_PERSON_CONTROL=WAIVED_B4`
    pencere öncesinde); cevap gelene kadar `TWO_PERSON_CONTROL` değeri
    belirlenmez.
@@ -13850,8 +14230,8 @@ Her dilim: yazım (tek yazan ajan oturumu; runbook revizyonu) →
 dilimin provasında Ek R4/16.6 sızıntı negatif testi zorunludur** (KD-2).
 
 **Ön koşullar.** (a) Avukat cevapları Ek R4/17'deki "hangi cevap hangi
-dilimi bekletir" kuralına göre; (b) AÇIK-26 dilim 2'den önce karara
-bağlanır (AÇIK-27 kapandı: Ek R4/12.1 madde 8); (c) `FORM_F1=24_SAAT` (Ek R4/3);
+dilimi bekletir" kuralına göre; (b) AÇIK-26 kapandı (revizyon 14; Ek
+R4/12.3) (AÇIK-27 kapandı: Ek R4/12.1 madde 8); (c) `FORM_F1=24_SAAT` (Ek R4/3);
 (d) güncellenmiş D9 bildiriminin yazılı cevabı (`LEGAL_APPROVED`) gerçek
 dosyadan önce (soru 9).
 
@@ -14073,7 +14453,8 @@ genişletilmiş N116. Kabul ölçütleri:
     alanında kural), değerin biçim sınıfını ekranda açıklar ve düzeltme
     yolunu söyler (Ek R4/12.1 "Değer redlerinin biçim sınıfları"). Red
     dosyası ilk iki satırdan (`REFUSAL_CODE`, `AT`; değişmedi) sonra
-    `REFUSAL_KEY=<ALAN>` ve `REFUSAL_VALUE_SHAPE=<SINIF>` taşır; değerin
+    `REFUSAL_KEY=<ALAN>` ve `REFUSAL_VALUE_SHAPE=<SINIF>` taşır (revizyon
+    14: ayrıca `REFUSAL_FILE_SHA256=<64 hex>`, tuzlu dosya hash'i); değerin
     kendisi ne red dosyasına ne ekrana girer; kit değeri düzeltmez,
     kırpmaz, harf büyüklüğünü değiştirmez; `BURAYA_` kalan, harf büyüklüğü
     farklı, boşluklu veya listede olmayan değer yine kilitsiz reddedilir ve
@@ -14541,7 +14922,7 @@ TUZ=<tuz>
 KARAR_TURU=INTAKE_APPROVED
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14567,7 +14948,7 @@ TUZ=<tuz>
 KARAR_TURU=VALIDATOR_WARNINGS_ACCEPTED
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14583,7 +14964,7 @@ TUZ=<tuz>
 KARAR_TURU=MANUAL_INPUT_COMPARED
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14600,7 +14981,7 @@ TUZ=<tuz>
 KARAR_TURU=FACT_ACCEPTED
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14615,7 +14996,7 @@ TUZ=<tuz>
 KARAR_TURU=VERIFICATION_VERIFIED
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14630,7 +15011,7 @@ TUZ=<tuz>
 KARAR_TURU=TIMELINE_APPROVED
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14645,7 +15026,7 @@ TUZ=<tuz>
 KARAR_TURU=STOPPING_EVENT
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14664,7 +15045,7 @@ TUZ=<tuz>
 KARAR_TURU=JUDICIAL_RECESS
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14679,7 +15060,7 @@ TUZ=<tuz>
 KARAR_TURU=DEADLINE_APPROVED
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14694,7 +15075,7 @@ TUZ=<tuz>
 KARAR_TURU=DELETION_DECISION
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14714,7 +15095,7 @@ TUZ=<tuz>
 KARAR_TURU=PILOT_UNSUITABLE
 CASE_ID=<case-id>
 # KARAR DOSYASI - yalniz avukat doldurur (runbook Ek R4/12.1).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; TUZ, KARAR_TURU, CASE_ID ve
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; TUZ, KARAR_TURU, CASE_ID ve
 # kitin doldurdugu diger satirlara dokunmayin. Her deger tek satir.
 # Turkce karakter, tarih ve kisisel bilgi yazmayin.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
@@ -14748,7 +15129,8 @@ YENİ (revizyon 8; §34.14). Dilim 1 kodu Ek R4/20'dedir (N135–N147). Kod
 yazılırken **çalıştırılmadı**; dilim 1 provasına tabidir (Ek R4/16.2) ve
 provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
 
-1. **Dilim 1 kit2 dizini** (`<evidence-dir>\kit2\`; tam olarak aşağıdaki
+1. **Dilim 1 kit2 dizini** (revizyon 14: dilim 2 ile 85 dosya; eklenen 26
+   dosya Ek R4/21 madde 1) (`<evidence-dir>\kit2\`; tam olarak aşağıdaki
    59 dosya + `pins2.txt` + `kit-build2.txt`; alt dizin yok; `bc.ps1`,
    `t0.ps1` ve `kume.ps1` bu kümeyi `Get-KbFileNames` (N136) ile ordinal
    olarak denetler):
@@ -14791,7 +15173,7 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    sessizce düzeltilmez); Not Defteri'nin ölçülmesi
    (`%SystemRoot%\System32\notepad.exe`: `FileVersion` ve SHA-256);
    **en son**, tek seferde CreateNew ile `pins2.txt` (her dosya için bir
-   satır `<ad> <64 küçük hex>`, LF; 59 satır) ve `kit-build2.txt`.
+   satır `<ad> <64 küçük hex>`, LF; 85 satır) ve `kit-build2.txt`.
 3. **`kit-build2.txt` satırları** (tam küme; `Read-KbBuild`, N136;
    bilinmeyen veya tekrar eden anahtar yüklemeyi reddeder): `KIT2_BUILD=OK`;
    her `pins2.txt` satırı için `KIT2_FILE_SHA256=<ad> <64 hex>` (aynı küme);
@@ -14819,7 +15201,8 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    `t0.ps1`, `kume.ps1` (ham dot-source), `b0.ps1`, `b1.ps1`, `b2.ps1`,
    `k.ps1`, `n.ps1`, `o.ps1`, `n000.ps1`, `n001.ps1`, `n002.ps1`,
    `n019.ps1`, `n037.ps1`, `n047.ps1`, `n048.ps1`, `n051.ps1`, `n117.ps1`
-   (`Get-KbScript … $null ''`); `n012.ps1` ve `n014.ps1`'de yalnız satır 1
+   (`Get-KbScript … $null ''`), revizyon 14'ten itibaren `b5.ps1`, `b5d.ps1`,
+   `b6.ps1`, `b7.ps1`, `g8.ps1`, `b8.ps1`, `u.ps1`; `n012.ps1` ve `n014.ps1`'de yalnız satır 1
    (`b1` bunları `FirstLine` ile yükler, `Get-KbScript` yalnız ilk satırı
    alır). Her eşleşme kurulum çıktısına `KIT2_PLACEHOLDER_LITERAL
    file=<ad> line=<n> token=<…>` satırı olarak yazılır (yalnız kurulum
@@ -14847,7 +15230,7 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    apply öncesi denetimler dilim 3'ün N90/N91 çerçevesindedir).
 6. **`n` bildirim metni** (karar, seçim 3; §34.14 yorum 14): sabit üç
    satırdır ve yalnız ekrana basılır; hiçbir dosyaya yazılmaz.
-7. **Dilim 1 komut kümeleri.** Normal oturum: `b0`, `b1`, `b2`, `k`, `n`,
+7. **Dilim 1 komut kümeleri** (dilim 2 eki: Ek R4/21 madde 2). Normal oturum: `b0`, `b1`, `b2`, `k`, `n`,
    `o`. Silme oturumu (`DUR.txt` var): `b0`, `b1`, `k` (yalnız `s25`
    öncesi), `n`, `o` (`b2` tanımlanmaz). Erken kapanış kipi: `b2` ve `k
    silme` dışındaki `k` türleri `EARLY_CLOSE_MODE` ile reddedilir. İçerik
@@ -14864,10 +15247,10 @@ hariç: kurulum aracıdır). Hepsi yalnız ASCII'dir ve Ek R4/7'ye uyar.
 **N135 — `bc.ps1` (KİT penceresi yükleyicisi).**
 
 ```powershell
-# bc.ps1 - Ek R4/1: kit2 yukleyicisi, KIT penceresi (runbook revizyon 8, dilim 1). ASCII. Kit1'den hemen sonra ayni Win+R satiriyla dot-source edilir.
+# bc.ps1 - Ek R4/1: kit2 yukleyicisi, KIT penceresi (runbook revizyon 8, dilim 1; revizyon 14, dilim 2). ASCII. Kit1'den hemen sonra ayni Win+R satiriyla dot-source edilir.
 # Kit1 yuklu degilse hicbir komut tanimlamaz. kbe.ps1'i pin ve ASCII denetiminden sonra ayni baytlardan yukler; pins2.txt, kit2 dizini,
 # kit-build2.txt, kit2-case.txt ve guvenli deger dosyasini (hash, ACL, bicim) denetler; yalniz app-dsn'i surec ortamina koyar.
-# Komutlar: b0, b1, b2, k, n, o. Butun yerel degiskenler alt kapsamdadir (& { }); genel adlar yalniz $global:Kb... bicimindedir.
+# Komutlar: b0, b1, b2, b5, b5d, b6, b7, g8, b8, u, k, n, o. Butun yerel degiskenler alt kapsamdadir (& { }); genel adlar yalniz $global:Kb... bicimindedir.
 & {
     if (($null -ceq $global:KitSess) -or ([string]$global:KitSess -ceq 'none') -or ($null -ceq $global:KitSessDir)) { Write-Host 'Kit1 yuklenmedi; pencereyi kapatin.'; return }
     if ($global:KbLoaded -ceq $true) {
@@ -15030,7 +15413,16 @@ hariç: kurulum aracıdır). Hepsi yalnız ASCII'dir ve Ek R4/7'ye uyar.
     $global:KbLoaded = $true
     function global:b0 { Invoke-KbStep 'b0' $args }
     function global:b1 { Invoke-KbStep 'b1' $args }
-    if (-not $global:KbTeardown) { function global:b2 { Invoke-KbStep 'b2' $args } }
+    if (-not $global:KbTeardown) {
+        function global:b2 { Invoke-KbStep 'b2' $args }
+        function global:b5 { Invoke-KbStep 'b5' $args }
+        function global:b5d { Invoke-KbStep 'b5d' $args }
+        function global:b6 { Invoke-KbStep 'b6' $args }
+        function global:b7 { Invoke-KbStep 'b7' $args }
+        function global:b8 { Invoke-KbStep 'b8' $args }
+        function global:u { Invoke-KbStep 'u' $args }
+    }
+    function global:g8 { Invoke-KbStep 'g8' $args }
     function global:k { Invoke-KbStep 'k' $args }
     function global:n { Invoke-KbStep 'n' $args }
     function global:o { Invoke-KbStep 'o' $args }
@@ -15041,7 +15433,7 @@ hariç: kurulum aracıdır). Hepsi yalnız ASCII'dir ve Ek R4/7'ye uyar.
 **N136 — `kbe.ps1` (ortak motor, süzgeç, kayıt ve değer yardımcıları).**
 
 ```powershell
-# kbe.ps1 - Ek R4/6: kit2 pinli blok motoru, anahtar basina suzgec, kayit, red ve deger yardimcilari (runbook revizyon 8; revizyon 10, 11 ve 13 duzeltmeleri). ASCII.
+# kbe.ps1 - Ek R4/6: kit2 pinli blok motoru, anahtar basina suzgec, kayit, red ve deger yardimcilari (runbook revizyon 8; revizyon 10, 11, 13 ve 14 duzeltmeleri). ASCII.
 # bc.ps1 ve pencere disi baslaticilar pin ve ASCII denetiminden sonra ayni baytlardan kurulan blokla dot-source eder
 # (Ek R4/5 madde 6 kurali; karar ACIK-28 = a). Kok kapsamda degisken yoktur; yalniz global fonksiyon tanimlar.
 # Baglam: $global:KbEvid, $global:KbDir, $global:KbPins, $global:KbVal, $global:KbSessName, $global:KbRefDir, $global:KbIsLauncher.
@@ -15150,7 +15542,9 @@ function global:Initialize-KbAllow {
         'N015|TOOL_MANIFEST_MATCH|bool',
         'N021|ALLOWED_FILE_HASH_RECORDED|bool', 'N021|ALLOWED_FILE_HASH_RECORD|w:FAIL',
         'N022|ALLOWED_FILE_HASH_OK|bool', 'N022|RESTRICTED_INVENTORY|w:OK,FAIL', 'N022|RESTRICTED_FILE_COUNT|int',
+        'N023|JSON_BOM|w:NONE,PRESENT', 'N024|TEXT_LENGTH|w:OK,OUT_OF_RANGE', 'N024|TEXT_VISIBLE|w:OK,EMPTY', 'N025|PAGE_COUNT|w:OK,INVALID',
         'N026|PDFTOTEXT_RC|int',
+        'N027|INTAKE_HASH|w:MATCH,MISMATCH', 'N029|TEXT_DATE_TOKEN_PRESENT|bool', 'N030|INTAKE_HASHES_RECORDED|bool', 'N031|SOURCE_HASHES_MATCH|bool',
         'N039|RUNTIME_PACKAGE_SET|w:MATCH,MISMATCH',
         'N040|PSQL_EXIT|int', 'N040|PSQL_READ_ONLY|bool', 'N040|PSQL_ROW_COUNT|int', 'N040|PSQL_EXIT_OR_READ_ONLY|w:FAIL',
         'N046|ENV_FILE|w:ABSENT', 'N046|ENV_FILE_BYTES|int',
@@ -15159,6 +15553,8 @@ function global:Initialize-KbAllow {
         'N052|PATH_OK|pathname', 'N052|PATH_FAIL|pathname', 'N053|PATH_OK|pathname', 'N053|PATH_FAIL|pathname',
         'N056|PATH_OK|pathname', 'N056|PATH_FAIL|pathname',
         'N057|CASE_ROOT_ABSENT|w:True', 'N057|CASE_ROOT_EXISTS|w:True', 'N057|PATH_OK|pathname', 'N057|PATH_FAIL|pathname',
+        'N059|MANUAL_INPUT_ENCODING|w:OK,FAIL', 'N060|MANUAL_INPUT_HASH_RECORDED|bool', 'N060|MANUAL_INPUT_HASH_RECORD|w:FAIL', 'N060|MANUAL_INPUT_REVISION|rx:^r[1-3]$', 'N060|MANUAL_INPUT_SHA256_PREFIX|h12',
+        'N061|MANUAL_INPUT_MATCHES_LAWYER_REVISION|bool', 'N061|LAWYER_DECISION_CITES_RECORD|bool',
         'N062|case_id|caseid', 'N062|document|docid', 'N062|target_ref|rx:^fact\.[a-z0-9_-]+\.pending$', 'N062|input_digest|h64', 'N062|pending_sha256|h64', 'N062|text_excerpt_sha256|h64', 'N062|excerpt_found|kbool', 'N062|verification_state|w:unverified',
         'N063|case_id|caseid', 'N063|document|docid', 'N063|pending_sha256|h64', 'N063|audit_file|audit', 'N063|journal_id|int', 'N063|attempt|int', 'N063|replayed|bool',
         'N069|journal_id|int', 'N069|new_state|w:completed,failed,reconciliation_required', 'N069|resolution_code|rx:^[A-Za-z0-9_]{1,64}$', 'N069|observed_post_hash|h64none',
@@ -15176,6 +15572,7 @@ function global:Initialize-KbAllow {
         'N086|row_key|w:deadline', 'N086|case_id|caseid', 'N086|pending_hash|h64', 'N086|validation_valid|bool',
         'N087|row_key|w:deadline', 'N087|canonical_hash|h64',
         'N118|RESTRICTED_ALLOWED_RECORD|w:WRITTEN,FAIL',
+        'N121|TAX_TYPE_VOCAB|w:OK,FAIL',
         'N122|EXPIRY_LINE_PRESENT|bool', 'N122|DISCLAIMER_LINE_PRESENT|bool',
         'TEST|TEST_KEY|w:OK')
     foreach ($kbeL in $kbeData) {
@@ -15191,6 +15588,7 @@ function global:New-KbFilterState([string]$Rec) {
     $kbeS['drop'] = 0; $kbeS['nons'] = 0; $kbeS['serr'] = 0; $kbeS['errc'] = 0; $kbeS['stop'] = $false
     $kbeS['nonsList'] = New-Object 'System.Collections.Generic.List[string]'; $kbeS['rows'] = New-Object 'System.Collections.Generic.List[string]'
     $kbeS['once'] = New-KbDict
+    $kbeS['vlines'] = New-Object 'System.Collections.Generic.List[string]'
     return ,$kbeS
 }
 function global:Add-KbOut($St, [string]$Line) {
@@ -15217,6 +15615,7 @@ function global:Submit-KbOut($St, [string]$Tag, [string]$Kind, $Raw) {
         }
         return
     }
+    if ($Kind -ceq 'validator') { $St['vlines'].Add($kbeT); return }
     if (($Kind -ceq 'psql') -and $kbeT.StartsWith('PSQL_ROW=', [System.StringComparison]::Ordinal)) { $St['rows'].Add($kbeT.Substring(9)); return }
     if (($Kind -ceq 'pip') -and ($kbeT -ceq 'No broken requirements found.')) { Add-KbOutOnce $St 'PIP_CHECK_CLEAN=True'; return }
     if (($Kind -ceq 'report') -and $kbeT.StartsWith('RAPOR YAZILDI: ', [System.StringComparison]::Ordinal)) { Add-KbOutOnce $St 'REPORT_WRITTEN_LINE_SEEN=True'; return }
@@ -15277,6 +15676,7 @@ function global:Complete-KbBlock($St, [object[]]$Spec, $Rc) {
         if ([int]$St['serr'] -ceq 0) { Add-KbOut $St 'GIT_STDERR_LINE_COUNT=0' } else { Add-KbOut $St "STOP GIT_STDERR_LINE_COUNT=$($St['serr'])" }
     } else {
         if ($Rc -ceq 2147352111) { Add-KbOut $St 'CLI_CALLED=False' } elseif ($Rc -ceq 0) { Add-KbOut $St 'CLI_RC=0' } else { Add-KbOut $St "STOP CLI_RC=$Rc" }
+        if ($kbeKind -ceq 'validator') { Add-KbValidatorLines $St $kbeTag }
         if ($kbeKind -ceq 'psql') {
             $kbeRows = [string[]]@($St['rows'])
             $kbeQ = [string]$Spec[5]
@@ -15296,6 +15696,134 @@ function global:Complete-KbBlock($St, [object[]]$Spec, $Rc) {
     $kbeWd = ''
     if ($kbeKind -cne 'status') { $kbeWd = ' WATCHDOG=NONE' }
     Add-KbOut $St "KB_BLOCK=$kbeTag DROPPED_TOKEN_COUNT=$($St['drop']) NONSTATUS_LINE_COUNT=$($St['nons']) STDERR_LINE_COUNT=$($St['serr'])$kbeWd"
+}
+function global:Read-KbValidatorOutput([string[]]$Lines, [string]$Tag) {
+    $kbeR = New-KbDict
+    $kbeGood = 'GE' + [char]0x00C7 + 'ERL' + [char]0x0130
+    $kbeBad = 'GE' + [char]0x00C7 + 'ERS' + [char]0x0130 + 'Z'
+    if ($Tag -ceq 'N032') { $kbePre = 'CASE '; $kbeHdr = 'Case:'; $kbeEnd = ' CASE VALIDATOR V1: PASS'; $kbeFail = 'CASE VALIDATION HATASI' }
+    else { $kbePre = 'CASE DOCUMENT LAYER '; $kbeHdr = 'Case directory:'; $kbeEnd = ' CASE DOCUMENT VALIDATOR V1: PASS'; $kbeFail = 'CASE DOCUMENT VALIDATION HATASI' }
+    $kbeNoW = 'Uyar' + [char]0x0131 + ' yok.'
+    $kbeG = $false; $kbeB = $false; $kbeE = $false; $kbeW = $false; $kbeIn = ''; $kbeTail = $false; $kbePath = ''; $kbeId = ''; $kbeEc = 0; $kbeWc = 0
+    $kbeP = New-Object 'System.Collections.Generic.List[string]'
+    for ($kbeI = 0; $kbeI -clt $Lines.Count; $kbeI++) {
+        $kbeL = [string]$Lines[$kbeI]
+        if (($kbeL -ceq $kbeHdr) -and (($kbeI + 1) -clt $Lines.Count) -and ($kbePath -ceq '')) { $kbePath = [string]$Lines[$kbeI + 1]; continue }
+        if ($kbeL -ceq ($kbePre + $kbeGood)) { $kbeG = $true; continue }
+        if ($kbeL -ceq ($kbePre + $kbeBad)) { $kbeB = $true; continue }
+        if ($kbeL.StartsWith('Case ID: ', [System.StringComparison]::Ordinal)) { $kbeId = $kbeL.Substring(9); continue }
+        if ($kbeL -ceq 'UYARILAR:') { $kbeIn = 'w'; $kbeW = $true; continue }
+        if ($kbeL -ceq $kbeNoW) { $kbeW = $true; continue }
+        if ($kbeL -ceq $kbeFail) { $kbeIn = 'e'; $kbeE = $true; continue }
+        if ($kbeL -ceq $kbeEnd) { $kbeTail = $true; continue }
+        if ($kbeL.StartsWith('=====', [System.StringComparison]::Ordinal)) { $kbeIn = ''; continue }
+        if (($kbeIn -cne '') -and $kbeL.StartsWith('- ', [System.StringComparison]::Ordinal)) {
+            if ($kbeIn -ceq 'w') { $kbeWc++ } else {
+                $kbeEc++
+                $kbeC = $kbeL.IndexOf(':', [System.StringComparison]::Ordinal)
+                if ($kbeC -cgt 2) { $kbeF = $kbeL.Substring(2, $kbeC - 2); if (($kbeF -cmatch '^[a-z_][a-z0-9_-]*(\.[a-z0-9_-]+)*$') -and ($kbeP.Count -clt 20)) { $kbeP.Add($kbeF) } }
+            }
+        }
+    }
+    $kbeRes = 'UNPARSED'
+    if ($kbeG -and (-not $kbeB) -and $kbeTail -and $kbeW -and ($kbeId -cne '') -and ($kbePath -cne '')) { $kbeRes = 'PASS' }
+    if ($kbeB -and (-not $kbeG) -and $kbeE -and ($kbeEc -cgt 0)) { $kbeRes = 'FAIL' }
+    $kbeR['result'] = $kbeRes; $kbeR['path'] = $kbePath; $kbeR['caseid'] = $kbeId; $kbeR['errors'] = [string]$kbeEc; $kbeR['warnings'] = [string]$kbeWc; $kbeR['paths'] = $kbeP.ToArray() -join ' '
+    return ,$kbeR
+}
+function global:Add-KbValidatorLines($St, [string]$Tag) {
+    $kbeR = Read-KbValidatorOutput ([string[]]@($St['vlines'])) $Tag
+    $St['vlines'].Clear()
+    $kbeN = 'DOCUMENT'; if ($Tag -ceq 'N032') { $kbeN = 'CASE' }
+    if ($null -ceq $global:KbValResult) { $global:KbValResult = New-KbDict }
+    $global:KbValResult[$Tag + ':errors'] = [string]$kbeR['errors']; $global:KbValResult[$Tag + ':paths'] = [string]$kbeR['paths']; $global:KbValResult[$Tag + ':result'] = [string]$kbeR['result']
+    if ([string]$kbeR['result'] -ceq 'PASS') {
+        Add-KbOut $St "VALIDATOR_$($kbeN)_RESULT=PASS"
+        $kbeRoot = [string]$global:KbVal['case-root']; $kbePath = [string]$kbeR['path']
+        if ([string]::Equals($kbePath, $kbeRoot, [System.StringComparison]::OrdinalIgnoreCase) -or $kbePath.StartsWith($kbeRoot + '\', [System.StringComparison]::OrdinalIgnoreCase)) { Add-KbOut $St 'VALIDATOR_PATH_MATCH=True' } else { Add-KbOut $St 'STOP VALIDATOR_PATH_MATCH=False' }
+        if ([string]$kbeR['caseid'] -ceq [string]$global:KbVal['case-id']) { Add-KbOut $St 'VALIDATOR_CASE_ID_MATCH=True' } else { Add-KbOut $St 'STOP VALIDATOR_CASE_ID_MATCH=False' }
+    } else { Add-KbOut $St "STOP VALIDATOR_$($kbeN)_RESULT=$([string]$kbeR['result'])" }
+    Add-KbOut $St "VALIDATOR_$($kbeN)_ERROR_COUNT=$([string]$kbeR['errors'])"
+    Add-KbOut $St "VALIDATOR_$($kbeN)_WARNING_COUNT=$([string]$kbeR['warnings'])"
+}
+function global:Test-KbSessionB1 { $kbeL = @(Read-KbLines (Join-Path ([string]$global:KitSessDir) 'b1.txt')); return (($kbeL -ccontains 'STEP_RESULT=PASS') -and ($kbeL -ccontains 'TEMP_IN_CONTAINER=True')) }
+function global:Test-KbRecClean([string]$Rec) { return (@(@(Read-KbLines $Rec) | Where-Object { $_.StartsWith('STOP ', [System.StringComparison]::Ordinal) }).Count -ceq 0) }
+function global:Get-KbSubst {
+    $kbeD = New-KbDict
+    foreach ($kbeK in @($global:KbVal.Keys)) { if (($kbeK -cne 'app-dsn') -and ($kbeK -cne 'FORM_F1') -and ($kbeK -cne 'known-external-drive-letters')) { $kbeD[$kbeK] = [string]$global:KbVal[$kbeK] } }
+    return ,$kbeD
+}
+function global:Read-KbDigits([string]$Prompt, [int]$Min, [int]$Max) {
+    $kbeW = ([string]$Max).Length
+    for ($kbeT = 1; $kbeT -cle 2; $kbeT++) {
+        try { while ([Console]::KeyAvailable) { $null = [Console]::ReadKey($true) } } catch { }
+        Write-Host "$Prompt ($Min-$Max; $kbeW hane, Enter gerekmez): " -NoNewline
+        $kbeS = ''; $kbeBad = $false
+        while (($kbeS.Length -clt $kbeW) -and (-not $kbeBad)) {
+            while (-not [Console]::KeyAvailable) { Start-Sleep -Milliseconds 50 }
+            $kbeC = [string][Console]::ReadKey($true).KeyChar
+            if ($kbeC -cmatch '^[0-9]$') { $kbeS = $kbeS + $kbeC; Write-Host $kbeC -NoNewline } else { $kbeBad = $true }
+        }
+        Write-Host ''
+        if (-not $kbeBad) { $kbeN = [int]$kbeS; if (($kbeN -cge $Min) -and ($kbeN -cle $Max)) { return $kbeN } }
+        Write-Host 'Gecersiz tus.'
+    }
+    return -1
+}
+function global:ConvertTo-KbJson([string]$Value) {
+    $kbeS = New-Object System.Text.StringBuilder
+    $null = $kbeS.Append('"')
+    foreach ($kbeC in $Value.ToCharArray()) {
+        $kbeN = [int]$kbeC
+        if ($kbeN -ceq 92) { $null = $kbeS.Append('\\') }
+        elseif ($kbeN -ceq 34) { $null = $kbeS.Append('\"') }
+        elseif ($kbeN -clt 32) { $null = $kbeS.Append('\u' + $kbeN.ToString('x4', [System.Globalization.CultureInfo]::InvariantCulture)) }
+        else { $null = $kbeS.Append($kbeC) }
+    }
+    $null = $kbeS.Append('"')
+    return $kbeS.ToString()
+}
+function global:Write-KbUtf8File([string]$Path, [string]$Text, [System.IO.FileMode]$Mode) {
+    $kbeB = (New-Object System.Text.UTF8Encoding($false)).GetBytes($Text)
+    $kbeFs = [System.IO.File]::Open($Path, $Mode, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+    try { $kbeFs.Write($kbeB, 0, $kbeB.Length) } finally { $kbeFs.Dispose() }
+}
+function global:Get-KbDecision([string]$Kind, [string]$Rev) {
+    foreach ($kbeF in @(Get-ChildItem -LiteralPath (Join-Path ([string]$global:KbEvid) 'steps\d') -Force -File -ErrorAction SilentlyContinue)) {
+        if ($kbeF.Name -cnotmatch '^k[1-9][0-9]{0,5}\.txt$') { continue }
+        $kbeL = [string[]]@(Read-KbLines $kbeF.FullName)
+        if (($kbeL -ccontains 'STEP_RESULT=PASS') -and ($kbeL -ccontains "DECISION_KIND=$Kind") -and (($Rev -ceq '') -or ($kbeL -ccontains "REVIZYON=$Rev"))) { return ,$kbeL }
+    }
+    return $null
+}
+function global:Test-KbDecisionHash([string[]]$Lines) {
+    $kbeM = [regex]::Match([string](Get-KbField $Lines 'INBOUND_DECISION_RECEIVED '), '^seq=[1-9][0-9]{0,5} sha256=([0-9a-f]{64}) channel=at-device$')
+    $kbeF = Get-KbField $Lines 'DECISION_FILE='
+    if ((-not $kbeM.Success) -or ($null -ceq $kbeF) -or ($kbeF -cnotmatch '^[a-z0-9.-]{1,64}$')) { return $false }
+    try { return ((Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path ([string]$global:KbVal['restricted-dir']) $kbeF)))) -ceq $kbeM.Groups[1].Value) } catch { return $false }
+}
+function global:Get-KbFormRecheckLines {
+    $kbeO = New-Object 'System.Collections.Generic.List[string]'
+    $kbeL = @(Read-KbLines (Join-Path ([string]$global:KbEvid) 'form-hash-record.txt'))
+    if ($kbeL.Count -ceq 0) { return [string[]]@('STOP FORM_HASH_RECORD=MISSING') }
+    $kbeH = New-KbDict; $kbeB = New-KbDict
+    foreach ($kbeT in $kbeL) {
+        if ($kbeT -ceq '') { continue }
+        $kbeM = [regex]::Match($kbeT, '^FORM_HASH unit=(AF|G|AFG|ATT[1-2]) seq=([1-9][0-9]{0,2}) sha256=([0-9a-f]{64})$')
+        if ($kbeM.Success) { $kbeH[$kbeM.Groups[1].Value + ' ' + $kbeM.Groups[2].Value] = $kbeM.Groups[3].Value; continue }
+        $kbeM = [regex]::Match($kbeT, '^FORM_BINDING part=(AF|G|ATT[1-2]) unit=(AF|G|AFG|ATT[1-2]) seq=([1-9][0-9]{0,2})$')
+        if ($kbeM.Success) { $kbeB[$kbeM.Groups[1].Value] = $kbeM.Groups[2].Value + ' ' + $kbeM.Groups[3].Value; continue }
+        return [string[]]@('STOP FORM_HASH_RECORD=UNPARSED')
+    }
+    if ((-not $kbeB.ContainsKey('AF')) -or (-not $kbeB.ContainsKey('G'))) { return [string[]]@('STOP FORM_BINDING=MISSING') }
+    foreach ($kbeP in @('AF', 'G', 'ATT1', 'ATT2')) {
+        if (-not $kbeB.ContainsKey($kbeP)) { continue }
+        $kbeK = 'form-' + $kbeP.ToLowerInvariant()
+        $kbeOk = $false
+        if ($global:KbVal.ContainsKey($kbeK) -and $kbeH.ContainsKey([string]$kbeB[$kbeP])) { try { $kbeOk = ((Get-KbSha ([System.IO.File]::ReadAllBytes([string]$global:KbVal[$kbeK]))) -ceq [string]$kbeH[[string]$kbeB[$kbeP]]) } catch { $kbeOk = $false } }
+        if ($kbeOk) { $kbeO.Add("FORM_HASH_RECHECK part=$kbeP match=True") } else { $kbeO.Add("STOP FORM_HASH_RECHECK part=$kbeP match=False") }
+    }
+    return [string[]]$kbeO.ToArray()
 }
 function global:Get-KbToken([string]$Key) { return ('<' + $Key + '>') }
 function global:Get-KbScript([string]$Name, $Subst, [string]$FirstLine) {
@@ -15494,7 +16022,7 @@ function global:Get-KbK6Branches([int]$Before) {
     $kbeR = @(); if ($kbeG5) { $kbeR += 'G5' }; if ($kbeM1) { $kbeR += 'MADDE1' }
     return [string[]]$kbeR
 }
-function global:Get-KbFileNames { return [string[]]@('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'sv7.ps1', 'ev.ps1', 'kit2-case.txt', 'n000.ps1', 'n001.ps1', 'n002.ps1', 'n003.ps1', 'n011.ps1', 'n012.ps1', 'n013.ps1', 'n014.ps1', 'n015.ps1', 'n019.ps1', 'n021.ps1', 'n022.ps1', 'n037.ps1', 'n038.ps1', 'n039.ps1', 'n040.ps1', 'n041.sql', 'n042.sql', 'n043.sql', 'n044.sql', 'n045.sql', 'n046.ps1', 'n047.ps1', 'n048.ps1', 'n049.ps1', 'n050.ps1', 'n051.ps1', 'n052.ps1', 'n053.ps1', 'n056.ps1', 'n057.ps1', 'n057-2.ps1', 'n117.ps1', 'n118.ps1', 'n123.txt', 'n124.txt', 'n125.txt', 'n126.txt', 'n127.txt', 'n128.txt', 'n129.txt', 'n130.txt', 'n131.txt', 'n132.txt', 'n133.txt') }
+function global:Get-KbFileNames { return [string[]]@('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'sv7.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1', 'n155.txt', 'n156.txt', 'n058.txt', 'n023.ps1', 'n024.ps1', 'n025.ps1', 'n026.ps1', 'n027.ps1', 'n028.ps1', 'n029.ps1', 'n030.ps1', 'n031.ps1', 'n032.ps1', 'n033.ps1', 'n034.ps1', 'n059.ps1', 'n060.ps1', 'n061.ps1', 'n121.ps1', 'ev.ps1', 'kit2-case.txt', 'n000.ps1', 'n001.ps1', 'n002.ps1', 'n003.ps1', 'n011.ps1', 'n012.ps1', 'n013.ps1', 'n014.ps1', 'n015.ps1', 'n019.ps1', 'n021.ps1', 'n022.ps1', 'n037.ps1', 'n038.ps1', 'n039.ps1', 'n040.ps1', 'n041.sql', 'n042.sql', 'n043.sql', 'n044.sql', 'n045.sql', 'n046.ps1', 'n047.ps1', 'n048.ps1', 'n049.ps1', 'n050.ps1', 'n051.ps1', 'n052.ps1', 'n053.ps1', 'n056.ps1', 'n057.ps1', 'n057-2.ps1', 'n117.ps1', 'n118.ps1', 'n123.txt', 'n124.txt', 'n125.txt', 'n126.txt', 'n127.txt', 'n128.txt', 'n129.txt', 'n130.txt', 'n131.txt', 'n132.txt', 'n133.txt') }
 function global:Test-KbKitDir {
     $kbeNames = Get-KbFileNames
     $global:KbPins = Read-KbPins ([string]$global:KbDir)
@@ -16066,10 +16594,10 @@ $null = Complete-KbStep $b2xRec 'b2' @('E2_CARRIER_KIND=ENCRYPTED_TRANSFER basis
 **N143 — `k.ps1` (karar dosyası).**
 
 ```powershell
-# k.ps1 - Ek R4/12.1: avukatin karar dosyasi (k tur; ornek: k fact) (runbook revizyon 8, dilim 1; revizyon 10 ve 13). ASCII. Yalniz k komutuyla, Invoke-KbStep icinden calisir.
+# k.ps1 - Ek R4/12.1: avukatin karar dosyasi (k tur; ornek: k fact) (runbook revizyon 8, dilim 1; revizyon 10, 13 ve 14). ASCII. Yalniz k komutuyla, Invoke-KbStep icinden calisir.
 # Sablonu (N123-N133, pinli) restricted dizine yazar veya ayni dosyayi acar, pinli Not Defteri'ni -Wait ile acar, kapaninca denetler (kilitsiz dongu),
 # avukat teyidinden sonra steps\d\k(seq).txt kaydini yazar. Kayda dosyanin icinden yalniz sozluk degerleri, boolean'lar ve uzunluk girer.
-# Deger redlerinde (K_MARKER_LEFT, K_VALUE, K_REFERENCE_FORMAT) red dosyasina yalniz alan adi ve bicim sinifi girer, deger girmez (revizyon 13).
+# Deger redlerinde (K_MARKER_LEFT, K_VALUE, K_REFERENCE_FORMAT) red dosyasina alan adi, bicim sinifi ve dosyanin tuzlu SHA-256'si girer, deger girmez (revizyon 13 ve 14).
 function Get-KxText([byte[]]$Bytes) { try { return (New-Object System.Text.UTF8Encoding($false, $true)).GetString($Bytes) } catch { return $null } }
 function Split-KxLines([string]$Text) { $kxsL = [System.Collections.Generic.List[string]]$Text.Split([char]10); if (($kxsL.Count -cgt 0) -and ($kxsL[$kxsL.Count - 1] -ceq '')) { $kxsL.RemoveAt($kxsL.Count - 1) }; return ,$kxsL }
 function New-KxSalt { $kxnB = New-Object byte[] 16; $kxnR = [System.Security.Cryptography.RandomNumberGenerator]::Create(); try { $kxnR.GetBytes($kxnB) } finally { $kxnR.Dispose() }; return ([System.BitConverter]::ToString($kxnB)).Replace('-', '').ToLowerInvariant() }
@@ -16248,14 +16776,16 @@ while ($true) {
         if ($kxRs -ceq 'REFERENCE_RULE') { $kxRt = '' }
         if ($kxCode -ceq 'K_MARKER_LEFT') { $kxRd = "Duzeltme: imleci bu satirin en sonuna koyun; $kxRm yazisini geri silme tusuyla (Backspace: Enter tusunun hemen ustundeki tus) tamamen silin, satirda yalniz $kxRk= kalsin; bosluk birakmayin; sonra $kxRh. Bitirince Ctrl+S, sonra X." }
         else { $kxRd = "Duzeltme: = isaretinden sonraki her seyi geri silme tusuyla (Backspace: Enter tusunun hemen ustundeki tus) silin, satirda yalniz $kxRk= kalsin; bosluk birakmayin; sonra $kxRh. Bitirince Ctrl+S, sonra X." }
-        if ($kxRk -cmatch '^[A-Z][A-Z0-9_]{0,63}$') { $kxRx = [string[]]@("REFUSAL_KEY=$kxRk", "REFUSAL_VALUE_SHAPE=$kxRs") }
+        if ($kxRk -cmatch '^[A-Z][A-Z0-9_]{0,63}$') { $kxRx = [string[]]@("REFUSAL_KEY=$kxRk", "REFUSAL_VALUE_SHAPE=$kxRs", "REFUSAL_FILE_SHA256=$(Get-KbSha $kxBytes)") }
+        $kxRo = ''
+        if ($kxCode -ceq 'K_MARKER_LEFT') { $kxRn = @($kxFields | Where-Object { ($_ -cne $kxRk) -and ([string]$kxRes['v:' + $_] -cmatch 'BURAYA_') }); if ($kxRn.Count -cgt 0) { $kxRo = "`nAyni durum su satirlarda da var: $($kxRn -join ', '). Hepsini ayni sekilde duzeltin." } }
     }
     if ($kxCode -ceq 'K_BOM') { $kxMsg = 'Dosya BOM ile kaydedilmis. Not Defteri''nde Farkli kaydet degil, yalniz Ctrl+S kullanin.' }
     if ($kxCode -ceq 'K_ENCODING') { $kxMsg = 'Dosya UTF-8 degil. Not Defteri''nde Farkli kaydet degil, yalniz Ctrl+S kullanin.' }
     if ($kxCode -ceq 'K_SALT_LINE') { $kxMsg = 'Ilk satir (TUZ) silinmis veya bozulmus.' }
     if ($kxCode -ceq 'K_TEMPLATE_IDENTITY') { $kxMsg = "Kitin doldurdugu $([string]$kxRes['key']) satiri silinmis, bozulmus veya iki kez yazilmis." }
     if ($kxCode -ceq 'K_TEMPLATE_LINE') { $kxMsg = "Satir $([string]$kxRes['line']) sablonla uyusmuyor. Sablondaki beklenen satir: $([string]$kxRes['expected'])" }
-    if ($kxCode -ceq 'K_MARKER_LEFT') { $kxMsg = "$kxRk satirinda BURAYA_ isareti kaldi. $kxRt`n$kxRe`n$kxRd" }
+    if ($kxCode -ceq 'K_MARKER_LEFT') { $kxMsg = "$kxRk satirinda BURAYA_ isareti kaldi. $kxRt$kxRo`n$kxRe`n$kxRd" }
     if ($kxCode -ceq 'K_VALUE') { $kxMsg = "$kxRk degeri gecersiz. $kxRt Izinli degerler: $([string]$kxRes['allowed'])`n$kxRe`n$kxRd" }
     if ($kxCode -ceq 'K_REFERENCE_FORMAT') { $kxMsg = 'REFERANS kurala uymuyor: yalniz harf, rakam, bosluk, nokta, alt cizgi, kisa cizgi; en cok 64 karakter; boslukla bitemez; tarih ve art arda 6 rakam olamaz. Referans yoksa YOK.' + "`n$kxRe`n$kxRd" }
     if ($kxCode -ceq 'K_K6_BRANCH_NOT_NAMED') { $kxMsg = "Silme kararinda $([string]$kxRes['key']) dali adlandirilmali (runbook 4.3 a, K6)." }
@@ -16387,14 +16917,14 @@ else {
 
 ```powershell
 # kvc2.ps1 - Ek R4/1 madde 5 ve Ek R4/7 madde 6: genisletilmis N116 (kit1 + kit2 degisken adi cakismasi), AST sayimlari ve komut adi
-# cakismasi (runbook revizyon 8, dilim 1; revizyon 10: yer tutucu sayaci). ASCII. Kit dizinlerine kopyalanmaz; dosyalari yalniz okur ve Parser.ParseFile ile ayristirir; kit kodu
+# cakismasi (runbook revizyon 8, dilim 1; revizyon 10: yer tutucu sayaci; revizyon 14: dilim 2 dosyalari). ASCII. Kit dizinlerine kopyalanmaz; dosyalari yalniz okur ve Parser.ParseFile ile ayristirir; kit kodu
 # calistirmaz. Yeni bir 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File' alt surecinde -Kit1Dir ve -Kit2Dir ile calistirilir.
 param([string]$Kit1Dir, [string]$Kit2Dir)
 $kvStop = 0; $kvCount = 0
 try {
     $kvK1 = @('ac.ps1', 'a2.ps1', 'a3.ps1', 'a4.ps1', 'a5.ps1', 'a6.ps1', 'a7.ps1', 'a8.ps1', 'a9.ps1', 'n003.ps1', 'n004.ps1', 'n006.ps1', 'n014.ps1', 'n015.ps1', 'n016.ps1', 'n017.ps1', 'n051.ps1')
-    $kvOwn = @('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'sv7.ps1')
-    $kvEng = @('n001.ps1', 'n002.ps1', 'n003.ps1', 'n011.ps1', 'n012.ps1', 'n013.ps1', 'n014.ps1', 'n015.ps1', 'n019.ps1', 'n021.ps1', 'n022.ps1', 'n037.ps1', 'n038.ps1', 'n039.ps1', 'n040.ps1', 'n046.ps1', 'n047.ps1', 'n048.ps1', 'n049.ps1', 'n050.ps1', 'n051.ps1', 'n052.ps1', 'n053.ps1', 'n056.ps1', 'n057.ps1', 'n057-2.ps1', 'n118.ps1')
+    $kvOwn = @('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'sv7.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1')
+    $kvEng = @('n001.ps1', 'n002.ps1', 'n003.ps1', 'n011.ps1', 'n012.ps1', 'n013.ps1', 'n014.ps1', 'n015.ps1', 'n019.ps1', 'n021.ps1', 'n022.ps1', 'n037.ps1', 'n038.ps1', 'n039.ps1', 'n040.ps1', 'n046.ps1', 'n047.ps1', 'n048.ps1', 'n049.ps1', 'n050.ps1', 'n051.ps1', 'n052.ps1', 'n053.ps1', 'n056.ps1', 'n057.ps1', 'n057-2.ps1', 'n118.ps1', 'n023.ps1', 'n024.ps1', 'n025.ps1', 'n026.ps1', 'n027.ps1', 'n028.ps1', 'n029.ps1', 'n030.ps1', 'n031.ps1', 'n032.ps1', 'n033.ps1', 'n034.ps1', 'n059.ps1', 'n060.ps1', 'n061.ps1', 'n121.ps1')
     $kvOther = @('n000.ps1', 'n117.ps1')
     $kvFiles = New-Object System.Collections.ArrayList
     foreach ($kvF in $kvK1) { $null = $kvFiles.Add(@('k1', $kvF, (Join-Path $Kit1Dir $kvF))) }
@@ -16506,7 +17036,7 @@ try {
         }
     }
     foreach ($kvF in @(Get-ChildItem -LiteralPath $Kit2Dir -Force -File -ErrorAction Stop)) { foreach ($kvB in [System.IO.File]::ReadAllBytes($kvF.FullName)) { if ($kvB -cgt 127) { $kvAstN['NON_ASCII_BYTE']++ } } }
-    $kvNoSubst = @('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'n000.ps1', 'n001.ps1', 'n002.ps1', 'n019.ps1', 'n037.ps1', 'n047.ps1', 'n048.ps1', 'n051.ps1', 'n117.ps1')
+    $kvNoSubst = @('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1', 'n000.ps1', 'n001.ps1', 'n002.ps1', 'n019.ps1', 'n037.ps1', 'n047.ps1', 'n048.ps1', 'n051.ps1', 'n117.ps1')
     $kvFirstOnly = @('n012.ps1', 'n014.ps1')
     $kvPh = 0; $kvPhBad = $false
     foreach ($kvF in ($kvNoSubst + $kvFirstOnly)) {
@@ -16556,4 +17086,1049 @@ try {
     foreach ($kvCn in $kvCmdNames) { if (@(Get-Command -Name $kvCn -ErrorAction SilentlyContinue).Count -cgt 0) { $kvCmdHit++; "KIT2_CMD_COLLISION name=$kvCn" } }
     if ($kvCmdHit -ceq 0) { 'KIT2_CMD_COLLISIONS=0' } else { "STOP KIT2_CMD_COLLISIONS=$kvCmdHit" }
 } catch { 'STOP KIT2_VAR_SCAN=EXCEPTION' }
+```
+
+### Ek R4/21 Dilim 2: dosya kümesi, uygulama seçimleri ve bloklar (revizyon 14)
+
+YENİ (revizyon 14; §34.20). Dilim 2 kodu N148–N156'dır; N0–N147'nin
+numaraları kaymadı. Sentetik düzenekte ölçüldü, provaya tabidir ve provadan
+geçmeden gerçek koşuda kullanılamaz (§32/41).
+
+1. **Dosya kümesi.** Ek R4/19 madde 1'deki 59 dosyaya 26 dosya eklenir:
+   toplam **85** dosya + `pins2.txt` + `kit-build2.txt`
+   (`Get-KbFileNames`, N136).
+
+   | Dosya | Kaynak | SHA-256 |
+   |---|---|---|
+   | `b5.ps1`, `b5d.ps1`, `b6.ps1`, `b7.ps1`, `g8.ps1`, `b8.ps1`, `u.ps1` | N148–N154 | §34.20 tablosu |
+   | `n155.txt`, `n156.txt` | N155, N156 (`case.json` ve `document.json` şablonu) | §34.20 tablosu |
+   | `n023.ps1` … `n034.ps1`, `n059.ps1`, `n060.ps1`, `n061.ps1`, `n121.ps1` | Aynı numaralı runbook bloğunun bayt-bayt kopyası | Ek R4/6 madde 3 kuralı |
+   | `n058.txt` | N58 (`json` bloğu), bayt-bayt | Aynı kural |
+
+   `n123`…`n133.txt` yeni pinleriyle (R13-O1; §34.20). `pins2.txt` 85 satır;
+   `KIT2_FILE_SHA256` satırları aynı küme. `kit-build2.txt` anahtar kümesi
+   değişmedi. N147 tarama listeleri dilim 2 dosyalarını kapsar
+   (`KIT2_VAR_SCAN_FILE_COUNT=81`).
+2. **Komut kümeleri.** Normal oturum: dilim 1 kümesi + `b5`, `b5d`, `b6`,
+   `b7`, `g8`, `b8`, `u`. Silme oturumu: `g8` tanımlıdır ve
+   `G8_NOT_ALLOWED` ile reddeder; diğer altısı tanımlanmaz (`b2` gibi).
+   Erken kapanış kipi: yedisi de `EARLY_CLOSE_MODE` ile reddedilir (`u`
+   kaydı varken `U_ALREADY`). Yedi komutun hepsi bu oturumda `b1` PASS
+   (işleme dalı; `TEMP_IN_CONTAINER=True`) ister; yoksa kilitsiz
+   `<KOMUT>_PRECONDITION` (Ek R4/8.4 madde 1; `Test-KbSessionB1`).
+3. **Form hash kaydı.** `b5`, §6.6/7 (a) yeniden ölçümünü
+   `<evidence-dir>\form-hash-record.txt`'den yapar: pencere öncesi ajanın
+   yazdığı ASCII, LF dosya; yalnız `FORM_HASH` ve `FORM_BINDING` satırları
+   (§6.6/7 biçimi; §26.2 "Avukat formu" satırlarının kit karşılığı;
+   Ek R4/16.7 (10)). Dosya yok `STOP FORM_HASH_RECORD=MISSING`; başka satır
+   `STOP FORM_HASH_RECORD=UNPARSED`; `AF` veya `G` bağlayıcılık satırı yok
+   `STOP FORM_BINDING=MISSING`; her `part` için son `FORM_BINDING` geçerlidir
+   ve dosya güvenli dosyadaki `form-af`, `form-g`, `form-att1`, `form-att2`
+   anahtarından okunur. Bu bir `STOP` ise belge kopyalanmaz.
+4. **`b5d` döngü sırası.** Madde 3–7'ye ek seçimler: `SAYI_` satırları
+   anahtar denetiminden önce okunur (form sayıları kendi taşır); boş
+   satırlar yok sayılır; satır formatı reddi yalnız satır numarasını
+   söyler; dahil ve istisna vergi terimleri aynı formda ise `b6`'daki
+   `TAX_TYPE_VOCAB` kilitlemesin diye `b5d` kilitsiz `B5D_VOCAB` verir
+   (§11.3 f); para, sayfa sayısı, taraf numarası ve ilgili dosya kimliği
+   ihlali `B5D_VALUE_RULE`'dur (Ek R4/8 girişi). Hatadan sonra önce "Not
+   Defteri yeniden acilsin mi?"; H → "Form bastan olusturulsun mu?
+   Girdikleriniz silinir."; H → kilitsiz çıkış, form yerinde. Sıfırlama
+   sorusu bu yüzden olağan düzeltme turunda sorulmaz. Sayı ve menü
+   sorusunda iki geçersiz tuş: `B5D_VALUE_RULE`, form yazılmaz.
+5. **Sayı okuma.** `Read-KbDigits` (N136) `Read-KbYesNo` kalıbındadır
+   (`KeyAvailable` + 50 ms; Ctrl+C sonraki tuşu beklemez). Hane sayısı
+   üst sınırın uzunluğudur: sayılar tek tuş, 18 terimlik vergi menüsü iki
+   tuş (`01`–`18`); Enter gerekmez. `b7`'de aday sayısına göre.
+6. **Doğrulayıcı ayrıştırıcısı (Ek R4/9 N32/N33).** Tür `validator`
+   (N136 `Read-KbValidatorOutput`, `Add-KbValidatorLines`). Pinli işaretler,
+   `bb3e5b4` kaynağından: `Case:`, `Case directory:`, `Case ID: `,
+   `CASE GEÇERLİ`, `CASE GEÇERSİZ`, `CASE DOCUMENT LAYER GEÇERLİ`,
+   `CASE DOCUMENT LAYER GEÇERSİZ`, `CASE VALIDATION HATASI`,
+   `CASE DOCUMENT VALIDATION HATASI`, `UYARILAR:`, `Uyarı yok.`,
+   ` CASE VALIDATOR V1: PASS`, ` CASE DOCUMENT VALIDATOR V1: PASS`.
+   `- ` ile başlayan satırlar yalnız sayılır. Kayıt satırları: N32
+   `VALIDATOR_CASE_RESULT`, `VALIDATOR_CASE_ERROR_COUNT`,
+   `VALIDATOR_CASE_WARNING_COUNT`; N33 aynı biçimde `DOCUMENT`; ikisinde
+   `VALIDATOR_PATH_MATCH`, `VALIDATOR_CASE_ID_MATCH` (yalnız PASS'te). Sonuç
+   `PASS`, `FAIL` veya işaretler bulunamazsa `UNPARSED`; ikisi de `STOP`.
+   `b6` iki sayıyı toplar: tek `VALIDATOR_ERROR_COUNT` ve tek
+   `VALIDATOR_WARNING_COUNT` (`k uyari` bu satırı okur). Hata satırının
+   iki nokta öncesi `^[a-z_][a-z0-9_-]*(\.[a-z0-9_-]+)*$` ise bellekte alan
+   yolu olarak tutulur (en çok 20) ve yalnız `b5d` iletisinde form anahtarı
+   önekine çevrilir; değer taşımaz. Doğrulayıcı çıktısının gövdesi hiçbir
+   kayda ve ekrana girmez.
+7. **N34.** Beklenen `check-ignore` satırı `.gitignore:<n>:/data/cases/`,
+   sekme, `data/cases/<case-id>/case.json`'dur; `<n>` `<repo-root>\.gitignore`
+   içindeki `/data/cases/` satırının numarasıdır (`b6` okur).
+8. **Aday kuralı (Ek R4/15 madde 1; kural sürümü N151).** Metin `\f` ile
+   sayfalara, `\n` ile satırlara, `(?<=[.!?])\s+` ile cümlelere bölünür.
+   Aday: kırpılmış ve NFC'ye çevrilmiş parça; 1–500 karakter; sekme dışında
+   kontrol karakteri yok; motor deseniyle (`src/manual_fact_entry_engine.py`
+   L117) **tam bir** eşleşme ve gerçek takvim günü (M-08); sayfa
+   `file.page_count`'u aşmaz (M-04); normalleştirilmiş metinde bulunur
+   (M-07). `date` eşleşmeden ISO'ya çevrilir. Aday sayısı kaydedilmez.
+9. **Girdi sürümleri.** `b7` `r1`'den başlar; `b07-r<n>` varken yeni sürüm
+   yalnız `MANUAL_INPUT_COMPARED` `REVIZYON=r<n>` `SONUC=RED` PASS kaydıyla
+   açılır; `r3` RED ise `B7_REVISION_LIMIT`. Reconciliation `r1`…`r7`
+   komutları **bu dilimde değildir** (KD-14; dilim 4). `b8`'in `b9`'a giden
+   yolu dilim 3'tedir.
+10. **Red ve karar hash'i.** `b7`, `b8`, `u` kullandıkları kararların dosya
+    hash'ini kayıttaki `sha256` ile karşılaştırır (`Test-KbDecisionHash`;
+    Ek R4/12.1 madde 7); fark kilitli `K_DECISION_HASH`.
+11. **`g8`** girdi dosyasının SHA-256'sını `manual-input-r<n>.sha256.txt` ile
+    karşılaştırır; farkta kilitsiz `G8_PRECONDITION`, değer basılmaz.
+    Kilitli sonuç `b8`'in N61'indedir.
+
+**N148 — `b5.ps1` (form hash, belge teslimi, `pdftotext`).**
+
+```powershell
+# b5.ps1 - Ek R4/8.3: form hash (a), belge teslimi, pdftotext (runbook revizyon 14, dilim 2). ASCII. Yalniz b5 komutuyla, Invoke-KbStep icinden calisir.
+# x dizinindeki tek dosya adina bakilmadan case-root altina opak adla kopyalanir; dosya adi kayda ve ekrana girmez. Sonra N15 ve N26 pinli baytlarla calisir.
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+$b5xV = $global:KbVal
+$b5xRec = Join-Path ([string]$global:KbEvid) 'steps\c\b05.txt'
+if (Test-Path -LiteralPath $b5xRec) { Write-KbRefusal 'B5_ALREADY' 'Bu adim zaten calisti: b05.txt. Tekrar calismaz.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B5_PRECONDITION' 'b5 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b5xGot = $false
+foreach ($b5xA in @(@('a6.txt', '1'), @('a7.txt', '2'))) {
+    $b5xL = @(Read-KbLines (Join-Path ([string]$global:KbEvid) ('steps\e2\' + [string]$b5xA[0])))
+    if (($b5xL -ccontains 'STEP_RESULT=PASS') -and ($b5xL -ccontains 'ATTEMPT_OUTCOME=SUCCESS') -and ($b5xL -ccontains "SEVENZIP_RC=0 attempt=$($b5xA[1])") -and ($b5xL -ccontains "X_ENTRY_COUNT=1 attempt=$($b5xA[1])")) { $b5xGot = $true }
+}
+if (-not $b5xGot) { Write-KbRefusal 'B5_PRECONDITION' 'b5 BASLAMADI: aktarim gunu a6 veya a7 basarili kaydi yok.'; return }
+$b5xCase = [string]$b5xV['case-root']
+if (Test-Path -LiteralPath $b5xCase) { Write-KbRefusal 'B5_PRECONDITION' 'b5 BASLAMADI: case dizini zaten var. Ajana donun; dizine dokunmayin.'; return }
+$b5xX = Join-Path ([string]$b5xV['intake-dir']) 'x'
+$b5xItems = @()
+if (Test-Path -LiteralPath $b5xX -PathType Container) { $b5xItems = @(Get-ChildItem -LiteralPath $b5xX -Force -ErrorAction Stop) }
+if ($b5xItems.Count -ceq 0) { Write-KbRefusal 'B5_X_EMPTY' 'b5 BASLAMADI: acilmis belge yok (x dizini bos). Aktarim gunu a6/a7 adimlarini denetleyin.'; return }
+if (-not (New-KbRecord $b5xRec (Get-KbHeader 'b5' 'b5.ps1'))) { Invoke-KbLock 'b5' 'B5_RECORD_WRITE_FAIL'; return }
+$b5xReq = @('X_FILE_COUNT=1', 'TOOL_MANIFEST_MATCH=True', 'PDFTOTEXT_RC=0', 'CLI_RC=0', 'FORM_HASH_RECHECK part=AF match=True', 'FORM_HASH_RECHECK part=G match=True')
+foreach ($b5xL in @(Get-KbFormRecheckLines)) { Add-KbLine $b5xRec ([string]$b5xL) }
+if (Test-KbRecClean $b5xRec) {
+    if ($b5xItems.Count -cne 1) { Add-KbLine $b5xRec "STOP X_FILE_COUNT=$($b5xItems.Count)" }
+    elseif ($b5xItems[0].PSIsContainer -or ($b5xItems[0].Attributes -band [System.IO.FileAttributes]::ReparsePoint)) { Add-KbLine $b5xRec 'STOP X_ENTRY_NOT_FILE=True' }
+    else {
+        Add-KbLine $b5xRec 'X_FILE_COUNT=1'
+        $b5xDoc = Join-Path $b5xCase ('documents\' + [string]$b5xV['document-id'])
+        $null = [System.IO.Directory]::CreateDirectory((Join-Path $b5xDoc 'extracted'))
+        [System.IO.File]::Copy([string]$b5xItems[0].FullName, (Join-Path $b5xDoc ([string]$b5xV['file-name'])), $false)
+        $b5xSub = Get-KbSubst
+        $b5xHelp = @((New-KbSpec 'n051.ps1' '' $null 'N051' 'status' $null), (New-KbSpec 'n019.ps1' '' $null 'N019' 'status' $null), (New-KbSpec 'n048.ps1' '' $null 'N048' 'status' $null), (New-KbSpec 'n012.ps1' 'function Get-PilotStringSha(' $null 'N012' 'status' $null), (New-KbSpec 'n014.ps1' 'function Get-PilotBinManifestSha(' $null 'N014' 'status' $null))
+        $null = Invoke-KbBlocks $b5xRec $b5xHelp @((New-KbSpec 'n015.ps1' '' $b5xSub 'N015' 'status' $null), (New-KbSpec 'n026.ps1' '' $b5xSub 'N026' 'cli' $null))
+    }
+}
+$null = Complete-KbStep $b5xRec 'b5' $b5xReq $false 'Siradaki: b5d.'
+```
+
+**N149 — `b5d.ps1` (intake formu ve JSON üretimi).**
+
+```powershell
+# b5d.ps1 - Ek R4/12.3: intake formu ve JSON uretimi (runbook revizyon 14, dilim 2). ASCII. Yalniz b5d komutuyla, Invoke-KbStep icinden calisir.
+# Form kapsayici icindedir ve Not Defteri'nde doldurulur. Kayit yalniz butun denetimler gecince acilir; form hatalari kilitsizdir, ileti yalniz anahtar adini soyler.
+# case.json ve document.json pinli sablonlardan (n155.txt, n156.txt) uretilir, geri okunur ve N32/N33 kayitsiz calisir. Deger hicbir kayda ve red dosyasina girmez.
+function Get-XdSchema([string]$Path) { return ((New-Object System.Text.UTF8Encoding($false, $true)).GetString([System.IO.File]::ReadAllBytes($Path)) | ConvertFrom-Json) }
+function Get-XdVocab($Cs, $Ds) {
+    $xvD = New-Object 'System.Collections.Generic.Dictionary[string,string[]]' ([System.StringComparer]::Ordinal)
+    $xvC = $Cs.'$defs'; $xvO = $Ds.'$defs'
+    $xvD['case_type'] = [string[]]@($Cs.properties.case_type.enum); $xvD['case_status'] = [string[]]@($Cs.properties.case_status.enum); $xvD['stage'] = [string[]]@($Cs.properties.stage.enum)
+    $xvD['client_side'] = [string[]]@($Cs.properties.client_side.enum); $xvD['confidentiality'] = [string[]]@($Cs.properties.confidentiality_level.enum)
+    $xvD['party_role'] = [string[]]@($xvC.party.properties.role.enum); $xvD['party_type'] = [string[]]@($xvC.party.properties.party_type.enum); $xvD['period_kind'] = [string[]]@($xvC.period.properties.kind.enum)
+    $xvD['action_category'] = [string[]]@($xvC.administrativeAction.properties.action_category.enum); $xvD['event_category'] = [string[]]@($xvC.event.properties.event_category.enum)
+    $xvD['date_precision'] = [string[]]@($xvC.event.properties.date_precision.enum); $xvD['level'] = [string[]]@($xvC.proceeding.properties.level.enum); $xvD['forum_type'] = [string[]]@($xvC.proceeding.properties.forum_type.enum)
+    $xvD['proceeding_status'] = [string[]]@($xvC.proceeding.properties.status.enum); $xvD['relation_type'] = [string[]]@($xvC.documentRef.properties.relation_type.enum); $xvD['case_relation'] = [string[]]@($xvC.caseRelation.properties.type.enum)
+    $xvD['document_category'] = [string[]]@($Ds.properties.document_category.enum); $xvD['date_type'] = [string[]]@($xvO.documentDate.properties.date_type.enum); $xvD['doc_precision'] = [string[]]@($xvO.documentDate.properties.precision.enum); $xvD['reference_type'] = [string[]]@($xvO.referenceNumber.properties.reference_type.enum)
+    return ,$xvD
+}
+function Add-XdF($List, [string]$Key, [string]$Class) { $List.Add([string[]]@($Key, $Class)) }
+function New-XdFields($Cn) {
+    $xnL = New-Object 'System.Collections.Generic.List[string[]]'
+    Add-XdF $xnL 'DOSYA_BASLIGI' 't'; Add-XdF $xnL 'DAVA_TURU' 'dv:case_type'; Add-XdF $xnL 'DOSYA_DURUMU' 'v:case_status'; Add-XdF $xnL 'ASAMA' 'dv:stage'; Add-XdF $xnL 'MUVEKKIL_TARAFI' 'v:client_side'; Add-XdF $xnL 'DOSYA_GIZLILIK' 'v:confidentiality'; Add-XdF $xnL 'BELGE_ILISKI_TURU' 'v:relation_type'; Add-XdF $xnL 'BELGE_ILISKI_NOTU' 'n'
+    for ($xnI = 1; $xnI -cle $Cn['SAYI_TARAF']; $xnI++) { $xnP = "TARAF_$($xnI)_"; Add-XdF $xnL ($xnP + 'AD') 'n'; Add-XdF $xnL ($xnP + 'ROL') 'v:party_role'; Add-XdF $xnL ($xnP + 'TUR') 'v:party_type'; Add-XdF $xnL ($xnP + 'REFERANS') 'n'; Add-XdF $xnL ($xnP + 'NOT') 'n' }
+    for ($xnI = 1; $xnI -cle $Cn['SAYI_KALEM']; $xnI++) {
+        $xnP = "KALEM_$($xnI)_"
+        Add-XdF $xnL ($xnP + 'VERGI_TURU') 'dx'; Add-XdF $xnL ($xnP + 'DONEM_TURU') 'v:period_kind'; Add-XdF $xnL ($xnP + 'DONEM_ETIKETI') 't'; Add-XdF $xnL ($xnP + 'DONEM_BASLANGIC') 'd'; Add-XdF $xnL ($xnP + 'DONEM_BITIS') 'd'
+        foreach ($xnM in @('ANA_VERGI', 'CEZA', 'TOPLAM')) { if ($xnM -ceq 'CEZA') { Add-XdF $xnL ($xnP + 'CEZA_TURU') 'n' }; Add-XdF $xnL ($xnP + $xnM + '_TUTARI') 'ma'; Add-XdF $xnL ($xnP + $xnM + '_PARA') 'mc' }
+        for ($xnJ = 1; $xnJ -cle $Cn[$xnP + 'SAYI_DAYANAK']; $xnJ++) { Add-XdF $xnL ($xnP + "DAYANAK_$xnJ") 't' }
+        Add-XdF $xnL ($xnP + 'NOT') 'n'
+    }
+    for ($xnI = 1; $xnI -cle $Cn['SAYI_ISLEM']; $xnI++) { $xnP = "ISLEM_$($xnI)_"; Add-XdF $xnL ($xnP + 'KATEGORI') 'dv:action_category'; Add-XdF $xnL ($xnP + 'TURU') 't'; Add-XdF $xnL ($xnP + 'IDARE') 'da'; Add-XdF $xnL ($xnP + 'TARIHI') 'd'; Add-XdF $xnL ($xnP + 'NOT') 'n' }
+    for ($xnI = 1; $xnI -cle $Cn['SAYI_OLAY']; $xnI++) { $xnP = "OLAY_$($xnI)_"; Add-XdF $xnL ($xnP + 'KATEGORI') 'v:event_category'; Add-XdF $xnL ($xnP + 'TURU') 't'; Add-XdF $xnL ($xnP + 'BASLIK') 't'; Add-XdF $xnL ($xnP + 'TARIHI') 'd'; Add-XdF $xnL ($xnP + 'TARIH_HASSASIYETI') 'v:date_precision'; Add-XdF $xnL ($xnP + 'ACIKLAMA') 'n' }
+    for ($xnI = 1; $xnI -cle $Cn['SAYI_YARGILAMA']; $xnI++) { $xnP = "YARGILAMA_$($xnI)_"; Add-XdF $xnL ($xnP + 'SEVIYE') 'v:level'; Add-XdF $xnL ($xnP + 'FORUM') 'v:forum_type'; Add-XdF $xnL ($xnP + 'MAHKEME') 'n'; Add-XdF $xnL ($xnP + 'ESAS_NO') 'n'; Add-XdF $xnL ($xnP + 'KARAR_NO') 'n'; Add-XdF $xnL ($xnP + 'ACILIS_TARIHI') 'd'; Add-XdF $xnL ($xnP + 'KARAR_TARIHI') 'd'; Add-XdF $xnL ($xnP + 'DURUM') 'v:proceeding_status'; Add-XdF $xnL ($xnP + 'NOT') 'n' }
+    for ($xnI = 1; $xnI -cle $Cn['SAYI_ILGILI_DOSYA']; $xnI++) { $xnP = "ILGILI_DOSYA_$($xnI)_"; Add-XdF $xnL ($xnP + 'TUR') 'v:case_relation'; Add-XdF $xnL ($xnP + 'KIMLIK') 'id'; Add-XdF $xnL ($xnP + 'NOT') 'n' }
+    Add-XdF $xnL 'BELGE_BASLIGI' 't'; Add-XdF $xnL 'BELGE_KATEGORISI' 'v:document_category'; Add-XdF $xnL 'BELGE_TURU' 'dd'; Add-XdF $xnL 'BELGE_ALT_TURU' 'n'; Add-XdF $xnL 'BELGE_GIZLILIK' 'v:confidentiality'; Add-XdF $xnL 'SAYFA_SAYISI' 'p'; Add-XdF $xnL 'BELGEYI_DUZENLEYEN_TARAF' 'pr'; Add-XdF $xnL 'ALICI_TARAFLAR' 'pl'
+    for ($xnI = 1; $xnI -cle $Cn['SAYI_BELGE_TARIH']; $xnI++) { $xnP = "BELGE_TARIH_$($xnI)_"; Add-XdF $xnL ($xnP + 'TUR') 'v:date_type'; Add-XdF $xnL ($xnP + 'DEGER') 'd'; Add-XdF $xnL ($xnP + 'HASSASIYET') 'v:doc_precision'; Add-XdF $xnL ($xnP + 'SAYFA') 'pn' }
+    for ($xnI = 1; $xnI -cle $Cn['SAYI_BELGE_REFERANS']; $xnI++) { $xnP = "BELGE_REFERANS_$($xnI)_"; Add-XdF $xnL ($xnP + 'TUR') 'v:reference_type'; Add-XdF $xnL ($xnP + 'DEGER') 't'; Add-XdF $xnL ($xnP + 'KURUM') 'n' }
+    return ,$xnL
+}
+function Get-XdMarker([string]$Class) {
+    if ($Class -ceq 't') { return 'BURAYA_METIN' }
+    if ($Class -ceq 'n') { return 'BURAYA_METIN_VEYA_BOS' }
+    if ($Class -ceq 'd') { return 'BURAYA_YYYY-AA-GG_VEYA_BOS' }
+    if ($Class -ceq 'da') { return 'BURAYA_IDARE_ADI' }
+    if ($Class -ceq 'dd') { return 'BURAYA_BELGE_TURU' }
+    if ($Class -ceq 'ma') { return 'BURAYA_TUTAR_VEYA_BOS' }
+    if ($Class -ceq 'mc') { return 'BURAYA_PARA_BIRIMI_VEYA_BOS' }
+    if ($Class -ceq 'p') { return 'BURAYA_SAYI' }
+    if ($Class -ceq 'pn') { return 'BURAYA_SAYI_VEYA_BOS' }
+    if ($Class -ceq 'pr') { return 'BURAYA_TARAF_NO_VEYA_BOS' }
+    if ($Class -ceq 'pl') { return 'BURAYA_TARAF_NOLARI' }
+    if ($Class -ceq 'id') { return 'BURAYA_DOSYA_KIMLIGI' }
+    return 'BURAYA_SOZLUK'
+}
+function Get-XdForm($Cn, $Fields, $Vocab, $Tax) {
+    $xgL = New-Object 'System.Collections.Generic.List[string]'
+    foreach ($xgT in @('# INTAKE FORMU - runbook Ek R4/12.3. Kapsayici icindedir; hicbir yere kopyalamayin.', '# BURAYA_ ile baslayan yaziyi geri silme tusuyla (Backspace: Enter tusunun hemen ustundeki tus; bosluk tusu DEGIL) tamamen silip yerine degeri yazin.', '# Her satir ANAHTAR=DEGER; deger tek satir. Harf buyuklugu listedeki gibi olmali.', '# SAYI_ satirlarina ve menuden gelen VERGI_TURU satirlarina dokunmayin; sayilar yanlissa kit formu bastan olusturur.', '# VEYA_BOS yazan alanda deger yoksa tam olarak BOS yazin. Tarih bicimi YYYY-AA-GG. Teblig tarihi bu forma yazilmaz.', '# Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.')) { $xgL.Add($xgT) }
+    foreach ($xgK in @('SAYI_TARAF', 'SAYI_KALEM', 'SAYI_ISLEM', 'SAYI_OLAY', 'SAYI_YARGILAMA', 'SAYI_ILGILI_DOSYA', 'SAYI_BELGE_TARIH', 'SAYI_BELGE_REFERANS')) { $xgL.Add($xgK + '=' + [string]$Cn[$xgK]) }
+    for ($xgI = 1; $xgI -cle $Cn['SAYI_KALEM']; $xgI++) { $xgK = "KALEM_$($xgI)_SAYI_DAYANAK"; $xgL.Add($xgK + '=' + [string]$Cn[$xgK]) }
+    foreach ($xgF in $Fields) {
+        $xgK = [string]$xgF[0]; $xgC = [string]$xgF[1]
+        if ($xgC.IndexOf(':', [System.StringComparison]::Ordinal) -cge 0) { $xgL.Add('# ' + $xgK + ': ' + ($Vocab[$xgC.Substring($xgC.IndexOf(':', [System.StringComparison]::Ordinal) + 1)] -join ', ')) }
+        if ($xgC -ceq 'ma') { $xgL.Add('# ' + $xgK + ': ornek bicim 1250.50 (nokta, en cok iki ondalik); tutar yoksa BOS') }
+        if ($xgC -ceq 'mc') { $xgL.Add('# ' + $xgK + ': uc buyuk harf (ornek TRY); tutar BOS ise BOS') }
+        if ($xgC -ceq 'dd') { $xgL.Add('# ' + $xgK + ': bu pilotta yalniz vergi_ceza_ihbarnamesi') }
+        if ($xgC -ceq 'da') { $xgL.Add('# ' + $xgK + ': isleme yapan idarenin adi; BOS olamaz (mali tatil denetimi)') }
+        if ($xgC -ceq 'pr') { $xgL.Add('# ' + $xgK + ': taraf numarasi (1-' + [string]$Cn['SAYI_TARAF'] + ') veya BOS') }
+        if ($xgC -ceq 'pl') { $xgL.Add('# ' + $xgK + ': taraf numaralari, virgulle, bosluksuz (ornek bicim 1,2); alici yoksa 0') }
+        if ($xgC -ceq 'dx') { $xgL.Add($xgK + '=' + [string]$Tax[$xgK]) } else { $xgL.Add($xgK + '=' + (Get-XdMarker $xgC)) }
+    }
+    return (($xgL.ToArray() -join "`n") + "`n")
+}
+function Read-XdCount([string]$Prompt, [int]$Min) { Write-Host 'TUSA PROJE SAHIBI BASAR'; return (Read-KbDigits $Prompt $Min 9) }
+function Read-XdAnswers($Terms) {
+    $xaC = New-Object 'System.Collections.Generic.Dictionary[string,int]' ([System.StringComparer]::Ordinal)
+    $xaT = New-KbDict
+    foreach ($xaQ in @(@('SAYI_TARAF', 'Taraf sayisi', 1), @('SAYI_KALEM', 'Uyusmazlik kalemi sayisi', 1), @('SAYI_ISLEM', 'Idari islem sayisi', 1), @('SAYI_OLAY', 'Olay sayisi', 0), @('SAYI_YARGILAMA', 'Yargilama sayisi', 0), @('SAYI_ILGILI_DOSYA', 'Ilgili dosya sayisi', 0), @('SAYI_BELGE_TARIH', 'Belgedeki tarih sayisi', 0), @('SAYI_BELGE_REFERANS', 'Belgedeki referans numarasi sayisi', 0))) {
+        $xaV = Read-XdCount ([string]$xaQ[1]) ([int]$xaQ[2])
+        if ($xaV -clt 0) { return $null }
+        $xaC[[string]$xaQ[0]] = $xaV
+    }
+    for ($xaI = 1; $xaI -cle $xaC['SAYI_KALEM']; $xaI++) {
+        $xaV = Read-XdCount "Kalem $xaI icin hukuki dayanak sayisi" 0
+        if ($xaV -clt 0) { return $null }
+        $xaC["KALEM_$($xaI)_SAYI_DAYANAK"] = $xaV
+        Write-Host "----- Kalem $xaI vergi turu (bu kalem icin ayri secin) -----"
+        for ($xaJ = 0; $xaJ -clt $Terms.Count; $xaJ++) { Write-Host "$(($xaJ + 1).ToString('00', [System.Globalization.CultureInfo]::InvariantCulture)) $($Terms[$xaJ])" }
+        Write-Host 'TUSA PROJE SAHIBI BASAR'
+        $xaV = Read-KbDigits "Kalem $xaI vergi turu numarasi" 1 $Terms.Count
+        if ($xaV -clt 1) { return $null }
+        $xaT["KALEM_$($xaI)_VERGI_TURU"] = [string]$Terms[$xaV - 1]
+    }
+    $xaR = New-Object 'System.Collections.Generic.List[object]'
+    $xaR.Add($xaC); $xaR.Add($xaT)
+    return ,$xaR
+}
+function New-XdRes([string]$Code, [string]$Key, [string]$Class, [string]$Line, [string]$Others) {
+    $xrR = New-KbDict
+    $xrR['code'] = $Code; $xrR['key'] = $Key; $xrR['class'] = $Class; $xrR['line'] = $Line; $xrR['others'] = $Others
+    return ,$xrR
+}
+function Get-XdOthers([string[]]$Keys) { if ($Keys.Count -cle 1) { return '' }; $xoK = @($Keys | Select-Object -Skip 1 -First 10); $xoT = $xoK -join ', '; if (($Keys.Count - 1) -cgt 10) { $xoT = $xoT + " ve $($Keys.Count - 11) satir daha" }; return $xoT }
+function Test-XdForm([byte[]]$Bytes, $Vocab, $Inc, $Exc) {
+    if (($Bytes.Count -cge 3) -and ($Bytes[0] -ceq 239) -and ($Bytes[1] -ceq 187) -and ($Bytes[2] -ceq 191)) { return (New-XdRes 'B5D_BOM' '' '' '' '') }
+    try { $xtT = (New-Object System.Text.UTF8Encoding($false, $true)).GetString($Bytes) } catch { return (New-XdRes 'B5D_ENCODING' '' '' '' '') }
+    $xtV = New-KbDict; $xtDup = ''
+    $xtN = 0
+    foreach ($xtL in $xtT.Split([char]10)) {
+        $xtN++
+        if (($xtL -ceq '') -or $xtL.StartsWith('#', [System.StringComparison]::Ordinal)) { continue }
+        $xtE = $xtL.IndexOf('=', [System.StringComparison]::Ordinal)
+        if (($xtE -clt 1) -or ($xtL.Substring(0, $xtE) -cnotmatch '^[A-Z][A-Z0-9_]*$') -or ($xtL.IndexOf([string][char]13, [System.StringComparison]::Ordinal) -cge 0)) { return (New-XdRes 'B5D_LINE_FORMAT' '' '' ([string]$xtN) '') }
+        $xtK = $xtL.Substring(0, $xtE)
+        if ($xtV.ContainsKey($xtK)) { if ($xtDup -ceq '') { $xtDup = $xtK } } else { $xtV[$xtK] = $xtL.Substring($xtE + 1) }
+    }
+    $xtC = New-Object 'System.Collections.Generic.Dictionary[string,int]' ([System.StringComparer]::Ordinal)
+    foreach ($xtQ in @(@('SAYI_TARAF', 1), @('SAYI_KALEM', 1), @('SAYI_ISLEM', 1), @('SAYI_OLAY', 0), @('SAYI_YARGILAMA', 0), @('SAYI_ILGILI_DOSYA', 0), @('SAYI_BELGE_TARIH', 0), @('SAYI_BELGE_REFERANS', 0))) {
+        $xtK = [string]$xtQ[0]
+        if ((-not $xtV.ContainsKey($xtK)) -or ([string]$xtV[$xtK] -cnotmatch '^[0-9]$') -or ([int]$xtV[$xtK] -clt [int]$xtQ[1])) { return (New-XdRes 'B5D_COUNT_MISMATCH' $xtK '' '' '') }
+        $xtC[$xtK] = [int]$xtV[$xtK]
+    }
+    for ($xtI = 1; $xtI -cle $xtC['SAYI_KALEM']; $xtI++) {
+        $xtK = "KALEM_$($xtI)_SAYI_DAYANAK"
+        if ((-not $xtV.ContainsKey($xtK)) -or ([string]$xtV[$xtK] -cnotmatch '^[0-9]$')) { return (New-XdRes 'B5D_COUNT_MISMATCH' $xtK '' '' '') }
+        $xtC[$xtK] = [int]$xtV[$xtK]
+    }
+    $xtF = New-XdFields $xtC
+    $xtCl = New-KbDict
+    foreach ($xtA in $xtF) { $xtCl[[string]$xtA[0]] = [string]$xtA[1] }
+    $xtSfx = '^(TARAF_[0-9]+_(AD|ROL|TUR|REFERANS|NOT)|KALEM_[0-9]+_(SAYI_DAYANAK|VERGI_TURU|DONEM_TURU|DONEM_ETIKETI|DONEM_BASLANGIC|DONEM_BITIS|ANA_VERGI_TUTARI|ANA_VERGI_PARA|CEZA_TURU|CEZA_TUTARI|CEZA_PARA|TOPLAM_TUTARI|TOPLAM_PARA|DAYANAK_[0-9]+|NOT)|ISLEM_[0-9]+_(KATEGORI|TURU|IDARE|TARIHI|NOT)|OLAY_[0-9]+_(KATEGORI|TURU|BASLIK|TARIHI|TARIH_HASSASIYETI|ACIKLAMA)|YARGILAMA_[0-9]+_(SEVIYE|FORUM|MAHKEME|ESAS_NO|KARAR_NO|ACILIS_TARIHI|KARAR_TARIHI|DURUM|NOT)|ILGILI_DOSYA_[0-9]+_(TUR|KIMLIK|NOT)|BELGE_TARIH_[0-9]+_(TUR|DEGER|HASSASIYET|SAYFA)|BELGE_REFERANS_[0-9]+_(TUR|DEGER|KURUM))$'
+    $xtBeyond = ''
+    foreach ($xtK in @($xtV.Keys)) {
+        if ($xtCl.ContainsKey($xtK) -or $xtC.ContainsKey($xtK)) { continue }
+        if ($xtK -cmatch $xtSfx) { if ($xtBeyond -ceq '') { $xtBeyond = $xtK } } else { return (New-XdRes 'B5D_UNKNOWN_KEY' $xtK '' '' '') }
+    }
+    if ($xtDup -cne '') { return (New-XdRes 'B5D_DUPLICATE_KEY' $xtDup '' '' '') }
+    foreach ($xtA in $xtF) { $xtK = [string]$xtA[0]; if ((-not $xtV.ContainsKey($xtK)) -and (([string]$xtA[1]).Substring(0, 1) -cne 'd' -or ([string]$xtA[1] -ceq 'd'))) { return (New-XdRes 'B5D_MISSING_KEY' $xtK ([string]$xtA[1]) '' '') } }
+    if ($xtBeyond -cne '') { return (New-XdRes 'B5D_COUNT_MISMATCH' $xtBeyond '' '' '') }
+    $xtM = New-Object 'System.Collections.Generic.List[string]'
+    foreach ($xtA in $xtF) { $xtK = [string]$xtA[0]; if ($xtV.ContainsKey($xtK) -and ([string]$xtV[$xtK] -cmatch 'BURAYA_')) { $xtM.Add($xtK) } }
+    if ($xtM.Count -cgt 0) { return (New-XdRes 'B5D_MARKER_LEFT' $xtM[0] ([string]$xtCl[$xtM[0]]) '' (Get-XdOthers ([string[]]$xtM.ToArray()))) }
+    $xtM.Clear()
+    foreach ($xtA in $xtF) {
+        $xtK = [string]$xtA[0]; $xtS = [string]$xtA[1]
+        if (($xtS -ceq 'dx') -or ($xtS -ceq 'da') -or ($xtS -ceq 'dd') -or $xtS.StartsWith('dv:', [System.StringComparison]::Ordinal)) { continue }
+        $xtX = [string]$xtV[$xtK]
+        if ([string]::IsNullOrWhiteSpace($xtX) -or (($xtX -ceq 'BOS') -and (@('t', 'p', 'pl', 'id') -ccontains $xtS)) -or (($xtX -ceq 'BOS') -and $xtS.StartsWith('v:', [System.StringComparison]::Ordinal))) { $xtM.Add($xtK) }
+    }
+    if ($xtM.Count -cgt 0) { return (New-XdRes 'B5D_EMPTY' $xtM[0] ([string]$xtCl[$xtM[0]]) '' (Get-XdOthers ([string[]]$xtM.ToArray()))) }
+    foreach ($xtA in $xtF) { if (([string]$xtA[1] -ceq 'd') -and ([string]$xtV[[string]$xtA[0]] -cne 'BOS') -and ([string]$xtV[[string]$xtA[0]] -cnotmatch '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')) { return (New-XdRes 'B5D_DATE_FORMAT' ([string]$xtA[0]) 'd' '' '') } }
+    foreach ($xtA in $xtF) {
+        $xtS = [string]$xtA[1]; $xtK = [string]$xtA[0]
+        if ($xtS.StartsWith('v:', [System.StringComparison]::Ordinal) -and (@($Vocab[$xtS.Substring(2)]) -cnotcontains [string]$xtV[$xtK])) { return (New-XdRes 'B5D_VOCAB' $xtK $xtS '' '') }
+    }
+    foreach ($xtA in $xtF) {
+        $xtS = [string]$xtA[1]; $xtK = [string]$xtA[0]
+        if (-not (($xtS -ceq 'dx') -or ($xtS -ceq 'da') -or ($xtS -ceq 'dd') -or $xtS.StartsWith('dv:', [System.StringComparison]::Ordinal))) { continue }
+        if ((-not $xtV.ContainsKey($xtK)) -or [string]::IsNullOrWhiteSpace([string]$xtV[$xtK]) -or ([string]$xtV[$xtK] -ceq 'BOS')) { return (New-XdRes 'B5D_DEADLINE_FIELD' $xtK $xtS '' '') }
+        if ($xtS.StartsWith('dv:', [System.StringComparison]::Ordinal) -and (@($Vocab[$xtS.Substring(3)]) -cnotcontains [string]$xtV[$xtK])) { return (New-XdRes 'B5D_VOCAB' $xtK $xtS '' '') }
+        if (($xtS -ceq 'dx') -and (@($Inc + $Exc) -cnotcontains [string]$xtV[$xtK])) { return (New-XdRes 'B5D_VOCAB' $xtK $xtS '' '') }
+        if (($xtS -ceq 'dd') -and ([string]$xtV[$xtK] -cne 'vergi_ceza_ihbarnamesi')) { return (New-XdRes 'B5D_DOCUMENT_TYPE_SCOPE' $xtK $xtS '' '') }
+    }
+    $xtHi = $false; $xtHe = $false
+    foreach ($xtA in $xtF) { if ([string]$xtA[1] -ceq 'dx') { if ($Inc -ccontains [string]$xtV[[string]$xtA[0]]) { $xtHi = $true } else { $xtHe = $true } } }
+    if ($xtHi -and $xtHe) { return (New-XdRes 'B5D_VOCAB' 'KALEM_1_VERGI_TURU' 'mix' '' '') }
+    foreach ($xtA in $xtF) {
+        $xtS = [string]$xtA[1]; $xtK = [string]$xtA[0]; $xtX = [string]$xtV[$xtK]; $xtBad = $false
+        if ($xtS -ceq 'ma') { $xtBad = (($xtX -cne 'BOS') -and ($xtX -cnotmatch '^-?[0-9]+(\.[0-9]{1,2})?$')) }
+        if ($xtS -ceq 'mc') { $xtBad = (($xtX -cne 'BOS') -and ($xtX -cnotmatch '^[A-Z]{3}$')); $xtPair = [string]$xtV[$xtK.Substring(0, $xtK.Length - 4) + 'TUTARI']; if (($xtX -ceq 'BOS') -cne ($xtPair -ceq 'BOS')) { $xtBad = $true } }
+        if ($xtS -ceq 'p') { $xtBad = ($xtX -cnotmatch '^[1-9][0-9]{0,5}$') }
+        if ($xtS -ceq 'pn') { $xtBad = (($xtX -cne 'BOS') -and ($xtX -cnotmatch '^[1-9][0-9]{0,5}$')) }
+        if ($xtS -ceq 'id') { $xtBad = ($xtX -cnotmatch '^[a-z0-9_-]{3,64}$') }
+        if ($xtS -ceq 'pr') { $xtBad = (($xtX -cne 'BOS') -and (($xtX -cnotmatch '^[1-9]$') -or ([int]$xtX -cgt $xtC['SAYI_TARAF']))) }
+        if (($xtS -ceq 'pl') -and ($xtX -cne '0')) {
+            $xtBad = ($xtX -cnotmatch '^[1-9](,[1-9])*$')
+            if (-not $xtBad) { $xtSeen = New-KbDict; foreach ($xtP in $xtX.Split([char]44)) { if (([int]$xtP -cgt $xtC['SAYI_TARAF']) -or $xtSeen.ContainsKey($xtP)) { $xtBad = $true }; $xtSeen[$xtP] = '1' } }
+        }
+        if ($xtBad) { return (New-XdRes 'B5D_VALUE_RULE' $xtK $xtS '' '') }
+    }
+    $xtR = New-XdRes '' '' '' '' ''
+    $xtO = New-Object 'System.Collections.Generic.List[object]'
+    $xtO.Add($xtR); $xtO.Add($xtV); $xtO.Add($xtC)
+    return ,$xtO
+}
+function Get-XdHelp($Res, $Vocab, $Inc, $Exc) {
+    $xhC = [string]$Res['code']; $xhK = [string]$Res['key']; $xhS = [string]$Res['class']
+    $xhBs = 'Duzeltme: imleci bu satirin en sonuna koyun; = isaretinden sonraki her seyi geri silme tusuyla (Backspace: Enter tusunun hemen ustundeki tus; bosluk tusu DEGIL) silin, sonra dogru degeri yazin. Bitirince Ctrl+S, sonra X.'
+    $xhF = ''
+    if ($xhS.StartsWith('v:', [System.StringComparison]::Ordinal)) { $xhF = "$xhK satiri tam olarak su satirlardan biri olmali:" + (@($Vocab[$xhS.Substring(2)] | ForEach-Object { "`n    $xhK=$_" }) -join '') }
+    elseif ($xhS.StartsWith('dv:', [System.StringComparison]::Ordinal)) { $xhF = "$xhK satiri tam olarak su satirlardan biri olmali:" + (@($Vocab[$xhS.Substring(3)] | ForEach-Object { "`n    $xhK=$_" }) -join '') }
+    elseif ($xhS -ceq 'dx') { $xhF = "$xhK degeri menudeki vergi terimlerinden biri olmali (kit yazdi; degistirdiyseniz formu bastan olusturun)." }
+    elseif ($xhS -ceq 'dd') { $xhF = "$xhK satiri tam olarak $xhK=vergi_ceza_ihbarnamesi olmali." }
+    elseif ($xhS -ceq 'da') { $xhF = "$xhK satirinda = isaretinden sonra isleme yapan idarenin adi yazili olmali; BOS yazilamaz." }
+    elseif ($xhS -ceq 'd') { $xhF = "Dogru bicim: $xhK=YYYY-AA-GG (yil-ay-gun, rakamlarla) veya tarih yoksa $xhK=BOS" }
+    elseif ($xhS -ceq 't') { $xhF = "Dogru bicim: $xhK= isaretinden hemen sonra tek satir metin; BOS yazilamaz." }
+    elseif ($xhS -ceq 'n') { $xhF = "Dogru bicim: $xhK= isaretinden hemen sonra tek satir metin, deger yoksa $xhK=BOS" }
+    elseif ($xhS -ceq 'ma') { $xhF = "Dogru bicim: $xhK= isaretinden sonra rakamlar; kurus varsa nokta ve en cok iki hane (ornek bicim 1250.50); tutar yoksa $xhK=BOS. Tutar ve para birimi birlikte dolu veya birlikte BOS olmali." }
+    elseif ($xhS -ceq 'mc') { $xhF = "Dogru bicim: $xhK= isaretinden sonra uc buyuk harf (ornek bicim TRY); tutar BOS ise $xhK=BOS. Tutar ve para birimi birlikte dolu veya birlikte BOS olmali." }
+    elseif ($xhS -ceq 'p') { $xhF = "Dogru bicim: $xhK= isaretinden sonra belgenin sayfa sayisi, yalniz rakam, 1 veya daha buyuk." }
+    elseif ($xhS -ceq 'pn') { $xhF = "Dogru bicim: $xhK= isaretinden sonra sayfa numarasi veya deger yoksa $xhK=BOS" }
+    elseif ($xhS -ceq 'pr') { $xhF = "Dogru bicim: $xhK= isaretinden sonra formdaki bir taraf numarasi veya deger yoksa $xhK=BOS" }
+    elseif ($xhS -ceq 'pl') { $xhF = "Dogru bicim: $xhK= isaretinden sonra formdaki taraf numaralari, virgulle, bosluksuz, tekrarsiz (ornek bicim $xhK=1,2); alici yoksa $xhK=0" }
+    elseif ($xhS -ceq 'id') { $xhF = "Dogru bicim: $xhK= isaretinden sonra kucuk harf, rakam, alt cizgi veya kisa cizgi; 3-64 karakter." }
+    if ($xhC -ceq 'B5D_BOM') { return 'Form BOM ile kaydedilmis. Not Defteri''nde Farkli kaydet degil, yalniz Ctrl+S kullanin.' }
+    if ($xhC -ceq 'B5D_ENCODING') { return 'Dosya UTF-8 degil. Not Defteri''nde Farkli kaydet degil, yalniz Ctrl+S kullanin.' }
+    if ($xhC -ceq 'B5D_LINE_FORMAT') { return "Satir $([string]$Res['line']) bicime uymuyor. Her satir ANAHTAR=DEGER olmali (anahtar buyuk harf, rakam, alt cizgi); aciklama satirlari # ile baslar; tek deger birden cok satira bolunmez." }
+    if ($xhC -ceq 'B5D_UNKNOWN_KEY') { return "$xhK anahtari formda yok. Satirdaki anahtar adini formun ilk halindeki gibi duzeltin veya satiri silin." }
+    if ($xhC -ceq 'B5D_DUPLICATE_KEY') { return "$xhK satiri birden cok kez yazilmis. Yalniz bir tanesini birakin." }
+    if ($xhC -ceq 'B5D_MISSING_KEY') { return "$xhK satiri eksik. Satiri geri yazin. $xhF" }
+    if ($xhC -ceq 'B5D_COUNT_MISMATCH') { return "$xhK satiri secilen sayilarla uyusmuyor. SAYI_ satirlarina dokunmayin; sayilar yanlis secildiyse form bastan olusturulmali." }
+    if ($xhC -ceq 'B5D_MARKER_LEFT') { $xhO = ''; if ([string]$Res['others'] -cne '') { $xhO = "`nAyni durum su satirlarda da var: $([string]$Res['others'])" }; return "$xhK satirinda BURAYA_ isareti kaldi. BURAYA_ yazisi tamamen silinmeli, yanina deger eklenmemeli.$xhO`n$xhF`nDuzeltme: imleci bu satirin en sonuna koyun; BURAYA_ ile baslayan yaziyi geri silme tusuyla (Backspace: Enter tusunun hemen ustundeki tus; bosluk tusu DEGIL) tamamen silin, satirda yalniz $xhK= kalsin; sonra degeri yazin. Bitirince Ctrl+S, sonra X." }
+    if ($xhC -ceq 'B5D_EMPTY') { $xhO = ''; if ([string]$Res['others'] -cne '') { $xhO = "`nAyni durum su satirlarda da var: $([string]$Res['others'])" }; return "$xhK degeri bos veya BOS yazilamaz.$xhO`n$xhF`n$xhBs" }
+    if ($xhC -ceq 'B5D_DATE_FORMAT') { return "$xhK tarih bicimine uymuyor.`n$xhF`n$xhBs" }
+    if ($xhC -ceq 'B5D_VOCAB') { if ($xhS -ceq 'mix') { return 'Vergi turleri: mali tatile dahil ve istisna terimler ayni dosyada olamaz (runbook 11.3 f). Avukatla karar verin; sayilar veya menu yanlissa form bastan olusturulmali.' }; return "$xhK degeri izinli degerlerden biri degil.`n$xhF`n$xhBs" }
+    if ($xhC -ceq 'B5D_DEADLINE_FIELD') { return "$xhK sure hesabina giren bir alandir: eksik, bos veya BOS olamaz.`n$xhF`n$xhBs" }
+    if ($xhC -ceq 'B5D_DOCUMENT_TYPE_SCOPE') { return "Belge turu pilot kapsami disinda. Avukatla karar verin: uygun degilse 'k uygunsuz' (NEDEN=OTHER), sonra 'u'.`n$xhF" }
+    if ($xhC -ceq 'B5D_VALUE_RULE') { return "$xhK degeri kurala uymuyor.`n$xhF`n$xhBs" }
+    return 'Form denetimden gecmedi.'
+}
+function Get-XdSections([string]$Text) {
+    $xsD = New-KbDict; $xsN = ''
+    $xsB = New-Object 'System.Collections.Generic.List[string]'
+    foreach ($xsL in $Text.TrimEnd([char]10).Split([char]10)) {
+        if ($xsL.StartsWith('#SECTION ', [System.StringComparison]::Ordinal)) { if ($xsN -cne '') { $xsD[$xsN] = $xsB.ToArray() -join "`n" }; $xsN = $xsL.Substring(9); $xsB.Clear() } else { $xsB.Add($xsL) }
+    }
+    $xsD[$xsN] = $xsB.ToArray() -join "`n"
+    return ,$xsD
+}
+function Format-XdFill([string]$Tpl, $Map) {
+    $xfS = New-Object System.Text.StringBuilder
+    $xfP = 0
+    foreach ($xfM in [regex]::Matches($Tpl, '<[a-z0-9][a-z0-9-]*>')) {
+        $null = $xfS.Append($Tpl.Substring($xfP, $xfM.Index - $xfP))
+        $xfK = $xfM.Value.Substring(1, $xfM.Length - 2)
+        if (-not $Map.ContainsKey($xfK)) { throw 'B5D_TEMPLATE_FILL' }
+        $null = $xfS.Append([string]$Map[$xfK])
+        $xfP = $xfM.Index + $xfM.Length
+    }
+    $null = $xfS.Append($Tpl.Substring($xfP))
+    return $xfS.ToString()
+}
+function Get-XdJ([string]$Value) { if ($Value -ceq 'BOS') { return 'null' }; return (ConvertTo-KbJson $Value) }
+function Get-XdNull([string]$Value) { if ($Value -ceq 'BOS') { return $null }; return $Value }
+function Get-XdMoney([string]$Amount, [string]$Cur) { if ($Amount -ceq 'BOS') { return 'null' }; return ('{"amount": ' + (ConvertTo-KbJson $Amount) + ', "currency": ' + (ConvertTo-KbJson $Cur) + '}') }
+function Add-XdRt($Rt, [string]$File, [string]$Path, $Value) { $Rt.Add([object[]]@($File, $Path, $Value)) }
+function New-XdJson($Val, $Cn, $CaseT, $DocT, [string]$CaseId, [string]$DocId, [string]$FileName, [string]$FileSha, [string]$FileSize) {
+    $xjR = New-Object 'System.Collections.Generic.List[object[]]'
+    $xjCid = ConvertTo-KbJson $CaseId; $xjDid = ConvertTo-KbJson $DocId
+    $xjP = New-Object 'System.Collections.Generic.List[string]'
+    for ($xjI = 1; $xjI -cle $Cn['SAYI_TARAF']; $xjI++) {
+        $xjK = "TARAF_$($xjI)_"; $xjM = New-KbDict; $xjO = "parties.$($xjI - 1)."
+        $xjM['party-id'] = ConvertTo-KbJson "party_$xjI"; $xjM['role'] = ConvertTo-KbJson $Val[$xjK + 'ROL']; $xjM['party-type'] = ConvertTo-KbJson $Val[$xjK + 'TUR']; $xjM['display-name'] = Get-XdJ $Val[$xjK + 'AD']; $xjM['reference-code'] = Get-XdJ $Val[$xjK + 'REFERANS']; $xjM['notes'] = Get-XdJ $Val[$xjK + 'NOT']
+        $xjP.Add((Format-XdFill $CaseT['party'] $xjM))
+        Add-XdRt $xjR 'c' ($xjO + 'role') $Val[$xjK + 'ROL']; Add-XdRt $xjR 'c' ($xjO + 'party_type') $Val[$xjK + 'TUR']; Add-XdRt $xjR 'c' ($xjO + 'display_name') (Get-XdNull $Val[$xjK + 'AD']); Add-XdRt $xjR 'c' ($xjO + 'reference_code') (Get-XdNull $Val[$xjK + 'REFERANS']); Add-XdRt $xjR 'c' ($xjO + 'notes') (Get-XdNull $Val[$xjK + 'NOT'])
+    }
+    $xjT = New-Object 'System.Collections.Generic.List[string]'
+    for ($xjI = 1; $xjI -cle $Cn['SAYI_KALEM']; $xjI++) {
+        $xjK = "KALEM_$($xjI)_"; $xjM = New-KbDict; $xjO = "dispute_items.$($xjI - 1)."
+        $xjM['item-id'] = ConvertTo-KbJson "item_$xjI"; $xjM['document-id'] = $xjDid; $xjM['tax-type'] = ConvertTo-KbJson $Val[$xjK + 'VERGI_TURU']; $xjM['period-kind'] = ConvertTo-KbJson $Val[$xjK + 'DONEM_TURU']; $xjM['period-label'] = ConvertTo-KbJson $Val[$xjK + 'DONEM_ETIKETI']; $xjM['period-start'] = Get-XdJ $Val[$xjK + 'DONEM_BASLANGIC']; $xjM['period-end'] = Get-XdJ $Val[$xjK + 'DONEM_BITIS']
+        $xjM['principal-tax'] = Get-XdMoney $Val[$xjK + 'ANA_VERGI_TUTARI'] $Val[$xjK + 'ANA_VERGI_PARA']; $xjM['penalty-type'] = Get-XdJ $Val[$xjK + 'CEZA_TURU']; $xjM['penalty-amount'] = Get-XdMoney $Val[$xjK + 'CEZA_TUTARI'] $Val[$xjK + 'CEZA_PARA']; $xjM['total-amount'] = Get-XdMoney $Val[$xjK + 'TOPLAM_TUTARI'] $Val[$xjK + 'TOPLAM_PARA']; $xjM['notes'] = Get-XdJ $Val[$xjK + 'NOT']
+        $xjB = New-Object 'System.Collections.Generic.List[string]'
+        for ($xjJ = 1; $xjJ -cle $Cn[$xjK + 'SAYI_DAYANAK']; $xjJ++) { $xjB.Add((ConvertTo-KbJson $Val[$xjK + "DAYANAK_$xjJ"])); Add-XdRt $xjR 'c' ($xjO + "asserted_legal_basis_refs.$($xjJ - 1)") $Val[$xjK + "DAYANAK_$xjJ"] }
+        $xjM['basis-refs'] = '[' + ($xjB.ToArray() -join ', ') + ']'
+        $xjT.Add((Format-XdFill $CaseT['item'] $xjM))
+        Add-XdRt $xjR 'c' ($xjO + 'tax_type') $Val[$xjK + 'VERGI_TURU']; Add-XdRt $xjR 'c' ($xjO + 'period.kind') $Val[$xjK + 'DONEM_TURU']; Add-XdRt $xjR 'c' ($xjO + 'period.label') $Val[$xjK + 'DONEM_ETIKETI']; Add-XdRt $xjR 'c' ($xjO + 'period.start_date') (Get-XdNull $Val[$xjK + 'DONEM_BASLANGIC']); Add-XdRt $xjR 'c' ($xjO + 'period.end_date') (Get-XdNull $Val[$xjK + 'DONEM_BITIS']); Add-XdRt $xjR 'c' ($xjO + 'penalty_type') (Get-XdNull $Val[$xjK + 'CEZA_TURU']); Add-XdRt $xjR 'c' ($xjO + 'notes') (Get-XdNull $Val[$xjK + 'NOT'])
+        foreach ($xjA in @(@('principal_tax', 'ANA_VERGI'), @('penalty_amount', 'CEZA'), @('total_amount', 'TOPLAM'))) { if ([string]$Val[$xjK + $xjA[1] + '_TUTARI'] -cne 'BOS') { Add-XdRt $xjR 'c' ($xjO + $xjA[0] + '.amount') $Val[$xjK + $xjA[1] + '_TUTARI']; Add-XdRt $xjR 'c' ($xjO + $xjA[0] + '.currency') $Val[$xjK + $xjA[1] + '_PARA'] } }
+    }
+    $xjA2 = New-Object 'System.Collections.Generic.List[string]'
+    for ($xjI = 1; $xjI -cle $Cn['SAYI_ISLEM']; $xjI++) {
+        $xjK = "ISLEM_$($xjI)_"; $xjM = New-KbDict; $xjO = "administrative_actions.$($xjI - 1)."
+        $xjM['action-id'] = ConvertTo-KbJson "action_$xjI"; $xjM['document-id'] = $xjDid; $xjM['action-category'] = ConvertTo-KbJson $Val[$xjK + 'KATEGORI']; $xjM['action-type'] = ConvertTo-KbJson $Val[$xjK + 'TURU']; $xjM['issuing-authority'] = ConvertTo-KbJson $Val[$xjK + 'IDARE']; $xjM['action-date'] = Get-XdJ $Val[$xjK + 'TARIHI']; $xjM['notes'] = Get-XdJ $Val[$xjK + 'NOT']
+        $xjA2.Add((Format-XdFill $CaseT['action'] $xjM))
+        Add-XdRt $xjR 'c' ($xjO + 'action_category') $Val[$xjK + 'KATEGORI']; Add-XdRt $xjR 'c' ($xjO + 'action_type') $Val[$xjK + 'TURU']; Add-XdRt $xjR 'c' ($xjO + 'issuing_authority') $Val[$xjK + 'IDARE']; Add-XdRt $xjR 'c' ($xjO + 'action_date') (Get-XdNull $Val[$xjK + 'TARIHI']); Add-XdRt $xjR 'c' ($xjO + 'notes') (Get-XdNull $Val[$xjK + 'NOT'])
+    }
+    $xjE = New-Object 'System.Collections.Generic.List[string]'
+    for ($xjI = 1; $xjI -cle $Cn['SAYI_OLAY']; $xjI++) {
+        $xjK = "OLAY_$($xjI)_"; $xjM = New-KbDict; $xjO = "events.$($xjI - 1)."
+        $xjM['event-id'] = ConvertTo-KbJson "event_$xjI"; $xjM['document-id'] = $xjDid; $xjM['event-category'] = ConvertTo-KbJson $Val[$xjK + 'KATEGORI']; $xjM['event-type'] = ConvertTo-KbJson $Val[$xjK + 'TURU']; $xjM['event-title'] = ConvertTo-KbJson $Val[$xjK + 'BASLIK']; $xjM['event-date'] = Get-XdJ $Val[$xjK + 'TARIHI']; $xjM['date-precision'] = ConvertTo-KbJson $Val[$xjK + 'TARIH_HASSASIYETI']; $xjM['description'] = Get-XdJ $Val[$xjK + 'ACIKLAMA']
+        $xjE.Add((Format-XdFill $CaseT['event'] $xjM))
+        Add-XdRt $xjR 'c' ($xjO + 'event_category') $Val[$xjK + 'KATEGORI']; Add-XdRt $xjR 'c' ($xjO + 'event_type') $Val[$xjK + 'TURU']; Add-XdRt $xjR 'c' ($xjO + 'title') $Val[$xjK + 'BASLIK']; Add-XdRt $xjR 'c' ($xjO + 'event_date') (Get-XdNull $Val[$xjK + 'TARIHI']); Add-XdRt $xjR 'c' ($xjO + 'date_precision') $Val[$xjK + 'TARIH_HASSASIYETI']; Add-XdRt $xjR 'c' ($xjO + 'description') (Get-XdNull $Val[$xjK + 'ACIKLAMA'])
+    }
+    $xjY = New-Object 'System.Collections.Generic.List[string]'
+    for ($xjI = 1; $xjI -cle $Cn['SAYI_YARGILAMA']; $xjI++) {
+        $xjK = "YARGILAMA_$($xjI)_"; $xjM = New-KbDict; $xjO = "proceedings.$($xjI - 1)."
+        $xjM['proceeding-id'] = ConvertTo-KbJson "proceeding_$xjI"; $xjM['document-id'] = $xjDid; $xjM['level'] = ConvertTo-KbJson $Val[$xjK + 'SEVIYE']; $xjM['forum-type'] = ConvertTo-KbJson $Val[$xjK + 'FORUM']; $xjM['court-name'] = Get-XdJ $Val[$xjK + 'MAHKEME']; $xjM['case-number'] = Get-XdJ $Val[$xjK + 'ESAS_NO']; $xjM['decision-number'] = Get-XdJ $Val[$xjK + 'KARAR_NO']; $xjM['filing-date'] = Get-XdJ $Val[$xjK + 'ACILIS_TARIHI']; $xjM['decision-date'] = Get-XdJ $Val[$xjK + 'KARAR_TARIHI']; $xjM['status'] = ConvertTo-KbJson $Val[$xjK + 'DURUM']; $xjM['notes'] = Get-XdJ $Val[$xjK + 'NOT']
+        $xjY.Add((Format-XdFill $CaseT['proceeding'] $xjM))
+        Add-XdRt $xjR 'c' ($xjO + 'level') $Val[$xjK + 'SEVIYE']; Add-XdRt $xjR 'c' ($xjO + 'forum_type') $Val[$xjK + 'FORUM']; Add-XdRt $xjR 'c' ($xjO + 'court_name') (Get-XdNull $Val[$xjK + 'MAHKEME']); Add-XdRt $xjR 'c' ($xjO + 'case_number') (Get-XdNull $Val[$xjK + 'ESAS_NO']); Add-XdRt $xjR 'c' ($xjO + 'decision_number') (Get-XdNull $Val[$xjK + 'KARAR_NO']); Add-XdRt $xjR 'c' ($xjO + 'filing_date') (Get-XdNull $Val[$xjK + 'ACILIS_TARIHI']); Add-XdRt $xjR 'c' ($xjO + 'decision_date') (Get-XdNull $Val[$xjK + 'KARAR_TARIHI']); Add-XdRt $xjR 'c' ($xjO + 'status') $Val[$xjK + 'DURUM']; Add-XdRt $xjR 'c' ($xjO + 'notes') (Get-XdNull $Val[$xjK + 'NOT'])
+    }
+    $xjL = New-Object 'System.Collections.Generic.List[string]'
+    for ($xjI = 1; $xjI -cle $Cn['SAYI_ILGILI_DOSYA']; $xjI++) {
+        $xjK = "ILGILI_DOSYA_$($xjI)_"; $xjM = New-KbDict; $xjO = "related_cases.$($xjI - 1)."
+        $xjM['relation-kind'] = ConvertTo-KbJson $Val[$xjK + 'TUR']; $xjM['related-case-id'] = ConvertTo-KbJson $Val[$xjK + 'KIMLIK']; $xjM['notes'] = Get-XdJ $Val[$xjK + 'NOT']
+        $xjL.Add((Format-XdFill $CaseT['related'] $xjM))
+        Add-XdRt $xjR 'c' ($xjO + 'type') $Val[$xjK + 'TUR']; Add-XdRt $xjR 'c' ($xjO + 'case_id') $Val[$xjK + 'KIMLIK']; Add-XdRt $xjR 'c' ($xjO + 'notes') (Get-XdNull $Val[$xjK + 'NOT'])
+    }
+    $xjM = New-KbDict
+    $xjM['case-id'] = $xjCid; $xjM['document-id'] = $xjDid; $xjM['title'] = ConvertTo-KbJson $Val['DOSYA_BASLIGI']; $xjM['case-type'] = ConvertTo-KbJson $Val['DAVA_TURU']; $xjM['case-status'] = ConvertTo-KbJson $Val['DOSYA_DURUMU']; $xjM['stage'] = ConvertTo-KbJson $Val['ASAMA']; $xjM['client-side'] = ConvertTo-KbJson $Val['MUVEKKIL_TARAFI']; $xjM['confidentiality'] = ConvertTo-KbJson $Val['DOSYA_GIZLILIK']; $xjM['relation-type'] = ConvertTo-KbJson $Val['BELGE_ILISKI_TURU']; $xjM['relation-notes'] = Get-XdJ $Val['BELGE_ILISKI_NOTU']
+    $xjM['parties'] = $xjP.ToArray() -join ",`n"; $xjM['items'] = $xjT.ToArray() -join ",`n"; $xjM['actions'] = $xjA2.ToArray() -join ",`n"; $xjM['events'] = $xjE.ToArray() -join ",`n"; $xjM['proceedings'] = $xjY.ToArray() -join ",`n"; $xjM['related'] = $xjL.ToArray() -join ",`n"
+    $xjCase = (Format-XdFill $CaseT['case'] $xjM) + "`n"
+    Add-XdRt $xjR 'c' 'title' $Val['DOSYA_BASLIGI']; Add-XdRt $xjR 'c' 'case_type' $Val['DAVA_TURU']; Add-XdRt $xjR 'c' 'case_status' $Val['DOSYA_DURUMU']; Add-XdRt $xjR 'c' 'stage' $Val['ASAMA']; Add-XdRt $xjR 'c' 'client_side' $Val['MUVEKKIL_TARAFI']; Add-XdRt $xjR 'c' 'confidentiality_level' $Val['DOSYA_GIZLILIK']; Add-XdRt $xjR 'c' 'case_document_refs.0.relation_type' $Val['BELGE_ILISKI_TURU']; Add-XdRt $xjR 'c' 'case_document_refs.0.notes' (Get-XdNull $Val['BELGE_ILISKI_NOTU'])
+    $xjD = New-Object 'System.Collections.Generic.List[string]'
+    for ($xjI = 1; $xjI -cle $Cn['SAYI_BELGE_TARIH']; $xjI++) {
+        $xjK = "BELGE_TARIH_$($xjI)_"; $xjM = New-KbDict; $xjO = "dates.$($xjI - 1)."
+        $xjM['date-type'] = ConvertTo-KbJson $Val[$xjK + 'TUR']; $xjM['date-value'] = Get-XdJ $Val[$xjK + 'DEGER']; $xjM['precision'] = ConvertTo-KbJson $Val[$xjK + 'HASSASIYET']; $xjM['source-page'] = 'null'; if ([string]$Val[$xjK + 'SAYFA'] -cne 'BOS') { $xjM['source-page'] = [string]$Val[$xjK + 'SAYFA'] }
+        $xjD.Add((Format-XdFill $DocT['date'] $xjM))
+        Add-XdRt $xjR 'd' ($xjO + 'date_type') $Val[$xjK + 'TUR']; Add-XdRt $xjR 'd' ($xjO + 'date') (Get-XdNull $Val[$xjK + 'DEGER']); Add-XdRt $xjR 'd' ($xjO + 'precision') $Val[$xjK + 'HASSASIYET']
+    }
+    $xjN = New-Object 'System.Collections.Generic.List[string]'
+    for ($xjI = 1; $xjI -cle $Cn['SAYI_BELGE_REFERANS']; $xjI++) {
+        $xjK = "BELGE_REFERANS_$($xjI)_"; $xjM = New-KbDict; $xjO = "reference_numbers.$($xjI - 1)."
+        $xjM['reference-type'] = ConvertTo-KbJson $Val[$xjK + 'TUR']; $xjM['reference-value'] = ConvertTo-KbJson $Val[$xjK + 'DEGER']; $xjM['issuing-body'] = Get-XdJ $Val[$xjK + 'KURUM']
+        $xjN.Add((Format-XdFill $DocT['refno'] $xjM))
+        Add-XdRt $xjR 'd' ($xjO + 'reference_type') $Val[$xjK + 'TUR']; Add-XdRt $xjR 'd' ($xjO + 'value') $Val[$xjK + 'DEGER']; Add-XdRt $xjR 'd' ($xjO + 'issuing_body') (Get-XdNull $Val[$xjK + 'KURUM'])
+    }
+    $xjM = New-KbDict
+    $xjRel = 'cases/' + $CaseId + '/documents/' + $DocId + '/'
+    $xjM['document-id'] = $xjDid; $xjM['case-id'] = $xjCid; $xjM['title'] = ConvertTo-KbJson $Val['BELGE_BASLIGI']; $xjM['document-category'] = ConvertTo-KbJson $Val['BELGE_KATEGORISI']; $xjM['document-type'] = ConvertTo-KbJson $Val['BELGE_TURU']; $xjM['document-subtype'] = Get-XdJ $Val['BELGE_ALT_TURU']; $xjM['confidentiality'] = ConvertTo-KbJson $Val['BELGE_GIZLILIK']
+    $xjM['file-name'] = ConvertTo-KbJson $FileName; $xjM['relative-path'] = ConvertTo-KbJson ($xjRel + $FileName); $xjM['file-sha256'] = ConvertTo-KbJson $FileSha; $xjM['page-count'] = [string]$Val['SAYFA_SAYISI']; $xjM['size-bytes'] = $FileSize; $xjM['extracted-text-path'] = ConvertTo-KbJson ($xjRel + 'extracted/' + $DocId + '.txt')
+    $xjM['issuer-party-id'] = 'null'; if ([string]$Val['BELGEYI_DUZENLEYEN_TARAF'] -cne 'BOS') { $xjM['issuer-party-id'] = ConvertTo-KbJson ('party_' + [string]$Val['BELGEYI_DUZENLEYEN_TARAF']) }
+    $xjB = New-Object 'System.Collections.Generic.List[string]'
+    if ([string]$Val['ALICI_TARAFLAR'] -cne '0') { foreach ($xjX in ([string]$Val['ALICI_TARAFLAR']).Split([char]44)) { $xjB.Add((ConvertTo-KbJson ('party_' + $xjX))) } }
+    $xjM['recipient-party-ids'] = '[' + ($xjB.ToArray() -join ', ') + ']'; $xjM['dates'] = $xjD.ToArray() -join ",`n"; $xjM['reference-numbers'] = $xjN.ToArray() -join ",`n"
+    $xjDoc = (Format-XdFill $DocT['document'] $xjM) + "`n"
+    Add-XdRt $xjR 'd' 'title' $Val['BELGE_BASLIGI']; Add-XdRt $xjR 'd' 'document_category' $Val['BELGE_KATEGORISI']; Add-XdRt $xjR 'd' 'document_type' $Val['BELGE_TURU']; Add-XdRt $xjR 'd' 'document_subtype' (Get-XdNull $Val['BELGE_ALT_TURU']); Add-XdRt $xjR 'd' 'confidentiality_level' $Val['BELGE_GIZLILIK']
+    $xjO = New-Object 'System.Collections.Generic.List[object]'
+    $xjO.Add($xjCase); $xjO.Add($xjDoc); $xjO.Add($xjR)
+    return ,$xjO
+}
+function Get-XdPath($Obj, [string]$Path) {
+    $xpC = $Obj
+    foreach ($xpS in $Path.Split([char]46)) { if ($null -ceq $xpC) { return $null }; if ($xpS -cmatch '^[0-9]+$') { $xpC = @($xpC)[[int]$xpS] } else { $xpC = $xpC.$xpS } }
+    return $xpC
+}
+function Test-XdRound($CaseTxt, $DocTxt, $Rt, $Cn) {
+    try { $xqC = $CaseTxt | ConvertFrom-Json; $xqD = $DocTxt | ConvertFrom-Json } catch { return $false }
+    if ((@($xqC.parties).Count -cne $Cn['SAYI_TARAF']) -or (@($xqC.dispute_items).Count -cne $Cn['SAYI_KALEM']) -or (@($xqC.administrative_actions).Count -cne $Cn['SAYI_ISLEM']) -or (@($xqC.events).Count -cne $Cn['SAYI_OLAY']) -or (@($xqC.proceedings).Count -cne $Cn['SAYI_YARGILAMA']) -or (@($xqC.related_cases).Count -cne $Cn['SAYI_ILGILI_DOSYA']) -or (@($xqD.dates).Count -cne $Cn['SAYI_BELGE_TARIH']) -or (@($xqD.reference_numbers).Count -cne $Cn['SAYI_BELGE_REFERANS'])) { return $false }
+    foreach ($xqE in $Rt) {
+        $xqO = $xqC; if ([string]$xqE[0] -ceq 'd') { $xqO = $xqD }
+        $xqG = Get-XdPath $xqO ([string]$xqE[1])
+        if ($null -ceq $xqE[2]) { if ($null -cne $xqG) { return $false } }
+        elseif (($xqG -isnot [string]) -or (-not [string]::Equals($xqG, [string]$xqE[2], [System.StringComparison]::Ordinal))) { return $false }
+    }
+    return $true
+}
+function Get-XdHint([string]$Path) {
+    $xiS = $Path.Split([char]46)
+    if (($xiS.Count -cge 2) -and ($xiS[1] -cmatch '^[0-9]+$')) {
+        $xiN = [int]$xiS[1] + 1
+        foreach ($xiA in @(@('parties', 'TARAF_'), @('dispute_items', 'KALEM_'), @('administrative_actions', 'ISLEM_'), @('events', 'OLAY_'), @('proceedings', 'YARGILAMA_'), @('related_cases', 'ILGILI_DOSYA_'))) { if ($xiS[0] -ceq [string]$xiA[0]) { return ([string]$xiA[1] + $xiN) } }
+    }
+    if (($xiS.Count -cge 3) -and ($xiS[2] -cmatch '^[0-9]+$')) {
+        if ($xiS[1] -ceq 'dates') { return ('BELGE_TARIH_' + ([int]$xiS[2] + 1)) }
+        if ($xiS[1] -ceq 'reference_numbers') { return ('BELGE_REFERANS_' + ([int]$xiS[2] + 1)) }
+    }
+    $xiM = [regex]::Match($Path, '^(party|item|action|event|proceeding)_([1-9])$')
+    if ($xiM.Success) {
+        foreach ($xiA in @(@('party', 'TARAF_'), @('item', 'KALEM_'), @('action', 'ISLEM_'), @('event', 'OLAY_'), @('proceeding', 'YARGILAMA_'))) { if ($xiM.Groups[1].Value -ceq [string]$xiA[0]) { return ([string]$xiA[1] + $xiM.Groups[2].Value) } }
+    }
+    return $Path
+}
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B5D_PRECONDITION' 'b5d BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b5dV = $global:KbVal
+$b5dC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b5dRec = Join-Path $b5dC 'b05d.txt'
+if (-not (Test-KbPass (Join-Path $b5dC 'b05.txt'))) { Write-KbRefusal 'B5D_PRECONDITION' 'b5d BASLAMADI: once b5 TAMAM olmali.'; return }
+if (Test-Path -LiteralPath $b5dRec) { Write-KbRefusal 'B5D_ALREADY' 'Bu adim zaten calisti: b05d.txt. Tekrar calismaz.'; return }
+$b5dPin = $true
+$b5dCaseS = Join-Path ([string]$b5dV['repo-root']) 'data\case.schema.json'
+$b5dDocS = Join-Path ([string]$b5dV['repo-root']) 'data\case_document.schema.json'
+try { $b5dPin = ((Get-KbSha ([System.IO.File]::ReadAllBytes($b5dCaseS))) -ceq [string]$global:KbBuild['CASE_SCHEMA_SHA256']) -and ((Get-KbSha ([System.IO.File]::ReadAllBytes($b5dDocS))) -ceq [string]$global:KbBuild['CASE_DOCUMENT_SCHEMA_SHA256']) } catch { $b5dPin = $false }
+$b5dCt = Get-KbText 'n155.txt'; $b5dDt = Get-KbText 'n156.txt'; $b5dTx = Get-KbText 'n121.ps1'
+if ((-not $b5dPin) -or ($null -ceq $b5dCt) -or ($null -ceq $b5dDt) -or ($null -ceq $b5dTx)) { Write-Host 'STOP B5D_SCHEMA_OR_TEMPLATE_PIN=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b5d' 'B5D_SCHEMA_OR_TEMPLATE_PIN'; return }
+$b5dNp = Join-Path ([string]$env:SystemRoot) ([string]$global:KbBuild['NOTEPAD_RELATIVE'])
+$b5dNpOk = $false
+try { $b5dNpOk = ((Get-KbSha ([System.IO.File]::ReadAllBytes($b5dNp))) -ceq [string]$global:KbBuild['NOTEPAD_SHA256']) -and ([string][System.Diagnostics.FileVersionInfo]::GetVersionInfo($b5dNp).FileVersion -ceq [string]$global:KbBuild['NOTEPAD_FILE_VERSION']) } catch { $b5dNpOk = $false }
+if (-not $b5dNpOk) { Write-Host 'STOP B5D_NOTEPAD_PIN=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b5d' 'B5D_NOTEPAD_PIN'; return }
+$b5dVoc = Get-XdVocab (Get-XdSchema $b5dCaseS) (Get-XdSchema $b5dDocS)
+$b5dTl = @($b5dTx.Split([char]10) | Where-Object { $_.StartsWith('$taxIncluded = ', [System.StringComparison]::Ordinal) -or $_.StartsWith('$taxExcluded = ', [System.StringComparison]::Ordinal) })
+$b5dTs = [scriptblock]::Create(($b5dTl -join "`n") + "`n" + ',[string[]]$taxIncluded' + "`n" + ',[string[]]$taxExcluded')
+$b5dTr = @(& $b5dTs)
+$b5dInc = [string[]]$b5dTr[0]; $b5dExc = [string[]]$b5dTr[1]
+$b5dTerms = [string[]]($b5dInc + $b5dExc)
+$b5dCs = Get-XdSections $b5dCt; $b5dDs = Get-XdSections $b5dDt
+$b5dForm = Join-Path ([string]$b5dV['container-temp']) 'intake-form.txt'
+$b5dDocDir = Join-Path ([string]$b5dV['case-root']) ('documents\' + [string]$b5dV['document-id'])
+$b5dPdf = [System.IO.File]::ReadAllBytes((Join-Path $b5dDocDir ([string]$b5dV['file-name'])))
+$b5dSha = Get-KbSha $b5dPdf; $b5dSize = [string]$b5dPdf.Length; $b5dPdf = $null
+$b5dNew = {
+    param([System.IO.FileMode]$b5dMode)
+    $b5dAns = Read-XdAnswers $b5dTerms
+    if ($null -ceq $b5dAns) { Write-KbRefusal 'B5D_VALUE_RULE' 'b5d: gecersiz tus; form yazilmadi. b5d yazip yeniden deneyin.'; return $false }
+    $b5dF = New-XdFields $b5dAns[0]
+    Write-KbUtf8File $b5dForm (Get-XdForm $b5dAns[0] $b5dF $b5dVoc $b5dAns[1]) $b5dMode
+    return $true
+}
+if (-not (Test-Path -LiteralPath $b5dForm)) { if (-not (& $b5dNew ([System.IO.FileMode]::CreateNew))) { return } }
+$b5dDone = $false
+while (-not $b5dDone) {
+    Write-Host 'Not Defteri aciliyor: intake-form.txt. Doldurun, Ctrl+S, sonra pencereyi X ile kapatin.'
+    Start-Process -FilePath $b5dNp -ArgumentList ('"' + $b5dForm + '"') -Wait
+    $b5dBytes = [System.IO.File]::ReadAllBytes($b5dForm)
+    $b5dR = Test-XdForm $b5dBytes $b5dVoc $b5dInc $b5dExc
+    $b5dCode = ''; $b5dMsg = ''
+    if ($b5dR -is [System.Collections.Generic.List[object]]) {
+        $b5dJ = New-XdJson $b5dR[1] $b5dR[2] $b5dCs $b5dDs ([string]$b5dV['case-id']) ([string]$b5dV['document-id']) ([string]$b5dV['file-name']) $b5dSha $b5dSize
+        Write-KbUtf8File (Join-Path ([string]$b5dV['case-root']) 'case.json') ([string]$b5dJ[0]) ([System.IO.FileMode]::Create)
+        Write-KbUtf8File (Join-Path $b5dDocDir 'document.json') ([string]$b5dJ[1]) ([System.IO.FileMode]::Create)
+        $b5dRo = $false
+        try { $b5dU = New-Object System.Text.UTF8Encoding($false, $true); $b5dRo = Test-XdRound ($b5dU.GetString([System.IO.File]::ReadAllBytes((Join-Path ([string]$b5dV['case-root']) 'case.json')))) ($b5dU.GetString([System.IO.File]::ReadAllBytes((Join-Path $b5dDocDir 'document.json')))) $b5dJ[2] $b5dR[2] } catch { $b5dRo = $false }
+        if (-not $b5dRo) { Write-Host 'STOP B5D_ROUNDTRIP_MISMATCH=True'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b5d' 'B5D_ROUNDTRIP_MISMATCH'; return }
+        $b5dSub = Get-KbSubst
+        $global:KbValResult = $null
+        $b5dVok = Invoke-KbBlocks '' @() @((New-KbSpec 'n032.ps1' '' $b5dSub 'N032' 'validator' $null), (New-KbSpec 'n033.ps1' '' $b5dSub 'N033' 'validator' $null))
+        if ($b5dVok) { $b5dDone = $true } else {
+            $b5dCode = 'B5D_VALIDATOR'
+            $b5dEc = 0; $b5dHints = New-Object 'System.Collections.Generic.List[string]'
+            foreach ($b5dT in @('N032', 'N033')) {
+                if (($null -cne $global:KbValResult) -and $global:KbValResult.ContainsKey($b5dT + ':errors')) {
+                    $b5dEc += [int]$global:KbValResult[$b5dT + ':errors']
+                    foreach ($b5dP in ([string]$global:KbValResult[$b5dT + ':paths']).Split([char]32)) { if ($b5dP -cne '') { $b5dH = Get-XdHint $b5dP; if (($b5dHints.Count -clt 8) -and (-not $b5dHints.Contains($b5dH))) { $b5dHints.Add($b5dH) } } }
+                }
+            }
+            $b5dMsg = "Dogrulayici reddetti (B5D_VALIDATOR): $b5dEc hata."
+            if ($b5dHints.Count -cgt 0) { $b5dMsg = $b5dMsg + " Bakilacak alanlar: $($b5dHints.ToArray() -join ', ')." } else { $b5dMsg = $b5dMsg + ' Alan adi gosterilemiyor; tarih sirasi, tutar toplami ve taraf rolu ile belge iliski turunu denetleyin.' }
+            $global:KbValResult = $null
+        }
+    } else { $b5dCode = [string]$b5dR['code']; $b5dMsg = Get-XdHelp $b5dR $b5dVoc $b5dInc $b5dExc }
+    if ($b5dDone) { break }
+    Write-KbRefusal $b5dCode $b5dMsg
+    Write-Host 'TUSA PROJE SAHIBI BASAR'
+    if ((Read-KitYesNo 'Not Defteri yeniden acilsin mi? (H = simdilik birak)') -ceq 'E') { continue }
+    Write-Host 'TUSA PROJE SAHIBI BASAR'
+    if ((Read-KitYesNo 'Form bastan olusturulsun mu? Girdikleriniz silinir. (H = form yerinde kalir)') -cne 'E') { Write-Host 'Form oldugu gibi birakildi. b5d ayni formu yeniden acar.'; return }
+    if (-not (& $b5dNew ([System.IO.FileMode]::Create))) { return }
+}
+if (-not (New-KbRecord $b5dRec (Get-KbHeader 'b5d' 'b5d.ps1'))) { Invoke-KbLock 'b5d' 'B5D_RECORD_WRITE_FAIL'; return }
+foreach ($b5dL in @('B5D_FORM_OK=True', 'B5D_MARKERS_LEFT=0', 'B5D_REQUIRED_OK=True', 'B5D_DEADLINE_FIELDS_OK=True', 'B5D_VALIDATORS_OK=True', 'B5D_ROUNDTRIP_OK=True')) { Add-KbLine $b5dRec $b5dL }
+Add-KbLine $b5dRec "FORM_SHA256=$(Get-KbSha ([System.IO.File]::ReadAllBytes($b5dForm)))"
+Add-KbLine $b5dRec "CASE_JSON_SHA256=$(Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path ([string]$b5dV['case-root']) 'case.json'))))"
+Add-KbLine $b5dRec "DOCUMENT_JSON_SHA256=$(Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path $b5dDocDir 'document.json'))))"
+$null = Complete-KbStep $b5dRec 'b5d' @('B5D_FORM_OK=True', 'B5D_MARKERS_LEFT=0', 'B5D_REQUIRED_OK=True', 'B5D_DEADLINE_FIELDS_OK=True', 'B5D_VALIDATORS_OK=True', 'B5D_ROUNDTRIP_OK=True') $false 'Siradaki: b6.'
+```
+
+**N150 — `b6.ps1` (mekanik kontroller ve alan özeti).**
+
+```powershell
+# b6.ps1 - Ek R4/8.3: mekanik kontroller (runbook revizyon 14, dilim 2). ASCII. Yalniz b6 komutuyla, Invoke-KbStep icinden calisir.
+# Uc hash yeniden olculur; N23, N24, N25, N27-N34 ve N121 pinli baytlarla calisir. PASS'ten sonra avukat icin alan ozeti yalniz Write-Host ile basilir.
+function Get-X6File([string]$Path) { return ((New-Object System.Text.UTF8Encoding($false, $true)).GetString([System.IO.File]::ReadAllBytes($Path)) | ConvertFrom-Json) }
+function Get-X6Text($Value) { if ($null -ceq $Value) { return 'BOS' }; return [string]$Value }
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B6_PRECONDITION' 'b6 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b6xV = $global:KbVal
+$b6xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b6xRec = Join-Path $b6xC 'b06.txt'
+if (Test-Path -LiteralPath $b6xRec) { Write-KbRefusal 'B6_ALREADY' 'Bu adim zaten calisti: b06.txt. Tekrar calismaz.'; return }
+$b6xD = @(Read-KbLines (Join-Path $b6xC 'b05d.txt'))
+if ($b6xD -cnotcontains 'STEP_RESULT=PASS') { Write-KbRefusal 'B6_PRECONDITION' 'b6 BASLAMADI: once b5d TAMAM olmali.'; return }
+if (-not (New-KbRecord $b6xRec (Get-KbHeader 'b6' 'b6.ps1'))) { Invoke-KbLock 'b6' 'B6_RECORD_WRITE_FAIL'; return }
+$b6xCase = [string]$b6xV['case-root']
+$b6xCj = Join-Path $b6xCase 'case.json'
+$b6xDj = Join-Path $b6xCase ('documents\' + [string]$b6xV['document-id'] + '\document.json')
+$b6xForm = Join-Path ([string]$b6xV['container-temp']) 'intake-form.txt'
+foreach ($b6xA in @(@('FORM_SHA256=', $b6xForm), @('CASE_JSON_SHA256=', $b6xCj), @('DOCUMENT_JSON_SHA256=', $b6xDj))) {
+    $b6xPre = [string]$b6xA[0]; $b6xName = $b6xPre.Substring(0, $b6xPre.Length - 1); $b6xSame = $false
+    try { $b6xSame = ((Get-KbSha ([System.IO.File]::ReadAllBytes([string]$b6xA[1]))) -ceq [string](Get-KbField $b6xD $b6xPre)) } catch { $b6xSame = $false }
+    if ($b6xSame) { Add-KbLine $b6xRec "$($b6xName)_MATCH=True" } else { Add-KbLine $b6xRec "STOP $($b6xName)_MATCH=False" }
+}
+$b6xReq = @('FORM_SHA256_MATCH=True', 'CASE_JSON_SHA256_MATCH=True', 'DOCUMENT_JSON_SHA256_MATCH=True', 'JSON_BOM=NONE', 'TEXT_LENGTH=OK', 'TEXT_VISIBLE=OK', 'PAGE_COUNT=OK', 'INTAKE_HASH=MATCH', 'TEXT_DATE_TOKEN_PRESENT=True', 'INTAKE_HASHES_RECORDED=True', 'SOURCE_HASHES_MATCH=True', 'VALIDATOR_CASE_RESULT=PASS', 'VALIDATOR_DOCUMENT_RESULT=PASS', 'VALIDATOR_PATH_MATCH=True', 'VALIDATOR_CASE_ID_MATCH=True', 'VALIDATOR_ERROR_COUNT=0', 'GIT_OUTPUT_MATCH=True', 'GIT_STDERR_LINE_COUNT=0', 'TAX_TYPE_VOCAB=OK')
+if (Test-KbRecClean $b6xRec) {
+    $b6xN = 0; $b6xI = 0
+    foreach ($b6xL in @(Read-KbLines (Join-Path ([string]$b6xV['repo-root']) '.gitignore'))) { $b6xI++; if ($b6xL -ceq '/data/cases/') { $b6xN = $b6xI } }
+    $b6xSub = Get-KbSubst
+    $b6xGit = @(('!! data/cases/' + [string]$b6xV['case-id'] + '/'), ('.gitignore:' + $b6xN + ':/data/cases/' + [string][char]9 + 'data/cases/' + [string]$b6xV['case-id'] + '/case.json'))
+    $b6xHelp = @((New-KbSpec 'n051.ps1' '' $null 'N051' 'status' $null), (New-KbSpec 'n019.ps1' '' $null 'N019' 'status' $null), (New-KbSpec 'n048.ps1' '' $null 'N048' 'status' $null))
+    $b6xBl = @()
+    foreach ($b6xT in @('N023', 'N024', 'N025', 'N027', 'N028', 'N029', 'N030', 'N031')) { $b6xBl += @(New-KbSpec ($b6xT.ToLowerInvariant() + '.ps1') '' $b6xSub $b6xT 'status' $null) }
+    $b6xBl += @((New-KbSpec 'n032.ps1' '' $b6xSub 'N032' 'validator' $null), (New-KbSpec 'n033.ps1' '' $b6xSub 'N033' 'validator' $null), (New-KbSpec 'n034.ps1' '' $b6xSub 'N034' 'git' $b6xGit), (New-KbSpec 'n121.ps1' '' $b6xSub 'N121' 'status' $null))
+    $global:KbValResult = $null
+    $null = Invoke-KbBlocks $b6xRec $b6xHelp $b6xBl
+    $b6xR = @(Read-KbLines $b6xRec)
+    $b6xE = 0; $b6xW = 0
+    foreach ($b6xP in @('VALIDATOR_CASE_ERROR_COUNT=', 'VALIDATOR_DOCUMENT_ERROR_COUNT=')) { $b6xF = Get-KbField $b6xR $b6xP; if ($null -cne $b6xF) { $b6xE += [int]$b6xF } }
+    foreach ($b6xP in @('VALIDATOR_CASE_WARNING_COUNT=', 'VALIDATOR_DOCUMENT_WARNING_COUNT=')) { $b6xF = Get-KbField $b6xR $b6xP; if ($null -cne $b6xF) { $b6xW += [int]$b6xF } }
+    if ($b6xE -ceq 0) { Add-KbLine $b6xRec 'VALIDATOR_ERROR_COUNT=0' } else { Add-KbLine $b6xRec "STOP VALIDATOR_ERROR_COUNT=$b6xE" }
+    Add-KbLine $b6xRec "VALIDATOR_WARNING_COUNT=$b6xW"
+    $global:KbValResult = $null
+}
+$b6xMsg = 'Siradaki: avukat k intake (dogrulayici uyarisi varsa k uyari da).'
+if (-not (Complete-KbStep $b6xRec 'b6' $b6xReq $false $b6xMsg)) { return }
+$b6xCo = Get-X6File $b6xCj
+$b6xDo = Get-X6File $b6xDj
+Write-Host '----- ALAN OZETI (yalniz ekran; avukat ekrana bakar) -----'
+Write-Host "Dosya basligi: $($b6xCo.title)"
+Write-Host "Dava turu: $($b6xCo.case_type)   Asama: $($b6xCo.stage)   Dosya durumu: $($b6xCo.case_status)   Muvekkil tarafi: $($b6xCo.client_side)   Gizlilik: $($b6xCo.confidentiality_level)"
+$b6xI = 0
+foreach ($b6xO in @($b6xCo.parties)) { $b6xI++; Write-Host "Taraf ${b6xI}: $(Get-X6Text $b6xO.display_name) | rol=$($b6xO.role) | tur=$($b6xO.party_type) | referans=$(Get-X6Text $b6xO.reference_code) | not=$(Get-X6Text $b6xO.notes)" }
+$b6xI = 0
+foreach ($b6xO in @($b6xCo.dispute_items)) {
+    $b6xI++
+    $b6xM = 'BOS'; if ($null -cne $b6xO.principal_tax) { $b6xM = [string]$b6xO.principal_tax.amount + ' ' + [string]$b6xO.principal_tax.currency }
+    $b6xN = 'BOS'; if ($null -cne $b6xO.penalty_amount) { $b6xN = [string]$b6xO.penalty_amount.amount + ' ' + [string]$b6xO.penalty_amount.currency }
+    $b6xT = 'BOS'; if ($null -cne $b6xO.total_amount) { $b6xT = [string]$b6xO.total_amount.amount + ' ' + [string]$b6xO.total_amount.currency }
+    Write-Host "Kalem ${b6xI}: vergi turu=$($b6xO.tax_type) | donem=$($b6xO.period.kind) $($b6xO.period.label) $(Get-X6Text $b6xO.period.start_date) - $(Get-X6Text $b6xO.period.end_date) | ana vergi=$b6xM | ceza turu=$(Get-X6Text $b6xO.penalty_type) | ceza=$b6xN | toplam=$b6xT | dayanak=$(@($b6xO.asserted_legal_basis_refs) -join ', ') | not=$(Get-X6Text $b6xO.notes)"
+}
+$b6xI = 0
+foreach ($b6xO in @($b6xCo.administrative_actions)) { $b6xI++; Write-Host "Islem ${b6xI}: kategori=$($b6xO.action_category) | tur=$($b6xO.action_type) | idare=$(Get-X6Text $b6xO.issuing_authority) | islem tarihi=$(Get-X6Text $b6xO.action_date) | teblig tarihi alani=$(Get-X6Text $b6xO.notification_date) | not=$(Get-X6Text $b6xO.notes)" }
+$b6xI = 0
+foreach ($b6xO in @($b6xCo.events)) { $b6xI++; Write-Host "Olay ${b6xI}: kategori=$($b6xO.event_category) | tur=$($b6xO.event_type) | baslik=$($b6xO.title) | tarih=$(Get-X6Text $b6xO.event_date) | hassasiyet=$($b6xO.date_precision) | aciklama=$(Get-X6Text $b6xO.description)" }
+$b6xI = 0
+foreach ($b6xO in @($b6xCo.proceedings)) { $b6xI++; Write-Host "Yargilama ${b6xI}: seviye=$($b6xO.level) | forum=$($b6xO.forum_type) | mahkeme=$(Get-X6Text $b6xO.court_name) | esas=$(Get-X6Text $b6xO.case_number) | karar=$(Get-X6Text $b6xO.decision_number) | acilis=$(Get-X6Text $b6xO.filing_date) | karar tarihi=$(Get-X6Text $b6xO.decision_date) | durum=$($b6xO.status) | not=$(Get-X6Text $b6xO.notes)" }
+$b6xI = 0
+foreach ($b6xO in @($b6xCo.related_cases)) { $b6xI++; Write-Host "Ilgili dosya ${b6xI}: tur=$($b6xO.type) | kimlik=$($b6xO.case_id) | not=$(Get-X6Text $b6xO.notes)" }
+Write-Host "Belge: $($b6xDo.title) | kategori=$($b6xDo.document_category) | tur=$($b6xDo.document_type) | alt tur=$(Get-X6Text $b6xDo.document_subtype) | gizlilik=$($b6xDo.confidentiality_level) | sayfa sayisi=$($b6xDo.file.page_count)"
+Write-Host "Belgeyi duzenleyen: $(Get-X6Text $b6xDo.issuer_party_id) | alicilar: $(@($b6xDo.recipient_party_ids) -join ', ')"
+foreach ($b6xO in @($b6xDo.dates)) { Write-Host "Belge tarihi: tur=$($b6xO.date_type) | tarih=$(Get-X6Text $b6xO.date) | hassasiyet=$($b6xO.precision) | sayfa=$(Get-X6Text $b6xO.source_page)" }
+foreach ($b6xO in @($b6xDo.reference_numbers)) { Write-Host "Belge referansi: tur=$($b6xO.reference_type) | deger=$($b6xO.value) | kurum=$(Get-X6Text $b6xO.issuing_body)" }
+Write-Host 'Butun verification_state alanlari: unverified'
+Write-Host '----- OZET SONU -----'
+```
+
+**N151 — `b7.ps1` (tebliğ satırı adayları ve girdi dosyası).**
+
+```powershell
+# b7.ps1 - Ek R4/15: teblig satiri adaylari ve girdi dosyasi (runbook revizyon 14, dilim 2). ASCII. Yalniz b7 komutuyla, Invoke-KbStep icinden calisir.
+# Metin yalniz bellekte okunur; aday listesi yalniz Write-Host ile basilir. Satiri operator tek basina secer (O4); elle alinti ve tarih istenmez.
+# Girdi dosyasini kit N58 bicimiyle yazar; sonra N59 ve N60 pinli baytlarla calisir. Surum r1-r3; sonraki surum yalniz onceki k girdi RED ise.
+function Get-X7Norm([string]$Text) { return [regex]::Replace($Text.Normalize([System.Text.NormalizationForm]::FormC), '\s+', ' ').Trim() }
+function Test-X7Control([string]$Text) { foreach ($x7c in $Text.ToCharArray()) { if (($x7c -cne [char]9) -and ([char]::GetUnicodeCategory($x7c) -ceq [System.Globalization.UnicodeCategory]::Control)) { return $true } }; return $false }
+function Get-X7Candidates([string]$Text, [int]$PageCount) {
+    $x7r = New-Object 'System.Collections.Generic.List[object]'
+    $x7d = '(?<![0-9])([0-9]{2})([./])([0-9]{2})\2([0-9]{4})(?![0-9])'
+    $x7all = Get-X7Norm $Text
+    $x7p = 0
+    foreach ($x7pg in $Text.Split([char]12)) {
+        $x7p++
+        if ($x7p -cgt $PageCount) { continue }
+        foreach ($x7ln in $x7pg.Split([char]10)) {
+            foreach ($x7sn in [regex]::Split($x7ln, '(?<=[.!?])\s+')) {
+                $x7s = $x7sn.Trim().Normalize([System.Text.NormalizationForm]::FormC)
+                if (($x7s.Length -clt 1) -or ($x7s.Length -cgt 500) -or (Test-X7Control $x7s)) { continue }
+                $x7m = [regex]::Matches($x7s, $x7d)
+                if ($x7m.Count -cne 1) { continue }
+                $x7g = $x7m[0].Groups
+                $x7dt = [DateTime]::MinValue
+                if (-not [DateTime]::TryParseExact(($x7g[1].Value + '-' + $x7g[3].Value + '-' + $x7g[4].Value), 'dd-MM-yyyy', [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$x7dt)) { continue }
+                if ($x7all.IndexOf((Get-X7Norm $x7s), [System.StringComparison]::Ordinal) -clt 0) { continue }
+                $x7r.Add(@($x7p, ($x7g[4].Value + '-' + $x7g[3].Value + '-' + $x7g[1].Value), $x7s))
+            }
+        }
+    }
+    return ,$x7r
+}
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B7_PRECONDITION' 'b7 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b7xV = $global:KbVal
+$b7xE = [string]$global:KbEvid
+$b7xC = Join-Path $b7xE 'steps\c'
+$b7xB6 = @(Read-KbLines (Join-Path $b7xC 'b06.txt'))
+if ($b7xB6 -cnotcontains 'STEP_RESULT=PASS') { Write-KbRefusal 'B7_PRECONDITION' 'b7 BASLAMADI: once b6 TAMAM olmali.'; return }
+$b7xI = Get-KbDecision 'INTAKE_APPROVED' ''
+$b7xOk = ($null -cne $b7xI)
+if ($b7xOk) { foreach ($b7xK in @('METIN', 'TARAFLAR', 'SAYFA_SAYISI', 'SURE_ALANLARI', 'DIGER_ALANLAR', 'DOGRULAMA_DURUMU')) { if ($b7xI -cnotcontains "INTAKE_ITEM_$b7xK=KABUL") { $b7xOk = $false } } }
+if (-not $b7xOk) { Write-KbRefusal 'B7_NO_INTAKE_APPROVAL' 'b7 BASLAMADI: avukatin k intake karari yok veya bir maddesi RED. Avukatla karar verin.'; return }
+$b7xWc = Get-KbField $b7xB6 'VALIDATOR_WARNING_COUNT='
+$b7xW = $null
+if ($b7xWc -cne '0') {
+    $b7xW = Get-KbDecision 'VALIDATOR_WARNINGS_ACCEPTED' ''
+    if (($null -ceq $b7xW) -or ($b7xW -cnotcontains 'SONUC=KABUL')) { Write-KbRefusal 'B7_WARNINGS_NOT_ACCEPTED' 'b7 BASLAMADI: dogrulayici uyarilari icin k uyari KABUL kaydi yok.'; return }
+}
+$b7xRev = 1; $b7xPrev = $null
+for ($b7xN = 1; $b7xN -cle 3; $b7xN++) {
+    if (-not (Test-Path -LiteralPath (Join-Path $b7xC "b07-r$b7xN.txt"))) { break }
+    $b7xPrev = Get-KbDecision 'MANUAL_INPUT_COMPARED' "r$b7xN"
+    if (($null -ceq $b7xPrev) -or ($b7xPrev -cnotcontains 'SONUC=RED')) { Write-KbRefusal 'B7_ALREADY' "Bu adim zaten calisti: b07-r$b7xN.txt. Yeni surum yalniz avukat k girdi ile RED yazarsa acilir."; return }
+    $b7xRev = $b7xN + 1
+}
+if ($b7xRev -cgt 3) { Write-KbRefusal 'B7_REVISION_LIMIT' 'En cok 3 girdi surumu (r1-r3) yazilabilir. Avukatla karar verin: uygun degilse k uygunsuz, sonra u.'; return }
+foreach ($b7xD in @($b7xI, $b7xW, $b7xPrev)) {
+    if (($null -cne $b7xD) -and (-not (Test-KbDecisionHash ([string[]]$b7xD)))) { Write-Host 'STOP K_DECISION_HASH=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b7' 'K_DECISION_HASH'; return }
+}
+$b7xDoc = Join-Path ([string]$b7xV['case-root']) ('documents\' + [string]$b7xV['document-id'])
+$b7xSt = New-Object System.Text.UTF8Encoding($false, $true)
+$b7xTx = $b7xSt.GetString([System.IO.File]::ReadAllBytes((Join-Path $b7xDoc ('extracted\' + [string]$b7xV['document-id'] + '.txt')))).TrimStart([char]0xFEFF)
+$b7xPc = [int](($b7xSt.GetString([System.IO.File]::ReadAllBytes((Join-Path $b7xDoc 'document.json'))) | ConvertFrom-Json).file.page_count)
+$b7xCand = Get-X7Candidates $b7xTx $b7xPc
+$b7xTx = $null
+$b7xWhy = 'Uygun teblig satiri yok. Avukatla karar verin: dosya bu pilota uygun degilse ''k uygunsuz'', sonra ''u'' yazin. Kayit yazilmadi; DUR kilidi yok.'
+if ($b7xCand.Count -ceq 0) { Write-KbRefusal 'B7_NO_CANDIDATE' $b7xWhy; return }
+$b7xSel = $null
+while ($null -ceq $b7xSel) {
+    Write-Host '----- TEBLIG SATIRI ADAYLARI (yalniz ekran) -----'
+    for ($b7xN = 0; $b7xN -clt $b7xCand.Count; $b7xN++) { $b7xO = $b7xCand[$b7xN]; Write-Host "[$($b7xN + 1)] sayfa $($b7xO[0]), tarih $($b7xO[1]): $($b7xO[2])" }
+    Write-Host '----- LISTE SONU -----'
+    Write-Host 'TUSA PROJE SAHIBI BASAR'
+    $b7xPick = Read-KbDigits 'Teblig tarihini tasiyan satirin numarasi (0 = hicbiri)' 0 $b7xCand.Count
+    if ($b7xPick -clt 1) { Write-KbRefusal 'B7_NONE_SELECTED' $b7xWhy; return }
+    Write-Host 'TUSA PROJE SAHIBI BASAR'
+    if ((Read-KitYesNo 'Bu satir teblig tarihini tasiyan cumle mi?') -ceq 'E') { $b7xSel = $b7xCand[$b7xPick - 1] } else { Write-KbRefusal 'B7_CANDIDATE_REJECTED' $b7xWhy }
+}
+$b7xTpl = Get-KbText 'n058.txt'
+if ($null -ceq $b7xTpl) { Write-Host 'STOP B7_TEMPLATE_PIN=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b7' 'B7_TEMPLATE_PIN'; return }
+$b7xRec = Join-Path $b7xC "b07-r$b7xRev.txt"
+if (-not (New-KbRecord $b7xRec (Get-KbHeader 'b7' 'b7.ps1'))) { Invoke-KbLock 'b7' 'B7_RECORD_WRITE_FAIL'; return }
+Add-KbLine $b7xRec "INPUT_REVISION=r$b7xRev"
+Add-KbLine $b7xRec 'CANDIDATE_SELECTED=True'
+$b7xJs = $b7xTpl.Replace('"__CASE_ID__"', (ConvertTo-KbJson ([string]$b7xV['case-id']))).Replace('"__DOCUMENT_ID__"', (ConvertTo-KbJson ([string]$b7xV['document-id']))).Replace('"__TEBLIG_TARIHI_YYYY-AA-GG__"', (ConvertTo-KbJson ([string]$b7xSel[1]))).Replace('"page": 0', ('"page": ' + [string]$b7xSel[0])).Replace('"__BELGEDEN_BIREBIR_TEK_SATIR_ALINTI__"', (ConvertTo-KbJson ([string]$b7xSel[2])))
+$null = [System.IO.Directory]::CreateDirectory((Join-Path $b7xDoc 'manual_input'))
+Write-KbUtf8File (Join-Path $b7xDoc 'manual_input\manual_facts.input.json') $b7xJs ([System.IO.FileMode]::Create)
+$b7xJs = $null
+$b7xSub = Get-KbSubst
+$b7xSub['input-revision'] = [string]$b7xRev
+$b7xHelp = @((New-KbSpec 'n051.ps1' '' $null 'N051' 'status' $null), (New-KbSpec 'n019.ps1' '' $null 'N019' 'status' $null), (New-KbSpec 'n048.ps1' '' $null 'N048' 'status' $null))
+$null = Invoke-KbBlocks $b7xRec $b7xHelp @((New-KbSpec 'n059.ps1' '' $b7xSub 'N059' 'status' $null), (New-KbSpec 'n060.ps1' '' $b7xSub 'N060' 'status' $null))
+$null = Complete-KbStep $b7xRec 'b7' @("INPUT_REVISION=r$b7xRev", 'CANDIDATE_SELECTED=True', 'MANUAL_INPUT_ENCODING=OK', 'MANUAL_INPUT_HASH_RECORDED=True') $false 'Siradaki: g8, sonra avukat k girdi.'
+```
+
+**N152 — `g8.ps1` (girdinin ekranda karşılaştırılması).**
+
+```powershell
+# g8.ps1 - Ek R4/8.3: girdi dosyasinin orijinal belgeyle karsilastirilmasi (runbook revizyon 14, dilim 2). ASCII. Yalniz g8 komutuyla, Invoke-KbStep icinden calisir.
+# Kayit yazmaz. Girdi dosyasi acikca UTF-8 okunur; degerler yalniz Write-Host ile basilir, suzgece ve hicbir dosyaya gitmez.
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+if ($global:KbTeardown -ceq $true) { Write-KbRefusal 'G8_NOT_ALLOWED' 'SILME OTURUMU: g8 bu pencerede calismaz.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'G8_PRECONDITION' 'g8 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$g8xV = $global:KbVal
+$g8xE = [string]$global:KbEvid
+$g8xRev = 0
+for ($g8xN = 1; $g8xN -cle 3; $g8xN++) { if (Test-KbPass (Join-Path $g8xE "steps\c\b07-r$g8xN.txt")) { $g8xRev = $g8xN } }
+if ($g8xRev -clt 1) { Write-KbRefusal 'G8_PRECONDITION' 'g8 BASLAMADI: once b7 TAMAM olmali.'; return }
+$g8xP = Join-Path ([string]$g8xV['case-root']) ('documents\' + [string]$g8xV['document-id'] + '\manual_input\manual_facts.input.json')
+$g8xB = [System.IO.File]::ReadAllBytes($g8xP)
+$g8xH = Get-KbField @(Read-KbLines (Join-Path $g8xE "manual-input-r$g8xRev.sha256.txt")) 'manual_input_sha256='
+if (($null -ceq $g8xH) -or ((Get-KbSha $g8xB) -cne $g8xH)) { Write-KbRefusal 'G8_PRECONDITION' "g8 BASLAMADI: girdi dosyasi r$g8xRev kaydiyla uyusmuyor. Ajana donun; dosyaya dokunmayin."; return }
+$g8xJ = (New-Object System.Text.UTF8Encoding($false, $true)).GetString($g8xB) | ConvertFrom-Json
+$g8xF = @($g8xJ.facts)[0]
+Write-Host '----- GIRDI DOSYASI (yalniz ekran; avukat orijinal belgeyle karsilastirir) -----'
+Write-Host "Tarih: $($g8xF.date)"
+Write-Host "Sayfa: $($g8xF.page)"
+Write-Host "Alinti: $($g8xF.text_excerpt)"
+Write-Host "Dosya kimligi: $($g8xJ.case_id)"
+Write-Host "Belge kimligi: $($g8xJ.document_id)"
+Write-Host "Surum: r$g8xRev"
+Write-Host "Hash oneki: $($g8xH.Substring(0, 12))"
+Write-Host '----- SON -----'
+Write-Host 'Siradaki: avukat k girdi.'
+```
+
+**N153 — `b8.ps1` (avukat kararının eşleştirilmesi).**
+
+```powershell
+# b8.ps1 - Ek R4/8.3: avukat girdi kararinin kayitla eslestirilmesi (runbook revizyon 14, dilim 2). ASCII. Yalniz b8 komutuyla, Invoke-KbStep icinden calisir.
+# Onek karar dosyasinin HASH_ONEK satirindan bellekte okunur ve yalniz N61'in blok metnine girer; kayda N61'in iki durum satiri girer.
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B8_PRECONDITION' 'b8 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b8xE = [string]$global:KbEvid
+$b8xC = Join-Path $b8xE 'steps\c'
+$b8xRev = 0
+for ($b8xN = 1; $b8xN -cle 3; $b8xN++) { if (Test-KbPass (Join-Path $b8xC "b07-r$b8xN.txt")) { $b8xRev = $b8xN } }
+if ($b8xRev -clt 1) { Write-KbRefusal 'B8_PRECONDITION' 'b8 BASLAMADI: once b7 TAMAM olmali.'; return }
+$b8xRec = Join-Path $b8xC "b08-r$b8xRev.txt"
+if (Test-Path -LiteralPath $b8xRec) { Write-KbRefusal 'B8_ALREADY' "Bu adim zaten calisti: b08-r$b8xRev.txt. Tekrar calismaz."; return }
+$b8xD = Get-KbDecision 'MANUAL_INPUT_COMPARED' "r$b8xRev"
+if ($null -ceq $b8xD) {
+    $b8xAny = $false
+    for ($b8xN = 1; $b8xN -cle 3; $b8xN++) { if ($null -cne (Get-KbDecision 'MANUAL_INPUT_COMPARED' "r$b8xN")) { $b8xAny = $true } }
+    if ($b8xAny) { Write-KbRefusal 'B8_WRONG_REVISION' "b8 BASLAMADI: avukatin karari son surum r$b8xRev icin degil."; return }
+    Write-KbRefusal 'B8_NO_DECISION' 'b8 BASLAMADI: once avukat k girdi ile kararini yazmali.'; return
+}
+if ($b8xD -cnotcontains 'SONUC=KABUL') { Write-KbRefusal 'B8_DECISION_RED' 'Avukat bu surumu reddetti; duzeltilmis surum icin b7'; return }
+if (-not (Test-KbDecisionHash ([string[]]$b8xD))) { Write-Host 'STOP K_DECISION_HASH=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b8' 'K_DECISION_HASH'; return }
+$b8xFile = Join-Path ([string]$global:KbVal['restricted-dir']) ([string](Get-KbField $b8xD 'DECISION_FILE='))
+$b8xPre = Get-KbField @(Read-KbLines $b8xFile) 'HASH_ONEK='
+if (-not (Test-KbValue 'h12' ([string]$b8xPre))) { Write-KbRefusal 'B8_VALUE_RULE' 'b8 BASLAMADI: HASH_ONEK degeri kurala uymuyor (B8_VALUE_RULE). Ajana donun.'; return }
+if (-not (New-KbRecord $b8xRec (Get-KbHeader 'b8' 'b8.ps1'))) { Invoke-KbLock 'b8' 'B8_RECORD_WRITE_FAIL'; return }
+$b8xSub = Get-KbSubst
+$b8xSub['input-revision'] = [string]$b8xRev
+$b8xSub['lawyer-cited-prefix'] = [string]$b8xPre
+$b8xHelp = @((New-KbSpec 'n051.ps1' '' $null 'N051' 'status' $null), (New-KbSpec 'n019.ps1' '' $null 'N019' 'status' $null), (New-KbSpec 'n048.ps1' '' $null 'N048' 'status' $null))
+$null = Invoke-KbBlocks $b8xRec $b8xHelp @(New-KbSpec 'n061.ps1' '' $b8xSub 'N061' 'status' $null)
+$null = Complete-KbStep $b8xRec 'b8' @('MANUAL_INPUT_MATCHES_LAWYER_REVISION=True', 'LAWYER_DECISION_CITES_RECORD=True') $false 'Siradaki: b9 (dilim 3).'
+```
+
+**N154 — `u.ps1` (erken kapanış kaydı).**
+
+```powershell
+# u.ps1 - Ek R4/14: erken kapanis kaydi (runbook revizyon 14, dilim 2). ASCII. Yalniz u komutuyla, Invoke-KbStep icinden calisir.
+# Kayittan sonra erken kapanis kipi baslar; silme sirasi dilim 4'tedir. Kayda yalniz kod, hash, zaman ve boolean girer.
+$uxE = [string]$global:KbEvid
+$uxC = Join-Path $uxE 'steps\c'
+$uxRec = Join-Path $uxC 'u.txt'
+if (Test-Path -LiteralPath $uxRec) { Write-KbRefusal 'U_ALREADY' 'Bu adim zaten calisti: u.txt. Tekrar calismaz.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'U_PRECONDITION' 'u BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not (Test-KbPass (Join-Path $uxC 'b05.txt'))) { Write-KbRefusal 'U_PRECONDITION' 'u BASLAMADI: b5 TAMAM kaydi yok.'; return }
+$uxD = Get-KbDecision 'PILOT_UNSUITABLE' ''
+if ($null -ceq $uxD) { Write-KbRefusal 'U_NO_DECISION' 'u BASLAMADI: once avukat k uygunsuz ile kararini yazmali.'; return }
+if (Test-Path -LiteralPath (Join-Path $uxC 'b11.txt')) {
+    $uxRed = $false
+    foreach ($uxK in @('FACT_ACCEPTED', 'VERIFICATION_VERIFIED', 'TIMELINE_APPROVED', 'DEADLINE_APPROVED')) { $uxL = Get-KbDecision $uxK ''; if (($null -cne $uxL) -and ($uxL -ccontains 'SONUC=RED')) { $uxRed = $true } }
+    if (-not $uxRed) { Write-KbRefusal 'U_AFTER_B11_NO_RED' 'b11 calisti ve avukatin RED karari yok: normal DUR yolu'; return }
+}
+if (-not (Test-KbDecisionHash ([string[]]$uxD))) { Write-Host 'STOP K_DECISION_HASH=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'u' 'K_DECISION_HASH'; return }
+Write-Host 'TUSA AVUKAT BASAR'
+if ((Read-KitYesNo 'Avukatin karariyla bu dosyanin islemesi burada bitiyor ve silme bu ziyarette yapilacak. Onayliyor musunuz?') -cne 'E') { Write-KbRefusal 'U_NOT_CONFIRMED' 'u: onaylanmadi. Kayit yazilmadi; zincir komutlari acik kaldi.'; return }
+$uxM = [regex]::Match([string](Get-KbField $uxD 'INBOUND_DECISION_RECEIVED '), '^seq=([1-9][0-9]{0,5}) sha256=([0-9a-f]{64}) channel=at-device$')
+$uxWhy = Get-KbField $uxD 'NEDEN='
+$uxAt = Get-KbStamp
+if (-not (New-KbRecord $uxRec (Get-KbHeader 'u' 'u.ps1'))) { Invoke-KbLock 'u' 'U_RECORD_WRITE_FAIL'; return }
+Add-KbLine $uxRec 'EARLY_CLOSE=True'
+Add-KbLine $uxRec "EARLY_CLOSE_REASON=$uxWhy"
+Add-KbLine $uxRec "EARLY_CLOSE_DECISION_SEQ=$($uxM.Groups[1].Value)"
+Add-KbLine $uxRec "EARLY_CLOSE_DECISION_SHA256=$($uxM.Groups[2].Value)"
+Add-KbLine $uxRec "ASSIGNMENT_PRESENT=$(Test-KbPass (Join-Path $uxC 'y1.txt'))"
+Add-KbLine $uxRec "WORK_ENDED_AT=$uxAt"
+Add-KbLine $uxRec 'EARLY_CLOSE_CONFIRMED basis=lawyer-E'
+$global:KbEarly = $true
+$null = Complete-KbStep $uxRec 'u' @('EARLY_CLOSE=True', 'EARLY_CLOSE_CONFIRMED basis=lawyer-E') $false 'Erken kapanis kipi: yalniz silme adimlari (dilim 4).'
+```
+
+**N155 — `n155.txt` (`case.json` şablonu).**
+
+```text
+#SECTION case
+{
+  "schema_version": 1,
+  "case_id": <case-id>,
+  "active": true,
+  "title": <title>,
+  "case_type": <case-type>,
+  "case_status": <case-status>,
+  "stage": <stage>,
+  "client_side": <client-side>,
+  "confidentiality_level": <confidentiality>,
+  "jurisdiction": "TR",
+  "language": "tr",
+  "parties": [
+<parties>
+  ],
+  "dispute_items": [
+<items>
+  ],
+  "administrative_actions": [
+<actions>
+  ],
+  "events": [
+<events>
+  ],
+  "proceedings": [
+<proceedings>
+  ],
+  "case_document_refs": [
+    {
+      "document_id": <document-id>,
+      "relation_type": <relation-type>,
+      "primary": true,
+      "notes": <relation-notes>
+    }
+  ],
+  "related_cases": [
+<related>
+  ],
+  "tags": []
+}
+#SECTION party
+    {
+      "party_id": <party-id>,
+      "role": <role>,
+      "party_type": <party-type>,
+      "display_name": <display-name>,
+      "reference_code": <reference-code>,
+      "notes": <notes>
+    }
+#SECTION item
+    {
+      "dispute_item_id": <item-id>,
+      "tax_type": <tax-type>,
+      "period": {
+        "kind": <period-kind>,
+        "label": <period-label>,
+        "start_date": <period-start>,
+        "end_date": <period-end>
+      },
+      "principal_tax": <principal-tax>,
+      "penalty_type": <penalty-type>,
+      "penalty_amount": <penalty-amount>,
+      "total_amount": <total-amount>,
+      "asserted_legal_basis_refs": <basis-refs>,
+      "source_document_ids": [<document-id>],
+      "verification_state": "unverified",
+      "notes": <notes>
+    }
+#SECTION action
+    {
+      "action_id": <action-id>,
+      "action_category": <action-category>,
+      "action_type": <action-type>,
+      "issuing_authority": <issuing-authority>,
+      "action_date": <action-date>,
+      "notification_date": null,
+      "source_document_id": <document-id>,
+      "verification_state": "unverified",
+      "notes": <notes>
+    }
+#SECTION event
+    {
+      "event_id": <event-id>,
+      "event_category": <event-category>,
+      "event_type": <event-type>,
+      "title": <event-title>,
+      "event_date": <event-date>,
+      "date_precision": <date-precision>,
+      "description": <description>,
+      "source_document_ids": [<document-id>],
+      "verification_state": "unverified"
+    }
+#SECTION proceeding
+    {
+      "proceeding_id": <proceeding-id>,
+      "level": <level>,
+      "forum_type": <forum-type>,
+      "court_name": <court-name>,
+      "case_number": <case-number>,
+      "decision_number": <decision-number>,
+      "filing_date": <filing-date>,
+      "decision_date": <decision-date>,
+      "status": <status>,
+      "source_document_ids": [<document-id>],
+      "notes": <notes>
+    }
+#SECTION related
+    {
+      "type": <relation-kind>,
+      "case_id": <related-case-id>,
+      "notes": <notes>
+    }
+```
+
+**N156 — `n156.txt` (`document.json` şablonu).**
+
+```text
+#SECTION document
+{
+  "schema_version": 1,
+  "document_id": <document-id>,
+  "case_id": <case-id>,
+  "active": true,
+  "title": <title>,
+  "document_category": <document-category>,
+  "document_type": <document-type>,
+  "document_subtype": <document-subtype>,
+  "confidentiality_level": <confidentiality>,
+  "jurisdiction": "TR",
+  "language": "tr",
+  "file": {
+    "file_name": <file-name>,
+    "relative_path": <relative-path>,
+    "format": "pdf",
+    "mime_type": "application/pdf",
+    "sha256": <file-sha256>,
+    "page_count": <page-count>,
+    "size_bytes": <size-bytes>
+  },
+  "provenance": {
+    "source_origin": "other",
+    "source_description": "kit2 sifreli aktarim",
+    "source_url": null,
+    "original_file_name": null,
+    "received_at": null,
+    "uploaded_by_ref": null
+  },
+  "issuer_party_id": <issuer-party-id>,
+  "recipient_party_ids": <recipient-party-ids>,
+  "dates": [
+<dates>
+  ],
+  "reference_numbers": [
+<reference-numbers>
+  ],
+  "relations": [],
+  "processing": {
+    "ingest_enabled": false,
+    "parser": "pdftotext",
+    "chunk_strategy": "none",
+    "ocr_required": false,
+    "ocr_completed": false,
+    "text_extraction_status": "completed",
+    "index_status": "not_indexed",
+    "extracted_text_path": <extracted-text-path>,
+    "parser_version": "pdftotext-kit2-technical-record"
+  },
+  "verification_state": "unverified",
+  "tags": []
+}
+#SECTION date
+    {
+      "date_type": <date-type>,
+      "date": <date-value>,
+      "precision": <precision>,
+      "source_page": <source-page>,
+      "verification_state": "unverified"
+    }
+#SECTION refno
+    {
+      "reference_type": <reference-type>,
+      "value": <reference-value>,
+      "issuing_body": <issuing-body>,
+      "verification_state": "unverified"
+    }
 ```
