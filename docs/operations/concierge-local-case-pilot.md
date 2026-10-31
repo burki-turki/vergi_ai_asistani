@@ -8,7 +8,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > komut çalıştırılmamıştır.** Belge ve revizyonu (§34) yazılırken gerçek
 > kurulum veya gerçek veri üzerinde hiçbir CLI, `psql`, Python veya
 > PowerShell betiği çalıştırılmadı (revizyon 10 düzeltmesi, rev9 inceleme
-> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13 ve 14 kopyalar üzerinde ölçüm düzeneği ve N116/N147
+> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13, 14 ve 15 kopyalar üzerinde ölçüm düzeneği ve N116/N147
 > çalıştırdı; her revizyonun kendi paragrafı neyin çalıştırıldığını
 > söyler); hiçbir gerçek belge alınmadı; hiçbir veritabanı
 > satırı yazılmadı; hiçbir ağ isteği yapılmadı; hiçbir API anahtarı, `.env`
@@ -161,6 +161,13 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > ölçülmedi. Hiçbir kit, başlatıcı veya runbook bloğu gerçek kurulum
 > olarak çalıştırılmadı; dilim 2 kodu provaya tabidir ve provadan geçmeden
 > gerçek koşuda kullanılamaz (§32/41).
+> Revizyon 15 (§34.21) `b5`'in hiçbir bloğun açmadığı `steps\c` dizinine
+> yazma kusurunu kapatır: N148'e tek satır eklendi, diğer 156 blok
+> bayt-bayt aynıdır. Dilim 2 komutlarının bütün yazım yollarının dizin
+> sahibi tablolandı. Ölçüm yalnız sentetik düzenektedir ve o düzenek
+> `steps\c`, `steps\d`, `steps\x` dizinlerini önceden kurmaz; eski
+> baytlarla kusur üretilerek pozitif kontrol yapıldı. Hiçbir kit,
+> başlatıcı veya runbook bloğu gerçek kurulum olarak çalıştırılmadı.
 
 ---
 
@@ -184,7 +191,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -6324,6 +6331,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 12:** N108 (`a4.ps1`: `NO_RECORD` için ayrı ileti; satır 1 yorumu); diğer 147 blok | Prova #3 (`C:\vd5_e5b58889`): insan penceresinde ÖN penceresi atlandı; KİT'te `a2`, `a3`, `b0`, `b1` PASS, `a4` iki kez `NO_RECORD` reddi (kayıt ve kilit yok), ardından `a9`; test pencerelerinde ölçüt (29) b gözlendi (§34.18); `PROVA_DILIM1=FAIL` (C18 plan kuralı kusuru; doğru kuralla `BELIRSIZ`, çıkarım); bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M2/L7/O14) | Değişti (yalnız N108; diğer bloklar bayt-bayt aynı, §34.18) | **Yeni, dilim 1 provası #4** (Ek R4/16.2, ölçüt (30) dahil; N108 değiştiği için kit1 kurulumu, `pins.txt`, N116 ve kit1 insan akışı yeniden; prova #3'ün kanıtı bayt değişen blok için devralınmaz) |
 | **Revizyon 13:** N136 (`kbe.ps1`: `Write-KbRefusal` isteğe bağlı üçüncü parametre), N143 (`k.ps1`: değer redlerinin iletisi; red dosyasına `REFUSAL_KEY` ve `REFUSAL_VALUE_SHAPE`); diğer 146 blok | Prova #4: 1. deneme (`C:\vd5_54fba6f4`) Test penceresi A'nın `a2`'si bildirim alanındaki Claude masaüstü uygulamasını buldu (`AI_CHANNEL_PROCESS_COUNT=1`), DUR; `PROVA_DILIM1=FAIL` (C27, plan kuralı; 13/3/1/13); 2. deneme (`C:\vd5_cff7fa22`) pencere ilk kez sonuna kadar koştu; `k uygunsuz` dört kez `K_MARKER_LEFT` (kullanıcı beyanı: `BURAYA_KOD` silinmeden boşluk tuşuyla değer eklendi); `PROVA_DILIM1=BELIRSIZ` (20/7/0/3); iki bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M1/L4/O12 ve C0/H0/M2/L5/O9) | Değişti (iki blok; diğer bloklar bayt-bayt aynı, §34.19) | **Yeni, dilim 1 provası #5** (Ek R4/16.2, ölçüt (31) dahil; N136 ve N143 değiştiği için kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147, A.8, G12, G14 ve `k` ajan ikizleri yeniden; prova #4'ün kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
 | **Revizyon 14:** N135, N136, N143, N147, N123–N133 değişti; yeni N148–N156 (dilim 2); diğer 133 blok | Prova #5 (`C:\vd5_fa7a5f56`) `PASS_WITH_LIMITS`, inceleme `a7f3e523…`: dilim 1 adlı sınırlarla kapandı | Değişti (§34.20) | **Yeni, dilim 2 provası** (Ek R4/16.3; kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147 ve `kbe.ps1`'i yükleyen bütün komutların ajan ikizleri yeniden; prova #5'in kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
+| **Revizyon 15:** N148 (`b5.ps1`: `steps\c` dizinini açan tek satır); diğer 156 blok bayt-bayt aynı | Revizyon 14 düzenekleri (dizini önceden kuruyordu; kanıt sayılmaz) | Değişti (§34.21) | **Yeni, dilim 2 provası** (N148 yeni pinle; §34.21 notları) |
 
 ### 34.5 Yazım sınırları
 
@@ -11070,6 +11078,190 @@ bloklar dosyadan yeniden çıkarılıp ölçülen baytlarla karşılaştırıld�
 gerçek koşuyu, gerçek veri gönderimini, dilim 2 provasını veya sonraki dilimleri
 yetkilendirmez; her biri ayrı kullanıcı kararıdır.
 
+### 34.21 Revizyon 15
+
+YENİ (`SCOPE_APPROVED`, `USER_DECISION at=2026-10-31T13:23:55+03:00`; oturum
+KIT2-REV15; tek yazan oturum). Kit2 dilim 2 iş paketi içinde dar revizyon. Kapsam
+yalnız şudur: `steps\c` dizin kusuru, dizin taraması ve bu bölüm. Girdi: `43482ab`
+runbook'u (SHA-256
+`eb855c9a065ca6ce8578c41d69611b2d5bc2960b0b2c0be484f7e115e01eb132`, 18134 satır,
+157 blok; HEAD = `origin/claude-dev`; çalışma ağacı temiz; diskten doğrulandı).
+Yalnız bu dosya değişti; kod, şema, veri, test, başka runbook veya `CLAUDE.md`
+değişmedi; LOCKED bir sözleşmeye dokunulmadı. Commit ve push yapılmadı. Kit,
+başlatıcı, gerçek CLI, `psql`, PostgreSQL, 7z, VeraCrypt, Not Defteri ve ağ
+çalıştırılmadı. Çalıştırılanlar yalnız oturuma özel scratchpad'deki kopyalar
+üzerinde `ParseFile`/AST, N147 ve sentetik düzenektir (yeni `powershell.exe
+-NoProfile -NonInteractive -ExecutionPolicy Bypass` süreçleri; `TEMP`/`TMP` ve
+`PSModuleAnalysisCachePath` scratchpad'e yönlendirildi). Prova #5 kanıtı
+(`C:\vd5_fa7a5f56\ext\ev`) ve revizyon 14 inceleme düzeneği yalnız okundu; `sec\`
+açılmadı. Alt ajan kullanılmadı.
+
+**Bulgu.** `b5` (N148) kaydını `steps\c\b05.txt` yoluna yazar; revizyon 14'te
+hiçbir blok `steps\c` dizinini açmıyordu. Kaynaktan doğrulandı: `Write-KbBytes`
+(N136 satır 9–13) yalın `File.Open` kullanır, dizin açmaz; `New-KbRecord` (satır
+34–39) hatayı yakalayıp `STOP KB_RECORD_CREATE=FAIL` basar ve `$false` döner; N148
+kilitli `B5_RECORD_WRITE_FAIL`'e gider. Dizin açan bütün satırlar (N105, N136,
+N138, N139, N143–N145, N148, N151) başka dizinleri açar; `steps\c` açan yoktur.
+Prova #5 ana kanıtında `steps` altında yalnız `d`, `e2`, `s1` ve dosyalar vardır.
+Sonuç: ilk gerçek `b5`, `a6`'dan **sonra**, içerik alınmışken kilitlenirdi. Kısa
+pozitif kontrol aşağıdadır: kusur eski baytlarla gerçekten üretildi.
+
+**Düzeltme.** N148'e, `B5_X_EMPTY` reddinden sonra ve `New-KbRecord`'dan hemen önce
+tek satır eklendi (N143 satır 221, N144 satır 8, N145 satır 4 deseni):
+`$null = [System.IO.Directory]::CreateDirectory((Join-Path ([string]$global:KbEvid) 'steps\c'))`.
+**Konum gerekçesi.** Altı ön koşul reddinin hepsi (`EARLY_CLOSE_MODE`,
+`B5_ALREADY`, üç `B5_PRECONDITION`, `B5_X_EMPTY`) bu satırdan önce `return` eder;
+red kayıt da dizin de bırakmaz. Yeni değişken açılmadı; N147 sayaçları eski ve yeni
+baytlarda aynıdır. `CreateDirectory` istisna atarsa (ör. `steps\c` bir dosya ise)
+kilit `B5_RECORD_WRITE_FAIL` değil, `Invoke-KbStep` üzerinden `KB_EXCEPTION`'dır;
+`a6`'dan sonra kilit doğru sonuçtur, belge kopyalanmaz (durum `b5cfile`).
+
+**Değişen bloklar** (SHA-256 §34.8 kuralıyla; "eski" = `43482ab`).
+
+| Blok | Dosya | Satır | Eski SHA-256 | Yeni SHA-256 |
+|---|---|---|---|---|
+| N148 | `b5.ps1` | 36 → 37 | `5bf4e4046ef34467a1f2b54688e045aa85ebf4d02a3ec90585d6d260a1394dfb` | `73e6559e7a3ef49b1fb28bc55077792f1828ed698dadb2589901d6a89d72bd28` |
+
+Diğer 156 blok (N0–N147, N149–N156) bayt-bayt aynıdır (157 blok, sıra aynı). §34.20
+tablosu tarihsel kalır; `b5.ps1`'in geçerli pini bu tablodur. Kit1, `kit-build2.txt`
+anahtar kümesi, 85 dosyalık küme ve N147 değişmedi.
+
+**Dizin taraması: dilim 2'nin yazdığı yollar** (N148–N154, çağırdıkları bloklar ve
+zincirdeki `k`; salt okunur). 18 yol; sahipsiz 1 (madde 1), yalnız metin eksiği 2
+(madde 12 ve 17; ikisi de pencere öncesi işi).
+
+| # | Yazılan yol | Yazan | Üst dizini kim, ne zaman açar |
+|---|---|---|---|
+| 1 | `steps\c\b05.txt` | `b5` | **Sahipsizdi; kusur.** Şimdi `b5` (N148, bu revizyon) |
+| 2 | `steps\c\b05d.txt` | `b5d` | `b5` (ön koşul `b05` PASS) |
+| 3 | `steps\c\b06.txt` | `b6` | `b5` (ön koşul `b05d` PASS) |
+| 4 | `steps\c\b07-r<n>.txt` | `b7` | `b5` (ön koşul `b06` PASS) |
+| 5 | `steps\c\b08-r<n>.txt` | `b8` | `b5` (ön koşul `b07-r<n>` PASS) |
+| 6 | `steps\c\u.txt` | `u` | `b5` (ön koşul `b05` PASS) |
+| 7 | `<case-root>\documents\<document-id>\<file-name>` | `b5` | `b5`, N148 satır 30, özyinelemeli (`extracted` ile) |
+| 8 | `...\extracted\<document-id>.txt` | N26 (`pdftotext`) | Aynı satır |
+| 9 | `<case-root>\case.json` | `b5d` | `b5`, satır 30 (ata dizin) |
+| 10 | `...\<document-id>\document.json` | `b5d` | `b5`, satır 30 (ata dizin) |
+| 11 | `...\manual_input\manual_facts.input.json` | `b7` | `b7`, N151 satır 84 |
+| 12 | `<container-temp>\intake-form.txt` | `b5d` | §4.4/3, pencere öncesi; `b1` N53 denetler. Ek R4/16.7 ve Ek R4/21'de yazılı değildi: Ek R4/21 madde 12 eklendi |
+| 13 | `<evidence-dir>\intake-hashes.tsv` | N30 (`b6`) | Kit kurulumu (Ek R3/2 madde 1; pencere öncesi) |
+| 14 | `<evidence-dir>\manual-input-r<n>.sha256.txt` | N60 (`b7`) | Aynı |
+| 15 | `<evidence-dir>\DUR.txt` | `Write-KitDur` | Aynı |
+| 16 | `steps\s<k>\refusal-<nnn>.txt` | `Write-KbRefusal` | Kit1 `ac.ps1` (N105 satır 187); ayrıca N136 satır 46 |
+| 17 | `<restricted-dir>\` karar dosyaları | `k` | §4.4/3, pencere öncesi; `b1` N53 denetler. Madde 12 ile aynı işlem |
+| 18 | `steps\d\k<seq>.txt` | `k` | `k`, N143 satır 221 |
+
+**Dizin taraması: revizyon 14 inceleme düzeneğinin kurduğu yollar**
+(`<profile>\vergi_step10_rev14_review_b94c17d1\work\h\lib.ps1` satır 39 ve devamı;
+yalnız okundu, kanıt sayılmadı).
+
+| Düzeneğin kurduğu | Gerçek akışta sahibi | Sonuç |
+|---|---|---|
+| `evid\steps\c` | Yoktu | **Kusuru gizledi** |
+| `evid\steps\d` | `k`, `n`, `o` (N143 satır 221, N144 satır 8, N145 satır 4) | Sahipli; önceden kurulması gereksiz |
+| `evid\steps\x` | `Write-KbRefusal` (N136 satır 46) | Sahipli; aynı |
+| `evid\steps\s1`, `evid\steps\e2` | `ac.ps1` (N105 satır 184–187) | Sahipli |
+| `evid\kit2`, `kit-build2.txt`, `pins2.txt` | Pencere öncesi ajan (Ek R4/16.7 (1), (12)) | Sahipli |
+| `pilot\repo\data\cases` | §4.4/3 klon (`case_0001` izlendiği için klonda vardır); `b1` N49 denetler | Sahipli |
+| `pilot\in\x` ve içindeki belge | N17 (`7z x -o`, `a6`/`a7`) | Sahipli |
+| `pilot\temp`, `pilot\restricted` | §4.4/3 (madde 12) | Sahipli |
+| `evid\form-hash-record.txt` | Pencere öncesi ajan (Ek R4/21 madde 3, Ek R4/16.7 (10)) | Sahipli |
+| `evid\technical-record.txt` | `b1` N14 | Sahipli |
+| `evid\steps\s1\b1.txt`, `evid\steps\e2\a6.txt` | `b1`, `a6` | Sahipli |
+| `tools\*`, `secure`, `ext`, `fakeroot\System32` | Düzenek taklitleri (evidence dışı) | Geçerli değil |
+
+Dizin dışında başka sınıf kusur görülmedi.
+
+**Neden kaçtı.** Yazar düzeneği (`hx.ps1`) ve inceleme düzeneği (`lib.ps1`) `steps\c`,
+`steps\d` ve `steps\x`'i kök kurulumunda açıyordu; ölçülen yol gerçek akışın yolu
+değildi. Dilim 1 provaları ana kanıtta `steps\c`'ye hiç yazmadı (prova ikizleri
+kendi ortamlarında açtı). `pcpre` durumu nedeni kanıtlar: eski baytlar, dizin
+önceden açıkken PASS verir. Kural Ek R4/16.3'e yazıldı.
+
+**Ölçüm düzeneği (açıklanır).** Revizyon 14 inceleme düzeneğinin `lib.ps1`,
+`cases.ps1`, `fakeval.py`, `run_all.py` metinleri okunup scratchpad'de uyarlandı;
+kaynak değişmedi ve eski düzenek kanıt sayılmadı. Farklar: gerçek akış ağacı
+(aşağıda), iki oturum dizini (`s1` aktarım, `s2` işleme; `b5` `s2`'de koşar), eski ve
+yeni kit, koşu etiketi, yedi yeni durum. Sapmalar revizyon 14 ile aynıdır: `Read-KitYesNo`,
+`Test-KitLock`, `Write-KitDur`, `Read-KbDigits`, `Start-Process` taklit; `pdftotext`,
+`python`, `git` taklit `.cmd`; `k` zincirde taklittir (kayıt yazmadan önce N143
+satır 221 ile aynı `CreateDirectory`), gerçek `k` durumları (`kl3`, `ksalt`) ayrıca
+`steps\d`'yi kendisi açtı. Not Defteri baytları pin için salt okunur okundu,
+çalıştırılmadı.
+
+Kurulan dizinler ve kaynak satırları: `evid\kit2` (Ek R4/16.7 (1)); `evid\steps`
+(N105 satır 183–184); `evid\steps\e2` (N105 satır 185–186); `evid\steps\s1` ve
+`evid\steps\s2` (N105 satır 187); `pilot\repo\data\cases`, `pilot\in`, `pilot\temp`,
+`pilot\restricted` (§4.4/3); `pilot\in\x` (N17); `tools\poppler`, `tools\7z`,
+`secure`, `ext` (evidence dışı taklitler). `steps\c`, `steps\d`, `steps\x` kurulmadı;
+düzenek biri varsa durur.
+
+**Ölçümler.** Üç tur sınırından **bir** tam koşu kullanıldı: 52 durum, **225
+denetim, 225 PASS**, ekranda ve kanıtta nöbetçi 0. Kit kodunda ölçümle bulunan
+hata 0. Ayrıca koşu öncesi statik denetim ve eski kitte N147 sayaç karşılaştırması.
+
+| Ölçüm | Durum | Sonuç |
+|---|---|---|
+| **Pozitif kontrol:** eski N148, gerçek akış ağacı | `pc` | Kusur üretildi: ekranda `STOP KB_RECORD_CREATE=FAIL`, `DUR.txt` `KIT_DUR_REASON=B5_RECORD_WRITE_FAIL`, kayıt yok, `steps\c` yok, `case-root` yok (8/8) |
+| Eski N148, `steps\c` önceden açık | `pcpre` | PASS: kusur gizlenir (4/4) |
+| Zincir `b5`→`b5d`→`b6`→(`k intake` taklidi)→`b7`→`g8`→(`k girdi` taklidi)→`b8` | `chain` | Hepsi PASS; `b05.txt`'de yeni pin; `steps\c`'de tam beş kayıt; `steps\x` açılmadı; red 0; `DUR.txt` yok (15/15) |
+| `u` dalı | `uchain`, `c5`, `c5b`, `c6hu` | PASS |
+| Ön koşul reddi sonrası | `b5x`, `b5c`, `e10` | `B5_X_EMPTY` ve `B5_PRECONDITION`: `steps\c` **açılmadı** |
+| `steps\c` zaten var | `b5idem` | PASS |
+| `steps\c` bir dosya | `b5cfile` | Kilitli `KB_EXCEPTION`; `case-root` yok |
+| `steps\x` sahibi | `sx` | `Write-KbRefusal` dizini kendisi açtı |
+| Ek R4/16.3 (1)–(2) | `c1`, `c1h`, `c1r`, `c1d`, `c2c` | PASS |
+| (2a)–(2c) | `c2a`, `c2b`, `c2bc`, `c2c` | PASS |
+| (3) | `c3`, `c3fm`, `c3c`, `c3d`, `c3v`, `c3w`, `c3p` | PASS |
+| (4) | `c4`, `c4n` | PASS |
+| (5) | `c5`, `c5b` | PASS |
+| (6) | `c6m`, `c6m1`, `c6`, `c6i`, `c6ok`, `c6h`, `c6hu` | PASS |
+| (7) | `c7` ve her durumda ekran taraması | PASS; pozitif kontrol kapsayıcıda bulundu |
+| (8) | `c8` | PASS |
+| N148 statik | — | `ParseFile` 0 hata; ASCII dışı 0; CR 0; küçük harfli `<...>` belirteci 0 |
+| N147 (kopyalar; kit2 yeni) | — | `KIT2_VAR_SCAN_FILE_COUNT=81`, `KIT2_VAR_COLLISIONS=0`, on `KIT2_AST_*=0`, `KIT2_PLACEHOLDER_LITERAL_COUNT=0`, `KIT2_CMD_COLLISIONS=0`; eski kitle aynı |
+| Blok değişmezliği ve §1.5 taraması | — | Yazımdan sonra bütün dosya ve `43482ab`'a göre eklenen satırlar üzerinde, pozitif kontrollü; sonuç bu oturumun kapanış raporundadır ve bağımsız incelemede yinelenir |
+
+**Ölçülmeyenler.** Gerçek `a6` ve gerçek `b1` ile oluşan kanıt ağacı (ağaç kaynak
+satırlarıyla ve prova #5 kanıtıyla kuruldu); gerçek kit1 fonksiyonları; `bc.ps1`'in
+tam yüklemesi; gerçek doğrulayıcılar, gerçek `pdftotext`, gerçek Not Defteri ve
+klavye, `Read-KbDigits`, gerçek `git`, `manual-fact`; gerçek ACL altında dizin
+açma; insanın formu doldurması. §34.20 "Ölçülmeyenler" aynen geçerlidir.
+
+**Dilim 2 provası planına notlar** (§34.20 notlarına ek; plan işidir).
+
+- **Pin:** N148 yeni pinle; `pins2.txt` ve `kit-build2.txt` buna göre kurulur.
+- **Ağaç ölçütü:** ana kanıt dizininde `b5`'ten önce `steps\c` yoktur ve ilk
+  `b5` onu kendisi açar; `steps\d` ilk `k`/`n`/`o` ile, `steps\x` ilk başlatıcı
+  reddiyle oluşur. Hiçbir plan adımı veya ikiz bu dizinleri ana kanıtta önceden
+  açmaz; Ek R4/16.3'teki düzenek kuralı provaya da uygulanır.
+- **Ret izi:** `b5`'in ön koşul reddi `steps\c` bırakmaz; ret dosyası yalnız
+  oturum dizinine düşer.
+
+**Taşınan maddeler.** §34.20 listesi aynen geçerlidir; rev14 açık Low'ları, K-2 ve
+O-maddelerine dokunulmadı. Ek not (değişiklik yok): silme oturumundan veya erken
+durmadan `b5` çalışmadan çağrılabilecek dilim 3–4 yazarları (`b24a`, `s25`–`s29`,
+`z1`) `steps\c`'ye yazacaksa dizini kendileri açmalıdır; o bloklar henüz yazılmadı.
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| Üst uyarı | Revizyon listesine 15; revizyon 15 paragrafı |
+| §0 | "Revizyon" satırı |
+| §34.4 | Revizyon 15 satırı |
+| §34.21 | Bu bölüm |
+| Ek R4/16.3 | Düzenek kuralı cümlesi |
+| Ek R4/21 | Madde 1 pin atfı; madde 12 |
+| N148 | Yukarıdaki tablo |
+
+**Yazma hesabı.** Blok tek `Edit` ile, metin scratchpad'deki tek Python yamasıyla
+(her değişiklik tek ve benzersiz eşleşme) yazıldı; ardından bu bölümde üç hedefli
+`Edit` yapıldı (bir blok atfı, bir not maddesi, bu cümle); dosya LF; son yazımdan
+sonra bloklar dosyadan yeniden çıkarılıp ölçülen baytlarla karşılaştırıldı. Bu revizyon gerçek
+koşuyu, gerçek veri gönderimini, dilim 2 provasını veya sonraki dilimleri
+yetkilendirmez; her biri ayrı kullanıcı kararıdır.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -14499,7 +14691,9 @@ sürüm sırası; (7) sızıntı testi (intake alanlarında nöbetçi ad ve tari
 `g8` ekranının kayda girmediği); (8) iki kalemli sentetik formda `tax_type`
 menüsü kalem başına ayrı sorulur ve forma iki ayrı
 `KALEM_<n>_VERGI_TURU` satırı yazılır; formda elle değiştirilen sözlük
-dışı değer `B5D_VOCAB` ile reddedilir (D-13).
+dışı değer `B5D_VOCAB` ile reddedilir (D-13). Düzenek kuralı (revizyon 15,
+§34.21): dilim 2 ölçümleri, kitin veya pencere öncesi ajanın açmadığı dizini
+önceden kurmayan düzenekte yapılır.
 
 #### Ek R4/16.4 Dilim 3 — DB zinciri
 
@@ -17100,7 +17294,7 @@ geçmeden gerçek koşuda kullanılamaz (§32/41).
 
    | Dosya | Kaynak | SHA-256 |
    |---|---|---|
-   | `b5.ps1`, `b5d.ps1`, `b6.ps1`, `b7.ps1`, `g8.ps1`, `b8.ps1`, `u.ps1` | N148–N154 | §34.20 tablosu |
+   | `b5.ps1`, `b5d.ps1`, `b6.ps1`, `b7.ps1`, `g8.ps1`, `b8.ps1`, `u.ps1` | N148–N154 | §34.20 tablosu; `b5.ps1` (N148) revizyon 15 pini §34.21 tablosunda |
    | `n155.txt`, `n156.txt` | N155, N156 (`case.json` ve `document.json` şablonu) | §34.20 tablosu |
    | `n023.ps1` … `n034.ps1`, `n059.ps1`, `n060.ps1`, `n061.ps1`, `n121.ps1` | Aynı numaralı runbook bloğunun bayt-bayt kopyası | Ek R4/6 madde 3 kuralı |
    | `n058.txt` | N58 (`json` bloğu), bayt-bayt | Aynı kural |
@@ -17179,6 +17373,10 @@ geçmeden gerçek koşuda kullanılamaz (§32/41).
 11. **`g8`** girdi dosyasının SHA-256'sını `manual-input-r<n>.sha256.txt` ile
     karşılaştırır; farkta kilitsiz `G8_PRECONDITION`, değer basılmaz.
     Kilitli sonuç `b8`'in N61'indedir.
+12. **Dizin sahipleri (revizyon 15).** `<container-temp>` ve `<restricted-dir>`
+    dizinlerini kit açmaz; §4.4/3 düzeninde pencereden önce oluşturulurlar ve
+    `b1` (N53) varlıklarını denetler; bütün yazım yollarının sahibi §34.21
+    tablosundadır.
 
 **N148 — `b5.ps1` (form hash, belge teslimi, `pdftotext`).**
 
@@ -17202,6 +17400,7 @@ $b5xX = Join-Path ([string]$b5xV['intake-dir']) 'x'
 $b5xItems = @()
 if (Test-Path -LiteralPath $b5xX -PathType Container) { $b5xItems = @(Get-ChildItem -LiteralPath $b5xX -Force -ErrorAction Stop) }
 if ($b5xItems.Count -ceq 0) { Write-KbRefusal 'B5_X_EMPTY' 'b5 BASLAMADI: acilmis belge yok (x dizini bos). Aktarim gunu a6/a7 adimlarini denetleyin.'; return }
+$null = [System.IO.Directory]::CreateDirectory((Join-Path ([string]$global:KbEvid) 'steps\c'))
 if (-not (New-KbRecord $b5xRec (Get-KbHeader 'b5' 'b5.ps1'))) { Invoke-KbLock 'b5' 'B5_RECORD_WRITE_FAIL'; return }
 $b5xReq = @('X_FILE_COUNT=1', 'TOOL_MANIFEST_MATCH=True', 'PDFTOTEXT_RC=0', 'CLI_RC=0', 'FORM_HASH_RECHECK part=AF match=True', 'FORM_HASH_RECHECK part=G match=True')
 foreach ($b5xL in @(Get-KbFormRecheckLines)) { Add-KbLine $b5xRec ([string]$b5xL) }
