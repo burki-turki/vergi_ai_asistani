@@ -8,7 +8,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > komut çalıştırılmamıştır.** Belge ve revizyonu (§34) yazılırken gerçek
 > kurulum veya gerçek veri üzerinde hiçbir CLI, `psql`, Python veya
 > PowerShell betiği çalıştırılmadı (revizyon 10 düzeltmesi, rev9 inceleme
-> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13, 14 ve 15 kopyalar üzerinde ölçüm düzeneği ve N116/N147
+> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13, 14, 15 ve 16 kopyalar üzerinde ölçüm düzeneği ve N116/N147
 > çalıştırdı; her revizyonun kendi paragrafı neyin çalıştırıldığını
 > söyler); hiçbir gerçek belge alınmadı; hiçbir veritabanı
 > satırı yazılmadı; hiçbir ağ isteği yapılmadı; hiçbir API anahtarı, `.env`
@@ -168,6 +168,17 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > `steps\c`, `steps\d`, `steps\x` dizinlerini önceden kurmaz; eski
 > baytlarla kusur üretilerek pozitif kontrol yapıldı. Hiçbir kit,
 > başlatıcı veya runbook bloğu gerçek kurulum olarak çalıştırılmadı.
+> Revizyon 16 (§34.22) kit2 dilim 3 kodunu ekler (`b9`–`b16`, `g14`, `g16`,
+> `b18`–`b23`, `adm.ps1`; yeni bloklar N157–N174, Ek R4/22), K-2'yi kapatır
+> (`b5d`'de doğrulayıcı altyapı hatası artık kilitlidir ve "0 hata" demez) ve
+> dilim 2'yi adlı sınırla kapatır (prova #6, `C:\vd5_accdc262`,
+> `PROVA_DILIM2=FAIL` kayıtta kalır; §34.22). Dilim 3 komutları yalnız sentetik
+> düzenekte ölçüldü: gerçek `ac.ps1`, gerçek `bc.ps1`, gerçek `Get-KbScript` ve
+> gerçek `adm.ps1` ile yükleme; taklit `python`, `psql`, `pg_isready`, `git`,
+> `pdftotext`, taklit Not Defteri ve taklit tuş. Gerçek CLI, gerçek PostgreSQL,
+> gerçek Not Defteri ve gerçek klavye ölçülmedi. Hiçbir kit, başlatıcı veya
+> runbook bloğu gerçek kurulum olarak çalıştırılmadı; dilim 3 kodu provaya
+> tabidir ve provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
 
 ---
 
@@ -191,7 +202,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -6332,6 +6343,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 13:** N136 (`kbe.ps1`: `Write-KbRefusal` isteğe bağlı üçüncü parametre), N143 (`k.ps1`: değer redlerinin iletisi; red dosyasına `REFUSAL_KEY` ve `REFUSAL_VALUE_SHAPE`); diğer 146 blok | Prova #4: 1. deneme (`C:\vd5_54fba6f4`) Test penceresi A'nın `a2`'si bildirim alanındaki Claude masaüstü uygulamasını buldu (`AI_CHANNEL_PROCESS_COUNT=1`), DUR; `PROVA_DILIM1=FAIL` (C27, plan kuralı; 13/3/1/13); 2. deneme (`C:\vd5_cff7fa22`) pencere ilk kez sonuna kadar koştu; `k uygunsuz` dört kez `K_MARKER_LEFT` (kullanıcı beyanı: `BURAYA_KOD` silinmeden boşluk tuşuyla değer eklendi); `PROVA_DILIM1=BELIRSIZ` (20/7/0/3); iki bağımsız kanıt incelemesi `REHEARSAL_EVIDENCE_VERIFIED` (C0/H0/M1/L4/O12 ve C0/H0/M2/L5/O9) | Değişti (iki blok; diğer bloklar bayt-bayt aynı, §34.19) | **Yeni, dilim 1 provası #5** (Ek R4/16.2, ölçüt (31) dahil; N136 ve N143 değiştiği için kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147, A.8, G12, G14 ve `k` ajan ikizleri yeniden; prova #4'ün kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
 | **Revizyon 14:** N135, N136, N143, N147, N123–N133 değişti; yeni N148–N156 (dilim 2); diğer 133 blok | Prova #5 (`C:\vd5_fa7a5f56`) `PASS_WITH_LIMITS`, inceleme `a7f3e523…`: dilim 1 adlı sınırlarla kapandı | Değişti (§34.20) | **Yeni, dilim 2 provası** (Ek R4/16.3; kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147 ve `kbe.ps1`'i yükleyen bütün komutların ajan ikizleri yeniden; prova #5'in kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
 | **Revizyon 15:** N148 (`b5.ps1`: `steps\c` dizinini açan tek satır); diğer 156 blok bayt-bayt aynı | Revizyon 14 düzenekleri (dizini önceden kuruyordu; kanıt sayılmaz) | Değişti (§34.21) | **Yeni, dilim 2 provası** (N148 yeni pinle; §34.21 notları) |
+| **Revizyon 16:** N134, N135, N136, N147, N149, N153 değişti; yeni N157–N174 (dilim 3); diğer 151 blok bayt-bayt aynı | Prova #6 (`C:\vd5_accdc262`) `PROVA_DILIM2=FAIL`, inceleme `3d5e4a35…`: dilim 2 adlı sınırla kapandı | Değişti (§34.22) | **Yeni, dilim 3 provası** (Ek R4/16.4; kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147 ve `kbe.ps1`'i yükleyen bütün komutların ajan ikizleri yeniden; prova #6'nın kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
 
 ### 34.5 Yazım sınırları
 
@@ -11262,6 +11274,281 @@ sonra bloklar dosyadan yeniden çıkarılıp ölçülen baytlarla karşılaştı
 koşuyu, gerçek veri gönderimini, dilim 2 provasını veya sonraki dilimleri
 yetkilendirmez; her biri ayrı kullanıcı kararıdır.
 
+### 34.22 Revizyon 16
+
+YENİ (`USER_DECISION at=2026-11-01T17:04:05+03:00`, `SCOPE_APPROVED
+at=2026-11-01T17:06:54+03:00`; oturum KIT2-DILIM3; tek yazan oturum). Adım 10 B
+yolu, işleme kiti (kit2) dilim 3. Girdi: `085318b` runbook'u (SHA-256
+`1e12dfad91642917f684534f0ceaeaac8429dcbb8e0fc046c648fbb0171f8519`, 18333 satır,
+157 blok; HEAD = `origin/claude-dev`; çalışma ağacı temiz; diskten doğrulandı).
+Yalnız bu dosya değişti; kod, şema, veri, test, başka runbook veya `CLAUDE.md`
+değişmedi; LOCKED bir sözleşmeye dokunulmadı. Commit ve push yapılmadı. Kit,
+başlatıcı, gerçek CLI, `psql`, PostgreSQL, 7z, VeraCrypt, Not Defteri ve ağ gerçek
+kurulum olarak çalıştırılmadı. Çalıştırılanlar yalnız oturuma özel scratchpad'deki
+kopyalar üzerinde `ParseFile`/`ParseInput`, N147 ve sentetik düzenektir (yeni
+`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass` süreçleri;
+`TEMP`/`TMP` ve `PSModuleAnalysisCachePath` scratchpad'e yönlendirildi). Prova #6
+kanıtından yalnız `s2\b1.txt` kayıt biçimi ve `run\tools` adları okundu; `sec\`
+açılmadı. Not Defteri baytları pin girdisi olarak salt okunur okundu, dosya
+çalıştırılmadı. Alt ajan kullanılmadı.
+
+**Kaynaklar (diskten okundu; SHA-256'lar ölçüldü).** Tasarım zinciri Ek R4 başındaki
+pinlerle aynı. Prova #6 bağımsız kanıt incelemesi
+`<profile>\vergi_step10_kit2_d2prova_evidence_review_13932462\independent-evidence-review.md`
+(`3d5e4a35f7cbbdea76f6f3e58e03d3084642b0089900cf0cd2cb8843c442cfd6`);
+`C:\vd5_accdc262\run\findings.md`
+(`2de8466b9bd0c3d7204ffcecc9c433ad8061f434abf05c4e1edee1d3d0426bf5`); revizyon 14
+incelemesi (`c47035485312651174c990d92537a6510451a73da675a752b0c94aa38ab4bc52`);
+revizyon 15 incelemesi
+(`83ee5de3de2efd7e7e20df2f3cd986debef49b4162c94b92aa857224e1782d36`). Kaynak
+okuması (HEAD, salt okunur): `ui/cli_mutate.py`, `scripts/iam_admin.py`,
+`ui/deadline_report.py`, `ui/services/db.py`,
+`ui/services/fact_verification_mutation_facade.py`,
+`ui/services/manual_fact_mutation_facade.py`, `src/case_validator.py`,
+`src/case_document_validator.py`, `src/manual_fact_entry_engine.py`,
+`src/timeline_engine.py`, `src/deadline_engine.py`, `src/fact_approval.py`,
+`src/timeline_approval.py`, `src/deadline_approval.py`,
+`data/case_timeline.schema.json`.
+
+**Dilim 2 kapanışı: "prova ile doğrulandı, adlı sınırla" (`USER_DECISION D1
+at=2026-11-01T17:04:05+03:00`).** Prova #6: kök `C:\vd5_accdc262`,
+`PROVA_DILIM2=FAIL` (28 PASS, 19 PASS_WITH_LIMIT, 0 NA, 2 FAIL, 0 UNMEASURED);
+`FAIL` kayıtta kalır, değiştirilmez, tekrar yoktur. Bağımsız inceleme `3d5e4a35…`:
+`PROVA_DILIM2=FAIL` yeniden üretildi; 0 Critical, 1 High, 2 Medium, 5 Low, 14
+Observation.
+
+Adlı sınır: C08 ve D10 FAIL'i düzeneğin kendi manifestlerinin sentetik kaynak dosya
+adını listelemesinden kaynaklanır (plan P§10 sınıf çelişkisi, bulgu H-1); kit
+kanıtı, kayıtlar ve raporlarda nöbetçi 0 (bağımsız tarama); kapsayıcı tarafı yalnız
+Faz B'nin B.3-lk taramasıyla ölçüldü (bağımsız tekrar yok); kalan 47 ölçüt bağımsız
+yeniden ölçümle Faz B ile birebir. Sonuç yalnız sentetik mekaniktir; gerçek dosya
+yetkisi vermez.
+
+**Hiç egzersiz edilmeyenler (dilim 2).** (1) Test penceresi yoktu; Ctrl+C insan
+ölçümleri ikizdir veya prova #5'ten devralındı; (2) `k uygunsuz`, `u` ve `a7`
+insanda çalışmadı; (3) `HASH_ONEK` göz karşılaştırması ve aday sayısı insanda
+fiilen yapılmadı, PASS kuralları makine ölçümüne dayanır (inceleme O-2); (4) soru
+9b sabit metindeki "BOS" sözcüğü yüzünden ayırt edici değildi; değerin ekrana
+geçmediği yalnız kodla ve diskten gösterildi (O-1); (5) ekran makineyle ölçülmedi;
+(6) `pilot\**`, kapsayıcı içi, parola sınıfı ve pilot portu bağımsız incelemede
+ölçülmedi; (7) Windows son kullanılanlar kaydı, PSReadLine geçmişi ve olay
+günlükleri taranmadı. Form süresi 31 dakika ölçüldü (tahmin 18–25).
+
+**Dilim 3 içeriği (`D2`: tek iş paketi).** `b9`, `b10`–`b16`, `b18`–`b23`, `g14`,
+`g16`, `adm.ps1` (`y1`), onay kapısı, kör hesap, `b20`/`b23` karşılaştırması.
+Uygulama seçimleri Ek R4/22'dedir. Dilim 4–5 yazılmadı (`b24`, `y2`, `k silme`
+kapısı, `s25` ve sonrası, `z1`, gerçek `ev.ps1`, reconciliation `r1`…`r7`, sayfa).
+
+**Bulgu: gerçek doğrulayıcının `FAIL`'i traceback taşır (K-2'nin okuması).** Görev
+metni altyapı hatasını `UNPARSED`, `CLI_RC≠0`, `TRACEBACK_SEEN` diye sayar ve
+gerçek içerik hatasının (`FAIL`) kilitsiz kalmasını ister. Kaynak okundu: iki
+doğrulayıcı da `except` içinde `… GEÇERSİZ` ve hata metnini basıp `raise` eder;
+yani gerçek içerik hatası her zaman `CLI_RC=1` ve traceback taşır. Üç işareti
+tek başına kilit saymak bütün form düzeltme turlarını kilitlerdi. İkinci cümle
+önceliklidir; kural Ek R4/22 madde 13'tedir. Taklit doğrulayıcı aynı biçimi üretir.
+
+**Biriken maddeler.**
+
+| Madde | Ne idi | Ne yapıldı |
+|---|---|---|
+| K-2 (rev14 L1) | `b5d`'de `UNPARSED` kilitsiz ve "0 hata" | `Test-KbValidatorFail`, N149'a tek satır; Ek R4/8.3, Ek R4/9, Ek R4/12.3 madde 6, Ek R4/21 madde 6 tek anlamda |
+| R15 L-1 | Ek R4/16.7 listesinde `form-hash-record.txt` yoktu | Madde (10)'a eklendi; Ek R4/19 madde 2 de aynı |
+| R15 L-2 / rev14 L2 | Ek R4/19 madde 2 (12) satır sayısı | Dosyada 85 yazıyordu (rev14 son yaması; R15 L-2 eski 59'u anıyordu); dilim 3 ile 128 |
+| N134 (§34.20) | "degerleri degistirin" cümlesi | N123–N133 satır 5 ile aynı cümle; satır sayısı ve ayrıştırma aynı |
+| N136 izin listesi (§34.20) | N064, N065, N073, N084, N085 ve `psql` N091 | Eklendi. Ayrıca N63, N75, N77, N79, N81, N83, N87'nin kendi `…=INVALID` satırları (Ek R4/10) |
+| `b8` iletisi | "Siradaki: b9 (dilim 3)." | "Siradaki: b9."; yalnız metin |
+
+**Değişen ve yeni bloklar** (SHA-256 §34.8 kuralıyla; "eski" = `085318b`).
+
+| Blok | Dosya | Satır | Eski SHA-256 | Yeni SHA-256 |
+|---|---|---|---|---|
+| N134 | `n134.txt` | 12 → 12 | `da5b6cf545882e5ef41aca48c16d4d46f87b1f0d8e7e1282ea7e16be67f918b1` | `29d2697cb37731dcbf531a34d4bfc6ad14e7a6b56c3e4912a82d641c8034b174` |
+| N135 | `bc.ps1` | 181 → 197 | `293440b043545c1fbf2aff74323989611194b1258548ed8109a092300ae9dd3a` | `1b0eb50b7e5496f6d48493295df0c3ea0b1a0bebeddc4676badb9a7beaef0bd4` |
+| N136 | `kbe.ps1` | 605 → 772 | `dd4201369447c8ffcc8288cf45c2580bd0a093d3b4d12e348d6486c4f854f7dc` | `34cfb936358b6e4e4ebffe0f66cce17673b47ae656c919d75475139d50453cd8` |
+| N147 | `kvc2.ps1 (kurulum aracı)` | 170 → 173 | `6c97cbcd232da66599e14a6e89f411579c85eaa9c05a18b35fcac27ab827e05f` | `483c335638a82c534c0c84de2871d9f54641415f68e183e010c565dac8b868ac` |
+| N149 | `b5d.ps1` | 440 → 441 | `8ff4a9914215ba42a6be20afe26f8320632b30599e2f4aac3130a6a7ef6a7e9d` | `2a8ad53bdc17a26f64e710cbe6a66b57df678f948f61d8bc1bc07b6bdc01884a` |
+| N153 | `b8.ps1` | 30 → 30 | `cb1e74ed8c95bba3e59d9715ae4624b5ea31a9ecb3f5a7b2cf9624198df4fcfe` | `3490a29af1832879ac5c84c36cd7c83dc8fca7e92f22573d67dd045f8c2266e1` |
+| N157 | `b9.ps1` (yeni) | 23 | — | `49edb4b828a02de71a038a765b1a98cb620a4cd27349cc33f1499f283eb13077` |
+| N158 | `b10.ps1` (yeni) | 48 | — | `06a7e878327216862df3d4480e57582760f18ffeb39ac17cd7cebd54db00f87a` |
+| N159 | `b11.ps1` (yeni) | 41 | — | `ba2ae9ddd61ed25d59a7d483d49f4752398b43516447ad1f4fdc76f45dd021ce` |
+| N160 | `b12.ps1` (yeni) | 26 | — | `56afee99874db7c929cee5cd0110e960ea505f08c63e4a50131285680433e696` |
+| N161 | `b13.ps1` (yeni) | 42 | — | `9411c36a0991a604883f21fcb3616f2481287f4a0a19a9eaa0a8ff97c663ab92` |
+| N162 | `g14.ps1` (yeni) | 17 | — | `88193cfc414436195ad6b522530b1807db73ec2ceb3fd44547675be869e85986` |
+| N163 | `b14.ps1` (yeni) | 45 | — | `d3dc8a0df959026904b6d4b452ad3c61b75afdfee8f876fd60655983f3d5032a` |
+| N164 | `b15.ps1` (yeni) | 32 | — | `eac3f9cba4a4fb56bb4568b168585d40efe9f2cb9bca358fdce8b3cda0295528` |
+| N165 | `g16.ps1` (yeni) | 26 | — | `b130dbb069ef420ad1cae8a180f8d2f56c3aaf8385aea5788b1fbcc3b82f55ee` |
+| N166 | `b16.ps1` (yeni) | 47 | — | `25cfdcb0b0ce6f55a56933591e37befcafc20028b57a458c765a679c06e8a679` |
+| N167 | `b18.ps1` (yeni) | 125 | — | `7845ef4c933f46a06f82c3a6df3e81ef6b87cd719d4d6c8ca146374128ce8b7f` |
+| N168 | `b19.ps1` (yeni) | 49 | — | `b81e0c641d13fb65b85fb7722e5f2f9ab312492cfc9f2757996151beee6cc678` |
+| N169 | `b20.ps1` (yeni) | 34 | — | `be18bbc0e926f7742337c29bc281eb7a6800a59391ce09bb7ce1ac61fefb6c80` |
+| N170 | `b21.ps1` (yeni) | 49 | — | `c3217eebbe0bd0f17a3a3ba77d896a663a97416ec39b41d56267a091324b9a44` |
+| N171 | `b22.ps1` (yeni) | 16 | — | `5b1a8c7c2a125129f8fa75ccba782bbe6a916c24eb607dcb296befc2d7b793ce` |
+| N172 | `b23.ps1` (yeni) | 36 | — | `93d0912ae075e679b4adf1031ada77e35b5279d924ce27c91c17e0f8a50cfaa4` |
+| N173 | `adm.ps1` (yeni) | 149 | — | `95a10fd17ad3e8f1805da3eed71eac29d310598fa519df25936d078d8f8fa782` |
+| N174 | `n083-no.ps1` (yeni) | 3 | — | `80d4d07c6500591e622ecfb093989cec2e5b4fbc05e8e95e0bf2d8ecdf84f7d0` |
+
+Diğer 151 blok bayt-bayt aynıdır; toplam 175 blok. Kit1 değişmedi. N135'te yorum ve
+komut tanımı; N136'da yorum, izin listesi, N062/N085 bellek satırları, `hashline`
+türü, `N091|<aile>` ayrıştırması, `Rc` parametresi, `ADMIN` penceresi, dosya listesi
+ve yeni yardımcılar (`Get-KbTok`, `Test-KbRecKeys`, `Test-KbChainStart`,
+`Test-KbDbGate`, `Test-KbApplyDecision`, `Request-KbApproval`, `New-KbSqlSpec`,
+`Add-KbJournalLines`, `Invoke-KbBaseline`, `Invoke-KbJournalCheck`,
+`Get-KbHelpSpecs`, `Invoke-KbMem`, `Get-KbMemLines`, `Open-KbMem`, `Add-KbInputSub`,
+`Get-KbFactId`, `Read-KbJsonStrict`, `Get-KbAnchorEvents`, `Get-KbBlindDate`,
+`Test-KbValidatorFail`); N147'de listeler ve şablon blok ayrıştırması; N149'da
+yorum ve K-2 satırı; N153'te yorum ve ileti. Dilim 1–2 komutlarının davranışı K-2
+dışında aynıdır. `kit-build2.txt` anahtar kümesi değişmedi.
+
+**Kabul ölçütleri (Ek R4/16.4) ve K-2 → ölçüm.** Bütün satırlar sentetik düzenektedir
+(`MECHANICS_ONLY`).
+
+| Ölçüt | Sonuç | Durumlar | Pozitif kontrol |
+|---|---|---|---|
+| (1) preview → apply → `calculated` → rapor; aile başına 1 `completed` | PASS | `s0`…`s12`, `C1_*`: yedi aile §26.3 sırasında, hepsi `completed` | `b11j0`, `b11j2`, `b11js`, `b11jf`, `b11ja`: sıfır, iki, yanlış durum, aile, aktör kilitlendi |
+| (2) Onay satırı CLI'den önce; H'de CLI yok | PASS | Taklit CLI her apply anında kaydı okudu: 6 apply, 6'sı onay satırı kayıttayken; `b11h`, `b13h`, `b14h`, `b16h`, `b21h`, `y1h`, `y1x`, `b11x`: apply sayısı 0, kayıt yok | `b11m`, `y1method`: yöntem kaydı bozukken soru sorulmadı |
+| (3) `blind-calc.txt` `b19`'dan önce hash'lenir; değişirse kilitli; tarih kayıtta yok | PASS | `s7`, `s8`, `b20mod`, `b23mod`, `b20diff`, `b20h`, `b23h`, `b23rep` | `b20diff`: sistem tarihi farklıyken E/H sorulmadan `STOP`; kayıtta tarih yok |
+| (4) İpucu satırları ekranda ve kayıtta yok | PASS | 119 durumun ekran ve kanıt taraması: 0 | `scanpc`: tarayıcı her biçimi buldu |
+| (5) ADMIN'de `app-dsn`, KİT'te `admin-dsn` yok | PASS | `y1ok`: `KbVal` anahtarı yok, genel bellek taraması 0, CLI'nin gördüğü DSN admin, çalışma dizini repo kökü. `T`: KİT'te aynı tarama 0. `C5_*`: KİT'in bütün `psql` ve `ui.*` çağrıları APP DSN'i | Aynı bellek taraması karşı DSN'i buldu (`T_KIT_MEM_SCAN_POSITIVE`, `Y1_MEM_SCAN_POSITIVE`) |
+| (6) Sızıntı, kasıtlı CLI hata yolu dahil | PASS | `filter` (24 etiket, 3 tür, 21 ham satır); `b10err`, `b10tr`, `b11err`, `b13pv`, `y1fail` yol ve nöbetçi taşıyan `ERROR`/traceback; bütün durumlarda ekran ve kanıt 0; `refneg`, `sonucneg` | `scanpc`: 22 biçim, 0 kaçak; büyük harf, `~1` ve küçük harf kullanıcı adı dahil |
+| (7) `TUZ=` satırı; kayıtta ve ekranda yok; yeniden açmada aynı; dosyalar farklı; `REFERANS_SHA256` yok | PASS | `C7_*`: 9 dosyanın hepsinde, hepsi farklı, kanıtta 0; `kreopen`, `b18codes` yeniden açma; sıfırlamada yeni tuz | `refneg`: `REFERANS_UZUNLUK` var, hash yok |
+| (8) RED'de `b13`/`b14`/`b16`/`b21` kilitsiz | PASS | `b13red`, `b14red`, `b16red`, `b21red`; `DUR.txt` yok, CLI çağrısı yok | `b13nod`, `b14nod`, `b16nod`, `b21nod`: karar yokken ayrı kod |
+| K-2 | PASS | `k2crash` (`UNPARSED`, rc 3), `k2noise` (`UNPARSED`, rc 0), `k2rc1` (`PASS` + rc 1), `k2tr` (`PASS` + traceback): `DUR.txt` `B5D_VALIDATOR_INFRA`, `b05d` yok, "0 hata" yok. `k2fail`: gerçek `FAIL` kilitsiz, düzeltme turu PASS | `k2pc`: eski baytlar aynı durumda kilitsiz ve "0 hata" basıyor |
+
+Ek durumlar: `load` (bütün yeni dosyalar gerçek `Get-KbScript` ile; `<…>` dolu ve
+boş sözlükle), `arginv` (sekiz apply bloğunda geçersiz argüman: `CLI_CALLED=False`,
+adlı `STOP`), `b9*`, `b10*`, `b11*`, `b12*`, `b13*`, `b14*`, `b15err`, `b16*`,
+`b18*`, `b19*`, `b20*`, `b21*`, `b22*`, `b23*`, `early` (on altı komut), `td` (silme
+oturumu), `y1*` (komut, kilit, ön koşul, tekrar, pin, güvenli dosya, `kit-values`).
+
+**Ölçümler.** Son koşu: 119 durum, **596 denetim, 596 PASS**, ekranda ve kanıtta
+nöbetçi 0, `scanpc` 22/22. `ParseFile`/`ParseInput`: değişen ve yeni 22 kod dosyasında
+0 hata, ASCII dışı 0, CR 0, yer değiştirmesiz yüklenen dosyalarda `<…>` belirteci 0.
+N147 (kopyalar): `KIT2_VAR_SCAN_FILE_COUNT=121`, `KIT2_VAR_COLLISIONS=0`, on
+`KIT2_AST_*=0`, `KIT2_PLACEHOLDER_LITERAL_COUNT=0`, `KIT2_CMD_COLLISIONS=0`. N147
+pozitif kontrolü: dört bozuk kopya satırı (yer tutucu, genel ad çakışması, duyarsız
+işleç, hashtable) dördü de `STOP` verdi.
+
+**Tur sayısı (açıklanır; K-3 kuralı).** Olumlu zincir üç tur: `r1`, `r2`, `f1`
+(`r0` kit ölçütlerine ulaşmadı: düzenek betiği sözdizimi hatasıyla `b5`'te durdu).
+Negatif küme iki tur: `n1`, `f1`. `n1`'deki 22 düşen denetimin 21'i düzenek veya test
+beklentisiydi (`$r`/`$R` büyük-küçük harf çakışması, N62 modunun preview'dan sonra
+açılması, `noise` modunun çıktıyı bozmaması, `n122`'nin sözlüksüz yüklenmesi, tüm
+dosya CRLF'in `k` ile aynı biçimde tuz reddi vermesi). Kit kodunda ölçümle bulunan
+tek kusur: `b20`, `DL_*` satırı `False` iken E/H soruyordu; düzeltildi (`STOP
+DL_ACCEPTANCE=False`; `b20st`). Kod okumasıyla yazım sırasında bulunup ölçümden önce
+kapatılanlar: N31'in N28'e bağımlılığı (`b6` sırasından gizli), `b1`'in SQL kuralının
+N91'i reddetmesi, `b14` yorumundaki `<…>` dizgesi, CLI bloklarının N147'de ham
+ayrıştırılamaması. Kural sapmaları: üç düzenek yaması heredoc ile yazıldı (yalnız
+scratchpad düzenek dosyaları; biri ters bölüyü bozdu, `r0`'ın nedeni budur); ayrıca
+iki salt okunur satır içi `python` heredoc'u, bir etkisiz `cat > /dev/null` ve birkaç
+`2>/dev/null` kullanıldı (dosya yazımı yok).
+
+**Dizin taraması: dilim 3'ün yazdığı yollar.** Sahipsiz yol 0.
+
+| Yazılan yol | Yazan | Üst dizini kim, ne zaman açar |
+|---|---|---|
+| `steps\c\b09a.txt`, `b09b.txt`, `b10.txt`…`b16.txt`, `b18.txt`…`b23.txt` | KİT komutları | `b5` (N148); `b9` zinciri `b08` PASS ister, gerisi ondan sonradır |
+| `steps\c\y1.txt` | `adm.ps1` | `b5`; ön koşul `b09a` PASS |
+| `steps\x\refusal-<nnn>.txt` | `adm.ps1` redleri | `Write-KbRefusal` (N136); `y1pre`, `steps\c` yokken ölçüldü |
+| `steps\s<k>\refusal-<nnn>.txt` | KİT redleri | Kit1 `ac.ps1` (N105) |
+| `steps\d\k<seq>.txt` | `k` | `k` (N143) |
+| `<restricted-dir>\blind-calc.txt`, `deadline-report.txt` | `b18`, N88 | §4.4/3, pencere öncesi; `b1` N53 denetler (Ek R4/21 madde 12) |
+| `…\extractions\*`, `generation_reviews\*`, `timeline\*`, `deadlines\*` ve alt dizinleri | Gerçek CLI | CLI kendisi açar (`src/manual_fact_entry_engine.py` L683–L684; `src/timeline_engine.py` L1524; `src/deadline_engine.py` L730; onay modüllerinin `mkdir` satırları); kit açmaz |
+| `<evidence-dir>\DUR.txt` | `Write-KitDur`, `Write-KbDur` | Kit kurulumu |
+
+**Düzeneğin önceden kurduğu dizinler ve sahipleri.** `evid\kit` (Ek R3/2),
+`evid\kit2` (Ek R4/16.7 (1)), `pilot\repo\data\cases` (§4.4/3 klon), `pilot\in`,
+`pilot\temp`, `pilot\restricted` (§4.4/3), `pilot\in\x` (N17); `tools\poppler`,
+`tools\7z`, `forms`, `ext`, `fake`, `cont`, `pyrt` evidence dışı taklitlerdir;
+güvenli dizin scratchpad'dedir ve gerçek ACL'lidir. `evid\steps`, `steps\e2`,
+`steps\s<k>` gerçek `ac.ps1`, `steps\c` gerçek `b5`, `steps\d` gerçek `k` tarafından
+açıldı; `T_TREE_KIT_OPENED_ONLY` ve `S0A_TREE_BEFORE_B5` bunu ölçer.
+
+**Düzenek (açıklanır).** Revizyon 15 düzeneğinden yalnız form doldurma yardımcısı ve
+taklit doğrulayıcı alındı. Her aşama yeni süreçtir; sabit kök anlık görüntülerden
+geri yüklenir. **Gerçek olanlar:** kit1 `ac.ps1`, kit2 `bc.ps1`, `kbe.ps1`,
+`adm.ps1`, `Get-KbScript`, `Test-KbKitDir`, `Read-KbBuild`, `Read-KbSecure` (gerçek
+ACL), `Test-KitLock`, `Write-KitDur`, `Invoke-KbStep`, bütün komut betikleri ve
+pinli bloklar; `b5`…`b8` zinciri ve `k` gerçek kodla koştu. **Taklitler:**
+`python`, `psql`, `pg_isready`, `git`, `pdftotext` (derlenmiş küçük exe, argümanı ham
+geçirir; çıktı biçimi kaynak satırlarından); `Read-KitYesNo`, `Read-KbYesNo`,
+`Read-KbDigits`, `Start-Process`. `adm.ps1` baytları değişmeden yüklendi; tuş taklidi
+değişken kesme noktasıyla kurulur. **Sahte kayıtlar:** `a4`, `a6`, `kume-1`, `b1`
+(içerik `s2\b1.txt` biçiminden), `technical-record.txt`. **Sapmalar:** süreçte
+`USERPROFILE` taklit dizine yönlendirilir (kök scratchpad'de olduğu için kit1 kök
+denetimini geçsin diye); güvenli dosyanın göreli adı gerçek profile göredir; `b0`,
+`b1`, `a2`, `a3` koşmaz; `Set-Location` düzenekçe yapılır (`a2`'de N6).
+
+**Ölçülmeyenler.** Gerçek `ui.cli_mutate`, `ui.deadline_report`, `scripts.iam_admin`,
+gerçek PostgreSQL ve gerçek journal; `pg_isready`'nin gerçek çıkış kodları;
+`canonical_hash` ile dosya hash'inin eşitliği yalnız kaynak okumasıyla türetildi
+(`CANONICAL_FILE_SHA_MATCH`); gerçek doğrulayıcının bu formla hata metni; gerçek Not
+Defteri, gerçek klavye ve Ctrl+C (`Read-KbYesNo` ADMIN'de hiç gerçek çalışmadı);
+Win+R satırının `-Command` biçimi (dot-source aynı argümanla ölçüldü); ADMIN'in
+gerçek rol yetkisi (`vergi_iam_admin`); `b22` süresi ve ilerleme süresi (O-Y6);
+bir gün içinde iki KİT oturumunun gerçek akışı; insanın kör hesabı doldurması.
+Taklidin göremediği şey ölçülmüş sayılmaz. Dilim 3 kodu provaya tabidir.
+
+**Dilim 3 provası planına notlar** (plan işidir; bu turda yazılmadı).
+
+- **Kit değişti:** `kbe.ps1`, `bc.ps1`, `b5d.ps1`, `b8.ps1`, `kvc2.ps1`, `n134.txt` ve
+  43 yeni dosya. Kurulum, `pins2.txt`, `kit-build2.txt`, N147 ve `kbe.ps1`'i yükleyen
+  bütün komutların ajan ikizleri yeniden koşar. Kit1 değişmedi.
+- **İnceleme `3d5e4a35…` §8 plan listesi** aynen geçerlidir: (1) manifestin Hariç
+  dosya adını taşıması ve sentetik kaynak adı; (2) ön tarama A.15'in son ölçümü,
+  pinli `lk.ps1`, tam sınıflar, kapsayıcı dahil; (3) `B.3-lkc` sonucu ve
+  `UB1_ASKED_AT`; (4) düzeltilen yardımcıların eski baytları; (5) T-CC4 ve
+  `elapsed_ms`; (6) T-K31a; (7) T-DV4 iki fikstür (K-2 sonrası "python değil" artık
+  `B5D_VALIDATOR_INFRA` kilididir, beklenti güncellenir); (8) LIMIT sözlüğü; (9)
+  T-PDF fikstür yolu; (10) kimlik kuralı; (11) oturum olayı satırı. Sayfa ve beyan
+  formu maddeleri de oradadır.
+- **Gerçek CLI:** prova, Ek R4/9'daki her anahtarı gerçek CLI çıktısıyla eşleştirir
+  (Ek R4/16.2 ölçüt 25 kalıbı); özellikle `canonical_hash` ↔ dosya, `psql` satır
+  biçimi (N91), `pending_exists`/`None`, `validation_valid`.
+- **Gerçek doğrulayıcı `FAIL`'i:** K-2 ayrımı gerçek traceback'le ölçülür.
+- **ADMIN:** gerçek Win+R satırı, gerçek `Read-KbYesNo`, `Y1_NOT_APPROVED` yolu ve
+  kapanış; `Get-WmiObject` yok. Yeni pencere öncesi girdi yok.
+- **Düzenek dersleri:** dizin önceden kurulmaz; kit gerçek `bc.ps1` ile yüklenir;
+  taklit CLI sözleşmeden sapamaz; kapıda (`A.8c`) `adm.ps1` de yüklenir.
+- **Tuş:** dilim 3'te E/H sayısı çok; süre sayfaya (dilim 5) ölçümle yazılır.
+
+**Taşınan maddeler.** Eksik Python'da `KB_EXCEPTION` iletisi; `b5d` sayı sorusunda
+Ctrl+C iletisi (dilim 5 sayfası); K12-1; O-11; §34.20 listesinin kalanı (N4 süreç adı
+ayrımı, klon `.git` izi, N117 Ctrl+C, avukata borçlu şablon örneği ve D9 metni, G
+bölümü, B3, Ek 1, Ek 2). Şablon örneği N134'ün yeni cümlesiyle hazırlanmalıdır.
+Gözlem (değişiklik yok): tüm dosya CRLF'e dönerse `k` ve `b18` ilk satırda tuz reddi
+verir; sıfırlama seçeneği sorulur, H dosyayı korur.
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| Üst uyarı | Revizyon listesine 16; revizyon 16 paragrafı |
+| §0 | "Revizyon" satırı |
+| §34.4 | Revizyon 16 satırı |
+| §34.22 | Bu bölüm |
+| Ek R4/2 | Madde 7: ADMIN anahtarları |
+| Ek R4/8.1 | `y1` kilitsiz kodları |
+| Ek R4/8.3 | `b5d`, `b10`, `b11`, `b18`, `g14`, `g16` satırları; ortak apply çerçevesi notu |
+| Ek R4/9 | N32/N33 satırı; "asla kaydedilmez" madde 1 |
+| Ek R4/11 | N174 satırı |
+| Ek R4/12.2 | Madde 3 kodu |
+| Ek R4/12.3 | Madde 6: `B5D_VALIDATOR` tanımı |
+| Ek R4/16.4 | Okuma ve düzenek kuralı |
+| Ek R4/16.7 | Madde (10) |
+| Ek R4/19 | Madde 1, 2 (10) ve (12), 3, 4, 7 |
+| Ek R4/21 | Madde 6 sonu |
+| Ek R4/22 | Yeni bölüm ve N157–N174 |
+| N134, N135, N136, N147, N149, N153 | Yukarıdaki tablo |
+
+**Yazma hesabı.** Kod ve metin oturuma özel scratchpad dizininde hazırlandı; bloklar
+ve metin tek Python yamasıyla (her değişiklik tek ve benzersiz eşleşme) yazıldı, dosya
+LF; ardından bu bölümde ve Ek R4/22 madde 12'de hedefli `Edit`ler yapıldı (çitli
+bloklara dokunulmadı); son yazımdan sonra bloklar
+dosyadan yeniden çıkarılıp ölçülen baytlarla karşılaştırıldı. Bu revizyon gerçek
+koşuyu, gerçek veri gönderimini, dilim 3 provasını
+veya sonraki dilimleri yetkilendirmez; her biri ayrı kullanıcı kararıdır.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -12687,7 +12974,9 @@ ilgili kararlar yeniden açılır ve bu ek değişir.
    ama bellekte yalnız kendi anahtarlarını tutar (inceleme L1): KİT
    `app-dsn` ve yollar (`admin-dsn`, `pg-ctl` ve `pg-data-dir` hariç); ÖN
    yalnız `external-root`; KÜME `pg-ctl`, `pg-data-dir` ve `app-dsn`'den
-   yalnız port (karar AÇIK-29); ADMIN ve İMHA kendi dilimlerinde.
+   yalnız port (karar AÇIK-29); ADMIN yalnız `python` ve `admin-dsn` (revizyon 16;
+   `repo-root`'u pinli `kit-values.txt`'den okur, Ek R4/22 madde 7); İMHA kendi
+   diliminde.
    **Hiçbir değer kayda veya hata iletisine basılmaz**; ekrana gelen tek
    değer `b1`'in VeraCrypt sorusundaki `container-root` sürücü harfidir
    (Ek R4/8.2; inceleme O7). `bc.ps1` yalnız `app-dsn`'i süreç ortamına
@@ -13117,7 +13406,7 @@ yazma hatası kilitlidir.
 |---|---|---|---|---|---|---|---|
 | `t0` (ÖN) | İlk içerik gününden önce, bir kez (revizyon 12: atlandıysa aktarım günü, `a4`'ün `NO_RECORD` reddinden sonra, KİT penceresi açıkken ve içerik alınmadan önce, bir kez; §34.18) | `system-temp.txt` yok; kit2 pinleri ve güvenli dosya hash'i tutuyor; TEMP yönlendirilmemiş | N51, N19, N48, N50 (`external-root`, `evidence-dir`), N12 pinli baytlarla; `SYSTEM_TEMP_USER=` ve `SYSTEM_TEMP_WINDOWS=` satırları izinli listede **ve** ekran listesinde yoktur → yol ne kayda ne ekrana gider (R1; errata-3 §5.3) | Yok | `system-temp.txt` (N12'nin kendi yazımı; bayt uyumu Ek R4/16 dilim 1 (1)) ve `steps\t0.txt` | `T0_ALREADY` (`system-temp.txt` var), `T0_SECURE_FILE_*` | İlk `STOP`'ta durur, sonraki blok çalışmaz (rev6 son kontrol O3) |
 | `kume` (KÜME) | Aktarım günü dahil her içerik günü, KİT'ten önce | Güvenli dosya hash'i ve ACL'si | `pg_ctl status`; kapalıysa `start` (Ek R4/6 madde 10); `pg_isready` | Yok | `steps\kume-<n>.txt` (`<n>` ilk boş sıra): dört `PG_*` boolean'ı, `KUME_STARTED_BY_KIT=True/False` | `KUME_SECURE_FILE_HASH`, `KUME_SECURE_FILE_ACL` | Dört koşuldan biri `False` (pencere başlığı "KUME — KAPATMAYIN"; kayıttan sonra "Bu pencereyi kapatmayin; kucultun") |
-| `y1` (ADMIN) | Zincir adım 9 | `b09a` PASS (aktif assignment 0) | N36 | `REAL_ACTION_APPROVED` (PS; Ek R4/8.7) | `steps\c\y1.txt`: `IAM_ADMIN_OK_LINE_SEEN=True`, `CLI_RC=0`, onay satırı | `Y1_PRECONDITION`, onay H (`Y1_NOT_APPROVED`; CLI çağrılmaz) | `OK` satırı yok, traceback, `CLI_RC` ≠ 0; **tekrar yok** |
+| `y1` (ADMIN) | Zincir adım 9 | `b09a` PASS (aktif assignment 0) | N36 | `REAL_ACTION_APPROVED` (PS; Ek R4/8.7) | `steps\c\y1.txt`: `IAM_ADMIN_OK_LINE_SEEN=True`, `CLI_RC=0`, onay satırı | `Y1_PRECONDITION`, `Y1_ALREADY`, `ADM_COMMAND`, `EARLY_CLOSE_MODE`, `APPROVAL_METHOD_MISSING`, onay H (`Y1_NOT_APPROVED`; CLI çağrılmaz) | `OK` satırı yok, traceback, `CLI_RC` ≠ 0; **tekrar yok** |
 | `y2` (ADMIN) | Zincir adım 24 | `b24a` PASS (aktif assignment tam 1) | N93 | `REAL_ACTION_APPROVED` (PS) | `steps\c\y2.txt` (aynı satırlar) | `Y2_PRECONDITION`, `Y2_NOT_APPROVED` | Aynı; tekrar yok |
 | `z1` (İMHA) | Kapsayıcı VeraCrypt'te ayrıldıktan sonra | `s29a`, `s26a` ve `s26b` PASS; `k silme` PASS kaydı var (dosya `s26b` ile silindiği için hash eşliği `s25` ve `s26a`'da doğrulanmıştır; `z1` dosyayı yeniden hash'lemez); `<container-root>` yok (ayrıldı). F1 aşımı `z1`'i **durdurmaz** (veri diskte kalmasın diye) ve `z1` F1 için hiçbir satır yazmaz; F1'i **yalnız** `s29b` ölçer ve yazar (Ek R4/14 madde 4; dar düzeltme turu D-8) | Form hash yeniden ölçümü (b; kit kodu), N102, N103 (`<system-temp-*>` canlı okunur ve `system-temp.txt` hash'iyle eşleşir; `<container-file-bytes>` pencere öncesi `container-record.txt`'den) | "Kapsayıcı VeraCrypt'te ayrıldı mı?" (PS) → `CONTAINER_DISMOUNTED=True basis=project-owner-E-at-kit`; `REAL_ACTION_APPROVED` (PS); "Anahtar kâğıdı ve tek kullanımlık anahtar imha edildi mi?" (PS; kapsayıcı silindikten sonra) → `CONTAINER_KEY_DESTROYED=True basis=project-owner-E-at-kit`; H → `CONTAINER_KEY_DESTROYED=False basis=project-owner-H-at-kit` (iki geçersiz tuşta `basis=no-valid-answer`), kilit yok, ekranda "kâğıdı şimdi imha edin" (Ek R4/14 madde 4; dar yeniden kontrol N-L1) | `steps\c\z1.txt`: `FORM_HASH_RECHECK part=<part> match=True`, `CONTAINER_FILE_GUARD=PASS`, `CONTAINER_DELETE_RESULT=COMPLETED`, `CONTAINER_FILE_ABSENT=True`, iki E/H satırı | `Z1_CONTAINER_MOUNTED`, `Z1_PRECONDITION`, onay H | Guard FAIL, silme FAIL, form hash farkı |
 | `s29b` (İMHA) | `z1`'den sonra, aynı pencerede | `z1` PASS | Kit kodu: §30/11 ve §30/12 (Ek R4/14) | "İmha kaydının kopyası dosya avukatına verildi mi?" (AV) → `DELETION_RECORD_COPY_TO_FILE_LAWYER=True basis=lawyer-E`; H → `…=False basis=lawyer-H` (iki geçersiz tuşta `basis=no-valid-answer`), kilit yok (Ek R4/14 madde 4; dar yeniden kontrol N-L1) | `steps\c\s29b.txt` + `<evidence-dir>\deletion-record.txt` (CreateNew; yalnız kodlar, zamanlar, hash'ler; yol yok); `POSTCONDITION_11` ve `POSTCONDITION_12` = `PASS` veya `INCOMPLETE` (revizyon 8; Ek R4/14 madde 4) | `S29B_PRECONDITION` | FAIL; imha kaydı yazılamadı; F1 aşımı (`TEMP_COPIES_DELETED_WITHIN_F1=False`; yazım sırası Ek R4/14 madde 4). `z1`'den gelen `CONTAINER_KEY_DESTROYED=False` ve kopya sorusundaki H FAIL sayılmaz (Ek R4/14 madde 4) |
@@ -13212,7 +13501,7 @@ yalnız `NO_RECORD` ret iletisi ayrıldı; PASS yolu bayt-bayt aynıdır, §34.1
 | Komut | Zincir adımı / iş | Ön koşul | Bloklar | E/H | Kayıt (başlıca satırlar) | Kilitsiz | Kilitli |
 |---|---|---|---|---|---|---|---|
 | `b5` | 5: form hash (a), belge teslimi, `pdftotext` | Bu oturumda `b1` PASS (işleme dalı); `a6` veya `a7` başarılı; `<case-root>` yok | Kit kodu: form hash yeniden ölçümü (a) (güvenli dosyadaki `form-*` yolları; `form-hash-record.txt`; Ek R4/21 madde 3); `<intake-dir>\x` içindeki **tek** dosyanın adına bakmadan `<case-root>\documents\<document-id>\<file-name>` olarak kopyalanması; N15, N26 | Yok | `steps\c\b05.txt`: `FORM_HASH_RECHECK part=<part> match=True`, `X_FILE_COUNT=1`, `TOOL_MANIFEST_MATCH=True`, `PDFTOTEXT_RC=0`, `CLI_RC=0` | `B5_X_EMPTY` | `x`'te iki veya daha fazla dosya; form hash farkı; `PDFTOTEXT_RC` ≠ 0 |
-| `b5d` | 5': intake formu ve JSON üretimi (Ek R4/12) | `b05` PASS; `b05d` yok | Kit kodu (form, denetim, JSON şablonları, geri okuma); KD-26 validator'ları (N32, N33) kayıtsız | İlk çalıştırmada sayı soruları ve menüler (PS); her hatadan sonra "Not Defteri yeniden acilsin mi?" (PS); "Form bastan olusturulsun mu?" (PS) | `steps\c\b05d.txt`: `B5D_FORM_OK=True`, `B5D_MARKERS_LEFT=0`, `B5D_REQUIRED_OK=True`, `B5D_DEADLINE_FIELDS_OK=True`, `B5D_VALIDATORS_OK=True`, `B5D_ROUNDTRIP_OK=True`, `FORM_SHA256`, `CASE_JSON_SHA256`, `DOCUMENT_JSON_SHA256` | Ek R4/12 madde 6'daki her kod (**asla DUR değil**) | Kayıt açıldıktan sonra yazma hatası; `B5D_ROUNDTRIP_MISMATCH`; `B5D_SCHEMA_OR_TEMPLATE_PIN`; `B5D_NOTEPAD_PIN` |
+| `b5d` | 5': intake formu ve JSON üretimi (Ek R4/12) | `b05` PASS; `b05d` yok | Kit kodu (form, denetim, JSON şablonları, geri okuma); KD-26 validator'ları (N32, N33) kayıtsız | İlk çalıştırmada sayı soruları ve menüler (PS); her hatadan sonra "Not Defteri yeniden acilsin mi?" (PS); "Form bastan olusturulsun mu?" (PS) | `steps\c\b05d.txt`: `B5D_FORM_OK=True`, `B5D_MARKERS_LEFT=0`, `B5D_REQUIRED_OK=True`, `B5D_DEADLINE_FIELDS_OK=True`, `B5D_VALIDATORS_OK=True`, `B5D_ROUNDTRIP_OK=True`, `FORM_SHA256`, `CASE_JSON_SHA256`, `DOCUMENT_JSON_SHA256` | Ek R4/12 madde 6'daki her kod (**asla DUR değil**) | Kayıt açıldıktan sonra yazma hatası; `B5D_ROUNDTRIP_MISMATCH`; `B5D_SCHEMA_OR_TEMPLATE_PIN`; `B5D_NOTEPAD_PIN`; doğrulayıcı altyapı hatası `B5D_VALIDATOR_INFRA` (revizyon 16, K-2; kayıt yazılmaz; Ek R4/22 madde 13) |
 | `b6` | 6: mekanik kontroller | `b05d` PASS | Üç hash yeniden ölçülür; N23, N24, N25, N27–N34, N121; sonunda avukat için alan özeti (yalnız ekran) | Yok | `steps\c\b06.txt`: `JSON_BOM=NONE`, `TEXT_LENGTH=OK`, `TEXT_VISIBLE=OK`, `PAGE_COUNT=OK`, `INTAKE_HASH=MATCH`, `TEXT_DATE_TOKEN_PRESENT=True`, `INTAKE_HASHES_RECORDED=True`, `SOURCE_HASHES_MATCH=True`, `VALIDATOR_CASE_RESULT=PASS`, `VALIDATOR_DOCUMENT_RESULT=PASS`, modül başına sayılar (Ek R4/21 madde 6), `VALIDATOR_ERROR_COUNT=0`, `VALIDATOR_WARNING_COUNT=<n>`, git sayıları, `TAX_TYPE_VOCAB=OK`; üç hash için `FORM_SHA256_MATCH=True`, `CASE_JSON_SHA256_MATCH=True`, `DOCUMENT_JSON_SHA256_MATCH=True` | `B6_ALREADY`, `B6_PRECONDITION` | Her `STOP`; üç hash'ten biri `b05d` ile farklı (dosya kayıttan sonra değişti); validator hatası (b5d döngüsü geçtiği için beklenmeyen sonuçtur) |
 | `k intake`, gerekiyorsa `k uyari` | 6: avukatın alan-alan intake onayı; validator uyarılarının kabulü (§11.3 c–d) | `b06` PASS | Ek R4/12 | Ek R4/12 | `steps\d\k<seq>.txt` | Ek R4/12 | Ek R4/12 |
 | `b7` | 7: manuel girdi (O4: satırı operatör tek başına seçer) | `b06` PASS; `INTAKE_APPROVED` PASS ve her maddesi `KABUL`; `VALIDATOR_WARNING_COUNT` > 0 ise `VALIDATOR_WARNINGS_ACCEPTED` PASS ve `KABUL`; revizyon `r<n>`: n = 1 ilk; sonraki revizyon yalnız önceki `k girdi` `RED` ise; n ≤ 3 | Kit kodu: aday listesi (Ek R4/15), girdi dosyasının kitçe yazılması (N58 biçimi), N59, N60 | Numara seçimi, `0` = hiçbiri (PS); "Bu satir teblig tarihini tasiyan cumle mi?" (PS) | `steps\c\b07-r<n>.txt`: `MANUAL_INPUT_ENCODING=OK`, `MANUAL_INPUT_HASH_RECORDED=True`, `INPUT_REVISION=r<n>`, `CANDIDATE_SELECTED=True` | `B7_NO_INTAKE_APPROVAL`, `B7_WARNINGS_NOT_ACCEPTED`, `B7_NO_CANDIDATE`, `B7_NONE_SELECTED`, `B7_CANDIDATE_REJECTED`, `B7_REVISION_LIMIT` | `MANUAL_INPUT_*` `STOP`; `B7_TEMPLATE_PIN` |
@@ -13220,20 +13509,20 @@ yalnız `NO_RECORD` ret iletisi ayrıldı; PASS yolu bayt-bayt aynıdır, §34.1
 | `k girdi` | 8: avukatın girdi kararı (`MANUAL_INPUT_COMPARED`) | `b07-r<n>` PASS | Ek R4/12 (KD-25: önek kitçe doldurulur, ekranda girdi kaydının önekiyle yan yana) | Ek R4/12 | `steps\d\k<seq>.txt` | Ek R4/12 | Ek R4/12 |
 | `b8` | 8: avukat kararının eşleştirilmesi | `MANUAL_INPUT_COMPARED` PASS, `REVIZYON=r<n>` ve `SONUC=KABUL` | N61 (`<lawyer-cited-prefix>` karar dosyasının `HASH_ONEK`'inden; `<input-revision>` = n) | Yok | `steps\c\b08-r<n>.txt`: `MANUAL_INPUT_MATCHES_LAWYER_REVISION=True`, `LAWYER_DECISION_CITES_RECORD=True` | `B8_NO_DECISION`, `B8_WRONG_REVISION`, `B8_DECISION_RED` (ileti: "Avukat bu surumu reddetti; duzeltilmis surum icin b7") | N61 `STOP` (önek/hash farkı); karar dosyası hash'i kayıttakinden farklı |
 | `b9` (`b09a`/`b09b`) | 9: assignment ölçümü önce / sonra | `b09a`: `b08` PASS; `b09b`: `y1` PASS | N40 × (N43, N44, N45) | Yok | `steps\c\b09a.txt` / `b09b.txt`: `ACTIVE_ASSIGNMENT_COUNT=<n>` (önce 0, sonra 1), `ASSIGNMENT_TOTAL_COUNT=<n>`, `USERS_ENABLED=True` | `B9_CLUSTER_DOWN`, `B9_PRECONDITION` | Sayaç beklenmeyen |
-| `b10` | 10: `manual-fact` preview | `y1` PASS, `b09b` PASS | N31, N61, N47, N40 × (N41–N45), N62 | Ekranda tarih ve sayfa → "Avukatın kararındaki tarih ve sayfa ile aynı mı?" (AV) | `steps\c\b10.txt`: Ek R4/9 N62 satırları, `PREVIEW_DATE_MATCHES_LAWYER=True basis=lawyer-E`, `PREVIEW_PAGE_MATCHES_LAWYER=True basis=lawyer-E`, `FACT_ID_DERIVED=True`, journal sayıları | Ortak ön denetim kodları | `CLI_RC` ≠ 0; H cevabı |
-| `b11` | 11: `manual-fact` apply | `b10` PASS | N90, N63 (`<attempt>`=1), N64, N65, N91 | `REAL_ACTION_APPROVED` (PS) | `steps\c\b11.txt`: onay satırı (CLI'den önce), Ek R4/9 N63 satırları, §14.5.2 boolean'ları, `JOURNAL_NEW_ROW_COUNT=1`, `JOURNAL_NEW_ROW_STATE=completed`, `JOURNAL_FAMILY_MATCH=True`, `JOURNAL_ACTOR_MATCH=True` | Onay H (`B11_NOT_APPROVED`) | `CLI_RC` ≠ 0, `replayed=True`, journal ≠ 1; §14.6 sınıfı hatalar (→ `r1`…) |
+| `b10` | 10: `manual-fact` preview | `y1` PASS, `b09b` PASS | N28 + N31, N61, N47, N40 × (N41–N45), N62, N40 × N41 (Ek R4/22 madde 4) | Ekranda tarih ve sayfa → "Avukatın kararındaki tarih ve sayfa ile aynı mı?" (AV) | `steps\c\b10.txt`: Ek R4/9 N62 satırları, `PREVIEW_DATE_MATCHES_LAWYER=True basis=lawyer-E`, `PREVIEW_PAGE_MATCHES_LAWYER=True basis=lawyer-E`, `FACT_ID_DERIVED=True`, journal sayıları | Ortak ön denetim kodları | `CLI_RC` ≠ 0; H cevabı |
+| `b11` | 11: `manual-fact` apply | `b10` PASS | Bellekte N28 + N31, N61; N90, N63 (`<attempt>`=1), N64, N65, N91 | `REAL_ACTION_APPROVED` (PS) | `steps\c\b11.txt`: onay satırı (CLI'den önce), Ek R4/9 N63 satırları, §14.5.2 boolean'ları, `JOURNAL_NEW_ROW_COUNT=1`, `JOURNAL_NEW_ROW_STATE=completed`, `JOURNAL_FAMILY_MATCH=True`, `JOURNAL_ACTOR_MATCH=True` | Onay H (`B11_NOT_APPROVED`) | `CLI_RC` ≠ 0, `replayed=True`, journal ≠ 1; §14.6 sınıfı hatalar (→ `r1`…) |
 | `b12` | 12: pending içerik kontrolü | `b11` PASS | N73; tek fact yalnız ekranda | Yok | `steps\c\b12.txt`: §15.1'in altı boolean'ı | — | §15.1 `STOP` |
 | `k fact` | 12: fact kabulü (`FACT_ACCEPTED`) | `b12` PASS | Ek R4/12 | | | | |
 | `b13` | 13: fact promotion | `b12` PASS; `FACT_ACCEPTED` PASS ve `SONUC=KABUL` | N74, N90, N75, N91 | `REAL_ACTION_APPROVED` (PS) | `steps\c\b13.txt`: Ek R4/9 N74/N75 satırları, journal satırları | `B13_NO_DECISION`, `B13_LAWYER_REJECTED` (ileti: "Avukat reddetti. Dosya pilot disi ise avukat 'k uygunsuz' yazsin, sonra 'u'."), onay H | `CLI_RC` ≠ 0; `validation_ready=False` |
-| `g14` | 14: locator'ın gösterdiği yerin karşılaştırılması (yalnız ekran; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b13` PASS | Kit kodu: canonical fact'in locator'ı (sayfa, alıntı) yalnız `Write-Host` | Yok | **Yok** | `G14_NOT_ALLOWED` | — |
+| `g14` | 14: locator'ın gösterdiği yerin karşılaştırılması (yalnız ekran; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b13` PASS | Kit kodu: canonical fact'in locator'ı (sayfa, alıntı) yalnız `Write-Host` | Yok | **Yok** | `G14_NOT_ALLOWED`, `G14_PRECONDITION`; erken kapanışta `EARLY_CLOSE_MODE` | — |
 | `k dogrulama` | 14: `VERIFICATION_VERIFIED` | `b13` PASS | Ek R4/12 | | | | |
 | `b14` | 14: verification | `b13` PASS; `VERIFICATION_VERIFIED` PASS ve `SONUC=KABUL` | N76, N90, N77, N91 | `REAL_ACTION_APPROVED` (PS) | `steps\c\b14.txt` | `B14_NO_DECISION`, `B14_LAWYER_REJECTED`, onay H | `CLI_RC` ≠ 0 |
 | `b15` | 15: timeline generation | `b14` PASS | N78, N90, N79, N91 | Yok (pending üretimi; §2.1) | `steps\c\b15.txt` | — | `CLI_RC` ≠ 0 |
-| `g16` | 16: timeline incelemesi (yalnız ekran; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b15` PASS | Kit kodu: pending timeline olayları (tür, tarih, kaynak locator'ı) yalnız `Write-Host` | Yok | **Yok** | `G16_NOT_ALLOWED` | — |
+| `g16` | 16: timeline incelemesi (yalnız ekran; avukat cevabına bağlı: soru 1 ve 3; cevap olumsuzsa yeniden açılır) | `b15` PASS | Kit kodu: pending timeline olayları (tür, tarih, kaynak locator'ı) yalnız `Write-Host` | Yok | **Yok** | `G16_NOT_ALLOWED`, `G16_PRECONDITION`; erken kapanışta `EARLY_CLOSE_MODE` | — |
 | `k zamancizelgesi` | 16: `TIMELINE_APPROVED` | `b15` PASS | Ek R4/12 | | | | |
 | `b16` | 16: timeline promotion | `b15` PASS; `TIMELINE_APPROVED` PASS ve `SONUC=KABUL` | N80, N90, N81, N91; kit kodu: canonical `timeline.json`'da `notification_date` olayının **tek** olduğu ve `event_id`'si (bellekte; `<anchor-event-id>`) | `REAL_ACTION_APPROVED` (PS) | `steps\c\b16.txt`: `ANCHOR_EVENT_COUNT=1` (kimlik kaydedilmez) | `B16_NO_DECISION`, `B16_LAWYER_REJECTED`, onay H | `CLI_RC` ≠ 0; tebliğ olayı sayısı ≠ 1 |
 | `k durdurucu`, `k adlitatil` | 17: stopping-event ve adli tatil kararları | `b16` PASS | Ek R4/12 | | | | |
-| `b18` | 18: kör hesabın sabitlenmesi (Ek R4/12; avukat cevabına bağlı: soru 1 ve 6; cevap olumsuzsa yeniden açılır) | `b16` PASS; `STOPPING_EVENT` ve `JUDICIAL_RECESS` PASS; `b18` kaydı yok; `s25` PASS yok | Kit kodu: `<restricted-dir>\blind-calc.txt` şablonu (N134; tuzlu) yoksa yazılır, varsa aynı dosya açılır; Not Defteri; biçim denetimi | "Kör hesabı sistem sonucunu görmeden yazdınız mı?" (AV) | `steps\c\b18.txt`: `BLIND_CALC_SHA256=<64 hex>`, `BLIND_CALC_AT=<zaman>`, `BLIND_CALC_CONFIRMED basis=lawyer-E` (**tarih yazılmaz**) | `B18_NO_DECISIONS`, `B18_ALREADY_DONE`, `B18_SALT_LINE` (sıfırlama seçeneği), `B18_ENCODING`, `B18_TEMPLATE_LINE` (AÇIK-27 satır kuralı; Ek R4/12.2), `B18_MARKER_LEFT`, `B18_DATE_FORMAT`, `B18_NOT_CONFIRMED`, `RESTRICTED_FROZEN` | `DURUM=present` veya `unknown` (H20; §17.1) |
+| `b18` | 18: kör hesabın sabitlenmesi (Ek R4/12; avukat cevabına bağlı: soru 1 ve 6; cevap olumsuzsa yeniden açılır) | `b16` PASS; `STOPPING_EVENT` ve `JUDICIAL_RECESS` PASS; `b18` kaydı yok; `s25` PASS yok | Kit kodu: `<restricted-dir>\blind-calc.txt` şablonu (N134; tuzlu) yoksa yazılır, varsa aynı dosya açılır; Not Defteri; biçim denetimi | "Kör hesabı sistem sonucunu görmeden yazdınız mı?" (AV) | `steps\c\b18.txt`: `BLIND_CALC_SHA256=<64 hex>`, `BLIND_CALC_AT=<zaman>`, `BLIND_CALC_CONFIRMED basis=lawyer-E` (**tarih yazılmaz**) | `B18_NO_DECISIONS`, `B18_ALREADY_DONE`, `B18_SALT_LINE` (sıfırlama seçeneği), `B18_ENCODING`, `B18_TEMPLATE_LINE` (AÇIK-27 satır kuralı; Ek R4/12.2), `B18_MARKER_LEFT`, `B18_DATE_FORMAT`, `B18_NOT_CONFIRMED`, `RESTRICTED_FROZEN`; revizyon 16: `B18_BOM`, `B18_TEMPLATE_IDENTITY`, `B18_CHANGED`, `B18_PRECONDITION` | `DURUM=present` veya `unknown` (H20; §17.1) |
 | `b19` | 19: deadline generation | `b18` PASS; iki karar dosyasının hash'i kayıttakiyle aynı | N82, N90, N83 (`none` + `<attestation-ref>` = karar dosyasındaki `REFERANS`, bellekten; adli tatil `yes`/`no`), N91 | Yok | `steps\c\b19.txt` | — | `CLI_RC` ≠ 0; karar dosyası hash farkı |
 | `b20` | 20: pending kabulü ve kör hesapla karşılaştırma | `b19` PASS | N84, N85; `blind-calc.txt` hash'i yeniden ölçülür; `SON_GUN` ile pending tarih bellekte karşılaştırılır ve ekranda yan yana gösterilir | "Ekrandaki iki tarih aynı mı?" (AV) | `steps\c\b20.txt`: `DL_*` boolean'ları, `BLIND_CALC_HASH_MATCH=True`, `PENDING_MATCH=True basis=lawyer-E` | — | `DL_*` `False`; kör hesap hash'i değişmiş; H |
 | `k sure` | 21: `DEADLINE_APPROVED` | `b20` PASS (kararın kaydı `b20`'nin `ENDED_AT`'inden sonra) | Ek R4/12 | | | | |
@@ -13265,7 +13554,10 @@ karar dosyası hash'i, preview değerleri); (3) `REAL_ACTION_APPROVED`
 kapısı (Ek R4/8.7); (4) N90; (5) CLI; (6) süzgeç; (7) N91: tam 1 yeni
 `completed` satır, doğru aile ve aktör (§26.3); (8) disk kontrolleri;
 (9) `STEP_RESULT`. (3)'ten önceki her red kilitsizdir; (5) başladıktan
-sonraki her beklenmeyen sonuç kilitlidir.
+sonraki her beklenmeyen sonuç kilitlidir. Preview'ı aynı komutta olan
+apply'larda (`b13`, `b14`, `b16`, `b21`) preview'ın beklenmeyen sonucu da CLI
+sonucu olduğu için kilitlidir (Ek R4/6 madde 9; Ek R4/5 madde 5); uygulama ve onay
+sırası Ek R4/22 madde 3–6'dadır (revizyon 16).
 
 #### Ek R4/8.4 İzin kümeleri ve kipler
 
@@ -13467,7 +13759,7 @@ varsa kayda girer, yoksa eksiklik değildir.
 | Blok (komut) | CLI | İzinli anahtarlar | Zorunlu |
 |---|---|---|---|
 | N26 (`b5`) | `pdftotext` | Bloğun kendi `PDFTOTEXT_RC` (int) | `PDFTOTEXT_RC` |
-| N32, N33 (`b6`; `b5d` kayıtsız) | `src.case_validator`, `src.case_document_validator` | CLI `anahtar=değer` basmaz; kit2'nin doğrulayıcı ayrıştırıcısı (kit kodu) türetilmiş satırları yazar: `VALIDATOR_CASE_RESULT` / `VALIDATOR_DOCUMENT_RESULT` (söz `PASS`/`FAIL`), `VALIDATOR_PATH_MATCH` (bool: başta basılan yol `<case-root>` altını gösteriyor), `VALIDATOR_CASE_ID_MATCH` (bool: `Case ID:` satırı `<case-id>`), `VALIDATOR_ERROR_COUNT`, `VALIDATOR_WARNING_COUNT` (int). Revizyon 14: modül başına `VALIDATOR_CASE_ERROR_COUNT`, `VALIDATOR_CASE_WARNING_COUNT`, `VALIDATOR_DOCUMENT_ERROR_COUNT`, `VALIDATOR_DOCUMENT_WARNING_COUNT`; toplamları `b6` yazar. İşaretler Ek R4/21 madde 6'da pinlidir | Ek R4/21 madde 6; ayrıştırıcı sonucu türetemezse (`UNPARSED`) kilitli |
+| N32, N33 (`b6`; `b5d` kayıtsız) | `src.case_validator`, `src.case_document_validator` | CLI `anahtar=değer` basmaz; kit2'nin doğrulayıcı ayrıştırıcısı (kit kodu) türetilmiş satırları yazar: `VALIDATOR_CASE_RESULT` / `VALIDATOR_DOCUMENT_RESULT` (söz `PASS`/`FAIL`), `VALIDATOR_PATH_MATCH` (bool: başta basılan yol `<case-root>` altını gösteriyor), `VALIDATOR_CASE_ID_MATCH` (bool: `Case ID:` satırı `<case-id>`), `VALIDATOR_ERROR_COUNT`, `VALIDATOR_WARNING_COUNT` (int). Revizyon 14: modül başına `VALIDATOR_CASE_ERROR_COUNT`, `VALIDATOR_CASE_WARNING_COUNT`, `VALIDATOR_DOCUMENT_ERROR_COUNT`, `VALIDATOR_DOCUMENT_WARNING_COUNT`; toplamları `b6` yazar. İşaretler Ek R4/21 madde 6'da pinlidir | Ek R4/21 madde 6; ayrıştırıcı sonucu türetemezse (`UNPARSED`) kilitli; `b5d`'de de kayıt yazılmaz ve kilit `B5D_VALIDATOR_INFRA`'dır (revizyon 16, K-2; Ek R4/22 madde 13) |
 | N36, N93 (`y1`, `y2`) | `scripts.iam_admin` | Tam bir `OK` satırı → `IAM_ADMIN_OK_LINE_SEEN=True` | `IAM_ADMIN_OK_LINE_SEEN` |
 | N38 (`b1`) | `pip check` | Tam bir `No broken requirements found.` satırı → `PIP_CHECK_CLEAN=True` (dizge dilim 1'de pinlenir) | `PIP_CHECK_CLEAN` |
 | N39 (`b1`) | `pip freeze` | Bloğun kendi `RUNTIME_PACKAGE_SET` (söz `MATCH`) | `RUNTIME_PACKAGE_SET` |
@@ -13485,8 +13777,10 @@ varsa kayda girer, yoksa eksiklik değildir.
 | N71 (`r5`) ve CLI'siz runbook blokları | — | Bloğun runbook metninde beklenen kendi durum anahtarları (`[A-Z0-9_]+=`; ör. `PATH_OK`, `SYSTEM_TEMP_MATCH`, `TOOL_MANIFEST_MATCH`, `ALLOWED_FILE_HASH_OK`, `CASE_DELETE_GUARD`); istisnalar aşağıda | Runbook'un o blok için PASS saydığı durum satırlarının hepsi |
 
 **Asla kaydedilmeyenler** (ne kayda ne red dosyasına; ilk dördü ekranda
-da gösterilmez): (1) `notification_date=`, `page=` ve her tarih, sayfa
-numarası ve alıntı; (2) `canonical_path=`, `audit_path=`, `pending_path=`,
+da gösterilmez): (1) `notification_date=`, `page=`, N85'in
+`PENDING_CALCULATED_DEADLINE=` satırı ve her tarih, sayfa numarası ve alıntı
+(revizyon 16: `b10` ve `b20` ekran listesindeki değerleri bellekten basar, Ek
+R4/22 madde 8); (2) `canonical_path=`, `audit_path=`, `pending_path=`,
 `RAPOR YAZILDI: <yol>` ve her mutlak yol; (3) ipucu satırları (`Uygulamak
 için:`, `Onaylamak için:`, `Üretmek için:`, `Sonraki adım:`); (4)
 `SYSTEM_TEMP_USER=`, `SYSTEM_TEMP_WINDOWS=` (N12; R1); (5) `ERROR:`
@@ -13583,6 +13877,7 @@ değişen satırları söyler; hepsi M1, M2 ve L-Y1'e uyar):
 | N120 | N96 | `$rSetOk` son koşulu çıkarıldı (karar dosyaları için koşul yok); `<report-produced>` aynı biçimde | Acil silme sayfası (Ek R4/13) |
 | N121 | N35 | ASCII dışı karakterler `[char]0x…` kaçışıyla | `b6`, `b5d` menüsü |
 | N122 | N89 | Aynı | `b22` |
+| N174 | N83 | Yalnız son argüman `--judicial-recess-applicable no` (§18.1; revizyon 16, Ek R4/22 madde 9) | `b19` |
 
 Elle yürütülen runbook yolunun N20, N35, N89 ve N96'sı **değişmez**; o
 yolda bugünkü beklentiler (izinli tek ad, dosya sayısı 1 veya 0) aynen
@@ -13871,7 +14166,7 @@ tam metin N123–N133):
 3. Devam yolu `k` ile aynıdır (errata-4 §2.2/2): dosya varsa ve `b18`
    kaydı yoksa aynı dosya açılır ve `TUZ=` korunur (bozuksa
    `B18_SALT_LINE` sıfırlama seçeneği); kimlik satırları farklıysa `k`
-   madde 4'ün kuralı; `b18` PASS varsa `B18_ALREADY_DONE`. Yarım
+   madde 4'ün kuralı (`B18_TEMPLATE_IDENTITY`; revizyon 16); `b18` PASS varsa `B18_ALREADY_DONE`. Yarım
    `blind-calc.txt` `b19`'u bekletir; silmeyi bekletmez.
 4. Kayda **tarih yazılmaz**; yalnız `BLIND_CALC_SHA256` (bütün baytlar,
    tuz dahil), `BLIND_CALC_AT` ve teyit. `b20` ve `b23` tarihi bellekte
@@ -13930,7 +14225,8 @@ tam metin N123–N133):
    `^[a-z_][a-z0-9_-]*(\.[a-z0-9_-]+)*$` kalıbına uyuyorsa (revizyon 14:
    gerçek biçim `parties.0.role`; eski kalıp eşlemiyordu) — form anahtarı
    önekini (`TARAF_1`) veya alan yolunu gösterir; aksi hâlde genel ileti
-   (eşleme N149 `Get-XdHint`).
+   (eşleme N149 `Get-XdHint`). `B5D_VALIDATOR` yalnız gerçek içerik hatasıdır;
+   doğrulayıcı altyapı hatası kilitlidir (revizyon 16, K-2; Ek R4/22 madde 13).
 7. **JSON üretimi ve geri okuma (errata-3 §6/5).** Kit `case.json` ve
    `document.json`'u runbook §11 yollarında **pinli sabit metin
    şablonundan** üretir; değerler kitin JSON kaçış fonksiyonuyla yazılır
@@ -14709,7 +15005,12 @@ ekranda ve kayıtta yok; (5) ADMIN penceresinde `app-dsn`, KİT penceresinde
 (7) her `k` şablonunda ve `blind-calc.txt`'de `TUZ=` satırı var; tuz
 hiçbir kayıtta ve ekranda yok; yeniden açmada değişmez; iki ayrı dosyada
 farklıdır; `REFERANS_SHA256` hiçbir kayıtta yok; (8) RED kararlarında
-`b13`/`b14`/`b16`/`b21` kilitsiz reddeder (AÇIK-17).
+`b13`/`b14`/`b16`/`b21` kilitsiz reddeder (AÇIK-17). Okuma ve düzenek kuralı
+(revizyon 16, §34.22): (2)'deki "CLI" apply CLI'sidir; `b13`, `b14`, `b16`, `b21`'in
+preview CLI'si hedef ve digest onaydan önce ekranda olsun diye önce çalışır (Ek
+R4/22 madde 4). Ölçümler kitin veya pencere öncesi ajanın açmadığı dizini önceden
+kurmayan düzenekte, gerçek `ac.ps1`, gerçek `bc.ps1` ve gerçek `Get-KbScript` ile
+yapılır.
 
 #### Ek R4/16.5 Dilim 4 — silme ve kapanış; Dilim 5 — kullanıcı sayfası
 
@@ -14858,7 +15159,9 @@ ve hash'ini taşıdığı için sayfadan **sonra** üretilir); (7)
 `container-record.txt` (`CONTAINER_FILE_BYTES`); (8) restricted sabit ad
 listesinin son hâli (avukat cevaplarından sonra); (9) karar şablonlarının
 avukata gönderilecek içeriksiz örneği ve güncellenmiş D9 bildirimi (Ek
-R4/17); (10) §26.5'teki AÖ sınıfı anahtarlar; (11) kullanıcı sayfası
+R4/17); (10) §26.5'teki AÖ sınıfı anahtarlar ve
+`<evidence-dir>\form-hash-record.txt` (Ek R4/21 madde 3; revizyon 16, R15 L-1);
+(11) kullanıcı sayfası
 (dilim 5); (12) **en son**, tek seferde CreateNew ile `pins2.txt` ve
 `kit-build2.txt`: genişletilmiş N116, komut adı çakışması, AST sayımları,
 N147 yer tutucu sayacı (`KIT2_PLACEHOLDER_LITERAL_COUNT=0`; revizyon 10),
@@ -15307,7 +15610,7 @@ TUZ=<tuz>
 KARAR_TURU=BLIND_CALC
 CASE_ID=<case-id>
 # KOR HESAP - yalniz avukat, sistemin sonucunu gormeden doldurur (runbook 17.2; Ek R4/12.2).
-# Yalniz BURAYA_ ile baslayan degerleri degistirin; ilk uc satira dokunmayin. Her deger tek satir.
+# BURAYA_ ile baslayan yaziyi silip yerine degeri yazin; ilk uc satira dokunmayin. Her deger tek satir.
 # Tarihler YYYY-AA-GG biciminde. KAPSAM satirlarina kisa aciklama yazabilirsiniz.
 # Bitirince Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.
 TEBLIG_TARIHI=BURAYA_YYYY-AA-GG
@@ -15324,7 +15627,8 @@ yazılırken **çalıştırılmadı**; dilim 1 provasına tabidir (Ek R4/16.2) v
 provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
 
 1. **Dilim 1 kit2 dizini** (revizyon 14: dilim 2 ile 85 dosya; eklenen 26
-   dosya Ek R4/21 madde 1) (`<evidence-dir>\kit2\`; tam olarak aşağıdaki
+   dosya Ek R4/21 madde 1; revizyon 16: dilim 3 ile 128 dosya; eklenen 43 dosya
+   Ek R4/22 madde 1) (`<evidence-dir>\kit2\`; tam olarak aşağıdaki
    59 dosya + `pins2.txt` + `kit-build2.txt`; alt dizin yok; `bc.ps1`,
    `t0.ps1` ve `kume.ps1` bu kümeyi `Get-KbFileNames` (N136) ile ordinal
    olarak denetler):
@@ -15355,7 +15659,8 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    `approval-method.txt` (Ek R4/8.7); (5) acil sayfa, ACL'si ve hash'i;
    (6) `ev.ps1`; (7) `container-record.txt`; (8) restricted ad listesinin
    son hâli (avukat cevaplarından sonra); (9) şablon örneği ve güncellenmiş
-   D9 bildirimi; (10) §26.5'teki AÖ anahtarları; (11) kullanıcı sayfası
+   D9 bildirimi; (10) §26.5'teki AÖ anahtarları ve
+   `form-hash-record.txt` (revizyon 16); (11) kullanıcı sayfası
    (dilim 5); (12) N147'nin gövdesinin oturum geçici dizinine (evidence,
    kapsayıcı ve repo dışında) CreateNew ile `kvc2.ps1` adıyla yazılması, SHA-256'sının
    §34.14'teki N147 değerine eşit olduğunun doğrulanması ve yeni bir
@@ -15367,7 +15672,7 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    sessizce düzeltilmez); Not Defteri'nin ölçülmesi
    (`%SystemRoot%\System32\notepad.exe`: `FileVersion` ve SHA-256);
    **en son**, tek seferde CreateNew ile `pins2.txt` (her dosya için bir
-   satır `<ad> <64 küçük hex>`, LF; 85 satır) ve `kit-build2.txt`.
+   satır `<ad> <64 küçük hex>`, LF; 128 satır) ve `kit-build2.txt`.
 3. **`kit-build2.txt` satırları** (tam küme; `Read-KbBuild`, N136;
    bilinmeyen veya tekrar eden anahtar yüklemeyi reddeder): `KIT2_BUILD=OK`;
    her `pins2.txt` satırı için `KIT2_FILE_SHA256=<ad> <64 hex>` (aynı küme);
@@ -15396,7 +15701,7 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    `k.ps1`, `n.ps1`, `o.ps1`, `n000.ps1`, `n001.ps1`, `n002.ps1`,
    `n019.ps1`, `n037.ps1`, `n047.ps1`, `n048.ps1`, `n051.ps1`, `n117.ps1`
    (`Get-KbScript … $null ''`), revizyon 14'ten itibaren `b5.ps1`, `b5d.ps1`,
-   `b6.ps1`, `b7.ps1`, `g8.ps1`, `b8.ps1`, `u.ps1`; `n012.ps1` ve `n014.ps1`'de yalnız satır 1
+   `b6.ps1`, `b7.ps1`, `g8.ps1`, `b8.ps1`, `u.ps1`, revizyon 16'dan itibaren dilim 3'ün on yedi dosyası (Ek R4/22 madde 1); `n012.ps1` ve `n014.ps1`'de yalnız satır 1
    (`b1` bunları `FirstLine` ile yükler, `Get-KbScript` yalnız ilk satırı
    alır). Her eşleşme kurulum çıktısına `KIT2_PLACEHOLDER_LITERAL
    file=<ad> line=<n> token=<…>` satırı olarak yazılır (yalnız kurulum
@@ -15406,12 +15711,17 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    `n041`–`n045.sql`, `sv7.ps1`'in `<7z>`'si) tasarım gereği yer tutucu
    taşır ve bu sayaca **girmez**; onların anahtar kapsamı `b1`/`t0`
    yer değiştirme sözlükleriyle (`kume.ps1` `Get-KbScript` çağırmaz) ölçüt (28) ve G12'de gösterilir.
+   Çıplak belirteç taşıyan CLI blokları (`--case <case-id>`) ham hâliyle
+   ayrıştırılamaz; N147 onları belirteçleri sabit bir sözcükle değiştirip
+   `ParseInput` ile ayrıştırır (revizyon 16; `$kvTpl` listesi).
 4. **Pencereler ve satırlar.** KİT satırı Ek R4/1 madde 3'teki gibi
    `ac.ps1`'i, sonra `bc.ps1`'i dot-source eder. ÖN ve KÜME satırları
    `powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\t0.ps1'"`
    ve aynı biçimde `kume.ps1`'dir; başlatıcı yüklenince **hemen** çalışır,
    ayrıca komut yazılmaz (karar, seçim 1). `kume` pencere başlığını
-   `KUME - KAPATMAYIN` yapar.
+   `KUME - KAPATMAYIN` yapar. ADMIN satırı aynı biçimde
+   `. '<evidence-dir>\kit2\adm.ps1' y1` taşır ve yüklenince hemen çalışır
+   (revizyon 16; `y2` dilim 4).
 5. **Kayıt ve kilit uygulaması.** Kayıtlar Ek R4/4 biçimindedir
    (`New-KbRecord`, `Add-KbLine`, `Complete-KbStep`; N136). Kilitsiz red
    `Write-KbRefusal` ile tek bir `refusal-<nnn>.txt` yazar (revizyon 13:
@@ -15424,7 +15734,7 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    apply öncesi denetimler dilim 3'ün N90/N91 çerçevesindedir).
 6. **`n` bildirim metni** (karar, seçim 3; §34.14 yorum 14): sabit üç
    satırdır ve yalnız ekrana basılır; hiçbir dosyaya yazılmaz.
-7. **Dilim 1 komut kümeleri** (dilim 2 eki: Ek R4/21 madde 2). Normal oturum: `b0`, `b1`, `b2`, `k`, `n`,
+7. **Dilim 1 komut kümeleri** (dilim 2 eki: Ek R4/21 madde 2; dilim 3 eki: Ek R4/22 madde 2). Normal oturum: `b0`, `b1`, `b2`, `k`, `n`,
    `o`. Silme oturumu (`DUR.txt` var): `b0`, `b1`, `k` (yalnız `s25`
    öncesi), `n`, `o` (`b2` tanımlanmaz). Erken kapanış kipi: `b2` ve `k
    silme` dışındaki `k` türleri `EARLY_CLOSE_MODE` ile reddedilir. İçerik
@@ -15441,10 +15751,10 @@ hariç: kurulum aracıdır). Hepsi yalnız ASCII'dir ve Ek R4/7'ye uyar.
 **N135 — `bc.ps1` (KİT penceresi yükleyicisi).**
 
 ```powershell
-# bc.ps1 - Ek R4/1: kit2 yukleyicisi, KIT penceresi (runbook revizyon 8, dilim 1; revizyon 14, dilim 2). ASCII. Kit1'den hemen sonra ayni Win+R satiriyla dot-source edilir.
+# bc.ps1 - Ek R4/1: kit2 yukleyicisi, KIT penceresi (runbook revizyon 8, dilim 1; revizyon 14, dilim 2; revizyon 16, dilim 3). ASCII. Kit1'den hemen sonra ayni Win+R satiriyla dot-source edilir.
 # Kit1 yuklu degilse hicbir komut tanimlamaz. kbe.ps1'i pin ve ASCII denetiminden sonra ayni baytlardan yukler; pins2.txt, kit2 dizini,
 # kit-build2.txt, kit2-case.txt ve guvenli deger dosyasini (hash, ACL, bicim) denetler; yalniz app-dsn'i surec ortamina koyar.
-# Komutlar: b0, b1, b2, b5, b5d, b6, b7, g8, b8, u, k, n, o. Butun yerel degiskenler alt kapsamdadir (& { }); genel adlar yalniz $global:Kb... bicimindedir.
+# Komutlar: b0, b1, b2, b5, b5d, b6, b7, g8, b8, b9-b16, g14, g16, b18-b23, u, k, n, o. Butun yerel degiskenler alt kapsamdadir (& { }); genel adlar yalniz $global:Kb... bicimindedir.
 & {
     if (($null -ceq $global:KitSess) -or ([string]$global:KitSess -ceq 'none') -or ($null -ceq $global:KitSessDir)) { Write-Host 'Kit1 yuklenmedi; pencereyi kapatin.'; return }
     if ($global:KbLoaded -ceq $true) {
@@ -15614,9 +15924,25 @@ hariç: kurulum aracıdır). Hepsi yalnız ASCII'dir ve Ek R4/7'ye uyar.
         function global:b6 { Invoke-KbStep 'b6' $args }
         function global:b7 { Invoke-KbStep 'b7' $args }
         function global:b8 { Invoke-KbStep 'b8' $args }
+        function global:b9 { Invoke-KbStep 'b9' $args }
+        function global:b10 { Invoke-KbStep 'b10' $args }
+        function global:b11 { Invoke-KbStep 'b11' $args }
+        function global:b12 { Invoke-KbStep 'b12' $args }
+        function global:b13 { Invoke-KbStep 'b13' $args }
+        function global:b14 { Invoke-KbStep 'b14' $args }
+        function global:b15 { Invoke-KbStep 'b15' $args }
+        function global:b16 { Invoke-KbStep 'b16' $args }
+        function global:b18 { Invoke-KbStep 'b18' $args }
+        function global:b19 { Invoke-KbStep 'b19' $args }
+        function global:b20 { Invoke-KbStep 'b20' $args }
+        function global:b21 { Invoke-KbStep 'b21' $args }
+        function global:b22 { Invoke-KbStep 'b22' $args }
+        function global:b23 { Invoke-KbStep 'b23' $args }
         function global:u { Invoke-KbStep 'u' $args }
     }
     function global:g8 { Invoke-KbStep 'g8' $args }
+    function global:g14 { Invoke-KbStep 'g14' $args }
+    function global:g16 { Invoke-KbStep 'g16' $args }
     function global:k { Invoke-KbStep 'k' $args }
     function global:n { Invoke-KbStep 'n' $args }
     function global:o { Invoke-KbStep 'o' $args }
@@ -15627,7 +15953,7 @@ hariç: kurulum aracıdır). Hepsi yalnız ASCII'dir ve Ek R4/7'ye uyar.
 **N136 — `kbe.ps1` (ortak motor, süzgeç, kayıt ve değer yardımcıları).**
 
 ```powershell
-# kbe.ps1 - Ek R4/6: kit2 pinli blok motoru, anahtar basina suzgec, kayit, red ve deger yardimcilari (runbook revizyon 8; revizyon 10, 11, 13 ve 14 duzeltmeleri). ASCII.
+# kbe.ps1 - Ek R4/6: kit2 pinli blok motoru, anahtar basina suzgec, kayit, red ve deger yardimcilari (runbook revizyon 8; revizyon 10, 11, 13, 14 ve 16 duzeltmeleri). ASCII.
 # bc.ps1 ve pencere disi baslaticilar pin ve ASCII denetiminden sonra ayni baytlardan kurulan blokla dot-source eder
 # (Ek R4/5 madde 6 kurali; karar ACIK-28 = a). Kok kapsamda degisken yoktur; yalniz global fonksiyon tanimlar.
 # Baglam: $global:KbEvid, $global:KbDir, $global:KbPins, $global:KbVal, $global:KbSessName, $global:KbRefDir, $global:KbIsLauncher.
@@ -15749,6 +16075,12 @@ function global:Initialize-KbAllow {
         'N057|CASE_ROOT_ABSENT|w:True', 'N057|CASE_ROOT_EXISTS|w:True', 'N057|PATH_OK|pathname', 'N057|PATH_FAIL|pathname',
         'N059|MANUAL_INPUT_ENCODING|w:OK,FAIL', 'N060|MANUAL_INPUT_HASH_RECORDED|bool', 'N060|MANUAL_INPUT_HASH_RECORD|w:FAIL', 'N060|MANUAL_INPUT_REVISION|rx:^r[1-3]$', 'N060|MANUAL_INPUT_SHA256_PREFIX|h12',
         'N061|MANUAL_INPUT_MATCHES_LAWYER_REVISION|bool', 'N061|LAWYER_DECISION_CITES_RECORD|bool',
+        'N064|PENDING_SHA_MATCH|bool', 'N064|TEMP_RESIDUE_ABSENT|bool', 'N064|CANONICAL_ABSENT|bool',
+        'N065|AUDIT_FILE_BOUND|bool', 'N065|AUDIT_LIST_OK|bool', 'N065|AUDIT_UNPARSEABLE_COUNT|int',
+        'N073|PENDING_METHOD_MANUAL|bool', 'N073|PENDING_PROVIDER_MODEL_NULL|bool', 'N073|PENDING_FACT_COUNT_ONE|bool', 'N073|PENDING_ALL_UNVERIFIED|bool', 'N073|PENDING_FACT_ID_MATCH|bool', 'N073|PENDING_LOCATOR_PRESENT|bool',
+        'N084|DL_SINGLE_PENDING_FILE|bool', 'N084|DL_SINGLE_RECORD|bool', 'N084|DL_CALCULATION_STATE_CALCULATED|bool', 'N084|DL_EXPIRY_NOT_EVALUATED|bool', 'N084|DL_ANCHOR_VERIFIED|bool', 'N084|DL_STOPPING_NONE|bool', 'N084|DL_ATTESTATION_REF_PRESENT|bool', 'N084|DL_REQUIRES_HUMAN_REVIEW|bool', 'N084|DL_CALCULATED_DEADLINE_PRESENT|bool',
+        'N085|DL_SINGLE_PENDING_FILE|bool',
+        'N063|MANUAL_FACT_APPLY_ARGS|w:INVALID', 'N075|EXPECTED_HASH|w:INVALID', 'N077|EXPECTED_HASH|w:INVALID', 'N081|EXPECTED_HASH|w:INVALID', 'N087|EXPECTED_HASH|w:INVALID', 'N079|EXPECTED_INPUT_DIGEST|w:INVALID', 'N083|EXPECTED_INPUT_DIGEST|w:INVALID',
         'N062|case_id|caseid', 'N062|document|docid', 'N062|target_ref|rx:^fact\.[a-z0-9_-]+\.pending$', 'N062|input_digest|h64', 'N062|pending_sha256|h64', 'N062|text_excerpt_sha256|h64', 'N062|excerpt_found|kbool', 'N062|verification_state|w:unverified',
         'N063|case_id|caseid', 'N063|document|docid', 'N063|pending_sha256|h64', 'N063|audit_file|audit', 'N063|journal_id|int', 'N063|attempt|int', 'N063|replayed|bool',
         'N069|journal_id|int', 'N069|new_state|w:completed,failed,reconciliation_required', 'N069|resolution_code|rx:^[A-Za-z0-9_]{1,64}$', 'N069|observed_post_hash|h64none',
@@ -15788,14 +16120,14 @@ function global:New-KbFilterState([string]$Rec) {
 function global:Add-KbOut($St, [string]$Line) {
     if ($Line.StartsWith('STOP ', [System.StringComparison]::Ordinal)) { $St['stop'] = $true }
     $St['out'].Add($Line)
-    if ([string]$St['rec'] -cne '') { Add-KbLine ([string]$St['rec']) $Line }
+    if ([string]$St['rec'] -cne '') { Add-KbLine ([string]$St['rec']) $Line } elseif ($null -cne $global:KbMemOut) { $global:KbMemOut.Add($Line) }
 }
 function global:Add-KbOutOnce($St, [string]$Line) { if (-not $St['once'].ContainsKey($Line)) { $St['once'][$Line] = '1'; Add-KbOut $St $Line } }
 function global:Submit-KbOut($St, [string]$Tag, [string]$Kind, $Raw) {
     $kbeIsErr = ($Raw -is [System.Management.Automation.ErrorRecord])
     $kbeT = [string]$Raw
     if ($kbeIsErr) {
-        if ($Kind -ceq 'status') { $St['errc'] = [int]$St['errc'] + 1; return }
+        if (($Kind -ceq 'status') -or ($Kind -ceq 'hashline')) { $St['errc'] = [int]$St['errc'] + 1; return }
         $St['serr'] = [int]$St['serr'] + 1
         $kbeM = [regex]::Match($kbeT, '^ERROR: ([A-Za-z][A-Za-z0-9_]{0,63}):')
         if ($kbeM.Success) { Add-KbOutOnce $St ('STOP CLI_ERROR_CLASS=' + $kbeM.Groups[1].Value) }
@@ -15810,6 +16142,12 @@ function global:Submit-KbOut($St, [string]$Tag, [string]$Kind, $Raw) {
         return
     }
     if ($Kind -ceq 'validator') { $St['vlines'].Add($kbeT); return }
+    if ((($Tag -ceq 'N062') -and ($kbeT.StartsWith('notification_date=', [System.StringComparison]::Ordinal) -or $kbeT.StartsWith('page=', [System.StringComparison]::Ordinal))) -or (($Tag -ceq 'N085') -and $kbeT.StartsWith('PENDING_CALCULATED_DEADLINE=', [System.StringComparison]::Ordinal))) {
+        if ($null -ceq $global:KbMem) { $global:KbMem = New-KbDict }
+        $kbeEq = $kbeT.IndexOf('=', [System.StringComparison]::Ordinal)
+        $global:KbMem[$kbeT.Substring(0, $kbeEq)] = $kbeT.Substring($kbeEq + 1)
+        return
+    }
     if (($Kind -ceq 'psql') -and $kbeT.StartsWith('PSQL_ROW=', [System.StringComparison]::Ordinal)) { $St['rows'].Add($kbeT.Substring(9)); return }
     if (($Kind -ceq 'pip') -and ($kbeT -ceq 'No broken requirements found.')) { Add-KbOutOnce $St 'PIP_CHECK_CLEAN=True'; return }
     if (($Kind -ceq 'report') -and $kbeT.StartsWith('RAPOR YAZILDI: ', [System.StringComparison]::Ordinal)) { Add-KbOutOnce $St 'REPORT_WRITTEN_LINE_SEEN=True'; return }
@@ -15857,7 +16195,7 @@ function global:Submit-KbOut($St, [string]$Tag, [string]$Kind, $Raw) {
 }
 function global:Complete-KbBlock($St, [object[]]$Spec, $Rc) {
     $kbeTag = [string]$Spec[3]; $kbeKind = [string]$Spec[4]
-    if ($kbeKind -ceq 'status') {
+    if (($kbeKind -ceq 'status') -or ($kbeKind -ceq 'hashline')) {
         if ([int]$St['nons'] -cgt 0) { Add-KbOut $St "STOP NONSTATUS_LINE_COUNT=$($St['nons'])" }
         if ([int]$St['errc'] -cgt 0) { Add-KbOut $St "STOP KB_ERROR_RECORD_COUNT=$($St['errc'])" }
     } elseif ($kbeKind -ceq 'git') {
@@ -15870,7 +16208,7 @@ function global:Complete-KbBlock($St, [object[]]$Spec, $Rc) {
         if ([int]$St['serr'] -ceq 0) { Add-KbOut $St 'GIT_STDERR_LINE_COUNT=0' } else { Add-KbOut $St "STOP GIT_STDERR_LINE_COUNT=$($St['serr'])" }
     } else {
         if ($Rc -ceq 2147352111) { Add-KbOut $St 'CLI_CALLED=False' } elseif ($Rc -ceq 0) { Add-KbOut $St 'CLI_RC=0' } else { Add-KbOut $St "STOP CLI_RC=$Rc" }
-        if ($kbeKind -ceq 'validator') { Add-KbValidatorLines $St $kbeTag }
+        if ($kbeKind -ceq 'validator') { Add-KbValidatorLines $St $kbeTag ([string]$Rc) }
         if ($kbeKind -ceq 'psql') {
             $kbeRows = [string[]]@($St['rows'])
             $kbeQ = [string]$Spec[5]
@@ -15880,6 +16218,7 @@ function global:Complete-KbBlock($St, [object[]]$Spec, $Rc) {
                 if ((-not $kbeIds.ContainsKey([string]$global:KbVal['actor-user-id'])) -or (-not $kbeIds.ContainsKey([string]$global:KbVal['admin-user-id']))) { $kbeEn = $false }
                 Add-KbOut $St "USERS_ENABLED=$kbeEn"
             } elseif ($kbeQ -ceq 'N045') { Add-KbOut $St 'USERS_ENABLED=False' }
+            elseif ($kbeQ.StartsWith('N091|', [System.StringComparison]::Ordinal)) { Add-KbJournalLines $St $kbeRows $kbeQ.Substring(5) }
             else {
                 $kbeName = $null
                 if ($kbeQ -ceq 'N041') { $kbeName = 'JOURNAL_ROW_COUNT' } elseif (($kbeQ -ceq 'N042') -or ($kbeQ -ceq 'N066')) { $kbeName = 'JOURNAL_UNRESOLVED_COUNT' } elseif (($kbeQ -ceq 'N043') -or ($kbeQ -ceq 'N092')) { $kbeName = 'ACTIVE_ASSIGNMENT_COUNT' } elseif ($kbeQ -ceq 'N044') { $kbeName = 'ASSIGNMENT_TOTAL_COUNT' } elseif ($kbeQ -ceq 'N072') { $kbeName = 'FACT_EXTRACTION_ROW_COUNT' } elseif ($kbeQ -ceq 'N090') { $kbeName = 'JOURNAL_BASELINE_MAX_ID' }
@@ -15888,7 +16227,7 @@ function global:Complete-KbBlock($St, [object[]]$Spec, $Rc) {
         }
     }
     $kbeWd = ''
-    if ($kbeKind -cne 'status') { $kbeWd = ' WATCHDOG=NONE' }
+    if (($kbeKind -cne 'status') -and ($kbeKind -cne 'hashline')) { $kbeWd = ' WATCHDOG=NONE' }
     Add-KbOut $St "KB_BLOCK=$kbeTag DROPPED_TOKEN_COUNT=$($St['drop']) NONSTATUS_LINE_COUNT=$($St['nons']) STDERR_LINE_COUNT=$($St['serr'])$kbeWd"
 }
 function global:Read-KbValidatorOutput([string[]]$Lines, [string]$Tag) {
@@ -15925,12 +16264,12 @@ function global:Read-KbValidatorOutput([string[]]$Lines, [string]$Tag) {
     $kbeR['result'] = $kbeRes; $kbeR['path'] = $kbePath; $kbeR['caseid'] = $kbeId; $kbeR['errors'] = [string]$kbeEc; $kbeR['warnings'] = [string]$kbeWc; $kbeR['paths'] = $kbeP.ToArray() -join ' '
     return ,$kbeR
 }
-function global:Add-KbValidatorLines($St, [string]$Tag) {
+function global:Add-KbValidatorLines($St, [string]$Tag, [string]$Rc) {
     $kbeR = Read-KbValidatorOutput ([string[]]@($St['vlines'])) $Tag
     $St['vlines'].Clear()
     $kbeN = 'DOCUMENT'; if ($Tag -ceq 'N032') { $kbeN = 'CASE' }
     if ($null -ceq $global:KbValResult) { $global:KbValResult = New-KbDict }
-    $global:KbValResult[$Tag + ':errors'] = [string]$kbeR['errors']; $global:KbValResult[$Tag + ':paths'] = [string]$kbeR['paths']; $global:KbValResult[$Tag + ':result'] = [string]$kbeR['result']
+    $global:KbValResult[$Tag + ':errors'] = [string]$kbeR['errors']; $global:KbValResult[$Tag + ':paths'] = [string]$kbeR['paths']; $global:KbValResult[$Tag + ':result'] = [string]$kbeR['result']; $global:KbValResult[$Tag + ':rc'] = $Rc
     if ([string]$kbeR['result'] -ceq 'PASS') {
         Add-KbOut $St "VALIDATOR_$($kbeN)_RESULT=PASS"
         $kbeRoot = [string]$global:KbVal['case-root']; $kbePath = [string]$kbeR['path']
@@ -16135,6 +16474,7 @@ function global:Read-KbSecure([string]$Window) {
     if ($Window -ceq 'KIT') { $kbeKeep = @('pilot-root', 'restricted-dir', 'container-root', 'external-root', 'python', 'python-runtime-root', 'psql', 'pg-bin-dir', 'pdftotext', 'source-repo-root', 'container-file', 'veracrypt-exe', 'app-dsn') + $kbeOpt }
     elseif ($Window -ceq 'T0') { $kbeKeep = @('external-root') }
     elseif ($Window -ceq 'KUME') { $kbeKeep = @('pg-ctl', 'pg-data-dir') }
+    elseif ($Window -ceq 'ADMIN') { $kbeKeep = @('python', 'admin-dsn') }
     $kbeOut = New-KbDict
     foreach ($kbeK in $kbeKeep) { if ($kbeD.ContainsKey($kbeK)) { $kbeOut[$kbeK] = [string]$kbeD[$kbeK] } }
     if ($Window -ceq 'KUME') { $kbeM = [regex]::Match([string]$kbeD['app-dsn'], '^postgresql://[A-Za-z0-9_]+@[0-9.]+:([1-9][0-9]{0,4})/'); if (-not $kbeM.Success) { return $null }; $kbeOut['app-port'] = $kbeM.Groups[1].Value }
@@ -16216,7 +16556,160 @@ function global:Get-KbK6Branches([int]$Before) {
     $kbeR = @(); if ($kbeG5) { $kbeR += 'G5' }; if ($kbeM1) { $kbeR += 'MADDE1' }
     return [string[]]$kbeR
 }
-function global:Get-KbFileNames { return [string[]]@('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'sv7.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1', 'n155.txt', 'n156.txt', 'n058.txt', 'n023.ps1', 'n024.ps1', 'n025.ps1', 'n026.ps1', 'n027.ps1', 'n028.ps1', 'n029.ps1', 'n030.ps1', 'n031.ps1', 'n032.ps1', 'n033.ps1', 'n034.ps1', 'n059.ps1', 'n060.ps1', 'n061.ps1', 'n121.ps1', 'ev.ps1', 'kit2-case.txt', 'n000.ps1', 'n001.ps1', 'n002.ps1', 'n003.ps1', 'n011.ps1', 'n012.ps1', 'n013.ps1', 'n014.ps1', 'n015.ps1', 'n019.ps1', 'n021.ps1', 'n022.ps1', 'n037.ps1', 'n038.ps1', 'n039.ps1', 'n040.ps1', 'n041.sql', 'n042.sql', 'n043.sql', 'n044.sql', 'n045.sql', 'n046.ps1', 'n047.ps1', 'n048.ps1', 'n049.ps1', 'n050.ps1', 'n051.ps1', 'n052.ps1', 'n053.ps1', 'n056.ps1', 'n057.ps1', 'n057-2.ps1', 'n117.ps1', 'n118.ps1', 'n123.txt', 'n124.txt', 'n125.txt', 'n126.txt', 'n127.txt', 'n128.txt', 'n129.txt', 'n130.txt', 'n131.txt', 'n132.txt', 'n133.txt') }
+function global:Get-KbTok([string[]]$Lines, [string]$Key, [bool]$Last = $false) {
+    $kbeP = $Key + '='; $kbeV = $null
+    foreach ($kbeL in $Lines) { foreach ($kbeT in $kbeL.Split([char]32)) { if ($kbeT.StartsWith($kbeP, [System.StringComparison]::Ordinal)) { if (-not $Last) { return $kbeT.Substring($kbeP.Length) }; $kbeV = $kbeT.Substring($kbeP.Length) } } }
+    return $kbeV
+}
+function global:Test-KbRecKeys([string]$Rec, [string[]]$Keys) {
+    $kbeL = @(Read-KbLines $Rec)
+    foreach ($kbeK in $Keys) { if ($null -ceq (Get-KbTok $kbeL $kbeK)) { Add-KbLine $Rec "STOP KB_REQUIRED_KEY_MISSING=$kbeK" } }
+}
+function global:Test-KbChainStart([string]$Cmd, [string]$Rec) {
+    if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return $false }
+    if (Test-Path -LiteralPath $Rec) { Write-KbRefusal ($Cmd.ToUpperInvariant() + '_ALREADY') "Bu adim zaten calisti: $(Split-Path -Leaf $Rec). Tekrar calismaz."; return $false }
+    return $true
+}
+function global:Test-KbDbGate([string]$Cmd) {
+    $kbeU = $Cmd.ToUpperInvariant()
+    $kbeL = @(Read-KbLines (Join-Path ([string]$global:KitSessDir) 'b1.txt'))
+    $kbeOk = (Test-KbSessionB1) -and ([string]$global:KbVal['app-dsn'] -cne '') -and ([string]$env:VERGI_IAM_DATABASE_URL -ceq [string]$global:KbVal['app-dsn'])
+    foreach ($kbeP in @('repo-root', 'cases-parent', 'external-root', 'evidence-dir', 'external-root-contract', 'container-root', 'pilot-root', 'repo-root-parent', 'restricted-dir', 'container-temp', 'intake-dir', 'pilot-root-contract', 'python', 'psql', 'pdftotext', '7z')) { if ($kbeL -cnotcontains "PATH_OK=$kbeP") { $kbeOk = $false } }
+    $kbeSeen = 0
+    foreach ($kbeT in $kbeL) { $kbeM = [regex]::Match($kbeT, '^ENV_SCOPE=[A-Za-z]+ MATCH_COUNT=([0-9]+)$'); if ($kbeM.Success) { $kbeSeen++; if ($kbeM.Groups[1].Value -cne '0') { $kbeOk = $false } } }
+    if ($kbeSeen -cne 3) { $kbeOk = $false }
+    if (-not $kbeOk) { Write-KbRefusal ($kbeU + '_SESSION_GATE') "$Cmd BASLAMADI: bu oturumun b1 kapilari tamam degil (yollar, ortam taramasi veya APP baglantisi). Once bu oturumda b0 ve b1 TAMAM olmali."; return $false }
+    $kbeToday = [DateTimeOffset]::Now.ToString('yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+    $kbeUp = $false
+    foreach ($kbeF in @(Get-ChildItem -LiteralPath (Join-Path ([string]$global:KbEvid) 'steps') -Force -File -ErrorAction SilentlyContinue)) {
+        if ($kbeF.Name -cnotmatch '^kume-[1-9][0-9]{0,2}\.txt$') { continue }
+        $kbeK = @(Read-KbLines $kbeF.FullName)
+        $kbeEnd = Get-KbField $kbeK 'ENDED_AT='
+        if (($kbeK -ccontains 'STEP_RESULT=PASS') -and ($null -cne $kbeEnd) -and $kbeEnd.StartsWith($kbeToday, [System.StringComparison]::Ordinal)) { $kbeUp = $true }
+    }
+    if ($kbeUp) {
+        $kbeUp = $false
+        $kbeIr = Join-Path ([string]$global:KbVal['pg-bin-dir']) 'pg_isready.exe'
+        if (Test-Path -LiteralPath $kbeIr -PathType Leaf) { $kbeOut = @(& $kbeIr "--dbname=$env:VERGI_IAM_DATABASE_URL" 2>&1); $kbeUp = ($LASTEXITCODE -ceq 0); $kbeOut = $null }
+    }
+    if (-not $kbeUp) { Write-KbRefusal ($kbeU + '_CLUSTER_DOWN') "$Cmd BASLAMADI: kume ayakta degil veya bugun KUME kaydi yok. Once KUME satirini Win+R ile acin; KUME TAMAM gorunce yeniden $Cmd yazin."; return $false }
+    return $true
+}
+function global:Test-KbApplyDecision([string]$Cmd, [string]$Kind, [string]$KCmd) {
+    $kbeU = $Cmd.ToUpperInvariant()
+    $kbeD = Get-KbDecision $Kind ''
+    if ($null -ceq $kbeD) { Write-KbRefusal ($kbeU + '_NO_DECISION') "$Cmd BASLAMADI: once avukat $KCmd ile kararini yazmali."; return $false }
+    if ($kbeD -ccontains 'SONUC=RED') { Write-KbRefusal ($kbeU + '_LAWYER_REJECTED') "Avukat reddetti. Dosya pilot disi ise avukat 'k uygunsuz' yazsin, sonra 'u'."; return $false }
+    if ($kbeD -cnotcontains 'SONUC=KABUL') { Write-KbRefusal ($kbeU + '_NO_DECISION') "$Cmd BASLAMADI: karar kaydinda SONUC=KABUL yok."; return $false }
+    if (-not (Test-KbDecisionHash ([string[]]$kbeD))) { Write-Host 'STOP K_DECISION_HASH=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock $Cmd 'K_DECISION_HASH'; return $false }
+    return $true
+}
+function global:Request-KbApproval([string]$Cmd, [string]$Target, [string]$Digest) {
+    $kbeOk = $false
+    try { $kbeOk = ((Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path ([string]$global:KbEvid) 'approval-method.txt')))) -ceq [string]$global:KbBuild['APPROVAL_METHOD_SHA256']) } catch { $kbeOk = $false }
+    if (-not $kbeOk) { Write-KbRefusal 'APPROVAL_METHOD_MISSING' "$Cmd BASLAMADI: yontem karari kaydi (approval-method.txt) yok veya kurulum kaydiyla ayni degil; onay sorulmadi. Ajana donun."; return $null }
+    Write-Host '----- ONAY (REAL_ACTION_APPROVED) -----'
+    Write-Host "Hedef: $Target"
+    Write-Host "Digest: $Digest"
+    Write-Host '----- SON -----'
+    Write-Host 'TUSA PROJE SAHIBI BASAR'
+    if ($global:KbIsLauncher -ceq $true) { $kbeA = Read-KbYesNo 'Bu hedef ve digest icin uygulamayi onayliyor musunuz?' } else { $kbeA = Read-KitYesNo 'Bu hedef ve digest icin uygulamayi onayliyor musunuz?' }
+    if ($kbeA -cne 'E') { Write-KbRefusal ($Cmd.ToUpperInvariant() + '_NOT_APPROVED') "$Cmd`: onay verilmedi; uygulama cagrilmadi. Karar degisirse ayni komutu yeniden yazin."; return $null }
+    return "REAL_ACTION_APPROVED step=$Cmd target=$Target digest=$Digest at=$(Get-KbStamp) basis=project-owner-E-at-kit"
+}
+function global:New-KbSqlSpec([string]$Query, $Extra, [string]$QueryTag) {
+    $kbeT = Get-KbText ($Query.ToLowerInvariant() + '.sql')
+    if ($null -ceq $kbeT) { return $null }
+    $kbeV = $global:KbVal
+    $kbeT = $kbeT.TrimEnd([char]10).Replace((Get-KbToken 'case-id'), [string]$kbeV['case-id']).Replace((Get-KbToken 'actor-user-id'), [string]$kbeV['actor-user-id']).Replace((Get-KbToken 'admin-user-id'), [string]$kbeV['admin-user-id'])
+    if ($null -cne $Extra) { foreach ($kbeK in @($Extra.Keys)) { $kbeT = $kbeT.Replace((Get-KbToken $kbeK), [string]$Extra[$kbeK]) } }
+    if (($kbeT -cmatch '[<"$`]') -or ($kbeT.IndexOf([string][char]10, [System.StringComparison]::Ordinal) -cge 0)) { return $null }
+    $kbeQs = New-KbDict; $kbeQs['psql'] = [string]$kbeV['psql']; $kbeQs['select-statement'] = $kbeT
+    $kbeR = New-KbSpec 'n040.ps1' '' $kbeQs 'N040' 'psql' $QueryTag
+    return ,$kbeR
+}
+function global:Add-KbJournalLines($St, [string[]]$Rows, [string]$Family) {
+    if ($Rows.Count -cne 1) { Add-KbOut $St "STOP JOURNAL_NEW_ROW_COUNT=$($Rows.Count)"; return }
+    Add-KbOut $St 'JOURNAL_NEW_ROW_COUNT=1'
+    $kbeM = [regex]::Match([string]$Rows[0], '^[1-9][0-9]{0,18}\|(prepared|executing|completed|failed|reconciliation_required)\|([0-9]{0,10})\|([a-z_.]{1,64})$')
+    if (-not $kbeM.Success) { Add-KbOut $St 'STOP KB_PSQL_ROW_PARSE=FAIL'; return }
+    if ($kbeM.Groups[1].Value -ceq 'completed') { Add-KbOut $St 'JOURNAL_NEW_ROW_STATE=completed' } else { Add-KbOut $St "STOP JOURNAL_NEW_ROW_STATE=$($kbeM.Groups[1].Value)" }
+    if ($kbeM.Groups[3].Value -ceq $Family) { Add-KbOut $St 'JOURNAL_FAMILY_MATCH=True' } else { Add-KbOut $St 'STOP JOURNAL_FAMILY_MATCH=False' }
+    if ($kbeM.Groups[2].Value -ceq [string]$global:KbVal['actor-user-id']) { Add-KbOut $St 'JOURNAL_ACTOR_MATCH=True' } else { Add-KbOut $St 'STOP JOURNAL_ACTOR_MATCH=False' }
+}
+function global:Invoke-KbBaseline([string]$Rec) {
+    $kbeS = New-KbSqlSpec 'N090' $null 'N090'
+    if ($null -ceq $kbeS) { Add-KbLine $Rec 'STOP KB_SQL_VALUE_RULE=False'; return $null }
+    if (-not (Invoke-KbBlocks $Rec @() @(,$kbeS))) { return $null }
+    return (Get-KbTok @(Read-KbLines $Rec) 'JOURNAL_BASELINE_MAX_ID' $true)
+}
+function global:Invoke-KbJournalCheck([string]$Rec, [string]$Base, [string]$Family) {
+    $kbeX = New-KbDict; $kbeX['baseline-max-id'] = $Base
+    $kbeS = New-KbSqlSpec 'N091' $kbeX ('N091|' + $Family)
+    if ($null -ceq $kbeS) { Add-KbLine $Rec 'STOP KB_SQL_VALUE_RULE=False'; return $false }
+    return (Invoke-KbBlocks $Rec @() @(,$kbeS))
+}
+function global:Get-KbHelpSpecs { return @((New-KbSpec 'n051.ps1' '' $null 'N051' 'status' $null), (New-KbSpec 'n019.ps1' '' $null 'N019' 'status' $null), (New-KbSpec 'n048.ps1' '' $null 'N048' 'status' $null)) }
+function global:Invoke-KbMem([object[]]$Helpers, [object[]]$Blocks) {
+    $global:KbMemOut = New-Object 'System.Collections.Generic.List[string]'
+    return (Invoke-KbBlocks '' $Helpers $Blocks)
+}
+function global:Get-KbMemLines { if ($null -ceq $global:KbMemOut) { return [string[]]@() }; return [string[]]$global:KbMemOut.ToArray() }
+function global:Open-KbMem([string]$Cmd, [string]$File, [string]$Rec) {
+    $kbeLines = Get-KbMemLines
+    $global:KbMemOut = $null
+    if (-not (New-KbRecord $Rec (Get-KbHeader $Cmd $File))) { Invoke-KbLock $Cmd ($Cmd.ToUpperInvariant() + '_RECORD_WRITE_FAIL'); return $false }
+    foreach ($kbeL in $kbeLines) { Add-KbLine $Rec $kbeL }
+    return $true
+}
+function global:Add-KbInputSub($Sub) {
+    $kbeC = Join-Path ([string]$global:KbEvid) 'steps\c'
+    $kbeRev = 0
+    for ($kbeN = 1; $kbeN -cle 3; $kbeN++) { if (Test-KbPass (Join-Path $kbeC "b08-r$kbeN.txt")) { $kbeRev = $kbeN } }
+    if ($kbeRev -clt 1) { return 0 }
+    $kbeD = Get-KbDecision 'MANUAL_INPUT_COMPARED' "r$kbeRev"
+    if ($null -ceq $kbeD) { return 0 }
+    $kbeF = Get-KbField $kbeD 'DECISION_FILE='
+    if ($null -ceq $kbeF) { return 0 }
+    $kbeP = Get-KbField @(Read-KbLines (Join-Path ([string]$global:KbVal['restricted-dir']) $kbeF)) 'HASH_ONEK='
+    if (-not (Test-KbValue 'h12' ([string]$kbeP))) { return 0 }
+    $Sub['input-revision'] = [string]$kbeRev
+    $Sub['lawyer-cited-prefix'] = [string]$kbeP
+    return $kbeRev
+}
+function global:Get-KbFactId {
+    $kbeD = Get-KbField @(Read-KbLines (Join-Path ([string]$global:KbEvid) 'steps\c\b10.txt')) 'input_digest='
+    if (-not (Test-KbValue 'h64' ([string]$kbeD))) { return $null }
+    return ('fact_' + [string]$global:KbVal['document-id'] + '_manual_v1_' + $kbeD.Substring(0, 12) + '_001')
+}
+function global:Read-KbJsonStrict([string]$Path) { return ((New-Object System.Text.UTF8Encoding($false, $true)).GetString([System.IO.File]::ReadAllBytes($Path)) | ConvertFrom-Json) }
+function global:Get-KbAnchorEvents {
+    $kbeP = Join-Path ([string]$global:KbVal['case-root']) 'timeline\timeline.json'
+    $kbeJ = Read-KbJsonStrict $kbeP
+    return @(@($kbeJ.events) | Where-Object { [string]$_.event_type -ceq 'notification_date' })
+}
+function global:Get-KbBlindDate {
+    $kbeH = Get-KbField @(Read-KbLines (Join-Path ([string]$global:KbEvid) 'steps\c\b18.txt')) 'BLIND_CALC_SHA256='
+    if ($null -ceq $kbeH) { return $null }
+    try { $kbeB = [System.IO.File]::ReadAllBytes((Join-Path ([string]$global:KbVal['restricted-dir']) 'blind-calc.txt')) } catch { return $null }
+    if ((Get-KbSha $kbeB) -cne $kbeH) { return $null }
+    try { $kbeT = (New-Object System.Text.UTF8Encoding($false, $true)).GetString($kbeB) } catch { return $null }
+    $kbeV = Get-KbField ([string[]]$kbeT.Split([char]10)) 'SON_GUN='
+    if (([string]$kbeV) -cnotmatch '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') { return $null }
+    return $kbeV
+}
+function global:Test-KbValidatorFail {
+    if ($null -ceq $global:KbValResult) { return $false }
+    $kbeAny = $false
+    foreach ($kbeT in @('N032', 'N033')) {
+        if (-not $global:KbValResult.ContainsKey($kbeT + ':result')) { continue }
+        $kbeR = [string]$global:KbValResult[$kbeT + ':result']; $kbeC = [string]$global:KbValResult[$kbeT + ':rc']
+        if ($kbeR -ceq 'FAIL') { if (($kbeC -ceq '0') -or ([string]$global:KbValResult[$kbeT + ':errors'] -ceq '0')) { return $false }; $kbeAny = $true }
+        elseif (($kbeR -cne 'PASS') -or ($kbeC -cne '0')) { return $false }
+    }
+    return $kbeAny
+}
+function global:Get-KbFileNames { return [string[]]@('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'sv7.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1', 'b9.ps1', 'b10.ps1', 'b11.ps1', 'b12.ps1', 'b13.ps1', 'g14.ps1', 'b14.ps1', 'b15.ps1', 'g16.ps1', 'b16.ps1', 'b18.ps1', 'b19.ps1', 'b20.ps1', 'b21.ps1', 'b22.ps1', 'b23.ps1', 'adm.ps1', 'n155.txt', 'n156.txt', 'n058.txt', 'n023.ps1', 'n024.ps1', 'n025.ps1', 'n026.ps1', 'n027.ps1', 'n028.ps1', 'n029.ps1', 'n030.ps1', 'n031.ps1', 'n032.ps1', 'n033.ps1', 'n034.ps1', 'n059.ps1', 'n060.ps1', 'n061.ps1', 'n121.ps1', 'n036.ps1', 'n062.ps1', 'n063.ps1', 'n064.ps1', 'n065.ps1', 'n073.ps1', 'n074.ps1', 'n075.ps1', 'n076.ps1', 'n077.ps1', 'n078.ps1', 'n079.ps1', 'n080.ps1', 'n081.ps1', 'n082.ps1', 'n083.ps1', 'n083-no.ps1', 'n084.ps1', 'n085.ps1', 'n086.ps1', 'n087.ps1', 'n088.ps1', 'n122.ps1', 'n090.sql', 'n091.sql', 'n134.txt', 'ev.ps1', 'kit2-case.txt', 'n000.ps1', 'n001.ps1', 'n002.ps1', 'n003.ps1', 'n011.ps1', 'n012.ps1', 'n013.ps1', 'n014.ps1', 'n015.ps1', 'n019.ps1', 'n021.ps1', 'n022.ps1', 'n037.ps1', 'n038.ps1', 'n039.ps1', 'n040.ps1', 'n041.sql', 'n042.sql', 'n043.sql', 'n044.sql', 'n045.sql', 'n046.ps1', 'n047.ps1', 'n048.ps1', 'n049.ps1', 'n050.ps1', 'n051.ps1', 'n052.ps1', 'n053.ps1', 'n056.ps1', 'n057.ps1', 'n057-2.ps1', 'n117.ps1', 'n118.ps1', 'n123.txt', 'n124.txt', 'n125.txt', 'n126.txt', 'n127.txt', 'n128.txt', 'n129.txt', 'n130.txt', 'n131.txt', 'n132.txt', 'n133.txt') }
 function global:Test-KbKitDir {
     $kbeNames = Get-KbFileNames
     $global:KbPins = Read-KbPins ([string]$global:KbDir)
@@ -17111,15 +17604,16 @@ else {
 
 ```powershell
 # kvc2.ps1 - Ek R4/1 madde 5 ve Ek R4/7 madde 6: genisletilmis N116 (kit1 + kit2 degisken adi cakismasi), AST sayimlari ve komut adi
-# cakismasi (runbook revizyon 8, dilim 1; revizyon 10: yer tutucu sayaci; revizyon 14: dilim 2 dosyalari). ASCII. Kit dizinlerine kopyalanmaz; dosyalari yalniz okur ve Parser.ParseFile ile ayristirir; kit kodu
+# cakismasi (runbook revizyon 8, dilim 1; revizyon 10: yer tutucu sayaci; revizyon 14: dilim 2 dosyalari; revizyon 16: dilim 3 dosyalari). ASCII. Kit dizinlerine kopyalanmaz; dosyalari yalniz okur ve Parser.ParseFile ile ayristirir; kit kodu
 # calistirmaz. Yeni bir 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File' alt surecinde -Kit1Dir ve -Kit2Dir ile calistirilir.
 param([string]$Kit1Dir, [string]$Kit2Dir)
 $kvStop = 0; $kvCount = 0
 try {
     $kvK1 = @('ac.ps1', 'a2.ps1', 'a3.ps1', 'a4.ps1', 'a5.ps1', 'a6.ps1', 'a7.ps1', 'a8.ps1', 'a9.ps1', 'n003.ps1', 'n004.ps1', 'n006.ps1', 'n014.ps1', 'n015.ps1', 'n016.ps1', 'n017.ps1', 'n051.ps1')
-    $kvOwn = @('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'sv7.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1')
-    $kvEng = @('n001.ps1', 'n002.ps1', 'n003.ps1', 'n011.ps1', 'n012.ps1', 'n013.ps1', 'n014.ps1', 'n015.ps1', 'n019.ps1', 'n021.ps1', 'n022.ps1', 'n037.ps1', 'n038.ps1', 'n039.ps1', 'n040.ps1', 'n046.ps1', 'n047.ps1', 'n048.ps1', 'n049.ps1', 'n050.ps1', 'n051.ps1', 'n052.ps1', 'n053.ps1', 'n056.ps1', 'n057.ps1', 'n057-2.ps1', 'n118.ps1', 'n023.ps1', 'n024.ps1', 'n025.ps1', 'n026.ps1', 'n027.ps1', 'n028.ps1', 'n029.ps1', 'n030.ps1', 'n031.ps1', 'n032.ps1', 'n033.ps1', 'n034.ps1', 'n059.ps1', 'n060.ps1', 'n061.ps1', 'n121.ps1')
+    $kvOwn = @('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'sv7.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1', 'b9.ps1', 'b10.ps1', 'b11.ps1', 'b12.ps1', 'b13.ps1', 'g14.ps1', 'b14.ps1', 'b15.ps1', 'g16.ps1', 'b16.ps1', 'b18.ps1', 'b19.ps1', 'b20.ps1', 'b21.ps1', 'b22.ps1', 'b23.ps1', 'adm.ps1')
+    $kvEng = @('n001.ps1', 'n002.ps1', 'n003.ps1', 'n011.ps1', 'n012.ps1', 'n013.ps1', 'n014.ps1', 'n015.ps1', 'n019.ps1', 'n021.ps1', 'n022.ps1', 'n037.ps1', 'n038.ps1', 'n039.ps1', 'n040.ps1', 'n046.ps1', 'n047.ps1', 'n048.ps1', 'n049.ps1', 'n050.ps1', 'n051.ps1', 'n052.ps1', 'n053.ps1', 'n056.ps1', 'n057.ps1', 'n057-2.ps1', 'n118.ps1', 'n023.ps1', 'n024.ps1', 'n025.ps1', 'n026.ps1', 'n027.ps1', 'n028.ps1', 'n029.ps1', 'n030.ps1', 'n031.ps1', 'n032.ps1', 'n033.ps1', 'n034.ps1', 'n059.ps1', 'n060.ps1', 'n061.ps1', 'n121.ps1', 'n036.ps1', 'n062.ps1', 'n063.ps1', 'n064.ps1', 'n065.ps1', 'n073.ps1', 'n074.ps1', 'n075.ps1', 'n076.ps1', 'n077.ps1', 'n078.ps1', 'n079.ps1', 'n080.ps1', 'n081.ps1', 'n082.ps1', 'n083.ps1', 'n083-no.ps1', 'n084.ps1', 'n085.ps1', 'n086.ps1', 'n087.ps1', 'n088.ps1', 'n122.ps1')
     $kvOther = @('n000.ps1', 'n117.ps1')
+    $kvTpl = @('n036.ps1', 'n062.ps1', 'n063.ps1', 'n074.ps1', 'n075.ps1', 'n076.ps1', 'n077.ps1', 'n078.ps1', 'n079.ps1', 'n080.ps1', 'n081.ps1', 'n082.ps1', 'n083.ps1', 'n083-no.ps1', 'n086.ps1', 'n087.ps1', 'n088.ps1')
     $kvFiles = New-Object System.Collections.ArrayList
     foreach ($kvF in $kvK1) { $null = $kvFiles.Add(@('k1', $kvF, (Join-Path $Kit1Dir $kvF))) }
     foreach ($kvF in ($kvOwn + $kvEng + $kvOther)) { $null = $kvFiles.Add(@('k2', $kvF, (Join-Path $Kit2Dir $kvF))) }
@@ -17142,7 +17636,8 @@ try {
         $kvSet = [string]$kvE[0]; $kvF = [string]$kvE[1]; $kvPath = [string]$kvE[2]
         if (-not (Test-Path -LiteralPath $kvPath -PathType Leaf)) { "STOP KIT2_VAR_SCAN_FILE_MISSING=$($kvSet):$kvF"; $kvStop++; continue }
         $kvTok = $null; $kvErr = $null
-        $kvAst = [System.Management.Automation.Language.Parser]::ParseFile($kvPath, [ref]$kvTok, [ref]$kvErr)
+        if (($kvSet -ceq 'k2') -and ($kvTpl -ccontains $kvF)) { $kvAst = [System.Management.Automation.Language.Parser]::ParseInput([regex]::Replace([System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($kvPath)), '<[a-z0-9][a-z0-9-]*>', 'zz'), [ref]$kvTok, [ref]$kvErr) }
+        else { $kvAst = [System.Management.Automation.Language.Parser]::ParseFile($kvPath, [ref]$kvTok, [ref]$kvErr) }
         if (@($kvErr).Count -cgt 0) { "STOP KIT2_VAR_PARSE_ERRORS=$(@($kvErr).Count) file=$($kvSet):$kvF"; $kvStop++; continue }
         $kvCount++
         $kvRoots = @($kvSet + ':' + $kvF + ':root')
@@ -17152,7 +17647,8 @@ try {
             if (($kvF -ceq 'bc.ps1') -or ($kvF -ceq 'n000.ps1')) { $kvRoots = @('GLOBAL_KIT') }
             if ($kvF -ceq 't0.ps1') { $kvRoots = @('GLOBAL_T0') }
             if ($kvF -ceq 'kume.ps1') { $kvRoots = @('GLOBAL_KUME') }
-            if (($kvF -ceq 'kbe.ps1') -or ($kvF -ceq 'kbl.ps1')) { $kvRoots = @('GLOBAL_KIT', 'GLOBAL_T0', 'GLOBAL_KUME') }
+            if ($kvF -ceq 'adm.ps1') { $kvRoots = @('GLOBAL_ADM') }
+            if (($kvF -ceq 'kbe.ps1') -or ($kvF -ceq 'kbl.ps1')) { $kvRoots = @('GLOBAL_KIT', 'GLOBAL_T0', 'GLOBAL_KUME', 'GLOBAL_ADM') }
             if ($kvEng -ccontains $kvF) { $kvRoots = @('ENGINE') }
         }
         $kvIsOwn = ($kvSet -ceq 'k2') -and (($kvOwn -ccontains $kvF) -or ($kvF -ceq 'n118.ps1'))
@@ -17230,7 +17726,7 @@ try {
         }
     }
     foreach ($kvF in @(Get-ChildItem -LiteralPath $Kit2Dir -Force -File -ErrorAction Stop)) { foreach ($kvB in [System.IO.File]::ReadAllBytes($kvF.FullName)) { if ($kvB -cgt 127) { $kvAstN['NON_ASCII_BYTE']++ } } }
-    $kvNoSubst = @('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1', 'n000.ps1', 'n001.ps1', 'n002.ps1', 'n019.ps1', 'n037.ps1', 'n047.ps1', 'n048.ps1', 'n051.ps1', 'n117.ps1')
+    $kvNoSubst = @('bc.ps1', 'kbe.ps1', 'kbl.ps1', 't0.ps1', 'kume.ps1', 'b0.ps1', 'b1.ps1', 'b2.ps1', 'k.ps1', 'n.ps1', 'o.ps1', 'b5.ps1', 'b5d.ps1', 'b6.ps1', 'b7.ps1', 'g8.ps1', 'b8.ps1', 'u.ps1', 'b9.ps1', 'b10.ps1', 'b11.ps1', 'b12.ps1', 'b13.ps1', 'g14.ps1', 'b14.ps1', 'b15.ps1', 'g16.ps1', 'b16.ps1', 'b18.ps1', 'b19.ps1', 'b20.ps1', 'b21.ps1', 'b22.ps1', 'b23.ps1', 'adm.ps1', 'n000.ps1', 'n001.ps1', 'n002.ps1', 'n019.ps1', 'n037.ps1', 'n047.ps1', 'n048.ps1', 'n051.ps1', 'n117.ps1')
     $kvFirstOnly = @('n012.ps1', 'n014.ps1')
     $kvPh = 0; $kvPhBad = $false
     foreach ($kvF in ($kvNoSubst + $kvFirstOnly)) {
@@ -17299,7 +17795,7 @@ geçmeden gerçek koşuda kullanılamaz (§32/41).
    | `n023.ps1` … `n034.ps1`, `n059.ps1`, `n060.ps1`, `n061.ps1`, `n121.ps1` | Aynı numaralı runbook bloğunun bayt-bayt kopyası | Ek R4/6 madde 3 kuralı |
    | `n058.txt` | N58 (`json` bloğu), bayt-bayt | Aynı kural |
 
-   `n123`…`n133.txt` yeni pinleriyle (R13-O1; §34.20). `pins2.txt` 85 satır;
+   `n123`…`n133.txt` yeni pinleriyle (R13-O1; §34.20). `pins2.txt` 85 satır (revizyon 16: 128);
    `KIT2_FILE_SHA256` satırları aynı küme. `kit-build2.txt` anahtar kümesi
    değişmedi. N147 tarama listeleri dilim 2 dosyalarını kapsar
    (`KIT2_VAR_SCAN_FILE_COUNT=81`).
@@ -17351,7 +17847,8 @@ geçmeden gerçek koşuda kullanılamaz (§32/41).
    iki nokta öncesi `^[a-z_][a-z0-9_-]*(\.[a-z0-9_-]+)*$` ise bellekte alan
    yolu olarak tutulur (en çok 20) ve yalnız `b5d` iletisinde form anahtarı
    önekine çevrilir; değer taşımaz. Doğrulayıcı çıktısının gövdesi hiçbir
-   kayda ve ekrana girmez.
+   kayda ve ekrana girmez. `b5d`'deki içerik/altyapı ayrımı Ek R4/22 madde 13'tedir
+   (revizyon 16, K-2).
 7. **N34.** Beklenen `check-ignore` satırı `.gitignore:<n>:/data/cases/`,
    sekme, `data/cases/<case-id>/case.json`'dur; `<n>` `<repo-root>\.gitignore`
    içindeki `/data/cases/` satırının numarasıdır (`b6` okur).
@@ -17423,7 +17920,7 @@ $null = Complete-KbStep $b5xRec 'b5' $b5xReq $false 'Siradaki: b5d.'
 **N149 — `b5d.ps1` (intake formu ve JSON üretimi).**
 
 ```powershell
-# b5d.ps1 - Ek R4/12.3: intake formu ve JSON uretimi (runbook revizyon 14, dilim 2). ASCII. Yalniz b5d komutuyla, Invoke-KbStep icinden calisir.
+# b5d.ps1 - Ek R4/12.3: intake formu ve JSON uretimi (runbook revizyon 14, dilim 2; revizyon 16: K-2). ASCII. Yalniz b5d komutuyla, Invoke-KbStep icinden calisir.
 # Form kapsayici icindedir ve Not Defteri'nde doldurulur. Kayit yalniz butun denetimler gecince acilir; form hatalari kilitsizdir, ileti yalniz anahtar adini soyler.
 # case.json ve document.json pinli sablonlardan (n155.txt, n156.txt) uretilir, geri okunur ve N32/N33 kayitsiz calisir. Deger hicbir kayda ve red dosyasina girmez.
 function Get-XdSchema([string]$Path) { return ((New-Object System.Text.UTF8Encoding($false, $true)).GetString([System.IO.File]::ReadAllBytes($Path)) | ConvertFrom-Json) }
@@ -17836,6 +18333,7 @@ while (-not $b5dDone) {
         $global:KbValResult = $null
         $b5dVok = Invoke-KbBlocks '' @() @((New-KbSpec 'n032.ps1' '' $b5dSub 'N032' 'validator' $null), (New-KbSpec 'n033.ps1' '' $b5dSub 'N033' 'validator' $null))
         if ($b5dVok) { $b5dDone = $true } else {
+            if (-not (Test-KbValidatorFail)) { $global:KbValResult = $null; Write-Host 'Dogrulayici calistirilamadi veya ciktisi okunamadi (B5D_VALIDATOR_INFRA). Bu bir form hatasi degildir; formu duzeltmeye calismayin.'; Write-Host 'STOP B5D_VALIDATOR_INFRA=True'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b5d' 'B5D_VALIDATOR_INFRA'; return }
             $b5dCode = 'B5D_VALIDATOR'
             $b5dEc = 0; $b5dHints = New-Object 'System.Collections.Generic.List[string]'
             foreach ($b5dT in @('N032', 'N033')) {
@@ -18073,7 +18571,7 @@ Write-Host 'Siradaki: avukat k girdi.'
 **N153 — `b8.ps1` (avukat kararının eşleştirilmesi).**
 
 ```powershell
-# b8.ps1 - Ek R4/8.3: avukat girdi kararinin kayitla eslestirilmesi (runbook revizyon 14, dilim 2). ASCII. Yalniz b8 komutuyla, Invoke-KbStep icinden calisir.
+# b8.ps1 - Ek R4/8.3: avukat girdi kararinin kayitla eslestirilmesi (runbook revizyon 14, dilim 2; revizyon 16: sonraki adim iletisi). ASCII. Yalniz b8 komutuyla, Invoke-KbStep icinden calisir.
 # Onek karar dosyasinin HASH_ONEK satirindan bellekte okunur ve yalniz N61'in blok metnine girer; kayda N61'in iki durum satiri girer.
 if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
 if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B8_PRECONDITION' 'b8 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
@@ -18102,7 +18600,7 @@ $b8xSub['input-revision'] = [string]$b8xRev
 $b8xSub['lawyer-cited-prefix'] = [string]$b8xPre
 $b8xHelp = @((New-KbSpec 'n051.ps1' '' $null 'N051' 'status' $null), (New-KbSpec 'n019.ps1' '' $null 'N019' 'status' $null), (New-KbSpec 'n048.ps1' '' $null 'N048' 'status' $null))
 $null = Invoke-KbBlocks $b8xRec $b8xHelp @(New-KbSpec 'n061.ps1' '' $b8xSub 'N061' 'status' $null)
-$null = Complete-KbStep $b8xRec 'b8' @('MANUAL_INPUT_MATCHES_LAWYER_REVISION=True', 'LAWYER_DECISION_CITES_RECORD=True') $false 'Siradaki: b9 (dilim 3).'
+$null = Complete-KbStep $b8xRec 'b8' @('MANUAL_INPUT_MATCHES_LAWYER_REVISION=True', 'LAWYER_DECISION_CITES_RECORD=True') $false 'Siradaki: b9.'
 ```
 
 **N154 — `u.ps1` (erken kapanış kaydı).**
@@ -18330,4 +18828,1023 @@ $null = Complete-KbStep $uxRec 'u' @('EARLY_CLOSE=True', 'EARLY_CLOSE_CONFIRMED 
       "issuing_body": <issuing-body>,
       "verification_state": "unverified"
     }
+```
+
+### Ek R4/22 Dilim 3: dosya kümesi, uygulama seçimleri ve bloklar (revizyon 16)
+
+YENİ (revizyon 16; §34.22). Dilim 3 kodu N157–N174'tür; N0–N156'nın numaraları
+kaymadı. Sentetik düzenekte ölçüldü, provaya tabidir ve provadan geçmeden gerçek
+koşuda kullanılamaz (§32/41).
+
+1. **Dosya kümesi.** Ek R4/21 madde 1'deki 85 dosyaya 43 dosya eklenir: toplam
+   **128** dosya + `pins2.txt` + `kit-build2.txt` (`Get-KbFileNames`, N136).
+
+   | Dosya | Kaynak | SHA-256 |
+   |---|---|---|
+   | `b9.ps1`, `b10.ps1`, `b11.ps1`, `b12.ps1`, `b13.ps1`, `g14.ps1`, `b14.ps1`, `b15.ps1`, `g16.ps1`, `b16.ps1`, `b18.ps1`, `b19.ps1`, `b20.ps1`, `b21.ps1`, `b22.ps1`, `b23.ps1`, `adm.ps1` | N157–N173 | §34.22 tablosu |
+   | `n083-no.ps1` | N174 (N83'ten türetilmiş; Ek R4/11) | §34.22 tablosu |
+   | `n036.ps1`, `n062.ps1`–`n065.ps1`, `n073.ps1`–`n088.ps1` (`n083.ps1` dahil), `n122.ps1` | Aynı numaralı runbook bloğunun bayt-bayt kopyası | Ek R4/6 madde 3 kuralı |
+   | `n090.sql`, `n091.sql` | N90, N91 (`sql` blokları), bayt-bayt | Aynı kural |
+   | `n134.txt` | N134 (`text` bloğu), bayt-bayt | Aynı kural; pin revizyon 16'da değişti (§34.22) |
+
+   `pins2.txt` 128 satır; `KIT2_FILE_SHA256` satırları aynı küme. `kit-build2.txt`
+   anahtar kümesi değişmedi.
+2. **Komut kümeleri.** Normal oturum: dilim 2 kümesi + `b9`–`b16`, `b18`–`b23`,
+   `g14`, `g16`. Silme oturumu: `g14` ve `g16` tanımlıdır ve `G14_NOT_ALLOWED`,
+   `G16_NOT_ALLOWED` ile reddeder (`g8` gibi); diğerleri tanımlanmaz. Erken
+   kapanış kipi: on altısı da `EARLY_CLOSE_MODE` ile reddedilir. `b9` tek
+   komuttur: `b09a` yoksa ilk ölçümü, varsa ikinci ölçümü yazar; ikinci ölçüm
+   `y1` PASS ister. `y1` KİT'te değil ADMIN penceresindedir (madde 7).
+3. **Ortak ön denetim (`Test-KbDbGate`, N136).** `b9`, `b10`, `b11`, `b13`–`b16`,
+   `b19`, `b21`, `b22` için. `<KOMUT>_SESSION_GATE`: oturumun `b1` kaydında
+   `STEP_RESULT=PASS`, `TEMP_IN_CONTAINER=True`, on altı `PATH_OK` satırı ve üç
+   `ENV_SCOPE … MATCH_COUNT=0` satırı yok ya da `VERGI_IAM_DATABASE_URL`
+   `app-dsn`'den farklı. `<KOMUT>_CLUSTER_DOWN`: bugünün PASS `kume` kaydı yok ya
+   da canlı `pg_isready` sıfırdan farklı döndü (`b1` ile aynı çağrı). Yalnız
+   `b12`, `b18`, `b20`, `b23` ve `g14`, `g16` veritabanı kullanmaz; onlar yalnız
+   `Test-KbSessionB1` ister.
+4. **Preview'lı apply'ların sırası (`b13`, `b14`, `b16`, `b21`).** Hedef ve digest
+   onaydan önce ekranda olmak zorunda olduğu için (Ek R4/8.7 madde 1) preview CLI
+   onaydan önce çalışır; süzgeç çıktısı **bellekte** tutulur (`Invoke-KbMem`,
+   `Rec` boş). Preview temiz ve kapılar tamamsa onay sorulur. H, onay yöntemi kaydı
+   eksikliği ve iki geçersiz tuş kilitsizdir: kayıt açılmaz, apply CLI çağrılmaz,
+   komut yeniden yazılabilir. E'den sonra kayıt açılır, bellek satırları yazılır,
+   `REAL_ACTION_APPROVED` satırı yazılır, sonra N90 ve apply. Preview'ın beklenmeyen
+   sonucu (`CLI_RC` ≠ 0, `validation_ready=False`, hash farkı) Ek R4/6 madde 9
+   gereği kilitlidir: kayıt açılır, satırlar `STOP` ile yazılır, onay sorulmaz.
+   `b11`'in preview'ı `b10`'dur; `b11` yalnız N28, N31 ve N61'i bellekte çalıştırır.
+   Ortak çerçevenin (2) adımı gereği kaynak hash'leri (N28 + N31) beş apply'ın
+   hepsinde yeniden ölçülür. N31, N28'in değişkenlerine dayanır: tek başına
+   çalıştırılamaz, bu yüzden Ek R4/8.3'teki "N31" her yerde "N28 + N31"dir.
+5. **Hedef ve digest (Ek R4/8.7 madde 1).** Satır biçimi aynıdır.
+
+   | Komut | `target=` | `digest=` |
+   |---|---|---|
+   | `b11` | `generation.fact_manual:<case-id>/<document-id>` | `b10`'daki `input_digest` |
+   | `b13` | `promotion.fact:<case-id>/<document-id>` | Preview `pending_hash` |
+   | `b14` | `verification.fact:<case-id>/<fact-id>` | Preview `canonical_sha256` |
+   | `b16` | `promotion.timeline:<case-id>/timeline` | Preview `pending_hash` |
+   | `b21` | `approval.deadline:<case-id>/deadline` | Preview `pending_hash` |
+   | `y1` | `iam.assign_case:<case-id>/user-<actor-user-id>` | `steps\c\b09a.txt` baytlarının SHA-256'sı |
+
+   `assign-case`'in digest'i yoktur; `y1` onayı "aktif atama 0" ölçümünün kaydına
+   bağlanır (`z1`'in `container-record.txt` kuralıyla aynı biçim).
+6. **Journal satırları.** N90 ve N91 N40 ile çalışır; sorgu metni `New-KbSqlSpec`
+   (N136) ile kurulur. `b1`'in kuralı (`[<>"$`]`) N91'in `id > <n>` ifadesini
+   reddederdi; `New-KbSqlSpec` `>` işaretine izin verir, `<`, `"`, `$` ve ters
+   tırnağı reddeder. Tek sorgu etiketi `N091|<aile>` biçimindedir; `psql` satırı
+   `id|state|actor_user_id|action_family` kalıbıyla bellekte ayrıştırılır, aile ve
+   aktör karşılaştırılır, ham satır kayda girmez (Ek R4/9 N40). Beklenen aile
+   §26.3 listesindendir. Tamamlanmış apply `replayed=True` dönerse kilitlidir.
+7. **`adm.ps1` (ADMIN; `y1`).** Yükleme `kume.ps1` kalıbıdır (Ek R4/5 madde 6).
+   Win+R satırı Ek R4/19 madde 4'tedir. Süreç ortamına yalnız `admin-dsn` konur;
+   `app-dsn` bellekte tutulmaz (`Read-KbSecure 'ADMIN'` yalnız `python` ve
+   `admin-dsn` döndürür). `python -m scripts.iam_admin` repo kökünden çalışmak
+   zorundadır; `repo-root` güvenli dosyada değildir (Ek R4/2 madde 2). Bu yüzden
+   `adm.ps1`, kit1'in `kit-values.txt` dosyasını yalnız okur, SHA-256'sını kit1
+   `pins.txt` satırıyla karşılaştırır, `repo-root` değerini alır ve o dizine geçer
+   (`Y1_KIT_VALUES` içerik sonrası kilitli). Kilitsiz kodlar: `ADM_COMMAND` (bu
+   kit sürümünde `y2` yok), `Y1_ALREADY`, `Y1_PRECONDITION`, `EARLY_CLOSE_MODE`,
+   `Y1_NOT_APPROVED`, `APPROVAL_METHOD_MISSING`. `Read-KbYesNo` ilk kez burada
+   çağrılır. Tekrar yoktur: `y1.txt` varsa `Y1_ALREADY`.
+8. **Bellekte kalan değerler.** N62'nin `notification_date=` ve `page=` satırları ile
+   N85'in `PENDING_CALCULATED_DEADLINE=` satırı süzgeçte `$global:KbMem`'e alınır,
+   izin listesinden geçmez, kayda girmez; `b10` ve `b20` onları yalnız `Write-Host`
+   ile basar ve belleği temizler. `REFERANS` `b19`'da karar dosyasından bellekte
+   okunur, kurala yeniden bakılır ve yalnız N83'ün blok metnine girer. Kör hesabın
+   `SON_GUN` değeri `b20` ve `b23`'te hash doğrulamasından sonra bellekte okunur.
+9. **`n083-no.ps1` (N174).** N83'te adli tatil cevabı metne yazılıdır (§18.1:
+   `yes`; karar `no` ise `no` yazılır). `Get-KbScript` yalnız `<…>` belirteçlerini
+   doldurduğu için, çalışma anında metin değiştirmek yerine pinli türetilmiş blok
+   eklendi. `b19` karardaki `UYGULANIR` değerine göre iki dosyadan birini seçer;
+   süzgeç etiketi ikisinde de `N083`'tür.
+10. **`b18`.** Ek R4/12.2'ye ek kodlar: `B18_BOM` (`K_BOM` karşılığı),
+    `B18_TEMPLATE_IDENTITY` (kimlik satırları; sıfırlama seçeneği), `B18_CHANGED`
+    (teyit sırasında değişti), `B18_PRECONDITION`, `B18_TEMPLATE_PIN`,
+    `B18_NOTEPAD_PIN` ve `B18_TEMPLATE_WRITE_FAIL` (son üçü kilitli). `KAPSAM_*`
+    değeri boşsa kod `B18_MARKER_LEFT`'tir. Red dosyası iki satırdır (Ek R4/5 madde
+    3); iletiler alan adını ve doğru biçimi söyler, değeri söylemez, geri silme
+    tuşunu Enter'ın üstündeki tuş olarak tarif eder.
+11. **`b20`, `b23`.** Tarihler bellekte karşılaştırılır (Ek R4/12.2 madde 4). Fark
+    varsa iki tarih yine ekranda gösterilir, E/H sorulmaz, `STOP` ve kilit. Tarih
+    hiçbir kayda girmez; `STOP` satırları tarih taşımaz.
+12. **Disk denetimleri (ortak çerçeve 8).** `b13`, `b14`, `b16`, `b21`:
+    `CANONICAL_FILE_SHA_MATCH` (canonical dosyanın baytları CLI'nin
+    `canonical_hash`'i); `b21`'de ayrıca pending hash'i (§18.4). `b15`, `b19`:
+    `PENDING_FILE_SHA_MATCH`. `b12`: `PENDING_SHA_MATCH`. `b16`:
+    `ANCHOR_EVENT_VERIFIED` (§16 kabulü; olayın `verification_state` değeri
+    `verified` ve `source_fact_ids` tebliğ fact'ini taşıyor; olayın durumu fact'ten
+    gelir: `src/timeline_engine.py` L653–L672 ve L957, birleştirmede
+    `src/timeline_consolidation_policy.py` L606). Bu satırlar kit
+    kodudur, süzgeçten geçmez. `b10`: `JOURNAL_PREVIEW_UNCHANGED` (H17).
+13. **K-2 (`b5d`).** `Test-KbValidatorFail` (N136) gerçek içerik hatasını altyapı
+    hatasından ayırır. Gerçek doğrulayıcılar içerik hatasında hata satırlarını
+    basıp yeniden `raise` eder: çıkış kodu 1'dir ve traceback görülür
+    (`src/case_validator.py` L1793–L1802, `src/case_document_validator.py`
+    L1333–L1344). Bu yüzden kural tek başına `CLI_RC` veya `TRACEBACK_SEEN` değildir:
+    bloğun sonucu `FAIL` (işaretler tam, en az bir `- ` hata satırı) ve çıkış kodu
+    sıfırdan farklı ise içerik hatasıdır ve kilitsiz düzeltme turu aynen kalır.
+    Başka her durum (`UNPARSED`; `PASS` iken `CLI_RC` ≠ 0; `FAIL` iken `CLI_RC=0`;
+    hata satırı 0; `PASS` iken traceback) altyapı hatasıdır: kayıt yazılmaz,
+    `STOP B5D_VALIDATOR_INFRA=True`, kilit (`B5D_VALIDATOR_INFRA`), "0 hata" iletisi
+    verilmez. Eksik `python` değişmedi: motor istisnası `KB_EXCEPTION` kilididir.
+14. **Dizin sahipleri.** Dilim 3'ün yazdığı yolların sahibi §34.22 tablosundadır.
+    Bütün `steps\c` yazarları `b05` PASS gerektirir, dizini `b5` açar.
+
+**N157 — `b9.ps1` (assignment ölçümü).**
+
+```powershell
+# b9.ps1 - Ek R4/8.3: assignment olcumu, y1'den once (b09a) ve sonra (b09b) (runbook revizyon 16, dilim 3). ASCII. Yalniz b9 komutuyla, Invoke-KbStep icinden calisir.
+# Hangi kaydin yazilacagi kayitlardan cikar. N40 x (N43, N44, N45) pinli baytlarla calisir; kayda yalniz sayaclar ve USERS_ENABLED girer.
+$b9xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b9xA = Join-Path $b9xC 'b09a.txt'
+$b9xB = Join-Path $b9xC 'b09b.txt'
+$b9xRec = $b9xA; $b9xWant = '0'; $b9xNext = 'Siradaki: ADMIN penceresinde y1 (sayfadaki ADMIN satiri).'
+if (Test-Path -LiteralPath $b9xA) { $b9xRec = $b9xB; $b9xWant = '1'; $b9xNext = 'Siradaki: b10.' }
+if (-not (Test-KbChainStart 'b9' $b9xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B9_PRECONDITION' 'b9 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b9xSub = New-KbDict
+if ($b9xWant -ceq '0') {
+    if ((Add-KbInputSub $b9xSub) -clt 1) { Write-KbRefusal 'B9_PRECONDITION' 'b9 BASLAMADI: once b8 TAMAM olmali.'; return }
+} elseif (-not ((Test-KbPass $b9xA) -and (Test-KbPass (Join-Path $b9xC 'y1.txt')))) { Write-KbRefusal 'B9_PRECONDITION' 'b9 BASLAMADI: ikinci olcum icin b09a ve ADMIN y1 TAMAM olmali.'; return }
+if (-not (Test-KbDbGate 'b9')) { return }
+if (-not (New-KbRecord $b9xRec (Get-KbHeader 'b9' 'b9.ps1'))) { Invoke-KbLock 'b9' 'B9_RECORD_WRITE_FAIL'; return }
+$b9xBl = @()
+$b9xLoad = $true
+foreach ($b9xQ in @('N043', 'N044', 'N045')) {
+    $b9xS = New-KbSqlSpec $b9xQ $null $b9xQ
+    if ($null -ceq $b9xS) { $b9xLoad = $false } else { $b9xBl += ,$b9xS }
+}
+if ($b9xLoad) { $null = Invoke-KbBlocks $b9xRec @() $b9xBl } else { Add-KbLine $b9xRec 'STOP KB_SQL_VALUE_RULE=False' }
+$null = Complete-KbStep $b9xRec 'b9' @("ACTIVE_ASSIGNMENT_COUNT=$b9xWant", "ASSIGNMENT_TOTAL_COUNT=$b9xWant", 'USERS_ENABLED=True') $false $b9xNext
+```
+
+**N158 — `b10.ps1` (`manual-fact` preview).**
+
+```powershell
+# b10.ps1 - Ek R4/8.3: manual-fact preview ve avukatin tarih/sayfa karsilastirmasi (runbook revizyon 16, dilim 3). ASCII. Yalniz b10 komutuyla, Invoke-KbStep icinden calisir.
+# N62'nin notification_date ve page satirlari suzgecten bellege alinir, yalniz Write-Host ile basilir; hicbir kayda girmez. Journal sayisi preview'dan once ve sonra olculur (H17).
+$b10xE = [string]$global:KbEvid
+$b10xC = Join-Path $b10xE 'steps\c'
+$b10xRec = Join-Path $b10xC 'b10.txt'
+if (-not (Test-KbChainStart 'b10' $b10xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B10_PRECONDITION' 'b10 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not ((Test-KbPass (Join-Path $b10xC 'y1.txt')) -and (Test-KbPass (Join-Path $b10xC 'b09b.txt')))) { Write-KbRefusal 'B10_PRECONDITION' 'b10 BASLAMADI: once ADMIN y1 ve ikinci b9 TAMAM olmali.'; return }
+$b10xSub = Get-KbSubst
+if ((Add-KbInputSub $b10xSub) -clt 1) { Write-KbRefusal 'B10_PRECONDITION' 'b10 BASLAMADI: b8 TAMAM kaydi veya girdi karari yok.'; return }
+if (-not (Test-KbDbGate 'b10')) { return }
+if (-not (New-KbRecord $b10xRec (Get-KbHeader 'b10' 'b10.ps1'))) { Invoke-KbLock 'b10' 'B10_RECORD_WRITE_FAIL'; return }
+$global:KbMem = New-KbDict
+$b10xBl = @((New-KbSpec 'n028.ps1' '' $b10xSub 'N028' 'status' $null), (New-KbSpec 'n031.ps1' '' $b10xSub 'N031' 'status' $null), (New-KbSpec 'n061.ps1' '' $b10xSub 'N061' 'status' $null), (New-KbSpec 'n047.ps1' '' $null 'N047' 'status' $null))
+$b10xLoad = $true
+foreach ($b10xQ in @('N041', 'N042', 'N043', 'N044', 'N045')) {
+    $b10xS = New-KbSqlSpec $b10xQ $null $b10xQ
+    if ($null -ceq $b10xS) { $b10xLoad = $false } else { $b10xBl += ,$b10xS }
+}
+$b10xBl += @(New-KbSpec 'n062.ps1' '' $b10xSub 'N062' 'cli' $null)
+$b10xS = New-KbSqlSpec 'N041' $null 'N041'
+if ($null -ceq $b10xS) { $b10xLoad = $false } else { $b10xBl += ,$b10xS }
+if ($b10xLoad) { $null = Invoke-KbBlocks $b10xRec (Get-KbHelpSpecs) $b10xBl } else { Add-KbLine $b10xRec 'STOP KB_SQL_VALUE_RULE=False' }
+$b10xReq = @('SOURCE_HASHES_MATCH=True', 'MANUAL_INPUT_MATCHES_LAWYER_REVISION=True', 'LAWYER_DECISION_CITES_RECORD=True', 'JOURNAL_UNRESOLVED_COUNT=0', 'ACTIVE_ASSIGNMENT_COUNT=1', 'ASSIGNMENT_TOTAL_COUNT=1', 'USERS_ENABLED=True', 'CLI_RC=0', 'PREVIEW_DATE_MATCHES_LAWYER=True basis=lawyer-E', 'PREVIEW_PAGE_MATCHES_LAWYER=True basis=lawyer-E', 'FACT_ID_DERIVED=True', 'JOURNAL_PREVIEW_UNCHANGED=True')
+Test-KbRecKeys $b10xRec @('case_id', 'document', 'target_ref', 'input_digest', 'pending_sha256', 'text_excerpt_sha256', 'excerpt_found', 'verification_state')
+$b10xL = @(Read-KbLines $b10xRec)
+foreach ($b10xM in @(@($b10xL | Where-Object { $_ -cmatch '^ENV_SCOPE=[A-Za-z]+ MATCH_COUNT=[1-9]' }))) { Add-KbLine $b10xRec 'STOP ENV_NAME_SCAN_CLEAN=False' }
+if ((Get-KbTok $b10xL 'target_ref') -cne ('fact.' + [string]$global:KbVal['document-id'] + '.pending')) { Add-KbLine $b10xRec 'STOP TARGET_REF_MATCH=False' }
+if ((Get-KbTok $b10xL 'excerpt_found') -cne 'true') { Add-KbLine $b10xRec 'STOP EXCERPT_FOUND=False' }
+if ((Get-KbTok $b10xL 'JOURNAL_ROW_COUNT') -ceq (Get-KbTok $b10xL 'JOURNAL_ROW_COUNT' $true)) { Add-KbLine $b10xRec 'JOURNAL_PREVIEW_UNCHANGED=True' } else { Add-KbLine $b10xRec 'STOP JOURNAL_PREVIEW_UNCHANGED=False' }
+if (Test-KbRecClean $b10xRec) {
+    $b10xD = [string]$global:KbMem['notification_date']; $b10xP = [string]$global:KbMem['page']
+    if (($b10xD -cnotmatch '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') -or ($b10xP -cnotmatch '^[1-9][0-9]{0,4}$')) { Add-KbLine $b10xRec 'STOP PREVIEW_SCREEN_VALUES=False' }
+    else {
+        Write-Host '----- ONIZLEME (yalniz ekran; avukat kararindaki tarih ve sayfa ile karsilastirir) -----'
+        Write-Host "Tarih: $b10xD"
+        Write-Host "Sayfa: $b10xP"
+        Write-Host '----- SON -----'
+        Write-Host 'TUSA AVUKAT BASAR'
+        if ((Read-KitYesNo 'Avukatin kararindaki tarih ve sayfa ile ayni mi?') -ceq 'E') {
+            Add-KbLine $b10xRec 'PREVIEW_DATE_MATCHES_LAWYER=True basis=lawyer-E'
+            Add-KbLine $b10xRec 'PREVIEW_PAGE_MATCHES_LAWYER=True basis=lawyer-E'
+            if ($null -cne (Get-KbFactId)) { Add-KbLine $b10xRec 'FACT_ID_DERIVED=True' } else { Add-KbLine $b10xRec 'STOP FACT_ID_DERIVED=False' }
+        } else { Add-KbLine $b10xRec 'STOP PREVIEW_DATE_MATCHES_LAWYER=False basis=lawyer-H' }
+    }
+}
+$global:KbMem = $null
+$null = Complete-KbStep $b10xRec 'b10' $b10xReq $false 'Siradaki: b11.'
+```
+
+**N159 — `b11.ps1` (`manual-fact` apply).**
+
+```powershell
+# b11.ps1 - Ek R4/8.3: manual-fact apply, ortak apply cercevesi (runbook revizyon 16, dilim 3). ASCII. Yalniz b11 komutuyla, Invoke-KbStep icinden calisir.
+# Kaynak ve girdi hash'leri once bellekte yeniden olculur; onay E ise kayit acilir, REAL_ACTION_APPROVED CLI'den once yazilir. Sonra N90, N63, N64, N65, N91.
+$b11xE = [string]$global:KbEvid
+$b11xC = Join-Path $b11xE 'steps\c'
+$b11xRec = Join-Path $b11xC 'b11.txt'
+if (-not (Test-KbChainStart 'b11' $b11xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B11_PRECONDITION' 'b11 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b11xPrev = @(Read-KbLines (Join-Path $b11xC 'b10.txt'))
+if ($b11xPrev -cnotcontains 'STEP_RESULT=PASS') { Write-KbRefusal 'B11_PRECONDITION' 'b11 BASLAMADI: once b10 TAMAM olmali.'; return }
+$b11xDig = Get-KbField $b11xPrev 'input_digest='
+$b11xPend = Get-KbField $b11xPrev 'pending_sha256='
+if ((-not (Test-KbValue 'h64' ([string]$b11xDig))) -or (-not (Test-KbValue 'h64' ([string]$b11xPend)))) { Write-KbRefusal 'B11_VALUE_RULE' 'b11 BASLAMADI: b10 kaydindaki digest kurala uymuyor (B11_VALUE_RULE). Ajana donun.'; return }
+$b11xSub = Get-KbSubst
+if ((Add-KbInputSub $b11xSub) -clt 1) { Write-KbRefusal 'B11_PRECONDITION' 'b11 BASLAMADI: b8 TAMAM kaydi veya girdi karari yok.'; return }
+if (-not (Test-KbDbGate 'b11')) { return }
+$b11xHelp = Get-KbHelpSpecs
+$b11xMem = Invoke-KbMem $b11xHelp @((New-KbSpec 'n028.ps1' '' $b11xSub 'N028' 'status' $null), (New-KbSpec 'n031.ps1' '' $b11xSub 'N031' 'status' $null), (New-KbSpec 'n061.ps1' '' $b11xSub 'N061' 'status' $null))
+$b11xReq = @('SOURCE_HASHES_MATCH=True', 'MANUAL_INPUT_MATCHES_LAWYER_REVISION=True', 'CLI_RC=0', 'PENDING_SHA_MATCH=True', 'TEMP_RESIDUE_ABSENT=True', 'CANONICAL_ABSENT=True', 'AUDIT_FILE_BOUND=True', 'AUDIT_LIST_OK=True', 'AUDIT_UNPARSEABLE_COUNT=0', 'JOURNAL_NEW_ROW_COUNT=1', 'JOURNAL_NEW_ROW_STATE=completed', 'JOURNAL_FAMILY_MATCH=True', 'JOURNAL_ACTOR_MATCH=True', 'replayed=False')
+if (-not $b11xMem) { if (Open-KbMem 'b11' 'b11.ps1' $b11xRec) { $null = Complete-KbStep $b11xRec 'b11' $b11xReq $false '' }; return }
+$b11xApp = Request-KbApproval 'b11' ('generation.fact_manual:' + [string]$global:KbVal['case-id'] + '/' + [string]$global:KbVal['document-id']) $b11xDig
+if ($null -ceq $b11xApp) { return }
+if (-not (Open-KbMem 'b11' 'b11.ps1' $b11xRec)) { return }
+Add-KbLine $b11xRec $b11xApp
+$b11xBase = Invoke-KbBaseline $b11xRec
+if ($null -cne $b11xBase) {
+    $b11xSub['expected-input-digest'] = $b11xDig
+    $b11xSub['attempt'] = '1'
+    if (Invoke-KbBlocks $b11xRec @() @(New-KbSpec 'n063.ps1' '' $b11xSub 'N063' 'cli' $null)) {
+        Test-KbRecKeys $b11xRec @('case_id', 'document', 'pending_sha256', 'audit_file', 'journal_id', 'attempt', 'replayed')
+        $b11xL = @(Read-KbLines $b11xRec)
+        if ((Get-KbTok $b11xL 'pending_sha256') -cne $b11xPend) { Add-KbLine $b11xRec 'STOP PENDING_SHA256_MATCH=False' }
+        if ((Get-KbTok $b11xL 'attempt') -cne '1') { Add-KbLine $b11xRec 'STOP ATTEMPT_MATCH=False' }
+        $b11xAud = Get-KbTok $b11xL 'audit_file'
+        if (Test-KbRecClean $b11xRec) {
+            $b11xSub['pending-sha256'] = $b11xPend
+            $b11xSub['audit-file'] = [string]$b11xAud
+            if (Invoke-KbBlocks $b11xRec $b11xHelp @((New-KbSpec 'n064.ps1' '' $b11xSub 'N064' 'status' $null), (New-KbSpec 'n065.ps1' '' $b11xSub 'N065' 'status' $null))) { $null = Invoke-KbJournalCheck $b11xRec $b11xBase 'generation.fact_manual' }
+        }
+    }
+} elseif (Test-KbRecClean $b11xRec) { Add-KbLine $b11xRec 'STOP JOURNAL_BASELINE_MAX_ID=MISSING' }
+$null = Complete-KbStep $b11xRec 'b11' $b11xReq $false 'Siradaki: b12.'
+```
+
+**N160 — `b12.ps1` (pending içerik kontrolü).**
+
+```powershell
+# b12.ps1 - Ek R4/8.3: pending icerik kontrolu (runbook revizyon 16, dilim 3). ASCII. Yalniz b12 komutuyla, Invoke-KbStep icinden calisir.
+# N73 alti boolean yazar; pending'in hash'i b11 kaydiyla yeniden karsilastirilir. PASS'ten sonra tek fact yalniz Write-Host ile basilir.
+$b12xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b12xRec = Join-Path $b12xC 'b12.txt'
+if (-not (Test-KbChainStart 'b12' $b12xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B12_PRECONDITION' 'b12 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b12xPrev = @(Read-KbLines (Join-Path $b12xC 'b11.txt'))
+if ($b12xPrev -cnotcontains 'STEP_RESULT=PASS') { Write-KbRefusal 'B12_PRECONDITION' 'b12 BASLAMADI: once b11 TAMAM olmali.'; return }
+$b12xFact = Get-KbFactId
+if ($null -ceq $b12xFact) { Write-KbRefusal 'B12_PRECONDITION' 'b12 BASLAMADI: b10 kaydindan fact kimligi turetilemedi. Ajana donun.'; return }
+if (-not (New-KbRecord $b12xRec (Get-KbHeader 'b12' 'b12.ps1'))) { Invoke-KbLock 'b12' 'B12_RECORD_WRITE_FAIL'; return }
+$b12xPath = Join-Path ([string]$global:KbVal['case-root']) ('documents\' + [string]$global:KbVal['document-id'] + '\extractions\facts_llm_v1_3.json.pending')
+$b12xSame = $false
+try { $b12xSame = ((Get-KbSha ([System.IO.File]::ReadAllBytes($b12xPath))) -ceq (Get-KbTok $b12xPrev 'pending_sha256')) } catch { $b12xSame = $false }
+if ($b12xSame) { Add-KbLine $b12xRec 'PENDING_SHA_MATCH=True' } else { Add-KbLine $b12xRec 'STOP PENDING_SHA_MATCH=False' }
+$b12xSub = Get-KbSubst
+$b12xSub['fact-id'] = $b12xFact
+if (Test-KbRecClean $b12xRec) { $null = Invoke-KbBlocks $b12xRec @() @(New-KbSpec 'n073.ps1' '' $b12xSub 'N073' 'status' $null) }
+if (-not (Complete-KbStep $b12xRec 'b12' @('PENDING_SHA_MATCH=True', 'PENDING_METHOD_MANUAL=True', 'PENDING_PROVIDER_MODEL_NULL=True', 'PENDING_FACT_COUNT_ONE=True', 'PENDING_ALL_UNVERIFIED=True', 'PENDING_FACT_ID_MATCH=True', 'PENDING_LOCATOR_PRESENT=True') $false 'Siradaki: avukat k fact.')) { return }
+$b12xF = @((Read-KbJsonStrict $b12xPath).facts)[0]
+Write-Host '----- TEK FACT (yalniz ekran; avukat kontrol eder) -----'
+Write-Host "Ifade: $($b12xF.statement)"
+Write-Host "Tarih: $(@($b12xF.structured_values)[0].date_value)"
+Write-Host "Sayfa: $($b12xF.source.page)"
+Write-Host "Alinti: $($b12xF.source.text_excerpt)"
+Write-Host '----- SON -----'
+```
+
+**N161 — `b13.ps1` (fact promotion).**
+
+```powershell
+# b13.ps1 - Ek R4/8.3: fact promotion, ortak apply cercevesi (runbook revizyon 16, dilim 3). ASCII. Yalniz b13 komutuyla, Invoke-KbStep icinden calisir.
+# Preview (N74) bellekte calisir; hedef ve digest onaydan once ekrandadir. H cevabinda apply cagrilmaz ve kayit acilmaz. E ise kayit acilir, onay satiri CLI'den once yazilir.
+$b13xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b13xRec = Join-Path $b13xC 'b13.txt'
+$b13xCase = [string]$global:KbVal['case-id']; $b13xDoc = [string]$global:KbVal['document-id']
+if (-not (Test-KbChainStart 'b13' $b13xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B13_PRECONDITION' 'b13 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not (Test-KbPass (Join-Path $b13xC 'b12.txt'))) { Write-KbRefusal 'B13_PRECONDITION' 'b13 BASLAMADI: once b12 TAMAM olmali.'; return }
+if (-not (Test-KbApplyDecision 'b13' 'FACT_ACCEPTED' 'k fact')) { return }
+if (-not (Test-KbDbGate 'b13')) { return }
+$b13xSub = Get-KbSubst
+$b13xMem = Invoke-KbMem (Get-KbHelpSpecs) @((New-KbSpec 'n028.ps1' '' $b13xSub 'N028' 'status' $null), (New-KbSpec 'n031.ps1' '' $b13xSub 'N031' 'status' $null), (New-KbSpec 'n074.ps1' '' $b13xSub 'N074' 'cli' $null))
+$b13xL = Get-KbMemLines
+$b13xHash = Get-KbTok $b13xL 'pending_hash'
+$b13xBad = New-Object 'System.Collections.Generic.List[string]'
+foreach ($b13xK in @('row_key', 'case_id', 'document', 'pending_hash', 'canonical_exists', 'validation_ready')) { if ($null -ceq (Get-KbTok $b13xL $b13xK)) { $b13xBad.Add("STOP KB_REQUIRED_KEY_MISSING=$b13xK") } }
+if ((Get-KbTok $b13xL 'row_key') -cne 'fact') { $b13xBad.Add('STOP ROW_KEY_MATCH=False') }
+if ($b13xHash -cne (Get-KbTok @(Read-KbLines (Join-Path $b13xC 'b11.txt')) 'pending_sha256')) { $b13xBad.Add('STOP PENDING_HASH_MATCH=False') }
+if ((Get-KbTok $b13xL 'canonical_exists') -cne 'False') { $b13xBad.Add('STOP CANONICAL_EXISTS=True') }
+if ((Get-KbTok $b13xL 'validation_ready') -cne 'True') { $b13xBad.Add('STOP VALIDATION_READY=False') }
+$b13xReq = @('SOURCE_HASHES_MATCH=True', 'CLI_RC=0', 'CANONICAL_FILE_SHA_MATCH=True', 'JOURNAL_NEW_ROW_COUNT=1', 'JOURNAL_NEW_ROW_STATE=completed', 'JOURNAL_FAMILY_MATCH=True', 'JOURNAL_ACTOR_MATCH=True', 'replayed=False')
+if ((-not $b13xMem) -or ($b13xBad.Count -cgt 0)) {
+    if (Open-KbMem 'b13' 'b13.ps1' $b13xRec) { foreach ($b13xT in $b13xBad) { Add-KbLine $b13xRec $b13xT }; $null = Complete-KbStep $b13xRec 'b13' $b13xReq $false '' }
+    return
+}
+$b13xApp = Request-KbApproval 'b13' "promotion.fact:$b13xCase/$b13xDoc" $b13xHash
+if ($null -ceq $b13xApp) { return }
+if (-not (Open-KbMem 'b13' 'b13.ps1' $b13xRec)) { return }
+Add-KbLine $b13xRec $b13xApp
+$b13xBase = Invoke-KbBaseline $b13xRec
+if ($null -cne $b13xBase) {
+    $b13xSub['expected-hash'] = $b13xHash
+    if (Invoke-KbBlocks $b13xRec @() @(New-KbSpec 'n075.ps1' '' $b13xSub 'N075' 'cli' $null)) {
+        Test-KbRecKeys $b13xRec @('canonical_hash', 'replayed')
+        $b13xPath = Join-Path ([string]$global:KbVal['case-root']) ("documents\$b13xDoc\extractions\facts.json")
+        $b13xSame = $false
+        try { $b13xSame = ((Get-KbSha ([System.IO.File]::ReadAllBytes($b13xPath))) -ceq (Get-KbTok @(Read-KbLines $b13xRec) 'canonical_hash')) } catch { $b13xSame = $false }
+        if ($b13xSame) { Add-KbLine $b13xRec 'CANONICAL_FILE_SHA_MATCH=True' } else { Add-KbLine $b13xRec 'STOP CANONICAL_FILE_SHA_MATCH=False' }
+        if (Test-KbRecClean $b13xRec) { $null = Invoke-KbJournalCheck $b13xRec $b13xBase 'promotion.fact' }
+    }
+} elseif (Test-KbRecClean $b13xRec) { Add-KbLine $b13xRec 'STOP JOURNAL_BASELINE_MAX_ID=MISSING' }
+$null = Complete-KbStep $b13xRec 'b13' $b13xReq $false 'Siradaki: g14, sonra avukat k dogrulama.'
+```
+
+**N162 — `g14.ps1` (locator karşılaştırması).**
+
+```powershell
+# g14.ps1 - Ek R4/8.3: canonical fact'in locator'inin orijinal belgeyle karsilastirilmasi (runbook revizyon 16, dilim 3). ASCII. Yalniz g14 komutuyla, Invoke-KbStep icinden calisir.
+# Kayit yazmaz. Dosya acikca UTF-8 okunur; degerler yalniz Write-Host ile basilir, suzgece ve hicbir dosyaya gitmez.
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+if ($global:KbTeardown -ceq $true) { Write-KbRefusal 'G14_NOT_ALLOWED' 'SILME OTURUMU: g14 bu pencerede calismaz.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'G14_PRECONDITION' 'g14 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$g14xE = [string]$global:KbEvid
+if (-not (Test-KbPass (Join-Path $g14xE 'steps\c\b13.txt'))) { Write-KbRefusal 'G14_PRECONDITION' 'g14 BASLAMADI: once b13 TAMAM olmali.'; return }
+$g14xId = Get-KbFactId
+$g14xP = Join-Path ([string]$global:KbVal['case-root']) ('documents\' + [string]$global:KbVal['document-id'] + '\extractions\facts.json')
+$g14xF = @(@((Read-KbJsonStrict $g14xP).facts) | Where-Object { [string]$_.fact_id -ceq $g14xId })
+if ($g14xF.Count -cne 1) { Write-KbRefusal 'G14_PRECONDITION' 'g14 BASLAMADI: canonical dosyada beklenen tek fact bulunamadi. Ajana donun; dosyaya dokunmayin.'; return }
+Write-Host '----- LOCATOR (yalniz ekran; avukat orijinal belgeyle karsilastirir) -----'
+Write-Host "Ifade: $($g14xF[0].statement)"
+Write-Host "Sayfa: $($g14xF[0].source.page)"
+Write-Host "Alinti: $($g14xF[0].source.text_excerpt)"
+Write-Host '----- SON -----'
+Write-Host 'Siradaki: avukat k dogrulama.'
+```
+
+**N163 — `b14.ps1` (verification).**
+
+```powershell
+# b14.ps1 - Ek R4/8.3: tebligat fact'inin verification'i, ortak apply cercevesi (runbook revizyon 16, dilim 3). ASCII. Yalniz b14 komutuyla, Invoke-KbStep icinden calisir.
+# Yalniz manuel tebligat fact'i verified yapilir; evidence-ref N77'de belge kimligidir. Preview (N76) bellekte calisir; onay kapisi b13 ile aynidir.
+$b14xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b14xRec = Join-Path $b14xC 'b14.txt'
+$b14xCase = [string]$global:KbVal['case-id']; $b14xDoc = [string]$global:KbVal['document-id']
+if (-not (Test-KbChainStart 'b14' $b14xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B14_PRECONDITION' 'b14 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not (Test-KbPass (Join-Path $b14xC 'b13.txt'))) { Write-KbRefusal 'B14_PRECONDITION' 'b14 BASLAMADI: once b13 TAMAM olmali.'; return }
+if (-not (Test-KbApplyDecision 'b14' 'VERIFICATION_VERIFIED' 'k dogrulama')) { return }
+$b14xFact = Get-KbFactId
+if ($null -ceq $b14xFact) { Write-KbRefusal 'B14_PRECONDITION' 'b14 BASLAMADI: b10 kaydindan fact kimligi turetilemedi. Ajana donun.'; return }
+if (-not (Test-KbDbGate 'b14')) { return }
+$b14xSub = Get-KbSubst
+$b14xSub['fact-id'] = $b14xFact
+$b14xMem = Invoke-KbMem (Get-KbHelpSpecs) @((New-KbSpec 'n028.ps1' '' $b14xSub 'N028' 'status' $null), (New-KbSpec 'n031.ps1' '' $b14xSub 'N031' 'status' $null), (New-KbSpec 'n076.ps1' '' $b14xSub 'N076' 'cli' $null))
+$b14xL = Get-KbMemLines
+$b14xHash = Get-KbTok $b14xL 'canonical_sha256'
+$b14xBad = New-Object 'System.Collections.Generic.List[string]'
+foreach ($b14xK in @('case_id', 'document', 'fact_id', 'from_state', 'source_locator_present', 'canonical_sha256', 'ALLOWED_EVIDENCE_DOCUMENT_COUNT', 'ALLOWED_EVIDENCE_INCLUDES_DOCUMENT')) { if ($null -ceq (Get-KbTok $b14xL $b14xK)) { $b14xBad.Add("STOP KB_REQUIRED_KEY_MISSING=$b14xK") } }
+if ((Get-KbTok $b14xL 'fact_id') -cne $b14xFact) { $b14xBad.Add('STOP FACT_ID_MATCH=False') }
+if ((Get-KbTok $b14xL 'from_state') -cne 'unverified') { $b14xBad.Add('STOP FROM_STATE_UNVERIFIED=False') }
+if ((Get-KbTok $b14xL 'source_locator_present') -cne 'True') { $b14xBad.Add('STOP SOURCE_LOCATOR_PRESENT=False') }
+if ((Get-KbTok $b14xL 'ALLOWED_EVIDENCE_INCLUDES_DOCUMENT') -cne 'True') { $b14xBad.Add('STOP ALLOWED_EVIDENCE_INCLUDES_DOCUMENT=False') }
+$b14xReq = @('SOURCE_HASHES_MATCH=True', 'CLI_RC=0', 'from_state=unverified', 'target_state=verified', 'CANONICAL_FILE_SHA_MATCH=True', 'JOURNAL_NEW_ROW_COUNT=1', 'JOURNAL_NEW_ROW_STATE=completed', 'JOURNAL_FAMILY_MATCH=True', 'JOURNAL_ACTOR_MATCH=True', 'replayed=False')
+if ((-not $b14xMem) -or ($b14xBad.Count -cgt 0)) {
+    if (Open-KbMem 'b14' 'b14.ps1' $b14xRec) { foreach ($b14xT in $b14xBad) { Add-KbLine $b14xRec $b14xT }; $null = Complete-KbStep $b14xRec 'b14' $b14xReq $false '' }
+    return
+}
+$b14xApp = Request-KbApproval 'b14' "verification.fact:$b14xCase/$b14xFact" $b14xHash
+if ($null -ceq $b14xApp) { return }
+if (-not (Open-KbMem 'b14' 'b14.ps1' $b14xRec)) { return }
+Add-KbLine $b14xRec $b14xApp
+$b14xBase = Invoke-KbBaseline $b14xRec
+if ($null -cne $b14xBase) {
+    $b14xSub['expected-hash'] = $b14xHash
+    if (Invoke-KbBlocks $b14xRec @() @(New-KbSpec 'n077.ps1' '' $b14xSub 'N077' 'cli' $null)) {
+        Test-KbRecKeys $b14xRec @('canonical_hash', 'target_state', 'replayed')
+        $b14xPath = Join-Path ([string]$global:KbVal['case-root']) ("documents\$b14xDoc\extractions\facts.json")
+        $b14xSame = $false
+        try { $b14xSame = ((Get-KbSha ([System.IO.File]::ReadAllBytes($b14xPath))) -ceq (Get-KbTok @(Read-KbLines $b14xRec) 'canonical_hash')) } catch { $b14xSame = $false }
+        if ($b14xSame) { Add-KbLine $b14xRec 'CANONICAL_FILE_SHA_MATCH=True' } else { Add-KbLine $b14xRec 'STOP CANONICAL_FILE_SHA_MATCH=False' }
+        if (Test-KbRecClean $b14xRec) { $null = Invoke-KbJournalCheck $b14xRec $b14xBase 'verification.fact' }
+    }
+} elseif (Test-KbRecClean $b14xRec) { Add-KbLine $b14xRec 'STOP JOURNAL_BASELINE_MAX_ID=MISSING' }
+$null = Complete-KbStep $b14xRec 'b14' $b14xReq $false 'Siradaki: b15.'
+```
+
+**N164 — `b15.ps1` (timeline generation).**
+
+```powershell
+# b15.ps1 - Ek R4/8.3: timeline generation (runbook revizyon 16, dilim 3). ASCII. Yalniz b15 komutuyla, Invoke-KbStep icinden calisir.
+# Pending uretimi ayri onay gerektirmez (2.1). N78 preview, N90, N79 apply, disk denetimi, N91.
+$b15xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b15xRec = Join-Path $b15xC 'b15.txt'
+if (-not (Test-KbChainStart 'b15' $b15xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B15_PRECONDITION' 'b15 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not (Test-KbPass (Join-Path $b15xC 'b14.txt'))) { Write-KbRefusal 'B15_PRECONDITION' 'b15 BASLAMADI: once b14 TAMAM olmali.'; return }
+if (-not (Test-KbDbGate 'b15')) { return }
+if (-not (New-KbRecord $b15xRec (Get-KbHeader 'b15' 'b15.ps1'))) { Invoke-KbLock 'b15' 'B15_RECORD_WRITE_FAIL'; return }
+$b15xSub = Get-KbSubst
+$b15xReq = @('CLI_RC=0', 'PENDING_FILE_SHA_MATCH=True', 'JOURNAL_NEW_ROW_COUNT=1', 'JOURNAL_NEW_ROW_STATE=completed', 'JOURNAL_FAMILY_MATCH=True', 'JOURNAL_ACTOR_MATCH=True', 'replayed=False')
+if (Invoke-KbBlocks $b15xRec @() @(New-KbSpec 'n078.ps1' '' $b15xSub 'N078' 'cli' $null)) {
+    Test-KbRecKeys $b15xRec @('row_key', 'case_id', 'target_ref', 'input_digest', 'pending_sha256', 'pending_exists')
+    $b15xL = @(Read-KbLines $b15xRec)
+    if ((Get-KbTok $b15xL 'row_key') -cne 'timeline') { Add-KbLine $b15xRec 'STOP ROW_KEY_MATCH=False' }
+    if (((Get-KbTok $b15xL 'pending_sha256') -ceq 'None') -and ((Get-KbTok $b15xL 'pending_exists') -cne 'False')) { Add-KbLine $b15xRec 'STOP PENDING_SHA256_NONE_WITH_PENDING=True' }
+    if (Test-KbRecClean $b15xRec) {
+        $b15xBase = Invoke-KbBaseline $b15xRec
+        if ($null -cne $b15xBase) {
+            $b15xSub['expected-input-digest'] = Get-KbTok $b15xL 'input_digest'
+            if (Invoke-KbBlocks $b15xRec @() @(New-KbSpec 'n079.ps1' '' $b15xSub 'N079' 'cli' $null)) {
+                Test-KbRecKeys $b15xRec @('row_key', 'pending_sha256', 'replayed')
+                $b15xPend = Get-KbTok @(Read-KbLines $b15xRec) 'pending_sha256' $true
+                $b15xSame = $false
+                try { $b15xSame = ((Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path ([string]$global:KbVal['case-root']) 'timeline\timeline_v1_1.json.pending')))) -ceq $b15xPend) } catch { $b15xSame = $false }
+                if ($b15xSame) { Add-KbLine $b15xRec 'PENDING_FILE_SHA_MATCH=True' } else { Add-KbLine $b15xRec 'STOP PENDING_FILE_SHA_MATCH=False' }
+                if (Test-KbRecClean $b15xRec) { $null = Invoke-KbJournalCheck $b15xRec $b15xBase 'generation.timeline' }
+            }
+        } elseif (Test-KbRecClean $b15xRec) { Add-KbLine $b15xRec 'STOP JOURNAL_BASELINE_MAX_ID=MISSING' }
+    }
+}
+$null = Complete-KbStep $b15xRec 'b15' $b15xReq $false 'Siradaki: g16, sonra avukat k zamancizelgesi.'
+```
+
+**N165 — `g16.ps1` (timeline incelemesi).**
+
+```powershell
+# g16.ps1 - Ek R4/8.3: pending timeline olaylarinin incelenmesi (runbook revizyon 16, dilim 3). ASCII. Yalniz g16 komutuyla, Invoke-KbStep icinden calisir.
+# Kayit yazmaz. Pending timeline ve canonical fact dosyasi acikca UTF-8 okunur; olay turu, tarih ve kaynak locator'i yalniz Write-Host ile basilir.
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+if ($global:KbTeardown -ceq $true) { Write-KbRefusal 'G16_NOT_ALLOWED' 'SILME OTURUMU: g16 bu pencerede calismaz.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'G16_PRECONDITION' 'g16 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$g16xE = [string]$global:KbEvid
+$g16xRec = @(Read-KbLines (Join-Path $g16xE 'steps\c\b15.txt'))
+if ($g16xRec -cnotcontains 'STEP_RESULT=PASS') { Write-KbRefusal 'G16_PRECONDITION' 'g16 BASLAMADI: once b15 TAMAM olmali.'; return }
+$g16xRoot = [string]$global:KbVal['case-root']
+$g16xP = Join-Path $g16xRoot 'timeline\timeline_v1_1.json.pending'
+$g16xB = [System.IO.File]::ReadAllBytes($g16xP)
+if ((Get-KbSha $g16xB) -cne (Get-KbTok $g16xRec 'pending_sha256' $true)) { Write-KbRefusal 'G16_PRECONDITION' 'g16 BASLAMADI: pending timeline b15 kaydiyla uyusmuyor. Ajana donun; dosyaya dokunmayin.'; return }
+$g16xJ = (New-Object System.Text.UTF8Encoding($false, $true)).GetString($g16xB) | ConvertFrom-Json
+$g16xF = @((Read-KbJsonStrict (Join-Path $g16xRoot ('documents\' + [string]$global:KbVal['document-id'] + '\extractions\facts.json'))).facts)
+Write-Host '----- ZAMAN CIZELGESI (yalniz ekran; avukat inceler) -----'
+$g16xI = 0
+foreach ($g16xO in @($g16xJ.events)) {
+    $g16xI++
+    Write-Host "Olay ${g16xI}: tur=$($g16xO.event_type) | tarih=$($g16xO.date) | hassasiyet=$($g16xO.date_precision) | dogrulama=$($g16xO.verification_state) | ifade=$($g16xO.statement)"
+    foreach ($g16xId in @($g16xO.source_fact_ids)) {
+        $g16xS = @($g16xF | Where-Object { [string]$_.fact_id -ceq [string]$g16xId })
+        if ($g16xS.Count -ceq 1) { Write-Host "  Kaynak: sayfa=$($g16xS[0].source.page) | alinti=$($g16xS[0].source.text_excerpt)" } else { Write-Host '  Kaynak: locator bulunamadi' }
+    }
+}
+Write-Host '----- SON -----'
+Write-Host 'Siradaki: avukat k zamancizelgesi.'
+```
+
+**N166 — `b16.ps1` (timeline promotion).**
+
+```powershell
+# b16.ps1 - Ek R4/8.3: timeline promotion ve teblig olayinin tekligi, ortak apply cercevesi (runbook revizyon 16, dilim 3). ASCII. Yalniz b16 komutuyla, Invoke-KbStep icinden calisir.
+# Preview (N80) bellekte calisir. Canonical timeline'da notification_date olayi tam bir tane ve dogrulanmis fact'e bagli olmali; event_id kayda girmez.
+$b16xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b16xRec = Join-Path $b16xC 'b16.txt'
+$b16xCase = [string]$global:KbVal['case-id']
+if (-not (Test-KbChainStart 'b16' $b16xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B16_PRECONDITION' 'b16 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b16xPrev = @(Read-KbLines (Join-Path $b16xC 'b15.txt'))
+if ($b16xPrev -cnotcontains 'STEP_RESULT=PASS') { Write-KbRefusal 'B16_PRECONDITION' 'b16 BASLAMADI: once b15 TAMAM olmali.'; return }
+if (-not (Test-KbApplyDecision 'b16' 'TIMELINE_APPROVED' 'k zamancizelgesi')) { return }
+if (-not (Test-KbDbGate 'b16')) { return }
+$b16xSub = Get-KbSubst
+$b16xMem = Invoke-KbMem (Get-KbHelpSpecs) @((New-KbSpec 'n028.ps1' '' $b16xSub 'N028' 'status' $null), (New-KbSpec 'n031.ps1' '' $b16xSub 'N031' 'status' $null), (New-KbSpec 'n080.ps1' '' $b16xSub 'N080' 'cli' $null))
+$b16xL = Get-KbMemLines
+$b16xHash = Get-KbTok $b16xL 'pending_hash'
+$b16xBad = New-Object 'System.Collections.Generic.List[string]'
+foreach ($b16xK in @('row_key', 'case_id', 'pending_hash', 'canonical_exists', 'validation_ready')) { if ($null -ceq (Get-KbTok $b16xL $b16xK)) { $b16xBad.Add("STOP KB_REQUIRED_KEY_MISSING=$b16xK") } }
+if ((Get-KbTok $b16xL 'row_key') -cne 'timeline') { $b16xBad.Add('STOP ROW_KEY_MATCH=False') }
+if ($b16xHash -cne (Get-KbTok $b16xPrev 'pending_sha256' $true)) { $b16xBad.Add('STOP PENDING_HASH_MATCH=False') }
+if ((Get-KbTok $b16xL 'canonical_exists') -cne 'False') { $b16xBad.Add('STOP CANONICAL_EXISTS=True') }
+if ((Get-KbTok $b16xL 'validation_ready') -cne 'True') { $b16xBad.Add('STOP VALIDATION_READY=False') }
+$b16xReq = @('SOURCE_HASHES_MATCH=True', 'CLI_RC=0', 'CANONICAL_FILE_SHA_MATCH=True', 'ANCHOR_EVENT_COUNT=1', 'ANCHOR_EVENT_VERIFIED=True', 'JOURNAL_NEW_ROW_COUNT=1', 'JOURNAL_NEW_ROW_STATE=completed', 'JOURNAL_FAMILY_MATCH=True', 'JOURNAL_ACTOR_MATCH=True', 'replayed=False')
+if ((-not $b16xMem) -or ($b16xBad.Count -cgt 0)) {
+    if (Open-KbMem 'b16' 'b16.ps1' $b16xRec) { foreach ($b16xT in $b16xBad) { Add-KbLine $b16xRec $b16xT }; $null = Complete-KbStep $b16xRec 'b16' $b16xReq $false '' }
+    return
+}
+$b16xApp = Request-KbApproval 'b16' "promotion.timeline:$b16xCase/timeline" $b16xHash
+if ($null -ceq $b16xApp) { return }
+if (-not (Open-KbMem 'b16' 'b16.ps1' $b16xRec)) { return }
+Add-KbLine $b16xRec $b16xApp
+$b16xBase = Invoke-KbBaseline $b16xRec
+if ($null -cne $b16xBase) {
+    $b16xSub['expected-hash'] = $b16xHash
+    if (Invoke-KbBlocks $b16xRec @() @(New-KbSpec 'n081.ps1' '' $b16xSub 'N081' 'cli' $null)) {
+        Test-KbRecKeys $b16xRec @('canonical_hash', 'replayed')
+        $b16xSame = $false
+        try { $b16xSame = ((Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path ([string]$global:KbVal['case-root']) 'timeline\timeline.json')))) -ceq (Get-KbTok @(Read-KbLines $b16xRec) 'canonical_hash')) } catch { $b16xSame = $false }
+        if ($b16xSame) { Add-KbLine $b16xRec 'CANONICAL_FILE_SHA_MATCH=True' } else { Add-KbLine $b16xRec 'STOP CANONICAL_FILE_SHA_MATCH=False' }
+        $b16xEv = @(Get-KbAnchorEvents)
+        if ($b16xEv.Count -ceq 1) {
+            Add-KbLine $b16xRec 'ANCHOR_EVENT_COUNT=1'
+            if (([string]$b16xEv[0].verification_state -ceq 'verified') -and (@($b16xEv[0].source_fact_ids) -ccontains (Get-KbFactId))) { Add-KbLine $b16xRec 'ANCHOR_EVENT_VERIFIED=True' } else { Add-KbLine $b16xRec 'STOP ANCHOR_EVENT_VERIFIED=False' }
+        } else { Add-KbLine $b16xRec "STOP ANCHOR_EVENT_COUNT=$($b16xEv.Count)" }
+        if (Test-KbRecClean $b16xRec) { $null = Invoke-KbJournalCheck $b16xRec $b16xBase 'promotion.timeline' }
+    }
+} elseif (Test-KbRecClean $b16xRec) { Add-KbLine $b16xRec 'STOP JOURNAL_BASELINE_MAX_ID=MISSING' }
+$null = Complete-KbStep $b16xRec 'b16' $b16xReq $false 'Siradaki: avukat k durdurucu ve k adlitatil.'
+```
+
+**N167 — `b18.ps1` (kör hesap).**
+
+```powershell
+# b18.ps1 - Ek R4/12.2: kor hesabin sabitlenmesi (runbook revizyon 16, dilim 3). ASCII. Yalniz b18 komutuyla, Invoke-KbStep icinden calisir.
+# Sablon N134 (pinli) restricted dizine yazilir veya ayni dosya acilir; avukat sistem sonucunu gormeden doldurur. Denetim kilitsiz dongudur.
+# Kayda dosyanin icinden hicbir deger girmez: yalniz dosyanin bayt hash'i, zaman ve teyit. Ileti degeri yazmaz, dogru satirin bicimini gosterir.
+function Split-XbLines([string]$Text) { $xbsL = [System.Collections.Generic.List[string]]$Text.Split([char]10); if (($xbsL.Count -cgt 0) -and ($xbsL[$xbsL.Count - 1] -ceq '')) { $xbsL.RemoveAt($xbsL.Count - 1) }; return ,$xbsL }
+function New-XbSalt { $xbnB = New-Object byte[] 16; $xbnR = [System.Security.Cryptography.RandomNumberGenerator]::Create(); try { $xbnR.GetBytes($xbnB) } finally { $xbnR.Dispose() }; return ([System.BitConverter]::ToString($xbnB)).Replace('-', '').ToLowerInvariant() }
+function Test-XbFile([byte[]]$Bytes, [string]$RawTpl, [string]$CaseId) {
+    $xbtR = New-KbDict
+    $xbtR['code'] = ''
+    if (($Bytes.Count -cge 3) -and ($Bytes[0] -ceq 239) -and ($Bytes[1] -ceq 187) -and ($Bytes[2] -ceq 191)) { $xbtR['code'] = 'B18_BOM'; return ,$xbtR }
+    $xbtT = $null
+    try { $xbtT = (New-Object System.Text.UTF8Encoding($false, $true)).GetString($Bytes) } catch { $xbtT = $null }
+    if ($null -ceq $xbtT) { $xbtR['code'] = 'B18_ENCODING'; return ,$xbtR }
+    $xbtL = Split-XbLines $xbtT
+    if (($xbtL.Count -ceq 0) -or ($xbtL[0] -cnotmatch '^TUZ=[0-9a-f]{32}$')) { $xbtR['code'] = 'B18_SALT_LINE'; return ,$xbtR }
+    foreach ($xbtK in @('KARAR_TURU=BLIND_CALC', "CASE_ID=$CaseId")) {
+        $xbtP = $xbtK.Substring(0, $xbtK.IndexOf('=', [System.StringComparison]::Ordinal) + 1)
+        $xbtHit = @($xbtL | Where-Object { $_.StartsWith($xbtP, [System.StringComparison]::Ordinal) })
+        if (($xbtHit.Count -cne 1) -or ($xbtHit[0] -cne $xbtK)) { $xbtR['code'] = 'B18_TEMPLATE_IDENTITY'; $xbtR['key'] = $xbtP.Substring(0, $xbtP.Length - 1); return ,$xbtR }
+    }
+    $xbtRaw = Split-XbLines $RawTpl
+    $xbtTpl = Split-XbLines ($RawTpl.Replace((Get-KbToken 'tuz'), $xbtL[0].Substring(4)).Replace((Get-KbToken 'case-id'), $CaseId))
+    for ($xbtI = 0; $xbtI -clt $xbtL.Count; $xbtI++) {
+        if ($xbtL[$xbtI].IndexOf([string][char]13, [System.StringComparison]::Ordinal) -cge 0) { $xbtR['code'] = 'B18_TEMPLATE_LINE'; $xbtR['line'] = [string]($xbtI + 1); if ($xbtI -clt $xbtRaw.Count) { $xbtR['expected'] = $xbtRaw[$xbtI] } else { $xbtR['expected'] = '(satir yok)' }; return ,$xbtR }
+    }
+    $xbtN = $xbtTpl.Count; if ($xbtL.Count -clt $xbtN) { $xbtN = $xbtL.Count }
+    for ($xbtI = 0; $xbtI -clt $xbtN; $xbtI++) {
+        $xbtE = $xbtTpl[$xbtI]; $xbtG = $xbtL[$xbtI]
+        $xbtEq = $xbtE.IndexOf('=BURAYA_', [System.StringComparison]::Ordinal)
+        if ($xbtE.StartsWith('#', [System.StringComparison]::Ordinal) -or ($xbtEq -clt 0)) { $xbtBad = ($xbtG -cne $xbtE) } else { $xbtBad = (-not $xbtG.StartsWith($xbtE.Substring(0, $xbtEq + 1), [System.StringComparison]::Ordinal)) }
+        if ($xbtBad) { $xbtR['code'] = 'B18_TEMPLATE_LINE'; $xbtR['line'] = [string]($xbtI + 1); $xbtR['expected'] = $xbtRaw[$xbtI]; return ,$xbtR }
+    }
+    if ($xbtL.Count -cne $xbtTpl.Count) { $xbtR['code'] = 'B18_TEMPLATE_LINE'; $xbtR['line'] = [string]($xbtN + 1); if ($xbtN -clt $xbtRaw.Count) { $xbtR['expected'] = $xbtRaw[$xbtN] } else { $xbtR['expected'] = '(satir yok)' }; return ,$xbtR }
+    for ($xbtI = 0; $xbtI -clt $xbtTpl.Count; $xbtI++) {
+        $xbtEq = $xbtTpl[$xbtI].IndexOf('=BURAYA_', [System.StringComparison]::Ordinal)
+        if ($xbtTpl[$xbtI].StartsWith('#', [System.StringComparison]::Ordinal) -or ($xbtEq -clt 0)) { continue }
+        $xbtK = $xbtTpl[$xbtI].Substring(0, $xbtEq)
+        $xbtV = $xbtL[$xbtI].Substring($xbtEq + 1)
+        if (($xbtV.Trim() -ceq '') -or ($xbtV -cmatch 'BURAYA_')) { $xbtR['code'] = 'B18_MARKER_LEFT'; $xbtR['key'] = $xbtK; return ,$xbtR }
+    }
+    foreach ($xbtK in @('TEBLIG_TARIHI', 'SON_GUN')) {
+        $xbtV = Get-KbField ([string[]]$xbtL.ToArray()) ($xbtK + '=')
+        if ([string]$xbtV -cnotmatch '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') { $xbtR['code'] = 'B18_DATE_FORMAT'; $xbtR['key'] = $xbtK; return ,$xbtR }
+    }
+    return ,$xbtR
+}
+if ($global:KbEarly -ceq $true) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.'; return }
+$b18xE = [string]$global:KbEvid
+$b18xC = Join-Path $b18xE 'steps\c'
+$b18xRec = Join-Path $b18xC 'b18.txt'
+if (Test-KbPass (Join-Path $b18xC 's25.txt')) { Write-KbRefusal 'RESTRICTED_FROZEN' 'b18: kapanis manifesti (s25) yazildi; kor hesap artik degistirilemez ve acilmaz.'; return }
+if (Test-Path -LiteralPath $b18xRec) { Write-KbRefusal 'B18_ALREADY_DONE' 'Bu adim zaten calisti: b18.txt. Tekrar calismaz.'; return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B18_PRECONDITION' 'b18 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not (Test-KbPass (Join-Path $b18xC 'b16.txt'))) { Write-KbRefusal 'B18_PRECONDITION' 'b18 BASLAMADI: once b16 TAMAM olmali.'; return }
+$b18xStop = Get-KbDecision 'STOPPING_EVENT' ''
+$b18xRecess = Get-KbDecision 'JUDICIAL_RECESS' ''
+if (($null -ceq $b18xStop) -or ($null -ceq $b18xRecess)) { Write-KbRefusal 'B18_NO_DECISIONS' 'b18 BASLAMADI: once avukat k durdurucu ve k adlitatil ile kararlarini yazmali.'; return }
+foreach ($b18xD in @(,$b18xStop) + @(,$b18xRecess)) { if (-not (Test-KbDecisionHash ([string[]]$b18xD))) { Write-Host 'STOP K_DECISION_HASH=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b18' 'K_DECISION_HASH'; return } }
+$b18xDur = Get-KbField $b18xStop 'DURUM='
+if ($b18xDur -cne 'none') {
+    if (-not (New-KbRecord $b18xRec (Get-KbHeader 'b18' 'b18.ps1'))) { Invoke-KbLock 'b18' 'B18_RECORD_WRITE_FAIL'; return }
+    Add-KbLine $b18xRec 'STOP STOPPING_EVENT_DURUM_NONE=False'
+    $null = Complete-KbStep $b18xRec 'b18' @() $false ''
+    return
+}
+$b18xCase = [string]$global:KbVal['case-id']
+$b18xPath = Join-Path ([string]$global:KbVal['restricted-dir']) 'blind-calc.txt'
+$b18xRaw = Get-KbText 'n134.txt'
+if ($null -ceq $b18xRaw) { Write-Host 'STOP B18_TEMPLATE_PIN=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b18' 'B18_TEMPLATE_PIN'; return }
+$b18xNp = Join-Path ([string]$env:SystemRoot) ([string]$global:KbBuild['NOTEPAD_RELATIVE'])
+$b18xNpOk = $false
+try { $b18xNpOk = ((Get-KbSha ([System.IO.File]::ReadAllBytes($b18xNp))) -ceq [string]$global:KbBuild['NOTEPAD_SHA256']) -and ([string][System.Diagnostics.FileVersionInfo]::GetVersionInfo($b18xNp).FileVersion -ceq [string]$global:KbBuild['NOTEPAD_FILE_VERSION']) } catch { $b18xNpOk = $false }
+if (-not $b18xNpOk) { Write-Host 'STOP B18_NOTEPAD_PIN=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b18' 'B18_NOTEPAD_PIN'; return }
+$b18xNew = {
+    param([System.IO.FileMode]$xbmMode)
+    $xbmT = $b18xRaw.Replace((Get-KbToken 'tuz'), (New-XbSalt)).Replace((Get-KbToken 'case-id'), $b18xCase)
+    if ($xbmT -cmatch '<[a-z0-9][a-z0-9-]*>') { throw 'B18_TEMPLATE_FILL' }
+    $xbmB = [System.Text.Encoding]::ASCII.GetBytes($xbmT)
+    $xbmFs = [System.IO.File]::Open($b18xPath, $xbmMode, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+    try { $xbmFs.Write($xbmB, 0, $xbmB.Length) } finally { $xbmFs.Dispose() }
+}
+if (-not (Test-Path -LiteralPath $b18xPath)) {
+    try { & $b18xNew ([System.IO.FileMode]::CreateNew) } catch { Write-Host 'STOP B18_TEMPLATE_WRITE=FAIL'; Invoke-KbLock 'b18' 'B18_TEMPLATE_WRITE_FAIL'; return }
+}
+$b18xFix = 'Duzeltme: = isaretinden sonraki her seyi geri silme tusuyla (Backspace: Enter tusunun hemen ustundeki tus; bosluk tusu degil) silin, satirda yalniz ANAHTAR= kalsin; sonra degeri yazin. Bitirince Ctrl+S, sonra X.'
+$b18xBytes = $null
+while ($true) {
+    $b18xBytes = [System.IO.File]::ReadAllBytes($b18xPath)
+    $b18xRes = Test-XbFile $b18xBytes $b18xRaw $b18xCase
+    $b18xCode = [string]$b18xRes['code']
+    if (($b18xCode -cne 'B18_SALT_LINE') -and ($b18xCode -cne 'B18_TEMPLATE_IDENTITY')) {
+        Write-Host 'Not Defteri aciliyor: blind-calc.txt. Doldurun, Ctrl+S, sonra pencereyi sag ustteki X ile kapatin. Farkli kaydet kullanmayin.'
+        Start-Process -FilePath $b18xNp -ArgumentList ('"' + $b18xPath + '"') -Wait
+        $b18xBytes = [System.IO.File]::ReadAllBytes($b18xPath)
+        $b18xRes = Test-XbFile $b18xBytes $b18xRaw $b18xCase
+        $b18xCode = [string]$b18xRes['code']
+    }
+    if ($b18xCode -ceq '') { break }
+    $b18xK = [string]$b18xRes['key']
+    $b18xMsg = 'b18: dosya denetimden gecmedi.'
+    if ($b18xCode -ceq 'B18_BOM') { $b18xMsg = 'Dosya BOM ile kaydedilmis. Not Defteri''nde Farkli kaydet degil, yalniz Ctrl+S kullanin.' }
+    if ($b18xCode -ceq 'B18_ENCODING') { $b18xMsg = 'Dosya UTF-8 degil. Not Defteri''nde Farkli kaydet degil, yalniz Ctrl+S kullanin.' }
+    if ($b18xCode -ceq 'B18_SALT_LINE') { $b18xMsg = 'Ilk satir (TUZ) silinmis veya bozulmus.' }
+    if ($b18xCode -ceq 'B18_TEMPLATE_IDENTITY') { $b18xMsg = "Kitin doldurdugu $b18xK satiri silinmis, bozulmus veya iki kez yazilmis." }
+    if ($b18xCode -ceq 'B18_TEMPLATE_LINE') { $b18xMsg = "Satir $([string]$b18xRes['line']) sablonla uyusmuyor. Sablondaki beklenen satir: $([string]$b18xRes['expected'])" }
+    if ($b18xCode -ceq 'B18_MARKER_LEFT') { $b18xMsg = "$b18xK satiri bos veya BURAYA_ isareti kaldi: BURAYA_ ile baslayan yazi silinip yerine deger yazilmali.`n$b18xK= isaretinden hemen sonra deger gelmeli.`n$b18xFix" }
+    if ($b18xCode -ceq 'B18_DATE_FORMAT') { $b18xMsg = "$b18xK degeri tarih bicimine uymuyor. Satir tam olarak su bicimde olmali: $b18xK=YYYY-AA-GG (dort hane yil, kisa cizgi, iki hane ay, kisa cizgi, iki hane gun; bosluk yok, Turkce nokta veya bolu yok).`n$b18xFix" }
+    Write-KbRefusal $b18xCode $b18xMsg
+    Write-Host 'TUSA AVUKAT BASAR'
+    if (($b18xCode -ceq 'B18_SALT_LINE') -or ($b18xCode -ceq 'B18_TEMPLATE_IDENTITY')) {
+        if ((Read-KitYesNo 'Sablon bastan olusturulsun mu? Girdikleriniz silinir. (H = simdilik birak)') -cne 'E') { Write-Host 'Dosya oldugu gibi birakildi. Ayni b18 komutu ayni dosyayi yeniden acar.'; return }
+        try { & $b18xNew ([System.IO.FileMode]::Create) } catch { Write-Host 'STOP B18_TEMPLATE_WRITE=FAIL'; Invoke-KbLock 'b18' 'B18_TEMPLATE_WRITE_FAIL'; return }
+    } else {
+        if ((Read-KitYesNo 'Not Defteri yeniden acilsin mi? (H = simdilik birak)') -cne 'E') { Write-Host 'Dosya oldugu gibi birakildi. Ayni b18 komutu ayni dosyayi yeniden acar.'; return }
+    }
+}
+$b18xSha = Get-KbSha $b18xBytes
+Write-Host 'TUSA AVUKAT BASAR'
+if ((Read-KitYesNo 'Kor hesabi sistem sonucunu gormeden yazdiniz mi?') -cne 'E') { Write-KbRefusal 'B18_NOT_CONFIRMED' 'b18: teyit edilmedi; kayit yazilmadi. Dosya yerinde kaldi; ayni b18 komutu ayni dosyayi yeniden acar.'; return }
+if ((Get-KbSha ([System.IO.File]::ReadAllBytes($b18xPath))) -cne $b18xSha) { Write-KbRefusal 'B18_CHANGED' 'Dosya teyit sirasinda degisti; kayit yazilmadi. Ayni b18 komutunu yeniden yazin.'; return }
+$b18xAt = Get-KbStamp
+if (-not (New-KbRecord $b18xRec (Get-KbHeader 'b18' 'b18.ps1'))) { Invoke-KbLock 'b18' 'B18_RECORD_WRITE_FAIL'; return }
+Add-KbLine $b18xRec "BLIND_CALC_SHA256=$b18xSha"
+Add-KbLine $b18xRec "BLIND_CALC_AT=$b18xAt"
+Add-KbLine $b18xRec 'BLIND_CALC_CONFIRMED basis=lawyer-E'
+$null = Complete-KbStep $b18xRec 'b18' @('BLIND_CALC_CONFIRMED basis=lawyer-E') $false 'Siradaki: b19.'
+```
+
+**N168 — `b19.ps1` (deadline generation).**
+
+```powershell
+# b19.ps1 - Ek R4/8.3: deadline generation (runbook revizyon 16, dilim 3). ASCII. Yalniz b19 komutuyla, Invoke-KbStep icinden calisir.
+# REFERANS karar dosyasindan bellekte okunur ve yalniz N83'un blok metnine girer; kayda girmez. Adli tatil kararina gore pinli N83 veya turetilmis n083-no calisir.
+$b19xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b19xRec = Join-Path $b19xC 'b19.txt'
+if (-not (Test-KbChainStart 'b19' $b19xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B19_PRECONDITION' 'b19 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not (Test-KbPass (Join-Path $b19xC 'b18.txt'))) { Write-KbRefusal 'B19_PRECONDITION' 'b19 BASLAMADI: once b18 TAMAM olmali.'; return }
+$b19xStop = Get-KbDecision 'STOPPING_EVENT' ''
+$b19xRecess = Get-KbDecision 'JUDICIAL_RECESS' ''
+if (($null -ceq $b19xStop) -or ($null -ceq $b19xRecess)) { Write-KbRefusal 'B19_PRECONDITION' 'b19 BASLAMADI: durdurucu veya adli tatil karari yok.'; return }
+foreach ($b19xD in @(,$b19xStop) + @(,$b19xRecess)) { if (-not (Test-KbDecisionHash ([string[]]$b19xD))) { Write-Host 'STOP K_DECISION_HASH=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b19' 'K_DECISION_HASH'; return } }
+$b19xWhy = Get-KbField $b19xRecess 'UYGULANIR='
+if ((-not (Test-KbValue 'w:yes,no' ([string]$b19xWhy))) -or ((Get-KbField $b19xStop 'DURUM=') -cne 'none')) { Write-KbRefusal 'B19_VALUE_RULE' 'b19 BASLAMADI: karar degerleri kurala uymuyor (B19_VALUE_RULE). Ajana donun.'; return }
+$b19xRef = Get-KbField @(Read-KbLines (Join-Path ([string]$global:KbVal['restricted-dir']) 'decision-stopping-event.txt')) 'REFERANS='
+if ([string]$b19xRef -cnotmatch '^[A-Za-z0-9](?:[A-Za-z0-9 ._-]{0,62}[A-Za-z0-9._-])?$') { Write-KbRefusal 'B19_VALUE_RULE' 'b19 BASLAMADI: REFERANS kurala uymuyor (B19_VALUE_RULE). Ajana donun.'; return }
+$b19xEv = @(Get-KbAnchorEvents)
+if ($b19xEv.Count -cne 1) { Write-KbRefusal 'B19_PRECONDITION' 'b19 BASLAMADI: canonical zaman cizelgesinde tek teblig olayi yok. Ajana donun.'; return }
+$b19xAnchor = [string]$b19xEv[0].event_id
+if (-not (Test-KbValue 'idv' $b19xAnchor)) { Write-KbRefusal 'B19_VALUE_RULE' 'b19 BASLAMADI: anchor kimligi kurala uymuyor (B19_VALUE_RULE). Ajana donun.'; return }
+if (-not (Test-KbDbGate 'b19')) { return }
+if (-not (New-KbRecord $b19xRec (Get-KbHeader 'b19' 'b19.ps1'))) { Invoke-KbLock 'b19' 'B19_RECORD_WRITE_FAIL'; return }
+$b19xSub = Get-KbSubst
+$b19xSub['anchor-event-id'] = $b19xAnchor
+$b19xReq = @('CLI_RC=0', 'PENDING_FILE_SHA_MATCH=True', 'JOURNAL_NEW_ROW_COUNT=1', 'JOURNAL_NEW_ROW_STATE=completed', 'JOURNAL_FAMILY_MATCH=True', 'JOURNAL_ACTOR_MATCH=True', 'replayed=False')
+if (Invoke-KbBlocks $b19xRec @() @(New-KbSpec 'n082.ps1' '' $b19xSub 'N082' 'cli' $null)) {
+    Test-KbRecKeys $b19xRec @('row_key', 'case_id', 'anchor', 'target_ref', 'input_digest', 'pending_sha256', 'pending_exists')
+    $b19xL = @(Read-KbLines $b19xRec)
+    if ((Get-KbTok $b19xL 'row_key') -cne 'deadline') { Add-KbLine $b19xRec 'STOP ROW_KEY_MATCH=False' }
+    if ((Get-KbTok $b19xL 'anchor') -cne $b19xAnchor) { Add-KbLine $b19xRec 'STOP ANCHOR_MATCH=False' }
+    if (((Get-KbTok $b19xL 'pending_sha256') -ceq 'None') -and ((Get-KbTok $b19xL 'pending_exists') -cne 'False')) { Add-KbLine $b19xRec 'STOP PENDING_SHA256_NONE_WITH_PENDING=True' }
+    if (Test-KbRecClean $b19xRec) {
+        $b19xBase = Invoke-KbBaseline $b19xRec
+        if ($null -cne $b19xBase) {
+            $b19xSub['expected-input-digest'] = Get-KbTok $b19xL 'input_digest'
+            $b19xSub['attestation-ref'] = [string]$b19xRef
+            $b19xFile = 'n083.ps1'; if ($b19xWhy -ceq 'no') { $b19xFile = 'n083-no.ps1' }
+            if (Invoke-KbBlocks $b19xRec @() @(New-KbSpec $b19xFile '' $b19xSub 'N083' 'cli' $null)) {
+                Test-KbRecKeys $b19xRec @('row_key', 'anchor', 'pending_sha256', 'replayed')
+                $b19xPend = Get-KbTok @(Read-KbLines $b19xRec) 'pending_sha256' $true
+                $b19xSame = $false
+                try { $b19xSame = ((Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path ([string]$global:KbVal['case-root']) ('deadlines\deadline_' + [string]$global:KbVal['case-id'] + '_v1.json.pending'))))) -ceq $b19xPend) } catch { $b19xSame = $false }
+                if ($b19xSame) { Add-KbLine $b19xRec 'PENDING_FILE_SHA_MATCH=True' } else { Add-KbLine $b19xRec 'STOP PENDING_FILE_SHA_MATCH=False' }
+                if (Test-KbRecClean $b19xRec) { $null = Invoke-KbJournalCheck $b19xRec $b19xBase 'generation.deadline' }
+            }
+        } elseif (Test-KbRecClean $b19xRec) { Add-KbLine $b19xRec 'STOP JOURNAL_BASELINE_MAX_ID=MISSING' }
+    }
+}
+$b19xSub = $null; $b19xRef = $null
+$null = Complete-KbStep $b19xRec 'b19' $b19xReq $false 'Siradaki: b20.'
+```
+
+**N169 — `b20.ps1` (pending kabulü ve karşılaştırma).**
+
+```powershell
+# b20.ps1 - Ek R4/8.3: pending kabulu ve kor hesapla karsilastirma (runbook revizyon 16, dilim 3). ASCII. Yalniz b20 komutuyla, Invoke-KbStep icinden calisir.
+# N85'in tarih satiri suzgecten bellege alinir; kor hesabin hash'i yeniden olculur, SON_GUN bellekte karsilastirilir. Iki tarih yalniz Write-Host ile basilir, hicbir kayda girmez.
+$b20xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b20xRec = Join-Path $b20xC 'b20.txt'
+if (-not (Test-KbChainStart 'b20' $b20xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B20_PRECONDITION' 'b20 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not (Test-KbPass (Join-Path $b20xC 'b19.txt'))) { Write-KbRefusal 'B20_PRECONDITION' 'b20 BASLAMADI: once b19 TAMAM olmali.'; return }
+if (-not (New-KbRecord $b20xRec (Get-KbHeader 'b20' 'b20.ps1'))) { Invoke-KbLock 'b20' 'B20_RECORD_WRITE_FAIL'; return }
+$b20xSub = Get-KbSubst
+$global:KbMem = New-KbDict
+$null = Invoke-KbBlocks $b20xRec @() @((New-KbSpec 'n084.ps1' '' $b20xSub 'N084' 'status' $null), (New-KbSpec 'n085.ps1' '' $b20xSub 'N085' 'status' $null))
+$b20xPend = [string]$global:KbMem['PENDING_CALCULATED_DEADLINE']
+$global:KbMem = $null
+$b20xL = @(Read-KbLines $b20xRec)
+$b20xDl = @('DL_SINGLE_PENDING_FILE=True', 'DL_SINGLE_RECORD=True', 'DL_CALCULATION_STATE_CALCULATED=True', 'DL_EXPIRY_NOT_EVALUATED=True', 'DL_ANCHOR_VERIFIED=True', 'DL_STOPPING_NONE=True', 'DL_ATTESTATION_REF_PRESENT=True', 'DL_REQUIRES_HUMAN_REVIEW=True', 'DL_CALCULATED_DEADLINE_PRESENT=True')
+foreach ($b20xD in $b20xDl) { if ($b20xL -cnotcontains $b20xD) { Add-KbLine $b20xRec 'STOP DL_ACCEPTANCE=False'; break } }
+$b20xBlind = Get-KbBlindDate
+if ($null -ceq $b20xBlind) { Add-KbLine $b20xRec 'STOP BLIND_CALC_HASH_MATCH=False' } else { Add-KbLine $b20xRec 'BLIND_CALC_HASH_MATCH=True' }
+if (Test-KbRecClean $b20xRec) {
+    if ($b20xPend -cnotmatch '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') { Add-KbLine $b20xRec 'STOP PENDING_DATE_READ=False' }
+    else {
+        Write-Host '----- IKI TARIH (yalniz ekran; avukat karsilastirir) -----'
+        Write-Host "Kor hesap son gun:   $b20xBlind"
+        Write-Host "Sistem son gun:      $b20xPend"
+        Write-Host '----- SON -----'
+        if ($b20xPend -cne $b20xBlind) { Add-KbLine $b20xRec 'STOP PENDING_MATCH=False' }
+        else {
+            Write-Host 'TUSA AVUKAT BASAR'
+            if ((Read-KitYesNo 'Ekrandaki iki tarih ayni mi?') -ceq 'E') { Add-KbLine $b20xRec 'PENDING_MATCH=True basis=lawyer-E' } else { Add-KbLine $b20xRec 'STOP PENDING_MATCH=False basis=lawyer-H' }
+        }
+    }
+}
+$b20xPend = $null; $b20xBlind = $null
+$null = Complete-KbStep $b20xRec 'b20' ($b20xDl + @('BLIND_CALC_HASH_MATCH=True', 'PENDING_MATCH=True basis=lawyer-E')) $false 'Siradaki: avukat k sure.'
+```
+
+**N170 — `b21.ps1` (deadline approval).**
+
+```powershell
+# b21.ps1 - Ek R4/8.3: deadline approval, ortak apply cercevesi (runbook revizyon 16, dilim 3). ASCII. Yalniz b21 komutuyla, Invoke-KbStep icinden calisir.
+# Avukat karari b20'den sonra yazilmis olmali (B21_ORDER). Preview (N86) bellekte calisir; onay kapisi b13 ile aynidir. Canonical deadline pending ile ayni baytlari tasir.
+$b21xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b21xRec = Join-Path $b21xC 'b21.txt'
+$b21xCase = [string]$global:KbVal['case-id']
+if (-not (Test-KbChainStart 'b21' $b21xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B21_PRECONDITION' 'b21 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b21x20 = @(Read-KbLines (Join-Path $b21xC 'b20.txt'))
+if ($b21x20 -cnotcontains 'STEP_RESULT=PASS') { Write-KbRefusal 'B21_PRECONDITION' 'b21 BASLAMADI: once b20 TAMAM olmali.'; return }
+if (-not (Test-KbApplyDecision 'b21' 'DEADLINE_APPROVED' 'k sure')) { return }
+$b21xOrd = $false
+try {
+    $b21xFmt = 'yyyy-MM-ddTHH:mm:sszzz'; $b21xInv = [System.Globalization.CultureInfo]::InvariantCulture
+    $b21xK = [DateTimeOffset]::ParseExact([string](Get-KbField (Get-KbDecision 'DEADLINE_APPROVED' '') 'ENDED_AT='), $b21xFmt, $b21xInv)
+    $b21xB = [DateTimeOffset]::ParseExact([string](Get-KbField $b21x20 'ENDED_AT='), $b21xFmt, $b21xInv)
+    $b21xOrd = ($b21xK -cge $b21xB)
+} catch { $b21xOrd = $false }
+if (-not $b21xOrd) { Write-KbRefusal 'B21_ORDER' 'b21 BASLAMADI: avukatin k sure karari b20 bittikten sonra yazilmis olmali.'; return }
+if (-not (Test-KbDbGate 'b21')) { return }
+$b21xSub = Get-KbSubst
+$b21xMem = Invoke-KbMem (Get-KbHelpSpecs) @((New-KbSpec 'n028.ps1' '' $b21xSub 'N028' 'status' $null), (New-KbSpec 'n031.ps1' '' $b21xSub 'N031' 'status' $null), (New-KbSpec 'n086.ps1' '' $b21xSub 'N086' 'cli' $null))
+$b21xL = Get-KbMemLines
+$b21xHash = Get-KbTok $b21xL 'pending_hash'
+$b21xBad = New-Object 'System.Collections.Generic.List[string]'
+foreach ($b21xKey in @('row_key', 'case_id', 'pending_hash', 'validation_valid')) { if ($null -ceq (Get-KbTok $b21xL $b21xKey)) { $b21xBad.Add("STOP KB_REQUIRED_KEY_MISSING=$b21xKey") } }
+if ((Get-KbTok $b21xL 'row_key') -cne 'deadline') { $b21xBad.Add('STOP ROW_KEY_MATCH=False') }
+if ($b21xHash -cne (Get-KbTok @(Read-KbLines (Join-Path $b21xC 'b19.txt')) 'pending_sha256' $true)) { $b21xBad.Add('STOP PENDING_HASH_MATCH=False') }
+if ((Get-KbTok $b21xL 'validation_valid') -cne 'True') { $b21xBad.Add('STOP VALIDATION_VALID=False') }
+$b21xReq = @('SOURCE_HASHES_MATCH=True', 'CLI_RC=0', 'CANONICAL_FILE_SHA_MATCH=True', 'JOURNAL_NEW_ROW_COUNT=1', 'JOURNAL_NEW_ROW_STATE=completed', 'JOURNAL_FAMILY_MATCH=True', 'JOURNAL_ACTOR_MATCH=True')
+if ((-not $b21xMem) -or ($b21xBad.Count -cgt 0)) {
+    if (Open-KbMem 'b21' 'b21.ps1' $b21xRec) { foreach ($b21xT in $b21xBad) { Add-KbLine $b21xRec $b21xT }; $null = Complete-KbStep $b21xRec 'b21' $b21xReq $false '' }
+    return
+}
+$b21xApp = Request-KbApproval 'b21' "approval.deadline:$b21xCase/deadline" $b21xHash
+if ($null -ceq $b21xApp) { return }
+if (-not (Open-KbMem 'b21' 'b21.ps1' $b21xRec)) { return }
+Add-KbLine $b21xRec $b21xApp
+$b21xBase = Invoke-KbBaseline $b21xRec
+if ($null -cne $b21xBase) {
+    $b21xSub['expected-hash'] = $b21xHash
+    if (Invoke-KbBlocks $b21xRec @() @(New-KbSpec 'n087.ps1' '' $b21xSub 'N087' 'cli' $null)) {
+        Test-KbRecKeys $b21xRec @('row_key', 'canonical_hash')
+        $b21xFileSha = ''
+        try { $b21xFileSha = Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path ([string]$global:KbVal['case-root']) 'deadlines\deadline.json'))) } catch { $b21xFileSha = '' }
+        if (($b21xFileSha -ceq (Get-KbTok @(Read-KbLines $b21xRec) 'canonical_hash')) -and ($b21xFileSha -ceq $b21xHash)) { Add-KbLine $b21xRec 'CANONICAL_FILE_SHA_MATCH=True' } else { Add-KbLine $b21xRec 'STOP CANONICAL_FILE_SHA_MATCH=False' }
+        if (Test-KbRecClean $b21xRec) { $null = Invoke-KbJournalCheck $b21xRec $b21xBase 'approval.deadline' }
+    }
+} elseif (Test-KbRecClean $b21xRec) { Add-KbLine $b21xRec 'STOP JOURNAL_BASELINE_MAX_ID=MISSING' }
+$null = Complete-KbStep $b21xRec 'b21' $b21xReq $false 'Siradaki: b22.'
+```
+
+**N171 — `b22.ps1` (salt-okunur rapor).**
+
+```powershell
+# b22.ps1 - Ek R4/8.3: salt-okunur deadline raporu (runbook revizyon 16, dilim 3). ASCII. Yalniz b22 komutuyla, Invoke-KbStep icinden calisir.
+# N88, N122, N22 pinli baytlarla calisir. REPORT_WRITTEN_LINE_SEEN satir goruldugu anda kayda girer. Raporun yolu ve icerigi kayda girmez.
+$b22xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b22xRec = Join-Path $b22xC 'b22.txt'
+if (Test-KbPass (Join-Path $b22xC 's25.txt')) { Write-KbRefusal 'RESTRICTED_FROZEN' 'b22: kapanis manifesti (s25) yazildi; restricted dizine dosya yazilamaz.'; return }
+if (-not (Test-KbChainStart 'b22' $b22xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B22_PRECONDITION' 'b22 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+if (-not (Test-KbPass (Join-Path $b22xC 'b21.txt'))) { Write-KbRefusal 'B22_PRECONDITION' 'b22 BASLAMADI: once b21 TAMAM olmali.'; return }
+if (-not (Test-KbDbGate 'b22')) { return }
+if (-not (New-KbRecord $b22xRec (Get-KbHeader 'b22' 'b22.ps1'))) { Invoke-KbLock 'b22' 'B22_RECORD_WRITE_FAIL'; return }
+$b22xSub = Get-KbSubst
+if (Invoke-KbBlocks $b22xRec (Get-KbHelpSpecs) @((New-KbSpec 'n088.ps1' '' $b22xSub 'N088' 'report' $null), (New-KbSpec 'n122.ps1' '' $b22xSub 'N122' 'hashline' $null), (New-KbSpec 'n022.ps1' '' $b22xSub 'N022' 'status' $null))) {
+    Add-KbLine $b22xRec 'REPORT_EXIT=0'
+    Test-KbRecKeys $b22xRec @('REPORT_SHA256', 'RESTRICTED_FILE_COUNT')
+}
+$null = Complete-KbStep $b22xRec 'b22' @('REPORT_EXIT=0', 'REPORT_WRITTEN_LINE_SEEN=True', 'EXPIRY_LINE_PRESENT=True', 'DISCLAIMER_LINE_PRESENT=True', 'RESTRICTED_INVENTORY=OK') $false 'Siradaki: b23.'
+```
+
+**N172 — `b23.ps1` (son karşılaştırma).**
+
+```powershell
+# b23.ps1 - Ek R4/8.3: rapor tarihinin son karsilastirmasi (runbook revizyon 16, dilim 3). ASCII. Yalniz b23 komutuyla, Invoke-KbStep icinden calisir.
+# Raporun hash'i b22 kaydiyla, kor hesabin hash'i b18 kaydiyla yeniden olculur; iki tarih bellekte karsilastirilir ve yalniz Write-Host ile basilir. ENDED_AT F1 baslangicidir (Ek R4/14).
+$b23xC = Join-Path ([string]$global:KbEvid) 'steps\c'
+$b23xRec = Join-Path $b23xC 'b23.txt'
+if (-not (Test-KbChainStart 'b23' $b23xRec)) { return }
+if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B23_PRECONDITION' 'b23 BASLAMADI: once bu oturumda b0 ve b1 TAMAM olmali (isleme dali).'; return }
+$b23x22 = @(Read-KbLines (Join-Path $b23xC 'b22.txt'))
+if ($b23x22 -cnotcontains 'STEP_RESULT=PASS') { Write-KbRefusal 'B23_PRECONDITION' 'b23 BASLAMADI: once b22 TAMAM olmali.'; return }
+if (-not (New-KbRecord $b23xRec (Get-KbHeader 'b23' 'b23.ps1'))) { Invoke-KbLock 'b23' 'B23_RECORD_WRITE_FAIL'; return }
+$b23xRep = ''
+try {
+    $b23xB = [System.IO.File]::ReadAllBytes((Join-Path ([string]$global:KbVal['restricted-dir']) 'deadline-report.txt'))
+    if ((Get-KbSha $b23xB) -ceq (Get-KbField $b23x22 'REPORT_SHA256=')) {
+        Add-KbLine $b23xRec 'REPORT_HASH_MATCH=True'
+        $b23xHit = @(((New-Object System.Text.UTF8Encoding($false, $true)).GetString($b23xB)).Split([char]10) | Where-Object { $_.StartsWith('calculated_deadline: ', [System.StringComparison]::Ordinal) })
+        if ($b23xHit.Count -ceq 1) { $b23xRep = $b23xHit[0].Substring(21) }
+    } else { Add-KbLine $b23xRec 'STOP REPORT_HASH_MATCH=False' }
+} catch { Add-KbLine $b23xRec 'STOP REPORT_HASH_MATCH=False' }
+$b23xBlind = Get-KbBlindDate
+if ($null -ceq $b23xBlind) { Add-KbLine $b23xRec 'STOP BLIND_CALC_HASH_MATCH=False' } else { Add-KbLine $b23xRec 'BLIND_CALC_HASH_MATCH=True' }
+if (Test-KbRecClean $b23xRec) {
+    if ($b23xRep -cnotmatch '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') { Add-KbLine $b23xRec 'STOP REPORT_DATE_READ=False' }
+    else {
+        Write-Host '----- IKI TARIH (yalniz ekran; avukat karsilastirir) -----'
+        Write-Host "Kor hesap son gun:   $b23xBlind"
+        Write-Host "Rapor son gun:       $b23xRep"
+        Write-Host '----- SON -----'
+        if ($b23xRep -cne $b23xBlind) { Add-KbLine $b23xRec 'STOP MATCH=False' }
+        else {
+            Write-Host 'TUSA AVUKAT BASAR'
+            if ((Read-KitYesNo 'Ekrandaki iki tarih ayni mi?') -ceq 'E') { Add-KbLine $b23xRec 'MATCH=True basis=lawyer-E' } else { Add-KbLine $b23xRec 'STOP MATCH=False basis=lawyer-H' }
+        }
+    }
+}
+$b23xRep = $null; $b23xBlind = $null
+$null = Complete-KbStep $b23xRec 'b23' @('REPORT_HASH_MATCH=True', 'BLIND_CALC_HASH_MATCH=True', 'MATCH=True basis=lawyer-E') $false 'Siradaki: b24 (dilim 4).'
+```
+
+**N173 — `adm.ps1` (ADMIN penceresi başlatıcısı).**
+
+```powershell
+# adm.ps1 - Ek R4/8.1: ADMIN penceresi baslaticisi (runbook revizyon 16, dilim 3: y1; y2 dilim 4). ASCII. Win+R satiriyla, komut adi parametresiyle dot-source edilir; kit1 yuklenmez.
+# kbl.ps1 ve kbe.ps1'i kendi kodunda pin ve ASCII ile denetleyip ayni baytlardan yukler (Ek R4/5 madde 6). Surec ortamina yalniz admin-dsn konur; app-dsn bellekte tutulmaz.
+# Calisma dizini kit1'in pinli kit-values.txt dosyasindaki repo-root'tur. REAL_ACTION_APPROVED CLI'den once kayda girer; H cevabinda kayit acilmaz, CLI cagrilmaz. Tekrar yok.
+$adxCmd = [string]$args[0]
+$adxDir = $PSScriptRoot
+$adxEvid = Split-Path -Parent $PSScriptRoot
+$adxLibs = New-Object 'System.Collections.Generic.List[scriptblock]'
+$adxLoad = $false
+if ($adxEvid -cmatch '^[A-Za-z]:\\[A-Za-z0-9 ._()\\-]*$') {
+    try {
+        $adxPinB = [System.IO.File]::ReadAllBytes((Join-Path $adxDir 'pins2.txt'))
+        $adxPinT = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([System.StringComparer]::Ordinal)
+        $adxPinOk = $true
+        foreach ($adxL in [System.Text.Encoding]::ASCII.GetString($adxPinB).Split([char]10)) {
+            if ($adxL -ceq '') { continue }
+            $adxM = [regex]::Match($adxL, '^([a-z0-9.-]+) ([0-9a-f]{64})$')
+            if ((-not $adxM.Success) -or $adxPinT.ContainsKey($adxM.Groups[1].Value)) { $adxPinOk = $false; break }
+            $adxPinT[$adxM.Groups[1].Value] = $adxM.Groups[2].Value
+        }
+        if ($adxPinOk) {
+            foreach ($adxN in @('kbl.ps1', 'kbe.ps1')) {
+                if (-not $adxPinT.ContainsKey($adxN)) { $adxPinOk = $false; break }
+                $adxB = [System.IO.File]::ReadAllBytes((Join-Path $adxDir $adxN))
+                $adxSha = [System.Security.Cryptography.SHA256]::Create()
+                try { $adxH = ([System.BitConverter]::ToString($adxSha.ComputeHash($adxB))).Replace('-', '').ToLowerInvariant() } finally { $adxSha.Dispose() }
+                $adxAsc = $true; foreach ($adxX in $adxB) { if ($adxX -cgt 127) { $adxAsc = $false; break } }
+                if (($adxH -cne [string]$adxPinT[$adxN]) -or (-not $adxAsc)) { $adxPinOk = $false; break }
+                $adxLibs.Add([scriptblock]::Create([System.Text.Encoding]::ASCII.GetString($adxB)))
+            }
+        }
+        $adxLoad = $adxPinOk -and ($adxLibs.Count -ceq 2)
+    } catch { $adxLoad = $false }
+}
+if (-not $adxLoad) {
+    $adxAfter = $false
+    $adxA4 = Join-Path $adxEvid 'steps\e2\a4.txt'
+    if (Test-Path -LiteralPath $adxA4) { try { $adxAfter = (@([System.IO.File]::ReadAllLines($adxA4)) -ccontains 'STEP_RESULT=PASS') } catch { $adxAfter = $true } }
+    $adxStep = 'y1'; if ($adxCmd -ceq 'y2') { $adxStep = 'y2' }
+    if ($adxAfter) {
+        $adxDurP = Join-Path $adxEvid 'DUR.txt'
+        if (-not (Test-Path -LiteralPath $adxDurP)) {
+            try {
+                $adxFs = [System.IO.File]::Open($adxDurP, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
+                try { foreach ($adxL in @("KIT_DUR step=$adxStep at=$([DateTimeOffset]::Now.ToString('yyyy-MM-ddTHH:mm:sszzz', [System.Globalization.CultureInfo]::InvariantCulture))", 'KIT_DUR_REASON=KB_LOADER_PIN')) { $adxB = [System.Text.Encoding]::UTF8.GetBytes($adxL + "`n"); $adxFs.Write($adxB, 0, $adxB.Length) } } finally { $adxFs.Dispose() }
+            } catch { Write-Host 'STOP KIT_DUR_WRITE=FAIL' }
+        }
+        Write-Host "DUR. Adim $adxStep durdu (KB_LOADER_PIN). Kalan adimlari yapmayin. Sayfadaki DUR OLURSA bolumune gecin."
+        Write-Host 'Pencere acikken hicbir yapay zeka araci veya sohbet ACMAYIN; ekrani hicbir yere yapistirmayin, fotograflamayin.'
+    } else {
+        Write-Host 'kbl.ps1 veya kbe.ps1 dogrulanamadi (KB_LOADER_PIN). Pencereyi kapatin; icerik henuz alinmadi, ajana donun.'
+    }
+} else {
+    foreach ($adxSb in $adxLibs) { . $adxSb }
+    try { $Host.UI.RawUI.WindowTitle = 'ADMIN' } catch { }
+    $global:KbEvid = $adxEvid
+    $global:KbDir = $adxDir
+    $global:KbSessName = 'none'
+    $global:KbRefDir = Join-Path $adxEvid 'steps\x'
+    $global:KbIsLauncher = $true
+    $global:KbTeardown = $false
+    $global:KbEarly = $false
+    $global:KbOpenRec = $null
+    $adxDone = $false
+    try {
+        $adxC = Join-Path $adxEvid 'steps\c'
+        $adxRec = Join-Path $adxC 'y1.txt'
+        $adxWhy = ''
+        if ($adxCmd -cne 'y1') { Write-KbRefusal 'ADM_COMMAND' 'ADMIN: bu kit surumunde yalniz y1 calisir (y2 dilim 4). Pencereyi kapatin; ajana donun.' }
+        else {
+            $adxAfter = Get-KbAfter
+            Initialize-KbAllow
+            $adxWhy = Test-KbKitDir
+            if ($adxWhy -cne '') { $adxWhy = 'Y1_' + $adxWhy }
+            $adxSec = $null; $adxCase = $null
+            if ($adxWhy -ceq '') {
+                $adxCaseB = [System.IO.File]::ReadAllBytes((Join-Path $adxDir 'kit2-case.txt'))
+                if ((Get-KbSha $adxCaseB) -cne [string]$global:KbPins['kit2-case.txt']) { $adxWhy = 'Y1_KB_LOAD_PIN_MISMATCH' }
+                else {
+                    $adxCase = Read-KbKeyFile $adxCaseB @('case-id', 'document-id', 'actor-user-id', 'admin-user-id', 'file-name', 'known-external-drive-letters', 'FORM_F1') @()
+                    if (($null -ceq $adxCase) -or (-not (Test-KbValue 'idv' ([string]$adxCase['case-id']))) -or (-not (Test-KbValue 'pint' ([string]$adxCase['actor-user-id']))) -or (-not (Test-KbValue 'pint' ([string]$adxCase['admin-user-id'])))) { $adxWhy = 'Y1_KB_LOAD_CASE' }
+                }
+            }
+            if ($adxWhy -ceq '') {
+                $adxSec = Read-KbSecure 'ADMIN'
+                if ($null -ceq $adxSec) { if ($global:KbSecErr -ceq 'VALUE_RULE') { $adxWhy = 'Y1_VALUE_RULE' } elseif ($global:KbSecErr -ceq 'ACL') { $adxWhy = 'Y1_SECURE_FILE_ACL' } elseif ($global:KbSecErr -ceq 'HASH') { $adxWhy = 'Y1_SECURE_FILE_HASH' } else { $adxWhy = 'Y1_SECURE_FILE_FORMAT' } }
+            }
+            $adxRepo = ''
+            if ($adxWhy -ceq '') {
+                $adxKvOk = $false
+                try {
+                    $adxKv = [System.IO.File]::ReadAllBytes((Join-Path $adxEvid 'kit\kit-values.txt'))
+                    $adxWant = $null
+                    foreach ($adxL in [System.IO.File]::ReadAllLines((Join-Path $adxEvid 'kit\pins.txt'))) { $adxM = [regex]::Match($adxL, '^kit-values\.txt ([0-9a-f]{64})$'); if ($adxM.Success) { $adxWant = $adxM.Groups[1].Value } }
+                    if (($null -cne $adxWant) -and ((Get-KbSha $adxKv) -ceq $adxWant)) {
+                        foreach ($adxL in [System.Text.Encoding]::ASCII.GetString($adxKv).Split([char]10)) { if ($adxL.StartsWith('repo-root=', [System.StringComparison]::Ordinal)) { $adxRepo = $adxL.Substring(10) } }
+                        $adxKvOk = Test-KbValue 'path' $adxRepo
+                    }
+                } catch { $adxKvOk = $false }
+                if (-not $adxKvOk) { $adxWhy = 'Y1_KIT_VALUES' }
+            }
+            if ($adxWhy -cne '') {
+                if ($adxWhy -ceq 'Y1_VALUE_RULE') { Write-KbRefusal $adxWhy "y1 BASLAMADI: $([string]$global:KbSecKey) degeri kurala uymuyor (Y1_VALUE_RULE). Pencereyi kapatin; ajana donun (icerik alindiysa sayfadaki DUR OLURSA)." } elseif ($adxAfter) { Write-KbDur 'y1' $adxWhy } else { Write-KbRefusal $adxWhy "y1 BASLAMADI ($adxWhy). Pencereyi kapatin; icerik henuz alinmadi, ajana donun." }
+            } elseif (Test-Path -LiteralPath $adxRec) { Write-KbRefusal 'Y1_ALREADY' 'Bu adim zaten calisti: y1.txt. Tekrar calismaz.' }
+            elseif (Test-Path -LiteralPath (Join-Path $adxEvid 'DUR.txt')) { Write-KbRefusal 'Y1_PRECONDITION' 'y1 BASLAMADI: DUR kilidi var. Pencereyi kapatin; sayfadaki DUR OLURSA.' }
+            elseif (Test-KbPass (Join-Path $adxC 'u.txt')) { Write-KbRefusal 'EARLY_CLOSE_MODE' 'Bu dosya pilot disi; yalniz silme adimlari.' }
+            elseif (-not (Test-KbPass (Join-Path $adxC 'b09a.txt'))) { Write-KbRefusal 'Y1_PRECONDITION' 'y1 BASLAMADI: once KIT penceresinde b9 TAMAM olmali (aktif atama 0).' }
+            elseif (-not (Test-Path -LiteralPath $adxRepo -PathType Container)) { Write-KbRefusal 'Y1_PRECONDITION' 'y1 BASLAMADI: repo dizini yok; kapsayici bagli degil. VeraCrypt ile baglayin, sonra ADMIN satirini yeniden acin.' }
+            else {
+                $adxVal = New-KbDict
+                foreach ($adxK in @($adxCase.Keys)) { $adxVal[$adxK] = [string]$adxCase[$adxK] }
+                $adxVal['python'] = [string]$adxSec['python']
+                $global:KbVal = $adxVal
+                $adxN0 = Get-KbScript 'n000.ps1' $null ''
+                if ($null -ceq $adxN0) { Write-KbDur 'y1' 'KB_SCRIPT_LOAD_FAIL' }
+                else {
+                    $adxDig = Get-KbSha ([System.IO.File]::ReadAllBytes((Join-Path $adxC 'b09a.txt')))
+                    $adxApp = Request-KbApproval 'y1' ('iam.assign_case:' + [string]$adxVal['case-id'] + '/user-' + [string]$adxVal['actor-user-id']) $adxDig
+                    if ($null -cne $adxApp) {
+                        . $adxN0
+                        $env:VERGI_IAM_DATABASE_URL = [string]$adxSec['admin-dsn']
+                        $adxSec = $null
+                        Set-Location -LiteralPath $adxRepo
+                        if (New-KbRecord $adxRec (Get-KbHeader 'y1' 'adm.ps1')) {
+                            Add-KbLine $adxRec $adxApp
+                            $adxSub = New-KbDict
+                            foreach ($adxK in @('python', 'case-id', 'actor-user-id', 'admin-user-id')) { $adxSub[$adxK] = [string]$adxVal[$adxK] }
+                            $null = Invoke-KbBlocks $adxRec @() @(New-KbSpec 'n036.ps1' '' $adxSub 'N036' 'iamadmin' $null)
+                            $null = Complete-KbStep $adxRec 'y1' @('IAM_ADMIN_OK_LINE_SEEN=True', 'CLI_RC=0') $false 'Bu pencereyi X ile kapatin; KIT penceresinde b9 yazin.'
+                        } else { Invoke-KbLock 'y1' 'Y1_RECORD_WRITE_FAIL' }
+                    }
+                }
+            }
+        }
+        $adxDone = $true
+    } catch {
+        $adxDone = $true
+        $adxEr = [string]$global:KbOpenRec
+        if (($adxEr -cne '') -and (@(@(Read-KbLines $adxEr) | Where-Object { $_.StartsWith('STEP_RESULT=', [System.StringComparison]::Ordinal) }).Count -ceq 0)) { try { Add-KbLine $adxEr 'STOP KB_EXCEPTION=True'; Add-KbLine $adxEr 'STEP_RESULT=STOP'; Add-KbLine $adxEr "ENDED_AT=$(Get-KbStamp)" } catch { } }
+        Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'
+        Write-KbDur 'y1' 'KB_EXCEPTION'
+    } finally {
+        if (-not $adxDone) {
+            $adxEr = [string]$global:KbOpenRec
+            if (($adxEr -cne '') -and (@(@(Read-KbLines $adxEr) | Where-Object { $_.StartsWith('STEP_RESULT=', [System.StringComparison]::Ordinal) }).Count -ceq 0)) { Write-Host 'YARIDA KALDI (sonuc satiri yok) -> sayfadaki DUR OLURSA'; Write-KbDur 'y1' 'KB_INTERRUPTED' }
+        }
+        $global:KbOpenRec = $null
+    }
+    Write-Host 'Bu ekrani hicbir yere yapistirmayin, fotografini cekmeyin.'
+}
+```
+
+**N174 — `n083-no.ps1` (N83'ten türetilmiş, adli tatil `no`).**
+
+```powershell
+# Ek R4/11 turetilmis N83 (runbook revizyon 16). Kaynak: N83, SHA-256 a0ad17e6e673ce356beee1f94fff75f7673584cede450847d1b0e2aa565d3d2a.
+# Degisen: yalniz son arguman --judicial-recess-applicable no (avukatin yazili karari no ise; 18.1). Diger her sey N83 ile ayni. ASCII.
+if ("<expected-input-digest>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_INPUT_DIGEST=INVALID" } else { & "<python>" -m ui.cli_mutate generation --case <case-id> --row-key deadline --anchor <anchor-event-id> --actor-user-id <actor-user-id> --apply --expected-input-digest <expected-input-digest> --stopping-event-status none --stopping-event-attestation-ref "<attestation-ref>" --judicial-recess-applicable no }
 ```
