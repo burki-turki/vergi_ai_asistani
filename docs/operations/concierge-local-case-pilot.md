@@ -8,7 +8,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > komut çalıştırılmamıştır.** Belge ve revizyonu (§34) yazılırken gerçek
 > kurulum veya gerçek veri üzerinde hiçbir CLI, `psql`, Python veya
 > PowerShell betiği çalıştırılmadı (revizyon 10 düzeltmesi, rev9 inceleme
-> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ve 19 kopyalar üzerinde ölçüm düzeneği ve N116/N147
+> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ve 20 kopyalar üzerinde ölçüm düzeneği ve N116/N147
 > çalıştırdı; her revizyonun kendi paragrafı neyin çalıştırıldığını
 > söyler); hiçbir gerçek belge alınmadı; hiçbir veritabanı
 > satırı yazılmadı; hiçbir ağ isteği yapılmadı; hiçbir API anahtarı, `.env`
@@ -236,6 +236,20 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > pencere başlıkları, G6 öncelik kuralı ve H cevabı DUR değildir, H/kilitsiz ret adımları, S12 dönüş
 > yolu, G10 cümlesi) ve N143 (`k girdi` `K_ORDER` iletisi) yeniden değişti; N167 değişmedi. Acil
 > sayfanın açılış yolu revizyon 20'ye ve son insan provası planından önceye bırakıldı (D-2).
+> Revizyon 20 (§34.26; `USER_DECISION=R19-FIX` D-2 ve `SCOPE_APPROVED`; kullanıcı kararları K20-1 A,
+> K20-2 A, K20-3): acil sayfanın açılış yolu yazıldı. `ev.ps1` (N188) sayfayı doğruladıktan sonra
+> kitin pinli Not Defteri'nde `-Wait` olmadan açar; ekrana yine tek satır basar: `MATCH`, `NO_MATCH`
+> veya yeni `OPEN_FAIL` (sayfa doğru ama Not Defteri pini tutmadı ya da başlatılamadı; sessizce
+> `NO_MATCH`'e dönüşmez). Not Defteri'nin sürümü ve SHA-256'sı `ev.ps1`'e pencere öncesi doldurulur
+> (iki yeni sabit; kurulum sırası Ek R4/16.7). N192'de D8 açılış yolunu, `OPEN_FAIL` için bir kez
+> yeniden çalıştırmayı ve ardından AÇIK-25 (b)'yi yazar (Ek R4/13 madde 8'in koşulu genişletildi);
+> G6 öncelik paragrafı ve S47 H dalı rev19 yeniden bakışının L-N1/L-N2'sine göre netleştirildi;
+> O-N1 avukata iletilecek bilgi olarak Ek R4/17'ye yazıldı. Değişen bloklar N188 ve N192; diğer
+> 191 blok bayt-bayt aynıdır; kit1 değişmedi; kit2 dosya kümesi 160'ta kaldı (yalnız `ev.ps1`
+> şablonu değişti). Denetim yalnız oturum scratchpad'inde, yeni `-NoProfile` süreçlerde ve sentetik
+> köklerde yapıldı; `Start-Process` taklit edildi, gerçek Not Defteri açılmadı; acil sayfa dalı son
+> tam insan provasına (ayrı kullanıcı kararı) tabidir ve provadan geçmeden gerçek koşuda
+> kullanılamaz (§32/41).
 
 ---
 
@@ -259,7 +273,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır, kit2 dilim 4 koduyla ve K17-1–K17-3 kararlarıyla revizyon 17'dir, kit2 dilim 4 prova #8 (`C:\vd5_837d8cf6`) ve prova #8-ek (`C:\vd5_79796a4c`) bağımsız kanıt incelemelerinin iki kit bulgusuyla (acil sayfa 2. bölümünde `Get-PilotStringSha` tanımsız; `z1.ps1` kanal kapısı kaynağı) revizyon 18'dir, kit2 dilim 4'ün prova #9-dar (`C:\vd5_625a9ed5`) ile "PASS_WITH_LIMITS (rev18)" kapanışı ve kit2 dilim 5 (kullanıcı sayfası N192; `K_ORDER` ve `B18_NO_DECISIONS` iletileri) ile revizyon 19'dur; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22; revizyon 17: §34.23; revizyon 18: §34.24; revizyon 19: §34.25) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır, kit2 dilim 4 koduyla ve K17-1–K17-3 kararlarıyla revizyon 17'dir, kit2 dilim 4 prova #8 (`C:\vd5_837d8cf6`) ve prova #8-ek (`C:\vd5_79796a4c`) bağımsız kanıt incelemelerinin iki kit bulgusuyla (acil sayfa 2. bölümünde `Get-PilotStringSha` tanımsız; `z1.ps1` kanal kapısı kaynağı) revizyon 18'dir, kit2 dilim 4'ün prova #9-dar (`C:\vd5_625a9ed5`) ile "PASS_WITH_LIMITS (rev18)" kapanışı ve kit2 dilim 5 (kullanıcı sayfası N192; `K_ORDER` ve `B18_NO_DECISIONS` iletileri) ile revizyon 19'dur, revizyon 19 bağımsız incelemesinin karar 10'u (acil sayfanın açılış yolu; `USER_DECISION=R19-FIX` D-2) ve yeniden bakışının L-N1, L-N2 ve O-N1 maddeleriyle revizyon 20'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22; revizyon 17: §34.23; revizyon 18: §34.24; revizyon 19: §34.25; revizyon 20: §34.26) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -6408,6 +6422,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 17:** N135, N136, N147, N154, N172, N173 değişti; yeni N175–N190 (dilim 4); diğer 169 blok bayt-bayt aynı | Prova #7 (`C:\vd5_b4bcce27`) `PROVA_DILIM3=BELIRSIZ`, inceleme `01962f35…`: dilim 3 adlı sınırla kapandı | Değişti (§34.23) | **Yeni, dilim 4 provası** (Ek R4/16.5; kit2 kurulumu, `pins2.txt` 160 satır, `kit-build2.txt`, N147 ve `kbe.ps1`'i yükleyen bütün komutların ajan ikizleri yeniden; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi) |
 | **Revizyon 18:** N187 (`z1.ps1`: `s29b` kanal kapısı kaynağı) ve N189 (acil sayfa şablonu: 2. bölümde N191) değişti; yeni N191 (sayfa bloğu; `Get-PilotStringSha` tanımı, N12'nin 1. satırı); diğer 189 blok bayt-bayt aynı | Prova #8 (`C:\vd5_837d8cf6`) `PROVA_DILIM4=BELIRSIZ` ve prova #8-ek (`C:\vd5_79796a4c`) `PROVA_DILIM4_EK=FAIL` / `PROVA_DILIM4_BIRLESIK=FAIL`; incelemeler `1fff636a…` (M-3) ve `22011802…` (H-1): dilim 4 adı konmuş kit kusuruyla kapandı (kullanıcı kararı D1) | Değişti (§34.24) | **Dar, ajanlı yeniden ölçüm** (§34.24 notları; planı ayrı iştir): altı acil sayfa ikizi (T-FEP1, T-FEP2, T-FEP2b, T-FEP4, T-FEP5, T-FEP6) blok başına sayaçla `prep_sec2_stop=0`; `z1`/`s29b` yoluna giren ikizler (küme P§7.4.2 taramasıyla); `z1.ps1` yeni pinle kit2 kurulumu, `pins2.txt`, `kit-build2.txt` ve N147 yeniden; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
 | **Revizyon 19:** N143 (`k.ps1`: `K_ORDER` iletisi eksik adımı adıyla) ve N167 (`b18.ps1`: `B18_NO_DECISIONS` iletisi eksik kararı adıyla) değişti; yeni N192 (kit2 kullanıcı sayfası, `text`; Ek R4/24); diğer 190 blok bayt-bayt aynı | Prova #9-dar (`C:\vd5_625a9ed5`) `PROVA_DILIM4_R18=PASS_WITH_LIMITS` ve `PROVA_DILIM4_BIRLESIK_R18=PASS_WITH_LIMITS`; inceleme `95285202…`: dilim 4 "PASS_WITH_LIMITS (rev18)" ile kapandı (kullanıcı kararı D1) | Değişti / yeni (§34.25) | **Son tam insan provası** (ayrı kullanıcı kararı; planı yazılmadı; §34.25 notları): gerçek koşu sayfası N192; `k.ps1` ve `b18.ps1` yeni pinle kit2 kurulumu, `pins2.txt` 160 satır, `kit-build2.txt`, N147; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
+| **Revizyon 20:** N188 (`ev.ps1` şablonu: `MATCH`'te acil sayfayı pinli Not Defteri'nde `-Wait` olmadan açar; yeni tek satırlık çıktı `OPEN_FAIL`; iki yeni doldurulan sabit `<notepad-file-version>`, `<notepad-sha256>`) ve N192 (D8 açılış yolu ve `OPEN_FAIL` dalı; G6 öncelik paragrafı; S47 H dalı) değişti; diğer 191 blok bayt-bayt aynı | — (yeni prova yok; rev19 incelemesi karar 10 / O-3 ve yeniden bakışı L-N1, L-N2, O-N1) | Değişti (§34.26) | **Son tam insan provası** (ayrı kullanıcı kararı; planı yazılmadı; §34.26 notları): `ev.ps1` yeni şablonla doldurulur (Not Defteri (6)'da ölçülür), `EV_PS1_SHA256` ve `pins2.txt`'nin `ev.ps1` satırı yeniden; acil sayfa dalı gerçek pencerede bir kez; N192 yeni hâliyle; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
 
 ### 34.5 Yazım sınırları
 
@@ -12733,6 +12748,201 @@ buldu. Bu bölüm yazıldıktan sonra tarama yeniden koşuldu.
 **Sonuç.** `READY_FOR_INDEPENDENT_REVIEW` (dar yeniden bakış için). Bu düzeltme commit, push, son
 tam insan provası, planı veya gerçek koşu yetkilendirmez.
 
+### 34.26 Revizyon 20
+
+YENİ (`USER_DECISION=R19-FIX` D-2, üst sınır `2026-11-08T18:27:01+03:00`, ve `SCOPE_APPROVED`
+"SCOPE EVET", üst sınır `2026-11-08T20:29:47+03:00`; ikisi de planlayıcı oturumunda verildi, saniye
+ölçülmedi; oturum KIT2-REV20; tek yazan oturum). Konu: acil sayfanın açılış yolu (R20-1), rev19
+yeniden bakışının iki küçük sayfa notu (R20-2) ve bir avukat bilgi maddesi (R20-3). Girdi: `495abbe`
+runbook'u (SHA-256 `31907f62afab22301116c2fb3f56e8bc2cda183edcc9f9908a13cb68d5a8b834`, 23373 satır,
+193 blok; HEAD = `origin/claude-dev`; çalışma ağacı temiz; diskten doğrulandı). Yalnız bu dosya
+değişti; kod, şema, veri, test, kit1, başka runbook veya `CLAUDE.md` değişmedi. Commit ve push
+yapılmadı. Kit, başlatıcı, gerçek CLI, `psql`, PostgreSQL, 7z, VeraCrypt, Not Defteri ve ağ
+çalıştırılmadı; gerçek kurulumun `ev.ps1`'i çalıştırılmadı (sentetik kopyaları yalnız
+scratchpad'deki sentetik sayfalarla ve taklit `Start-Process` ile çalıştırıldı; profil kökü
+`GetFolderPath` gereği gerçek profildir, aşağıda "Sahte profil"); hiçbir porta bağlanılmadı; `.env`
+açılmadı.
+
+**Kaynaklar (diskten okundu; SHA-256'lar ölçüldü, üçü de komuttaki değerle eşit).** Rev19
+incelemesi (Sonnet 5.5) `<profile>\vergi_step10_rev19_review_de0267a0\independent-runbook-rev19-review.md`
+(`60c1c8c8b9f2e800ca3c90d4536cd82580f610a79aedde395a76617ffa56359a`; O-3, karar 10). Rev19 yeniden
+bakışı (Sonnet 5.5) `<profile>\vergi_step10_rev19_recheck_dd4921d0\independent-runbook-rev19-recheck.md`
+(`219afc9c94b1600748daa302a3bb4b4fbea2d488859621d16ce5e4aa86d6ef71`; L-N1, L-N2, O-N1) ve aynı
+dizinde `independent-runbook-rev19-recheck-corrections.md`
+(`deec430a65f2c239073ad070c4cc382ebb60359bb4c7ac438234c19b346aabf3`; madde 3: S44 atfı G6'dır).
+
+**Kullanıcı kararları.**
+
+| Karar | Metin | Uygulama |
+|---|---|---|
+| `USER_DECISION=R19-FIX` D-2 | Acil sayfanın açılış yolu revizyon 20'de, son tam insan provasının planından ÖNCE karara bağlanır | Bu revizyon (R20-1) |
+| `SCOPE_APPROVED` ("SCOPE EVET") | R20-1 = A (`ev.ps1` `MATCH`'te sayfayı açar), R20-2, R20-3, R20-4 (kapsam dışı liste) | Aşağıdaki tablo |
+| K20-1 A (bu oturumda; saniye ölçülmedi; üst sınır `2026-11-08T21:20:45+03:00`) | Sayfa doğrulandı ama Not Defteri açılamadı: `ev.ps1` tek satır `OPEN_FAIL` basar; D8: EV satırı bir kez daha, yine olmazsa AÇIK-25 (b); Ek R4/13 madde 8'in koşulu "veya doğrulandığı hâlde açılamıyorsa" ile genişler | N188, N192 D8, Ek R4/13 madde 1, 4, 7, 8 |
+| K20-2 A (aynı) | Not Defteri pin değerleri `ev.ps1`'e pencere öncesi doldurulan iki sabit olarak girer (`<notepad-file-version>`, `<notepad-sha256>`); `kit-build2.txt` çalışma anında okunmaz | N188, Ek R4/23 madde 6 |
+| K20-3 EVET (aynı) | Kurulumda Not Defteri (6)'da ölçülür ve doldurulur; (12)'deki ölçüm aynı olmalı, değilse DUR (Ek R4/16.7 ve Ek R4/19 madde 2; bağlı metin listesinin dışındaydı, kapsam genişlemesi onaylandı) | Ek R4/16.7 (6), (12); Ek R4/19 madde 2 |
+
+Yazar ilk teslimde `BATCH_DECISIONS_REQUIRED` ile durmuştu (sayfa doğru ama Not Defteri
+açılamıyorsa bu durum bugünkü iki çıktıyla ancak `NO_MATCH`'e, yani guard'sız silmeye
+dönüşebiliyordu); K20-1…K20-3 o durumu kapatır.
+
+**Madde → değişiklik → bloklar.**
+
+| Madde | Değişiklik | Yer | Blok |
+|---|---|---|---|
+| R20-1 | `ev.ps1`: doğrulama aynı; eşleşirse pinli Not Defteri (`%SystemRoot%\System32\notepad.exe`; `FileVersion` ve SHA-256 iki doldurulan sabitle ordinal) `Start-Process -ErrorAction Stop` ile `-Wait` olmadan açılır, `MATCH` çağrı döndükten sonra basılır; pin farkı, sabit bozuk/doldurulmamış veya başlatma istisnası → `OPEN_FAIL`; ekrana her durumda tek satır | N188 | Değişti |
+| R20-1 | D8: GÖR = `MATCH` ve acil sayfa Not Defteri'nde açıldı; EV penceresi kapatılır, sayfa açık kalır, sayfaya yazılmaz, "Kaydetme"; yeni GÖRMEZSEN: `OPEN_FAIL` veya açılmayan sayfa → EV satırı bir kez daha, yine olmazsa AÇIK-25 (b) | N192 D8 | Değişti |
+| R20-1 | Bağlı metinler: Ek R4/13 madde 1, 4 (açılış, `-Wait` gerekçesi, güven sınırı ve zaman aralığı), 7 (`OPEN_FAIL` dalında sayfanın silinmesi madde 6 kuralıyla), 8 (koşul genişledi); Ek R4/23 giriş ve madde 6; Ek R4/16.7 (6), (12); Ek R4/19 madde 1 (pin notu) ve madde 2; Ek R4/24 madde 7; Ek R4/1 madde 5 (çıktı listesi) | Metin | — |
+| R20-2 (L-N2) | G6 öncelik paragrafı: adımın kendi GÖRMEZSEN satırı o durum için açıkça "DUR DEĞİL" diyorsa o geçerlidir (ekranda "DUR"/"DURDU" ya da "STOP" ile BAŞLAYAN satır veya "YARIDA KALDI" yoksa); H cümlesi "… ile BAŞLAYAN satır" biçiminde | N192 G6; Ek R4/24 madde 9 | Değişti |
+| R20-2 (L-N1) | S47 H dalı tek anlamlı: S44'te satırın boşaldığı görüldüyse H yanlış tuştur (DUR DEĞİL): İMHA penceresi kapatılır, VeraCrypt'e dokunmadan İMHA satırı yeniden açılır (S46); görülmediyse S44'ün GÖR'ü çıkmamıştır (G6): DUR OLURSA, zorla ayırma yok. S45'te kapatılan VeraCrypt'in yeniden açılması gerekmez | N192 S47; Ek R4/24 madde 9 | Değişti |
+| R20-3 (O-N1) | Ek R4/17 "Avukata borçlu olunanlar (açık)" paragrafına bilgi maddesi: `b18` kör hesap teyit sorusunda H = avukat sistem sonucunu gördü; kit kilitsiz reddeder ve aynı `b18` aynı dosyayı yeniden açtırır; avukata bildirilir ve görüşü sorulur. Kod ve sayfa değişmedi; yeni hukuki ifade yok | Ek R4/17 | — |
+| Kayıt | Üst uyarı, §0, §34.4 revizyon 20 satırı, bu bölüm | Metin | — |
+
+**Değişen bloklar (`495abbe`'ye göre; beklenen yalnız N188 ve N192).**
+
+| Blok | Eski SHA-256 | Yeni SHA-256 | Satır |
+|---|---|---|---|
+| N188 (`ev.ps1` şablonu) | `2fd5efeff4b9cceaaa43a8cc2751879a5f50035ef722da513cda53ecdd46f665` | `b25aa922d3eb5c6288374dc6052108fa7aafbe5df65f3faa1ed74ea079006383` | 27 → 46 |
+| N192 (kullanıcı sayfası) | `d832353ecf0fbd15182d109ea23a1e0d82bab4199275236d305fe9caf83e3614` | `88f5866134ed583f84b2ed2956e543b70b483f793f5031960f668070dfb98ecf` | 924 → 938 |
+
+Diğer 191 blok bayt-bayt aynıdır; yeni blok yok (193). Kit1 baytı ve `pins.txt` değişmedi; kit2
+dosya kümesi 160'ta kaldı; `pins2.txt` 160 satır ve iki sentetik kök arasında yalnız `ev.ps1`
+satırı farklı (`ev.ps1` köke özgü doldurulduğu için zaten her kurulumda ölçülür).
+
+**Ölçümler (hepsi oturuma özel scratchpad'de; yeni `powershell.exe -NoProfile -NonInteractive
+-ExecutionPolicy Bypass -File` süreçleri, Windows PowerShell 5.1; `TEMP`/`TMP` ve
+`PSModuleAnalysisCachePath` scratchpad'e yönlendirildi; başlarken boş bellek ≈ 5,0 GB; düzenek
+iskeleti rev19 yazar düzeneğinin `build.py`/`finish.py`/`h.ps1`/`pf.ps1`/`pchk.py`/`scan15.py`
+kopyasıdır (salt-okunur kopyalandı, uyarlamalar ayrı dosyalarda)).**
+
+- **Sahte profil.** `[Environment]::GetFolderPath('UserProfile')` `USERPROFILE` ortam değişkeniyle
+  sahtelenemez (ölçüldü: değişken değişti, dönüş değişmedi). Bu yüzden sentetik güvenli dizin ve
+  sayfalar scratchpad'in içindedir ve göreli ad gerçek profile göre hesaplandı (rev19 düzeneğiyle
+  aynı sınır); scratchpad dışında profil altında hiçbir dosya okunmadı veya yazılmadı (aşağıdaki
+  sapma hariç). Kit1 `ac.ps1` yüklemesinde `USERPROFILE` yalnız yükleme süresince sahte profile
+  çevrildi (rev18/rev19 düzenek sınırı).
+- **`ev.ps1` durum tablosu (26 vaka; her vaka yeni kök ve yeni süreç; Ek R4/23 madde 6 kuralıyla
+  ordinal doldurma; `Start-Process` fonksiyon gölgelemesiyle taklit; taklit etkin değilse `ev.ps1`
+  çalıştırılmaz — 26/26 vakada etkindi; gerçek Not Defteri açılmadı; Not Defteri dosyası yalnız
+  okundu).**
+
+  | Vaka | Eski şablon | Yeni şablon | Yeni: `Start-Process` çağrısı |
+  |---|---|---|---|
+  | MATCH | `MATCH`, çağrı 0 | `MATCH` | 1: `FilePath` = pinli yol, tek argüman = tırnaklı tam sayfa yolu, `ErrorAction=Stop`, `-Wait` yok |
+  | MATCH, boşluklu dizin | `MATCH`, çağrı 0 | `MATCH` | 1: aynı (tırnaklama doğru) |
+  | Hash farkı | `NO_MATCH` | `NO_MATCH` | 0 |
+  | Dosya yok | `NO_MATCH` | `NO_MATCH` | 0 |
+  | Reparse bileşen (junction) | `NO_MATCH` | `NO_MATCH` | 0 |
+  | `..` bileşeni | `NO_MATCH` | `NO_MATCH` | 0 |
+  | Bozuk sabit (hash biçimi) | `NO_MATCH` | `NO_MATCH` | 0 |
+  | Doldurulmamış şablon | `NO_MATCH` | `NO_MATCH` | 0 |
+  | Not Defteri hash farkı | `MATCH`, çağrı 0 | `OPEN_FAIL` | 0 |
+  | Not Defteri sürüm farkı | `MATCH`, çağrı 0 | `OPEN_FAIL` | 0 |
+  | Not Defteri sabitleri doldurulmamış | `MATCH`, çağrı 0 | `OPEN_FAIL` | 0 |
+  | Not Defteri yok (`SystemRoot` sentetik dizin) | `MATCH`, çağrı 0 | `OPEN_FAIL` | 0 |
+  | Başlatma istisnası (taklit `throw`) | `MATCH`, çağrı 0 | `OPEN_FAIL` | 1 (çağrı yapıldı, istisna yakalandı) |
+
+  Her vakada çıkış kodu 0 ve ekranda **tek satır**; satırda sayfa yolu, göreli ad, sayfa hash'i,
+  Not Defteri hash'i, profil yolu ve güvenli dizin adı **0** kez (tarama pozitif kontrolü: iğneleri
+  taşıyan sentetik satırda 2/2). Eski şablonun MATCH'te çağrı yapmaması, taklidin yalnız gerçek
+  çağrıyı yakaladığının karşı kontrolüdür. Not Defteri'nin gerçek `FileVersion` dizgesi kitin `ver`
+  sınıfına uyar (ölçüldü).
+- **Kit2 bütünlüğü.** İki sentetik kök (taban ve yeni baytlar) ve iki pozitif kontrol kökü. Taban ve
+  yeni kökte gerçek `ac.ps1` + gerçek `bc.ps1`: `KIT2_LOAD=OK`, `KIT2_COMMANDS_DEFINED=True`; gerçek
+  `Get-KbScript` **41/41**; `pins2.txt` `ev.ps1` = `EV_PS1_SHA256`; N141'in (`b1`) acil sayfa ve
+  `ev.ps1` hash satırları (7 satır, runbook baytlarından alınıp çalıştırıldı) `B1_PAGE_OK=True`,
+  `B1_PAGE_ACL=True`, `B1_EV_OK=True`. Pozitif kontroller: yüklemeden önce `ev.ps1`'e 1 bayt →
+  `KIT2 YUKLENEMEDI (KB_LOAD_PIN_MISMATCH)`; yüklemeden sonra 1 bayt → `B1_EV_OK=False`.
+- **`ParseFile` ve N147.** Doldurulmuş yeni `ev.ps1`: 0 hata, 46 satır, ASCII dışı 0, CR 0, yer
+  tutucu 0. N147 (taban ve yeni kökte): `KIT2_VAR_SCAN_FILE_COUNT=150`, `KIT2_VAR_COLLISIONS=0`, on
+  `KIT2_AST_*=0`, `KIT2_PLACEHOLDER_LITERAL_COUNT=0`, `KIT2_CMD_COLLISIONS=0`. Pozitif kontroller:
+  doldurulmamış `<notepad-sha256>` + duyarsız işleç → `STOP KIT2_PLACEHOLDER_LITERAL_COUNT=1` ve
+  `STOP KIT2_AST_INSENSITIVE_OPERATOR=1`; bir değişkenin harf büyüklüğü farkı →
+  `KIT2_VAR_COLLISION kind=SAME_SCOPE_CASE`, `STOP KIT2_VAR_COLLISIONS=1`. Kit1'in 17 kod dosyası iki
+  kökte bayt-eşit (`kit-values.txt` köke özgü sentetik değerdir).
+- **Sayfa statik denetimleri (N192; C1–C10; dokuz pozitif kontrolün dokuzu kusuru yakaladı).** C1
+  172 YAP / 0 ihlal; C2 172 GÖR / 0 eksik; C3 dört içerik günü KÜME → KİT; C4 beş yer tutucu, düz
+  `<…>` 0; C5 üçlü/tek ters tırnak 0; C6 tanımsız komut 0, kodlar runbook'ta (yeni `OPEN_FAIL` dahil);
+  C7 361 parça kitte birebir, iki eksik parça (`y1`/`y2` "repo dizini yok" iletisi) tabanda da aynıdır
+  ve `adm.ps1`'deki `$adxStep` birleştirmesinden gelir (§34.25'te açıklandı); C8, C9 eşit; C10 yedi
+  Win+R satırı kalıba uyar. Ek: N192'de güvenli dosya, acil sayfa ve profil-göreli ad izi 0 (aynı
+  desen N188'de 2 isabet verdi: pozitif kontrol). S47'deki "DUR DEĞİL" kitin gerçek davranışına
+  uyar (`z1` H → `Z1_PRECONDITION`, `Write-KbRefusal`, kilitsiz).
+
+**Ölçülemeyenler (PASS sayılmadı).** Gerçek Not Defteri'nin açılması ve sayfanın gerçekten ekranda
+görünmesi; EV penceresi X'ten kapatılınca Not Defteri'nin açık kalması (Windows davranışı; gerekçe
+olarak yazıldı, ölçülmedi); gerçek `Start-Process` başlatma hatasının biçimi (taklit `throw` ile
+ölçüldü; `-ErrorAction Stop`'un gerçek cmdlet hatalarını sonlandırıcı yaptığı gerçek cmdlet'le
+ölçülmedi); gerçek bir Windows güncellemesiyle oluşan pin farkı (sabitle taklit edildi); doğrulama ile
+açma arasındaki zaman aralığı; `GetFolderPath`'in gerçekten sahte bir profile yönelmesi (ortamla
+sahtelenemedi); `b1`'in tamamı (yalnız acil sayfa/`ev.ps1` satırları); kurulumun (6)/(12) Not
+Defteri sırası gerçek kurulumda; sayfanın bir insan tarafından okunması ve izlenmesi; gerçek
+VeraCrypt, İMHA penceresi ve klavye (S47).
+
+**Tek taraflı kararlar (inceleyici için).** (1) `-Wait` yok: satır başlatmanın sonucunu bildirdiği
+için çağrı döndükten sonra basılmalı ve sayfa bloklar kopyalanırken açık kalmalı. (2) Üçüncü çıktının
+adı `OPEN_FAIL` (MATCH ile başlamaz; aceleyle okunurken karışmasın). (3) Not Defteri yolu
+doldurulmaz, `System32\notepad.exe` sabittir (`Read-KbBuild` `NOTEPAD_RELATIVE`'i zaten bu sabite
+bağlar); iki sabitin biçimi kitin `h64` ve `ver` kurallarıyla denetlenir. (4) `MATCH` görülüp sayfanın
+açılmaması `OPEN_FAIL` ile aynı dala gider (bir kez yeniden, sonra AÇIK-25 (b)); K20-1'in "sayfa
+doğru ama açılamadı" sınıfıdır. (5) Not Defteri dosyası bulunamazsa (ör. `SystemRoot` yanlış)
+`OPEN_FAIL`, çünkü sayfa doğrulanmıştır. (6) N189 değişmedi: 0. bölümü yalnız `MATCH`'te görülür ve
+GÖRMEZSEN cümlesi genişleyen madde 8'e atıf yaptığı için doğru kalır. (7) Ek R4/1 madde 5'teki
+çıktı listesi tutarlılık için güncellendi (bağlı metin listesinde adı yoktu). (8) `OPEN_FAIL` ile
+AÇIK-25 (b)'ye gelindiğinde sayfanın silinmesi madde 6 kuralıyla (hash eşleşirse sil) yapılır, madde
+7'nin "eşleşmeyen sayfa" kuralıyla değil. (9) G6'daki yeni "DUR DEĞİL" önceliğine "ekranda DUR/DURDU
+veya STOP ile başlayan satır ya da YARIDA KALDI yoksa" koşulu eklendi; gerçekten kilitli bir sonuç
+DUR değil yapılmadı. (10) L-N1 için incelemenin ilk önerisi seçildi (S44 GÖR'üne göre iki dal);
+VeraCrypt'i yeniden açma adımı eklenmedi, çünkü iki dalın hiçbiri buna ihtiyaç duymaz. (11) R20-3'ün
+yeri Ek R4/17'deki "Avukata borçlu olunanlar (açık)" paragrafıdır. (12) §34.25'in metni tarihsel
+kayıttır, değiştirilmedi; "Sonraki revizyona bırakılanlar (3)"ün kapandığı burada yazılıdır. (13) Ek
+R4/24 madde 7'nin revizyon 19 metni korundu, sonuna revizyon 20 notu eklendi.
+
+**Kapanan maddeler.** §34.25 "Sonraki revizyona bırakılanlar" (3) (acil sayfanın açılış yolu; D-2;
+rev19 incelemesi O-3 / karar 10); rev19 yeniden bakışı L-N1, L-N2; O-N1 avukata bildirilecek bilgi
+maddesi olarak kayda alındı (avukatın görüşü açıktır).
+
+**Sonraki revizyona bırakılanlar (blok veya kit davranışı değişikliği gerekir; bu turda
+YAPILMADI).** §34.25 listesinin (1), (2), (4), (5), (6) ve (7). maddeleri aynen. Ek olarak: kit
+kodunun `ev.ps1`'in iki Not Defteri sabitini `kit-build2.txt`'deki `NOTEPAD_*` ile karşılaştırması
+(bugün kurulumdaki ajan ölçümüdür; kit değişikliği R20-4 gereği kapsam dışıydı).
+
+**Son insan provası planına notlar** (plan işidir; bu turda YAZILMADI). §34.25 notları aynen; ek
+olarak: (a) acil sayfa dalı gerçek pencerede **bir kez**: EV satırı → tek satır `MATCH` ve acil
+sayfanın Not Defteri'nde açılması; EV penceresi X'ten kapatılınca sayfanın açık kalması; blokların
+sayfadan ACİL KİT penceresine kopyalanması; sayfaya yazılmaması ve "Kaydetme". (b) `OPEN_FAIL` dalı
+prova kökünde bilerek bir kez (ör. prova kopyasında Not Defteri sabiti farklı): ekranda tek satır
+`OPEN_FAIL`, ikinci çalıştırmada da `OPEN_FAIL`, sayfanın açılmadığı ve D8'in AÇIK-25 (b)'ye yönlendirdiği
+gözlenir (silme yapılmaz). (c) Kurulumda Not Defteri (6)'da ölçülür ve doldurulur; (12)'de eşitlik
+denetimi kayda geçer. (d) G6 öncelik paragrafı ve S47'nin iki dalı (S44'te boşalma görüldükten sonra H)
+gerçek pencerede. (e) N188 ve N192 için önceki kanıt devralınmaz; `ev.ps1` yeni şablonla doldurulur,
+`EV_PS1_SHA256` ve `pins2.txt`'nin `ev.ps1` satırı yeniden ölçülür.
+
+**Düzeneğin kurduğu dizinler.** Scratchpad içinde: rev19 araç kopyaları dizini; dört sentetik kit kökü
+(taban, yeni, yüklemeden önce bozulan, yüklemeden sonra bozulan), her biri `ev\kit`, `ev\kit2`, `sec`
+(sentetik güvenli dosya ve sayfa; Ek R4/2 madde 5 ACL'si yalnız bu kökte), `vol\pilot\{repo,restricted,temp,in}`,
+`ext`, `srcrepo`, `cfile`, `pg\data`, `tools` (boş araç dosyaları), `fakeprof`, `tool`, `tmp`, `psmac`;
+kit tarafından açılanlar `steps`, `steps\s1`, oturum kayıtları (`ac.txt`, `bc.txt`); `ev.ps1` vaka
+dizini (26 vaka kökü, iki junction ve sentetik `SystemRoot` dizini); `tmp`, `psmac`. **Sapma:** bir Bash
+tırnaklama hatasıyla bir sentetik kit kökü (içinde yalnız sentetik kit ve sentetik sayfa) bir kez
+scratchpad'in yanındaki oturum dizinine kuruldu; scratchpad dışı silme onay gerektirdiği için
+silinmedi, kullanıcı kararına bırakıldı. Ayrıca bir uyarlama betiği bir kez Bash heredoc'uyla
+üretildi (komut heredoc'u yasaklıyordu); çıktısı satır satır karşılaştırıldı (yalnız amaçlanan satırlar
+değişmişti). Repo, prova kökleri, Masaüstü, pilot kümesi ve passfile'a dokunulmadı.
+
+**§1.5 taraması (pozitif kontrollü).** `495abbe`'ye göre eklenen ve değişen satırlar kullanıcı adı,
+profil dizininin adı, profil yolu biçimi, yüzde-sarmalı profil değişkeni, 8.3 kısa ad, DSN port,
+"port" bağlamlı sayı, `55xxx`, avukat unvanı + ad deseni, e-posta, uygulama verisi dizini, scratchpad
+yolu ve proje dizini adı sınıflarıyla tarandı: 0 isabet; pozitif kontrol on üç sınıfın on üçünü buldu.
+Bu bölüm yazıldıktan sonra tarama yeniden koşuldu.
+
+**Yazma hesabı.** Taban dosya diskten okundu (SHA-256 eşit); düzenlemeler tek bir betikle, her biri
+tam bir eşleşme denetimiyle yapıldı; dosya LF, BOM yok, CR 0; son yazımdan sonra bloklar dosyadan
+yeniden çıkarılıp taban bloklarla karşılaştırıldı (191 eşit, 2 değişti, 0 yeni) ve yukarıdaki SHA'lar
+ölçülen baytlardır. Bu revizyon gerçek koşuyu, gerçek veri gönderimini, son tam insan provasını veya
+planını yetkilendirmez; her biri ayrı kullanıcı kararıdır.
+
+**Sonuç.** `READY_FOR_INDEPENDENT_REVIEW`.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -14065,8 +14275,9 @@ ilgili kararlar yeniden açılır ve bu ek değişir.
    `z1`, `s29b`; KİT penceresi `b0`, `b1`, `b2`, `b5`, `b5d`, `b6`, `b7`,
    `g8`, `b8`–`b16`, `g14`, `g16`, `b18`–`b24`, `u`, `s25`–`s28`, `s29a`,
    `k`, `n`, `o`, `r1`–`r5`; `r6` ve `r7` bu sürümde yok (K17-1; §34.23
-   Açık maddeler). `ev.ps1` bir komut değildir; yalnız `MATCH`
-   veya `NO_MATCH` basar (Ek R4/13). Kurulumda kit1 + kit2 birleşimi
+   Açık maddeler). `ev.ps1` bir komut değildir; yalnız tek satır `MATCH`,
+   `NO_MATCH` veya `OPEN_FAIL` basar ve `MATCH`'te acil sayfayı pinli Not
+   Defteri'nde açar (Ek R4/13 madde 4; revizyon 20). Kurulumda kit1 + kit2 birleşimi
    üzerinde genişletilmiş N116 (değişken adı çakışması) ve `Get-Command`
    ile komut adı çakışması ölçülür (dilim 1).
 6. **Kit1 araçları yalnız okunarak kullanılır.** Kit2 `Write-KitDur`,
@@ -15605,8 +15816,11 @@ seçimine girmez. Yeni süreye giren alan bulunmadı.
    `s29a` FAIL verir, `z1` kit yoluyla çalışmaz ve yol acil sayfanın 7.
    bölümüdür; `K_ALREADY_DECIDED` bunları onaramaz): sayfanın
    DUR OLURSA bölümü önce `ev.ps1`'i çalıştırır. `MATCH` ise acil sayfa
-   kullanılır; başka her çıktıda (boş, hata, `NO_MATCH`) veya sayfa yoksa
-   AÇIK-25 (b) (madde 8). Kit2 sağlamken acil sayfanın bozuk olması bu
+   kullanılır (`ev.ps1` onu pinli Not Defteri'nde açmıştır; revizyon 20,
+   madde 4); `OPEN_FAIL` ise (sayfa doğru ama açılamadı) EV satırı bir kez
+   daha çalıştırılır ve yine açılmazsa AÇIK-25 (b) (madde 8; kullanıcı
+   kararı K20-1 A); başka her çıktıda (boş, hata, `NO_MATCH`) veya sayfa
+   yoksa AÇIK-25 (b) (madde 8). Kit2 sağlamken acil sayfanın bozuk olması bu
    yolu tetiklemez (madde 5).
 2. **Acil sayfa (`<emergency-page>`).** Pencere öncesi ajan oturumunun
    yazdığı, değerleri doldurulmuş, güvenli dosyayla **aynı** dizinde
@@ -15715,24 +15929,56 @@ seçimine girmez. Yeni süreye giren alan bulunmadı.
    basar; ekran satırları kayda geçirilmez. Veri silindikten sonra ajan
    oturumu (D7) manifestleri ve §30 postcondition'larını ölçer; özet
    (§26.4) yolu "acil sayfa" olarak işaretler (§32/48).
-4. **`ev.ps1` (L-Y2 b; recheck-2 not 9).** `<evidence-dir>\kit2\ev.ps1`;
-   yalnız ASCII; tek işlevli. Sayfanın profil-göreli sabit adını ve
-   beklenen SHA-256'sını **kendi içinde sabit** taşır (pencere öncesi
-   ajan sayfayı yazdıktan sonra üretir). Göreli adı
+4. **`ev.ps1` (L-Y2 b; recheck-2 not 9; revizyon 20: açılış yolu).**
+   `<evidence-dir>\kit2\ev.ps1`; yalnız ASCII. Sayfanın profil-göreli
+   sabit adını ve beklenen SHA-256'sını **kendi içinde sabit** taşır
+   (pencere öncesi ajan sayfayı yazdıktan sonra üretir). Göreli adı
    `[Environment]::GetFolderPath('UserProfile')` ile birleştirir; tam
    yolun canonical olduğunu ve profil dizininden dosyaya kadar hiçbir
    bileşenin reparse point olmadığını denetler (Ek R4/2 madde 4 ile
-   aynı); sayfanın SHA-256'sını alır, ordinal karşılaştırır ve **yalnız**
-   `MATCH` veya `NO_MATCH` basar; her istisna `NO_MATCH`'tir. Yol, hash
-   veya başka metin basmaz. Güvenli dosyayı, `pins2.txt`'yi, `bc.ps1`'i ve
-   kit1'i **okumaz**. Kullanıcı sayfasının DUR OLURSA bölümündeki kendi
-   Win+R satırıyla başlatılır; satır güvenli dizinin yolunu taşımaz.
-   SHA-256'sı `pins2.txt`'ye ve `kit-build2.txt`'ye (`EV_PS1_SHA256`)
-   girer. **Güven sınırı (dürüst):** kullanım anında `ev.ps1`'in kendisini
-   mekanik olarak doğrulayan bir şey yoktur; bu kit1 `ac.ps1`'in kendi
-   pinini denetlemesiyle aynı sınıftır (tehdit modeli kazara bozulma, eski
-   veya yanlış sayfadır; kasıtlı değişiklik değil). Elle 64 hex
-   karşılaştırması yoktur.
+   aynı); sayfanın SHA-256'sını alır ve ordinal karşılaştırır. Eşleşmezse
+   `NO_MATCH` basar ve hiçbir şey açmaz; doğrulamadaki her istisna
+   `NO_MATCH`'tir. **Açılış (revizyon 20; kullanıcı kararları K20-1 A,
+   K20-2 A).** Eşleşirse sayfayı kitin bugünkü kuralıyla pinli Not
+   Defteri'nde açar: yol `%SystemRoot%\System32\notepad.exe`
+   (`NOTEPAD_RELATIVE` ile aynı sabit); `FileVersion` dizgesi ve SHA-256
+   `ev.ps1`'in kendi içinde taşıdığı iki sabitle ordinal karşılaştırılır
+   (pencere öncesi ajan `NOTEPAD_FILE_VERSION` ve `NOTEPAD_SHA256`
+   değerleriyle doldurur; Ek R4/23 madde 6; N143 `k`'nin pin denetimiyle
+   aynı); pin tutarsa `Start-Process -FilePath <pinli notepad.exe>
+   -ArgumentList <tırnaklı sayfa yolu> -ErrorAction Stop` **`-Wait`
+   olmadan** çağrılır ve `MATCH` ancak çağrı döndükten sonra basılır. Pin
+   tutmazsa, iki sabitten biri bozuk veya doldurulmamışsa ya da başlatma
+   bir istisna verirse `OPEN_FAIL` basılır: sayfa doğrudur ama
+   açılamadı; bu durum sessizce `NO_MATCH`'e dönüşmez (madde 1 ve 8).
+   `-Wait` kullanılmaz: satır başlatmanın sonucunu bildirdiği için çağrı
+   döndükten sonra basılmalıdır (`-Wait` ile Not Defteri kapanana kadar
+   hiçbir şey basılmazdı) ve sayfa, bloklar KİT penceresine kopyalanırken
+   açık kalmalıdır; Not Defteri ayrı bir süreçtir, EV penceresi X'ten
+   kapatılınca açık kalır. Ekrana her durumda **yalnız** tek satır basılır
+   (`MATCH`, `NO_MATCH` veya `OPEN_FAIL`); yol, hash veya başka metin
+   basılmaz. Güvenli dosyayı, `pins2.txt`'yi, `kit-build2.txt`'yi,
+   `bc.ps1`'i ve kit1'i **okumaz**. Kullanıcı sayfasının DUR OLURSA
+   bölümündeki kendi Win+R satırıyla başlatılır; satır güvenli dizinin
+   yolunu taşımaz ve kullanıcı sayfası acil sayfanın yolunu yazmaz
+   (sayfayı yalnız `ev.ps1` açar). SHA-256'sı `pins2.txt`'ye ve
+   `kit-build2.txt`'ye (`EV_PS1_SHA256`) girer. **Güven sınırı (dürüst):**
+   kullanım anında `ev.ps1`'in kendisini mekanik olarak doğrulayan bir şey
+   yoktur; bu kit1 `ac.ps1`'in kendi pinini denetlemesiyle aynı sınıftır
+   (tehdit modeli kazara bozulma, eski veya yanlış sayfadır; kasıtlı
+   değişiklik değil). Elle 64 hex karşılaştırması yoktur. Aynı tehdit
+   modeli doğrulama ile açma arasındaki aralık için de geçerlidir: Not
+   Defteri dosyayı yoldan yeniden okur, `ev.ps1`'in doğruladığı baytları
+   değil; dosya bu kısa aralıkta değişirse açılan metin doğrulanan metin
+   olmayabilir. Kazara bozulmanın tam bu aralığa denk gelmesi beklenmez;
+   kasıtlı değişiklik kapsam dışıdır. Başlatmanın başarılı olması sayfanın
+   ekranda göründüğünü kanıtlamaz; bunu operatör görür (N192 D8 GÖR). Kit
+   kodu `ev.ps1`'in içindeki iki Not Defteri sabitini `kit-build2.txt`'deki
+   `NOTEPAD_*` ile karşılaştırmaz (`b1` yalnız `EV_PS1_SHA256`'yı denetler;
+   kit değişikliği revizyon 20'nin kapsamı dışıdır); eşitlik kurulumda
+   pencere öncesi ajanın ölçümüdür (Ek R4/16.7 (6) ve (12)). Windows
+   güncellemesi Not Defteri'ni kurulumdan sonra değiştirirse acil yolda
+   `OPEN_FAIL` görülür; içerik alındıktan sonra ajan yeniden pinleyemez.
 5. **Kit2'nin bütünlük denetimi (errata-4 §4.2/2; recheck-2 not 1).** Kit2
    her başarılı yüklemede ve her `b1`'de `ev.ps1`'in ve sayfanın hash'ini
    karşılaştırır ve sayfanın ACL'sini ölçer. **İçerik öncesi**
@@ -15760,14 +16006,20 @@ seçimine girmez. Yeni süreye giren alan bulunmadı.
    hedefi adlandıran ayrı kullanıcı onayıyla, ajan dosyanın yalnız yol ve
    değer taşıdığını (içerik taşımadığını) görür ve siler; özete
    `EMERGENCY_PAGE_DELETED=True` ve `EMERGENCY_PAGE_HASH_MATCHED=False`
-   girer.
+   girer. `OPEN_FAIL` ile bu dala gelindiyse (revizyon 20) sayfa
+   eşleşmiştir; sayfanın silinmesinde madde 6'nın kuralı uygulanır (hash
+   eşleşirse silinir, eşleşmezse silinmez ve durulur).
 8. **AÇIK-25 = (b) (kullanıcı kararı `at=2026-10-20T22:51:52+03:00`;
-   recheck-2 not 2).** Kit2 yüklenemiyor (veya silme komutları
-   tamamlanamıyor) **ve** acil sayfaya güvenilemiyorsa: dosya avukatının
-   yazılı Form F kararı (madde 2.4'teki kanal) ve ayrı
-   `REAL_ACTION_APPROVED` ile kapsayıcı doğrudan imha edilir. Bu dal
-   **guard'sız bir silmedir**: §28.3.3'ün guard'ı (N102) yer tutucu
-   değerleri ister ve bu dalda değerler güvenilir değildir.
+   recheck-2 not 2; revizyon 20: kullanıcı kararı K20-1 A).** Kit2
+   yüklenemiyor (veya silme komutları tamamlanamıyor) **ve** acil sayfa
+   kullanılamıyorsa — sayfaya güvenilemiyorsa (boş, hata, `NO_MATCH`,
+   sayfa yok) **veya** sayfa doğrulandığı hâlde iki çalıştırmada da
+   açılamıyorsa (`OPEN_FAIL`; madde 4) —: dosya avukatının yazılı Form F
+   kararı (madde 2.4'teki kanal) ve ayrı `REAL_ACTION_APPROVED` ile
+   kapsayıcı doğrudan imha edilir. Bu dal **guard'sız bir silmedir**:
+   §28.3.3'ün guard'ı (N102) yer tutucu değerleri ister ve bu dalda
+   değerler güvenilir değildir (`OPEN_FAIL` dalında değerler doğrudur ama
+   operatör sayfayı açamadığı için onlara ulaşamaz).
    - Gizliliğin dayanağı **anahtar imhasıdır** (§28.3.3/4–5: gizlilik
      anahtarın imhasına dayanır); case, restricted, kapsayıcıdaki klon ve
      F1 geçici kopyaları kapsayıcı içindedir ve onunla yok olur.
@@ -16408,7 +16660,10 @@ konması (`pins2.txt` ve `kit-build2.txt` henüz yok); (2) `kit2-case.txt`
 (3) `<kb-secure-file>`, ACL'si ve hash'i (KD-22 a); (4) Ek R4/8.7 yöntem
 kararının kullanıcıdan alınması ve `approval-method.txt`; (5) acil silme
 sayfası, ACL'si ve hash'i (Ek R4/13); (6) `ev.ps1` (sayfanın göreli adını
-ve hash'ini taşıdığı için sayfadan **sonra** üretilir); (7)
+ve hash'ini taşıdığı için sayfadan **sonra** üretilir; revizyon 20, K20-3:
+Not Defteri (`%SystemRoot%\System32\notepad.exe`; `FileVersion` dizgesi ve
+SHA-256) burada ölçülür ve iki değer `ev.ps1`'e doldurulur, Ek R4/23 madde
+6); (7)
 `container-record.txt` (`CONTAINER_FILE_BYTES`); (8) restricted sabit ad
 listesinin son hâli (avukat cevaplarından sonra); (9) karar şablonlarının
 avukata gönderilecek içeriksiz örneği ve güncellenmiş D9 bildirimi (Ek
@@ -16420,7 +16675,13 @@ R4/17); (10) §26.5'teki AÖ sınıfı anahtarlar ve
 N147 yer tutucu sayacı (`KIT2_PLACEHOLDER_LITERAL_COUNT=0`; revizyon 10),
 şablon hash'leri ve (2)–(6)'nın ölçülen hash'leri. (12)'den sonra (2)–(6)
 değişirse kit2 yüklenmez (pin farkı; içerik öncesi kilitsiz) ve kurulum
-ayrı kullanıcı kararıyla yeniden yapılır.
+ayrı kullanıcı kararıyla yeniden yapılır. (12)'deki Not Defteri ölçümü
+(revizyon 20, K20-3) (6)'da `ev.ps1`'e doldurulan iki değerle ordinal eşit
+olmalıdır ve `kit-build2.txt`'ye bu değerler girer; eşit değilse DUR
+(dosya sessizce düzeltilmez; kurulum ayrı kullanıcı kararıyla yeniden
+yapılır). Not Defteri yeniden pinlenirse (`K_NOTEPAD_PIN`, içerik öncesi)
+`ev.ps1` de yeniden doldurulur; `EV_PS1_SHA256` ve `pins2.txt`'nin
+`ev.ps1` satırı değişir.
 
 ### Ek R4/17 Avukat bağımlılık haritası ve sorular
 
@@ -16569,7 +16830,14 @@ yazılmaz (§1.5). Kayda giren yalnız cevap özetidir; cevap metni
 Olumsuz cevap yoktur; bağımlılık haritasının hiçbir satırı yeniden
 açılmaz. **Avukata borçlu olunanlar (açık):** `k` şablon örneği (soru 4)
 ve güncellenmiş D9 bildirimi (soru 9); ikisi de Ek R4/19 madde 2 (9)'da
-pencere öncesi iştir, gerçek dosyadan önce gönderilir. Soru 5'in cevabı
+pencere öncesi iştir, gerçek dosyadan önce gönderilir. Ayrıca dosya
+avukatına iletilecek ve görüşü sorulacak bir bilgi maddesi (revizyon 20,
+§34.26; rev19 yeniden bakışı O-N1): `b18`'in kör hesap teyit sorusunda
+("Kor hesabi sistem sonucunu gormeden yazdiniz mi?") H, avukatın sistem
+sonucunu gördüğü anlamına gelir; kit bunu kilitsiz reddeder ve aynı `b18`
+komutu aynı kör hesap dosyasını yeniden açtırır (N167 `B18_NOT_CONFIRMED`;
+N192 S18). Kör hesabın bütünlüğü bakımından bu davranış avukata bildirilir;
+kod ve sayfa değişmez, yeni hukuki ifade yazılmaz. Soru 5'in cevabı
 operatör ile dosya avukatı ayrı kişilerken geçerlidir; aynı kişi
 durumunda §4.1'in B4 kuralı değişmeden uygulanır. Protokol inceleyicisi
 ile dosya avukatının aynı kişi olması §4.1 "Aynı kişi, iki rol" notuna
@@ -16883,7 +17151,9 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    dosya Ek R4/21 madde 1; revizyon 16: dilim 3 ile 128 dosya; eklenen 43 dosya
    Ek R4/22 madde 1; revizyon 17: dilim 4 ile 160 dosya; eklenen 32 dosya Ek R4/23 madde 1;
    revizyon 18: 160 dosya değişmedi, yalnız `z1.ps1`'in pini yenilendi, §34.24;
-   revizyon 19: 160 dosya değişmedi, yalnız `k.ps1` ve `b18.ps1`'in pinleri yenilendi, §34.25)
+   revizyon 19: 160 dosya değişmedi, yalnız `k.ps1` ve `b18.ps1`'in pinleri yenilendi, §34.25;
+   revizyon 20: 160 dosya değişmedi, yalnız `ev.ps1`'in şablonu N188 değişti (iki yeni doldurulan
+   değer; `ev.ps1` kurulumda doldurulup ölçülür), §34.26)
    (`<evidence-dir>\kit2\`; tam olarak aşağıdaki
    59 dosya + `pins2.txt` + `kit-build2.txt`; alt dizin yok; `bc.ps1`,
    `t0.ps1` ve `kume.ps1` bu kümeyi `Get-KbFileNames` (N136) ile ordinal
@@ -16913,7 +17183,8 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    `kit-build2.txt` henüz yok); (2) `kit2-case.txt`; (3) `<kb-secure-file>`,
    ACL'si (dizin ve dosya; Ek R4/2 madde 5) ve hash'i; (4) yöntem kararı ve
    `approval-method.txt` (Ek R4/8.7); (5) acil sayfa, ACL'si ve hash'i;
-   (6) `ev.ps1`; (7) `container-record.txt`; (8) restricted ad listesinin
+   (6) `ev.ps1` (revizyon 20: Not Defteri burada ölçülür ve doldurulur; Ek R4/16.7
+   (6)); (7) `container-record.txt`; (8) restricted ad listesinin
    son hâli (avukat cevaplarından sonra); (9) şablon örneği ve güncellenmiş
    D9 bildirimi; (10) §26.5'teki AÖ anahtarları ve
    `form-hash-record.txt` (revizyon 16); (11) kullanıcı sayfası
@@ -16926,7 +17197,8 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    `KIT2_AST_<AD>=0` ve `KIT2_PLACEHOLDER_LITERAL_COUNT=0` gerekir
    (revizyon 10); biri değilse kit kullanılmaz: DUR, dosya
    sessizce düzeltilmez); Not Defteri'nin ölçülmesi
-   (`%SystemRoot%\System32\notepad.exe`: `FileVersion` ve SHA-256);
+   (`%SystemRoot%\System32\notepad.exe`: `FileVersion` ve SHA-256; revizyon 20:
+   (6)'da `ev.ps1`'e doldurulan değerlerle ordinal eşit olmalı, değilse DUR; Ek R4/16.7 (12));
    **en son**, tek seferde CreateNew ile `pins2.txt` (her dosya için bir
    satır `<ad> <64 küçük hex>`, LF; 160 satır, revizyon 17) ve `kit-build2.txt`.
 3. **`kit-build2.txt` satırları** (tam küme; `Read-KbBuild`, N136;
@@ -21254,7 +21526,8 @@ if ("<expected-input-digest>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_INP
 
 YENİ (revizyon 17; §34.23). Dilim 4 kodu N175–N190'dır; N0–N174'ün numaraları kaymadı.
 Revizyon 18 (§34.24) N187'yi (`s29b` kanal kapısı kaynağı) ve N189'u (2. bölüme N191) değiştirdi
-ve sayfa bloğu N191'i ekledi; N0–N190'ın numaraları kaymadı.
+ve sayfa bloğu N191'i ekledi; N0–N190'ın numaraları kaymadı. Revizyon 20 (§34.26) N188'i
+(`ev.ps1`: açılış yolu ve `OPEN_FAIL`) değiştirdi; numaralar kaymadı.
 Sentetik düzenekte ölçüldü, provaya tabidir ve provadan geçmeden gerçek koşuda kullanılamaz
 (§32/41).
 
@@ -21317,13 +21590,20 @@ Sentetik düzenekte ölçüldü, provaya tabidir ve provadan geçmeden gerçek k
    dosyası hash'ini yeniden ölçmez (Ek R4/12.1 madde 7 listesinde de yoktur): `s25`'ten sonra
    restricted donuktur ve N100'ün manifest-birebir karşılaştırması içerik değişikliğini yakalar
    (revizyon 17 incelemesi O-5; revizyon 18 notu).
-6. **`ev.ps1` (N188).** Şablonun iki belirteci pencere öncesi ajan tarafından doldurulur:
+6. **`ev.ps1` (N188).** Şablonun dört belirteci pencere öncesi ajan tarafından doldurulur:
    `<emergency-page-relative>` (sayfanın profil-göreli adı, `KB_EMERGENCY_PAGE_RELATIVE` ile
-   aynı) ve `<emergency-page-sha256>` (sayfanın SHA-256'sı, `KB_EMERGENCY_PAGE_SHA256` ile
-   aynı). Doldurulmuş dosya ham dot-source edilir (Get-KbScript değil); N147 onu yer tutucu
+   aynı), `<emergency-page-sha256>` (sayfanın SHA-256'sı, `KB_EMERGENCY_PAGE_SHA256` ile
+   aynı) ve (revizyon 20, K20-2 A) `<notepad-file-version>` (Not Defteri'nin `FileVersion`
+   dizgesi aynen, `NOTEPAD_FILE_VERSION` ile aynı; kitin `ver` sınıfı: yazdırılabilir ASCII,
+   1–200 karakter, kesme işareti ve açılı ayraç yok) ile `<notepad-sha256>` (`NOTEPAD_SHA256` ile
+   aynı). Not Defteri kurulumun (6). adımında ölçülür; (12)'deki ölçüm aynı olmalıdır (Ek R4/16.7).
+   Doldurulmuş dosya ham dot-source edilir (Get-KbScript değil); N147 onu yer tutucu
    sayacına ve AST denetimine alır. Değer biçimi bozuk, ad `..` taşıyor, yol canonical değil,
    bir bileşen reparse noktası, dosya yok veya hash farklı → `NO_MATCH`; her istisna `NO_MATCH`;
-   doldurulmamış şablon `NO_MATCH` basar. Yalnız tek satır basar.
+   doldurulmamış şablon `NO_MATCH` basar. Sayfa doğrulandıktan sonra: Not Defteri sabitlerinden
+   biri bozuk veya doldurulmamış, Not Defteri'nin hash'i veya `FileVersion`'ı farklı ya da
+   başlatma istisnası → `OPEN_FAIL`; tutarsa sayfa pinli Not Defteri'nde `-Wait` olmadan açılır
+   ve `MATCH` basılır (Ek R4/13 madde 4). Yalnız tek satır basar.
 7. **Acil sayfa (N189) ve pinli satırlar (N190).** Pencere öncesi ajan sayfayı N189'dan üretir:
    `<…>` belirteçleri güvenli dosyanın ve kurulumun değerleriyle; tam satır `@@BLOK Nnnn@@`
    o runbook bloğunun baytlarıyla (belirteçleri doldurulmuş); `@@BLOK N040 Nmmm@@` N40 ile ve
@@ -22141,9 +22421,10 @@ $null = Complete-KbStep $r5xRec 'r5' @('CLI_RC=0', 'JOURNAL_ROW_STATE_FAILED=Tru
 **N188 — `ev.ps1 (şablon)` (acil sayfa doğrulayıcısı; Ek R4/23 madde 6).**
 
 ```powershell
-# ev.ps1 - Ek R4/13 madde 4: acil silme sayfasinin dogrulayicisi (runbook revizyon 17, dilim 4). ASCII. Kullanici sayfasinin DUR OLURSA satiriyla Win+R'den dot-source edilir.
-# Yalniz MATCH veya NO_MATCH basar; yol, hash veya baska metin basmaz. Guvenli dosyayi, pins2.txt'yi, bc.ps1'i ve kit1'i okumaz. Her istisna NO_MATCH'tir.
-# Iki deger (sayfanin profil-goreli adi ve SHA-256'si) pencere oncesi ajan tarafindan doldurulur (Ek R4/23 madde 6); doldurulmus dosyanin SHA-256'si EV_PS1_SHA256'dir.
+# ev.ps1 - Ek R4/13 madde 4: acil silme sayfasinin dogrulayicisi ve acicisi (runbook revizyon 17, dilim 4; revizyon 20: MATCH'te sayfayi pinli Not Defteri'nde acar). ASCII. Kullanici sayfasinin DUR OLURSA satiriyla Win+R'den dot-source edilir.
+# Yalniz tek satir MATCH, NO_MATCH veya OPEN_FAIL basar; yol, hash veya baska metin basmaz. Guvenli dosyayi, pins2.txt'yi, kit-build2.txt'yi, bc.ps1'i ve kit1'i okumaz. Dogrulamadaki her istisna NO_MATCH'tir.
+# MATCH: sayfa dogrulandi ve pinli Not Defteri'nde acildi (-Wait yok; EV penceresi kapatilinca sayfa acik kalir). OPEN_FAIL: sayfa dogrulandi ama Not Defteri pini tutmadi, sabitlerden biri bozuk veya baslatma istisna verdi (revizyon 20, K20-1 A). NO_MATCH'te hicbir sey acilmaz.
+# Dort deger (sayfanin profil-goreli adi ve SHA-256'si; Not Defteri'nin FileVersion dizgesi ve SHA-256'si) pencere oncesi ajan tarafindan doldurulur (Ek R4/23 madde 6); doldurulmus dosyanin SHA-256'si EV_PS1_SHA256'dir.
 & {
     $evxOut = 'NO_MATCH'
     try {
@@ -22166,6 +22447,24 @@ $null = Complete-KbStep $r5xRec 'r5' @('CLI_RC=0', 'JOURNAL_ROW_STATE_FAILED=Tru
             if ($evxH -ceq $evxWant) { $evxOut = 'MATCH' }
         }
     } catch { $evxOut = 'NO_MATCH' }
+    if ($evxOut -ceq 'MATCH') {
+        $evxOut = 'OPEN_FAIL'
+        try {
+            $evxNpVer = '<notepad-file-version>'
+            $evxNpWant = '<notepad-sha256>'
+            $evxNpOk = ($evxNpWant -cmatch '^[0-9a-f]{64}$') -and ($evxNpVer -cmatch '^[ -~]{1,200}$') -and ($evxNpVer -cnotmatch '[''<>]')
+            $evxNp = Join-Path ([string]$env:SystemRoot) 'System32\notepad.exe'
+            if ($evxNpOk) {
+                $evxNpSha = [System.Security.Cryptography.SHA256]::Create()
+                try { $evxNpH = ([System.BitConverter]::ToString($evxNpSha.ComputeHash([System.IO.File]::ReadAllBytes($evxNp)))).Replace('-', '').ToLowerInvariant() } finally { $evxNpSha.Dispose() }
+                $evxNpOk = ($evxNpH -ceq $evxNpWant) -and ([string][System.Diagnostics.FileVersionInfo]::GetVersionInfo($evxNp).FileVersion -ceq $evxNpVer)
+            }
+            if ($evxNpOk) {
+                Start-Process -FilePath $evxNp -ArgumentList ('"' + $evxFull + '"') -ErrorAction Stop
+                $evxOut = 'MATCH'
+            }
+        } catch { $evxOut = 'OPEN_FAIL' }
+    }
     Write-Host $evxOut
 }
 ```
@@ -22426,13 +22725,19 @@ Ek R4/16.5) tabidir ve provadan geçmeden gerçek koşuda kullanılamaz (§32/41
    L7 → G12. K6 dal adları (G5, MADDE1, MADDE5, MADDE6; N132 şablonu ve §4.3 a) N114'ün madde
    numaralarına bağlıydı; N192'de G8 bu adları sayfadaki dallara bağlar (A3 → MADDE1, A16 →
    MADDE5, A17 → MADDE6).
-7. **Acil sayfanın açılışı.** Acil sayfa güvenli dosyayla aynı dizindedir (Ek R4/13 madde 2) ve
+7. **Acil sayfanın açılışı.** (Revizyon 19 hâli aşağıdadır; revizyon 20'de kapandı, maddenin
+   sonuna bakın.) Acil sayfa güvenli dosyayla aynı dizindedir (Ek R4/13 madde 2) ve
    kullanıcı sayfası güvenli dizinin yolunu taşımaz (Ek R4/1 madde 3). Kaynak, acil sayfanın
    operatör tarafından nasıl açılacağını yazmaz. N192 D8 bu yüzden yalnız EV satırını, `MATCH`
    sonrası "acil sayfanın 1. bölümünden devam" kuralını (N189'un 0. bölümü EV satırıdır) ve
    AÇIK-25 (b) dalını yazar. Açılış yolu sonraki revizyon (revizyon 20) maddesidir ve
    son tam insan provasının planından ÖNCE karara bağlanması zorunludur (kullanıcı
    kararı D-2; §34.25). Bu düzeltme (R19-FIX) bunu YAZMAZ.
+   **Revizyon 20 (§34.26; kullanıcı kararları K20-1 A, K20-2 A, K20-3).** Açılış yolu yazıldı:
+   `ev.ps1` `MATCH`'te acil sayfayı pinli Not Defteri'nde kendisi açar (Ek R4/13 madde 4). D8
+   GÖR'ü buna göre yazıldı (sayfa açık kalır, EV penceresi kapatılır, sayfaya yazılmaz,
+   "Kaydetme"); `OPEN_FAIL` veya açılmayan sayfa için EV satırı bir kez daha, yine olmazsa
+   AÇIK-25 (b). Kullanıcı sayfası yine güvenli dizinin ve acil sayfanın yolunu taşımaz.
 8. **Dar düzeltme (R19-FIX; §34.25 "Bağımsız inceleme ve dar düzeltme").** G4 pencere
    başlıklarını kaynağa göre yazar (KİT "Windows PowerShell", ADMIN "ADMIN", İMHA "IMHA",
    KÜME "KUME - KAPATMAYIN"). G6'ya öncelik kuralı eklendi: bir adımın GÖRMEZSEN satırı
@@ -22442,6 +22747,14 @@ Ek R4/16.5) tabidir ve provadan geçmeden gerçek koşuda kullanılamaz (§32/41
    ret iletisine sadık yazıldı; 23 ön koşul adımının GÖRMEZSEN satırına "kilitsiz ret iletisi
    varsa G6" eklendi. S12 dalı aynı pencerede İ44-İ45'ten sonra S12'ye döner. G10 süre
    kuralının yalnız listedeki komutlar için olduğunu söyler.
+9. **Revizyon 20 (R20-2; §34.26; rev19 yeniden bakışı L-N1, L-N2).** G6 öncelik paragrafı: bir
+   adımın kendi GÖRMEZSEN satırı o durum için açıkça "DUR DEĞİL" diyorsa o satır geçerlidir
+   (ekranda "DUR"/"DURDU" ya da "STOP" ile başlayan satır veya "YARIDA KALDI" yoksa); "… ile
+   BAŞLAYAN satır" ifadesi H cümlesine de yazıldı. S47 H dalı tek anlamlıdır: S44'te satırın
+   boşaldığı görüldüyse H yanlış tuştur, İMHA penceresi kapatılıp VeraCrypt'e dokunmadan İMHA
+   satırı yeniden açılır (S46); görülmediyse S44'ün GÖR'ü çıkmamıştır: DUR OLURSA, zorla ayırma
+   yok. Böylece S45'te kapatılan VeraCrypt'in yeniden açılmasına gerek kalmaz. Kit davranışı
+   değişmedi (`z1` H → `Z1_PRECONDITION`, kilitsiz).
 
 **N192 — `kit2 kullanıcı sayfası` (şablon; Ek R4/24; kit2 dizinine girmez; revizyon 19).**
 
@@ -22508,10 +22821,14 @@ G6 Ekranda "DUR" veya "DURDU" ile başlayan bir satır, "STOP" ile başlayan bir
      o adımın GÖR satırını bu pencerede daha önce gördüyseniz geçirir;
      görmediyseniz DUR OLURSA (tek açık istisna: SO12).
    - "KIT zaten yuklu" ve "KIT2 zaten yuklu" istisna DEĞİLDİR (A3).
-   Öncelik: bir adımın GÖRMEZSEN satırı "DUR OLURSA" dese bile, ekranda
+   Öncelik: bir adımın kendi GÖRMEZSEN satırı o durum için açıkça "DUR
+   DEĞİL" diyorsa o satır geçerlidir: söylediğini yapın (ekranda "DUR" veya
+   "DURDU" ile BAŞLAYAN bir satır, "STOP" ile BAŞLAYAN bir satır veya "YARIDA
+   KALDI" yoksa). Bir adımın GÖRMEZSEN satırı "DUR OLURSA" dese bile, ekranda
    "(Kayit yazilmadi; DUR kilidi yok.)" satırı varsa bu G6 geçerlidir: iletiyi
-   izleyin, DUR OLURSA'ya GİTMEYİN (ileti yapılacak bir iş söylemiyorsa: DUR
-   OLURSA). H cevabı da, ekranda "DUR", "DURDU", "STOP" veya "YARIDA KALDI"
+   izleyin, DUR OLURSA'ya GİTMEYİN (ne ileti ne adımın satırı yapılacak bir iş
+   söylüyorsa: DUR OLURSA). H cevabı da, ekranda "DUR" veya "DURDU" ile
+   BAŞLAYAN bir satır, "STOP" ile BAŞLAYAN bir satır veya "YARIDA KALDI"
    getirmedikçe DUR DEĞİLDİR: kit H için kilitsiz bir ret ve ileti basar;
    iletinin söylediğini yapın (çoğu zaman aynı komutu yeniden yazmak).
    Nerede olduğunuzdan emin değilseniz: DUR OLURSA.
@@ -23148,11 +23465,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence
 S47 YAP: S44'te satırın boşaldığını gördüyseniz E, görmediyseniz H.
    GÖR: "----- ONAY (REAL_ACTION_APPROVED) -----", "Hedef:", "Digest:" ve
         soru.
-   GÖRMEZSEN: H bastıysanız DUR DEĞİL (G6): ekran "z1 BASLAMADI: once
-              VeraCrypt ile kapsayiciyi ayirin; sonra IMHA satirini yeniden
-              acin." der; İMHA penceresini X'ten kapatın, S43-S45'i yapın,
-              sonra İMHA satırını yeniden açın (S46; z1 bitmediği için G13
-              yasağı geçmez). Başka: DUR OLURSA.
+   GÖRMEZSEN: H bastıysanız ekran "z1 BASLAMADI: once VeraCrypt ile
+              kapsayiciyi ayirin; sonra IMHA satirini yeniden acin." der
+              (kilit yok). S44'te satırın boşaldığını GÖRDÜYSENİZ H yanlış
+              tuştur ve DUR DEĞİL (G6): İMHA penceresini X'ten kapatın,
+              VeraCrypt'e dokunmadan İMHA satırını yeniden açın (S46; z1
+              bitmediği için G13 yasağı geçmez). GÖRMEDİYSENİZ S44'ün GÖR'ü
+              çıkmamıştır (G6): İMHA penceresini X'ten kapatın; ZORLA
+              AYIRMAYIN; DUR OLURSA. Başka: DUR OLURSA.
 S48 YAP: Hedef ve digest'i okuyup onaylıyorsanız E, onaylamıyorsanız H.
    GÖR: "TUSA PROJE SAHIBI BASAR" ve "Anahtar kagidi ve tek kullanimlik
         anahtar imha edildi mi?"
@@ -23341,9 +23661,16 @@ D8 KİT2 İLE SİLME OLMUYORSA (acil yol; yalnız İÇERİK ALINDIKTAN sonra ve
    Kit2 sağlamken yalnız acil sayfanın bozuk olması bu yolu açmaz.
    YAP: Win+R ile EV satırını çalıştırın:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\ev.ps1'"
-   GÖR: tek satır: MATCH. Acil silme sayfası kullanılır: o sayfanın 1.
-        bölümünden devam (0. bölümü bu adımdır; acil sayfa güvenli dosyayla
-        aynı dizindedir, yolu bu sayfada yazmaz). EV penceresi X'ten kapatılır.
+   GÖR: tek satır: MATCH ve acil silme sayfası Not Defteri'nde açıldı (EV
+        satırı onu kendisi açar; yolu bu sayfada yazmaz). Acil sayfa
+        kullanılır: o sayfanın 1. bölümünden devam (0. bölümü bu adımdır). EV
+        penceresini X'ten kapatın; acil sayfa açık kalır. Acil sayfaya HİÇBİR
+        ŞEY YAZMAYIN; en sonda X'ten kapatırken "Kaydetme".
+   GÖRMEZSEN: tek satır OPEN_FAIL (acil sayfa doğru ama açılamadı) veya MATCH
+              görüldü ama acil sayfa açılmadı: EV penceresini X'ten kapatın
+              ve EV satırını BİR KEZ daha çalıştırın. Bu kez MATCH ve açılan
+              acil sayfa: yukarıdaki GÖR gibi devam. Yine olmazsa acil sayfa
+              kullanılamaz: aşağıdaki AÇIK-25 (b) yolu.
    GÖRMEZSEN (boş, hata, NO_MATCH veya acil sayfa yok): acil sayfayı
               KULLANMAYIN. Yol AÇIK-25 (b): dosya avukatının yazılı Form F
               kararı ve ayrı REAL_ACTION_APPROVED onayıyla kapsayıcı doğrudan
