@@ -8,7 +8,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > komut çalıştırılmamıştır.** Belge ve revizyonu (§34) yazılırken gerçek
 > kurulum veya gerçek veri üzerinde hiçbir CLI, `psql`, Python veya
 > PowerShell betiği çalıştırılmadı (revizyon 10 düzeltmesi, rev9 inceleme
-> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 ve 18 kopyalar üzerinde ölçüm düzeneği ve N116/N147
+> O6: revizyon 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ve 19 kopyalar üzerinde ölçüm düzeneği ve N116/N147
 > çalıştırdı; her revizyonun kendi paragrafı neyin çalıştırıldığını
 > söyler); hiçbir gerçek belge alınmadı; hiçbir veritabanı
 > satırı yazılmadı; hiçbir ağ isteği yapılmadı; hiçbir API anahtarı, `.env`
@@ -215,6 +215,27 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > olarak çalıştırılmadı; gerçek CLI, PostgreSQL, VeraCrypt, Not Defteri ve klavye ölçülmedi;
 > `z1`'in kendi silme dalı bu turda yeniden ölçülmedi (değişmedi); dilim 4 kodu dar, ajanlı
 > yeniden ölçüme (§34.24 notları) tabidir ve provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
+> Revizyon 19 (§34.25) kit2 dilim 4'ü prova #9-dar (`C:\vd5_625a9ed5`) ile "PASS_WITH_LIMITS (rev18)"
+> olarak kapatır (kullanıcı kararı D1; yeni prova yok; dört kapanış notu §34.25'te) ve kit2 dilim 5'i
+> ekler: kit2 kullanıcı sayfası N192 (Ek R4/24; N114 değişmedi), `k` `K_ORDER` ve `b18`
+> `B18_NO_DECISIONS` iletilerinin eksik adımı veya kararı adıyla söylemesi (N143, N167; davranış, kod
+> adı, kilitsiz sınıf ve red dosyası satırları aynı), revizyon 18 incelemesi L-2'nin sayfa metni
+> (kanal kapısı mantığı değişmedi) ve "ilerleme yoksa" süreleri (prova #5–#8 kayıtlarından mekanik
+> kural; `r1`, `r3`, `r4`, `r5` ölçüm olmadığı için yazılmadı, kullanıcı kararı K19-1 = A). Değişen bloklar N143 ve
+> N167, yeni N192; diğer 190 blok bayt-bayt aynıdır; kit1 değişmedi; kit2 dosya kümesi 160'ta kaldı
+> (`k.ps1` ve `b18.ps1` pinleri yenilendi). Denetim yalnız oturum scratchpad'inde, yeni `-NoProfile`
+> süreçlerde: taban ve yeni baytlarla ayrı sentetik köklerde gerçek `ac.ps1` ve gerçek `bc.ps1`
+> yüklemesi (`KIT2_LOAD=OK`), gerçek `Get-KbScript` ile 41 komut dosyası, iki iletinin 13 sentetik
+> durumda önce/sonra ölçümü, `ParseFile`, kopyalar üzerinde N116/N147, sayfanın pozitif kontrollü
+> statik denetimi ve hash. Hiçbir kit, başlatıcı veya runbook bloğu gerçek kurulum olarak
+> çalıştırılmadı; gerçek CLI, PostgreSQL, VeraCrypt, Not Defteri ve klavye ölçülmedi; sayfa ve dilim 5
+> kodu son tam insan provasına (ayrı kullanıcı kararı) tabidir ve provadan geçmeden gerçek koşuda
+> kullanılamaz (§32/41).
+> Revizyon 19 dar düzeltmesi (`USER_DECISION=R19-FIX`; §34.25 "Bağımsız inceleme ve dar düzeltme"):
+> bağımsız inceleme (Sonnet 5.5) `READY_FOR_NARROW_REMEDIATION` (0C/0H/2M/4L/9O) verdi; N192 (G4
+> pencere başlıkları, G6 öncelik kuralı ve H cevabı DUR değildir, H/kilitsiz ret adımları, S12 dönüş
+> yolu, G10 cümlesi) ve N143 (`k girdi` `K_ORDER` iletisi) yeniden değişti; N167 değişmedi. Acil
+> sayfanın açılış yolu revizyon 20'ye ve son insan provası planından önceye bırakıldı (D-2).
 
 ---
 
@@ -238,7 +259,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır, kit2 dilim 4 koduyla ve K17-1–K17-3 kararlarıyla revizyon 17'dir, kit2 dilim 4 prova #8 (`C:\vd5_837d8cf6`) ve prova #8-ek (`C:\vd5_79796a4c`) bağımsız kanıt incelemelerinin iki kit bulgusuyla (acil sayfa 2. bölümünde `Get-PilotStringSha` tanımsız; `z1.ps1` kanal kapısı kaynağı) revizyon 18'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22; revizyon 17: §34.23; revizyon 18: §34.24) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır, kit2 dilim 4 koduyla ve K17-1–K17-3 kararlarıyla revizyon 17'dir, kit2 dilim 4 prova #8 (`C:\vd5_837d8cf6`) ve prova #8-ek (`C:\vd5_79796a4c`) bağımsız kanıt incelemelerinin iki kit bulgusuyla (acil sayfa 2. bölümünde `Get-PilotStringSha` tanımsız; `z1.ps1` kanal kapısı kaynağı) revizyon 18'dir, kit2 dilim 4'ün prova #9-dar (`C:\vd5_625a9ed5`) ile "PASS_WITH_LIMITS (rev18)" kapanışı ve kit2 dilim 5 (kullanıcı sayfası N192; `K_ORDER` ve `B18_NO_DECISIONS` iletileri) ile revizyon 19'dur; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22; revizyon 17: §34.23; revizyon 18: §34.24; revizyon 19: §34.25) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -6386,6 +6407,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 16:** N134, N135, N136, N147, N149, N153 değişti; yeni N157–N174 (dilim 3); diğer 151 blok bayt-bayt aynı | Prova #6 (`C:\vd5_accdc262`) `PROVA_DILIM2=FAIL`, inceleme `3d5e4a35…`: dilim 2 adlı sınırla kapandı | Değişti (§34.22) | **Yeni, dilim 3 provası** (Ek R4/16.4; kit2 kurulumu, `pins2.txt`, `kit-build2.txt`, N147 ve `kbe.ps1`'i yükleyen bütün komutların ajan ikizleri yeniden; prova #6'nın kanıtı bayt değişen bloklar için devralınmaz; kit1 değişmedi) |
 | **Revizyon 17:** N135, N136, N147, N154, N172, N173 değişti; yeni N175–N190 (dilim 4); diğer 169 blok bayt-bayt aynı | Prova #7 (`C:\vd5_b4bcce27`) `PROVA_DILIM3=BELIRSIZ`, inceleme `01962f35…`: dilim 3 adlı sınırla kapandı | Değişti (§34.23) | **Yeni, dilim 4 provası** (Ek R4/16.5; kit2 kurulumu, `pins2.txt` 160 satır, `kit-build2.txt`, N147 ve `kbe.ps1`'i yükleyen bütün komutların ajan ikizleri yeniden; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi) |
 | **Revizyon 18:** N187 (`z1.ps1`: `s29b` kanal kapısı kaynağı) ve N189 (acil sayfa şablonu: 2. bölümde N191) değişti; yeni N191 (sayfa bloğu; `Get-PilotStringSha` tanımı, N12'nin 1. satırı); diğer 189 blok bayt-bayt aynı | Prova #8 (`C:\vd5_837d8cf6`) `PROVA_DILIM4=BELIRSIZ` ve prova #8-ek (`C:\vd5_79796a4c`) `PROVA_DILIM4_EK=FAIL` / `PROVA_DILIM4_BIRLESIK=FAIL`; incelemeler `1fff636a…` (M-3) ve `22011802…` (H-1): dilim 4 adı konmuş kit kusuruyla kapandı (kullanıcı kararı D1) | Değişti (§34.24) | **Dar, ajanlı yeniden ölçüm** (§34.24 notları; planı ayrı iştir): altı acil sayfa ikizi (T-FEP1, T-FEP2, T-FEP2b, T-FEP4, T-FEP5, T-FEP6) blok başına sayaçla `prep_sec2_stop=0`; `z1`/`s29b` yoluna giren ikizler (küme P§7.4.2 taramasıyla); `z1.ps1` yeni pinle kit2 kurulumu, `pins2.txt`, `kit-build2.txt` ve N147 yeniden; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
+| **Revizyon 19:** N143 (`k.ps1`: `K_ORDER` iletisi eksik adımı adıyla) ve N167 (`b18.ps1`: `B18_NO_DECISIONS` iletisi eksik kararı adıyla) değişti; yeni N192 (kit2 kullanıcı sayfası, `text`; Ek R4/24); diğer 190 blok bayt-bayt aynı | Prova #9-dar (`C:\vd5_625a9ed5`) `PROVA_DILIM4_R18=PASS_WITH_LIMITS` ve `PROVA_DILIM4_BIRLESIK_R18=PASS_WITH_LIMITS`; inceleme `95285202…`: dilim 4 "PASS_WITH_LIMITS (rev18)" ile kapandı (kullanıcı kararı D1) | Değişti / yeni (§34.25) | **Son tam insan provası** (ayrı kullanıcı kararı; planı yazılmadı; §34.25 notları): gerçek koşu sayfası N192; `k.ps1` ve `b18.ps1` yeni pinle kit2 kurulumu, `pins2.txt` 160 satır, `kit-build2.txt`, N147; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
 
 ### 34.5 Yazım sınırları
 
@@ -12226,6 +12248,491 @@ durduruldu ve tekrar edilmedi). Bu revizyon gerçek koşuyu, gerçek veri gönde
 ölçümü, dilim 4 provasının tekrarını veya dilim 5'i yetkilendirmez; her biri ayrı kullanıcı
 kararıdır.
 
+### 34.25 Revizyon 19
+
+YENİ (`USER_DECISION=D4-KAPANIS-R18`, "D1 D2 EVET", ve `SCOPE_APPROVED`, "SCOPE EVET"; ikisi de
+planlayıcı oturumunda verildi, saniye ölçülmedi, üst sınır `2026-11-08T15:45:31+03:00`; oturum
+KIT2-REV19; tek yazan oturum). Adım 10 B yolu, kit2 dilim 4'ün kapanış kaydı ve kit2 dilim 5. Girdi:
+`eb704b0` runbook'u (SHA-256 `cd3dbe18625ea6fabcb75c127868561f7c79dea49244adc01910cdfefa85ed2c`,
+21818 satır, 192 blok; HEAD = `origin/claude-dev`; çalışma ağacı temiz; diskten doğrulandı). Yalnız
+bu dosya değişti; kod, şema, veri, test, kit1, başka runbook veya `CLAUDE.md` değişmedi. Commit ve
+push yapılmadı. Kit, başlatıcı, gerçek CLI, `psql`, PostgreSQL, 7z, VeraCrypt, Not Defteri,
+`ev.ps1` ve ağ gerçek kurulum olarak çalıştırılmadı; hiçbir porta bağlanılmadı; `.env` açılmadı.
+Ölçümler oturuma özel scratchpad'deki sentetik köklerde, yeni `powershell.exe -NoProfile
+-NonInteractive -ExecutionPolicy Bypass -File` süreçlerinde (Windows PowerShell 5.1; `TEMP`/`TMP` ve
+`PSModuleAnalysisCachePath` scratchpad'e yönlendirilmiş) yapıldı. Prova kökleri (`C:\vd5_fa7a5f56`,
+`C:\vd5_accdc262`, `C:\vd5_b4bcce27`, `C:\vd5_837d8cf6`) yalnız `ext\ev\steps` kayıtları için
+okundu; `sec\` altı, acil sayfalar ve sayfaların P satırı açılmadı.
+
+**Kaynaklar (diskten okundu; SHA-256'lar ölçüldü, beşi de komuttaki değerle eşit).** Prova #9-dar
+bağımsız kanıt incelemesi (Sonnet 5.5)
+`<profile>\vergi_step10_kit2_d4r18_evidence_review_77eb6e84\independent-evidence-review.md`
+(`952852026db2fd9a66d72e9eadf81e95432b070494763159188cb0d1ed78b5ec`; §9 bulgular, §11 listeleri), aynı
+dizinde `independent-evidence-review-corrections.md`
+(`b399e563671ff3378ff175a7d7504490b1592bce9821e94c48b3b5d308fcfd18`) ve
+`independent-evidence-review-addendum.md`
+(`b8a687ac153347d0fa5a23483a6bf892d0fc2cd1b07b002c52c4d4729068f11b`). Revizyon 18 incelemesi
+(Sonnet 5.5) `<profile>\vergi_step10_rev18_review_e9cc6d8e\independent-runbook-rev18-review.md`
+(`b4270e695a968e60ecad08794641e13caeaf90f1474814895316d2c9a2e9d2ca`; L-2). Prova #8 kanıt
+incelemesi (Fable 5.1) `<profile>\vergi_step10_kit2_d4prova_evidence_review_3a215ede\independent-evidence-review.md`
+(`1fff636a48b46c04e362040e295e38d01f46845814a288b95d9a41bcd8952562`; §4 beyan ↔ disk, L-6, M-2, O-2,
+§10 sayfa listesi). Prova #8 planının (`<profile>\vergi_step10_kit2_d4prova_plan_7b188334\plan_v3.md`)
+insan sayfası satırları ([108], [109], [130], [206a], [225], MOLA) yalnız okundu; numaraları değil,
+dersleri taşındı.
+
+**Dilim 4 kapanışı: "PASS_WITH_LIMITS (rev18)" (`USER_DECISION=D4-KAPANIS-R18` D1).** Prova #9-dar
+kökü `C:\vd5_625a9ed5`: `PROVA_DILIM4_R18=PASS_WITH_LIMITS` (26 ölçüt: 6 PASS, 20 PWL) ve
+`PROVA_DILIM4_BIRLESIK_R18=PASS_WITH_LIMITS` (100 ölçüt: 47 PASS, 53 PWL). Bağımsız inceleme
+`95285202…` (`REHEARSAL_EVIDENCE_VERIFIED`; 0 Critical, 0 High, 1 Medium, 7 Low, 9 Observation;
+düzeltme dosyası `b399e563…` bulgu sınıfını ve hükmü değiştirmez; ek dosya `b8a687ac…`). Yeni prova
+yoktur. Kapanış kaydının dört notu:
+(1) hüküm ve F08, B.2 yerine B.3-lkc kaydındadır (`D4R18_TEXT_CONFLICT=F08_VERDICT_IN_B3LKC`;
+inceleme L-2; değer bağımsızca yeniden hesaplandı, aynı); (2) yardımcı düzenlemeleri durmuş kök
+`C:\vd5_9d4b43e8`'den uyarlandı; bayt veya ölçüm devri yoktur (inceleme M-1); (3) kanal kapısı
+yalnız bir negatifle (T-FEN) sınandı; revizyon 18 incelemesi L-2 (`a2`'siz `ac.txt` oturumu)
+ölçülmedi (inceleme O-4); (4) tuz ölçümü yalnız A.11d'de, kapsayıcı içinde yapıldı (A.15 `STOP`,
+karar `A15-LK-R18`, `A.15-r1` PASS; inceleme L-1, L-7). **D2:** sıradaki paket dilim 5'tir (tek
+kapsam paketi; bu revizyon).
+
+**Kullanıcı kararları (bu tur).**
+
+| Karar | Metin (komuttan) | Uygulama |
+|---|---|---|
+| D1 (`D4-KAPANIS-R18`) | Dilim 4 KAPANDI: "PASS_WITH_LIMITS (rev18)"; yeni prova yok; dört kapanış notu | Yukarıdaki paragraf; §34.4 revizyon 19 satırı |
+| D2 | Sıradaki paket dilim 5 (tek kapsam paketi) | Bu revizyon |
+| `SCOPE_APPROVED` | Kapsam 1–5 ve K5-1…K5-7 aynen; kapsam dışı: son tam insan provası ve planı, okuyucu birleştirme, K12-1, O-11, avukat formları, dış yapay zekâ, kit1 baytları, iki ileti dışında kit davranışı, kanal kapısı mantığı, `src/`, şema, hukuki kural, süre mantığı, acil silme/imha sırası, avukat cevapları | Değişen yalnız N143, N167; yeni N192; kit1 dokunulmadı |
+| K5-1 | Sayfa biçimi kaynaktan türetilir; kit1 baytı veya pini değişecekse DUR | Yeni blok N192 (Ek R4/24 madde 1–2); kit1 baytı ve `pins.txt` değişmedi; DUR gerekmedi |
+| K5-2 | İki kit2 ileti düzeltmesi; davranış, kod, kilit sınıfı, kayıt satırları aynı; yalnız ASCII; `Get-KbScript` kuralı | N143, N167; ölçüm aşağıda |
+| K5-3 | L-2 yalnız ileti/sayfa metniyle; N187 davranışı değişecekse yapılmaz, sonraki revizyon | N192 SO0, Ek R4/14 madde 4 notu; N187 değişmedi; kit iletisi tarafı sonraki revizyon |
+| K5-4 | Sonraya taşınanlar listesi | "Sonraya taşınanlar" |
+| K5-5 | Son insan provası planı bu turda yazılmaz; ayrı kullanıcı kararı | Ölçüt (5) yazılmadı |
+| K5-6 | Ölçüt (7) süreleri prova kayıtlarından mekanik kuralla; ölçüm yoksa tahmin yok, DUR ve sor | Ek R4/24 madde 4; `r1`, `r3`, `r4`, `r5`: K19-1 = A (aşağıda) |
+| K5-7 | Son insan provası planına notlar (plan yazılmaz) | "Son insan provası planına notlar" |
+
+**Bulgu / madde → değişiklik → blok.**
+
+| # | Bulgu veya madde (kaynak) | Değişiklik | Blok |
+|---|---|---|---|
+| 1 | Dilim 5 içerik (Ek R4/16.5; Ek R4/8.6 iskeleti; §34.4 revizyon 7 "N114'ün yerini alacak kit2 sayfası") | Kit2 kullanıcı sayfası: aktarım, işleme, son gün, erken kapanış, silme oturumu, DUR OLURSA (EV satırı, iki tetik, AÇIK-25 (b)), BİTİŞ | N192 (yeni) |
+| 2 | `k durdurucu` `K_ORDER` iletisi eksik adımı adlandırmıyordu (§34.24 "Dilim 5'e kalanlar"; prova #8 s3'te `K_ORDER` ×3; inceleme `95285202…` §11) | İleti eksik adımı "once b16 TAMAM olmali" biçiminde adıyla söyler (`b6`, `b7`, `b12`, `b13`, `b15`, `b16`, `b20`, `b24 (atama varsa y2 ve ikinci b24)`); kod, kilitsiz sınıf, red dosyası aynı | N143 |
+| 3 | `b18` `B18_NO_DECISIONS` iletisi iki kararı her zaman birlikte anıyordu (prova #8 13a; §34.24) | Yalnız eksik kararı adıyla söyler; ikisi de eksikse ileti eskisiyle bayt-aynı | N167 |
+| 4 | Rev18 incelemesi L-2: `a2`'siz `ac.txt` oturumunda kapı kalıcı `INCOMPLETE` | Kapı mantığı değişmedi. Sayfa (SO0) etkiyi ve kaçınma yolunu söyler; Ek R4/14 madde 4'e not. Kit iletisi tarafı (N187 veya kit1 `ac.ps1`) sonraki revizyon | N192 (metin) |
+| 5 | Prova #8 insan penceresi [108], [109], [130], [206a], [225] / `Z1_ALREADY`; MOLA U-15; `b5d` sayı sorusunda Ctrl+C (§34.20, §34.22, §34.24) | Ek R4/24 madde 6'daki eşleme | N192 (metin) |
+| 6 | Rev6 son kontrol L1–L4 ve KD-18 (Ek R4/16.5) | L1 → G6; L2, L3 → yer tutucu ve ters tırnak kuralı; L4 → A16 GÖRMEZSEN; KD-18: kit1 baytı değişmedi | N192 |
+| 7 | C3 `": "` ayracı (1a/19a/19b) ve ADMIN pencere sayısı sorusu (§34.24; Fable §10 "Sayfa" madde 3 ve 5, O-4) | Kaynakta ikisi de **prova planının C3-d4 kâğıt formu** maddeleridir; runbook'ta C3 formu yoktur. ADMIN sayısının sayfa tarafı N192 G13 ile kapandı (gerçek sayfada kâğıt soru yok; kayıtlar sayar). `": "` ayracı ve form sorusunun kaldırılması plan işidir ("Son insan provası planına notlar") | N192 (yalnız G13) |
+
+**Değişen ve yeni bloklar** (SHA-256 §34.8 kuralıyla: gövde + tek sondaki LF; "eski" = `eb704b0`).
+
+| Blok | Dosya | Satır | Eski SHA-256 | Yeni SHA-256 |
+|---|---|---|---|---|
+| N143 | `k.ps1` (kit2) | 236 → 240 | `84dc018fd66ea87d207360352f2fa436e148fa46b647525d8c8b7df1ae88f67a` | `4505a664c6b4b99e6821691bedf4d890c5866c7d5e5f614fa63e1e5d680485f0` |
+| N167 | `b18.ps1` (kit2) | 125 → 129 | `7845ef4c933f46a06f82c3a6df3e81ef6b87cd719d4d6c8ca146374128ce8b7f` | `949224b25e71731c935eef9a53747a6d83cde1dae00dfe5c792901a1a0284c47` |
+| N192 | kit2 kullanıcı sayfası (`text`; kit2 dizinine girmez) (yeni) | 924 | — | `d832353ecf0fbd15182d109ea23a1e0d82bab4199275236d305fe9caf83e3614` |
+
+(Yukarıdaki N143 ve N192 değerleri dar düzeltmeden SONRAKİ nihai baytlardır. İlk teslimdeki
+ara değerler N143 `1da670b0…` ve N192 `20ec9bb9…` (876 satır) idi; bkz. "Bağımsız inceleme ve dar
+düzeltme".) Diğer 190 blok bayt-bayt aynıdır (taban ve yeni dosyadan ayrı ayrı çıkarılıp
+karşılaştırıldı: 190/190 eşit); toplam 193 blok (N0–N192). **Kit pinleri.** Kit1 değişmedi (17 dosya; `pins.txt`
+aynı). Kit2 dosya kümesi 160'ta kaldı; `k.ps1` ve `b18.ps1`'in pinleri yenilendi; `pins2.txt` 160
+satır, `kit-build2.txt` anahtar kümesi değişmedi; `Get-KbFileNames` ve N147 listeleri değişmedi.
+N192, N114 gibi kit dizinine girmez; hash'i yalnız `kit-build.txt`'nin `KIT_PAGE_SHA256` satırına
+girer (Ek R4/24 madde 2). `pins2.txt` ilk teslime göre yalnız `k.ps1` satırı yenilendi
+(`4505a664…`); `b18.ps1` satırı değişmedi (`949224b2…`).
+
+**N143 ve N167 — uygulama.** N143'te tek satırlık `K_ORDER` reddi, eksik adımı `$kxNeed` (yeni yerel
+değişken, `kx` öneki) ile adlandıran üç satırlık bloğa döndü; ret yine `Write-KbRefusal 'K_ORDER' …;
+return` ile, aynı yerde ve aynı koşulda verilir. Dar düzeltmede (L-2) `k girdi` için ikinci bir
+yerel değişken `$kxTail` eklendi: ileti "once b7 TAMAM olmali ve girdi hash'i kaydedilmis olmali"
+der (b7 PASS ama `manual-input-r<n>.sha256.txt` yok/geçersiz dalı da bu iletiyle kapsanır); koşul,
+kod adı, kilit sınıfı ve kayıt satırları aynı, satır sayısı 240'ta kaldı. `silme`'nin `K_ORDER` dalı yalnız normal yolda
+ulaşılabilirdir (erken kapanışta ve silme oturumunda `$kxOrder` her zaman doğrudur), bu yüzden ileti
+normal yolun eksiğini söyler. N167'de `B18_NO_DECISIONS` koşulu aynıdır; ileti `$b18xMsg`'ye
+seçilir (ad b18'de ileti değişkeni olarak zaten vardır; yeni dal hemen `return` ettiği için sonraki
+kullanımla çakışmaz). İki dosyada da `Write-KbRefusal`'a üçüncü parametre verilmez; red dosyası
+yine iki satırdır (`REFUSAL_CODE`, `AT`). Eklenen satırlar yalnız ASCII; `<…>` belirteci yoktur.
+
+**Ölçümler** (hepsi scratchpad'de; yeni `-NoProfile` süreçler).
+
+1. **Gerçek yükleme.** Taban (`rO`) ve yeni (`rN`, ayrıca temiz `rN2`) baytlarla ayrı sentetik
+   kökler: kit1 dizini (17 blok kopyası + `kit-values.txt` + `pins.txt`), kit2 dizini (160 dosya,
+   bloklardan; `ev.ps1` doldurulmuş; `kit2-case.txt`; `pins2.txt`; N147 geçtikten sonra yazılan
+   `kit-build2.txt`), ACL'li güvenli dizin (güvenli dosya + sentetik acil sayfa; yalnız geçerli
+   kullanıcı SID'i, miras kapalı). Gerçek `ac.ps1` (düzenek sınırı: `kit-values.txt`'nin profil
+   dışı kuralı için yalnız yükleme anında `USERPROFILE` sahte profile çevrildi; revizyon 18 emsali) ve gerçek
+   `bc.ps1` dot-source edildi: üç kökte de `KIT_LOAD=OK`, `KIT2_LOAD=OK`, `KIT2_COMMANDS_DEFINED=True`,
+   `KIT2_NESTED_PARENT=False`; gerçek `Get-KbScript` 41/41 komut dosyasını yükledi.
+2. **İki ileti, önce/sonra (13 durum; her durum ayrı red dosyası).** `k intake`, `k uyari`,
+   `k girdi`, `k fact`, `k dogrulama`, `k zamancizelgesi`, `k durdurucu`, `k adlitatil`, `k sure`,
+   `k silme` (hiçbir önceki kayıt yokken) ve `b18` üç durumda (sentetik önceki kayıtlar: oturum `b1`
+   PASS ve `TEMP_IN_CONTAINER=True`, `b16` PASS; (i) karar yok, (ii) yalnız `STOPPING_EVENT`, (iii)
+   yalnız `JUDICIAL_RECESS`). **Taban baytlar (pozitif kontrol):** on `k` durumunda eski genel ileti
+   ("bu karar icin onceki adim henuz tamam degil (runbook Ek R4/8.6 madde 5)"); üç `b18` durumunda
+   aynı ileti ("once avukat k durdurucu ve k adlitatil ile kararlarini yazmali"). **Yeni baytlar:**
+   `k`: "once b6" (intake, uyari), "once b7 TAMAM olmali ve girdi hash'i kaydedilmis olmali" (girdi; ilk teslimde yalnız "once b7"; dar düzeltme L-2), "once b12", "once b13", "once b15", "once b16"
+   (durdurucu, adlitatil), "once b20", "once b24 (atama varsa y2 ve ikinci b24)" ve her birinde "TAMAM
+   olmali"; `b18`: (i) eski iletiyle bayt-aynı, (ii) "once avukat k adlitatil ile kararini yazmali (k
+   durdurucu kaydi var)", (iii) "once avukat k durdurucu ile kararini yazmali (k adlitatil kaydi
+   var)". **Önce ve sonra aynı:** kod (`K_ORDER` ×10, `B18_NO_DECISIONS` ×3), her durumda tam bir
+   yeni red dosyası, red dosyası iki satır (`REFUSAL_CODE`, `AT`), "(Kayit yazilmadi; DUR kilidi yok.)"
+   satırı, `DUR.txt` yok, `steps\d` karar kaydı yok, restricted dizininde dosya yok, `b18.txt` yok.
+3. **Statik.** `ParseFile`: yeni `k.ps1` 0 hata (240 satır), yeni `b18.ps1` 0 hata (129 satır); ASCII
+   dışı 0, CR 0, büyük-küçük harf duyarsız işleç 0. **N147 (kopyalar):** taban ve yeni kümede aynı
+   sonuç: `KIT2_VAR_SCAN_FILE_COUNT=150`, `KIT2_VAR_GLOBAL_NAME_COUNT=31`,
+   `KIT2_VAR_CROSS_SCOPE_CASE_PAIR_COUNT=9`, `KIT2_VAR_COLLISIONS=0`, on `KIT2_AST_*=0`,
+   `KIT2_PLACEHOLDER_LITERAL_COUNT=0`, `KIT2_CMD_COLLISIONS=0`. **N116 (kit1 kopyaları, değişmedi):**
+   17 dosya, `KIT_VAR_COLLISIONS=0`.
+4. **Sayfa (N192) statik denetimi; dokuz pozitif kontrolün dokuzu da bozulmuş kopyada kusuru
+   yakaladı.** C1 tek eylem (Ek R4/24 madde 5 a): 172 YAP hücresi, 0 ihlal. C2 her YAP'ın kendi GÖR'ü:
+   0 eksik (GÖRMEZSEN sayılmaz). C3 KÜME → KİT: dört içerik gününün dördünde. C4 yer tutucu:
+   `<case-id>`, `<container-file>`, `<container-root>`, `<evidence-dir>`, `<intake-dir>`; düz `<…>` 0
+   (denetimin ilk koşusu taslakta bir düz `<…>` yakaladı ve düzeltildi). C5 üçlü ters tırnak 0, tek
+   ters tırnak 0. C6 sayfanın andığı 46 komut adı, 11 `k` türü ve 12 kod adı runbookta var (bilinmeyen
+   0). C7 tırnaklı ASCII ekran metinlerinin (dar düzeltme sonrası: 392 tırnak, 397 parça) 372'si kit
+   bloklarında birebir var; kalan 25 parça el ile açıklandı: 11 "Not Defteri aciliyor: …" parçası
+   `k`'nın dosya adı sabitlerinden kurulur; yedi Win+R satırı (ÖN, KÜME, KİT, ADMIN ×2, İMHA,
+   EV) runbook metninde veya kalıbında yazılıdır (Ek R4/19 madde 4, Ek R4/1 madde 3, Ek R4/13
+   madde 4); 4 "VeraCrypt
+   ekraninda kapsayici <container-root> …" sorusu kitte `$([string]$b1xV['container-root'])`
+   interpolasyonudur; "y1/y2 BASLAMADI: repo dizini yok; …" iletisi `adm.ps1`'de `$adxStep`
+   interpolasyonudur; "(ONAY - PROJE SAHIBI)" bir etikettir; Türkçe arayüz adları ("Kaydetme",
+   "Farklı kaydet" vb.) ayrıca listelendi; açıklanamayan 0. C8 L7: üç ifadenin üçü de kit1 `a3`/`a4`'te var ve
+   G12'de `b0`/`b1`'e bağlı. C9 SON GÜN F1 cümlesi Ek R4/8.6 madde 3'teki metinle (ters tırnaklar
+   çıkarılmış) aynı. C10 Win+R satırları: yedisi de aynı kalıpta; KİT (Ek R4/1 madde 3) ile ÖN, KÜME, ADMIN
+   (`y1`, `y2`) ve İMHA (Ek R4/19 madde 4) satırları runbook metninde yazılıdır; yalnız EV satırı
+   türetmedir (Ek R4/13 madde 4; dar düzeltme L-4: ilk teslimdeki "yalnız ÖN ve KİT birebir"
+   önkabulü düzeltildi). UTF-8, BOM yok, CR 0, sekme 0.
+5. **Uzun sürebilen komut sınıflandırıcısı.** Ek R4/24 madde 4'teki ölçüt düzenli ifadeyle
+   uygulandı; dokuz sentetik satırla denendi (beş pozitif: `& "<python>"`, `& "<psql>"`, `git`,
+   `Start-Process`, `Test-KbDbGate` → dış; dört negatif: `Write-Host`, `& { }`, `& $…Sb`, yorum
+   satırı → değil): 9/9.
+
+**Ölçüt kanıt tablosu (Ek R4/16.5 dilim 5; N192 satır numaraları blok içindir; kaynak satırları
+taban `eb704b0`'a göredir).**
+
+| Ölçüt | N192 | Kaynak | Kanıt |
+|---|---|---|---|
+| (1) her YAP tek eylem | Bütün YAP hücreleri; tanım Ek R4/24 madde 5 (a) | Ek R4/16.5 L15807; Ek R4/8.6 L14325 | C1: 172/172; pozitif kontrol |
+| (2) her içerik günü KÜME → KİT | A1/A3 (163/171), İ1/İ3 (325/330), S1/S3 (522/527), SO1/SO3 (783/788) | L15807; Ek R4/8.6 L14336–L14356; Ek R4/1 madde 2 L13529 | C3: 4/4; pozitif kontrol |
+| (3) SON GÜN F1 cümlesi | 517–520 | Ek R4/8.6 madde 3 L14356–L14361 | C9 eşit; pozitif kontrol |
+| (4) yer tutucu `<[a-z0-9-]+>`, düz `<…>` yok; satır içi üçlü ters tırnak yok | Bütün sayfa | L15808–L15810 | C4, C5; pozitif kontrol |
+| (5) son insan provası planı onaylı | — | L15810 | **Bu revizyonda yazılmadı** (K5-5; ayrı kullanıcı kararı) |
+| (6) L7: "madde 3 blokları", "altı sınıf beyanı", "teknik kayıt" → `b0`/`b1` | G12 (103–111); ayrıca A6 (188) | N107 L12706; N108 L12715, L12727, L12746; N117 L13452 | C8: 3/3; pozitif kontrol |
+| (7) "ilerleme yoksa" kuralı ve süresi | G10 (85–100) | Ek R4/6 madde 11 L13999–L14005; Ek R4/16.5 L15812–L15816; N135 `finally` L16525–L16533 | Ek R4/24 madde 4 ve aşağıdaki tablo; `r1`, `r3`, `r4`, `r5`: süreyi izin veren yazılı karar yazar (K19-1 = A) |
+| (8) silme kararı aynı ziyarette, yarım kalırsa silme başlamaz | 517–520; S32 (647) | L15816–L15818; Ek R4/8.6 L14358–L14360; avukat cevabı 10 (Ek R4/17 L16044) | C9 |
+| (9) "sonraki adıma geç" istisnası yalnız GÖR görüldüyse; erken kayıttan sonra `a4` kilitsiz red iletileri → D7 | G6 (38–69; kit1 listesi 45–54, sınırlar 55–62, öncelik kuralı 63–68); A16 GÖRMEZSEN (243–245) | L15818–L15820; N114 G6 L12892–L12908; §34.12 madde (15) L8072–L8076; Ek R4/5 madde 2 L13777 | Kaynak eşlemesi (kit1 iletilerinin son eki ölçüldü: listedeki iletiler "(Kayit yazilmadi; DUR kilidi yok.)" taşımaz, bu yüzden liste sayfada açıkça durur) |
+| (10) DUR OLURSA: iki tetik ve AÇIK-25 (b); `ev.ps1` satırı | D8 (888–907) | Ek R4/13 madde 1 L15085–L15097, madde 4 L15205–L15222, madde 8 L15251–L15270 | Kaynak eşlemesi; C10 |
+
+**"İlerleme yoksa" süre tablosu (Ek R4/24 madde 4; ana kit kayıtları; süreler saniye).**
+
+| Komut | Kayıt sayısı (kök) | En uzun kayıt süresi (s) ve kaynağı | Kayıt öncesi aralığın üst sınırı (s) | Türetilen süre |
+|---|---|---|---|---|
+| `b1` | 9 (p5 1, p6 2, p7 2, p8 4) | 41 — C:\vd5_837d8cf6 `ext\ev\steps\s3\b1.txt` | 154 | 7 dakika |
+| `b5` | 3 (p6 1, p7 1, p8 1) | 1 — C:\vd5_accdc262 `ext\ev\steps\c\b05.txt` | 76 | 5 dakika |
+| `b5d` | 3 (p6 1, p7 1, p8 1) | 0 — C:\vd5_accdc262 `ext\ev\steps\c\b05d.txt` | 1179 | 5 dakika |
+| `b6` | 3 (p6 1, p7 1, p8 1) | 2 — C:\vd5_b4bcce27 `ext\ev\steps\c\b06.txt` | 62 | 5 dakika |
+| `b9` | 4 (p7 2, p8 2) | 0 — C:\vd5_b4bcce27 `ext\ev\steps\c\b09a.txt` | 59 | 5 dakika |
+| `b10` | 2 (p7 1, p8 1) | 18 — C:\vd5_b4bcce27 `ext\ev\steps\c\b10.txt` | 29 | 5 dakika |
+| `b11` | 2 (p7 1, p8 1) | 2 — C:\vd5_837d8cf6 `ext\ev\steps\c\b11.txt` | 36 | 5 dakika |
+| `b13` | 2 (p7 1, p8 1) | 2 — C:\vd5_837d8cf6 `ext\ev\steps\c\b13.txt` | 35 | 5 dakika |
+| `b14` | 2 (p7 1, p8 1) | 2 — C:\vd5_837d8cf6 `ext\ev\steps\c\b14.txt` | 51 | 5 dakika |
+| `b15` | 2 (p7 1, p8 1) | 3 — C:\vd5_837d8cf6 `ext\ev\steps\c\b15.txt` | 39 | 5 dakika |
+| `b16` | 2 (p7 1, p8 1) | 2 — C:\vd5_837d8cf6 `ext\ev\steps\c\b16.txt` | 66 | 5 dakika |
+| `b18` | 2 (p7 1, p8 1) | 1 — C:\vd5_837d8cf6 `ext\ev\steps\c\b18.txt` | 146 | 5 dakika |
+| `b19` | 2 (p7 1, p8 1) | 3 — C:\vd5_b4bcce27 `ext\ev\steps\c\b19.txt` | 18 | 5 dakika |
+| `b21` | 2 (p7 1, p8 1) | 2 — C:\vd5_b4bcce27 `ext\ev\steps\c\b21.txt` | 30 | 5 dakika |
+| `b22` | 2 (p7 1, p8 1) | 1 — C:\vd5_b4bcce27 `ext\ev\steps\c\b22.txt` | 22 | 5 dakika |
+| `b24` | 2 (p8 2) | 1 — C:\vd5_837d8cf6 `ext\ev\steps\c\b24a.txt` | 67 | 5 dakika |
+| `s26a` | 1 (p8 1) | 0 — C:\vd5_837d8cf6 `ext\ev\steps\c\s26a.txt` | 18 | 5 dakika |
+| `s26b` | 1 (p8 1) | 1 — C:\vd5_837d8cf6 `ext\ev\steps\c\s26b.txt` | 28 | 5 dakika |
+| `s29a` | 1 (p8 1) | 1 — C:\vd5_837d8cf6 `ext\ev\steps\c\s29a.txt` | 30 | 5 dakika |
+| `k` | 20 (p5 1, p6 2, p7 8, p8 9) | 0 — C:\vd5_fa7a5f56 `ext\ev\steps\d\k1.txt` | 357 | 5 dakika |
+| `r1` | 0 | **ölçüm yok** | — | **yazılmadı (K19-1 = A)** |
+| `r3` | 0 | **ölçüm yok** | — | **yazılmadı (K19-1 = A)** |
+| `r4` | 0 | **ölçüm yok** | — | **yazılmadı (K19-1 = A)** |
+| `r5` | 0 | **ölçüm yok** | — | **yazılmadı (K19-1 = A)** |
+
+Sütun 2'de p5–p8 = prova #5–#8 (kökleri Ek R4/24 madde 4'teki gibi). "Kayıt öncesi aralığın üst sınırı" =
+aynı oturumdaki bir önceki olaydan (kayıt bitişi veya red dosyası) bu kaydın açılışına kadar geçen en
+uzun süre; insan süresini (yazma, okuma, Not Defteri) içerir ve kurala girmez. Türetilen süre =
+en büyük(5, yukarı yuvarlanmış(10 × M / 60)) dakika.
+
+**Kapanan maddeler.** Dilim 5 içerik (N192); `K_ORDER` iletisi (N143); `B18_NO_DECISIONS` iletisi
+(N167); rev18 L-2'nin sayfa tarafı (SO0); prova #8 [108], [109], [130], [206a], [225]; MOLA U-15
+(B4); `b5d` sayı sorusunda Ctrl+C'nin sayfa tarafı (G10); ADMIN pencere sayısının sayfa tarafı (G13);
+rev6 son kontrol L1–L4; KD-18 (uyuldu).
+
+**Sonraki revizyona bırakılanlar (blok veya kit davranışı değişikliği gerekir; bu turda
+YAPILMADI).** (1) Rev18 L-2'nin kit tarafı: `s29b` ekranında kapının neden `False` olduğunu söyleyen
+ileti (N187) veya yalnız `a2` yazılmış oturumları sayma (kapı mantığı; ayrı karar); kit1 `ac.ps1`'in
+"a2 yazmadan kapatin" iletisinin etkiyi söylemesi (kit1 baytı). (2) Ctrl+C kayıt açılmadan
+basıldığında kitin bir ileti basması (N135 `Invoke-KbStep`). (3) Acil sayfanın açılış yolu (Ek R4/24
+madde 7): revizyon 20'ye bırakıldı ve son tam insan provasının planından ÖNCE karara bağlanması
+zorunludur (kullanıcı kararı D-2, `USER_DECISION=R19-FIX`). (4) KÜME, ADMIN, İMHA ve ÖN pencerelerinde "ilerleme yoksa" kuralı (kaynak kuralı yalnız
+KİT penceresi için yazar). (5) `r1`, `r3`, `r4`, `r5` sürelerinin ölçümü (K19-1 = A; son tam insan provası). (6) O-3
+(`adm.ps1` `PYTHONDONTWRITEBYTECODE`). (7) Ek R4/24 madde 4'teki sınıflandırıcının düzenli ifade
+sınırı (AST tabanlı bir taramayla değiştirilebilir).
+
+**Son insan provası planına notlar** (plan işidir; bu turda YAZILMADI; K5-5, K5-7).
+
+- **Prova #9-dar incelemesi §11 "Sonraki plan" listesi aynen:** (1) e3 NA kuralı hem `LK-PartScan`
+  hem `LK-PartPre` (A.15) için yazılsın, ya da `lk.ps1`'de A.15 tuz koşulu NA davransın; (2) hükümler
+  B.3-lk'den sonraki adıma (B.3-lkc veya B.4) konsun, C3 metni buna uysun; birleşik hüküm B.4'te
+  yeniden hesaplansın; (3) durmuş kök yardımcıları için açık kural; (4) `at=` değeri "ilk araç
+  çağrısı" olarak GERÇEKTEN ölçülsün (komuttan önce `Get-Date` kaydı); (5) `sk.ps1` kapsamı/otomatik
+  değişken listesi planda kapalı yazılsın, `FT-KbTok` adı hc kuralına göre baştan `FT-FieldTok`
+  olsun; (6) DG değişmezlik atlama listesi (O-2) sınır olarak adlandırılsın; (7) plan incelemelerine
+  "STOP emsali taraması" eklensin: önceki provanın her STOP'u bu planda kapandı mı; (8) T-FEN türü
+  sıra kusurları için "her `FT-Del` × bağlama durumu" tablosu plan şablonuna; (9) port-hijyeni
+  (prova dışı port) kalıcı tarama maddesi; (10) uzun adımların yalnız gizli süreçte koşması kuralına
+  B.H/B.1/B.2/B.4 netliği.
+- **Durmuş kök yardımcıları (M-1) için açık kural:** plan, durmuş bir kökün yardımcı dosyalarının
+  kaynak olarak (okuma ve uyarlama) kullanılıp kullanılamayacağını adıyla yazar; kullanılırsa her
+  uyarlama ilk aşamanın kaydında `D_TEXT_CONFLICT` benzeri bir satırla bildirilir; bayt ve ölçüm
+  devri yine yasaktır.
+- **A.15 tuz NA kuralı:** kaynak 0 ise pozitif kontrol `NA` ve adlı sınır; kural hem ön taramaya
+  (A.15) hem son taramaya (B.3-lk) yazılır.
+- **Hüküm yeri:** hükümler B.3-lk'den sonraki adımda yazılır; C3 metni buna uyar.
+- **Her `FT-Del` × bağlama durumu tablosu** plan şablonuna girer (T-FEN sıra kusuru sınıfı).
+- **Plan incelemelerine tarama:** "önceki provanın her STOP'u bu planda kapandı mı" (A.15 STOP'u
+  prova #8-ek'te de olmuştu).
+- **`at=` değeri** gerçekten ölçülür (ilk araç çağrısından önce kayıt).
+- **Dilim 5'e özgü:** gerçek koşu sayfası N192 doldurulmuş hâliyle kullanılır; `k.ps1` ve `b18.ps1`
+  yeni pinle kurulur (bayt değişen iki komutun ikizleri yeniden; `K_ORDER` ve `B18_NO_DECISIONS`
+  insan tarafında da görünür); `r1`, `r3`, `r4`, `r5` sürelerinin ölçümü (K19-1 = A);
+  rev18 L-2 dalı (`a2` yazılmadan kapatılan pencere) bilerek bir kez; kayıt açılmadan Ctrl+C (ör.
+  `b5d` sayı sorusu) bir kez; C3-d4 formundan ADMIN pencere sayısı sorusu kaldırılır ve 1a/19a/19b
+  satırlarına `": "` ayracı eklenir; acil sayfanın açılış yolu karara bağlanmadan acil sayfa
+  dalı gerçek pencerede ölçülmez (D-2: açılış yolu revizyon 20'de, plandan ÖNCE karara bağlanır).
+- **Dar düzeltme incelemesi §7 (a): H cevaplı adımlar.** Gerçek pencerede K5, K6, E3, S18, S47,
+  ADMIN (İ28, S28) ve "yeniden açılsın mı" istemlerinde (İ17, K3, S17) H cevabının kitin kilitsiz
+  ret iletisini ve G6 önceliğini gerçekten verdiği ölçülür (H bir kez; DUR kilidi yazılmadığı ve
+  aynı komutun yeniden yazılabildiği kayıttan doğrulanır). `K_NOT_CONFIRMED`, `U_NOT_CONFIRMED`,
+  `B18_NOT_CONFIRMED`, `Z1_PRECONDITION` ve `Y1_/Y2_PRECONDITION` redleri insan tarafında da
+  görünür.
+- **Dar düzeltme incelemesi §7 (b): pencere başlıkları ve ilerleme-yoksa.** ADMIN, İMHA, ÖN ve
+  KÜME pencerelerinin gerçek başlığı (G4: "ADMIN", "IMHA", "KUME - KAPATMAYIN"; ÖN için kaynakta
+  başlık yazılı değildir, gözlenir) ve bu pencerelerde "ilerleme yoksa" davranışı (kaynak kuralı
+  yalnız KİT içindir) ile gerçek Ctrl+C ve gerçek klavye davranışı yalnız son tam insan provasında
+  ölçülür; sayfanın ölçülemeyen kısımları (ADMIN/İMHA/ÖN/KÜME pencereleri, gerçek Ctrl+C, gerçek
+  klavye) için ölçüt: GÖR/GÖRMEZSEN satırındaki ekran metninin gerçek ekranla eşleşmesi ve kayıt/kilit
+  durumunun (DUR.txt, `KB_INTERRUPTED`) sayfanın söylediğiyle aynı olması.
+- **Dar düzeltme incelemesi §7 (c): Win+R 259 karakter sınırı.** KİT satırı iki `<evidence-dir>`
+  taşır (şablon 130 karakter); Run kutusunun 259 karakter sınırı gerçek `<evidence-dir>` yoluyla
+  (yol ≤ 78 karakter olmalıdır) ve yedi satırın hepsi için gerçek pencerede denenir.
+- **S12 dönüş yolu (L-1)** gerçek pencerede bilerek bir kez (b16 yapılmamışken S12; İ44-İ45'ten
+  sonra S12'ye dönüş) ve **G6 öncelik kuralı** (suffix'li ret iletisi varken GÖRMEZSEN "DUR OLURSA"
+  dese bile iletinin izlenmesi) ölçülür.
+
+**Sonraya taşınanlar (K5-4).** KIT/ADMIN okuyucu birleştirme (O-7; kit1 baytı); K12-1 (ERTELE);
+O-11; §34.23 "Taşınan maddeler"in kalanı (avukata borçlu şablon örneği ve D9 metni,
+`DL_SINGLE_PENDING_FILE` ikizi); yukarıdaki "Sonraki revizyona bırakılanlar" listesi.
+
+**Karar K19-1 (`USER_DECISION=K19-1` "A" (bu oturumda alındı; saniye ölçülmedi, üst sınır `2026-11-08T17:28:20+03:00`)).** Konu: `r1`, `r3`, `r4`, `r5` için "ilerleme
+yoksa" süresi. Uygulanan seçenek **A**. Bu dört komut ana kitte hiç koşmadı; K5-6 gereği süre tahmin edilmedi ve N192'de
+yazılmadı. Seçenekler: (A, önerilen) sayfa bu dört komut için süre vermez; bu komutları
+yetkilendiren ayrı ve yazılı kullanıcı kararı (Ek R4/8.4 madde 2) bekleme süresini de yazar; süre
+son tam insan provasında ölçülür. (B) Ek R4/24 madde 4'ün 5 dakikalık alt sınırı bu dört komuta da
+uygulanır; ölçülmemiş bir değerdir, bu yüzden önerilmedi. Uygulama: N192 G10'a ve SİLME OTURUMU
+bölümüne "süreyi izin veren yazılı karar yazar" satırları; Ek R4/24 madde 4; Ek R4/16.5 notu.
+Yazar ilk teslimde `BATCH_DECISIONS_REQUIRED` ile durmuştu; bu karar o durumu kapatır.
+
+**Tek taraflı kararlar (inceleyici için).** (1) Sayfa biçimi: dosya sonunda yeni `text` bloğu N192;
+N114'e dokunulmadı (Ek R4/24 madde 1). (2) Kurulum Ek R3/2 madde 9 üzerinden; yazılan şablon kit2
+koşusunda N192 (madde 2). (3) Win+R satırları: KİT (Ek R4/1 madde 3) ile ÖN, KÜME, ADMIN ve İMHA (Ek R4/19 madde 4)
+runbook metninde yazılıdır; yalnız EV satırı türetmedir (C10; dar düzeltme L-4 ile düzeltildi). (4) MOLA U-15'in gerçek koşu karşılığı B4:
+içerik alındıktan sonra iki pencere arasında yapay zekâ aracı açılırsa sonraki pencere açılmaz ve
+DUR OLURSA D5'ten itibaren uygulanır; sonraki pencere ancak yazılı karar ve HAZIRLIK H1–H6
+tekrarından sonra (en sıkı okuma; §4.3 a, B3, D7; dar düzeltmede kullanıcı kararı D-1 ile KABUL edildi, metin değişmedi). (5) ADMIN'de H'den sonra karar değişirse pencere
+kapatılıp aynı ADMIN satırı yeniden açılır (G13; kitin "ayni komutu yeniden yazin" iletisinin
+başlatıcı penceresindeki karşılığı, Ek R4/19 madde 4). (6) İŞLEME GÜNÜ tek bölüm ve bölünme kuralı
+(Ek R4/24 madde 1). (7) SO12: silme oturumunda daha önce TAMAM olmuş `k silme` için "Bu karar zaten
+kaydedildi." iletisi G6'nın ikinci sınırının adlı istisnasıdır. (8) ÖN satırı HAZIRLIK H10'dur
+(VeraCrypt bağlandıktan sonra; N114 H6 sırası). (9) Ctrl+C kayıt açılmadan basılırsa da DUR OLURSA
+(G10; N114 G6'nın "GÖR çıkmazsa DUR OLURSA" kuralı). (10) Acil sayfanın açılış yolu kaynakta
+olmadığı için yazılmadı, açık madde olarak listelendi (Ek R4/24 madde 7); dar düzeltmede kullanıcı
+kararı D-2 ile revizyon 20'ye ve son insan provası planından ÖNCEye bağlandı (zorunlu). (11) N167'de `$b18xMsg`
+adının yeniden kullanımı. (12) `k silme` `K_ORDER` iletisi yalnız normal yolun eksiğini söyler
+(diğer yollarda dal ulaşılmaz). (13) "Uzun sürebilen" ölçütü ve 10 kat / 5 dakika kuralı (Ek R4/24
+madde 4); M yalnız ana kit kayıtlarından. (14) G6'da kit1 istisna listesi N114 G6'dan (§34.12 O7)
+aynen alındı, çünkü kit1 iletileri kit2'nin son ekini taşımaz. (15) K6 dal adlarının N192
+dallarına bağlanması (G8). (16) Sayfanın tırnaklı ekran metinleri kitin bastığı ASCII metnin
+parçalarıdır; bazıları "..." ile kısaltıldı. (17) İskeletten farklar: G10–G13, D8, K KALIBI ve ONAY
+KALIBI bölümleri ve gün başına harfli adım kimlikleri (Ek R4/24 madde 1). (R19-FIX sonrası ek
+kararlar: bkz. "Bağımsız inceleme ve dar düzeltme", dar düzeltme tek taraflı seçimleri.)
+
+**Düzeneğin önceden kurduğu dizinler ve sahipleri.** Üç kök (`rO` taban, `rN` ve `rN2` yeni), her
+biri: `ev\kit` (Ek R3/2; kit1 kurulumu), `ev\kit2` (Ek R4/16.7 (1)), `sec` (güvenli dosya ve
+sentetik acil sayfa; Ek R4/2 madde 5 ACL'si scratchpad içinde), `vol\pilot\{repo,restricted,temp,in}`
+(§4.4/3; sentetik), `ext`, `srcrepo`, `cfile`, `pg\data` (yalnız yol değerleri için), `tools` (boş
+araç dosyaları), `fakeprof` (sahte profil), `tool` (`kvc2.ps1`, `kvc.ps1`; kurulum araçları), `tmp`,
+`psmac`. Ölçüm için önceden yazılan sentetik kayıtlar: oturum dizinine `b1.txt` (gerçekte `b1`),
+`steps\c` ve `b16.txt` (gerçekte `b5` ve `b16`), `steps\d` ve `k1.txt`/`k2.txt` (gerçekte `k`).
+Kit tarafından açılanlar: `steps`, `steps\s1` ve `ac.txt` (`ac.ps1`), `bc.txt` (`bc.ps1`), red
+dosyaları (`Write-KbRefusal`). Hiçbir dizin scratchpad dışında açılmadı; repo, prova kökleri,
+Masaüstü, pilot kümesi ve passfile dokunulmadı.
+
+**Ölçülmeyenler.** Silme oturumu yüklemesi (SO3 metni yalnız statik); ADMIN, İMHA, ÖN ve KÜME
+pencereleri (`adm.ps1`, `z1.ps1`, `t0.ps1`, `kume.ps1` bu turda yüklenmedi; sayfanın bu pencerelere
+ait GÖR satırları, ör. S46–S53, yalnız kaynak metniyle statik eşlendi); gerçek Ctrl+C ve "YARIDA KALDI"; `k girdi`'nin `b07` PASS ama girdi hash dosyası yok
+dalı; `s25` ve `z1`'in kayıt öncesi evresi; sayfanın bir insan tarafından okunması ve izlenmesi;
+gerçek CLI, PostgreSQL, VeraCrypt, Not Defteri ve klavye; `b18`'in iki karar da varken sonraki
+dalları (değişmedi). Ölçülmeyen şey PASS sayılmadı.
+
+**§1.5 taraması (pozitif kontrollü).** Taban ile yeni dosya arasında eklenen ve değişen satırlar on üç
+sınıfla tarandı: kullanıcı adı, profil dizininin adı, `<sürücü>:\Users\` profil yolu biçimi,
+yüzde-sarmalı profil değişkeni adı, 8.3 kısa ad izi, DSN port biçimi, "port" bağlamlı sayı, `55xxx`
+beş haneli sayı, avukat unvanı deseni, e-posta, kullanıcı uygulama verisi dizininin adı, oturum
+scratchpad yolu ve proje dizininin kullanıcı adı taşıyan adı: hepsi 0 isabet; pozitif kontrol on üç
+sınıfın on üçünü kendi kontrol dizgesinde buldu. Bu bölüm yazıldıktan sonra tarama aynı sonuçla
+yeniden koşuldu.
+
+**Bölüm → değişiklik.**
+
+| Bölüm | Değişiklik |
+|---|---|
+| Üst uyarı | Revizyon listesine 19; revizyon 19 paragrafı |
+| §0 | "Revizyon" satırı |
+| §34.4 | Revizyon 19 satırı |
+| §34.25 | Bu bölüm |
+| Ek R3/2 | Madde 9: kit2 koşusunda şablon N192 |
+| Ek R3/5 | "Kit2 koşusu" notu (N114 değişmedi) |
+| Ek R4/1 | Madde 8: N192 işareti |
+| Ek R4/6 | Madde 11: süre kuralının yeri |
+| Ek R4/8.6 | İskelet: N192 işareti |
+| Ek R4/14 | Madde 4: L-2 notu (kapı aynı; N192 SO0) |
+| Ek R4/16.5 | Revizyon 19 notu (dilim 5) |
+| Ek R4/16.7 | (11): N192 işareti |
+| Ek R4/19 | Madde 1: revizyon 19 pin notu; madde 2 (11): N192 işareti |
+| Ek R4/24 | Yeni bölüm (dosyanın sonunda, N191'den sonra); R19-FIX: madde 3 (L-4), madde 7 (D-2), yeni madde 8 |
+| Ek R4/6 madde 11, Ek R4/16.5 ölçüt (7) | R19-FIX: süre tabanı "dilim 1 ve 3" yerine prova #5–#8 (L-3) |
+| N143, N167 | Yukarıdaki tablo |
+| N192 | Yeni blok (Ek R4/24'ün sonunda) |
+
+**Yazma hesabı.** Taban dosya diskten okundu (SHA-256 eşit); düzenlemeler tek ve benzersiz
+eşleşmelerle bir betikle yapıldı (her eşleşmenin sayısı 1 olarak denetlendi); dosya LF, BOM yok, CR
+0; son yazımdan sonra bloklar dosyadan yeniden çıkarılıp taban bloklarla karşılaştırıldı (190 eşit,
+2 değişti, 1 yeni) ve yukarıdaki SHA'lar ölçülen baytlardır. Bu revizyon gerçek koşuyu, gerçek veri
+gönderimini, son tam insan provasını veya planını yetkilendirmez; her biri ayrı kullanıcı kararıdır.
+
+#### Bağımsız inceleme ve dar düzeltme (revizyon 19; `USER_DECISION=R19-FIX`)
+
+**Girdi.** Bağımsız inceleme (Sonnet 5.5; yazardan ayrı ve temiz oturum; salt-okunur)
+`<profile>\vergi_step10_rev19_review_de0267a0\independent-runbook-rev19-review.md`
+(`60c1c8c8b9f2e800ca3c90d4536cd82580f610a79aedde395a76617ffa56359a`) ve düzeltme notu
+`independent-runbook-rev19-review-corrections.md`
+(`be2d3de383ae69ae3a149cb84ff70313c0c8b0da50531f870d3afae6d8c74fab`); iki SHA da diskten ölçüldü,
+komuttakiyle eşit. **Hüküm: `READY_FOR_NARROW_REMEDIATION`** (0 Critical, 0 High, 2 Medium, 4 Low,
+9 Observation). Düzeltmenin tabanı: çalışma kopyası `22bd817fb6bc773b2582c01171252e1ccfcec650daab4096924b507fc7d48dd7`
+(23154 satır, 193 blok; ölçüldü), HEAD `eb704b0f9b8e4786b7c5a08b54967042952d1c6d`. Commit ve push
+yapılmadı; yalnız bu dosya değişti. Kullanıcı kararı planlayıcı oturumunda verildi, saniye
+ölçülmedi; düzeltmenin ilk ölçümü `2026-11-08T18:27:01+03:00` (karar için üst sınır).
+
+**Kullanıcı kararları.** **D-1** (inceleme karar 4, MOLA/B4): yazarın en sıkı okuması KABUL; B4
+metni aynen kaldı. **D-2** (inceleme karar 10 / O-3, acil sayfanın açılış yolu): bu düzeltmede
+YAZILMADI; ayrı küçük revizyonda (revizyon 20) ve son tam insan provasının planından ÖNCE karara
+bağlanması zorunludur (Ek R4/24 madde 7, "Sonraki revizyona bırakılanlar (3)" ve "Son insan
+provası planına notlar" buna göre güncellendi). **D-3** (M-2 yönü): H cevabı DUR DEĞİLDİR; kitin
+kilitsiz reddi ve iletisi geçerlidir.
+
+**Bulgu → değişiklik.**
+
+| Bulgu | Değişiklik | Yer |
+|---|---|---|
+| M-1 (G4 pencere başlıkları) | KİT "Windows PowerShell"; ADMIN "ADMIN" (`adm.ps1`/N173 `WindowTitle = 'ADMIN'`); İMHA "IMHA" (`z1.ps1`/N187 `WindowTitle = 'IMHA'`); KÜME "KUME - KAPATMAYIN" (`kume.ps1`/N139 ve Ek R4/19 madde 4). Kaynak satırları bu turda diskten doğrulandı; `t0.ps1`'de başlık atanmaz (ÖN için başlık yazılmadı) | N192 G4 |
+| M-2 (H / kilitsiz ret ↔ "DUR OLURSA") | G6'ya öncelik kuralı (satır "(Kayit yazilmadi; DUR kilidi yok.)" varsa G6 geçerli; H, DUR/DURDU/STOP/YARIDA KALDI getirmedikçe DUR değil; ileti yapılacak iş söylemiyorsa DUR OLURSA). K5, K6, E3, S18 GÖRMEZSEN satırları kit iletisine sadık yeniden yazıldı. Taramada bulunan aynı sınıf (aşağıdaki liste) aynı biçimde düzeltildi | N192 G6, K5, K6, E3, S18, S47, İ28, S28, İ17, K3, S17 + 23 adım |
+| L-1 (S12/S13 dönüş yolu) | S12 GÖRMEZSEN: yeni pencere açılmaz, a9 yazılmaz; aynı pencerede İ44-İ45 yapılır, b16 PASS görününce İ46-İ48 ATLANIP S12'ye dönülür; S13: "b16'dan sonra S13'e dönün" | N192 S12, S13 |
+| L-2 (`k girdi` `K_ORDER` iletisi) | İleti "once b7 TAMAM olmali ve girdi hash'i kaydedilmis olmali" der (`$kxTail`); koşul, kod, kilit sınıfı, kayıt satırları aynı; 240 satır; ASCII | N143 |
+| L-3 ("dilim 1 ve 3") | "prova #5–#8 (dilim 1–4) ana kit kayıtları" | Ek R4/6 madde 11; Ek R4/16.5 ölçüt (7) |
+| L-4 (karar (3) önkabulü) | ÖN, KÜME, ADMIN, İMHA satırları Ek R4/19 madde 4'te, KİT Ek R4/1 madde 3'te yazılı; yalnız EV türetme | Ek R4/24 madde 3; §34.25 karar (3) ve C10 |
+| O-1 (G10 kapsamı) | "Bu süre kuralı yalnız yukarıdaki listedeki komutlar içindir …" | N192 G10 |
+| §7 (a), (b), (c) | Son insan provası planına notlar: H cevaplı adımların gerçek davranışı; ADMIN/İMHA/ÖN/KÜME gerçek başlık ve ilerleme-yoksa, gerçek Ctrl+C/klavye ve ölçülemeyen kısımların ölçütü; Win+R 259 karakter sınırı | §34.25 "Son insan provası planına notlar" |
+
+**H / kilitsiz ret tarama sonucu (kaynak: kit2 komut betikleri ve `kbe.ps1`).** Düzeltilenler:
+(1) kullanıcının seçtiği H sonucu kilitsiz reddedilen adımlar — K5 (`K_NOT_CONFIRMED`), K6
+(`K_NOT_CONFIRMED`), E3 (`U_NOT_CONFIRMED`), S18 (`B18_NOT_CONFIRMED`), S47 (`Z1_PRECONDITION`);
+(2) H ile "yeniden açılsın mı / bastan olusturulsun mu" soruları — İ17 (`b5d`), K3 (`k`), S17
+(`b18`), iletiler "… oldugu gibi birakildi … ayni komutu yeniden acar"; (3) ADMIN pencere
+ön koşul redleri — İ28 (`y1`: "once KIT penceresinde b9 TAMAM olmali", "repo dizini yok;
+kapsayici bagli degil"), S28 (`y2`: "once KIT penceresinde b24 TAMAM olmali ve aktif atama 1
+gostermeli", aynı repo iletisi); "DUR kilidi var" ve `…_KIT_VALUES` (içerik alındıktan sonra `Write-KbDur`, kilitli) ile
+`…_VALUE_RULE` (ileti "içerik alındıysa sayfadaki DUR OLURSA" der) DUR OLURSA'da kaldı; (4) "kilitsiz ret iletisi varsa G6" notu eklenen
+23 ön koşul adımı: A7, İ7, S7, SO7 (`b0`), İ18 (`b6`), İ24 (`g8`), İ27, İ31 (`b9`), İ32 (`b10`),
+İ35 (`b12`), İ38 (`g14`), İ41 (`b15`), İ42 (`g16`), S19 (`b19`), S20 (`b20`), S24 (`b22`), S25
+(`b23`), S27, S31, E4 (`b24`), S37 (`s27`), S38 (`s28`), S39 (`s29a`). Zaten doğru olanlar: İ34,
+İ37, İ40, İ44, S23, S35, S36 (onay H → O1), İ29, S29 (ADMIN onay H → "DUR değil; G13"), S48
+(z1 onay H), S50 (anahtar H), İ23 (`b7` H → G6). **Gerçekten kilitli, dokunulmadı:** `b0`/`b1`/`b2`
+H cevapları (`STOP`), `b10`, `b20`, `b23` H (`STOP`), `s25` E (`STOP`), `YARIDA KALDI`, `DURDU`.
+
+**Değişen bloklar (22bd817f… çalışma kopyasına göre; beklenen yalnız N143 ve N192).**
+
+| Blok | Eski SHA-256 (22bd817f…) | Yeni SHA-256 | Satır |
+|---|---|---|---|
+| N143 (`k.ps1`) | `1da670b019ec6da6ffde1b57ada140d7e3eac8be67281d1cb3c49d2af6e3d923` | `4505a664c6b4b99e6821691bedf4d890c5866c7d5e5f614fa63e1e5d680485f0` | 240 → 240 |
+| N192 (kullanıcı sayfası) | `20ec9bb96ca1a323bc033252d89a2a0c5b08b27c75a5901c428020b522c39086` | `d832353ecf0fbd15182d109ea23a1e0d82bab4199275236d305fe9caf83e3614` | 876 → 924 |
+
+Diğer 191 blok (N167 dahil) bayt-bayt aynıdır; eb704b0'a göre değişenler yine yalnız N143, N167
+ve yeni N192'dir (190 blok eşit). Kit1 baytı ve `pins.txt` değişmedi; `pins2.txt` 160 satır, 22bd817f'ye
+göre yalnız `k.ps1` satırı değişti.
+
+**Ölçümler (hepsi bu oturumun scratchpad'inde; yeni `powershell.exe -NoProfile -NonInteractive
+-ExecutionPolicy Bypass -File` süreçleri; `TEMP`/`TMP` scratchpad'e yönlendirilmiş; boş bellek ≈ 4,8 GB;
+düzenek iskeleti rev19 incelemesinin `build.py`/`h2.ps1` kopyasıdır).** Üç sentetik kök: `eb704b0`,
+`22bd817f`, yeni baytlar. Gerçek `ac.ps1` + gerçek `bc.ps1` üç kökte de `KIT_LOAD=OK`, `KIT2_LOAD=OK`;
+gerçek `Get-KbScript` **41/41**. `K_ORDER`: 10 tür (`intake`, `uyari`, `girdi`, `fact`, `dogrulama`,
+`zamancizelgesi`, `durdurucu`, `adlitatil`, `sure`, `silme`) + dört ek dal (STOP'lu `b16`, sonuç
+satırsız `b16`, STOP'lu `b15`, FAIL'li `b12`) + çoklu eksik (`k sure`, `b19`+`b20` yok) + `k silme`
+(`b24a` var, `b24b` yok) + **incelemenin D durumu** (`b07-r1` PASS, girdi hash dosyası yok): 22
+vakanın 20'sinde 22bd817f ↔ yeni ileti aynı, ikisinde (`k girdi` kayıtsız; D durumu) yeni ileti
+"… once b7 TAMAM olmali ve girdi hash'i kaydedilmis olmali (runbook Ek R4/8.6 madde 5). Dosya
+yazilmadi." Üç kökte de kod (`K_ORDER` ×17, `B18_NO_DECISIONS` ×4, `B18_PRECONDITION` ×1), red dosyası
+(2 satır, `REFUSAL_CODE`, `AT`; ASCII dışı 0; ters bölü 0), `DUR.txt` yok, karar kaydı/restricted
+dosyası/`b18.txt` yok ve "(Kayit yazilmadi; DUR kilidi yok.)" aynı. `ParseFile`: `k.ps1` 0 hata
+(240 satır, ASCII dışı 0, CR 0, duyarsız işleç 0), `b18.ps1` 0 hata (129). N147: `KIT2_VAR_SCAN_FILE_COUNT=150`,
+`KIT2_VAR_COLLISIONS=0`, on `KIT2_AST_*=0`, `KIT2_PLACEHOLDER_LITERAL_COUNT=0`, `KIT2_CMD_COLLISIONS=0`;
+N116 (kit1): 17 dosya, `KIT_VAR_COLLISIONS=0`. **Sayfa statik denetimleri yeniden koşuldu** (dokuz
+denetim C1–C9, C10 ayrıca; hepsi pozitif kontrollü kusuru yakaladı): C1 172 YAP / 0 ihlal; C2 172 GÖR / 0
+eksik; C3 dört gün KÜME → KİT; C4 beş yer tutucu, düz `<…>` 0; C5 üçlü/tek ters tırnak 0; C6 tanımsız
+komut 0, 11 `k` türü, kod adları runbook'ta; C7 392 ASCII tırnak, 372/397 parça birebir, kalan 25
+açıklandı; C8 L7 üç ifade G12'de; C9 F1 cümlesi eşit; C10 yedi Win+R satırı. §34.25 kanıt tablosunun
+N192 satır numaraları 924 satırlık yeni sayfaya göre güncellendi (A1/A3 163/171, İ1/İ3 325/330, S1/S3
+522/527, SO1/SO3 783/788, F1 517–520, G6 38–69, G10 85–100, G12 103–111, A16 GÖRMEZSEN 243–245,
+D8 888–907).
+
+**Dar düzeltmenin tek taraflı seçimleri (inceleyici için).** (a) M-2 için tek tek satırları yeniden
+yazmak yerine G6'ya genel öncelik kuralı eklendi; yalnız kullanıcı seçimi H olan veya kit iletisi
+farklı bir iş söyleyen adımlar tek tek yazıldı; kalan 23 ön koşul adımına yalnız "kilitsiz ret iletisi
+varsa G6" notu eklendi. (b) K6'nın kit iletisi ("Kayit yazilmadi (proje sahibi kabul etmedi). Dosya
+yerinde kaldi.") yeniden yazmayı söylemez; "karar değişirse k uyari'yı yeniden yazın" cümlesi
+`k.ps1` davranışından (kayıt yok, dosya yerinde, `K_ALREADY_DECIDED` yalnız PASS kaydında) türetildi. (c)
+E3 için "avukat kararını yineler ve onaylarsa u'yu yeniden yazın" cümlesi `u.ps1` davranışından
+(`U_NOT_CONFIRMED` kayıt yazmaz, "zincir komutlari acik kaldi") türetildi. (d) L-1 için kaynak
+dönüş yolunu açıkça söylemiyor; en dar yol seçildi: aynı pencerede kalmak. Gerekçe: `b16`, bu
+pencerede yalnız `b0` ve `b1` PASS'ini ister (`Test-KbSessionB1`) ve `b16` PASS kaydı pencereler
+arası kalıcıdır (`k durdurucu`/`k adlitatil` `steps\c\b16.txt`'ye bakar); yeni pencere `a2`, 2 dakika
+bekleme, `a3`, `b0`, `b1`, KÜME/KİT satırlarını yeniden gerektirir, rev18 L-2 kapı sürekliliğini ve
+MADDE1 dalı riskini artırır. `a9` SON GÜN'ün sonunda (S40) bir kez yazılır; İ46–İ48 bilerek atlanır.
+`b16` başka bir eksik adım söylerse (G6) o adım İŞLEME GÜNÜ bölümünden aynı pencerede yapılır. (e)
+S47 için "İMHA satırını yeniden aç" cümlesi `z1.ps1` iletisinden alındı (z1 bitmediği için G13
+yasağı geçmez). (f) ADMIN reddinde "ADMIN penceresini kapatın" cümlesi sayfanın G13/İ28 mevcut
+düzeninden gelir; iletinin kendisi kapatmayı söylemez. (g) `$kxTail` `girdi`'nin her K_ORDER
+durumuna eklenir (b7 hiç PASS değilse de "girdi hash'i" cümlesi doğrudur, çünkü b7 hash'i yazar).
+
+**Dokunulmayanlar (inceleme O-2…O-9).** O-2 (SO0 yanlışlıkla açılış cümlesi), O-3 (acil sayfa açılış
+yolu = D-2, sonraki revizyon), O-4 (`n`/`o` komutlarının sayfada olmaması), O-5 (BİTİŞ'te KÜME
+penceresi), O-6 (§34.4 rev7 satırı tarihsel), O-7 (Win+R 259 karakter sınırı; yalnız plan notu),
+O-8 (kayıt öncesi aralık sütunu bağımsız ölçülmedi), O-9 (düzenek bağımsızlığı sınırı). Kapsam
+dışı kaldı: başka kit davranışı, kanal kapısı (N187), acil sayfa açılış yolu, kit1 baytları, yeni
+hukuki ifade.
+
+**§1.5 taraması (pozitif kontrollü).** `eb704b0`'a göre eklenen ve değişen satırlar (dar düzeltme
+dahil) kullanıcı adı, profil yolu biçimi, yüzde-sarmalı ortam adı, 8.3 kısa ad, DSN port, "port"
+bağlamlı sayı, `55xxx`, avukat unvanı + ad deseni, e-posta, uygulama verisi dizini, scratchpad yolu
+ve proje dizini adı sınıflarıyla tarandı: 0 isabet; pozitif kontrol on iki sınıfın on ikisini
+buldu. Bu bölüm yazıldıktan sonra tarama yeniden koşuldu.
+
+**Sonuç.** `READY_FOR_INDEPENDENT_REVIEW` (dar yeniden bakış için). Bu düzeltme commit, push, son
+tam insan provası, planı veya gerçek koşu yetkilendirmez.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -12331,7 +12838,9 @@ tutucu kalırsa blok çalıştırılmaz: `STOP KIT_SCRIPT_LOAD=FAIL`.
    sayfada `<…>` biçiminde yer tutucu kalırsa sayfa yazılmaz: **DUR**.
    Sayfa evidence'a, repoya ve bu belgeye yazılmaz; yalnız SHA-256'sı
    `kit-build.txt`'ye girer. Not formu basılmaz (revizyon 6; Ek R3/6
-   `a9`'un aldığı pencere sonu öz beyanıdır).
+   `a9`'un aldığı pencere sonu öz beyanıdır). Kit2 koşusunda bu maddede
+   yazılan şablon N114 değil N192'dir (revizyon 19; Ek R4/24 madde 2);
+   konum denetimi, doldurma kuralı ve `KIT_PAGE_SHA256` satırı aynıdır.
 10. Ajan oturumu kapatılır; içerik penceresinden önce §4.3 (a) kapatma
     prosedürü uygulanır (bir kerelik bilgisayar hazırlığı daha önce
     yapılmış olmalıdır; §4.3 a). Kit pilot boyunca değişmez; değişiklik
@@ -12864,6 +13373,10 @@ satırıdır (Ek R4/8.1); bu sayfanın H6 adımındaki Win+R satırı ÖN satır
 `a4`'ün `NO_RECORD` iletisindeki (N108 satır 40) "Sayfanizda ON satiri
 yoksa … a9 yazin" dalı bu sayfa içindir: kit1 tek başına kullanılıyorsa
 o iletide `a9` yazılır, H6 geç çalıştırılmaz.
+
+**Kit2 koşusu (revizyon 19; §34.25).** Kit2 ile yürütülen koşuda kullanıcı
+sayfası bu şablon değil N192'dir (Ek R4/24). N114 değişmedi; kit1 tek başına
+kullanıldığında geçerlidir. Kit2 sayfasının ÖN satırı H10'dur.
 
 ```text
 KULLANICI SAYFASI — İÇERİK PENCERESİ (YAP / GÖR / GÖRMEZSEN)      Dosya: <case-id>
@@ -13573,7 +14086,7 @@ ilgili kararlar yeniden açılır ve bu ek değişir.
    yeni bir sınır tanımı yoktur.
 8. **Runbook ekranda.** Ek R4 ile yürütülen koşuda runbook işleme
    günlerinde **açılmaz**; tek yardım değerleri doldurulmuş kullanıcı
-   sayfasıdır (dilim 5). Not Defteri'ni yalnız kit açar (`b5d`, `k`,
+   sayfasıdır (dilim 5; revizyon 19: N192, Ek R4/24). Not Defteri'ni yalnız kit açar (`b5d`, `k`,
    `b18`). Bu, §4.3 (a)'nın "aktarım günü dışındaki içerik oturumlarında
    runbook iş bitene kadar açık kalır" cümlesinin kit2 koşusundaki
    karşılığıdır (§4.3 a, revizyon 7 paragrafı).
@@ -14001,8 +14514,8 @@ fotografini cekmeyin."
     penceresinde** Ctrl+C'ye basar; kit "YARIDA KALDI" der, adım PASS
     yazılmaz ve sayfanın DUR OLURSA bölümü uygulanır. KÜME penceresi
     kapatılmaz (küme ayrı konsoldadır; ADOPT L213–L219). Sayfanın bekleme
-    süresi dilim 1 ve 3 provalarındaki ölçümlerden dilim 5'te yazılır
-    (O-Y6).
+    süresi prova #5-#8 (dilim 1-4) ana kit kayıtlarındaki ölçümlerden dilim 5'te yazılır
+    (O-Y6; revizyon 19: N192 G10, kural Ek R4/24 madde 4).
 12. **Dar yedek: `Process` çalıştırıcı (errata-3 §5.7).** Yalnız dilim 1
     ölçümü belirli bir Python CLI'si için `&` yolunun yetmediğini
     gösterirse ve kullanıcı o CLI için ayrıca onaylarsa: `UseShellExecute=$false`,
@@ -14319,7 +14832,7 @@ Kit tuşa kimin bastığını bilemez (§32/39 d); satır beyandır.
 #### Ek R4/8.6 Günlerin sırası ve kullanıcı sayfasının iskeleti
 
 **Sayfa iskeleti** (tasarım v2 §5; metin dilim 5'te yazılır, N114
-değişmez): biçim N114 ile aynıdır — G1–G9, HAZIRLIK, gün bölümleri
+değişmez; revizyon 19: N192, Ek R4/24): biçim N114 ile aynıdır — G1–G9, HAZIRLIK, gün bölümleri
 (AKTARIM GÜNÜ, İŞLEME GÜNÜ 1, gerekirse İŞLEME GÜNÜ 2, SON GÜN, ERKEN
 KAPANIŞ, SİLME OTURUMU), DUR OLURSA D1–D7 (ve Ek R4/13'ün `ev.ps1`
 satırı ile iki tetiği), BİTİŞ. Her YAP hücresinde tek eylem; GÖRMEZSEN
@@ -15364,7 +15877,8 @@ seçimine girmez. Yeni süreye giren alan bulunmadı.
    gerekir. Biri eksik, başka oturumun kaydı veya `STOP` taşıyorsa `False`
    (fail-closed; `POSTCONDITION_11=INCOMPLETE`); `a2` yazılmadan kapatılan
    bir silme oturumu penceresi (`ac.txt` var, `a2.txt` yok) revizyon 17'de
-   olduğu gibi `False` verir. Ad korunmuştur; ölçülen, oturum açılış ve
+   olduğu gibi `False` verir (revizyon 19, revizyon 18 incelemesi L-2: kapı
+   aynı kaldı; kullanıcı sayfası N192 SO0 bu etkiyi ve kaçınma yolunu söyler). Ad korunmuştur; ölçülen, oturum açılış ve
    kapanış kayıtlarıdır, pencere içi süreklilik değildir (revizyon 17
    incelemesi O-1). 12: imha kaydı
    yazıldı, SHA-256'sı kayıtta ve `DELETION_RECORD_COPY_TO_FILE_LAWYER=True`
@@ -15812,8 +16326,8 @@ metin `<...>` yok (L2) ve sayfada satır içi üçlü ters tırnak yok (L3);
 biri sayfada `b0`/`b1` karşılığına bağlanır (L7); (7) uzun sürebilen her
 komut için "ilerleme yoksa" kuralı: belirtilen süre boyunca KİT
 penceresinde yeni satır yoksa Ctrl+C (yalnız KİT penceresinde) → kit
-"YARIDA KALDI" → DUR OLURSA; KÜME penceresi kapatılmaz (O-Y6; süre dilim 1
-ve 3 ölçümlerinden); (8) SON GÜN bölümü silme kararının aynı ziyarette
+"YARIDA KALDI" → DUR OLURSA; KÜME penceresi kapatılmaz (O-Y6; süre prova
+#5-#8 (dilim 1-4) ana kit ölçümlerinden); (8) SON GÜN bölümü silme kararının aynı ziyarette
 tamamlanması gerektiğini ve yarım kalırsa silmenin başlamayacağını söyler
 (M-Y1/4); (9) G6 ve 2a'daki "sonraki adıma geç" istisnası yalnız GÖR
 satırı görüldüyse geçerlidir (rev6 son kontrol L1); erken kayıttan sonra
@@ -15826,6 +16340,14 @@ döngüsü, ADMIN, `k` ile avukat rolü — ikinci kişi cihaz başında); son g
 (F1 süresi ölçülür); bir erken kapanış dalı veya bir kasıtlı DUR ve silme
 oturumu; rev6 son kontrol L1/L4 dalları. Kapsayıcı, yol kapısı, ACL ve
 "Farklı kaydet" muaf tutulmaz.
+
+**Revizyon 19 notu (dilim 5; §34.25).** Dilim 5 sayfası N192'dir (Ek R4/24). Ölçüt (1)–(4) ve
+(6)–(10) N192'nin pozitif kontrollü statik denetimi ve kaynak eşlemesiyle karşılandı (§34.25 ölçüt
+kanıt tablosu); insan provasıyla değil. Ölçüt (5) (son insan provası planı) bu revizyonda yazılmadı
+ve ayrı kullanıcı kararıdır (K5-5). Ölçüt (7)'nin süreleri Ek R4/24 madde 4'teki kuralla prova
+#5–#8 kayıtlarından türetildi; `r1`, `r3`, `r4` ve `r5` için ölçüm olmadığından süre yazılmadı (kullanıcı
+kararı K19-1 = A: süreyi izin veren yazılı karar yazar; §34.25). İki ileti düzeltmesi (N143 `K_ORDER`, N167 `B18_NO_DECISIONS`) sentetik düzenekte
+ölçüldü; son tam insan provası iki iletiyi de gösterir.
 
 #### Ek R4/16.6 Sızıntı negatif testi (her dilimde zorunlu; KD-2, M1, M6, L-Y4)
 
@@ -15893,7 +16415,7 @@ avukata gönderilecek içeriksiz örneği ve güncellenmiş D9 bildirimi (Ek
 R4/17); (10) §26.5'teki AÖ sınıfı anahtarlar ve
 `<evidence-dir>\form-hash-record.txt` (Ek R4/21 madde 3; revizyon 16, R15 L-1);
 (11) kullanıcı sayfası
-(dilim 5); (12) **en son**, tek seferde CreateNew ile `pins2.txt` ve
+(dilim 5; revizyon 19: N192, Ek R4/24 madde 2); (12) **en son**, tek seferde CreateNew ile `pins2.txt` ve
 `kit-build2.txt`: genişletilmiş N116, komut adı çakışması, AST sayımları,
 N147 yer tutucu sayacı (`KIT2_PLACEHOLDER_LITERAL_COUNT=0`; revizyon 10),
 şablon hash'leri ve (2)–(6)'nın ölçülen hash'leri. (12)'den sonra (2)–(6)
@@ -16360,7 +16882,8 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
 1. **Dilim 1 kit2 dizini** (revizyon 14: dilim 2 ile 85 dosya; eklenen 26
    dosya Ek R4/21 madde 1; revizyon 16: dilim 3 ile 128 dosya; eklenen 43 dosya
    Ek R4/22 madde 1; revizyon 17: dilim 4 ile 160 dosya; eklenen 32 dosya Ek R4/23 madde 1;
-   revizyon 18: 160 dosya değişmedi, yalnız `z1.ps1`'in pini yenilendi, §34.24)
+   revizyon 18: 160 dosya değişmedi, yalnız `z1.ps1`'in pini yenilendi, §34.24;
+   revizyon 19: 160 dosya değişmedi, yalnız `k.ps1` ve `b18.ps1`'in pinleri yenilendi, §34.25)
    (`<evidence-dir>\kit2\`; tam olarak aşağıdaki
    59 dosya + `pins2.txt` + `kit-build2.txt`; alt dizin yok; `bc.ps1`,
    `t0.ps1` ve `kume.ps1` bu kümeyi `Get-KbFileNames` (N136) ile ordinal
@@ -16394,7 +16917,7 @@ provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
    son hâli (avukat cevaplarından sonra); (9) şablon örneği ve güncellenmiş
    D9 bildirimi; (10) §26.5'teki AÖ anahtarları ve
    `form-hash-record.txt` (revizyon 16); (11) kullanıcı sayfası
-   (dilim 5); (12) N147'nin gövdesinin oturum geçici dizinine (evidence,
+   (dilim 5; revizyon 19: N192, Ek R4/24 madde 2); (12) N147'nin gövdesinin oturum geçici dizinine (evidence,
    kapsayıcı ve repo dışında) CreateNew ile `kvc2.ps1` adıyla yazılması, SHA-256'sının
    §34.14'teki N147 değerine eşit olduğunun doğrulanması ve yeni bir
    `powershell.exe -NoProfile -ExecutionPolicy Bypass -File` alt sürecinde
@@ -18227,7 +18750,11 @@ if ($kxName -ceq 'silme') {
     elseif ($global:KbTeardown -ceq $true) { $kxOrder = $true }
     else { $kxOrder = (Test-KbPass (Join-Path $kxC 'b24b.txt')) -or (@(Read-KbLines (Join-Path $kxC 'b24a.txt')) -ccontains 'REVOKE_NOT_NEEDED=True') }
 }
-if (-not $kxOrder) { Write-KbRefusal 'K_ORDER' "k $($kxName): bu karar icin onceki adim henuz tamam degil (runbook Ek R4/8.6 madde 5). Dosya yazilmadi."; return }
+if (-not $kxOrder) {
+    $kxNeed = 'b6'; $kxTail = ''
+    if ($kxName -ceq 'girdi') { $kxNeed = 'b7'; $kxTail = " ve girdi hash'i kaydedilmis olmali" } elseif ($kxName -ceq 'fact') { $kxNeed = 'b12' } elseif ($kxName -ceq 'dogrulama') { $kxNeed = 'b13' } elseif ($kxName -ceq 'zamancizelgesi') { $kxNeed = 'b15' } elseif (($kxName -ceq 'durdurucu') -or ($kxName -ceq 'adlitatil')) { $kxNeed = 'b16' } elseif ($kxName -ceq 'sure') { $kxNeed = 'b20' } elseif ($kxName -ceq 'silme') { $kxNeed = 'b24 (atama varsa y2 ve ikinci b24)' }
+    Write-KbRefusal 'K_ORDER' "k $($kxName): bu karar icin onceki adim henuz tamam degil: once $kxNeed TAMAM olmali$kxTail (runbook Ek R4/8.6 madde 5). Dosya yazilmadi."; return
+}
 $kxFile = [string]$kxType[2]
 if ($kxName -ceq 'girdi') { $kxFile = "decision-input-r$kxRev.txt" }
 $kxPath = Join-Path ([string]$global:KbVal['restricted-dir']) $kxFile
@@ -20247,7 +20774,11 @@ if (-not (Test-KbSessionB1)) { Write-KbRefusal 'B18_PRECONDITION' 'b18 BASLAMADI
 if (-not (Test-KbPass (Join-Path $b18xC 'b16.txt'))) { Write-KbRefusal 'B18_PRECONDITION' 'b18 BASLAMADI: once b16 TAMAM olmali.'; return }
 $b18xStop = Get-KbDecision 'STOPPING_EVENT' ''
 $b18xRecess = Get-KbDecision 'JUDICIAL_RECESS' ''
-if (($null -ceq $b18xStop) -or ($null -ceq $b18xRecess)) { Write-KbRefusal 'B18_NO_DECISIONS' 'b18 BASLAMADI: once avukat k durdurucu ve k adlitatil ile kararlarini yazmali.'; return }
+if (($null -ceq $b18xStop) -or ($null -ceq $b18xRecess)) {
+    $b18xMsg = 'b18 BASLAMADI: once avukat k durdurucu ve k adlitatil ile kararlarini yazmali.'
+    if ($null -cne $b18xStop) { $b18xMsg = 'b18 BASLAMADI: once avukat k adlitatil ile kararini yazmali (k durdurucu kaydi var).' } elseif ($null -cne $b18xRecess) { $b18xMsg = 'b18 BASLAMADI: once avukat k durdurucu ile kararini yazmali (k adlitatil kaydi var).' }
+    Write-KbRefusal 'B18_NO_DECISIONS' $b18xMsg; return
+}
 foreach ($b18xD in @(,$b18xStop) + @(,$b18xRecess)) { if (-not (Test-KbDecisionHash ([string[]]$b18xD))) { Write-Host 'STOP K_DECISION_HASH=FAIL'; Write-Host 'DURDU (STOP) -> sayfadaki DUR OLURSA'; Invoke-KbLock 'b18' 'K_DECISION_HASH'; return } }
 $b18xDur = Get-KbField $b18xStop 'DURUM='
 if ($b18xDur -cne 'none') {
@@ -21815,4 +22346,1028 @@ Bu yolda kit kaydi yoktur; ekrandaki satirlar kayda gecirilmez. Veri silindikten
 
 ```powershell
 function Get-PilotStringSha([string]$s) { $sha = [System.Security.Cryptography.SHA256]::Create(); try { return ([System.BitConverter]::ToString($sha.ComputeHash((New-Object System.Text.UTF8Encoding($false)).GetBytes($s)))).Replace('-', '').ToLowerInvariant() } finally { $sha.Dispose() } }
+```
+
+### Ek R4/24 Dilim 5: kit2 kullanıcı sayfası (revizyon 19)
+
+YENİ (revizyon 19; §34.25). Dilim 5 metni N192'dir; N0–N191'in numaraları kaymadı. Sayfa yalnız
+statik denetimle ve kaynak eşlemesiyle denetlendi; son tam insan provasına (ayrı kullanıcı kararı;
+Ek R4/16.5) tabidir ve provadan geçmeden gerçek koşuda kullanılamaz (§32/41).
+
+1. **Yer ve biçim.** Ek R4/8.6 "metin dilim 5'te yazılır, N114 değişmez" der. Bu yüzden kit2
+   sayfası, N114'ün bayt değişikliği değil, dosyanın sonuna eklenen yeni bir `text` bloğudur (N192).
+   N114 ve Ek R3/5 değişmedi; kit1 tek başına kullanıldığında geçerlidir. Biçim N114 ile aynıdır
+   (YAP / GÖR / GÖRMEZSEN; G kuralları, HAZIRLIK, gün bölümleri, DUR OLURSA, BİTİŞ, ALFABE). Gün
+   bölümleri Ek R4/8.6 iskeletindeki sırayla yazıldı. İskelete göre farklar (tek taraflı seçimler,
+   §34.25): iskeletteki "İŞLEME GÜNÜ 1, gerekirse İŞLEME GÜNÜ 2" tek bölümdür ve bölünme kuralı
+   sonundadır; G1–G9'a G10 (ilerleme yoksa), G11 (KÜME penceresi), G12 (kit1 iletilerindeki adlar,
+   L7) ve G13 (ADMIN/İMHA pencereleri) eklendi; DUR OLURSA D1–D7'ye iskeletin istediği `ev.ps1`
+   satırı ve iki tetik D8 olarak eklendi; tekrar eden karar ve onay ekranları için K KALIBI ve ONAY
+   KALIBI bölümleri vardır; adım kimlikleri gün başına harfle (H, A, İ, S, E, SO) numaralanır.
+   Sayfa Türkçe yazılır; tırnak içindeki ekran metinleri kitin bastığı gibidir (ASCII).
+2. **Kurulum.** Kit2 koşusunda Ek R3/2 madde 9 aynen uygulanır; yazılan şablon N114 değil N192'dir.
+   Konum denetimi, CreateNew, UTF-8 (BOM'suz) ve LF, doldurmadan sonra `<…>` kalmaması kuralı ve
+   `kit-build.txt`'deki `KIT_PAGE_SHA256` satırı değişmez. N192'nin doldurulan yer tutucuları beştir:
+   `<case-id>`, `<evidence-dir>`, `<intake-dir>`, `<container-file>`, `<container-root>`; N114'ün H6
+   için kullandığı `<external-root>` ve `<repo-root>` N192'de yoktur (sistem Temp kaydını ÖN penceresi
+   `t0` yazar). Ek R4/16.7 (11) ve Ek R4/19 madde 2 (11) bu yazımı adlandırır. Sayfanın hash'i yalnız
+   `kit-build.txt`'ye girer; `pins2.txt`'ye ve `kit-build2.txt`'ye girmez. Bu yüzden (12)'nin bağlayıcı
+   sıra gerekçesi değişmez. `KIT_PAGE_SHA256` koşuya özgü bir kurulum kaydıdır, kit1 pini değildir:
+   kit1 baytları ve `pins.txt` değişmez (K5-1 tetiklenmedi).
+3. **Win+R satırları.** KİT (A3) satırı Ek R4/1 madde 3'teki satırın; ÖN (H10), KÜME, ADMIN
+   (`y1`, `y2`) ve İMHA satırları Ek R4/19 madde 4'te yazılı satırların birebiridir. Yalnız EV satırı türetmedir (Ek R4/13 madde 4 "kendi Win+R satırı", aynı
+   kalıp). Hiçbiri güvenli dosyanın yolunu taşımaz.
+4. **"İlerleme yoksa" kuralı (Ek R4/16.5 dilim 5 ölçütü (7); Ek R4/6 madde 11; K5-6).** Kural
+   yalnız KİT penceresi içindir (Ek R4/6 madde 11). Ctrl+C'den sonra kayıt açıksa kit "YARIDA KALDI"
+   der ve `KB_INTERRUPTED` kilidini yazar (N135 `Invoke-KbStep` `finally`). Kayıt henüz açılmamışsa
+   (örneğin `b5d`'nin sayı sorusunda) "YARIDA KALDI" basılmaz ve kilit yazılmaz. Sayfa iki durumda da
+   DUR OLURSA der (N192 G10).
+   - **Hangi komutlar "uzun sürebilen".** Mekanik ölçüt: KİT penceresindeki kit2 komutunun kendi
+     gövdesi ya da yüklediği runbook bloğu bir dış programı çağırıyorsa uzun sürebilen sayılır. Dış
+     program çağrısı şu dördünden biridir: çağrı işleciyle dış program (`& "<python>"`, `& "<psql>"`,
+     `pdftotext` vb.; betik bloğu `& { }` ve `& $…Sb` sayılmaz), yalın `git`, `Start-Process` (Not
+     Defteri) ve `Test-KbDbGate` (`pg_isready` ön denetimi). Tarama düzenli ifadeyle yapıldı; pozitif
+     ve negatif kontrolü §34.25'tedir. Bu ölçütle uzun sürebilenler şunlardır: `b1`, `b5`, `b5d`, `b6`,
+     `b9`, `b10`, `b11`, `b13`, `b14`, `b15`, `b16`, `b18`, `b19`, `b21`, `b22`, `b24`, `s26a`, `s26b`,
+     `s29a`, `k`, `r1`, `r3`, `r4`, `r5`. Uzun sayılmayanlar ve nedeni: `b0`, `b2`, `b7`, `b8`, `b12`,
+     `b20`, `b23`, `g8`, `g14`, `g16`, `u`, `n`, `o`, `s25`, `s27`, `s28`, `r2` (dış program çağrısı
+     yok). `k` ve `b18`'in dış programı Not Defteri'dir ve Not Defteri açıkken süre işlemez.
+   - **Kural.** M = komutun prova #5 (`C:\vd5_fa7a5f56`), prova #6 (`C:\vd5_accdc262`), prova #7
+     (`C:\vd5_b4bcce27`) ve prova #8 (`C:\vd5_837d8cf6`) **ana kit** kayıtlarındaki
+     (`ext\ev\steps\…`; ikiz kayıtları `en\…` sayılmaz, çünkü taklit araçlarla koştular)
+     `STARTED_AT` → `ENDED_AT` sürelerinin en uzunudur (saniye). Bekleme süresi =
+     en büyük(5 dakika, yukarı yuvarlanmış(10 × M / 60) dakika). Sonuç: `b1` 7 dakika (M = 41 s,
+     prova #8 `s3\b1.txt`); diğer 19 ölçülmüş komut 5 dakika (M ≤ 18 s). Ayrıntılı tablo §34.25'tedir.
+   - **Ölçüm yoksa süre yazılmaz.** `r1`, `r3`, `r4` ve `r5` ana kitte hiç koşmadı; süreleri yazılmadı
+     (K19-1 = A, §34.25): N192 bu dört komut için süre vermez; onlara izin veren ayrı ve yazılı
+     kullanıcı kararı (Ek R4/8.4 madde 2) bekleme süresini de yazar; süre son tam insan provasında
+     ölçülür. N192 G10 ve SİLME OTURUMU bunu söyler.
+   - **Sınırlar.** Kayıt süresi, kayıt açılmadan önceki evreyi kapsamaz. `b5d` doğrulayıcıları (N32,
+     N33) kayıttan önce çalıştırır; aynı iki blok `b6` kaydının içinde koşar (en uzun 2 s). `s25` ve
+     `z1`'in kayıt öncesi evresi ayrıca ölçülmedi; o evrenin üst sınırı (önceki olaydan kaydın
+     açılmasına kadar geçen süre) insan süresini de içerir ve §34.25 tablosunda ayrı sütundur. Kayıt
+     süreleri E/H beklemelerini de içerir; kural bu yüzden yüksek tarafta kalır. Bekleme süresi
+     ölçülmüş bir değerden türetilmiştir; gerçek dosyada araçların süresi ölçülmedi.
+5. **Sayfa yazım kuralları (dilim 5 ölçütleri (1), (2), (4)).** (a) **Tek eylem:** bir YAP hücresi
+   tek bir eylemdir. Tek eylem şunlardan biridir: bir komut yazıp Enter, tek bir tuş, tek bir fiziksel
+   iş (bir pencereyi kapatmak, bir Win+R satırını çalıştırmak, kâğıdı yırtmak) veya aynı türden
+   soruların her birine E/H basmak. Hücrede tırnak ve parantez dışında `;`, "sonra", "ardından" yoktur;
+   en çok bir cümle ve en çok bir "(Enter)" vardır. (b) Her YAP'ın hemen altında kendi GÖR satırı
+   vardır; GÖRMEZSEN bunun yerine geçmez (prova #8 [109] dersi). (c) Her içerik günü (aktarım, işleme,
+   son gün, silme oturumu) önce KÜME, sonra KİT satırıyla açılır. (d) Yer tutucu yalnız
+   `<[a-z0-9-]+>` biçimindedir; düz metinde `<…>` yoktur. (e) Sayfada üçlü ters tırnak yoktur.
+6. **Dersler ve kaynak eşlemesi (§34.25).** Prova #8 insan penceresi: [108] → İ45 (`b16`
+   "TAMAMLANDI (PASS)" kontrolü); [109] → madde 5 (b); [130] → G7 son cümlesi ("(Kayit yazilmadi;
+   DUR kilidi yok.)" öz beyanda DUR sayılmaz); [206a] → G13 (ADMIN pencere sayısı not edilmez,
+   kayıtlar gösterir); [225] / `Z1_ALREADY` → G13 ve S53 (İMHA satırı ikinci kez açılmaz). MOLA U-15
+   → B4. `b5d` sayı sorusunda Ctrl+C → G10 son cümlesi. Rev18 incelemesi L-2 → SO0 (kapı aynı;
+   Ek R4/14 madde 4). Rev6 son kontrol L1 → G6 ikinci sınır; L4 → A16 GÖRMEZSEN ("erken kayıtta"
+   kitin "ajana donebilirsiniz" iletisine karşın G9, D7; §34.12 madde (15)); L2, L3 → madde 5 (d), (e).
+   L7 → G12. K6 dal adları (G5, MADDE1, MADDE5, MADDE6; N132 şablonu ve §4.3 a) N114'ün madde
+   numaralarına bağlıydı; N192'de G8 bu adları sayfadaki dallara bağlar (A3 → MADDE1, A16 →
+   MADDE5, A17 → MADDE6).
+7. **Acil sayfanın açılışı.** Acil sayfa güvenli dosyayla aynı dizindedir (Ek R4/13 madde 2) ve
+   kullanıcı sayfası güvenli dizinin yolunu taşımaz (Ek R4/1 madde 3). Kaynak, acil sayfanın
+   operatör tarafından nasıl açılacağını yazmaz. N192 D8 bu yüzden yalnız EV satırını, `MATCH`
+   sonrası "acil sayfanın 1. bölümünden devam" kuralını (N189'un 0. bölümü EV satırıdır) ve
+   AÇIK-25 (b) dalını yazar. Açılış yolu sonraki revizyon (revizyon 20) maddesidir ve
+   son tam insan provasının planından ÖNCE karara bağlanması zorunludur (kullanıcı
+   kararı D-2; §34.25). Bu düzeltme (R19-FIX) bunu YAZMAZ.
+8. **Dar düzeltme (R19-FIX; §34.25 "Bağımsız inceleme ve dar düzeltme").** G4 pencere
+   başlıklarını kaynağa göre yazar (KİT "Windows PowerShell", ADMIN "ADMIN", İMHA "IMHA",
+   KÜME "KUME - KAPATMAYIN"). G6'ya öncelik kuralı eklendi: bir adımın GÖRMEZSEN satırı
+   "DUR OLURSA" dese bile ekranda "(Kayit yazilmadi; DUR kilidi yok.)" varsa G6 (iletiyi
+   izle) geçerlidir; H cevabı DUR değildir (kullanıcı kararı D-3). K5, K6, E3, S18, S47,
+   ADMIN (İ28, S28) ve H sonrası "yeniden açılsın mı" istemleri (İ17, K3, S17) kitin kilitsiz
+   ret iletisine sadık yazıldı; 23 ön koşul adımının GÖRMEZSEN satırına "kilitsiz ret iletisi
+   varsa G6" eklendi. S12 dalı aynı pencerede İ44-İ45'ten sonra S12'ye döner. G10 süre
+   kuralının yalnız listedeki komutlar için olduğunu söyler.
+
+**N192 — `kit2 kullanıcı sayfası` (şablon; Ek R4/24; kit2 dizinine girmez; revizyon 19).**
+
+```text
+KULLANICI SAYFASI — KİT2 KOŞUSU (YAP / GÖR / GÖRMEZSEN)          Dosya: <case-id>
+Bu sayfa ekranda Not Defteri'nde açık durur; yazdırılmaz. Bu sayfaya HİÇBİR ŞEY
+YAZMAYIN; kapatırken "Kaydetme". Pencereler boyunca yardım olarak YALNIZ bu
+sayfa açıktır; runbook bu koşuda açılmaz. Karar, form ve kör hesap dosyalarını
+Not Defteri'nde yalnız kit açar. Bu sayfa ile runbook çelişirse runbook
+geçerlidir: a9 yazın, pencereyi kapatın, sonra DUR OLURSA. Kit iletisi ile G9
+farklıysa bu bir çelişki ve DUR sebebi DEĞİLDİR: daha sıkı olan (İÇERİK
+ALINDI) geçerlidir.
+Satır biçimi: YAP = yapılacak TEK eylem; hemen altındaki GÖR = beklenen ekran;
+GÖRMEZSEN = başka her sonuç (yanlış anda görülen başarı dahil). Bir YAP'ın
+GÖR'ünü görmeden sonraki YAP'a geçmeyin. Tırnak içindeki ekran metinleri
+kitin bastığı gibidir (Türkçe harfsiz).
+Tuşa kim basar: kit her E/H sorusundan önce "TUSA AVUKAT BASAR" veya "TUSA
+PROJE SAHIBI BASAR" yazar; tuşa o kişi basar. "(AVUKAT EKRANA BAKAR)" yazan
+adımlarda avukat ekranın başındadır. "(ONAY - PROJE SAHIBI)" yazan adımlarda
+hedef ve digest'i proje sahibi okur ve tuşa o basar.
+
+GENEL KURALLAR
+G1 Fare serbesttir; yalnız PowerShell pencerelerinin İÇİNE tıklamayın.
+   Başlıkta "Seç" görürseniz Esc.
+G2 Not Defteri'ni ve diğer pencereleri fareyle sağ üstteki X'ten kapatın
+   ("Kaydetme"; kitin açtığı dosyalarda önce Ctrl+S). Alt+F4 KULLANMAYIN.
+   Sonra görev çubuğundan istenen pencereye dönün.
+G3 Win+R satırlarını bu sayfadan kopyalayıp yapıştırabilirsiniz: imleç
+   satırda, Home, Shift+End, Ctrl+C. Satırı YALNIZ Win+R kutusuna yapıştırın;
+   açılan PowerShell penceresine TEKRAR YAPIŞTIRMAYIN. PAROLA ASLA
+   kopyalanmaz, yapıştırılmaz, hiçbir dosyaya yazılmaz; yalnız kâğıda ve
+   7z'nin "Enter password" istemine yazılır.
+G4 Her komuttan ve paroladan önce doğru pencerede olun. Pencere başlıkları:
+   KİT penceresinde "Windows PowerShell"; ADMIN penceresinde "ADMIN" ve İMHA
+   penceresinde "IMHA" (başlatıcı yüklenince); KÜME penceresinde "KUME -
+   KAPATMAYIN". s29b dışındaki bütün komutlar KİT penceresine yazılır (s29b
+   İMHA penceresinde).
+G5 Pencere açıkken Claude, VS Code, ChatGPT, Copilot veya başka hiçbir yapay
+   zekâ aracı ya da sohbet AÇILMAZ; ekran paylaşılmaz, yapıştırılmaz,
+   fotoğraflanmaz. Olduysa: a9, pencereyi kapatın, DUR OLURSA (silme oturumu
+   yok).
+G6 Ekranda "DUR" veya "DURDU" ile başlayan bir satır, "STOP" ile başlayan bir
+   satır veya "YARIDA KALDI" görürseniz ya da bir adımın GÖR satırı çıkmazsa:
+   en alttaki DUR OLURSA. İstisna yalnız kitin kayıt ve DUR kilidi YAZMADIĞI
+   şu iletilerdir; listede olmayan her ileti DUR OLURSA'dır:
+   - Sonunda "(Kayit yazilmadi; DUR kilidi yok.)" satırı olan iletiler (kit2
+     ve kit1): bu satır DUR DEĞİLDİR. İletinin söylediğini yapın (ileti eksik
+     adımı adıyla söyler; ör. "once b16 TAMAM olmali").
+   - Kit1'in şu iletileri (runbook §34.12 O7 listesi): "Bu adim zaten
+     calisti", "Kanal beyani bu oturumda zaten yazildi", "a8 zaten
+     kaydedildi", "Ek deneme hakki yok", "Parola kagidi imha edilmis", "a5 hic
+     TAMAM olmadi", "SILME OTURUMU: a4-a7 bu pencerede calismaz": kit bir şey
+     yazmadı. "Once bu oturumda ... TAMAM olmali": bir adımı atladınız; o
+     adımı bu pencerede hiç yazmadıysanız sayfada o adıma dönün. "Once
+     kagidi yirtin": kâğıdı yırtın, sonra yeniden a8. "Bu oturumda a2
+     calismamis": a9 kaydı yok; pencereyi kapatın (bulunduğunuz dalın kalan
+     adımları). "BEKLEYIN", "CAPS LOCK KAPALI": o adımın GÖR/GÖRMEZSEN
+     satırındaki gibi.
+   Üç sınır:
+   - İleti "icerik henuz alinmadi, ajana donebilirsiniz" diyorsa ama İÇERİK
+     ALINDIYSA (G9): o yol geçmez; DUR OLURSA D7.
+   - "Bu adim zaten calisti" veya "zaten kaydedildi" gibi, adımı yanlışlıkla
+     iki kez yazdığınızı söyleyen bir ileti sizi sayfada sonraki adıma YALNIZ
+     o adımın GÖR satırını bu pencerede daha önce gördüyseniz geçirir;
+     görmediyseniz DUR OLURSA (tek açık istisna: SO12).
+   - "KIT zaten yuklu" ve "KIT2 zaten yuklu" istisna DEĞİLDİR (A3).
+   Öncelik: bir adımın GÖRMEZSEN satırı "DUR OLURSA" dese bile, ekranda
+   "(Kayit yazilmadi; DUR kilidi yok.)" satırı varsa bu G6 geçerlidir: iletiyi
+   izleyin, DUR OLURSA'ya GİTMEYİN (ileti yapılacak bir iş söylemiyorsa: DUR
+   OLURSA). H cevabı da, ekranda "DUR", "DURDU", "STOP" veya "YARIDA KALDI"
+   getirmedikçe DUR DEĞİLDİR: kit H için kilitsiz bir ret ve ileti basar;
+   iletinin söylediğini yapın (çoğu zaman aynı komutu yeniden yazmak).
+   Nerede olduğunuzdan emin değilseniz: DUR OLURSA.
+G7 Bir adımda takılırsanız aklınızda tutun; HİÇBİR YERE yazmayın. a9 sonunda
+   kit size üç öz beyan sorusu sorar; onlara gerçeğe göre E veya H.
+   "(Kayit yazilmadi; DUR kilidi yok.)" satırları öz beyandaki "DUR gordunuz
+   mu?" sorusu için DUR SAYILMAZ.
+G8 "(silme oturumu yok)" yazan bir dal yaşandıysa: yazılı silme kararı o dalı
+   adıyla anmadıkça silme oturumu açılmaz. Dalların silme kararındaki adları:
+   G5 (G5 kuralı), MADDE1 (KİT satırında ikinci kit yüklemesi), MADDE5 (a4
+   adımında sıra dışı "a4 TAMAM"), MADDE6 (aktarım dosyasının intake klasörü
+   dışına kaydedilmesi).
+G9 İÇERİK SINIRI: Ekranda "a4 TAMAM" göründüğü andan (dosya henüz
+   kaydedilmemiş olsa da) veya aktarım dosyası herhangi bir anda herhangi bir
+   yere kaydedildiyse o andan — hangisi önceyse — gerçek veri silinene kadar,
+   bugün ve sonraki bütün günlerde İÇERİK ALINDI. O ana kadar İÇERİK
+   ALINMADI. Kit iletisi ile G9 farklıysa daha sıkı olan (İÇERİK ALINDI)
+   geçerlidir. DUR OLURSA iki tarafı ayırır.
+G10 İLERLEME YOKSA (yalnız KİT penceresi): bir komutu yazıp Enter'a bastıktan
+   sonra, ekranda bir soru beklemiyorken ve kitin açtığı Not Defteri
+   kapalıyken, aşağıdaki süre boyunca KİT penceresinde hiç yeni satır
+   çıkmazsa: KİT penceresinde Ctrl+C. Ekranda "YARIDA KALDI" görünür; sonra
+   DUR OLURSA. "YARIDA KALDI" görünmezse de (kit henüz kayıt açmamıştır): DUR
+   OLURSA. KÜME penceresini KAPATMAYIN; Ctrl+C'ye yalnız KİT penceresinde
+   basın. Süreler (prova ölçümlerinden; runbook Ek R4/24 madde 4):
+     b1 ................................................. 7 dakika
+     b5, b5d, b6, b9, b10, b11, b13, b14, b15, b16,
+     b18, b19, b21, b22, b24, s26a, s26b, s29a, k ......... 5 dakika
+     r1, r3, r4, r5: süreyi onlara izin veren yazılı karar yazar (SO bölümü)
+   Bu süre kuralı yalnız yukarıdaki listedeki komutlar içindir; listede
+   olmayan bir komutta geçmez (orada G6: GÖR satırı çıkmazsa DUR OLURSA).
+   Bir soru ekrandayken (E/H, sayı veya numara; b5d'nin sayı ve menü soruları
+   dahil) süre işlemez ve Ctrl+C'ye BASILMAZ. Basıldıysa "YARIDA KALDI"
+   çıkmayabilir: bu da DUR OLURSA'dır.
+G11 KÜME penceresi her içerik gününün ilk penceresidir; açılır, simge
+   durumuna küçültülür ve gün boyunca KAPATILMAZ (DUR olsa da).
+G12 Kit1 iletilerindeki adların bu sayfadaki karşılığı:
+   - "kagittaki madde 3 bloklari", "sayfadaki madde 3 bloklari" ve "Sayfadaki
+     madde 3 kalan adimlari" = bu sayfada b0 (altı sınıf beyanı) ve b1 (yol
+     kapıları ve ilk oturumda teknik kayıt).
+   - "alti sinif kanal beyani" / "alti sinif beyani" = b0.
+   - "teknik kayit" = b1 (ilk KİT oturumunda yazılır).
+   - "sayfadaki madde 1 komutu" = bu sayfadaki KİT satırı.
+   - "Diger gunlerde: runbook adimlari" = bu sayfada o günün bölümü (runbook
+     açılmaz).
+G13 ADMIN ve İMHA pencereleri tek iş içindir; satırları yüklenince komut kendi
+   kendine çalışır. İş bitince fareyle X'ten kapatın. ADMIN'de H'den sonra
+   karar değişirse pencereyi kapatıp aynı ADMIN satırını Win+R ile yeniden
+   açın. Kaç ADMIN penceresi açtığınızı not etmeyin: kit kayıtları gösterir.
+   İMHA satırını z1 ve s29b bittikten sonra İKİNCİ KEZ AÇMAYIN.
+
+HAZIRLIK (her içerik gününden önce; açık bir ajan oturumu varsa kapatıldıktan
+sonra)
+H1 YAP: Claude Code, VS Code ve Claude masaüstünü kendi pencerelerinden tamamen
+        kapatın (VS Code: Dosya > Çıkış).
+   GÖR: VS Code ve Claude penceresi kalmadı.
+   GÖRMEZSEN: yeniden kapatın.
+H2 YAP: Görev Yöneticisi'ni açın (Ctrl+Shift+Esc > Ayrıntılar).
+   GÖR: süreç listesi.
+H3 YAP: Şu yedi addan görünen her birini yalnız onu seçerek "Görevi
+        sonlandır" ile kapatın (başka süreç sonlandırmayın): Code,
+        copilot-runtime, claude, ChatGPT, M365Copilot, OneDrive,
+        OneDrive.Sync.Service (sonlarında .exe).
+   GÖR: listede bu yedi addan hiçbiri yok.
+   GÖRMEZSEN: pencere AÇMAYIN; DUR OLURSA D5'ten itibaren (a8/a9 yok).
+H4 YAP: Görev Yöneticisi'ni X'ten kapatın.
+   GÖR: Görev Yöneticisi kapandı.
+H5 YAP: Ayarlar > Sistem > Pano'da "Pano geçmişi" ve cihazlar arası eşitleme
+        anahtarlarına BAKIN (değiştirmeyin).
+   GÖR: ikisi de Kapalı.
+   GÖRMEZSEN: pencere AÇMAYIN; DUR OLURSA D5'ten itibaren (a8/a9 yok).
+H6 YAP: Ayarlar'ı X'ten kapatın.
+   GÖR: Ayarlar kapandı.
+H7 YAP: Harici diskleri, USB bellekleri ve optik sürücüdeki diski çıkarın.
+   GÖR: hiçbiri takılı değil; masada kalem, boş kâğıt, kapsayıcı parola
+        kâğıdı; telefon yanınızda (aktarım günü dosya avukatıyla görüşme).
+   GÖRMEZSEN: pencere AÇMAYIN; DUR OLURSA D5'ten itibaren (a8/a9 yok).
+H8 YAP: VeraCrypt'te kapsayıcıyı bağlayın (dosya <container-file>, sürücü
+        <container-root>, parola kapsayıcı parola kâğıdından elle).
+   GÖR: VeraCrypt listesinde kapsayıcı dosyası -> <container-root>.
+   GÖRMEZSEN: pencere AÇMAYIN; DUR OLURSA D5'ten itibaren (a8/a9 yok).
+H9 YAP: VeraCrypt penceresini simge durumuna küçültün.
+   GÖR: VeraCrypt görev çubuğunda; birim bağlı kalır.
+H10 ÖN SATIRI — YALNIZ ilk içerik penceresinden önce, bir kez, ve
+   <evidence-dir>\system-temp.txt YOKSA. Dosya VARSA H10-H11'i ATLAYIN.
+   YAP: Win+R ile şu ÖN satırını çalıştırın:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\t0.ps1'"
+   GÖR: "TAMAMLANDI (PASS)" ve "Pencereyi sag ustteki X ile kapatin."
+   GÖRMEZSEN: "t0 BASLAMADI: t0 kaydi zaten var": H11'e geçin; bu adım
+              yapılmış sayılır. Başka her şey: yeniden denemeyin; pencereyi
+              X'ten kapatın; KÜME ve KİT AÇMAYIN; DUR OLURSA D5'ten itibaren
+              (a8/a9 yok).
+H11 YAP: ÖN penceresini X'ten kapatın.
+   GÖR: ÖN penceresi kapandı.
+
+AKTARIM (E2) GÜNÜ — HAZIRLIK H1-H11, sonra:
+A1 YAP: Win+R ile KÜME satırını çalıştırın:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\kume.ps1'"
+   GÖR: "TAMAMLANDI (PASS)" ve "Bu pencereyi kapatmayin; kucultun. Simdi KIT
+        satirini Win+R ile acin." Başlık "KUME - KAPATMAYIN".
+   GÖRMEZSEN: "kume BASLAMADI": pencereyi kapatın; içerik henüz alınmadı;
+              ajana dönebilirsiniz (bugün KİT açılmaz). Başka: DUR OLURSA.
+A2 YAP: KÜME penceresini simge durumuna küçültün (sağ üstteki _ düğmesi).
+   GÖR: KÜME penceresi görev çubuğunda duruyor.
+A3 YAP: Win+R ile KİT satırını çalıştırın (iki kit birlikte yüklenir):
+powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit\ac.ps1'; . '<evidence-dir>\kit2\bc.ps1'"
+   GÖR: "KIT YUKLENDI. Oturum ..." ve "KIT2 YUKLENDI. Siradaki: a2 yazip
+        Enter."
+   GÖRMEZSEN: "DUR" ile başlayan satır: DUR OLURSA (kit yüklenmediyse a8/a9
+              yok). İkinci bir "KIT YUKLENDI" satırı, "KIT zaten yuklu" veya
+              "KIT2 zaten yuklu": a9 yazın, pencereyi kapatın: DUR OLURSA
+              (silme oturumu yok; dal adı MADDE1). "SILME OTURUMU" yazarsa:
+              SİLME OTURUMU bölümündeki SO0. "KIT2 YUKLENEMEDI": a9 yazın,
+              pencereyi kapatın: DUR OLURSA. "Kit1 yuklenmedi": pencereyi
+              kapatın: DUR OLURSA (kit1 yüklenmediği için a8/a9 yok).
+A4 YAP: a2  (Enter)
+   GÖR: "a2 TAMAM. En az 2 dakika bekleyin, sonra a3 yazin."
+   GÖRMEZSEN: "a2 BASLAMADI: Kapsayici bagli degil": H8'i yapın, sonra
+              yeniden a2 (kayıt ve kilit yok). Başka: DUR OLURSA.
+A5 YAP: >>> 2 DAKİKA BEKLEYİN <<< (saate bakın).
+   GÖR: 2 dakika geçti.
+A6 YAP: a3  (Enter)
+   GÖR: "a3 TAMAM. Kanal kapisi gecti. Aktarim gununde: once kagittaki madde 3
+        bloklari, sonra a4 ..." ("madde 3 bloklari" = A7-A15; G12).
+   GÖRMEZSEN: "BEKLEYIN: ... saniye daha": o kadar bekleyip yeniden a3.
+              Başka: DUR OLURSA.
+A7 YAP: b0  (Enter)
+   GÖR: "TUSA PROJE SAHIBI BASAR" ve ilk soru "Yapay zeka kodlama asistani
+        kapali mi?"
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+A8 YAP: Altı sorunun her birine ekranda sorulduğu sırayla gerçeğe göre E veya H.
+   GÖR: "KANAL BEYANI TAMAM. Sayfadaki madde 3 kalan adimlarina gecin.",
+        "TAMAMLANDI (PASS)" ve "Siradaki: b1."
+   GÖRMEZSEN: "DUR" ile başlayan satır (bir H cevabında kit DUR der): DUR
+              OLURSA.
+A9 YAP: VeraCrypt penceresini görev çubuğundan öne getirin.
+   GÖR: listede kapsayıcı dosyası -> <container-root>.
+   GÖRMEZSEN: a9 yazın, pencereyi kapatın: DUR OLURSA.
+A10 YAP: KİT penceresinde b1 yazın  (Enter).
+   GÖR: harici sürücü soruları (yalnız kayıtlı bir harici sürücü harfi varsa)
+        veya doğrudan "TUSA PROJE SAHIBI BASAR" ve "VeraCrypt ekraninda
+        kapsayici <container-root> surucu harfine bagli gorunuyor mu?"
+   GÖRMEZSEN: "b1 BASLAMADI": iletinin söylediğini yapın (G6). "DUR": DUR
+              OLURSA.
+A11 YAP: Ekrandaki her soruya gerçeğe göre E veya H (harici sürücü için kabul
+         edilen tek durum çıkarıldı = E, şifreli = H; kapsayıcı sorusu: A9'da
+         gördüyseniz E).
+   GÖR: satırlar akar; ilk oturumda "TUSA PROJE SAHIBI BASAR" ve
+        "VeraCrypt'te Yardim > Hakkinda'yi acin. Orada ... yaziyor mu?"
+   GÖRMEZSEN: "b1 BASLAMADI: harici disk kurali saglanmadi": diski çıkarın,
+              sonra yeniden b1 (A10). "DURDU" veya "STOP": DUR OLURSA.
+A12 YAP: VeraCrypt'te Yardım > Hakkında penceresini açın.
+   GÖR: Hakkında penceresinde VeraCrypt sürümü.
+A13 YAP: KİT penceresindeki soruya: Hakkında'daki yazı ekrandaki dizgeyle
+         aynıysa E, değilse H.
+   GÖR: satırlar akar; "TAMAMLANDI (PASS)" ve "Siradaki: a4."
+   GÖRMEZSEN: "DURDU" veya "STOP": DUR OLURSA (içerik henüz alınmadı: D6).
+A14 YAP: VeraCrypt Hakkında penceresini kapatın (birim bağlı kalır).
+   GÖR: ekranda yardım olarak yalnız bu sayfa ve KİT penceresi.
+A15 YAP: Optik sürücüde disk varsa çıkarın (>>> OPTİK SÜRÜCÜ BOŞ MU? <<<).
+   GÖR: sürücü boş, ışık sönük. a4'ten sonra pencere kapanana kadar optik
+        sürücüye disk TAKILMAZ (takılırsa: a9, pencereyi kapatın: DUR
+        OLURSA).
+   GÖRMEZSEN: disk çıkmıyorsa: a9 yazın, pencereyi kapatın: DUR OLURSA.
+A16 YAP: a4  (Enter)
+   GÖR: "a4 TAMAM. Dosyayi Farkli kaydet ile intake klasorune transfer.7z
+        adiyla kaydedin, sonra a5 yazin."
+        >>> "a4 TAMAM" GÖRÜNDÜĞÜ ANDAN İTİBAREN İÇERİK ALINDI (G9) <<<
+   GÖRMEZSEN: "a4 BASLAMADI: sistem Temp kaydi (system-temp.txt) hic
+              yazilmamis (NO_RECORD)": KİT penceresini KAPATMADAN H10'daki ÖN
+              satırını Win+R ile ayrı bir pencerede çalıştırın; orada
+              "TAMAMLANDI (PASS)" görünce o pencereyi X'ten kapatın; KİT'te a4'ü
+              bir kez daha yazın. ÖN'de PASS görmezseniz veya ileti yine
+              çıkarsa: a9 yazın, pencereyi kapatın: DUR OLURSA.
+              Başka bir "a4 BASLAMADI" iletisi: iletinin söylediğini yapın;
+              aynı ileti yine çıkarsa a9 yazın, pencereyi kapatın: DUR OLURSA.
+              Aktarım dosyası a4'ten ÖNCE herhangi bir yere kaydedildiyse
+              İÇERİK ALINDI (G9): a4'ün "icerik henuz alinmadi" iletileri bu
+              durumda geçmez; a9, pencereyi kapatın: DUR OLURSA D7.
+              "a4 TAMAM" çıktı ama bu pencerede A7-A15'i a4'ten ÖNCE
+              yapmadıysanız: a5 YAZMAYIN ve dosyayı KAYDETMEYİN; a9 yazın,
+              pencereyi kapatın: DUR OLURSA — İÇERİK ALINDI, D7 (silme oturumu
+              yok; dal adı MADDE5).
+              "DUR" ile başlayan satır: DUR OLURSA.
+A17 YAP: Aktarım dosyasını tarayıcının (veya aktarım istemcisinin) "Farklı
+         kaydet" kutusuyla DOĞRUDAN <intake-dir> klasörüne, transfer.7z adıyla
+         kaydedin (indirme klasörüne değil; dosyayı açmayın, sürüklemeyin).
+   GÖR: kayıt tamamlandı.
+   GÖRMEZSEN: dosya başka bir yere kaydedildiyse (İÇERİK ALINDI): a9 yazın,
+              pencereyi kapatın: DUR OLURSA (silme oturumu yok; dal adı
+              MADDE6).
+A18 YAP: Tarayıcıyı X'ten kapatın.
+   GÖR: görev çubuğunda KİT, KÜME ve bu sayfa.
+A19 YAP: KİT penceresinde a5 yazın  (Enter).
+   GÖR (en çok 10 saniye; bu sürede HİÇBİR TUŞA BASILMAZ): "a5 TAMAM. Simdi
+        dosya avukatini arayin; ..."
+   GÖRMEZSEN: "a5 BASLAMADI: intake klasorunde transfer.7z yok": dosyayı hiç
+              kaydetmediyseniz A17'yi yapın, sonra yeniden a5; başka bir yere
+              kaydettiyseniz A17 GÖRMEZSEN. Başka: DUR OLURSA.
+A20 YAP: Dosya avukatını telefonla arayın.
+   GÖR: avukat hatta.
+A21 YAP: Avukatın alfabe adlarıyla (A Adana, B Bolu ...) harf harf okuduğu
+         parolayı 4'lü gruplarla YALNIZ KÂĞIDA yazın (her grubu geri okuyarak).
+   GÖR: kâğıtta 20 karakter; geri okuma tuttu.
+   GÖRMEZSEN: alfabe dışı bir okunuş (ör. "Isparta", "sıfır") veya tutmayan
+              geri okuma: A24'teki geri okuma sorusuna H.
+A22 YAP: >>> CAPS LOCK'U AÇIN <<<
+   GÖR: Caps Lock ışığı yanık.
+A23 YAP: a6  (Enter)
+   GÖR: "Kagittan geri okuma tuttu mu?"
+   GÖRMEZSEN: "CAPS LOCK KAPALI": A22, sonra yeniden a6 (deneme harcanmaz).
+              "DUR" ile başlayan satır: DUR OLURSA.
+A24 YAP: Geri okuma tuttuysa E, tutmadıysa H.
+   GÖR: 7z'nin "Enter password" istemi (veya istem yok).
+A25 YAP: İstem göründüyse parolayı kâğıttan BOŞLUKSUZ girin (Enter dahil;
+         istem yoksa hiçbir şey yazmayın ve Enter'a basmayın).
+   GÖR: "Ekranda parola istemi (Enter password) gorundu mu?"
+A26 YAP: İstem göründüyse E, görünmediyse H.
+   GÖR: "Ekranda Wrong password yazisi gorundu mu?"
+A27 YAP: "Wrong password" gördüyseniz E, görmediyseniz H.
+   GÖR: "Acma basarili. Parola kagidini BUGUN yirtin, sonra a8 yazin." ->
+        A29. Veya "Tek ek deneme hakki var. ... a7 yazin." -> A28.
+   GÖRMEZSEN: "DUR" ile başlayan satır: DUR OLURSA.
+A28 YAP: YALNIZ ekran "a7 yazin" dediyse: a7  (Enter).
+   GÖR: A23-A27 aynen; sonunda "Acma basarili. Parola kagidini BUGUN yirtin,
+        sonra a8 yazin."
+   GÖRMEZSEN: "CAPS LOCK KAPALI": Caps Lock'u açıp yeniden a7. Başka: DUR
+              OLURSA.
+A29 YAP: Parola kâğıdını yırtın.
+   GÖR: kâğıt yırtıldı.
+A30 YAP: a8  (Enter)
+   GÖR: "imha ettiniz mi?" sorusu.
+   GÖRMEZSEN: DUR OLURSA.
+A31 YAP: E.
+   GÖR: "a8 kaydedildi ..."
+   GÖRMEZSEN: DUR OLURSA.
+A32 YAP: >>> CAPS LOCK'U KAPATIN <<<
+   GÖR: Caps Lock ışığı sönük.
+A33 YAP: b2  (Enter)
+   GÖR: "TUSA PROJE SAHIBI BASAR" ve "Aktarim sifreli 7z dosyasiyla mi
+        geldi?"
+   GÖRMEZSEN: "b2 ...": G6. "DURDU" veya "STOP": DUR OLURSA.
+A34 YAP: Üç sorunun her birine ("Aktarim sifreli 7z ...", "Parola ayri kanaldan
+         (telefonla) mi geldi?", "Aktarim dosyasi dogrudan intake klasorune mi
+         kaydedildi?") gerçeğe göre E veya H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: a9."
+   GÖRMEZSEN: "DURDU" veya "STOP": DUR OLURSA.
+A35 YAP: a9  (Enter)
+   GÖR: kapanış taraması ve "Oz beyan 1/3: Bu pencerede bir adimda takildiniz
+        mi?"
+   GÖRMEZSEN: DUR OLURSA.
+A36 YAP: Öz beyan sorularının her birine gerçeğe göre E veya H (G7).
+   GÖR: "a9 TAMAM. Pencereyi kapatabilirsiniz."
+   GÖRMEZSEN: DUR OLURSA.
+A37 YAP: KİT penceresini fareyle X'ten kapatın.
+   GÖR: görev çubuğunda KÜME penceresi (dokunmayın) ve bu sayfa. Sonra BİTİŞ.
+
+İŞLEME GÜNÜ (bir veya iki gün; HAZIRLIK H1-H9, sonra)
+İ1 YAP: Win+R ile KÜME satırını çalıştırın (A1'deki satır).
+   GÖR: A1'in GÖR'ü.
+   GÖRMEZSEN: DUR OLURSA.
+İ2 YAP: KÜME penceresini simge durumuna küçültün.
+   GÖR: KÜME penceresi görev çubuğunda duruyor.
+İ3 YAP: Win+R ile KİT satırını çalıştırın (A3'teki satır).
+   GÖR: A3'ün GÖR'ü.
+   GÖRMEZSEN: A3'ün GÖRMEZSEN'i.
+İ4 YAP: a2  (Enter)
+   GÖR: "a2 TAMAM. En az 2 dakika bekleyin, sonra a3 yazin."
+   GÖRMEZSEN: A4'ün GÖRMEZSEN'i.
+İ5 YAP: >>> 2 DAKİKA BEKLEYİN <<<
+   GÖR: 2 dakika geçti.
+İ6 YAP: a3  (Enter)
+   GÖR: "a3 TAMAM. Kanal kapisi gecti. ..." ("Diger gunlerde: runbook
+        adimlari" = bu bölüm; G12).
+   GÖRMEZSEN: A6'nın GÖRMEZSEN'i.
+İ7 YAP: b0  (Enter)
+   GÖR: ilk soru "Yapay zeka kodlama asistani kapali mi?"
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ8 YAP: Altı sorunun her birine gerçeğe göre E veya H.
+   GÖR: "KANAL BEYANI TAMAM. ...", "TAMAMLANDI (PASS)" ve "Siradaki: b1."
+   GÖRMEZSEN: DUR OLURSA.
+İ9 YAP: VeraCrypt penceresini görev çubuğundan öne getirin.
+   GÖR: listede kapsayıcı dosyası -> <container-root>.
+   GÖRMEZSEN: a9 yazın, pencereyi kapatın: DUR OLURSA.
+İ10 YAP: KİT penceresinde b1 yazın  (Enter).
+   GÖR: (varsa harici sürücü soruları) "VeraCrypt ekraninda kapsayici
+        <container-root> surucu harfine bagli gorunuyor mu?"
+   GÖRMEZSEN: "b1 BASLAMADI": iletinin söylediğini yapın (G6). Başka: DUR
+              OLURSA.
+İ11 YAP: Ekrandaki her soruya gerçeğe göre E veya H (kapsayıcı sorusu: İ9'da
+         gördüyseniz E).
+   GÖR: satırlar akar; "TAMAMLANDI (PASS)" ve "Siradaki: gunun zincir
+        komutlari (sayfa)." "Acil sayfa kullanilamaz. (Uyari; kit2 silme yolu
+        acik kalir.)" satırı çıkarsa bu DUR DEĞİLDİR; devam edin.
+   GÖRMEZSEN: "DURDU" veya "STOP": DUR OLURSA.
+İ12 YAP: b5  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: b5d."
+   GÖRMEZSEN: DUR OLURSA (iletinin söylediği bir eksik varsa G6).
+İ13 YAP: b5d  (Enter)
+   GÖR: "TUSA PROJE SAHIBI BASAR" ve sayı soruları ("... Enter gerekmez").
+   GÖRMEZSEN: G6; "DURDU": DUR OLURSA.
+İ14 YAP: Her sayı ve menü sorusuna belgeye göre rakam basın (sayılar tek
+         rakam, vergi türü menüsü iki rakam; Enter gerekmez).
+   GÖR: "Not Defteri aciliyor: intake-form.txt. ..." ve form penceresi.
+   GÖRMEZSEN: iki kez "Gecersiz tus." ve "(Kayit yazilmadi; DUR kilidi yok.)":
+              form yazılmadı; yeniden b5d (İ13).
+İ15 YAP: Formdaki her BURAYA_ alanını belgedeki değerle doldurun (BURAYA_
+         yazısını geri silme tuşuyla tamamen silerek; SAYI_ satırlarına
+         dokunmayın).
+   GÖR: formda BURAYA_ kalmadı.
+İ16 YAP: Ctrl+S.
+   GÖR: başlıktaki * işareti kalktı.
+İ17 YAP: Form penceresini X'ten kapatın.
+   GÖR: KİT'te denetim satırları; "TAMAMLANDI (PASS)" ve "Siradaki: b6."
+   GÖRMEZSEN: ekran bir satırı ve nedenini gösterip "Not Defteri yeniden
+              acilsin mi? (H = simdilik birak)" sorarsa: E; ekranın söylediği
+              satırı düzeltin; İ16-İ17. Kit "Form bastan olusturulsun mu?"
+              sorarsa: yalnız sayılar yanlış seçildiyse E, aksi H. H
+              bastıysanız DUR DEĞİL (G6): ekran "Form oldugu gibi birakildi.
+              b5d ayni formu yeniden acar." der; b5d'yi yeniden yazın (İ13).
+              "DURDU" veya "STOP": DUR OLURSA.
+İ18 (AVUKAT EKRANA BAKAR) YAP: b6  (Enter)
+   GÖR: "----- ALAN OZETI (yalniz ekran; avukat ekrana bakar) -----", özet,
+        "TAMAMLANDI (PASS)" ve "Siradaki: avukat k intake (dogrulayici uyarisi
+        varsa k uyari da)."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ19 (AVUKAT) YAP: k intake  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-intake.txt. ..." ve karar penceresi.
+        Sonra K KALIBI (K1-K6).
+   GÖRMEZSEN: iletinin söylediği eksik (G6); "DURDU": DUR OLURSA.
+İ20 (AVUKAT) YAP: YALNIZ İ18'deki ileti "k uyari" dediyse: k uyari  (Enter).
+   GÖR: "Not Defteri aciliyor: decision-warnings.txt. ..." Sonra K KALIBI
+        (K1-K7).
+   GÖRMEZSEN: "k uyari: dogrulayici uyarisi yok": bu karar gerekmez; İ21.
+İ21 YAP: b7  (Enter)
+   GÖR: "----- TEBLIG SATIRI ADAYLARI (yalniz ekran) -----", numaralı satırlar
+        ve "Teblig tarihini tasiyan satirin numarasi (0 = hicbiri)".
+   GÖRMEZSEN: "b7 ..." iletisi: G6; aday yoksa avukat kararıyla ERKEN
+              KAPANIŞ.
+İ22 YAP: Tebliğ tarihini taşıyan satırın numarasını basın (yoksa 0).
+   GÖR: "Bu satir teblig tarihini tasiyan cumle mi?"
+İ23 YAP: Seçtiğiniz satır tebliğ tarihini taşıyan cümleyse E, değilse H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: g8, sonra avukat k girdi."
+   GÖRMEZSEN: G6; "DURDU": DUR OLURSA.
+İ24 (AVUKAT EKRANA BAKAR) YAP: g8  (Enter)
+   GÖR: "----- GIRDI DOSYASI (yalniz ekran; avukat orijinal belgeyle
+        karsilastirir) -----" ve "Siradaki: avukat k girdi."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ25 (AVUKAT) YAP: k girdi  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-input-r..." Sonra K KALIBI (K1-K6).
+   GÖRMEZSEN: G6.
+İ26 YAP: b8  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: b9."
+   GÖRMEZSEN: "Avukat bu surumu reddetti; duzeltilmis surum icin b7": İ21.
+              Başka: DUR OLURSA.
+İ27 YAP: b9  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: ADMIN penceresinde y1 (sayfadaki
+        ADMIN satiri)."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ28 (ONAY - PROJE SAHIBI) YAP: Win+R ile ADMIN y1 satırını çalıştırın:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\adm.ps1' y1"
+   GÖR: "----- ONAY (REAL_ACTION_APPROVED) -----", "Hedef:", "Digest:",
+        "TUSA PROJE SAHIBI BASAR" ve "Bu hedef ve digest icin uygulamayi
+        onayliyor musunuz?"
+   GÖRMEZSEN: "y1 BASLAMADI: once KIT penceresinde b9 TAMAM olmali ..." veya
+              "y1 BASLAMADI: repo dizini yok; kapsayici bagli degil. ...": DUR
+              DEĞİL (G6): ADMIN penceresini kapatın; iletinin söylediğini
+              yapın (KİT'te b9 / VeraCrypt'i bağlayın), sonra ADMIN satırını
+              yeniden açın. "y1 BASLAMADI: DUR kilidi var" veya başka
+              "BASLAMADI", "DUR", "DURDU": pencereyi kapatın; KİT'te a9; DUR
+              OLURSA.
+İ29 YAP: Hedef ve digest'i okuyup onaylıyorsanız E, onaylamıyorsanız H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Bu pencereyi X ile kapatin; KIT penceresinde
+        b9 yazin."
+   GÖRMEZSEN: H bastıysanız: "onay verilmedi; uygulama cagrilmadi." (DUR
+              değil; G13). "DURDU" veya "DUR": pencereyi kapatın; KİT'te a9;
+              DUR OLURSA.
+İ30 YAP: ADMIN penceresini X'ten kapatın.
+   GÖR: görev çubuğunda KİT, KÜME ve bu sayfa.
+İ31 YAP: KİT penceresinde b9 yazın  (Enter).
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: b10."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ32 (AVUKAT EKRANA BAKAR) YAP: b10  (Enter)
+   GÖR: "----- ONIZLEME (yalniz ekran; ...) -----", "TUSA AVUKAT BASAR" ve
+        "Avukatin kararindaki tarih ve sayfa ile ayni mi?"
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ33 (AVUKAT) YAP: Ekrandaki tarih ve sayfa kararınızdakiyle aynıysa E,
+         değilse H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: b11."
+   GÖRMEZSEN: DUR OLURSA.
+İ34 (ONAY - PROJE SAHIBI) YAP: b11  (Enter)
+   GÖR: "----- ONAY (REAL_ACTION_APPROVED) -----" ve soru. Sonra ONAY KALIBI;
+        PASS'te "Siradaki: b12."
+   GÖRMEZSEN: G6.
+İ35 (AVUKAT EKRANA BAKAR) YAP: b12  (Enter)
+   GÖR: "----- TEK FACT (yalniz ekran; avukat kontrol eder) -----",
+        "TAMAMLANDI (PASS)" ve "Siradaki: avukat k fact."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ36 (AVUKAT) YAP: k fact  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-fact.txt. ..." Sonra K KALIBI (K1-K6).
+   GÖRMEZSEN: G6.
+İ37 (ONAY - PROJE SAHIBI) YAP: b13  (Enter)
+   GÖR: ONAY ekranı. Sonra ONAY KALIBI; PASS'te "Siradaki: g14, sonra avukat k
+        dogrulama."
+   GÖRMEZSEN: "Avukat reddetti. Dosya pilot disi ise avukat 'k uygunsuz'
+              yazsin, sonra 'u'.": ERKEN KAPANIŞ. Başka: G6.
+İ38 (AVUKAT EKRANA BAKAR) YAP: g14  (Enter)
+   GÖR: "----- LOCATOR (yalniz ekran; avukat orijinal belgeyle
+        karsilastirir) -----" ve "Siradaki: avukat k dogrulama."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ39 (AVUKAT) YAP: k dogrulama  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-verification.txt. ..." Sonra K
+        KALIBI (K1-K6).
+   GÖRMEZSEN: G6.
+İ40 (ONAY - PROJE SAHIBI) YAP: b14  (Enter)
+   GÖR: ONAY ekranı. Sonra ONAY KALIBI; PASS'te "Siradaki: b15."
+   GÖRMEZSEN: İ37'nin GÖRMEZSEN'i.
+İ41 YAP: b15  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: g16, sonra avukat k
+        zamancizelgesi."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ42 (AVUKAT EKRANA BAKAR) YAP: g16  (Enter)
+   GÖR: "----- ZAMAN CIZELGESI (yalniz ekran; avukat inceler) -----" ve
+        "Siradaki: avukat k zamancizelgesi."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+İ43 (AVUKAT) YAP: k zamancizelgesi  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-timeline.txt. ..." Sonra K KALIBI
+        (K1-K6).
+   GÖRMEZSEN: G6.
+İ44 (ONAY - PROJE SAHIBI) YAP: b16  (Enter)
+   GÖR: ONAY ekranı. Sonra ONAY KALIBI; PASS'te "Siradaki: avukat k
+        durdurucu ve k adlitatil."
+   GÖRMEZSEN: İ37'nin GÖRMEZSEN'i.
+İ45 KONTROL YAP: KİT penceresinde b16'nın son satırlarına bakın.
+   GÖR: b16 için "TAMAMLANDI (PASS)" ve "Siradaki: avukat k durdurucu ve k
+        adlitatil." -> İ46.
+   GÖRMEZSEN: b16'yı hiç yazmadıysanız İ44'e dönün. b16'yı yazdınız ve başka
+              bir şey gördüyseniz: DUR OLURSA.
+İ46 YAP: a9  (Enter)
+   GÖR: kapanış taraması ve "Oz beyan 1/3: ..."
+   GÖRMEZSEN: DUR OLURSA.
+İ47 YAP: Öz beyan sorularının her birine gerçeğe göre E veya H (G7).
+   GÖR: "a9 TAMAM. Pencereyi kapatabilirsiniz."
+   GÖRMEZSEN: DUR OLURSA.
+İ48 YAP: KİT penceresini fareyle X'ten kapatın.
+   GÖR: görev çubuğunda KÜME penceresi (dokunmayın) ve bu sayfa. Sonra BİTİŞ.
+İşleme günü bölünürse: kaldığınız adımdan sonra İ46-İ48 (a9, kapatın).
+Sonraki işleme günü H1-H9, İ1-İ11, sonra kaldığınız adımdan devam.
+
+SON GÜN (adım 18-23 ve silme; aynı ziyaret)
+Adım 23 ile silme aynı ziyarettedir. Silme, b23 bittikten sonraki 24 saat
+(F1) içinde, z1 dahil, bitmelidir. Avukat silme kararını bu ziyarette
+eksiksiz verir; yarım kalırsa silme başlamaz ve avukat k silme ile kaldığı
+yerden devam eder. Bu sürede bitmeyecekse b23'e başlamayın.
+HAZIRLIK H1-H9, sonra:
+S1 YAP: Win+R ile KÜME satırını çalıştırın (A1'deki satır).
+   GÖR: A1'in GÖR'ü.
+   GÖRMEZSEN: DUR OLURSA.
+S2 YAP: KÜME penceresini simge durumuna küçültün.
+   GÖR: KÜME penceresi görev çubuğunda duruyor.
+S3 YAP: Win+R ile KİT satırını çalıştırın (A3'teki satır).
+   GÖR: A3'ün GÖR'ü.
+   GÖRMEZSEN: A3'ün GÖRMEZSEN'i.
+S4 YAP: a2  (Enter)
+   GÖR: "a2 TAMAM. ..."
+   GÖRMEZSEN: A4'ün GÖRMEZSEN'i.
+S5 YAP: >>> 2 DAKİKA BEKLEYİN <<<
+   GÖR: 2 dakika geçti.
+S6 YAP: a3  (Enter)
+   GÖR: "a3 TAMAM. Kanal kapisi gecti. ..."
+   GÖRMEZSEN: A6'nın GÖRMEZSEN'i.
+S7 YAP: b0  (Enter)
+   GÖR: ilk soru "Yapay zeka kodlama asistani kapali mi?"
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S8 YAP: Altı sorunun her birine gerçeğe göre E veya H.
+   GÖR: "KANAL BEYANI TAMAM. ...", "TAMAMLANDI (PASS)" ve "Siradaki: b1."
+   GÖRMEZSEN: DUR OLURSA.
+S9 YAP: VeraCrypt penceresini görev çubuğundan öne getirin.
+   GÖR: listede kapsayıcı dosyası -> <container-root>.
+   GÖRMEZSEN: a9 yazın, pencereyi kapatın: DUR OLURSA.
+S10 YAP: KİT penceresinde b1 yazın  (Enter).
+   GÖR: "VeraCrypt ekraninda kapsayici <container-root> surucu harfine bagli
+        gorunuyor mu?"
+   GÖRMEZSEN: "b1 BASLAMADI": G6. Başka: DUR OLURSA.
+S11 YAP: Ekrandaki her soruya gerçeğe göre E veya H (kapsayıcı sorusu: S9'da
+         gördüyseniz E).
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: gunun zincir komutlari (sayfa)."
+   GÖRMEZSEN: "DURDU" veya "STOP": DUR OLURSA.
+S12 (AVUKAT) YAP: k durdurucu  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-stopping-event.txt. ..." Sonra K
+        KALIBI (K1-K6).
+   GÖRMEZSEN: "... once b16 TAMAM olmali ..." ve "(Kayit yazilmadi; DUR kilidi
+              yok.)": b16 yapılmamış; bu pencerede kalın (yeni pencere
+              AÇMAYIN, a9 yazmayın, a2 yeniden gerekmez): İŞLEME GÜNÜ İ44 ve
+              İ45'i yapın (b16 başka bir eksik adım söylerse G6: o adımı
+              İŞLEME GÜNÜ bölümünden aynı pencerede yapın). İ45'te b16 için
+              "TAMAMLANDI (PASS)" görünce İ46-İ48'i ATLAYIN ve S12'ye dönün.
+              Başka: G6.
+S13 (AVUKAT) YAP: k adlitatil  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-judicial-recess.txt. ..." Sonra K
+        KALIBI (K1-K6).
+   GÖRMEZSEN: S12'nin GÖRMEZSEN'i (b16'dan sonra S13'e dönün).
+S14 (AVUKAT EKRANA BAKAR) YAP: b18  (Enter)
+   GÖR: "Not Defteri aciliyor: blind-calc.txt. ..." ve kör hesap penceresi.
+   GÖRMEZSEN: "b18 BASLAMADI: once avukat ..." iletisi eksik kararı adıyla
+              söyler: o kararı yazın (S12 veya S13), sonra yeniden b18.
+              "DURDU": DUR OLURSA.
+S15 (AVUKAT) YAP: Kör hesabı sistem sonucunu görmeden yazın (her BURAYA_
+         alanını geri silme tuşuyla silip doldurarak; tarihler YYYY-AA-GG;
+         ilk üç satıra dokunmayın).
+   GÖR: dosyada BURAYA_ kalmadı.
+S16 (AVUKAT) YAP: Ctrl+S.
+   GÖR: başlıktaki * işareti kalktı.
+S17 (AVUKAT) YAP: Kör hesap penceresini X'ten kapatın.
+   GÖR: "TUSA AVUKAT BASAR" ve "Kor hesabi sistem sonucunu gormeden yazdiniz
+        mi?"
+   GÖRMEZSEN: değer reddi ve "Not Defteri yeniden acilsin mi?": E; ekranın
+              söylediği satırı düzeltin; S16-S17. H bastıysanız DUR DEĞİL
+              (G6): ekran "Dosya oldugu gibi birakildi. Ayni b18 komutu ayni
+              dosyayi yeniden acar." der; b18'i yeniden yazın (S14).
+S18 (AVUKAT) YAP: Gerçeğe göre E veya H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: b19."
+   GÖRMEZSEN: H bastıysanız DUR DEĞİL (G6): ekran "b18: teyit edilmedi; kayit
+              yazilmadi. Dosya yerinde kaldi; ayni b18 komutu ayni dosyayi
+              yeniden acar." der; iletinin söylediğini yapın: b18'i yeniden
+              yazın (S14). Başka: DUR OLURSA.
+S19 YAP: b19  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: b20."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S20 (AVUKAT EKRANA BAKAR) YAP: b20  (Enter)
+   GÖR: "----- IKI TARIH (yalniz ekran; avukat karsilastirir) -----",
+        "TUSA AVUKAT BASAR" ve "Ekrandaki iki tarih ayni mi?"
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S21 (AVUKAT) YAP: İki tarih aynıysa E, değilse H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: avukat k sure."
+   GÖRMEZSEN: DUR OLURSA.
+S22 (AVUKAT) YAP: k sure  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-deadline.txt. ..." Sonra K KALIBI
+        (K1-K6).
+   GÖRMEZSEN: G6.
+S23 (ONAY - PROJE SAHIBI) YAP: b21  (Enter)
+   GÖR: ONAY ekranı. Sonra ONAY KALIBI; PASS'te "Siradaki: b22."
+   GÖRMEZSEN: İ37'nin GÖRMEZSEN'i.
+S24 YAP: b22  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: b23."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S25 (AVUKAT EKRANA BAKAR) YAP: b23  (Enter)
+   GÖR: "----- IKI TARIH (yalniz ekran; avukat karsilastirir) -----",
+        "TUSA AVUKAT BASAR" ve "Ekrandaki iki tarih ayni mi?"
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S26 (AVUKAT) YAP: İki tarih aynıysa E, değilse H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: b24." F1 bu anda başlar.
+   GÖRMEZSEN: DUR OLURSA.
+S27 YAP: b24  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: ADMIN penceresinde y2 (sayfadaki
+        ADMIN satiri, y2 ile)." -> S28. Veya "Siradaki: avukat k silme." ->
+        S32.
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S28 (ONAY - PROJE SAHIBI) YAP: Win+R ile ADMIN y2 satırını çalıştırın:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\adm.ps1' y2"
+   GÖR: "----- ONAY (REAL_ACTION_APPROVED) -----", "Hedef:", "Digest:" ve
+        soru.
+   GÖRMEZSEN: "y2 BASLAMADI: once KIT penceresinde b24 TAMAM olmali ve aktif
+              atama 1 gostermeli." veya "y2 BASLAMADI: repo dizini yok;
+              kapsayici bagli degil. ...": DUR DEĞİL (G6): ADMIN penceresini
+              kapatın; iletinin söylediğini yapın (S27'nin GÖR'ü "avukat k
+              silme" diyorsa y2 gerekmez: S32; aksi hâlde KİT'te b24 /
+              VeraCrypt'i bağlayın), sonra ADMIN satırını yeniden açın. Başka
+              "BASLAMADI", "DUR", "DURDU": pencereyi kapatın; KİT'te a9; DUR
+              OLURSA.
+S29 YAP: Hedef ve digest'i okuyup onaylıyorsanız E, onaylamıyorsanız H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Bu pencereyi X ile kapatin; KIT penceresinde
+        b24 yazin."
+   GÖRMEZSEN: H: "onay verilmedi; uygulama cagrilmadi." (G13). "DURDU" veya
+              "DUR": pencereyi kapatın; KİT'te a9; DUR OLURSA.
+S30 YAP: ADMIN penceresini X'ten kapatın.
+   GÖR: görev çubuğunda KİT, KÜME ve bu sayfa.
+S31 YAP: KİT penceresinde b24 yazın  (Enter).
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: avukat k silme."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S32 (AVUKAT) YAP: k silme  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-deletion.txt. ..." Sonra K KALIBI
+        (K1-K6; F2=SILINSIN, SILME_BU_ZIYARETTE=EVET, SILME_OTURUMU_DALLARI=
+        YOK veya G8'deki dal adları).
+   GÖRMEZSEN: G6.
+S33 YAP: s25  (Enter)
+   GÖR: "----- GORELI YOLLAR (yalniz ekran; proje sahibi bakar) -----", yol
+        satırları, "TUSA PROJE SAHIBI BASAR" ve "Ekrandaki goreli yollarda ad
+        veya numara var mi?"
+   GÖRMEZSEN: "Once avukat 'k silme' ile silme kararini yazsin.": S32.
+              Başka: DUR OLURSA.
+S34 YAP: Yollarda kişi adı veya dosya numarası görürseniz E, görmezseniz H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: s26a."
+   GÖRMEZSEN: E bastıysanız kit durur: DUR OLURSA. İki geçersiz tuş: kayıt ve
+              manifest yazılmadı; yeniden s25 (S33).
+S35 (ONAY - PROJE SAHIBI) YAP: s26a  (Enter)
+   GÖR: ONAY ekranı. Sonra ONAY KALIBI; PASS'te "Siradaki: s26b."
+   GÖRMEZSEN: G6; "STOP K6_BRANCH_NOT_NAMED" veya başka "STOP": DUR OLURSA
+              (D8).
+S36 (ONAY - PROJE SAHIBI) YAP: s26b  (Enter)
+   GÖR: ONAY ekranı. Sonra ONAY KALIBI; PASS'te "Siradaki: s27."
+   GÖRMEZSEN: G6; "STOP": DUR OLURSA (D8).
+S37 YAP: s27  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: s28."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S38 YAP: s28  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: s29a."
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+S39 YAP: s29a  (Enter)
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: a9, pencereyi kapatin, VeraCrypt ile
+        kapsayiciyi ayirin, sonra IMHA satiri (z1)."
+   GÖRMEZSEN: DUR OLURSA (D8; kilitsiz ret iletisi varsa G6). VeraCrypt'e DOKUNMAYIN.
+S40 YAP: a9  (Enter)
+   GÖR: kapanış taraması ve "Oz beyan 1/3: ..."
+   GÖRMEZSEN: DUR OLURSA.
+S41 YAP: Öz beyan sorularının her birine gerçeğe göre E veya H (G7).
+   GÖR: "a9 TAMAM. Pencereyi kapatabilirsiniz."
+   GÖRMEZSEN: DUR OLURSA.
+S42 YAP: KİT penceresini fareyle X'ten kapatın.
+   GÖR: görev çubuğunda KÜME penceresi (dokunmayın), VeraCrypt ve bu sayfa.
+S43 YAP: VeraCrypt listesinde <container-root> satırını tıklayın.
+   GÖR: satır seçili.
+S44 YAP: VeraCrypt'in "Ayır" (Dismount) düğmesine BİR KEZ basın.
+   GÖR: <container-root> satırı boşaldı (birim yok).
+   GÖRMEZSEN: birimin kullanımda olduğunu söyleyen veya zorla ayırma soran
+              pencere: Hayır veya İptal; ZORLA AYIRMAYIN; DUR OLURSA.
+S45 YAP: VeraCrypt penceresini X'ten kapatın.
+   GÖR: VeraCrypt penceresi kapandı.
+S46 (ONAY - PROJE SAHIBI) YAP: Win+R ile İMHA satırını çalıştırın:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\z1.ps1'"
+   GÖR: "TUSA PROJE SAHIBI BASAR" ve "Kapsayici VeraCrypt'te ayrildi mi?"
+   GÖRMEZSEN: "z1 BASLAMADI": iletinin söylediğini yapın (G6). "DURDU" veya
+              "DUR": pencereyi kapatın; DUR OLURSA.
+S47 YAP: S44'te satırın boşaldığını gördüyseniz E, görmediyseniz H.
+   GÖR: "----- ONAY (REAL_ACTION_APPROVED) -----", "Hedef:", "Digest:" ve
+        soru.
+   GÖRMEZSEN: H bastıysanız DUR DEĞİL (G6): ekran "z1 BASLAMADI: once
+              VeraCrypt ile kapsayiciyi ayirin; sonra IMHA satirini yeniden
+              acin." der; İMHA penceresini X'ten kapatın, S43-S45'i yapın,
+              sonra İMHA satırını yeniden açın (S46; z1 bitmediği için G13
+              yasağı geçmez). Başka: DUR OLURSA.
+S48 YAP: Hedef ve digest'i okuyup onaylıyorsanız E, onaylamıyorsanız H.
+   GÖR: "TUSA PROJE SAHIBI BASAR" ve "Anahtar kagidi ve tek kullanimlik
+        anahtar imha edildi mi?"
+   GÖRMEZSEN: H: "onay verilmedi; uygulama cagrilmadi." (G13). "DURDU" veya
+              "DUR": pencereyi kapatın; DUR OLURSA.
+S49 YAP: Anahtar kâğıdını ve tek kullanımlık anahtarı imha edin.
+   GÖR: imha edildi.
+S50 YAP: İMHA penceresindeki soruya gerçeğe göre E veya H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: bu pencerede s29b yazip Enter
+        (avukat ekrana bakar)." H bastıysanız ekran "Anahtar kagidini ve tek
+        kullanimlik anahtari simdi imha edin." der (kilit yok).
+   GÖRMEZSEN: "DURDU" veya "DUR": pencereyi kapatın; DUR OLURSA.
+S51 (AVUKAT EKRANA BAKAR) YAP: Aynı İMHA penceresinde s29b yazın  (Enter).
+   GÖR: "TUSA AVUKAT BASAR" ve "Imha kaydinin kopyasi dosya avukatina verildi
+        mi?" (kopya kâğıt biçimindedir; avukat cevabı 8b).
+   GÖRMEZSEN: "DURDU" veya "DUR": pencereyi kapatın; DUR OLURSA.
+S52 (AVUKAT) YAP: Kopya verildiyse E, verilmediyse H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Silme ve imha kaydi tamam. Pencereyi
+        kapatin; sonra ajan oturumu (D7)."
+   GÖRMEZSEN: "DUR" (F1 aşıldı): silme tamamlanmıştır; pencereyi kapatın; DUR
+              OLURSA D7. Başka: DUR OLURSA.
+S53 YAP: İMHA penceresini X'ten kapatın.
+   GÖR: görev çubuğunda KÜME penceresi ve bu sayfa. İMHA satırı İKİNCİ KEZ
+        AÇILMAZ (G13). Sonra BİTİŞ.
+
+ERKEN KAPANIŞ (avukatın kararıyla; dosya bu pilota uygun değil; silme bu
+ziyarette)
+Ne zaman: kit "Avukat reddetti. Dosya pilot disi ise avukat 'k uygunsuz'
+yazsin, sonra 'u'." dediğinde, b7 aday bulamadığında veya avukat intake
+onayında bir maddeyi reddettiğinde — ve avukat bu dosyanın burada bitmesine
+karar verdiyse. Aynı KİT penceresinde:
+E1 (AVUKAT) YAP: k uygunsuz  (Enter)
+   GÖR: "Not Defteri aciliyor: decision-unsuitable.txt. ..." Sonra K KALIBI
+        (K1-K6; NEDEN= sözlükteki kod; SILME_BU_ZIYARETTE=EVET).
+   GÖRMEZSEN: G6.
+E2 (AVUKAT EKRANA BAKAR) YAP: u  (Enter)
+   GÖR: "TUSA AVUKAT BASAR" ve "Avukatin karariyla bu dosyanin islemesi burada
+        bitiyor ve silme bu ziyarette yapilacak. Onayliyor musunuz?"
+   GÖRMEZSEN: "b11 calisti ve avukatin RED karari yok: normal DUR yolu": DUR
+              OLURSA. Başka: G6.
+E3 (AVUKAT) YAP: Onaylıyorsanız E, onaylamıyorsanız H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Erken kapanis kipi: yalniz silme adimlari.
+        Siradaki: atama varsa b24, yoksa avukat k silme." F1 bu anda başlar.
+   GÖRMEZSEN: H bastıysanız DUR DEĞİL (G6): ekran "u: onaylanmadi. Kayit
+              yazilmadi; zincir komutlari acik kaldi." der; erken kapanış
+              kipi başlamadı. Avukat kararını yineler ve onaylarsa u'yu
+              yeniden yazın (E2). Başka: DUR OLURSA.
+E4 YAP: b24  (Enter)
+   GÖR: "b24 gerekmez: erken kapanista atama yok. Siradaki: avukat k silme."
+        -> E5. Veya S27'nin GÖR'ü (y2 gerekiyorsa S28-S31, sonra E5).
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+E5 Sonra SON GÜN S32-S53 aynen (k silme, s25, s26a, s26b, s27, s28, s29a, a9,
+   VeraCrypt'te ayır, İMHA z1 ve s29b). Bu kipte kit başka komutları "Bu
+   dosya pilot disi; yalniz silme adimlari." ile reddeder (DUR değil).
+
+SİLME OTURUMU (yalnız İÇERİK ALINDIKTAN sonra, bir DUR'dan sonra; yalnız D7'deki
+karar ve onayla)
+Açılması için: dosya avukatının Form F'ye uygun yazılı silme kararı ve
+kullanıcının (proje sahibinin) o hedef için ayrı REAL_ACTION_APPROVED onayı;
+F1 süresi içinde. Önceki pencerede "(silme oturumu yok)" yazan bir dal
+yaşandıysa yazılı silme kararı o dalı adıyla (G8) anmadıkça silme oturumu
+açılmaz. Ajan oturumu açılmaz. r1-r5 komutları YALNIZ ayrı ve yazılı
+kullanıcı kararıyla çalışır; o karar yoksa yazmayın. Bu sayfa r1, r3, r4 ve
+r5 için ilerleme yoksa süresi vermez; o yazılı karar bekleme süresini de
+yazar (G10).
+SO0 KANAL KAPISI SÜREKLİLİĞİ: KİT satırı açılınca ekran "SILME OTURUMU" der.
+   Bu pencerede a2, a3, b0 ve a9 MUTLAKA yazılır. a2 yazılmadan kapatılan her
+   KİT penceresi (silme günü değilken açılıp kapatılan dahil) imha kaydında
+   kanal kapısını kalıcı olarak tamamlanmadı gösterir
+   (CHANNEL_GATE_CONTINUOUS=False, POSTCONDITION_11=INCOMPLETE). Bu DUR
+   değildir, geri alınamaz ve silmeyi durdurmaz. Bundan kaçınmak için DUR'dan
+   sonra KİT satırını YALNIZ silme günü açın. Silme günü değilken yanlışlıkla
+   açtıysanız: a2 yazmadan pencereyi kapatın (kitin dediği gibi): DUR OLURSA
+   D5'ten itibaren.
+HAZIRLIK H1-H9, sonra:
+SO1 YAP: Win+R ile KÜME satırını çalıştırın (A1'deki satır).
+   GÖR: A1'in GÖR'ü.
+   GÖRMEZSEN: DUR OLURSA (D8).
+SO2 YAP: KÜME penceresini simge durumuna küçültün.
+   GÖR: KÜME penceresi görev çubuğunda duruyor.
+SO3 YAP: Win+R ile KİT satırını çalıştırın (A3'teki satır).
+   GÖR: "KIT YUKLENDI, ama DUR kilidi var: SILME OTURUMU ..." ve "KIT2
+        YUKLENDI (SILME OTURUMU). ..."
+   GÖRMEZSEN: "KIT2 YUKLENEMEDI": a9 yazın, pencereyi kapatın: D8.
+              Başka: DUR OLURSA.
+SO4 YAP: a2  (Enter)
+   GÖR: "a2 TAMAM. ..."
+   GÖRMEZSEN: A4'ün GÖRMEZSEN'i.
+SO5 YAP: >>> 2 DAKİKA BEKLEYİN <<<
+   GÖR: 2 dakika geçti.
+SO6 YAP: a3  (Enter)
+   GÖR: "a3 TAMAM. Kanal kapisi gecti. ..."
+   GÖRMEZSEN: A6'nın GÖRMEZSEN'i.
+SO7 YAP: b0  (Enter)
+   GÖR: ilk soru "Yapay zeka kodlama asistani kapali mi?"
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+SO8 YAP: Altı sorunun her birine gerçeğe göre E veya H.
+   GÖR: "KANAL BEYANI TAMAM. ...", "TAMAMLANDI (PASS)" ve "Siradaki: b1."
+   GÖRMEZSEN: DUR OLURSA.
+SO9 YAP: VeraCrypt penceresini görev çubuğundan öne getirin.
+   GÖR: listede kapsayıcı dosyası -> <container-root>.
+   GÖRMEZSEN: a9 yazın, pencereyi kapatın: DUR OLURSA (D8).
+SO10 YAP: KİT penceresinde b1 yazın  (Enter).
+   GÖR: "VeraCrypt ekraninda kapsayici <container-root> surucu harfine bagli
+        gorunuyor mu?"
+   GÖRMEZSEN: G6.
+SO11 YAP: Ekrandaki her soruya gerçeğe göre E veya H (kapsayıcı sorusu: SO9'da
+          gördüyseniz E).
+   GÖR: "TAMAMLANDI (PASS)".
+   GÖRMEZSEN: "DURDU" veya "STOP": a9 yazın, pencereyi kapatın: D8.
+SO12 Sonra SON GÜN S27-S53 aynen (b24; gerekiyorsa ADMIN y2 ve ikinci b24;
+   k silme; s25-s29a; a9; VeraCrypt'te ayır; İMHA z1 ve s29b). k silme önceki
+   bir pencerede TAMAM olduysa ekran "Bu karar zaten kaydedildi." der: bu
+   satır o kararın kaydıdır; doğrudan S33 (s25). Bir silme komutu
+   tamamlanamıyorsa: D8.
+
+K KALIBI (karar komutlarından sonra; Not Defteri'ndeki karar dosyası)
+K1 (AVUKAT) YAP: Her BURAYA_ alanını kararınızla doldurun (BURAYA_ yazısını
+         geri silme tuşuyla tamamen silerek; boşluk yok; TUZ, KARAR_TURU,
+         CASE_ID ve # satırlarına dokunmayın).
+   GÖR: dosyada BURAYA_ kalmadı.
+K2 (AVUKAT) YAP: Ctrl+S.
+   GÖR: başlıktaki * işareti kalktı ("Farklı kaydet" kullanılmadı).
+K3 (AVUKAT) YAP: Karar penceresini X'ten kapatın.
+   GÖR: KİT'te "----- KARAR OZETI (yalniz ekran) -----", özet, "TUSA AVUKAT
+        BASAR" ve "Ekrandaki ozet sizin karariniz mi?" -> K5.
+   GÖRMEZSEN: ileti bir alanı adıyla ve doğru biçimiyle gösterip "Not Defteri
+              yeniden acilsin mi? (H = simdilik birak)" sorarsa: K4. H
+              bastıysanız DUR DEĞİL (G6): ekran "Dosya oldugu gibi birakildi.
+              Ayni k komutu ayni dosyayi yeniden acar." der; aynı k komutunu
+              yeniden yazın.
+              "DURDU": DUR OLURSA.
+K4 (AVUKAT) YAP: E.
+   GÖR: karar penceresi yeniden açıldı: yalnız ekranın söylediği satırı K1'deki
+        gibi düzeltip K2-K3.
+   GÖRMEZSEN: DUR OLURSA.
+K5 (AVUKAT) YAP: Özet kararınızsa E, değilse H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: ..." (sayfadaki sonraki adım);
+        k uyari'de önce K6.
+   GÖRMEZSEN: H bastıysanız DUR DEĞİL (G6): ekran "Kayit yazilmadi. Dosya
+              yerinde kaldi; ayni k komutu ayni dosyayi yeniden acar." der;
+              iletinin söylediğini yapın: aynı k komutunu yeniden yazın
+              (K1'den). Başka: DUR OLURSA.
+K6 (YALNIZ k uyari; PROJE SAHIBI) YAP: "Dogrulayici uyarilarini kabul
+         edilebilir saydiginizi (runbook 11.3 d) onayliyor musunuz?" sorusuna
+         E veya H.
+   GÖR: "TAMAMLANDI (PASS)".
+   GÖRMEZSEN: H bastıysanız DUR DEĞİL (G6): ekran "Kayit yazilmadi (proje
+              sahibi kabul etmedi). Dosya yerinde kaldi." der; karar
+              değişirse k uyari'yı yeniden yazın. Başka: DUR OLURSA.
+
+ONAY KALIBI (b11, b13, b14, b16, b21, s26a, s26b; ekranda ONAY bloğu)
+O1 (ONAY - PROJE SAHIBI) YAP: Hedef ve digest'i okuyup onaylıyorsanız E,
+         onaylamıyorsanız H.
+   GÖR: "TAMAMLANDI (PASS)" ve "Siradaki: ..." (sayfadaki sonraki adım).
+   GÖRMEZSEN: H bastıysanız: "onay verilmedi; uygulama cagrilmadi. Karar
+              degisirse ayni komutu yeniden yazin." (DUR değil). "DURDU" veya
+              "STOP": DUR OLURSA.
+
+DUR OLURSA
+D1 Başka hiçbir adım çalıştırmayın.
+D2 7z parola kâğıdı varsa yırtın ve a8 yazın (kâğıt yoksa a8 yok).
+D3 KİT penceresinde a9 yazın (ekran "SIMDI a9 YAZIN" der); a9'un üç öz beyan
+   sorusuna E veya H. Kit yüklenmediyse a8/a9 ve öz beyan yoktur: saati
+   aklınızda tutun.
+D4 KİT, ADMIN ve İMHA pencerelerini fareyle X'ten kapatın; KÜME penceresini
+   KAPATMAYIN.
+D5 Pencere açıkken hiçbir yapay zekâ aracı veya sohbet AÇMAYIN; ekranı
+   yapıştırmayın, fotoğraflamayın. Sonra G9'a bakın: İÇERİK ALINDI MI?
+D6 İÇERİK ALINMADIYSA: kiti yeniden AÇMAYIN. Diskte müvekkil verisi yoktur;
+   avukat araması gerekmez. Pencere kapandıktan sonra ajana dönebilirsiniz.
+D7 İÇERİK ALINDIYSA (bu her DUR için geçerlidir):
+   - Hiçbir yapay zekâ aracı veya sohbet AÇILMAZ (pencere kapandıktan sonra da).
+   - Dosya avukatını hemen telefonla arayın ve aynı gün kişisel veri
+     içermeyen yazılı bildirim yapın (form v5 E3).
+   - Kiti yeniden AÇMAYIN; yalnız SİLME OTURUMU koşullarıyla açılır (SO0).
+   - Silme gerekiyorsa yalnız runbook §25.2/§28.1 yoluyla: dosya avukatının
+     Form F'ye uygun yazılı silme kararı + kullanıcının o hedef için ayrı
+     REAL_ACTION_APPROVED onayı; F1 süresi içinde.
+   - Ajan oturumu ancak gerçek veri silindikten sonra açılır.
+D8 KİT2 İLE SİLME OLMUYORSA (acil yol; yalnız İÇERİK ALINDIKTAN sonra ve
+   SİLME OTURUMU koşulları varken). İki tetik: (a) kit2 yüklenemiyor (ör.
+   "KIT2 YUKLENEMEDI": güvenli dosya veya pin farkı, yükleyici hatası); (b)
+   kit2 yükleniyor ama silme komutları tamamlanamıyor (ör. s25 veya s26a
+   kilitlendi, s26a "STOP K6_BRANCH_NOT_NAMED" verdi, s29a FAIL verdi).
+   Kit2 sağlamken yalnız acil sayfanın bozuk olması bu yolu açmaz.
+   YAP: Win+R ile EV satırını çalıştırın:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\ev.ps1'"
+   GÖR: tek satır: MATCH. Acil silme sayfası kullanılır: o sayfanın 1.
+        bölümünden devam (0. bölümü bu adımdır; acil sayfa güvenli dosyayla
+        aynı dizindedir, yolu bu sayfada yazmaz). EV penceresi X'ten kapatılır.
+   GÖRMEZSEN (boş, hata, NO_MATCH veya acil sayfa yok): acil sayfayı
+              KULLANMAYIN. Yol AÇIK-25 (b): dosya avukatının yazılı Form F
+              kararı ve ayrı REAL_ACTION_APPROVED onayıyla kapsayıcı doğrudan
+              imha edilir: VeraCrypt'te ayırın; kapsayıcı dosyasını
+              VeraCrypt'in bağlama ekranındaki yoldan tanıyıp Geri Dönüşüm
+              Kutusu'nu kullanmadan silin (Shift+Delete); anahtar kâğıdını
+              ve tek kullanımlık anahtarı imha edin. Bu guard'sız bir
+              silmedir; kalan ölçümleri ve kayıtları veri silindikten sonra
+              ajan oturumu yapar.
+
+BİTİŞ (pencere kapandıktan sonra)
+B1 Bu sayfanın Not Defteri'ni X'ten kapatın ("Kaydetme").
+B2 Öz beyan a9'da alındı; ayrıca bir beyan yazılmaz.
+B3 İÇERİK ALINDIYSA (G9) DUR olmasa da gerçek veri silinene kadar hiçbir
+   yapay zekâ aracı veya ajan oturumu açılmaz; iki içerik günü arasında da.
+   İÇERİK ALINMADIYSA ajana dönebilirsiniz.
+B4 MOLA: İÇERİK ALINDIKTAN sonra iki içerik penceresi arasında bir yapay zekâ
+   aracı veya ajan oturumu açıldıysa: sonraki pencereyi AÇMAYIN; DUR OLURSA
+   D5'ten itibaren (pencere zaten kapalı; a8/a9 yok). Sonraki pencere ancak
+   kullanıcının ve dosya avukatının yazılı kararından ve HAZIRLIK H1-H6
+   yeniden yapıldıktan sonra açılır.
+
+ALFABE (29 sembol): A Adana  B Bolu  C Ceyhan  D Denizli  E Edirne  F Fatsa
+G Giresun  H Hatay  J Jandarma  K Kars  L Lüleburgaz  M Muş  N Niğde
+P Polatlı  R Rize  S Sinop  T Tokat  U Uşak  V Van  Y Yozgat  Z Zonguldak
+2 iki  3 üç  4 dört  5 beş  6 altı  7 yedi  8 sekiz  9 dokuz
 ```
