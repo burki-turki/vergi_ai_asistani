@@ -250,6 +250,15 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > köklerde yapıldı; `Start-Process` taklit edildi, gerçek Not Defteri açılmadı; acil sayfa dalı son
 > tam insan provasına (ayrı kullanıcı kararı) tabidir ve provadan geçmeden gerçek koşuda
 > kullanılamaz (§32/41).
+> Revizyon 21 (§34.27; `SCOPE_APPROVED`): kullanıcı sayfası N192'de silme oturumu çıkmazları
+> kapatıldı (yalnız metin). Silme oturumunda önceki pencerelerde çalışmış silme adımlarının kilitsiz
+> iletileri (`B24_ALREADY`, `k silme`'nin iki iletisi, `s25`–`s29a` `_ALREADY`) sonraki adıma
+> bağlandı; kaydı kitin sonraki adım ön koşulu denetler (TAMAM değilse D8); silme oturumunda
+> `Y2_ALREADY` D8'dir; `z1` TAMAM sonrası yalnız İMHA girişi; kilit yazmayan bir DUR'dan sonra
+> silme oturumuna giriş `o` (olay kaydı) ile (SGR1–SGR10). Rev20 incelemesinin L-1'i (Ek R4/13 madde 1,
+> 7, 8; K20-1 notu) ve O-8'i (D8) işlendi. Değişen blok yalnız N192; diğer 192 blok bayt-bayt
+> aynıdır; kit kodu ve kit1 değişmedi. Denetim yalnız oturum scratchpad'inde ve sentetik kökte;
+> sayfa son tam insan provasına (ayrı kullanıcı kararı) tabidir (§32/41).
 
 ---
 
@@ -273,7 +282,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır, kit2 dilim 4 koduyla ve K17-1–K17-3 kararlarıyla revizyon 17'dir, kit2 dilim 4 prova #8 (`C:\vd5_837d8cf6`) ve prova #8-ek (`C:\vd5_79796a4c`) bağımsız kanıt incelemelerinin iki kit bulgusuyla (acil sayfa 2. bölümünde `Get-PilotStringSha` tanımsız; `z1.ps1` kanal kapısı kaynağı) revizyon 18'dir, kit2 dilim 4'ün prova #9-dar (`C:\vd5_625a9ed5`) ile "PASS_WITH_LIMITS (rev18)" kapanışı ve kit2 dilim 5 (kullanıcı sayfası N192; `K_ORDER` ve `B18_NO_DECISIONS` iletileri) ile revizyon 19'dur, revizyon 19 bağımsız incelemesinin karar 10'u (acil sayfanın açılış yolu; `USER_DECISION=R19-FIX` D-2) ve yeniden bakışının L-N1, L-N2 ve O-N1 maddeleriyle revizyon 20'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22; revizyon 17: §34.23; revizyon 18: §34.24; revizyon 19: §34.25; revizyon 20: §34.26) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır, kit2 dilim 4 koduyla ve K17-1–K17-3 kararlarıyla revizyon 17'dir, kit2 dilim 4 prova #8 (`C:\vd5_837d8cf6`) ve prova #8-ek (`C:\vd5_79796a4c`) bağımsız kanıt incelemelerinin iki kit bulgusuyla (acil sayfa 2. bölümünde `Get-PilotStringSha` tanımsız; `z1.ps1` kanal kapısı kaynağı) revizyon 18'dir, kit2 dilim 4'ün prova #9-dar (`C:\vd5_625a9ed5`) ile "PASS_WITH_LIMITS (rev18)" kapanışı ve kit2 dilim 5 (kullanıcı sayfası N192; `K_ORDER` ve `B18_NO_DECISIONS` iletileri) ile revizyon 19'dur, revizyon 19 bağımsız incelemesinin karar 10'u (acil sayfanın açılış yolu; `USER_DECISION=R19-FIX` D-2) ve yeniden bakışının L-N1, L-N2 ve O-N1 maddeleriyle revizyon 20'dir, son tam insan provası planını yazan oturumun N192 bulgusu (silme oturumu çıkmazları) ve rev20 incelemesinin L-1 ve O-8 maddeleriyle revizyon 21'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22; revizyon 17: §34.23; revizyon 18: §34.24; revizyon 19: §34.25; revizyon 20: §34.26; revizyon 21: §34.27) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -6423,6 +6432,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 18:** N187 (`z1.ps1`: `s29b` kanal kapısı kaynağı) ve N189 (acil sayfa şablonu: 2. bölümde N191) değişti; yeni N191 (sayfa bloğu; `Get-PilotStringSha` tanımı, N12'nin 1. satırı); diğer 189 blok bayt-bayt aynı | Prova #8 (`C:\vd5_837d8cf6`) `PROVA_DILIM4=BELIRSIZ` ve prova #8-ek (`C:\vd5_79796a4c`) `PROVA_DILIM4_EK=FAIL` / `PROVA_DILIM4_BIRLESIK=FAIL`; incelemeler `1fff636a…` (M-3) ve `22011802…` (H-1): dilim 4 adı konmuş kit kusuruyla kapandı (kullanıcı kararı D1) | Değişti (§34.24) | **Dar, ajanlı yeniden ölçüm** (§34.24 notları; planı ayrı iştir): altı acil sayfa ikizi (T-FEP1, T-FEP2, T-FEP2b, T-FEP4, T-FEP5, T-FEP6) blok başına sayaçla `prep_sec2_stop=0`; `z1`/`s29b` yoluna giren ikizler (küme P§7.4.2 taramasıyla); `z1.ps1` yeni pinle kit2 kurulumu, `pins2.txt`, `kit-build2.txt` ve N147 yeniden; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
 | **Revizyon 19:** N143 (`k.ps1`: `K_ORDER` iletisi eksik adımı adıyla) ve N167 (`b18.ps1`: `B18_NO_DECISIONS` iletisi eksik kararı adıyla) değişti; yeni N192 (kit2 kullanıcı sayfası, `text`; Ek R4/24); diğer 190 blok bayt-bayt aynı | Prova #9-dar (`C:\vd5_625a9ed5`) `PROVA_DILIM4_R18=PASS_WITH_LIMITS` ve `PROVA_DILIM4_BIRLESIK_R18=PASS_WITH_LIMITS`; inceleme `95285202…`: dilim 4 "PASS_WITH_LIMITS (rev18)" ile kapandı (kullanıcı kararı D1) | Değişti / yeni (§34.25) | **Son tam insan provası** (ayrı kullanıcı kararı; planı yazılmadı; §34.25 notları): gerçek koşu sayfası N192; `k.ps1` ve `b18.ps1` yeni pinle kit2 kurulumu, `pins2.txt` 160 satır, `kit-build2.txt`, N147; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
 | **Revizyon 20:** N188 (`ev.ps1` şablonu: `MATCH`'te acil sayfayı pinli Not Defteri'nde `-Wait` olmadan açar; yeni tek satırlık çıktı `OPEN_FAIL`; iki yeni doldurulan sabit `<notepad-file-version>`, `<notepad-sha256>`) ve N192 (D8 açılış yolu ve `OPEN_FAIL` dalı; G6 öncelik paragrafı; S47 H dalı) değişti; diğer 191 blok bayt-bayt aynı | — (yeni prova yok; rev19 incelemesi karar 10 / O-3 ve yeniden bakışı L-N1, L-N2, O-N1) | Değişti (§34.26) | **Son tam insan provası** (ayrı kullanıcı kararı; planı yazılmadı; §34.26 notları): `ev.ps1` yeni şablonla doldurulur (Not Defteri (6)'da ölçülür), `EV_PS1_SHA256` ve `pins2.txt`'nin `ev.ps1` satırı yeniden; acil sayfa dalı gerçek pencerede bir kez; N192 yeni hâliyle; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
+| **Revizyon 21:** N192 (SO12–SO15: silme oturumunda önceki pencerelerde çalışmış silme adımları ve kitin sonraki adım denetimi; `Y2_ALREADY` → D8; SGR1–SGR10: kilit yazmayan DUR'dan sonra `o` ile silme oturumu girişi; S46 `z1` iletisi; G6 adlı istisnaları; D8 ikinci GÖRMEZSEN başlığı) değişti; diğer 192 blok bayt-bayt aynı | — (yeni prova yok; son tam insan provası planını yazan oturumun kaynak bulgusu; rev20 incelemesi L-1, O-8) | Değişti (§34.27) | **Son tam insan provası** (ayrı kullanıcı kararı; planı yazılmadı; §34.27 notları): `k silme`'den sonra kasıtlı DUR ve SO13 geçişi; kilit yazmayan DUR'dan sonra SGR girişi; N192 yeni hâliyle; kit kodu değişmedi, kit2 kurulumu ve pinleri değişmez |
 
 ### 34.5 Yazım sınırları
 
@@ -12777,7 +12787,7 @@ dizinde `independent-runbook-rev19-recheck-corrections.md`
 |---|---|---|
 | `USER_DECISION=R19-FIX` D-2 | Acil sayfanın açılış yolu revizyon 20'de, son tam insan provasının planından ÖNCE karara bağlanır | Bu revizyon (R20-1) |
 | `SCOPE_APPROVED` ("SCOPE EVET") | R20-1 = A (`ev.ps1` `MATCH`'te sayfayı açar), R20-2, R20-3, R20-4 (kapsam dışı liste) | Aşağıdaki tablo |
-| K20-1 A (bu oturumda; saniye ölçülmedi; üst sınır `2026-11-08T21:20:45+03:00`) | Sayfa doğrulandı ama Not Defteri açılamadı: `ev.ps1` tek satır `OPEN_FAIL` basar; D8: EV satırı bir kez daha, yine olmazsa AÇIK-25 (b); Ek R4/13 madde 8'in koşulu "veya doğrulandığı hâlde açılamıyorsa" ile genişler | N188, N192 D8, Ek R4/13 madde 1, 4, 7, 8 |
+| K20-1 A (bu oturumda; saniye ölçülmedi; üst sınır `2026-11-08T21:20:45+03:00`) | Sayfa doğrulandı ama Not Defteri açılamadı: `ev.ps1` tek satır `OPEN_FAIL` basar; D8: EV satırı bir kez daha, yine olmazsa AÇIK-25 (b); Ek R4/13 madde 8'in koşulu "veya doğrulandığı hâlde açılamıyorsa" ile genişler. Revizyon 21 notu (§34.27; rev20 incelemesi L-1, kullanıcı onayı): `MATCH` görülüp sayfanın ekranda açılmaması da bu karara bağlıdır | N188, N192 D8, Ek R4/13 madde 1, 4, 7, 8 |
 | K20-2 A (aynı) | Not Defteri pin değerleri `ev.ps1`'e pencere öncesi doldurulan iki sabit olarak girer (`<notepad-file-version>`, `<notepad-sha256>`); `kit-build2.txt` çalışma anında okunmaz | N188, Ek R4/23 madde 6 |
 | K20-3 EVET (aynı) | Kurulumda Not Defteri (6)'da ölçülür ve doldurulur; (12)'deki ölçüm aynı olmalı, değilse DUR (Ek R4/16.7 ve Ek R4/19 madde 2; bağlı metin listesinin dışındaydı, kapsam genişlemesi onaylandı) | Ek R4/16.7 (6), (12); Ek R4/19 madde 2 |
 
@@ -12942,6 +12952,380 @@ yeniden çıkarılıp taban bloklarla karşılaştırıldı (191 eşit, 2 deği�
 planını yetkilendirmez; her biri ayrı kullanıcı kararıdır.
 
 **Sonuç.** `READY_FOR_INDEPENDENT_REVIEW`.
+
+### 34.27 Revizyon 21
+
+YENİ (`SCOPE_APPROVED` "SCOPE EVET", üst sınır `2026-11-08T22:44:33+03:00`; planlayıcı oturumunda
+verildi, saniye ölçülmedi; oturum KIT2-REV21; tek yazan oturum). Konu: kullanıcı sayfası N192'de
+silme oturumu çıkmazlarının dar metin düzeltmesi (R21-1, R21-2) ve rev20 incelemesinin L-1 ve O-8
+maddeleri (R21-3). Girdi: `2effc8f` runbook'u (SHA-256
+`58deea83083d09e66ddad5cfbeee0c7aa7e7a95ca108a1e2ad41d97e50d63300`, 23700 satır, 193 blok; HEAD =
+`origin/claude-dev`; çalışma ağacı temiz; diskten doğrulandı). Yalnız bu dosya değişti; kit kodu
+(hiçbir `.ps1` bloğu), kit1, kod, şema, veri, test, başka runbook veya `CLAUDE.md` değişmedi. Commit
+ve push yapılmadı. Kit penceresi, başlatıcılar (`t0`, `kume`, `adm.ps1`, `z1.ps1`, `ev.ps1`), gerçek
+CLI, `psql`, PostgreSQL, 7z, VeraCrypt, Not Defteri ve ağ çalıştırılmadı; hiçbir porta bağlanılmadı;
+`.env` açılmadı. Aşağıda "taban L…" `2effc8f` runbook'unun satırıdır (kit blokları bayt-eşit, yalnız
+yerleri kaydı).
+
+**Neden (bulan oturum ve satırlar).** Son tam insan provası planını yazan oturum (KIT2-FINAL-PLAN)
+kaynağı okurken iki çıkmaz buldu; planlayıcı satırları diskte doğruladı; bu oturum kaynakla ve
+sentetik kökte yeniden ölçtü.
+
+1. SO12 (taban L23586) silme oturumunda SON GÜN S27–S53'ü "aynen" tekrarlatır. `b24`, `b24b.txt`
+   varsa kilitsiz `B24_ALREADY` verir ("Bu adim zaten calisti: b24b.txt. Tekrar calismaz."; taban
+   L21698–21700). G6'nın "zaten calisti" sınırı (taban L22819–22822) bu iletiyi yalnız adımın GÖR'ü
+   bu pencerede görüldüyse geçirir; tek adlı istisna `k silme`'nin "Bu karar zaten kaydedildi."
+   iletisiydi. Sonuç: `k silme`'den (dolayısıyla `y2`/`b24b`'den) sonraki her DUR'da sayfa harfiyen
+   uygulanınca silme oturumu `b24`'te DUR OLURSA'ya düşer. Aynı sınıf `k silme`'nin
+   `RESTRICTED_FROZEN` iletisini (`s25` PASS iken `K_ALREADY_DECIDED`'den önce gelir; taban L18988)
+   ve `s25`–`s29a`'nın `_ALREADY` iletilerini de kapsıyordu.
+2. Silme oturumu kipi yalnız `<evidence-dir>\DUR.txt` varsa açılır (`ac.ps1` taban L13291–13302;
+   `bc.ps1` L17363, L17455–17483, L17497). Kilit yazmayan bir DUR'dan sonra SO3'ün beklediği satır
+   çıkmaz; sayfa girişi söylemiyordu.
+
+**Kullanıcı kararları.**
+
+| Karar | Metin | Uygulama |
+|---|---|---|
+| `SCOPE_APPROVED` ("SCOPE EVET") | Revizyon 21 kapsamı 1–4 (aşağıdaki tablo); kapsam dışı: kit kodu, N189, kanal kapısı, acil silme sırası ve hedefleri, `r1`–`r5`, süreler, son tam insan provası ve planı, `src/`, şema, hukuki kural, avukat cevapları | Bu revizyon |
+| Önceki (planlayıcı oturumu) | Son tam insan provası planı `SCOPE_APPROVED` (P-1 A: `k silme`'den sonra kasıtlı DUR ve silme oturumu; P-2 A; P-3 A; P-4 A) | §34.27 "Son insan provası planına notlar" |
+| Önceki (rev20 incelemesi sonrası) | "`MATCH` göründü ama sayfa açılmadı" dalının `OPEN_FAIL` dalına bağlanması onayı; L-1 ve O-8'in sonraki revizyona not edilmesi | R21-3 |
+
+**Madde → değişiklik → bloklar.**
+
+| Madde | Değişiklik | Yer | Blok |
+|---|---|---|---|
+| R21-1 | SO12 → SO12–SO15: önceki pencerede çalışmış silme adımlarının kilitsiz iletileri tabloyla sonraki adıma bağlandı (SO13); "zaten calisti"/"gerekmez" iletileri PASS göstermediği için kaydı kitin sonraki adım ön koşulu denetler, TAMAM değilse D8 (SO14); silme oturumunda `Y2_ALREADY` D8 (SO15); SO13–SO15 adımın GÖRMEZSEN'inden ve G6'dan önce gelir (dar düzeltmede SO13–SO17) | N192 SO12–SO15 | Değişti |
+| R21-1 | SO14'ün D8 dalları sayfanın kalıbıyla: KİT açıksa `a9` ve pencereyi kapatma, sonra D8 (D8'den önce açık KİT penceresi kalmaz; aksi hâlde sonradan yazılan `a9` acil sayfanın K6 satırında MADDE1 gösterebilirdi, `Get-KbK6Branches` taban L18120–18123); SO15 aynı | N192 SO14, SO15 | Değişti |
+| R21-1 | G6 ikinci sınırı: adlı istisnalar SO13–SO15 ve S46'daki "z1 daha once TAMAM" satırı | N192 G6 | Değişti |
+| R21-1 | S46 GÖRMEZSEN: silme oturumunda `z1`'in "once KIT penceresinde k silme, s26a, s26b ve s29a TAMAM olmali" iletisi SO14'tür (D8); `Z1_ALREADY` + "z1 daha once TAMAM ..." → S51; ikinci satır yoksa D8 | N192 S46 | Değişti |
+| R21-2 | G6 öncelik paragrafı: kilit yazan tek adlı istisna SGR7'nin `o` DUR satırıdır (SGR7'nin GÖR'ü; kitin "SIMDI a9 YAZIN" ve "DUR OLURSA" satırları orada SGR8–SGR10'dur) | N192 G6, SGR7 | Değişti |
+| R21-1 | SİLME OTURUMU önsözü: `z1` önceki bir İMHA penceresinde TAMAM olduysa yalnız İMHA satırı (H8, KÜME, KİT yok); S51 `S29B_ALREADY` → D8 | N192 | Değişti |
+| R21-2 | SO0'a ve SO3 GÖRMEZSEN'e kilit yazmayan DUR'dan sonra giriş; yeni SİLME OTURUMU GİRİŞİ SGR1–SGR10 (`a2`, 2 dk, `a3`, `b0`, `o`, `a9`, kapat, SO3) | N192 SO0, SO3, SGR1–SGR10 | Değişti |
+| R21-3 (O-8) | D8 ikinci GÖRMEZSEN başlığı ikinci çalıştırmadaki `OPEN_FAIL`'i ve açılmayan sayfayı sayar | N192 D8 | Değişti |
+| R21-3 (L-1) | Ek R4/13 madde 1, 7, 8'e birer cümle; §34.26 K20-1 satırına revizyon 21 notu | Metin | — |
+| Kayıt | Üst uyarı, §0, §34.4 revizyon 21 satırı, Ek R4/24 madde 10, Ek R4/16.5 notu, bu bölüm | Metin | — |
+
+**Değişen bloklar (`2effc8f`'ye göre; beklenen yalnız N192).**
+
+| Blok | Eski SHA-256 | Yeni SHA-256 | Satır |
+|---|---|---|---|
+| N192 (kullanıcı sayfası) | `88f5866134ed583f84b2ed2956e543b70b483f793f5031960f668070dfb98ecf` | `5271f1c992240e3a85022335b95804daadaa4d4b92cd23efec86a4c0c2e4b3b0` | 938 → 1067 (dar düzeltmeden önce `c8403cca…a7cb`, 1039) |
+
+Diğer 192 blok bayt-bayt aynıdır; yeni blok yok (193). Kit1 baytı, `pins.txt`, kit2 dosya kümesi
+(160), `pins2.txt` ve `kit-build2.txt` anahtarları değişmedi. Sayfanın hash'i yalnız kurulumda
+`kit-build.txt`'nin `KIT_PAGE_SHA256` satırına girer (koşuya özgü kurulum kaydı, kit pini değil; Ek
+R4/24 madde 2).
+
+**`_ALREADY` sınıfı (kaynaktan tam liste: silme oturumunda SO12'nin tekrarlattığı S27–S53).** Kit2
+kaydı `CreateNew` ile açılır ve `STEP_RESULT` sonradan yazılır (taban L17537–17541, L17560–17570);
+istisna (`STOP` + sonuç satırı) ve kesinti (`YARIDA KALDI`, sonuç satırı yok) aynı dosyayı bırakır
+(taban L17311–17324). Bu yüzden "Bu adim zaten calisti" yalnız dosyanın varlığını gösterir.
+
+| Adım | İleti (kod) | Kaynak (taban) | PASS'i gösterir mi | Sayfa |
+|---|---|---|---|---|
+| `b24` | "Bu adim zaten calisti: b24b.txt. Tekrar calismaz." (`B24_ALREADY`) | L21695–21700 (`b24a` varsa kayıt `b24b`) | Hayır (PASS, STOP, yarım: A1, A2, A2y) | SO13 → S32; denetim `s25` (L21739, L18264–18272) |
+| `b24` | "b24 BASLAMADI: ilk olcum (b24a) atama 1 gostermedi; ikinci olcum gerekmez. Siradaki: avukat k silme." (`B24_PRECONDITION`) | L21708–21710 | Hayır (`b24a` PASS ve 0 ya da STOP: A3, A4) | SO13 → S32; denetim `s25` |
+| `y2` (ADMIN) | "Bu adim zaten calisti: y2.txt. Tekrar calismaz." (`Y2_ALREADY`) | L21458 (`$adxStep` ile kurulur) | Silme oturumunda hiçbir zaman: `b24` y2'yi yalnız `Test-KbPass y2.txt` yanlışken ister (L21711; A5, A6, A6p) | SO15 → D8 (yalnız statik; `adm.ps1` çalıştırılmadı) |
+| `k silme` | "Bu karar zaten kaydedildi." (`K_ALREADY_DECIDED`) | L18991–18997 | Evet (yalnız `STEP_RESULT=PASS` kaydı; A7, A8n) | SO13 → S33 |
+| `k silme` | "k: kapanis manifesti (s25) yazildi; karar dosyalari artik degistirilemez ve acilmaz." (`RESTRICTED_FROZEN`) | L18988 | Evet (`s25` PASS; `s25` PASS karar kaydı ister L21740–21741; A8, A8n) | SO13 → S35 |
+| `s25` | "Bu adim zaten calisti: s25.txt. Tekrar calismaz." (`S25_ALREADY`) | L21737 | Hayır (E cevabı STOP yazar L21773–21776; A9, A9p) | SO13 → S35; denetim `s26a` (L21805) |
+| `s26a` | `S26A_ALREADY` | L21803 | Hayır (yarım silme Ek R4/23 madde 14) | SO13 → S36; denetim `s26b` (L21862) |
+| `s26b` | `S26B_ALREADY` | L21860 | Hayır | SO13 → S37; denetim `s28` (L21918); `s27` denetlemez (L21895; B7) |
+| `s27` | `S27_ALREADY` | L21893 | Hayır | SO13 → S38; denetim yalnız `s29a` `POSTCONDITION_13` (L21990) |
+| `s28` | `S28_ALREADY` | L21916 | Hayır | SO13 → S39; denetim `s29a` (L21937) |
+| `s29a` | `S29A_ALREADY` | L21935 | Hayır | SO13 → SO16 (İMHA yoklaması); denetim `z1` (L22251; dar düzeltmede ölçüldü, aşağıda) |
+| `z1` (İMHA) | "Bu adim zaten calisti: z1.txt. Tekrar calismaz. Siradaki: s29b." (`Z1_ALREADY`) + yalnız `z1.txt` PASS iken "z1 daha once TAMAM. Siradaki: s29b yazip Enter (avukat ekrana bakar)." | L22250, L22312–22317, L22414 | İkinci satır: evet; ilk satır tek başına: hayır | S46 → S51; ikinci satır yoksa D8 (statik) |
+| `s29b` (İMHA) | `S29B_ALREADY` | L22325 | Hayır | Önsöz: D8 (statik) |
+
+Kapsam dışı (pencere başına kayıt; yeni pencerede `_ALREADY` vermez): kit1 `a2`, `a3`, `a8`, `a9`
+(`steps\s<k>`), `b0`, `b1`. `r1`–`r5` SO12'de yoktur.
+
+**Kilit yazmayan DUR yolları (içerik alındıktan sonra; kaynaktan liste).** Hepsinde `DUR.txt` yazılmaz;
+sonraki KİT penceresi silme oturumu değildir; giriş SO3 GÖRMEZSEN → SGR1–SGR10'dur.
+
+| Yol | Sayfa | Kaynak (taban) |
+|---|---|---|
+| Kit2 komutunda kayıt açılmadan Ctrl+C (soru ekrandayken dahil) | G10 | `Invoke-KbStep` `finally`: kilit yalnız `KbOpenRec` dolu ve sonuç satırı yoksa (L17320–17324) |
+| Kit1 adımında Ctrl+C | G10 | `Invoke-KitStep`'te `finally` yok (L13228–13236) |
+| `b0`'da H veya iki geçersiz tuş | A8, İ8, S8, SO8, SGR5 | `b0.ps1` `Complete-KbStep … $true` (L18705); N117 "Kit kilidi yazilmadi" (L14129, L14136–14139) |
+| G5 (`a9` öz beyanında yapay zekâ/paylaşım E) | G5 | `a9.ps1` yalnız `CLOSING_SCAN_OK` ister (L13546–13552) |
+| İkinci veya iç içe kit yüklemesi (MADDE1) | A3 | `ac.ps1` L13103; `bc.ps1` L17299, L17447 |
+| Sayfanın "a9 yazın, pencereyi kapatın: DUR OLURSA" dalları (MADDE5, MADDE6, VeraCrypt görünmüyor, optik disk, `a4` sıra dışı) | A9, A15–A17, İ9, S9, SO9 | Kit kilidi yok; `a9` kilit yazmaz |
+| HAZIRLIK H3/H5/H7/H8 başarısız (sonraki içerik günü), B4 MOLA | H, B4 | Pencere açılmaz |
+| `*_VALUE_RULE` redleri | A1, A3, A10, İ28, S28, S46 | `bc.ps1` L17394–17397 (kit2 yüklenmez: `o` da yok → SO3 "KIT2 YUKLENEMEDI" → D8), `kume.ps1` L18633, `b1.ps1` L18741, `adm.ps1` L21457, `z1.ps1` L22248 |
+| ADMIN/İMHA kilitsiz ön koşul ve onay H redleri ile sayfanın "Başka … DUR OLURSA" dediği kilitsiz redler | İ28, İ29, S28, S29, S44, S46–S48 | `Write-KbRefusal` (L17544–17556) |
+| "GÖR satırı çıkmazsa" veya "emin değilseniz" (kit kilit yazmadıysa) | G6 | — |
+
+**Giriş yolunun kaynak kanıtı (`o`).** (i) `Invoke-KbStep` `n` ve `o`'yu kilit denetiminden muaf tutar
+(L17306); `o` normal ve silme oturumunda koşulsuz tanımlıdır (L17495–17496); Ek R4/8.3: "Her an", "Her olay
+DUR'dur: kayıttan sonra `Write-KitDur`" (L14952). (ii) `o.ps1` (L19196–19207): E değilse kilitsiz red
+(`O_NOT_NOTIFIED`); E ise yalnız `steps\d\o<seq>.txt` (CreateNew) ve `Write-KitDur 'o' 'INCIDENT'`
+(`DUR.txt`, CreateNew; L13135–13140). `steps\c`'ye, `<restricted-dir>`'e ve kapsayıcıya yazmaz; Ek
+R4/8.4 izin kümesini değiştirmez (kümeyi `bc.ps1` yüklemede kurar). (iii) Sonraki KİT yüklemesi
+`DUR.txt`'yi görür: `ac.txt` ve `bc.txt` `KIT_TEARDOWN_SESSION=True`, silme oturumu komut kümesi ve iki
+"SILME OTURUMU" satırı (L13291–13302, L17444, L17455–17483, L17497). (iv) Giriş penceresinin `a2`,
+`a3`, `b0` ve `a9`'u `s29b`'nin kanal kapısı denetimini (her `ac.txt` oturumunda dört kayıt;
+L22375–22387) korur; `b1` gerekmez.
+
+**Ölçümler (hepsi oturuma özel scratchpad'de; yeni `powershell.exe -NoProfile -NonInteractive
+-ExecutionPolicy Bypass -File` süreçleri, Windows PowerShell 5.1; `TEMP`/`TMP` ve
+`PSModuleAnalysisCachePath` sentetik köke yönlendirildi; başlarken boş bellek ≈ 4,6 GB; düzenek
+iskeleti rev20 yazar düzeneğinin `build2.py`/`finish2.py`/`h20.ps1`/`scan20.py` ve rev19'un `pchk.py`
+kopyasıdır (salt-okunur kopyalandı, uyarlamalar ayrı dosyalarda)).**
+
+- **Sentetik kök.** Taban runbook'un bloklarından bayt-bayt kurulan kit1 (18 dosya) ve kit2 (160 dosya
+  + `pins2.txt` + `kit-build2.txt`); gerçek `ac.ps1` + gerçek `bc.ps1` yüklemesi (`KIT2_LOAD=OK`).
+  Taklitler: `Start-Process` (kayıt + `throw`; 34 vakada hiç çağrılmadı, Not Defteri açılmadı),
+  `Read-KitYesNo` (yalnız `o` vakalarında sabit E/H) ve oturumun `b1.txt`'si (yalnız
+  `Test-KbSessionB1` için iki satır). Her vaka yeni süreç; A ve B vakalarında `ev\steps` vaka başına
+  sentetik kayıtlarla yeniden kuruldu; E0–E2 bilerek aynı durumu sırayla paylaşır.
+- **Giriş (E0–E2).** E0 (pozitif kontrol): `DUR.txt` yokken yükleme normal ("KIT YUKLENDI. Oturum s1.
+  Siradaki: a2 yazip Enter." ve "KIT2 YUKLENDI. Siradaki: a2 yazip Enter."); `o` + H → "o: kayit
+  yazilmadi. …" ve "(Kayit yazilmadi; DUR kilidi yok.)"; `DUR.txt` ve `o` kaydı yok. E1: normal
+  yükleme; `o` + E → "TAMAMLANDI (PASS). Olay kaydedildi. Ayni gun yazili bildirim icin: n." ve "DUR.
+  Adim o durdu (INCIDENT). Kalan adimlari yapmayin."; `DUR.txt` iki satır (`step=o`,
+  `KIT_DUR_REASON=INCIDENT`); `o1.txt` PASS; `steps\c` kayıtları, `k` karar kaydı ve `vol\` önce/sonra
+  bayt-eşit; aynı pencerede ardından `b24` → "DUR - devam yok.". E2: sonraki yükleme "KIT YUKLENDI, ama
+  DUR kilidi var: SILME OTURUMU …" ve "KIT2 YUKLENDI (SILME OTURUMU). …"; `ac.txt`/`bc.txt`
+  `KIT_TEARDOWN_SESSION=True`; tanımlı komutlar Ek R4/8.4 kümesi (`r1`–`r5` var; `b2`–`b23`, `u` yok).
+- **`_ALREADY` iletileri (A1–A9p; silme oturumu kipinde, `DUR.txt` var).** Yukarıdaki tablonun
+  `b24`, `k silme` ve `s25`–`s29a` satırlarının hepsi gerçek kitte ölçüldü; her birinde "(Kayit
+  yazilmadi; DUR kilidi yok.)". Aynı iletinin PASS, STOP ve sonuç satırı olmayan kayıtta değişmediği
+  (A1/A2/A2y, A3/A4, A5/A6, A9/A9p) ve `s25` STOP iken `RESTRICTED_FROZEN` değil `K_ALREADY_DECIDED`
+  geldiği (A8n) ölçüldü. Pozitif kontrol A6p: `y2` PASS ve `b24b` yokken `b24` ikinci ölçüme başlar
+  (DB kapısında kilitsiz durdu; `pg_isready` çağrılmadı).
+- **SO14 denetimi (B1–B7).** `s25` ← `b24b` STOP / `b24a` STOP / `y2` STOP: "s25 BASLAMADI: once atama
+  olcumu tamam olmali (b24; atama 1 ise ADMIN y2 ve ikinci b24)."; `s26a` ← `s25` STOP; `s26b` ←
+  `s26a` STOP; `s28` ← `s26b` STOP; `s29a` ← `s28` STOP: her biri "… once <adım> TAMAM olmali." ve
+  kilitsiz. Pozitif kontroller: önceki kayıt PASS iken aynı adım bu kapıdan geçer (B1p `STOP
+  K_DECISION_HASH=FAIL`, B3p "'k silme' kaydi yok", B6p "kapsayici bagli degil"). B7 (sınır): `s26b`
+  STOP iken `s27` kendi kaydını açar (s26b'yi denetlemez).
+- **Toplam:** 34/34 PASS (ilk tur bir düzenek hatasıyla yarıda kaldı: vaka adındaki "/" çıktı dosya
+  adına girdi; E vakaları geçmişti; ikinci tur yeni kökte ve yeni çıktı dizininde tamamlandı).
+- **Sayfa statik denetimleri (N192; C1–C11; on pozitif kontrolün onu kusuru yakaladı; değerler dar
+  düzeltmeden sonraki sayfanındır, rev21 değerleri aşağıda).** C1 184 YAP
+  / 0 ihlal (taban 172; +10 SGR, +2 SO16–SO17); C2 184 GÖR / 0 eksik; C3 dört içerik günü KÜME → KİT; C4 beş yer
+  tutucu, düz `<…>` 0; C5 üçlü/tek ters tırnak 0; C6 tanımsız komut ve runbook'ta olmayan kod 0; C7
+  415 parça kitte birebir, üç parça yalnız ölçüm çıktısında ("Bu adim zaten calisti: b24b.txt. …" ve
+  iki biçimiyle "DUR. Adim o durdu (INCIDENT). …": kitte değişkenle kurulur, gerçek çıktıda ölçüldü), üç eksik parça
+  `adm.ps1`'in `$adxStep` birleştirmesinden gelir (ikisi tabanda da var; yeni olan `Y2_ALREADY`
+  iletisi, statik); C8, C9 eşit; C10 yedi Win+R satırı kalıba uyar (tabanla aynı); C11 (yeni) güvenli
+  dizin, güvenli dosya, acil sayfa adı ve yolu ile izinsiz ters bölü 0.
+
+**Silme oturumu akışı (insan gözüyle izlendi; ölü dal, döngü veya çelişen talimat bulunmadı).**
+
+| Dal | Yol |
+|---|---|
+| (a) `k silme`'den sonra kilitli DUR | SO3 "SILME OTURUMU" → SO4–SO11 → S27 `b24`: SO13 (`B24_ALREADY` veya "gerekmez") → S32: "Bu karar zaten kaydedildi." → S33 `s25` (çalışır veya SO13) → … ; DUR'un olduğu adımın kaydı TAMAM değilse sonraki adım SO14 iletisini verir → D8 (yeniden deneme yok) |
+| (b) `k silme`'den sonra kilitsiz DUR | SO3 normal satırlar → SGR1–SGR10 (`o` → `DUR.txt`) → SO3 "SILME OTURUMU" → (a) gibi |
+| (c) `k silme`'den önce DUR | SO12: S27 `b24` (`b24a` silme oturumunda koşulsuz; L21704) → 1 ise S28 `y2` → S31 → S32 `k silme` (silme oturumunda sıra serbest; L19022) → … |
+| (d) Atamasız dosya | `b24a` `REVOKE_NOT_NEEDED=True` → "Siradaki: avukat k silme." (S27 GÖR) veya sonraki pencerede SO13 "gerekmez" → S32; `s25` denetimi geçer |
+| (e) `y2` önceki pencerede bitti, `b24b` yok | S27 `b24` ikinci ölçümü yapar (`b24` else dalı; A6p) → "Siradaki: avukat k silme." → S32; `Y2_ALREADY`'ye hiç gidilmez (gidilirse SO15 → D8) |
+| (f) `s29a` önceki pencerede çalıştı (dar düzeltme, M-1) | SO13 `s29a` → SO16: VeraCrypt bağlı ve KİT açıkken İMHA yoklaması; "z1 BASLAMADI: kapsayici hala bagli. …" → SO17 → S40–S53 (S46'da İMHA yeniden); "once KIT penceresinde … s29a TAMAM olmali." veya başka ekran → İMHA'yı kapat, VeraCrypt'e dokunma, KİT'te `a9`, KİT'i kapat → D8 (kapsayıcı bağlı kalır) |
+
+Döngü denetimi: SO14 iletisini veren adım ve "zaten calisti/gerekmez" veren adım aynı pencerede
+yeniden yazılmaz (D8). `b24a` STOP iken `b24`'ün yanıltıcı "ikinci olcum gerekmez" iletisi → `k silme`
+→ `s25` "once atama olcumu" → D8 (eski metinde S27 ↔ S33 arasında döngüydü).
+
+**Ölçülemeyenler (PASS sayılmadı).** `adm.ps1` (`y2`) ve `z1.ps1` (`z1`, `s29b`) başlatıcıları
+çalıştırılmadı: `Y2_ALREADY`, `Z1_ALREADY`, "z1 daha once TAMAM" ve `S29B_ALREADY` yalnız statik;
+`z1`'in `s29a` denetimi (L22251) statik (dar düzeltmede ölçüldü, aşağıda); `s27` STOP'unun `s29a` `POSTCONDITION_13` ile yakalanması
+(L21990) statik. Gerçek pencere, klavye, gerçek Ctrl+C anı, gerçek `Read-KitYesNo`; DB'li adımların
+gövdesi; F1 süresinin gerçek ölçümü; sayfanın bir insan tarafından okunması.
+
+**Tek taraflı kararlar (inceleyici için).** (1) "zaten calisti" ve "gerekmez" iletileri SO13'te
+geçiş sayılır ama TAMAM sayılmaz; ayırıcı operatörün hafızası değil kitin sonraki adım ön koşuludur
+(SO14), çünkü kit kaydı dosya varlığıyla reddeder ve PASS'i yalnız sonraki adım denetler; gerçekten
+kilitli bir sonuç geçirilebilir yapılmadı. (2) `Y2_ALREADY` D8'dir: komuttaki "en az `B24_ALREADY` ve
+ADMIN `Y2_ALREADY` kaydı sayılır" varsayımı kaynakla çelişti (`b24` TAMAM bir `y2`'yi istemez); yalnız
+`B24_ALREADY` geçiş oldu. (3) `RESTRICTED_FROZEN` → doğrudan S35 (`s25` PASS kanıtlı). (4) `z1` TAMAM
+olduktan sonra gerçek veri silinmiştir (G9) ve kapsayıcı yoktur; o gün içerik günü sayılmadı, KÜME ve
+KİT açılmaz (madde 5 (c) içerik günleri içindir); yalnız İMHA satırı. (5) Giriş penceresinde `b1` ve
+`n` yazılmaz (kanal kapısı `a2`/`a3`/`six-class`/`a9` ister; yazılı bildirim D7'nin işidir). (6)
+`o`'nun etiketi `KIT_DUR_REASON=INCIDENT`'tır; §4.2/11 olayı dar tanımlar, ama D7 içerik sonrası her
+DUR'da avukata telefonla bildirim ister ve `o` tam bu bildirimi kaydeder; ayrı bir kit komutu kapsam
+dışıydı. (7) F1: `Get-KbF1Start` `b23`, `u` ve `DUR.txt`'nin en erkenini alır (L18245–18256); `b23`/`u`
+yoksa kit F1'i `o`'nun saatinden ölçer, gerçek DUR anından değil. Sayfa bunu söyler ve silmeyi gerçek
+DUR'dan itibaren F1 içinde bitirmeyi ister; `TEMP_COPIES_DELETED_WITHIN_F1` bu dalda gerçek DUR'a göre
+değildir (kayıt sınırı; dar düzeltmede R21-REM-2 = A ile adlandırılmış sınır, SGR önsözüne tek cümle). (8) SO0'ın "KİT satırını YALNIZ silme günü açın" kuralı giriş penceresini de
+kapsar (aynı silme günü). (9) Yeni adım kimliği öneki SG (dar düzeltmede L-4 ile SGR oldu). (10) S46'nın `z1` kuralı SON GÜN'de de
+geçerlidir (İMHA penceresi `s29b`'den önce kapanırsa). (11) §34.26'nın metni tarihsel kayıttır; yalnız
+K20-1 satırına not eklendi. (12) `s27`'nin kaydı geç denetlenir (`s28` ve `s29a` koşar ve kendi
+kayıtlarını yazar); kabul edildi, SO14'te yazılı. (13) `B24_PRECONDITION`'ın `b24a` STOP iken de
+"ikinci olcum gerekmez" demesi kit iletisidir; değiştirilmedi, SO14 yakalar.
+
+**Kapanan maddeler.** KIT2-FINAL-PLAN bulgusu (SO12 `B24_ALREADY` çıkmazı; kilit yazmayan DUR'dan
+sonra silme oturumu girişi); aynı sınıftaki `RESTRICTED_FROZEN` ve `s25`–`s29a`, `z1` iletileri; rev20
+incelemesi L-1 ve O-8.
+
+**Sonraki revizyona bırakılanlar (blok veya kit davranışı değişikliği gerekir; bu turda YAPILMADI).**
+§34.26 listesi aynen; rev20 incelemesi L-2 (N189 0. bölümü) aynen. Ek olarak: (1) `_ALREADY`
+iletilerinin kaydın sonucunu (PASS/STOP) da söylemesi; (2) `B24_PRECONDITION`'ın `b24a` STOP iken ayrı
+ileti vermesi; (3) kilit yazmayan DUR'u gerçek anıyla kaydeden ayrı bir giriş (F1'in gerçek DUR
+anından ölçülmesi); (4) `z1` TAMAM sonrası kilitli DUR (`s29b` yarım/STOP) için acil sayfada ayrı dal
+(bugün D8); (5) `s27` kaydının `s28`'de denetlenmesi; (6) dar düzeltme M-2: SGR yolunda imha kaydının
+F1 başlangıcının gerçek DUR anından alınması (kit değişikliği; (3) ile aynı iş; bugün adlandırılmış sınır).
+
+**Son insan provası planına notlar** (plan işidir; bu turda YAZILMADI). §34.26 notları aynen; ek
+olarak: (a) P-1 A'nın kasıtlı DUR'u `k silme`'den sonra; silme oturumunda SO13 geçişleri (`b24`
+`B24_ALREADY` veya "gerekmez", "Bu karar zaten kaydedildi.", varsa `s25`…) ve SO14 denetimi gerçek
+pencerede bir kez; (b) kilit yazmayan bir DUR'dan (ör. kayıt açılmadan Ctrl+C) sonra SGR1–SGR10 girişi
+ve sonraki KİT'in "SILME OTURUMU" demesi gerçek pencerede bir kez; (c) N192 yeni hâliyle; önceki
+kanıt devralınmaz; kit kurulumu değişmez. Dar düzeltmeden (rev21 incelemesi §3 G): (d) `s29a`'nın
+STOP bırakıldığı dal (SO16'nın GÖRMEZSEN'i) gerçek pencerede DENENMEZ (geri dönülmez zincirdir),
+yalnız ajan ikiziyle (sentetik) ölçülür; (e) SGR yolunda gerçek F1 saati (gerçek DUR anı) ile `o`'nun
+saati arasındaki fark prova raporunda ayrıca not edilir (M-2); (f) tam SGR dizisi gerçek pencerede bir
+kez yapılır ve `o` tek çalışımlıktır (`DUR.txt` `CreateNew` ile yazılır; başarısızsa tekrar ve temizlik
+yok; CLAUDE.md §14.5); (g) SO16 yoklaması her açılışta `steps\x` altına bir ret dosyası yazar; prova
+ölçütleri bu dosyayı beklesin.
+
+**Düzeneğin kurduğu dizinler.** Scratchpad içinde: rev20/rev19 araç kopyaları dizini; iki sentetik kit
+kökü (ilki yarıda kalan tur), her biri `ev\kit`, `ev\kit2`, `sec` (sentetik güvenli dosya ve sayfa;
+ACL yalnız bu kökte), `vol\pilot\{repo,restricted,temp,in}`, `ext`, `srcrepo`, `cfile`, `pg\data`,
+`tools` (boş araç dosyaları), `fakeprof`, `tool`, `tmp`, `psmac` ve kitin açtığı `steps` (vaka başına
+yeniden kuruldu); iki çıktı dizini; aday runbook dosyaları. Denetim: Temp kökünde ve profil kökünde
+(yalnız birinci düzey) kalıcı yeni öğe yok; daha derin bir tarama yapılmadı. **Sapmalar:** (1) iki
+Bash komutunda çıktı `/dev/null`'a yönlendirildi (komut yönlendirmeyi yasaklıyordu; dosya
+yazılmadı; biri bir `git show` çıktısını, biri bir denetim betiğinin çıktısını attı). (2) Not Defteri'nin sürüm dizgesi `TEMP` ve `PSModuleAnalysisCachePath` yönlendirmesi
+olmayan bir PowerShell sürecinde okundu. (3) Windows PowerShell'in her süreçte kendiliğinden
+güncellediği, profil altındaki var olan başlangıç verisi dosyası (`StartupProfileData-NonInteractive`)
+ölçüm koşusu sırasında güncellendi (yeni dosya oluşmadı; modül analiz önbelleği değişmedi; dosya
+ölçüm verisi taşımaz). Repo, prova kökleri, Masaüstü, pilot kümesi ve passfile'a dokunulmadı.
+
+**§1.5 taraması (pozitif kontrollü).** `2effc8f`'ye göre eklenen ve değişen satırlar kullanıcı adı,
+profil dizininin adı, profil yolu biçimi, yüzde-sarmalı profil değişkeni, 8.3 kısa ad, DSN port,
+"port" bağlamlı sayı, `55xxx`, avukat unvanı + ad deseni, e-posta, uygulama verisi dizini, scratchpad
+yolu ve proje dizini adı sınıflarıyla tarandı: 0 isabet; pozitif kontrol on üç sınıfın on üçünü buldu.
+Bu bölüm yazıldıktan sonra tarama yeniden koşuldu.
+
+**Yazma hesabı.** Taban dosya diskten okundu (SHA-256 eşit); düzenlemeler tek bir betikle, her biri
+tam bir eşleşme denetimiyle yapıldı; dosya LF, BOM yok, CR 0; son yazımdan sonra bloklar dosyadan
+yeniden çıkarılıp taban bloklarla karşılaştırıldı (192 eşit, 1 değişti, 0 yeni) ve yukarıdaki SHA'lar
+ölçülen baytlardır. Bu revizyon gerçek koşuyu, gerçek veri gönderimini, son tam insan provasını veya
+planını yetkilendirmez; her biri ayrı kullanıcı kararıdır.
+
+**Bağımsız inceleme ve dar düzeltme (oturum KIT2-REV21-FIX; ayrı ve tek yazan oturum).** İnceleme
+(Sonnet 5.5, temiz ve salt-okunur oturum): `independent-runbook-rev21-review.md` (SHA-256
+`90fe5d192abf5a0247c9da749ccea2997442cb143b390c2b7422a2f07a9f3780`) ve ek dosyası
+`independent-runbook-rev21-review-addendum.md` (SHA-256
+`b73585abbd2ba0a4bca849205e4ebdb29e0a8c2849752d84d888d94ba6752f56`); hüküm
+`READY_FOR_NARROW_REMEDIATION` (0 Critical, 0 High, 2 Medium, 5 Low, 7 Observation). Girdi: commit
+edilmemiş revizyon 21 çalışma kopyası (SHA-256
+`9b1844f649c0436e8fe31b3f6ff14a5e81b5c60263d79b7b51004408fb272fdb`, 24082 satır, 193 blok, CR 0, BOM
+yok; N192 `c8403cca924777c73865a432fe6b29d2ba34300c877024f418f1e4fd9e4ba7cb`, 1039 satır); HEAD =
+`origin/claude-dev` = `2effc8f`; diskten doğrulandı. Yalnız metin değişti: N192 ile düz metinde bu alt
+bölüm, §34.27'nin güncellenen satırları ve L-4'ün önek atıfları (üst uyarı, §34.4 revizyon 21
+satırı, Ek R4/16.5 notu, Ek R4/24 madde 10). Kit kodu (hiçbir `.ps1` bloğu, N188 dahil), kit1, N189,
+kanal kapısı, acil silme sırası, onay satırları ve silme hedefleri, `r1`–`r5` ve süreler değişmedi.
+Commit ve push yapılmadı. Aşağıda "taban L…" `2effc8f` runbook'unun, "L…" (sayfa sütununda) bu
+dosyanın satırıdır. Yeni N192: SHA-256 `5271f1c992240e3a85022335b95804daadaa4d4b92cd23efec86a4c0c2e4b3b0`, 1067 satır (rev21: `c8403cca…a7cb`, 1039);
+değişen blok yalnız N192, diğer 192 blok `2effc8f` ve rev21 ile bayt-eşit.
+
+| Karar | Metin | Uygulama |
+|---|---|---|
+| `R21-FIX EVET` (planlayıcı oturumunda verildi; üst sınır `2026-11-09T00:36:22+03:00`, saniye ölçülmedi) | R21-REM-1 = A (M-1); R21-REM-2 = A (M-2); R21-REM-3 = EVET (L-1, L-3, L-4); L-2 kabul (değişiklik yok); L-5 ve O-1…O-7 bilgi (değişiklik yok) | Bu alt bölüm |
+
+| Bulgu | Değişiklik | Sayfa | Kaynak (taban) |
+|---|---|---|---|
+| M-1 | SO13'ün `s29a` satırı S40 yerine SO16'ya gider. Yeni SO16: VeraCrypt bağlı ve KİT açıkken İMHA satırı yalnız yoklama için açılır; "z1 BASLAMADI: kapsayici hala bagli. …" `s29a`, `s26a`, `s26b` ve silme kararının TAMAM olduğunu gösterir → SO17 (İMHA'yı kapat) → S40–S53 (S46'da İMHA yeniden). "z1 BASLAMADI: once KIT penceresinde k silme, s26a, s26b ve s29a TAMAM olmali." veya başka her ekran → İMHA'yı kapat, VeraCrypt'e dokunma, KİT'te `a9`, KİT'i kapat → D8 (kapsayıcı bağlı kalır). SO14'ün `z1` maddesi SO16 (KİT açık) ve S46 (KİT kapalı) için ayrıldı; `s29a` kaydını SO16'nın denetlediği yazıldı. SO12'nin öncelik cümlesi SO13–SO17'yi kapsar: SO16–SO17, adımın GÖRMEZSEN'inden ve G6'dan önce gelir | SO12 L24023; SO13 L24038; SO14 L24048; SO16 L24059–L24073; SO17 L24074 | `z1.ps1` ret sırası: L22250 `Z1_ALREADY` (herhangi bir `z1.txt`), L22251 `Z1_PRECONDITION` (`s29a`, `s26a`, `s26b` PASS ve silme kararı), L22252 `Z1_CONTAINER_MOUNTED` (iletisi S40–S46'yı söyler), ancak bunlardan sonra L22254–22255 soru; `S29A_ALREADY` L21935 (kayıt varsa her zaman) |
+| M-1 (G13) | G13'e tek cümlelik adlı istisna: `z1` bitmeden yapılan açılışlar (SO16 yoklaması, S47'deki yeniden açış) yasağa girmez | G13 L23296 | G13 yasağı yalnız "z1 ve s29b bittikten sonra"dır; S47 GÖRMEZSEN'in "z1 bitmediği için G13 yasağı geçmez" emsali; S53'ün "İKİNCİ KEZ AÇILMAZ"ı `s29b`'den sonradır |
+| M-2 | SGR önsözüne tek cümle: bu yolda imha kaydındaki F1 satırı gerçek DUR anına göre güvenilir değildir; gerçek DUR saatini dosya avukatına telefonla söyleyin (hiçbir yere yazmayın; G7). Kit düzeltmesi sonraki revizyona (yukarıda, "Sonraki revizyona bırakılanlar" madde 6) | L24084 | `Get-KbF1Start` L18245–18256 (`DUR.txt` `at=`, L18250); `s29b` L22359 |
+| L-1 | SO15: `y2`, `b24` ya "Siradaki: ADMIN penceresinde y2 (sayfadaki ADMIN satiri, y2 ile)." (S27'nin GÖR'ü) ya da "b24 BASLAMADI: ikinci olcum icin once ADMIN penceresinde y2 TAMAM olmali." derse açılır; iki tırnak kitte bayt-eşit | SO15 L24052 | `b24` L21721, L21711 |
+| L-3 | SGR7 GÖR: kitin `o`'dan sonra bastığı "Parola kagidi varsa yirtin ve a8 yazin." satırı D2'dir; kâğıt varsa yırtıp SGR8'den önce `a8`, kâğıt yoksa `a8` gerekmez | SGR7 L24112 | `Write-KitDurRule` L13124 (`a9` tanımlıyken bu satır; L13125 "SIMDI a9 YAZIN"); `a8` L13523 ("a5 hic TAMAM olmadi", G6 listesinde), L13526 ("a8 zaten kaydedildi.", G6 listesinde); rev21 E1 ham çıktısında satır gerçekten basılıyor |
+| L-4 | Yeni adım kimliği öneki SGR | SGR1 L24087–SGR10 L24125; G6 L23246; SO0 L23980; SO3 L23994 | — |
+| L-2, L-5, O-1…O-7 | Dokunulmadı (kabul ve bilgi) | — | — |
+
+**Yoklamanın yan etkisi (kaynak).** İMHA satırı açılınca `z1.ps1` yalnız kilitsiz bir ret basar:
+`Write-KbRefusal` (taban L17544–17556) her retle `<evidence-dir>\steps\x\refusal-<nnn>.txt` yazar
+(İMHA penceresinin ret dizini taban L22198); kayıt, `z1.txt`, `DUR.txt` ve oturum dizini yazılmaz
+(`KbSessName` `none`). Bu dosyayı okuyan kod yok: `Get-KbK6Branches` `x` dizinini atlar (taban L18102);
+`s29b`'nin kanal kapısı yalnız `ac.txt` taşıyan `s<k>` dizinlerini sayar (taban L22376–22377); acil
+sayfanın K6 satırı (N190) yalnız `s<k>` dizinlerini tarar (taban L22641); N188 (`ev.ps1`) `steps`'e
+bakmaz; kit kod bloklarında `refusal-` yalnız yazarda geçer. Kit değişikliği veya hukuki karar gerekmez;
+yalnız son prova ölçütleri bu ret dosyasını beklemelidir (prova notu (g)).
+
+**z1 ölçümü (gerçek `z1.ps1`, kendi `pins2.txt` yükleyicisiyle; rev20 K-2 kalıbı).** İki sentetik kök;
+kit1 (18) ve kit2 (160 + `pins2.txt` + `kit-build2.txt`) bu runbook'un bloklarından bayt-bayt kuruldu;
+ACL'li sentetik güvenli dosyada `container-root` "bağlı" durumda var olan bir sürücü kökü, "bağlı
+değil" durumda var olmayan bir harftir (subst ve junction yok; `z1` bu değeri ret noktasından önce
+yalnız `Test-Path` ile yoklar); `DUR.txt` önceden var (silme oturumu); `system-temp.txt` ham yol
+taşımaz (iki hash). Taklitler: `Start-Process` (hiç çağrılmadı) ve `Read-KbYesNo` (`kbl.ps1` yüklendikten
+sonra `Initialize-KbAllow` üzerindeki komut kesme noktasıyla; soruyu kaydeder ve H döndürür). Sınır:
+pozitif kontrolde soru H ile cevaplandığı için `z1` onay sorusuna, `z1.txt`'ye ve silme bloklarına
+ulaşmadı; VeraCrypt, 7z ve Not Defteri çalıştırılmadı. Her durum iki ayrı yeni süreçte (iki açılış)
+koşuldu; ikinci açılışın ekranı birincisiyle aynıdır ve yalnız bir ret dosyası daha ekler. Ölçüm
+sayfanın son biçiminden önce koşuldu; geçerlidir, çünkü kit N192'yi okumaz ve N192 dışındaki 192 blok
+ölçülen adayla bayt-eşittir.
+
+| Durum | Kayıtlar | `container-root` | Ekran (iki açılışta aynı) | Ret kaydı | `z1.txt` / yeni kilit / `DUR.txt` |
+|---|---|---|---|---|---|
+| Z1-i | `s29a` PASS | var | "z1 BASLAMADI: kapsayici hala bagli. …" ve "(Kayit yazilmadi; DUR kilidi yok.)"; soru yok | `Z1_CONTAINER_MOUNTED` | yok / yok / bayt-eşit |
+| Z1-ii | `s29a` STOP | var | "z1 BASLAMADI: once KIT penceresinde k silme, s26a, s26b ve s29a TAMAM olmali." ve aynı satır | `Z1_PRECONDITION` | yok / yok / bayt-eşit |
+| Z1-iii | `s29a` yarım (sonuç satırı yok) | var | Z1-ii ile aynı | `Z1_PRECONDITION` | yok / yok / bayt-eşit |
+| Z1-iv (pozitif kontrol) | `s29a` PASS | yok | "TUSA PROJE SAHIBI BASAR", "Kapsayici VeraCrypt'te ayrildi mi?" (taklit H), "z1 BASLAMADI: once VeraCrypt ile kapsayiciyi ayirin; …" | `Z1_PRECONDITION` | yok / yok / bayt-eşit |
+| Z1-v | `s26a` STOP, `s29a` PASS | var | Z1-ii ile aynı | `Z1_PRECONDITION` | yok / yok / bayt-eşit |
+| Z1-vi | silme kararı yok | var | Z1-ii ile aynı | `Z1_PRECONDITION` | yok / yok / bayt-eşit |
+| Z1-vii | STOP bir `z1.txt` | var | "Bu adim zaten calisti: z1.txt. …"; "z1 daha once TAMAM" yok, `s29b` tanımsız (SO16 "başka ekran" → D8; S46 kuralıyla aynı) | `Z1_ALREADY` | önceki dosya, bayt-eşit / yok / bayt-eşit |
+| Z1-viii | `system-temp.txt` yok | var | "DUR. Adim z1 durdu (Z1_SYSTEM_TEMP). …" (SO16 "başka ekran") | yok | yok / yok (`DUR.txt` zaten vardı) / bayt-eşit |
+
+Toplam 22/22 denetim PASS (yedi durum × iki açılış + yedi "ikinci açılış aynı ekran" + Z1-viii).
+
+**Rev21'in 34 vakası yeniden.** Yazarın düzeneği (kopya; uyarlama yalnız: runbook = bu aday, gizli
+pencere bayrağı, Not Defteri sürüm okumasının yönlendirmeli süreçte yapılması) bu adayın bloklarından
+kurulan yeni kökte 34/34 PASS; `Start-Process` taklidi çağrılmadı. Kurulan `pins2.txt`'nin satırları
+(`ev.ps1` hariç; o satır kökün yoluna bağlıdır) rev21 yazar köküyle aynıdır.
+
+**Statik sayfa denetimi (N192, C1–C11).** C1 184 YAP / 0 ihlal (rev21: 182; +2 SO16–SO17); C2 184
+GÖR / 0 eksik; C3 dört içerik günü KÜME → KİT; C4 beş yer tutucu, düz `<…>` 0; C5 üçlü/tek ters tırnak
+0; C6 tanımsız komut ve runbook'ta olmayan kod 0; C7 415 parça kitte birebir, 3 yalnız ölçüm
+çıktısında, 3 eksik (rev21'deki üç `adm.ps1` birleştirmesi); C8, C9 eşit; C10 yedi Win+R satırı
+kalıba uyar (SO16 S46'nın satırını tekrar yazmaz); C11 0. Pozitif kontroller: C1–C9 için dokuz bozulmuş kopya ve C11 için bir bozulmuş kopya; onunun onu da kusuru yakaladı. Denetim
+betiğinde tek değişiklik: adım kimliği deseni SG yerine SGR.
+
+**Önek (L-4).** `SGR` büyük/küçük harf duyarlı ve kelime sınırlı taramayla (`SGR`'nin önünde harf,
+rakam veya `_` yok; arkasında harf veya `_` yok) tabanda 0, rev21 çalışma kopyasında 0 isabet verdi.
+Değiştirilen atıflar: N192 (G6, SO0, SO3, SGR1–SGR10 ve iç atıfları), üst uyarı, §34.4 revizyon 21
+satırı, §34.27 (R21-2 satırları, kilitsiz DUR tablosu, akış (b), tek taraflı karar (9) notu, prova
+notu (b)), Ek R4/16.5 notu, Ek R4/24 madde 10. Eski ölçüm tablosundaki guard kimlikleri (taban
+L11763–L11795) değişmedi; düzeltmeden sonra eski önek + rakam deseni yalnız o tablonun beş satırında
+kalır.
+
+**İnsan gözüyle yürüyüş (değişen dallar).** (f) dalı yukarıdaki akış tablosunda. S39'un "VeraCrypt'e
+DOKUNMAYIN"ı ile çelişki yok: SO16 ve GÖRMEZSEN'i VeraCrypt'e dokunmaz; ayırma yalnız SO16'nın GÖR'ünden
+sonra (S43–S44). Acil sayfanın "kapsayıcı bağlı" kapısıyla çelişki yok: D8'e kapsayıcı bağlıyken
+ulaşılır. G13/S53 ile çelişki yok: SO16 `z1`'den öncedir (G13 adlı istisnası). G6'nın öncelik
+paragrafıyla çelişki yok: SO12, SO16–SO17'yi G6'dan önce koyar. Döngü yok: SO16 bir kez
+açılır; çıkışı ya SO17 → S40 ya da D8'dir; S46'da "once … s29a TAMAM olmali" çıkarsa SO14 → D8.
+SO15: S27'nin GÖR'ü ve `b24`'ün `y2` iletisi aynı S28'e gider; `Y2_ALREADY` → D8 değişmedi. SGR7: `a8`
+yalnız kâğıt varsa; `a8`'in olası iletileri G6 listesindedir; ardından SGR8. M-2 cümlesi G7 ("HİÇBİR
+YERE yazmayın") ile çelişmez: saat yalnız telefonla söylenir. Ölü dal: yok.
+
+**§1.5 taraması.** `2effc8f`'ye göre eklenen ve değişen 555 satır, rev21 ile aynı on üç sınıfla
+(scratchpad sınıfına bu oturumun kimliği eklendi) tarandı: on üç sınıfın hepsinde 0 isabet (rev21'e göre eklenen ve değişen 211 satırda da 0); pozitif kontrol on üç sınıfın on üçünü buldu.
+
+**Ölçülemeyenler (PASS sayılmadı).** Gerçek VeraCrypt bağlıyken `Test-Path` (gerçek kapsayıcı yerine var
+olan bir sürücü kökü kullanıldı); SO16'nın gerçek pencerede açılışı ve gerçek klavye; `z1`'in onay
+sorusundan sonrası (bilerek sınırlandı); F1'in gerçek süresi; sayfanın bir insan tarafından okunması.
+
+**Tek taraflı kararlar (inceleyici için).** (1) Yoklama SO13 tablosuna gömülmedi; ayrı tek eylemli
+adımlar SO16 ve SO17 oldu (C1). (2) G6'nın "zaten calisti" adlı istisna listesi (SO13–SO15) değişmedi:
+SO16 bir "zaten calisti" iletisini geçirmez; SO16'nın `Z1_ALREADY`'si "başka ekran"dır (D8). SO12'nin
+öncelik cümlesi ise SO13–SO17'ye genişletildi: SO16'nın "başka her ekran → D8" talimatı, ekranda
+"(Kayit yazilmadi; DUR kilidi yok.)" olsa da G6'dan önce gelir (ör. `Z1_ALREADY`'nin "Siradaki: s29b."
+iletisi İMHA penceresinde izlenmez). (3) SO16
+GÖRMEZSEN'inde bir soru çıkarsa tuşa basılmaz, İMHA penceresi X'ten kapatılır (soru ancak kapsayıcı
+bağlı değilken çıkar; `z1.txt` bu soruya E cevabından önce yazılmaz, taban L22255–22269). (4) M-2
+cümlesi SGR7'ye değil önsöze kondu: telefon görüşmesi SGR6'dan önce yapılır. (5) §34.27'nin değişen
+bloklar tablosu ve statik
+denetim sayıları yerinde güncellendi; rev21 değerleri (N192 `c8403cca…a7cb`, 1039 satır; C1 182) bu alt
+bölümde ve tabloda kayıtlıdır.
+
+**Kurulan dizinler ve sapmalar.** Yalnız oturum scratchpad'inde: rev21 düzenek kopyaları dizini, dört z1
+kökü (iki tur), iki ön ölçüm dizini, bir 34 vaka kökü, üç çıktı dizini ve aday dosyalar. Temp ve
+profil köklerinde (birinci düzey) yeni öğe yok. **Sapmalar:** (1) Windows PowerShell'in her süreçte kendiliğinden güncellediği, profil altındaki var olan başlangıç verisi dosyası (`StartupProfileData-NonInteractive`) ölçüm sırasında güncellendi (yeni dosya yok; modül analiz önbelleği değişmedi). (2) Temp kökünde önceden var olan bir dosyanın ve oturum scratchpad'inin üst dizininin yazma zamanı oturum sırasında değişti; kaynağı ölçülmedi, içerik açılmadı, yeni öğe yok. (3) z1 ölçümü iki kez koşuldu: önce rev21 runbook'unun (kit blokları bayt-eşit) blokları, sonra bu adayın blokları (ikisi de 22/22; aynı ölçüm için üç tur sınırının içinde); 34 vaka bir kez. (4) Yama betiği ilk iki denemede tam eşleşme denetiminde durdu (girinti farkı; §34.26'da da bulunan kapanış satırı); dosya yazılmadı. Bash, yönlendirme ve git yazma komutu kullanılmadı; repo dosyası Python ile bayt-bayt yazıldı.
+
+**Sonuç.** `READY_FOR_INDEPENDENT_REVIEW` (dar düzeltmeden sonra; dar yeniden bakış için).
 
 ---
 
@@ -15821,7 +16205,10 @@ seçimine girmez. Yeni süreye giren alan bulunmadı.
    daha çalıştırılır ve yine açılmazsa AÇIK-25 (b) (madde 8; kullanıcı
    kararı K20-1 A); başka her çıktıda (boş, hata, `NO_MATCH`) veya sayfa
    yoksa AÇIK-25 (b) (madde 8). Kit2 sağlamken acil sayfanın bozuk olması bu
-   yolu tetiklemez (madde 5).
+   yolu tetiklemez (madde 5). `MATCH` görüldüğü hâlde sayfa ekranda açılmadıysa
+   da `OPEN_FAIL` ile aynı dal uygulanır (revizyon 21; rev20 incelemesi L-1,
+   kullanıcı onayı; `ev.ps1` başlatmanın sonucunu bildirir, sayfanın ekranda
+   göründüğünü bilemez, madde 4).
 2. **Acil sayfa (`<emergency-page>`).** Pencere öncesi ajan oturumunun
    yazdığı, değerleri doldurulmuş, güvenli dosyayla **aynı** dizinde
    duran tek metin dosyası (evidence dışı; repoda değil). Evidence'a
@@ -16008,7 +16395,9 @@ seçimine girmez. Yeni süreye giren alan bulunmadı.
    `EMERGENCY_PAGE_DELETED=True` ve `EMERGENCY_PAGE_HASH_MATCHED=False`
    girer. `OPEN_FAIL` ile bu dala gelindiyse (revizyon 20) sayfa
    eşleşmiştir; sayfanın silinmesinde madde 6'nın kuralı uygulanır (hash
-   eşleşirse silinir, eşleşmezse silinmez ve durulur).
+   eşleşirse silinir, eşleşmezse silinmez ve durulur). `MATCH` görülüp sayfa
+   ekranda açılmadığı için bu dala gelindiyse de aynı kural uygulanır
+   (revizyon 21; rev20 incelemesi L-1).
 8. **AÇIK-25 = (b) (kullanıcı kararı `at=2026-10-20T22:51:52+03:00`;
    recheck-2 not 2; revizyon 20: kullanıcı kararı K20-1 A).** Kit2
    yüklenemiyor (veya silme komutları tamamlanamıyor) **ve** acil sayfa
@@ -16019,7 +16408,10 @@ seçimine girmez. Yeni süreye giren alan bulunmadı.
    kapsayıcı doğrudan imha edilir. Bu dal **guard'sız bir silmedir**:
    §28.3.3'ün guard'ı (N102) yer tutucu değerleri ister ve bu dalda
    değerler güvenilir değildir (`OPEN_FAIL` dalında değerler doğrudur ama
-   operatör sayfayı açamadığı için onlara ulaşamaz).
+   operatör sayfayı açamadığı için onlara ulaşamaz). Revizyon 21 (rev20
+   incelemesi L-1; kullanıcı onayı): `MATCH` görüldüğü hâlde sayfa iki
+   çalıştırmada da ekranda açılmadıysa bu dal `OPEN_FAIL` ile aynı biçimde
+   uygulanır.
    - Gizliliğin dayanağı **anahtar imhasıdır** (§28.3.3/4–5: gizlilik
      anahtarın imhasına dayanır); case, restricted, kapsayıcıdaki klon ve
      F1 geçici kopyaları kapsayıcı içindedir ve onunla yok olur.
@@ -16600,6 +16992,12 @@ ve ayrı kullanıcı kararıdır (K5-5). Ölçüt (7)'nin süreleri Ek R4/24 mad
 #5–#8 kayıtlarından türetildi; `r1`, `r3`, `r4` ve `r5` için ölçüm olmadığından süre yazılmadı (kullanıcı
 kararı K19-1 = A: süreyi izin veren yazılı karar yazar; §34.25). İki ileti düzeltmesi (N143 `K_ORDER`, N167 `B18_NO_DECISIONS`) sentetik düzenekte
 ölçüldü; son tam insan provası iki iletiyi de gösterir.
+
+**Revizyon 21 notu (§34.27).** N192'nin SO12–SO15 (önceki pencerelerde çalışmış silme adımları),
+SGR1–SGR10 (kilit yazmayan bir DUR'dan sonra silme oturumu girişi) ve S46 (`z1` iletisi) metinleri
+pozitif kontrollü statik denetim ve sentetik kökte gerçek `ac.ps1` + `bc.ps1` ölçümüyle karşılandı;
+insan provasıyla değil. Son tam insan provası `k silme`'den sonraki kasıtlı DUR'da SO13 geçişini ve
+kilit yazmayan bir DUR'dan sonra SGR girişini gerçek pencerede birer kez gösterir.
 
 #### Ek R4/16.6 Sızıntı negatif testi (her dilimde zorunlu; KD-2, M1, M6, L-Y4)
 
@@ -22755,6 +23153,18 @@ Ek R4/16.5) tabidir ve provadan geçmeden gerçek koşuda kullanılamaz (§32/41
    satırı yeniden açılır (S46); görülmediyse S44'ün GÖR'ü çıkmamıştır: DUR OLURSA, zorla ayırma
    yok. Böylece S45'te kapatılan VeraCrypt'in yeniden açılmasına gerek kalmaz. Kit davranışı
    değişmedi (`z1` H → `Z1_PRECONDITION`, kilitsiz).
+10. **Revizyon 21 (§34.27; silme oturumu çıkmazları; rev20 incelemesi L-1, O-8).** G6'nın
+    "zaten calisti" sınırının adlı istisnaları SİLME OTURUMU SO13–SO15 ve İMHA penceresinde `z1`'in
+    "z1 daha once TAMAM" satırıdır (S46); kilit yazan tek adlı istisna SGR7'deki `o` DUR satırıdır
+    (G6 öncelik paragrafı). SO13 önceki pencerelerde çalışmış silme adımlarının kilitsiz
+    iletilerini sonraki adıma bağlar; "zaten calisti" ve "gerekmez" iletileri kaydın PASS olduğunu
+    göstermediği için kaydı kitin sonraki adım ön koşulu denetler (SO14: TAMAM değilse D8). Silme
+    oturumunda `Y2_ALREADY` her zaman TAMAM olmayan bir `y2` kaydıdır (SO15: D8). `z1` önceki bir
+    İMHA penceresinde TAMAM olduysa gerçek veri silinmiştir (G9) ve kapsayıcı yoktur; o gün içerik
+    günü değildir, KÜME ve KİT açılmaz, yalnız İMHA satırı (SİLME OTURUMU önsözü). Kilit yazmayan
+    bir DUR'dan sonra SO3 "SILME OTURUMU" demez; giriş SGR1–SGR10'dur (aynı silme gününde `a2`, `a3`,
+    `b0`, `o`, `a9`; `o` DUR kilidini yazar, sonraki KİT silme oturumudur). D8'in ikinci GÖRMEZSEN
+    başlığı ikinci `OPEN_FAIL`'i ve açılmayan sayfayı sayar (O-8). Kit davranışı değişmedi.
 
 **N192 — `kit2 kullanıcı sayfası` (şablon; Ek R4/24; kit2 dizinine girmez; revizyon 19).**
 
@@ -22819,7 +23229,9 @@ G6 Ekranda "DUR" veya "DURDU" ile başlayan bir satır, "STOP" ile başlayan bir
    - "Bu adim zaten calisti" veya "zaten kaydedildi" gibi, adımı yanlışlıkla
      iki kez yazdığınızı söyleyen bir ileti sizi sayfada sonraki adıma YALNIZ
      o adımın GÖR satırını bu pencerede daha önce gördüyseniz geçirir;
-     görmediyseniz DUR OLURSA (tek açık istisna: SO12).
+     görmediyseniz DUR OLURSA. Adlı istisnalar yalnız şunlardır: SİLME
+     OTURUMU'nda önceki pencerelerde çalışmış silme adımları (SO13-SO15) ve
+     İMHA penceresinde "z1 daha once TAMAM" satırı (S46).
    - "KIT zaten yuklu" ve "KIT2 zaten yuklu" istisna DEĞİLDİR (A3).
    Öncelik: bir adımın kendi GÖRMEZSEN satırı o durum için açıkça "DUR
    DEĞİL" diyorsa o satır geçerlidir: söylediğini yapın (ekranda "DUR" veya
@@ -22831,6 +23243,8 @@ G6 Ekranda "DUR" veya "DURDU" ile başlayan bir satır, "STOP" ile başlayan bir
    BAŞLAYAN bir satır, "STOP" ile BAŞLAYAN bir satır veya "YARIDA KALDI"
    getirmedikçe DUR DEĞİLDİR: kit H için kilitsiz bir ret ve ileti basar;
    iletinin söylediğini yapın (çoğu zaman aynı komutu yeniden yazmak).
+   Kilit yazan tek adlı istisna: SGR7'deki "DUR. Adim o durdu (INCIDENT).
+   ..." satırı SGR7'nin GÖR'üdür (kilidi o komutu bilerek yazar): SGR8.
    Nerede olduğunuzdan emin değilseniz: DUR OLURSA.
 G7 Bir adımda takılırsanız aklınızda tutun; HİÇBİR YERE yazmayın. a9 sonunda
    kit size üç öz beyan sorusu sorar; onlara gerçeğe göre E veya H.
@@ -22878,7 +23292,9 @@ G13 ADMIN ve İMHA pencereleri tek iş içindir; satırları yüklenince komut k
    kendine çalışır. İş bitince fareyle X'ten kapatın. ADMIN'de H'den sonra
    karar değişirse pencereyi kapatıp aynı ADMIN satırını Win+R ile yeniden
    açın. Kaç ADMIN penceresi açtığınızı not etmeyin: kit kayıtları gösterir.
-   İMHA satırını z1 ve s29b bittikten sonra İKİNCİ KEZ AÇMAYIN.
+   İMHA satırını z1 ve s29b bittikten sonra İKİNCİ KEZ AÇMAYIN. Adlı
+   istisna: z1 bitmeden yapılan açılışlar (SO16'daki s29a yoklaması ve
+   S47'deki yeniden açış) bu yasağa girmez.
 
 HAZIRLIK (her içerik gününden önce; açık bir ajan oturumu varsa kapatıldıktan
 sonra)
@@ -23460,8 +23876,15 @@ S45 YAP: VeraCrypt penceresini X'ten kapatın.
 S46 (ONAY - PROJE SAHIBI) YAP: Win+R ile İMHA satırını çalıştırın:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit2\z1.ps1'"
    GÖR: "TUSA PROJE SAHIBI BASAR" ve "Kapsayici VeraCrypt'te ayrildi mi?"
-   GÖRMEZSEN: "z1 BASLAMADI": iletinin söylediğini yapın (G6). "DURDU" veya
-              "DUR": pencereyi kapatın; DUR OLURSA.
+   GÖRMEZSEN: "z1 BASLAMADI": iletinin söylediğini yapın (G6); silme
+              oturumunda "z1 BASLAMADI: once KIT penceresinde k silme,
+              s26a, s26b ve s29a TAMAM olmali." ise SO14: pencereyi
+              kapatın; D8. "Bu adim zaten calisti: z1.txt. Tekrar
+              calismaz. Siradaki: s29b." ve altında "z1 daha once TAMAM.
+              Siradaki: s29b yazip Enter (avukat ekrana bakar).": z1 önceki
+              bir İMHA penceresinde TAMAM oldu (G6 adlı istisnası): S51. Bu
+              ikinci satır yoksa z1 kaydı TAMAM değildir: pencereyi kapatın;
+              D8. "DURDU" veya "DUR": pencereyi kapatın; DUR OLURSA.
 S47 YAP: S44'te satırın boşaldığını gördüyseniz E, görmediyseniz H.
    GÖR: "----- ONAY (REAL_ACTION_APPROVED) -----", "Hedef:", "Digest:" ve
         soru.
@@ -23538,6 +23961,12 @@ açılmaz. Ajan oturumu açılmaz. r1-r5 komutları YALNIZ ayrı ve yazılı
 kullanıcı kararıyla çalışır; o karar yoksa yazmayın. Bu sayfa r1, r3, r4 ve
 r5 için ilerleme yoksa süresi vermez; o yazılı karar bekleme süresini de
 yazar (G10).
+z1 önceki bir İMHA penceresinde TAMAM olduysa (S50'de "TAMAMLANDI (PASS)"
+gördüyseniz) gerçek veri silinmiştir ve kapsayıcı dosyası yoktur: bugün
+HAZIRLIK H1-H7'den sonra H8, KÜME ve KİT YOKTUR; yalnız İMHA satırı (S46).
+Ekran S46'daki "z1 daha once TAMAM" satırını gösterirse S51-S53; göstermezse
+veya S51 "Bu adim zaten calisti: s29b.txt. Tekrar calismaz." derse: İMHA
+penceresini kapatın; D8.
 SO0 KANAL KAPISI SÜREKLİLİĞİ: KİT satırı açılınca ekran "SILME OTURUMU" der.
    Bu pencerede a2, a3, b0 ve a9 MUTLAKA yazılır. a2 yazılmadan kapatılan her
    KİT penceresi (silme günü değilken açılıp kapatılan dahil) imha kaydında
@@ -23546,7 +23975,10 @@ SO0 KANAL KAPISI SÜREKLİLİĞİ: KİT satırı açılınca ekran "SILME OTURUM
    değildir, geri alınamaz ve silmeyi durdurmaz. Bundan kaçınmak için DUR'dan
    sonra KİT satırını YALNIZ silme günü açın. Silme günü değilken yanlışlıkla
    açtıysanız: a2 yazmadan pencereyi kapatın (kitin dediği gibi): DUR OLURSA
-   D5'ten itibaren.
+   D5'ten itibaren. Önceki DUR kilit yazmadıysa (ör. kayıt açılmadan Ctrl+C,
+   b0'da "Kit kilidi yazilmadi", G5 dalı) KİT satırı "SILME OTURUMU" demez:
+   SO3 GÖRMEZSEN'deki giriş (SGR1-SGR10) aynı silme gününde yapılır; o
+   pencerede de a2, a3, b0 ve a9 yazılır.
 HAZIRLIK H1-H9, sonra:
 SO1 YAP: Win+R ile KÜME satırını çalıştırın (A1'deki satır).
    GÖR: A1'in GÖR'ü.
@@ -23557,6 +23989,9 @@ SO3 YAP: Win+R ile KİT satırını çalıştırın (A3'teki satır).
    GÖR: "KIT YUKLENDI, ama DUR kilidi var: SILME OTURUMU ..." ve "KIT2
         YUKLENDI (SILME OTURUMU). ..."
    GÖRMEZSEN: "KIT2 YUKLENEMEDI": a9 yazın, pencereyi kapatın: D8.
+              "KIT YUKLENDI. Oturum ..." ve "KIT2 YUKLENDI. Siradaki: a2
+              yazip Enter." ("SILME OTURUMU" yok; önceki DUR kilit
+              yazmamış): bu pencerede SİLME OTURUMU GİRİŞİ (SGR1-SGR10).
               Başka: DUR OLURSA.
 SO4 YAP: a2  (Enter)
    GÖR: "a2 TAMAM. ..."
@@ -23584,10 +24019,113 @@ SO11 YAP: Ekrandaki her soruya gerçeğe göre E veya H (kapsayıcı sorusu: SO9
    GÖR: "TAMAMLANDI (PASS)".
    GÖRMEZSEN: "DURDU" veya "STOP": a9 yazın, pencereyi kapatın: D8.
 SO12 Sonra SON GÜN S27-S53 aynen (b24; gerekiyorsa ADMIN y2 ve ikinci b24;
-   k silme; s25-s29a; a9; VeraCrypt'te ayır; İMHA z1 ve s29b). k silme önceki
-   bir pencerede TAMAM olduysa ekran "Bu karar zaten kaydedildi." der: bu
-   satır o kararın kaydıdır; doğrudan S33 (s25). Bir silme komutu
-   tamamlanamıyorsa: D8.
+   k silme; s25-s29a; a9; VeraCrypt'te ayır; İMHA z1 ve s29b). Önceki bir
+   pencerede çalışmış adımlarda SO13-SO17, o adımın GÖRMEZSEN satırından ve
+   G6'dan önce gelir. Bir silme komutu tamamlanamıyorsa: D8.
+SO13 ÖNCEKİ PENCEREDE ÇALIŞMIŞ ADIM: kit onu yeniden çalıştırmaz; aşağıdaki
+   iletiyi ve altında "(Kayit yazilmadi; DUR kilidi yok.)" satırını basar.
+   Sayfada sağdaki adıma geçin (SO14 denetimiyle):
+     b24 -> "Bu adim zaten calisti: b24b.txt. Tekrar calismaz." ..... S32
+     b24 -> "b24 BASLAMADI: ilk olcum (b24a) atama 1 gostermedi;
+            ikinci olcum gerekmez. Siradaki: avukat k silme." ..... S32
+     k silme -> "Bu karar zaten kaydedildi." ........................ S33
+     k silme -> "k: kapanis manifesti (s25) yazildi; ..." ........... S35
+     s25 -> "Bu adim zaten calisti: s25.txt. Tekrar calismaz." ..... S35
+     s26a -> "Bu adim zaten calisti: s26a.txt. Tekrar calismaz." ... S36
+     s26b -> "Bu adim zaten calisti: s26b.txt. Tekrar calismaz." ... S37
+     s27 -> "Bu adim zaten calisti: s27.txt. Tekrar calismaz." ..... S38
+     s28 -> "Bu adim zaten calisti: s28.txt. Tekrar calismaz." ..... S39
+     s29a -> "Bu adim zaten calisti: s29a.txt. Tekrar calismaz." ... SO16
+SO14 DENETİM: k silme'nin iki iletisi kararın TAMAM olduğunu gösterir.
+   "zaten calisti" ve "gerekmez" iletileri GÖSTERMEZ (kayıt DUR anında STOP
+   ile veya yarım kalmış olabilir); o kaydı kit sonraki adımda denetler.
+   SO13 ile geçtiğiniz bir adım için kit sonraki adımda şunlardan birini
+   derse o kayıt TAMAM değildir (o adımı yeniden yazmayın): "once atama
+   olcumu tamam olmali" (s25; b24 için), "once s25 TAMAM olmali" (s26a),
+   "once s26a TAMAM olmali" (s26b), "once s26b TAMAM olmali" (s28), "once
+   s28 TAMAM olmali" (s29a): a9 yazın, KİT penceresini kapatın: D8. "once
+   KIT penceresinde k silme, s26a, s26b ve s29a TAMAM olmali" (İMHA z1):
+   SO16'da (KİT açık) SO16 GÖRMEZSEN'deki gibi; S46'da (KİT zaten kapalı)
+   İMHA penceresini kapatın; D8. s29a'nın kaydını, VeraCrypt bağlıyken,
+   SO16 denetler. s27'nin kaydını yalnız s29a denetler: s29a "DURDU" derse
+   S39 GÖRMEZSEN (D8).
+SO15 ADMIN y2: silme oturumunda y2 YALNIZ b24 ya "Siradaki: ADMIN
+   penceresinde y2 (sayfadaki ADMIN satiri, y2 ile)." (S27'nin GÖR'ü) ya
+   da "b24 BASLAMADI: ikinci olcum icin once ADMIN penceresinde y2 TAMAM
+   olmali." derse açılır (S28). ADMIN penceresi o zaman "Bu adim zaten
+   calisti: y2.txt. Tekrar calismaz." derse y2 kaydı TAMAM değildir (b24,
+   TAMAM bir y2'yi istemez): ADMIN penceresini kapatın; KİT'te a9 yazın,
+   KİT penceresini kapatın: D8.
+SO16 s29a YOKLAMASI (yalnız SO13'te s29a "Bu adim zaten calisti: s29a.txt.
+   ..." dediyse): S40-S45'ten ÖNCE, VeraCrypt'e DOKUNMADAN (kapsayıcı
+   bağlı, KİT penceresi açık). İMHA satırı burada yalnız yoklar: kapsayıcı
+   bağlıyken z1 soru sormaz, silmez, kayıt ve kilit yazmaz.
+   YAP: Win+R ile İMHA satırını çalıştırın (S46'daki satır).
+   GÖR: "z1 BASLAMADI: kapsayici hala bagli. ..." ve "(Kayit yazilmadi; DUR
+        kilidi yok.)": s29a, s26a, s26b ve silme kararı TAMAM'dır; kitin
+        iletisi S40-S46'yı söyler. -> SO17.
+   GÖRMEZSEN: "z1 BASLAMADI: once KIT penceresinde k silme, s26a, s26b ve
+              s29a TAMAM olmali." (SO14): İMHA penceresini X'ten kapatın;
+              VeraCrypt'e DOKUNMAYIN; KİT'te a9 yazın, KİT penceresini
+              kapatın: D8. Başka her ekran ("DUR" dahil; bir soru çıkarsa
+              hiçbir tuşa basmayın): aynı şekilde İMHA penceresini X'ten
+              kapatın, VeraCrypt'e DOKUNMAYIN, KİT'te a9 yazın, KİT
+              penceresini kapatın: D8.
+SO17 YAP: İMHA penceresini X'ten kapatın.
+   GÖR: görev çubuğunda KİT, KÜME, VeraCrypt ve bu sayfa. Sonra S40-S53 (a9;
+        VeraCrypt'te ayırma; İMHA satırı yeniden: S46).
+
+SİLME OTURUMU GİRİŞİ (yalnız SO3'te "SILME OTURUMU" yazmadıysa: önceki DUR
+kilit yazmamıştır; ör. kayıt açılmadan Ctrl+C, b0'da "Kit kilidi
+yazilmadi", G5 veya "a9 yazın, pencereyi kapatın" dalları). Aynı KİT
+penceresinde. o (olay kaydı) DUR kilidini yazar; sonraki KİT penceresi
+silme oturumudur. F1 gerçek DUR anından işler; b23 veya u kaydı yoksa kit
+F1 başlangıcını o'nun saatinden ölçer: silmeyi gerçek DUR'dan itibaren F1
+içinde bitirin. Bu yolda imha kaydındaki F1 satırı gerçek DUR anına göre
+güvenilir değildir; gerçek DUR saatini dosya avukatına telefonla söyleyin
+(hiçbir yere yazmayın; G7).
+SGR1 YAP: a2  (Enter)
+   GÖR: "a2 TAMAM. En az 2 dakika bekleyin, sonra a3 yazin."
+   GÖRMEZSEN: A4'ün GÖRMEZSEN'i.
+SGR2 YAP: >>> 2 DAKİKA BEKLEYİN <<<
+   GÖR: 2 dakika geçti.
+SGR3 YAP: a3  (Enter)
+   GÖR: "a3 TAMAM. Kanal kapisi gecti. ..."
+   GÖRMEZSEN: A6'nın GÖRMEZSEN'i.
+SGR4 YAP: b0  (Enter)
+   GÖR: ilk soru "Yapay zeka kodlama asistani kapali mi?"
+   GÖRMEZSEN: DUR OLURSA (kilitsiz ret iletisi varsa G6).
+SGR5 YAP: Altı sorunun her birine gerçeğe göre E veya H.
+   GÖR: "KANAL BEYANI TAMAM. ...", "TAMAMLANDI (PASS)" ve "Siradaki: b1."
+        (b1 bu pencerede YAZILMAZ.)
+   GÖRMEZSEN: DUR OLURSA.
+SGR6 YAP: o  (Enter)
+   GÖR: "TUSA PROJE SAHIBI BASAR" ve "Olayi dosya avukatina telefonla
+        bildirdiniz mi?"
+   GÖRMEZSEN: a9 yazın, pencereyi kapatın: D8.
+SGR7 YAP: Dosya avukatına DUR'u telefonla bildirdiyseniz (D7) E,
+          bildirmediyseniz H.
+   GÖR: "TAMAMLANDI (PASS). Olay kaydedildi. Ayni gun yazili bildirim
+        icin: n." ve "DUR. Adim o durdu (INCIDENT). Kalan adimlari
+        yapmayin." Bu DUR girişin kendisidir (G6 adlı istisnası): kitin
+        "SIMDI a9 YAZIN" ve "DUR OLURSA" satırları burada SGR8-SGR10'dur; n
+        YAZMAYIN. Kitin "Parola kagidi varsa yirtin ve a8 yazin." satırı D2'dir:
+        7z parola kâğıdı varsa yırtın ve SGR8'den önce a8 yazın; kâğıt yoksa a8
+        gerekmez.
+   GÖRMEZSEN: H bastıysanız DUR DEĞİL (G6): ekran "o: kayit yazilmadi.
+              Once dosya avukatini telefonla arayin (bu bilgisayardan
+              degil), sonra yeniden o yazin." der; avukatı telefonla arayın,
+              sonra SGR6. Başka: a9 yazın, pencereyi kapatın: DUR OLURSA.
+SGR8 YAP: a9  (Enter)
+   GÖR: kapanış taraması ve "Oz beyan 1/3: ..."
+   GÖRMEZSEN: DUR OLURSA.
+SGR9 YAP: Öz beyan sorularının her birine gerçeğe göre E veya H (G7).
+   GÖR: "a9 TAMAM. Pencereyi kapatabilirsiniz."
+   GÖRMEZSEN: DUR OLURSA.
+SGR10 YAP: KİT penceresini fareyle X'ten kapatın.
+   GÖR: görev çubuğunda KÜME penceresi (dokunmayın), VeraCrypt ve bu sayfa.
+        Sonra SO3 (SO1-SO2 yeniden YAPILMAZ); bu kez ekran "SILME
+        OTURUMU" der.
 
 K KALIBI (karar komutlarından sonra; Not Defteri'ndeki karar dosyası)
 K1 (AVUKAT) YAP: Her BURAYA_ alanını kararınızla doldurun (BURAYA_ yazısını
@@ -23671,8 +24209,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence
               ve EV satırını BİR KEZ daha çalıştırın. Bu kez MATCH ve açılan
               acil sayfa: yukarıdaki GÖR gibi devam. Yine olmazsa acil sayfa
               kullanılamaz: aşağıdaki AÇIK-25 (b) yolu.
-   GÖRMEZSEN (boş, hata, NO_MATCH veya acil sayfa yok): acil sayfayı
-              KULLANMAYIN. Yol AÇIK-25 (b): dosya avukatının yazılı Form F
+   GÖRMEZSEN (boş, hata, NO_MATCH, acil sayfa yok; ya da ikinci çalıştırmada
+              da OPEN_FAIL veya açılmayan sayfa): acil sayfayı KULLANMAYIN.
+              Yol AÇIK-25 (b): dosya avukatının yazılı Form F
               kararı ve ayrı REAL_ACTION_APPROVED onayıyla kapsayıcı doğrudan
               imha edilir: VeraCrypt'te ayırın; kapsayıcı dosyasını
               VeraCrypt'in bağlama ekranındaki yoldan tanıyıp Geri Dönüşüm
