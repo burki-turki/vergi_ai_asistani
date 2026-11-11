@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "document_id": "ihbarname",
+      "file_name": "ihbarname.txt",
+      "title": "Vergi ceza ihbarnamesi KURGU-IHB-0001",
+      "document_type": "Ceza ihbarnamesi",
+      "is_notice": true
+    },
+    {
+      "document_id": "cimer",
+      "file_name": "cimer_sikayet.txt",
+      "title": "CİMER başvurusu KURGU-CIMER-0001",
+      "document_type": "CİMER başvurusu"
+    },
+    {
+      "document_id": "tutanak",
+      "file_name": "tutanak.txt",
+      "title": "Tutanak KURGU-TUT-0101",
+      "document_type": "Tutanak"
+    }
+  ],
+  "statements": [
+    {
+      "statement_id": "ihb-evrak",
+      "document_id": "ihbarname",
+      "excerpt": "VERGİ CEZA İHBARNAMESİ",
+      "role": "administrative_act",
+      "header_item": "evrak_turu",
+      "section": "Başlık",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "ihb-ceza-turu",
+      "document_id": "ihbarname",
+      "excerpt": "Cezanın türü: Özel usulsüzlük cezası",
+      "role": "administrative_act",
+      "header_item": "ceza_turu",
+      "section": "1. Cezanın türü",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "ihb-madde-no",
+      "document_id": "ihbarname",
+      "excerpt": "213 sayılı Vergi Usul Kanunu 353 üncü madde, 1 numaralı bent",
+      "role": "administrative_act",
+      "header_item": "madde_no",
+      "section": "2. Ceza açıklaması",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "ihb-madde-basligi",
+      "document_id": "ihbarname",
+      "excerpt": "Satış belgesi verilmemesi (kurgusal başlık)",
+      "role": "administrative_act",
+      "header_item": "madde_basligi",
+      "section": "2. Ceza açıklaması",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "ihb-aciklama",
+      "document_id": "ihbarname",
+      "excerpt": "Mükellefin nakit satışlarda perakende satış fişi düzenlemediği 12.01.2026 tarihli ve KURGU-TUT-0101 sayılı tutanakla tespit edildiğinden adına özel usulsüzlük cezası kesilmiştir.",
+      "role": "administrative_act",
+      "section": "2. Ceza açıklaması",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "ihb-dayanak",
+      "document_id": "ihbarname",
+      "excerpt": "Dayanak belge: 12.01.2026 tarihli ve KURGU-TUT-0101 sayılı tutanak.",
+      "role": "administrative_act",
+      "section": "2. Ceza açıklaması",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "ihb-teblig-usulu",
+      "document_id": "ihbarname",
+      "excerpt": "Tebliğ usulü: Elektronik tebligat (kurgusal kayıt)",
+      "role": "administrative_act",
+      "header_item": "teblig_usulu",
+      "section": "3. Tebliğ",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "ihb-teblig-tarihi",
+      "document_id": "ihbarname",
+      "excerpt": "Tebliğ tarihi: 10.03.2026",
+      "role": "administrative_act",
+      "header_item": "teblig_tarihi",
+      "section": "3. Tebliğ",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "cimer-iddia-1",
+      "document_id": "cimer",
+      "excerpt": "Bu işletme nakit satışlarda fiş kesmiyor.",
+      "role": "complainant_allegation",
+      "section": "Başvuru metni",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "cimer-iddia-2",
+      "document_id": "cimer",
+      "excerpt": "Birkaç kez alışveriş yaptım, nakit ödediğimde bana fiş verilmedi.",
+      "role": "complainant_allegation",
+      "section": "Başvuru metni",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "tut-aktarim-1",
+      "document_id": "tutanak",
+      "excerpt": "CİMER aracılığıyla yapılan başvuruda, işletmenin nakit satışlarda fiş düzenlemediği bildirilmiştir.",
+      "role": "officer_relay",
+      "section": "Açıklama",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "tut-aktarim-2",
+      "document_id": "tutanak",
+      "excerpt": "İşbu tutanak başvuruda bildirilen hususlar esas alınarak düzenlenmiştir.",
+      "role": "officer_relay",
+      "section": "Açıklama",
+      "tagged_by": "operator"
+    },
+    {
+      "statement_id": "tut-mukellef",
+      "document_id": "tutanak",
+      "excerpt": "İşletme yetkilisi, bütün satışlarda fiş düzenlediklerini beyan etmiştir.",
+      "role": "taxpayer_statement",
+      "section": "Açıklama",
+      "tagged_by": "operator"
+    }
+  ],
+  "sales": []
+}

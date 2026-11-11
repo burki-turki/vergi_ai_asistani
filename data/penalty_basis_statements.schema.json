@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "penalty_basis_statements.schema.json",
+  "title": "Vergi AI Penalty Basis Statements Schema V1",
+  "description": "Ceza ihbarnamesi - dayanak karşılaştırma raporu (PENALTY-BASIS-V1) için operatörün elle etiketlediği ifadeler. Bir roadmap Row'u değildir. Bu şema src/penalty_basis_review.py içindeki elle yazılmış doğrulayıcının belgesidir; modül yalnız standart kütüphane kullanır ve aynı kuralları kendisi uygular. Ek kurallar (şema ile ifade edilemeyen): her excerpt kendi belgesinin metninde birebir ve tam bir kez geçmelidir; aynı belgedeki alıntılar çakışamaz; document_id/statement_id/sale_id tekil olmalıdır; sale_ref ve date/amount.statement_id var olan kayıtlara işaret etmelidir; date/amount.statement_id ile gösterilen ifadenin sale_ref değeri o satış olmalı ve value o ifadenin alıntısında birebir ve iki yanında rakam veya harf olmadan geçmelidir (öbür yanında rakam olan bir nokta veya virgül de sınır sayılmaz); role administrative_act olan her ifade (header_item taşıyanlar dahil) is_notice: true işaretli belgeden olmalıdır; is_notice: true işaretli belgeden yalnız role administrative_act olan ifade kabul edilir (aksi ret kodu NOTICE_DOCUMENT_ROLE_INVALID); tebliğ usulü/tarihi bu sürümde yalnız is_notice belgesinden işaretlenebilir, ayrı tebliğ belgesi bu sürümün sınırıdır; her satış en az bir ifade tarafından sale_ref ile gösterilmelidir; belgeler BOM'suz UTF-8 olmalı ve \\n, \\r, \\t dışında kontrol karakteri içeremez.",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "documents",
+    "statements",
+    "sales"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/document" },
+      "contains": {
+        "type": "object",
+        "required": ["is_notice"],
+        "properties": { "is_notice": { "const": true } }
+      },
+      "minContains": 1,
+      "maxContains": 1
+    },
+
+    "statements": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/statement" }
+    },
+
+    "sales": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sale" }
+    }
+  },
+
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,64}$"
+    },
+
+    "display_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "\\S"
+    },
+
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_id", "file_name", "title", "document_type"],
+      "properties": {
+        "document_id": { "$ref": "#/$defs/id" },
+        "file_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,95}\\.txt$",
+          "not": { "const": "statements.json" }
+        },
+        "title": { "$ref": "#/$defs/display_text" },
+        "document_type": { "$ref": "#/$defs/display_text" },
+        "is_notice": { "type": "boolean" }
+      }
+    },
+
+    "statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement_id", "document_id", "excerpt", "role", "tagged_by"],
+      "allOf": [
+        {
+          "if": { "properties": { "role": { "const": "officer_observation" } } },
+          "then": { "required": ["sale_ref"] }
+        },
+        {
+          "if": { "required": ["header_item"] },
+          "then": {
+            "properties": { "role": { "const": "administrative_act" } },
+            "not": { "required": ["sale_ref"] }
+          }
+        }
+      ],
+      "properties": {
+        "statement_id": { "$ref": "#/$defs/id" },
+        "document_id": { "$ref": "#/$defs/id" },
+        "excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000,
+          "pattern": "\\S"
+        },
+        "role": {
+          "enum": [
+            "complainant_allegation",
+            "officer_relay",
+            "officer_observation",
+            "taxpayer_statement",
+            "administrative_act"
+          ]
+        },
+        "section": { "$ref": "#/$defs/display_text" },
+        "sale_ref": { "$ref": "#/$defs/id" },
+        "header_item": {
+          "enum": [
+            "evrak_turu",
+            "ceza_turu",
+            "madde_no",
+            "madde_basligi",
+            "teblig_usulu",
+            "teblig_tarihi"
+          ]
+        },
+        "tagged_by": {
+          "const": "operator"
+        }
+      }
+    },
+
+    "sale_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "statement_id"],
+      "properties": {
+        "value": { "$ref": "#/$defs/display_text" },
+        "statement_id": { "$ref": "#/$defs/id" }
+      }
+    },
+
+    "sale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sale_id"],
+      "properties": {
+        "sale_id": { "$ref": "#/$defs/id" },
+        "date": { "$ref": "#/$defs/sale_value" },
+        "amount": { "$ref": "#/$defs/sale_value" }
+      }
+    }
+  }
+}

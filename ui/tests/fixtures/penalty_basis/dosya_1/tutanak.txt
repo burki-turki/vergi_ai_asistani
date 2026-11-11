@@ -1,0 +1,21 @@
+TUTANAK
+
+Tutanak No: KURGU-TUT-0101
+Düzenleme Tarihi: 12.01.2026
+Düzenleyen: Kurgu Vergi Dairesi Müdürlüğü yoklama memuru (kurgusal)
+İlgili İşletme: Örnek Kurgu Kafe (kurgusal işletme)
+
+Konu:
+KURGU-CIMER-0001 sayılı CİMER başvurusu.
+
+Açıklama:
+CİMER aracılığıyla yapılan başvuruda, işletmenin nakit satışlarda fiş düzenlemediği bildirilmiştir.
+Başvuru üzerine işletmeye gidilmiş, işletme yetkilisine başvurunun konusu anlatılmıştır.
+İşletme yetkilisi, bütün satışlarda fiş düzenlediklerini beyan etmiştir.
+İşbu tutanak başvuruda bildirilen hususlar esas alınarak düzenlenmiştir.
+
+İmza: Yoklama memuru (kurgusal) / İşletme yetkilisi (kurgusal)
+
+
+Bu metin Vergi AI geliştirme sürecinde kullanılmak üzere oluşturulmuş
+sentetik test verisidir ve gerçek bir belge değildir.

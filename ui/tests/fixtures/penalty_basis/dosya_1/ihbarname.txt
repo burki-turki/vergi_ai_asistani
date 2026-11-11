@@ -1,0 +1,34 @@
+VERGİ CEZA İHBARNAMESİ
+
+İhbarname No: KURGU-IHB-0001
+Düzenleme Tarihi: 03.03.2026
+Vergi Dairesi: Kurgu Vergi Dairesi Müdürlüğü (kurgusal)
+Mükellef: Örnek Kurgu Kafe (kurgusal işletme)
+
+
+1. CEZANIN TÜRÜ
+
+Cezanın türü: Özel usulsüzlük cezası
+
+
+2. CEZA AÇIKLAMASI
+
+Kanun maddesi: 213 sayılı Vergi Usul Kanunu 353 üncü madde, 1 numaralı bent
+Madde başlığı: Satış belgesi verilmemesi (kurgusal başlık)
+
+Açıklama:
+Mükellefin nakit satışlarda perakende satış fişi düzenlemediği 12.01.2026 tarihli ve KURGU-TUT-0101 sayılı tutanakla tespit edildiğinden adına özel usulsüzlük cezası kesilmiştir.
+
+Dayanak belge: 12.01.2026 tarihli ve KURGU-TUT-0101 sayılı tutanak.
+
+Ceza tutarı: 1.111,00 TL (kurgusal tutar; gerçek bir yılın tutarı değildir)
+
+
+3. TEBLİĞ
+
+Tebliğ usulü: Elektronik tebligat (kurgusal kayıt)
+Tebliğ tarihi: 10.03.2026
+
+
+Bu metin Vergi AI geliştirme sürecinde kullanılmak üzere oluşturulmuş
+sentetik test verisidir ve gerçek bir belge değildir.

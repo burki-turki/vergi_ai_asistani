@@ -1,0 +1,13 @@
+CİMER BAŞVURUSU
+
+Başvuru No: KURGU-CIMER-0001
+Başvuru Tarihi: 05.01.2026
+Başvuru Sahibi: Kurgusal vatandaş (kimlik bilgisine sentetik dosyada yer verilmedi)
+İlgili İşletme: Örnek Kurgu Kafe (kurgusal işletme)
+
+Başvuru Metni:
+Bu işletme nakit satışlarda fiş kesmiyor. Birkaç kez alışveriş yaptım, nakit ödediğimde bana fiş verilmedi. Gereğinin yapılmasını rica ederim.
+
+
+Bu metin Vergi AI geliştirme sürecinde kullanılmak üzere oluşturulmuş
+sentetik test verisidir ve gerçek bir belge değildir.
