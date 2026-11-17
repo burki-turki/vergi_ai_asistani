@@ -269,6 +269,23 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 > PASS'ten sonra KİT/KÜME açılmaz ve sayfa doğrudan BİTİŞ'e gönderir (G13, G14, S53). Değişen
 > blok yalnız N192; diğer 192 blok bayt-bayt aynıdır; kit kodu ve kit1 değişmedi. Sayfa dar
 > provaya (ayrı kullanıcı kararı) tabidir (§32/41).
+> Revizyon 23 (§34.29; `USER_DECISION=D5-KAPANIS-A` ve `SCOPE_APPROVED`: K23-1 EVET, K23-2 EVET,
+> K23-3 HAYIR): prova #13 (`C:\vd5_53b2e35e`; `PROVA_DILIM5_DAR=FAIL`,
+> `KIT2_BIRLESIK_D1_D5_R22=FAIL`; bağımsız kanıt incelemesi `4ebf8467…` H-1 ve M-1) üzerine iki dar
+> metin düzeltmesi. (K23-1) Acil sayfa şablonu N189'un 1. bölümü "altı sınıf kanal beyanı
+> bloğunu (N117) yapıştırın" diyordu ama bloğu taşımıyordu (revizyon 17'den beri): 1. bölüme
+> `--- BLOK N117` / `@@BLOK N117@@` / `--- BLOK SONU` eklendi (mevcut `@@BLOK Nnnn@@` doldurma
+> kuralı; yeni sayfa bloğu yok) ve 1. bölümün satırları N117'nin gerçek iletilerine bağlandı.
+> (K23-2) Kullanıcı sayfası N192 SO0'a "silme günü değilken açılan pencerede yanlışlıkla `a2`
+> yazıldıysa" dalı eklendi: aynı pencerede SGR2–SGR5 ve SGR8–SGR9 (`b1` ve `o` yok); böylece o
+> pencere kanal kapısını tamamlanmadı göstermez; silme günü değişmez. Değişen bloklar N189 ve
+> N192; diğer 191 blok bayt-bayt aynıdır; kit kodu, kit1 ve kit2 baytları değişmedi; `ac.ps1`'in
+> DUR ekranı değişmedi (K23-3). Ölçüm yalnız ajan-yalnız sentetik düzenekte yapıldı (gerçek kit1
+> baytları, tek gizli `-NoProfile` süreç, taklit süreç listesi ve taklit tuş; §34.29). **Dilim 5
+> adlı sınırlarla kapandı (D5-KAPANIS-A); kapanış, bu revizyonun bağımsız incelemesi
+> `READY_FOR_COMMIT=YES` ve commit ile geçerlilik kazanır** (§34.29 "Dilim 5 kapanış notu"). Prova
+> #12 ve #13 hükümleri FAIL olarak kayıtta kalır; düzeltilmiş acil sayfa yolu hiçbir insan
+> provasında koşulmadı.
 
 ---
 
@@ -292,7 +309,7 @@ ve fail-closed biçimde işlenmesi için **operatör talimatı taslağıdır**.
 | Revizyon 4 incelemesi | `vergi_step10_rev4_review_56d54d8b\independent-runbook-rev4-review.md` SHA-256 `9ab9e8ba20f06d4d4997a237ffe6962823cf705dc861afec0b8c3a825a9089c7` (repo dışı; ara sürüm `b9de07df…b720` üzerinde; `READY_FOR_COMMIT=YES`, 0C/0H/0M/2L/3O; bulgular §34.10'da işlendi) |
 | Delta3 prova yeniden koşusu (revizyon 4) | `C:\vd3_d9d67b7d` (repo dışı; kök `d9d67b7d`), runbook `5153593` (SHA-256 `a00d89e5d69100cf4af1e0d20723a6d358e74c2b68e89b50b767b76a9e29caa6`) üzerinde; plan `vergi_step10_delta3_plan_0889a820\plan_v6.md` SHA-256 `941d0f2eefb3a5104907c287c01402955281f82df0346f6d04c98c30b0d2c42b`; `run\findings.md` SHA-256 `47176765503c8db8cbbe92f16af1985239c32ee3919d728b8dea9f0592e9df72`; `run\summary.md` SHA-256 `5c33047ef48ac08dc40bdf4e8b1fb4dcdac4e3529fb0cc8d07851f525f554467`; inceleme `run\review\20261018-113730-independent-evidence-review.md` SHA-256 `9d2aa6082b70dae81d05522ede83b80547e25bc83f56a8ba391e162e63f9eb84` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H2/M3/L7/O8). Sonuç: Faz A PASS (A.16 üç ek turla), insan penceresi 1 `a4`'te `STOP KIT_TEMP_IN_CONTAINER=False`, pencere 2–3 açılmadı, Faz B yalnız kayıt; prova `STOPPED_ON_UNEXPECTED_RESULT`. Aynı planla önceki kök `C:\vd3_3fa3ee24` A.4'te bir prova yardımcısının değişken çakışmasıyla durdu (runbook bloklarına bağlı değil) |
 | Delta4 prova (revizyon 5) | `C:\vd3_69f37b8a` (repo dışı; kök `69f37b8a`; ikinci deneme), runbook `eb3fe43` (SHA-256 `89b4b0977688997e592d6f2f1a2c563eef80825afb50d5eff1d14c0d36f4bdb7`) üzerinde; plan `vergi_step10_delta4_plan_47c90162\plan_v4.md` SHA-256 `95b27e5825836bd5e5e086e17903cd7e37bf20bcb2ba56fc73c5d632b69bb429`; `run\findings.md` SHA-256 `34dabad3587406856c04879aa88d9a24d091889ac1c56a55d5ef7e97c8587061`; adım adım sayfası `run\print\adim-adim.txt` SHA-256 `2ad737a974ef742cdf03a4750eb01ad1326ec04d991681ccb7c0df5b4c577daf`; sayfa dışı ek talimat `run\decisions\u4-ek-talimat.txt` SHA-256 `a6e6072e0e9ab7a8f43a34a1470bfb80f49617271f385927334e36ae8a166d74`; inceleme `run\review\20261019-143927-independent-evidence-review.md` SHA-256 `1b36302a3190c045a05f0db590757103a0f2ab8609f523a5b466254796071c64` (verdict `REHEARSAL_EVIDENCE_VERIFIED`; C0/H0/M2/L6/O9; aynı dizindeki `20261019-143501-…` sürümünün, SHA-256 `05b0b673b5e793b6b51cbe8bfd1c66a336cfa26f1d89ef54fbbcdaa934f10b63`, yerine geçer). Sonuç: üç insan penceresi tamamlandı (P1 tam akış `a2`–`a9`, P2 kasıtlı `a5` DUR'u, P3 silme oturumu); D4-OPT FAIL (CD `a4`'ten sonra takıldı), D4-USE BELİRSİZ (not formu doldurulmadı). Aynı planla ilk deneme kökü `C:\vd3_6d54bcdb` (iç içe PowerShell oturumları, Faz B koşulmadı) |
-| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır, kit2 dilim 4 koduyla ve K17-1–K17-3 kararlarıyla revizyon 17'dir, kit2 dilim 4 prova #8 (`C:\vd5_837d8cf6`) ve prova #8-ek (`C:\vd5_79796a4c`) bağımsız kanıt incelemelerinin iki kit bulgusuyla (acil sayfa 2. bölümünde `Get-PilotStringSha` tanımsız; `z1.ps1` kanal kapısı kaynağı) revizyon 18'dir, kit2 dilim 4'ün prova #9-dar (`C:\vd5_625a9ed5`) ile "PASS_WITH_LIMITS (rev18)" kapanışı ve kit2 dilim 5 (kullanıcı sayfası N192; `K_ORDER` ve `B18_NO_DECISIONS` iletileri) ile revizyon 19'dur, revizyon 19 bağımsız incelemesinin karar 10'u (acil sayfanın açılış yolu; `USER_DECISION=R19-FIX` D-2) ve yeniden bakışının L-N1, L-N2 ve O-N1 maddeleriyle revizyon 20'dir, son tam insan provası planını yazan oturumun N192 bulgusu (silme oturumu çıkmazları) ve rev20 incelemesinin L-1 ve O-8 maddeleriyle revizyon 21'dir, son tam insan provası #10'un (`C:\vd5_9343fc2e`) bağımsız kanıt incelemesinin O5, O6, O7 ve L6 bulguları ile o provanın plan kontrolünün KR-3 ve KR-4 adaylarıyla revizyon 22'dir; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22; revizyon 17: §34.23; revizyon 18: §34.24; revizyon 19: §34.25; revizyon 20: §34.26; revizyon 21: §34.27; revizyon 22: §34.28) |
+| Revizyon | Bu sürüm `13f19d0` runbook'unun prova bulguları, avukat formu v5 ve kullanıcı kararlarıyla revizyonudur (revizyon 1), e11bab73 delta provası bulgularıyla revizyon 2'dir, delta2 provası (709b329c) bulgularıyla revizyon 3'tür, delta3 Faz A (86c4a7da) bulgusuyla revizyon 4'tür, delta3 yeniden koşusu (d9d67b7d) bulgularıyla revizyon 5'tir, delta4 provası (69f37b8a) bulgularıyla revizyon 6'dır ve işleme kiti (kit2) tasarım zinciriyle (Ek R4 kaynak tablosu; tasarım dizini `<profile>\vergi_step10_kit2_design_aa6d5422\`, SHA-256'lar Ek R4'te) revizyon 7'dir, kit2 dilim 1 koduyla revizyon 8'dir, dilim 1 prova planı kontrolünün H1 bulgusuyla revizyon 9'dur, kit2 dilim 1 prova #1'in (`C:\vd5_3de66d67`; A.10/G12 `KB_SCRIPT_LOAD_FAIL`) kod bulgusu ve biriken dar düzeltmelerle revizyon 10'dur, kit2 dilim 1 prova #2'nin (`C:\vd5_2a3883ec`) bağımsız kanıt incelemesinin H1, L1 ve L4 bulgularıyla revizyon 11'dir, kit2 dilim 1 prova #3'ün (`C:\vd5_e5b58889`) bağımsız kanıt incelemesinin M-1 bulgusu ve revizyon 11 incelemesinin L1/L2 maddeleriyle revizyon 12'dir, kit2 dilim 1 prova #4'ün 2. denemesinin (`C:\vd5_cff7fa22`) bağımsız kanıt incelemesinin M-1/M-2 bulguları, dosya avukatının e-posta eki cevabı ve revizyon 12 incelemesinin L1–L3 maddeleriyle revizyon 13'tür, kit2 dilim 2 koduyla ve AÇIK-26 kararıyla revizyon 14'tür, dilim 2 prova planı yazılırken bulunan `steps\c` dizin kusuruyla revizyon 15'tir, kit2 dilim 3 koduyla ve K-2 kararıyla revizyon 16'dır, kit2 dilim 4 koduyla ve K17-1–K17-3 kararlarıyla revizyon 17'dir, kit2 dilim 4 prova #8 (`C:\vd5_837d8cf6`) ve prova #8-ek (`C:\vd5_79796a4c`) bağımsız kanıt incelemelerinin iki kit bulgusuyla (acil sayfa 2. bölümünde `Get-PilotStringSha` tanımsız; `z1.ps1` kanal kapısı kaynağı) revizyon 18'dir, kit2 dilim 4'ün prova #9-dar (`C:\vd5_625a9ed5`) ile "PASS_WITH_LIMITS (rev18)" kapanışı ve kit2 dilim 5 (kullanıcı sayfası N192; `K_ORDER` ve `B18_NO_DECISIONS` iletileri) ile revizyon 19'dur, revizyon 19 bağımsız incelemesinin karar 10'u (acil sayfanın açılış yolu; `USER_DECISION=R19-FIX` D-2) ve yeniden bakışının L-N1, L-N2 ve O-N1 maddeleriyle revizyon 20'dir, son tam insan provası planını yazan oturumun N192 bulgusu (silme oturumu çıkmazları) ve rev20 incelemesinin L-1 ve O-8 maddeleriyle revizyon 21'dir, son tam insan provası #10'un (`C:\vd5_9343fc2e`) bağımsız kanıt incelemesinin O5, O6, O7 ve L6 bulguları ile o provanın plan kontrolünün KR-3 ve KR-4 adaylarıyla revizyon 22'dir, kit2 dilim 5 prova #13'ün (`C:\vd5_53b2e35e`) bağımsız kanıt incelemesinin H-1 (acil sayfa 1. bölümünde N117 bloğu yok) ve M-1 (silme günü değilken yanlışlıkla `a2`) bulgularıyla ve dilim 5'in adlı sınırlarla kapanışıyla (kullanıcı kararı D5-KAPANIS-A) revizyon 23'tür; ID → bölüm eşlemesi **§34**'tedir (revizyon 2: §34.8; revizyon 3: §34.9; revizyon 4: §34.10; revizyon 5: §34.11; revizyon 6: §34.12; revizyon 7: §34.13; revizyon 8: §34.14; revizyon 9: §34.15; revizyon 10: §34.16; revizyon 11: §34.17; revizyon 12: §34.18; revizyon 13: §34.19; revizyon 14: §34.20; revizyon 15: §34.21; revizyon 16: §34.22; revizyon 17: §34.23; revizyon 18: §34.24; revizyon 19: §34.25; revizyon 20: §34.26; revizyon 21: §34.27; revizyon 22: §34.28; revizyon 23: §34.29) |
 
 **Kopyalama ilkesi.** Temel runbook'tan alınan bölümler **atıf yerine
 kopyalanmıştır**: operatör yürütme sırasında tek belgeyle çalışır ve temel
@@ -6444,6 +6461,7 @@ optik blok (§4.2/10) kendisinden sonraki blok numaralarını bir kaydırır
 | **Revizyon 20:** N188 (`ev.ps1` şablonu: `MATCH`'te acil sayfayı pinli Not Defteri'nde `-Wait` olmadan açar; yeni tek satırlık çıktı `OPEN_FAIL`; iki yeni doldurulan sabit `<notepad-file-version>`, `<notepad-sha256>`) ve N192 (D8 açılış yolu ve `OPEN_FAIL` dalı; G6 öncelik paragrafı; S47 H dalı) değişti; diğer 191 blok bayt-bayt aynı | — (yeni prova yok; rev19 incelemesi karar 10 / O-3 ve yeniden bakışı L-N1, L-N2, O-N1) | Değişti (§34.26) | **Son tam insan provası** (ayrı kullanıcı kararı; planı yazılmadı; §34.26 notları): `ev.ps1` yeni şablonla doldurulur (Not Defteri (6)'da ölçülür), `EV_PS1_SHA256` ve `pins2.txt`'nin `ev.ps1` satırı yeniden; acil sayfa dalı gerçek pencerede bir kez; N192 yeni hâliyle; bayt değişen bloklar için önceki kanıt devralınmaz; kit1 değişmedi |
 | **Revizyon 21:** N192 (SO12–SO15: silme oturumunda önceki pencerelerde çalışmış silme adımları ve kitin sonraki adım denetimi; `Y2_ALREADY` → D8; SGR1–SGR10: kilit yazmayan DUR'dan sonra `o` ile silme oturumu girişi; S46 `z1` iletisi; G6 adlı istisnaları; D8 ikinci GÖRMEZSEN başlığı) değişti; diğer 192 blok bayt-bayt aynı | — (yeni prova yok; son tam insan provası planını yazan oturumun kaynak bulgusu; rev20 incelemesi L-1, O-8) | Değişti (§34.27) | **Son tam insan provası** (ayrı kullanıcı kararı; planı yazılmadı; §34.27 notları): `k silme`'den sonra kasıtlı DUR ve SO13 geçişi; kilit yazmayan DUR'dan sonra SGR girişi; N192 yeni hâliyle; kit kodu değişmedi, kit2 kurulumu ve pinleri değişmez |
 | **Revizyon 22:** N192 (G7 işaret kâğıdı; G11 ve B6 KÜME penceresi ve kümenin durdurulması; G13 `s29b` PASS sonrası KİT/KÜME yasağı; yeni G14; HAZIRLIK yeni H6 Windows Update bakışı, H8 USB aygıtı / disk görüntüsü / optik sürücü, eski H6–H11 → H7–H12 ve bütün H atıfları; A37, İ48, S53, E5 doğrudan BİTİŞ; ERKEN KAPANIŞ ve SİLME OTURUMU başlık koşulları; B1, B3, B5, B6) değişti; diğer 192 blok bayt-bayt aynı | Prova #10 (`C:\vd5_9343fc2e`) Faz B `PROVA_DILIM5=FAIL`; inceleme `d1d1f422…` (O5, O6, O7, L6); plan kontrolü KR-3, KR-4 | Değişti (§34.28) | **Dar prova** (ayrı kullanıcı kararı; planı yazılmadı; §34.28 "Dar prova planına notlar"): N192 yeni hâliyle; kapsam 1–4 gerçek pencerede birer kez; kit kodu değişmedi, kit2 kurulumu ve pinleri değişmez (N192 yalnız `kit-build.txt` `KIT_PAGE_SHA256`'ya girer) |
+| **Revizyon 23:** N189 (acil sayfa şablonu: 1. bölümde `@@BLOK N117@@`; 1. bölüm satırları N117'nin iletilerine bağlı; başlık satırı) ve N192 (SO0: silme günü değilken yanlışlıkla `a2` yazıldığında aynı pencerede SGR2–SGR5 ve SGR8–SGR9) değişti; diğer 191 blok bayt-bayt aynı | Prova #13 (`C:\vd5_53b2e35e`) Faz B `PROVA_DILIM5_DAR=FAIL`, `KIT2_BIRLESIK_D1_D5_R22=FAIL`; inceleme `4ebf8467…` (H-1, M-1) | Değişti (§34.29) | **Yeni insan provası yok** (kullanıcı kararı D5-KAPANIS-A; dilim 5 adlı sınırlarla kapandı, §34.29): ajan-yalnız sentetik kanıt (§34.29). Kit kodu değişmedi; runbook'ta pinli hiçbir kit değeri değişmez. Bir sonraki pencere öncesi kurulumda acil sayfa yeni N189'dan üretilir; sayfanın SHA-256'sı, `ev.ps1`'in `<emergency-page-sha256>` sabiti, `EV_PS1_SHA256` ve `pins2.txt`'nin `ev.ps1` satırı koşuya özgü kurulum değerleri olarak yeniden ölçülür (Ek R4/23 madde 1, 6, 7); N192 yalnız `kit-build.txt` `KIT_PAGE_SHA256`'ya girer |
 
 ### 34.5 Yazım sınırları
 
@@ -13616,6 +13634,386 @@ bayt-bayt yazıldı.
 
 **Sonuç.** `READY_FOR_INDEPENDENT_REVIEW`.
 
+### 34.29 Revizyon 23
+
+YENİ (`SCOPE_APPROVED` revizyon 23: K23-1 EVET, K23-2 EVET, K23-3 HAYIR; planlayıcı oturumunda
+verildi, saniye ölçülmedi, üst sınır `2026-11-17T19:38:19+03:00` ("SCOPE EVET");
+`USER_DECISION=D5-KAPANIS-A`, üst sınır `2026-11-17T19:14:56+03:00` ("Evet, böyle kapat"); oturum
+KIT2-REV23; tek yazan oturum). Konu: prova #13'ün bağımsız kanıt incelemesinin H-1 ve M-1
+bulgularının dar metin düzeltmesi ve dilim 5'in adlı sınırlarla kapanış notu. Girdi: `6e54fe2`
+runbook'u (SHA-256 `7d60877ef8d1c70e995b4b332dd934a6c1734c01440cedbbdf2bfb27334e2ee7`, 24611
+satır, CR 0, 193 blok — §34.28'in kaydıyla aynı; HEAD = `origin/claude-dev` =
+`6e54fe23cf63c22f6bac986e383829f5f3b78e28`; çalışma ağacı temiz; diskten doğrulandı). Yalnız bu
+dosya değişti; kit kodu (hiçbir `.ps1` bloğu; N188 dahil), kit1 ve kit2 baytları, kod, şema, veri,
+test, başka runbook veya `CLAUDE.md` değişmedi. Commit ve push yapılmadı. Gerçek kit penceresi,
+başlatıcılar (`t0`, `kume`, `adm.ps1`, `z1.ps1`, gerçek kurulumun `ev.ps1`'i), gerçek CLI, `psql`,
+PostgreSQL, `pg_ctl`, 7z, VeraCrypt, Not Defteri, Windows Update ve ağ çalıştırılmadı; hiçbir porta
+bağlanılmadı; `.env` açılmadı; `subst` ve junction kullanılmadı. Aşağıda "taban L…" `6e54fe2`
+runbook'unun satırıdır; "sayfa L…" yeni N189 veya N192 bloğunun kendi satırıdır (1 = ilk satır).
+
+Girdi SHA-256'ları (diskten ölçüldü, hepsi tuttu): kanıt incelemesi
+`<profile>\vergi_step10_kit2_d5dar3_evidence_review_c6b4de70\independent-evidence-review.md`
+`4ebf8467b6a8c5d5a2fc755160ea68528ab40cd62260aeda673af3521033840c` (271 satır) ve aynı dizindeki
+`sha-table.txt` `a26f08323de0fb76ad94a144c564a49e2430c2166e92d15ac39ebe9b05439bad`; prova #13 Faz B
+`C:\vd5_53b2e35e\run\summary.md` `3bcd15a3702e3398b8bdefe17b5ea7007634c0a42cadb7ef748707a5ae9c84c9`
+ve `run\findings.md` `5b7cd3bd26645707e9e452e4eb2a1f520f4c89bd0a2af64e013184cbc70c7958` (yalnız
+okundu). Acil sayfaların, `sec\` dizinlerinin ve sayfaların P satırının içeriği açılmadı; acil
+sayfanın içeriği runbook şablonundan okundu.
+
+**Neden.** Prova #13 (`C:\vd5_53b2e35e`) Faz B `PROVA_DILIM5_DAR=FAIL` ve
+`KIT2_BIRLESIK_D1_D5_R22=FAIL`; bağımsız kanıt incelemesi (Sonnet 5.5) `REHEARSAL_EVIDENCE_VERIFIED`
+(0C/1H/2M/5L/6O). Bu revizyonun ele aldığı bulgular:
+
+1. **H-1.** N189 1. bölümü "alti sinif kanal beyani blogunu (N117) yapistirin" diyordu (taban
+   L23185), ama şablonda `--- BLOK N117` yoktu: doğrulanmış sayfada 63 `--- BLOK` satırından 0'ı
+   N117'ydi. ACIL KIT yalnız kit1'i yükler (taban L23181–L23182); `six-class.txt`'yi bugün yalnız
+   kit2 `b0` yazar (N140, taban L19387–L19393). Sayfayı harfiyen izleyen biri ACIL yolunda altı
+   sınıf kaydını üretemez; 1. bölümün GÖRMEZSEN'i "a9 yazin, pencereyi kapatin" der (taban
+   L23186): acil silme yolu fail-closed biçimde kullanılamazdı (veri kaybı yok; kullanılabilirlik
+   kusuru). Kusur N189'un ilk yazıldığı revizyon 17'den beri örtüktü.
+2. **M-1.** `s5` oturumunda, silme günü değilken DUR kilidi varken ekran "Silme gunu degilse a2
+   yazmadan pencereyi simdi kapatin" dediği hâlde (taban L13975) kullanıcı `a2` ve sonra `a9`
+   yazıp kapattı; sayfada bu durum için geri dönüş dalı yoktu.
+
+**Kullanıcı kararları.**
+
+| Karar | Metin | Uygulama |
+|---|---|---|
+| `USER_DECISION=D5-KAPANIS-A` (planlayıcı oturumunda; üst sınır `2026-11-17T19:14:56+03:00`) | Dilim 5, yeni bir beş pencereli insan provası yapılmadan, bu revizyon + ajan-yalnız sentetik kanıt + bağımsız inceleme + commit ile adlı sınırlarla kapanır; prova #12 ve #13 hükümleri kayıtta değişmeden kalır | Aşağıda "Dilim 5 kapanış notu"; Ek R4/16.5 dilim 5 durumu; üst uyarı; §0; §34.4 |
+| `SCOPE_APPROVED` revizyon 23 (üst sınır `2026-11-17T19:38:19+03:00`) | K23-1 EVET (N189 1. bölümü), K23-2 EVET (N192 geri dönüş dalı), K23-3 HAYIR (`ac.ps1` DUR ekranı değişmez); kapsam dışı: kit kodu ve kit1/kit2 baytları, prova kartı, BD metinleri, C3 şablonu, Faz B yardımcısı ve her türlü prova planı maddesi, kanal kapısının kuralı, acil silme sırası, onay satırları ve silme hedefleri, `r1`–`r5`, süreler, `src/`, şema, hukuki kural, avukat cevapları, `CLAUDE.md` | Bu revizyon |
+
+**Madde → değişiklik → bloklar.**
+
+| Madde | Değişiklik | Yer | Blok |
+|---|---|---|---|
+| K23-1 | 1. bölümde N117 bloğu; 1. bölüm satırları N117'nin iletilerine bağlı; başlık satırı | N189 sayfa L1, L17–L25 | Değişti |
+| K23-1 (bağlı metin) | Ek R4/13 madde 2.1; Ek R4/23 giriş paragrafı ve madde 7; Ek R4/16.5 revizyon 23 notu | Metin | — |
+| K23-2 | SO0'a silme günü değilken yanlışlıkla `a2` dalı | N192 sayfa L861–L870 | Değişti |
+| K23-2 (bağlı metin) | Ek R4/24 madde 12 | Metin | — |
+| K23-3 | Değişiklik yok (`ac.ps1` ekranı); adlı sınır | — | — |
+| Kapanış | Bu bölüm, "Dilim 5 kapanış notu"; üst uyarı; §0; §34.4; Ek R4/16.5 dilim 5 durumu | Metin | — |
+
+**K23-1 (a) — N117'nin yalnız kit1 yüklü oturumdaki bağımlılıkları (kaynaktan).** N117'nin gövdesi
+(taban L14789–L14856) tek bir `& { … }`'dir; dışarıdan yalnız şu adları kullanır:
+
+| Ad | Kit1'deki tanımı (taban) | N117'deki kullanımı (taban) |
+|---|---|---|
+| `$global:KitSess` | `ac.ps1`: L13776 (yükleme koruması), L13959 (`s<k>`) | L14793; L14795 (boş/`none` ise "DUR. Kit yuklu degil" ve çıkış) |
+| `$global:KitSessDir` | L13781 (`$null`), L13959 | L14794, L14797 (`a3.txt`), L14799 (`six-class.txt`) |
+| `$global:KitTeardown` | L13783 (`$false`), L13965 (`DUR.txt` varsa `$true`) | L14826 (`KIT_TEARDOWN_SESSION=`) |
+| `$global:KitE2Dir` | L13782, L13957 | L14826 (`E2_A4_RECORD_PRESENT=`) |
+| `Write-KitDurRule` | L13791–L13807 (`function global:`) | L14812 (`Test-Path Function:\Write-KitDurRule` korumalı) |
+
+Geri kalan her şey .NET türleri (`System.IO.File`, `Console`, `DateTimeOffset`, `CultureInfo`,
+`Encoding`), kit1 penceresinde zaten yüklü iki çekirdek modülün komutları (`Write-Host`,
+`Test-Path`, `Join-Path`, `Start-Sleep`) ve bloğun kendi içinde tanımlanan dört fonksiyondur
+(`Get-SixNow`, `Add-SixLine`, `Write-SixStop`, `Read-SixYesNo`; L14804–L14825). Kit2 fonksiyonu
+(`*-Kb*`), `Get-PilotStringSha` veya yer tutucu yoktur. N191 dersinin uygulanışı: rev18'de N12'nin
+tamamı yan etkili olduğu için alınmamıştı; N117 ise kit kilidi yazmaz, yalnız kendi kaydını yazar
+(`six-class.txt`, CreateNew L14828 ve Append L14806) ve kitin kendi akışında da bütün hâliyle
+çalışır: kit2 `b0` aynı baytları `n117.ps1` olarak çağırır (N140, taban L19389–L19393). Bu yüzden
+yeni bir yan etkisiz sayfa bloğu GEREKMEDİ: blok zaten runbook bloğu N117'dir ve mevcut Ek R4/23
+madde 7 `@@BLOK Nnnn@@` kuralıyla doldurulur. K23-1 (c) (kit kodu değişikliği) tetiklenmedi.
+
+**K23-1 (b) — sayfa değişikliği (N189).**
+
+| Sayfa (yeni N189) | Değişiklik | Kaynak (taban) |
+|---|---|---|
+| L1 | Başlık: "revizyon 23: 1. bolumde N117" | — |
+| L17 | YAP: "asagidaki ... blogunu (N117) yapistirin"; GÖR: ilk soru satırı "Yapay zeka kodlama asistani kapali mi?   Evet: E tusu   Hayir: H tusu" | Soru metni L14832, ek L14817 (`"$Question   Evet: E tusu   Hayir: H tusu"`); satır çalışma anında birleşir (aşağıdaki sentetik kanıtta ekranda bayt-eşit görüldü) |
+| L18–L20 | `--- BLOK N117` / `@@BLOK N117@@` / `--- BLOK SONU` | Ek R4/23 madde 7 (L22301–L22313); N117 L14788–L14857 |
+| L21 | YAP: altı soruya gerçeğe göre E veya H; GÖR: "KANAL BEYANI TAMAM. Sayfadaki madde 3 kalan adimlarina gecin." ve bu sayfadaki karşılığı (2. bölüm) | L14849 |
+| L22 | GÖRMEZSEN: "BEKLEYIN: ... saniye daha. Sonra yeniden a3 yazin. (Kayit yazilmadi.)" → bekleyip `a3` | `a3` L14088 |
+| L23 | "Once bu oturumda a3 TAMAM olmali. (Kayit yazilmadi.)" → `a3`, sonra blok yeniden | L14798 (kayıtsız ret) |
+| L24 | "Kanal beyani bu oturumda zaten yazildi. Tekrar calismaz." → TAMAM görüldüyse 2. bölüm, görülmediyse L25 | L14800 (kayıtsız ret) |
+| L25 | GÖRMEZSEN (başka her sonuç, "DUR" ile başlayan satır dahil): `a9`, kapat, veri korunur, yazılı karar; kitin "DUR OLURSA" satırı yerine bu satır | `$sixStop` "DUR. Kanal beyani gecmedi (...)" L14803; `Write-KitDurRule` içerik sonrası "Icerik alindi: pencereyi kapatin ve sayfadaki DUR OLURSA bolumunu uygulayin." L13802; eski GÖRMEZSEN L23186 |
+
+Sayfanın doldurma kuralı değişmedi (Ek R4/23 madde 7'ye "1. bölümdeki `@@BLOK N117@@` aynı kuralla"
+cümlesi eklendi); sayfanın satır sayısı hiçbir runbook yerinde sabit bir değere bağlı değildir
+(Ek R3/2 madde 9 ve Ek R4/24 madde 2 yalnız konum ve `<…>`/`@@` kurallarını koyar; taban L13707–
+L13726, L22301–L22313; tabanda tam sözcük "159" ve "63" taraması N189'a, acil sayfaya veya blok
+başlıklarına bağlı yalnız bir geçiş buldu: §34.24'ün tarihsel "156 → 159" satırı, taban L12022). Blok listesini sabit dizi olarak taşıyan bir runbook
+kod bloğu yoktur; `@@BLOK` yalnız N189'da ve düz metinde geçer (§34.24'te anılan prova #8 `ft.ps1`
+sabit dizisi bir prova yardımcısıdır, runbook bloğu değildir; aşağıda adlı sınır).
+
+**K23-1 (d) — `z1` kanal kapısı ACIL/D8 yolunda.** `z1.ps1` yalnız İMHA satırıyla yüklenir ve
+kit2'nin `kbl.ps1`/`kbe.ps1` dosyalarını pin denetimiyle yükler (taban L22861; pin farkında
+`Z1_KB_LOAD_PIN_MISMATCH` L22908; güvenli dosya `Read-KbSecure 'IMHA'` L22915). D8 (a)'da kit2
+yüklenemediği için İMHA da yüklenemez; D8 (b)'de `z1` `s29a`, `s26a`, `s26b` PASS ve silme kararını
+ister (`Z1_PRECONDITION`, L22945), oysa acil yol tam da bunlar tamamlanamadığında açılır. Acil sayfa
+İMHA satırını hiç açmaz: 7. bölüm kit yüklemeyen ayrı bir pencerede N051/N102/N103'ü çalıştırır
+(L23309–L23323) ve 8. bölüm "Bu yolda kit kaydi yoktur" der (L23327). Bu yüzden kanal kapısı
+(L23069–L23078) D8 yolunda hesaplanmaz; o yolda `POSTCONDITION_11`'i veri silindikten sonra ajan
+oturumu (D7) ölçer (Ek R4/13 madde 3, L16604–L16608). O ölçümde ACIL KIT oturumu da `ac.txt`
+taşıyan bir oturumdur: eski şablonla `six-class.txt` yazılamadığı için kural gereği kapıyı
+tamamlanmadı gösterirdi (Ek R4/14 madde 4, L16801–L16816); yeni şablonla göstermez (aşağıdaki
+kanıt). **3.–7. bölümler `six-class`'a bağlı değildir:** doldurulmuş yeni sayfada `six-class`,
+`CHANNEL_GATE` ve `AI_CONTENT_CHANNELS` dizgeleri 0., 2., 3., 4., 5., 6., 7. ve 8. bölümlerde 0 kez,
+yalnız 1. bölümde (N117) geçer; pozitif kontrol: aynı sayaç N117, N187, N108 ve N140'ta dizgeyi
+buldu. Kaydı okuyan kaynaklar yalnız `a4` (L14106–L14111; acil yolda çalışmaz, `a4`–`a7` silme
+oturumunda reddedilir L13902) ve `z1` (L23073)'tür.
+
+**K23-2 — seçenek tablosu (silme günü değilken açılan "SILME OTURUMU" penceresinde yanlışlıkla
+`a2`).** Kaynak: kapı, `ac.txt` taşıyan her `steps\s<k>` için `a2.txt`
+(`AI_CHANNEL_PROCESS_COUNT=0`), `a3.txt` (`SCAN_INTERVAL_OK=True`), `six-class.txt`
+(`AI_CONTENT_CHANNELS_CLOSED=True`) ve `a9.txt` (`CLOSING_SCAN_OK=True`) ister; her biri kendi
+`STEP=`, `KIT_SESSION=s<k>` ve `STEP_RESULT=PASS` satırıyla, `STOP` olmadan (taban L23069–L23078);
+`POSTCONDITION_11` buna bağlıdır (L23082); `s29b`'nin PASS'i yalnız imha kaydının yazılmasını
+ister (L23088). Silme oturumunda `a2`/`a3` kilitten muaftır (L13967–L13968), `a4`–`a7` reddedilir
+(L13902); kit2 `b0` silme oturumunda tanımlıdır (Ek R4/23 madde 2, L22242–L22244; `bc.ps1`
+`b0`'ı silme oturumu koşulunun dışında tanımlar, L18146–L18147, ve silme oturumu yükleme iletisi
+onu sayar, L18191). Prova #13'te DUR varken açılan silme oturumu `s8` kanal kapısını bozan
+oturumlar arasında değildir (inceleme L-3: kırıcılar `s5`, `s6`, `s7`); bu, `s8`'de `b0` ile
+yazılmış geçerli bir `six-class.txt` bulunduğu anlamına gelir (çıkarım; `s8` kaydı açılmadı). `ac.ps1` her
+açılışta ilk boş `steps\s<k>`'yı açar ve önceki oturumlara bakmaz (L13959, L13964–L13966).
+
+| Yol (silme günü değil, "SILME OTURUMU") | Oturumun kayıtları | Kanal kapısı (bu oturum) | Ertesi gün silme oturumu |
+|---|---|---|---|
+| Bugünkü SO0: `a2` yazmadan kapat | `ac.txt` (+ kit2 `bc.txt`) | Tamamlanmadı (`a2` yok) — ölçüldü (K2N: `False`) | Açılır: yeni `s<k+1>`, `KIT_TEARDOWN_SESSION=True`, `a2` PASS — ölçüldü (K2N) |
+| (A) `a2` sonra `a9`, kapat (s5'in yaptığı; inceleme kart adayı) | `ac`, `bc`, `a2`, `a9` | Tamamlanmadı (`a3`, `six-class` yok) — ölçüldü (K2A: `False`) | Açılır — ölçüldü (K2A) |
+| (B) `a2` sonra doğrudan X | `ac`, `bc`, `a2` | Tamamlanmadı (`a3`, `six-class`, `a9` yok) — yalnız kaynak kuralıyla (L23069–L23078); ayrıca koşulmadı | Açılır (aynı `ac.ps1` kuralı) |
+| **(C) `a2` sonra SGR2–SGR5 ve SGR8–SGR9, kapat (seçilen)** | `ac`, `bc`, `a2`, `a3`, `b0`, `six-class`, `a9` | Tamamlandı (dört kayıt PASS) — ölçüldü (K2C ilk gün: `True`; silme günü oturumu da tamamlanınca iki oturumla `True`) | Açılır — ölçüldü (K2C) |
+
+`s29b`'nin `STEP_RESULT=PASS`'i dört yolda da kapıya bağlı değildir (L23088); fark yalnız imha
+kaydındaki `CHANNEL_GATE_CONTINUOUS` ve `POSTCONDITION_11` satırlarıdır (SO0'ın "silmeyi
+durdurmaz" cümlesi). Hiçbir yol kit davranışı değişikliği gerektirmez.
+
+Seçilen dal: (C). Gerekçe: kapıyı tamamlanmadı göstermeyen tek yol odur; adımlar içerik okumaz
+(`a4`–`a7` silme oturumunda çalışmaz; `b1` ve `o` yazılmaz; `b0` yalnız N117'yi çalıştırır ve kilit
+yazmaz); kullanıcı aynı adım dizisini SGR1–SGR10'dan tanır; herhangi bir GÖR çıkmazsa dal (A)'ya
+düşer, yani bugünkü sonuçtan kötü değildir. Bedel: pencere yaklaşık üç dakika daha açık kalır.
+K6 (N190 3. satırı) yalnız `a9` öz beyanının `SELF_REPORT_AI_HELP_SHARE` satırına ve iç içe/çakışan
+yüklemeye bakar; gerçeğe uygun cevaplarla (C) yeni bir K6 dalı üretmez. Dal "kiti bir daha açmayın"
+demez; silme günü değişmez.
+
+**Kanıt tablosu (değişen N192 cümlesi ↔ kaynak).**
+
+| Sayfa (yeni N192) | Cümle | Kaynak (taban) |
+|---|---|---|
+| L861–L862 | `a2` yazıldıysa ("a2 TAMAM. ..." göründü) | `a2` PASS iletisi L14077 |
+| L862–L863 | Aynı pencerede SGR2–SGR5 (2 dakika, `a3`, `b0`, altı soru; `b1` ve `o` yazılmaz) | `a3` 120 sn kuralı L14086–L14088; `b0` ön koşulu bu oturumda `a3` PASS (N140 L19383–L19385); SGR5 GÖR'ündeki "(b1 bu pencerede YAZILMAZ.)" (taban L24465, değişmedi) |
+| L863–L865 | SGR8–SGR9, sonra X; DUR OLURSA D5'ten; SGR10'un "Sonra SO3" cümlesi yok | `a9` silme oturumunda çalışır (L13974); `a9` PASS iletisi "a9 TAMAM. Pencereyi kapatabilirsiniz." L14225; SO0'ın mevcut "D5'ten itibaren" yolu (taban sayfa L861) |
+| L865–L866 | Pencere kanal kapısını tamamlanmadı göstermez | Kapı L23069–L23078; sentetik kanıt K2C |
+| L866–L868 | Bir GÖR çıkmazsa `a9` ve kapat; kapı tamamlanmadı kalır | Kapı aynı; sentetik kanıt K2A; "KIT2 YUKLENEMEDI" N135 L18090 |
+| L868–L870 | Silme günü değişmez; KİT yeni oturum açar | `ac.ps1` L13959, L13964–L13966; sentetik kanıt K2N/K2A/K2C ikinci gün |
+
+**Ajan-yalnız sentetik kanıt (insan penceresi yok).** Kanıt dizini (kapanış koşulu; scratchpad
+kuralının tek istisnası): `<profile>\vergi_step10_rev23_acil_proof_2fb2402a` (önceden yoktu; dosyalar
+CreateNew; üzerine yazma yok). Özet `summary.md` SHA-256
+`2fdb37b8fed4f93c717d0f685ea45bbe294bd215a99e8b2f9100b5b2bb0626b3` (dizindeki diğer bütün dosyaların
+SHA-256 listesini taşır). Başarısız ilk tur `run-1` silinmeden korunur; geçerli tur `run-2`'dir.
+
+- **Düzenek.** Oturum scratchpad'inde sekiz sentetik kök; her birinde kit1'in 17 `.ps1` dosyası yeni
+  runbook'un N105–N113, N3, N4, N6, N14–N17, N51 bloklarından bayt-bayt (tabanla da bayt-eşit;
+  Ek R3/1 tablosundaki on SHA-256 tuttu), sentetik `kit-values.txt` ve `pins.txt`; içerik
+  alınmış sayılması için `steps\e2\a4.txt` (`STEP_RESULT=PASS`); (A) değişkenlerinde `DUR.txt`.
+  Tek bir gizli `powershell.exe -NoProfile -ExecutionPolicy Bypass -File` süreci (20:07:27–20:21:05)
+  her senaryoda gerçek `ac.ps1`'i dot-source ile yükledi (ACIL KIT satırının yaptığı gibi) ve
+  gerçek `a2`, `a3`, `a9` komutlarını çalıştırdı; `a3`'ün 120 sn kuralı gerçek saatle (125 sn
+  bekleme) karşılandı. N117, doldurulmuş YENİ sayfanın 1. bölümünden alınan metinle (runbook N117'si
+  ile bayt-eşit) çalıştırıldı. Taklitler (kit baytları değişmedi): süreç listesi süzgeci
+  (`Get-Process` gölgesi; N4'ün deseni kit dosyasından okundu), `Write-Host` dinleyicisi (ekran
+  kaydı), çocuk süreçte sahte `USERPROFILE` (kitin "değer profil altında olmaz" kuralı için; değerler
+  scratchpad'de) ve TEMP/TMP yönlendirmesi, konsol giriş tamponuna tuş yazan bir iş parçacığı.
+  Kanal kapısı, N187'nin kapı parçası (taban L23069–L23078) ve N136'nın `Read-KbLines` tanımı (taban
+  L18211–L18214) runbook'tan bayt-eşit alınarak sentetik kayıtlar üzerinde çalıştırıldı.
+- **Pozitif kontroller (CTL).** Enjekte edilen tuş akıtılmadan okunursa görünür (`True/X`);
+  süzgeçsiz gerçek süreç listesinde N4 deseni sıfırdan büyük sayı verir; süzgece sahte bir
+  `claude` süreci eklenince gerçek `a2` `AI_CHANNEL_PROCESS_COUNT=1` ve `STEP_RESULT=STOP` yazdı.
+  Her N117 çalıştırmasından önce kuyruğa geçersiz bir tuş kondu; N117'nin kendi akıtması onu yuttu
+  ("Gecersiz tus." 0).
+- **(i) Eski N189 (revizyon 22).** Kilit var, `a2` ve `a3` PASS; eski sayfanın 1. bölümünde
+  yapıştırılacak blok 0; `six-class.txt` yok; `a9` PASS; kapı parçası `False`. Kusur yeniden
+  üretildi.
+- **(ii) Yeni N189.** Değişken (A) kilit var: `ac.txt` `KIT_TEARDOWN_SESSION=True`, `a2`, `a3` PASS;
+  ekranda ilk soru satırı bayt-eşit; altı E → "KANAL BEYANI TAMAM. ..." ve `six-class.txt` (STEP,
+  `KIT_SESSION=s1`, `KIT_TEARDOWN_SESSION=True`, `E2_A4_RECORD_PRESENT=True`, altı sınıf `True`,
+  `AI_CONTENT_CHANNELS_CLOSED=True`, `STEP_RESULT=PASS`, `STOP` yok); `a9` PASS; kapı `True`;
+  `DUR.txt` baytları değişmedi. Değişken (B) `DUR.txt` yok: yükleme iletisi "KIT YUKLENDI. Oturum s1.
+  ..." ve `KIT_TEARDOWN_SESSION=False`; aynı akış PASS, kapı `True`, `DUR.txt` sonunda da yok.
+- **(iii) `a3` TAMAM olmadan N117** (değişken B, `a2`'den hemen sonra): "Once bu oturumda a3 TAMAM
+  olmali. (Kayit yazilmadi.)"; `six-class.txt` ve `DUR.txt` yok.
+- **(iv) H cevapları** (kilit yok): `six-class.txt` `AI_CODING_ASSISTANT_CLOSED=False`, `STOP
+  AI_CONTENT_CHANNELS_CLOSED=False`, `STEP_RESULT=STOP`; ekranda "DUR. Kanal beyani gecmedi (...)",
+  "SIMDI a9 YAZIN (kapanis taramasi)." ve içerik sonrası "DUR OLURSA" satırı; `DUR.txt` yazılmadı;
+  `a9` PASS; kapı `False`.
+- **(v) İkinci çalıştırma** (değişken A, PASS'ten sonra): "Kanal beyani bu oturumda zaten yazildi.
+  Tekrar calismaz."; `six-class.txt`'nin SHA-256'sı değişmedi.
+- **(vi) Başlıklar** (betikle): yeni şablonda ve doldurulmuş yeni sayfada `--- BLOK N117` tam 1;
+  diğer 31 blok aynı sırada ve gövdeleri bayt-eşit (yukarıdaki statik denetim).
+- **K23-2** (kilit var, silme günü değil): K2N, K2A ve K2C yukarıdaki seçenek tablosundaki
+  sonuçları verdi; üçünde de "ertesi gün" yeniden yüklemede kit yeni `s2` oturumunu açtı
+  (`KIT_TEARDOWN_SESSION=True`) ve `a2` PASS oldu; K2C'de silme günü oturumu da tamamlanınca iki
+  oturumla kapı `True` kaldı. K2C'de `b0` yerine aynı N117 baytları çalıştırıldı (adlı sınır).
+- **Sonuç.** 58 kontrolün 58'i PASS; FAIL 0. Kanıt dosyalarında kullanıcı adı, kullanıcılar kök
+  yolu, uygulama veri dizini ve scratchpad izi 0 (pozitif kontrol: aynı tarama scratchpad'deki
+  yol dosyasında isabet verdi).
+
+**Aynı sınıf taraması (sayfaların andığı her blok ve adım adı; betikle, pozitif kontrollü).**
+N189: 30 `@@BLOK`/`@@SATIR` doldurma satırının hepsi var olan bir runbook bloğuna veya N190'ın üç
+satırından birine gider (geçersiz 0); düz metinde anılan her `Nnnn` adının sayfada kendi `--- BLOK`
+başlığı vardır. Tabanda bu kurala uymayan tek ad sayfa L17'deki `N117`'ydi (H-1, betikle yeniden
+üretildi); yenide 0. Pozitif kontrol: yeni sayfadan N117 bloğu silinmiş bir kopyada tarayıcı
+başlık satırı dahil üç `N117` anışını buldu. Komut adları: N189'un andığı `a2`, `a3`, `a9` kit1'de
+tanımlıdır (taban L13967–L13974). N192: adım ailelerinin (G, H, A, İ, S, E, SO, SGR, K, O, D, B)
+tanımı 218 (taban 218), atıf 371 (taban 364; +7: SGR2, SGR5, SGR8, SGR9, SGR10, SO3, D5); tanımsız
+atıf iki ve ikisi de tabanda aynıdır (sayfa L45 `O7` runbook atfı; sayfa L456 "K KALIBI (K1-K7)",
+§34.28 sonraki revizyon (6)). Pozitif kontrol: "SGR8-SGR9" → "SGR8-SGR19" bozulmuş kopyada yeni
+tanımsız atıf bulundu. N192'nin yeni cümlesindeki komutlar (`a2`, `a3`, `b0`, `b1`, `o`, `a9`) kitte
+vardır (L13967–L13974; N140; N141; N145); yeni cümle hiçbir blok anmaz.
+
+**Tırnak denetimi.** Yeni ve değişen sayfa cümlelerindeki her tırnaklı ekran metni kit kaynağında
+bayt-eşit bulundu: N117 L14798, L14800, L14803, L14817, L14832, L14849; `a3` L14088 (iki parça);
+`a3 TAMAM.` L14098; `a2 TAMAM.` L14077; "sayfadaki DUR OLURSA bolumunu uygulayin" L13802;
+"KIT2 YUKLENEMEDI" N135 L18090; "SILME OTURUMU" L13975. Negatif kontrol: tek karakteri değiştirilmiş
+iki metin bulunmadı. İlk soru satırı çalışma anında iki parçadan birleşir; birleşik hâli sentetik
+kanıtta ekranda bayt-eşit görüldü (VA `prompt1_seen`).
+
+**Sayfa akışı (insan gözüyle).**
+
+- **N189 (acil sayfa) §0 → §8.** §0: EV `MATCH` → §1; başka her çıktı → Ek R4/13 madde 8 (döngü
+  yok). §1: ACIL KIT satırı → `a2` (GÖR) → 2 dakika → `a3` (GÖR; erken yazılırsa L22 "BEKLEYIN"
+  dalı aynı adıma döner, kit süreyi kendisi sayar, sonsuz döngü yok) → N117 yapıştırma (GÖR ilk
+  soru) → altı E/H (GÖR "KANAL BEYANI TAMAM ..." = 2. bölüm). `a3` atlandıysa L23 tek bir geri
+  dönüş verir; ikinci yapıştırma L24'te ya 2. bölüme (TAMAM görüldüyse) ya L25'e gider; başka her
+  sonuç L25: `a9`, kapat, yazılı karar (kitin "DUR OLURSA" satırına gidilmez; acil sayfadan kullanıcı
+  sayfasının D8'ine ve oradan yeniden acil sayfaya dönen bir döngü yok). §2 → §3 (PSQL_ROW dalları
+  ve ADMIN) → §4 (K6) → §5 (S25 seçicisi, N094/N095, RAPOR seçicisi, N120 A/B) → §6 (N097–N101,
+  `a9`, X, VeraCrypt ayırma) → §7 (ayrı pencere N051, N102, N103; anahtar) → §8 (F1, D7). §2–§8
+  değişmedi; numara atıfları (4.2/10, 4.4/7, 25.2/2-7, 28.3, Ek R4/13 madde 2.5 ve 8, Ek R4/14
+  madde 3, Ek R4/8.7 madde 2) runbook'ta vardır. Çelişen talimat: §1'de kitin `Write-KitDurRule`
+  satırları ("SIMDI a9 YAZIN", "sayfadaki DUR OLURSA") ile sayfa L25 aynı eylemi (`a9`, kapat)
+  söyler; "DUR OLURSA" yerine L25'in geçerli olduğu açıkça yazıldı. Ölü dal yok.
+- **N192 SO0 → SO3 → yeni dal → ertesi gün.** A3 GÖRMEZSEN "SILME OTURUMU" → SO0 (taban L23716–L23717).
+  Silme günü değilse: `a2` yazmadan kapat (mevcut) veya `a2` yazıldıysa yeni dal: SGR2 (2 dk) →
+  SGR3 (`a3`) → SGR4 (`b0`) → SGR5 (altı soru; GÖR'deki "Siradaki: b1." ve "(b1 bu pencerede
+  YAZILMAZ.)", taban L24464–L24465) → SGR8 (`a9`) → SGR9 (öz beyan) → X → DUR OLURSA D5–D7.
+  SGR6–SGR7 (`o`) ve SGR10'un "Sonra SO3"ü bu dalda yoktur (açıkça yazıldı). SGR'lerin GÖRMEZSEN'i
+  "DUR OLURSA" der; D3 `a9`'u söyler; dalın kendi "GÖR'ü çıkmazsa `a9` ve kapat" cümlesiyle aynı
+  eylemdir. Ertesi (silme) günü: HAZIRLIK H1–H10 → SO1–SO11 → SO12 (S27–S53) → BİTİŞ; KİT yeni
+  oturum açar (`ac.ps1` L13959). Döngü yok: dal SO3'e geri göndermez; silme günü dalı tekrar
+  tetiklemez (o gün silme günüdür).
+
+**Statik denetim (yeni N189 ve N192).** N189: yalnız ASCII (ASCII dışı satır 0), CR 0, sekme 0;
+`--- BLOK` ile başlayan satır 63 → 65 (gerçek başlık 31 → 32, `--- BLOK SONU` 31 → 32; bir satır
+L4'teki tarif satırıdır), N117 başlığı tam 1; N117 dışındaki başlıklar aynı sırada. Doldurulmuş
+sayfa (aynı sentetik değerlerle; Ek R4/23 madde 7 kuralı): eski 342 satır, yeni 416 satır;
+`@@` ve `<…>` kalmadı; N117 dışındaki 31 bloğun gövdesi eski sayfadakiyle bayt-eşit ve aynı
+sırada (pozitif kontrol: bir bloğa tek satır eklenmiş kopyada eşitlik `False` oldu); 1. bölümdeki
+tek blok N117 ve gövdesi runbook N117'siyle bayt-eşit (SHA-256
+`0d361e10f755bba84dea8140e6d71c8db6b5124c02f8935a2f1322738438ed96`). N192: üçlü ters tırnak 0,
+sekme 0; yer tutucular yalnız beş izinli `<[a-z0-9-]+>` (`<case-id>`, `<container-file>`,
+`<container-root>`, `<evidence-dir>`, `<intake-dir>`); 80 karakterden geniş yeni satır yok (tabandaki
+dokuz geniş satır aynen, yerleri kaydı); güvenli dizin ve acil sayfa yolu yok (yeni cümle yol
+taşımaz).
+
+**§1.5 taraması.** `6e54fe2`'ye göre eklenen ve değişen satırlar (git salt-okunur `diff -U0`) on üç
+sınıfla tarandı (kullanıcı adı, profil dizin adı, kullanıcılar kök yolu, yüzde işaretli profil
+değişkeni, 8.3 kısa ad, DSN/port, port bağlamlı sayı, pilot port biçimi, avukat unvanı + ad,
+e-posta, uygulama veri dizini, oturum scratchpad yolu ve bu oturumun kimliği, proje dizin adı):
+on üç sınıfın hepsinde 0 isabet; pozitif kontrol on üç sınıfın on üçünü buldu.
+
+**Değişen bloklar (`6e54fe2`'ye göre; izinli N189 ve N192; yeni blok yok).**
+
+| Blok | Eski SHA-256 | Yeni SHA-256 | Satır |
+|---|---|---|---|
+| N189 (acil sayfa şablonu) | `1e2b1c1250315c6bf9e0f7f07772705e9a6978146251807220ac637b463b8d8b` | `c0c1d9c73bcede9233571e87f00d3483daf8084f9ef9d295d4e91c3824c72f50` | 159 → 166 |
+| N192 (kullanıcı sayfası) | `aabdc5bbecc5e864e91c800d81e6e26138e39ecf10617e0c42ab5afa1eaaf2f6` | `1d2bdb2b7f51cf3748f81f927da1f213a731d19a0e989f8bece13781e590c514` | 1128 → 1138 |
+
+Diğer 191 blok bayt-bayt aynıdır (blok blok SHA-256 karşılaştırması, 191/191 eşit); toplam 193
+blok, çit satırı 386 (bu bölüm ve diğer metin değişiklikleri çit eklemedi). Kit1 baytları ve
+`pins.txt` kuralı, kit2 dosya kümesi, `pins2.txt` ve `kit-build2.txt` anahtar kümesi değişmedi.
+Metin değişiklikleri (blok dışı): üst uyarı, §0 "Revizyon" satırı, §34.4 revizyon 23 satırı, bu
+bölüm, Ek R4/13 madde 2.1, Ek R4/16.5 (revizyon 23 notu ve dilim 5 durumu), Ek R4/23 giriş
+paragrafı ve madde 7, Ek R4/24 madde 12.
+
+**Ölçülemeyenler (PASS sayılmadı).** Düzeltilmiş acil sayfa yolunun ve N192'nin yeni dalının bir
+insan tarafından gerçek pencerede yürünmesi; N117'nin gerçek Not Defteri'nden gerçek konsola
+yapıştırılması (çok satırlı yapıştırmanın PSReadLine ile davranışı; sentetik kanıt bloğu aynı
+baytlardan `[scriptblock]::Create` ile çalıştırdı); gerçek klavye (tuşlar konsol giriş tamponuna
+yazıldı); gerçek süreç listesiyle `a2`/`a3`/`a9` (bu bilgisayarda N4 deseni, Claude Code çalıştığı
+için, gerçek listede sıfırdan büyük sayı verir; düzenek süzülmüş liste kullandı, pozitif kontrol
+CTL); dalda kit2 `b0`'ın kendisi (`bc.ps1` yüklenmedi; `b0` aynı N117 baytlarını çağırır, `b0.txt`
+ölçülmedi); gerçek `z1`/`s29b` (yalnız kapı parçası L23069–L23078 ve `Read-KbLines` tanımı taban
+L18211–L18214 sentetik kayıtlar üzerinde çalıştırıldı); D7 ajan oturumunun acil yoldaki
+`POSTCONDITION_11` ölçümünün gerçek biçimi (kaynak kuralı Ek R4/14 madde 4 ile aynı sayıldı); tek
+bir H ve beş E karışımı (düzenek altı H verdi; N117'de E dışındaki her cevap aynı dala gider,
+L14842); bu revizyonla üretilecek gerçek acil sayfanın SHA-256'sı ve `ev.ps1` sabiti (gerçek kurulum
+yapılmadı).
+
+**Tek taraflı kararlar (inceleyici için).** (1) N117 sayfaya ayrı bir yan etkisiz satır olarak
+değil, bütün runbook bloğu olarak alındı: blok kilit yazmaz, kendi kaydını yazar ve kitin kendi
+yolu (`b0`) da onu bütün olarak çalıştırır (N191 dersinin yan etkili-blok yasağı burada
+tetiklenmez). (2) Sayfa L22–L24 iki kayıtsız ret ve `a3`'ün "BEKLEYIN" iletisi için geri dönüş
+satırlarıdır; eski sayfada bu iletiler "başka her sonuç"a düşüp acil yolu kapatıyordu. "BEKLEYIN"
+satırı N117'nin değil `a3`'ün iletisidir; L23'ün kendi geri dönüşü bu iletiye yol açabildiği için
+eklendi. (3) Sayfa L25'teki "Kitin "DUR OLURSA" satiri yerine bu satir uygulanir" cümlesi, acil
+sayfadan kullanıcı sayfasının D8'ine dönüş döngüsünü kapatır; eylem (a9, kapat, yazılı karar)
+eski satırla aynıdır. (4) K23-2'de (C) seçildi; inceleme adayı ("`a9` yazın, pencereyi kapatın")
+(A)'dır ve kapıyı kalıcı olarak bozar; (C)'nin fazladan pencere süresi bedeli yukarıda yazılı. Aksi
+görülürse bu bir toplu karar maddesidir. (5) Dal SGR adımlarına atıfla yazıldı (yeni YAP hücresi
+yok); SGR6–SGR7 ve SGR10'un son cümlesi açıkça hariç tutuldu. (6) SO0'daki "a2 yazmadan kapatın"
+yolu ve `ac.ps1` ekranı değişmedi (K23-3); a2'siz kapatmanın kapıyı bozduğu SO0'da zaten yazılıydı.
+(7) A3 GÖRMEZSEN (taban L23713–L23719) SO0'a gönderdiği için değişmedi. (8) N189 8. bölümünün
+ve Ek R4/13 madde 3'ün "Bu yolda kit kaydi yoktur" cümlesi 2.–7. bölümlerin runbook bloklarını
+anlatır; 1. bölümün kit1 kayıtları (`ac`, `a2`, `a3`, `a9` revizyon 17'den beri; `six-class` bu
+revizyonla) Ek R4/14 madde 4 kapısının zaten saydığı oturum kayıtlarıdır.
+Cümle değiştirilmedi.
+
+**Dilim 5 kapanış notu (D5-KAPANIS-A).** Dilim 5 adlı sınırlarla kapandı (D5-KAPANIS-A); kapanış,
+bu revizyonun bağımsız incelemesi `READY_FOR_COMMIT=YES` ve commit ile geçerlilik kazanır. Kapanış
+bir kit LOCK'u veya roadmap LOCK'u DEĞİLDİR; `CLAUDE.md` değişmedi. Adlı sınırlar:
+
+1. Prova #12 ve prova #13 hükümleri (prova #13: `PROVA_DILIM5_DAR=FAIL`,
+   `KIT2_BIRLESIK_D1_D5_R22=FAIL`) FAIL olarak kayıtta kalır.
+2. Düzeltilmiş acil sayfa yolu hiçbir insan provasında koşulmadı; yalnız ajan-yalnız sentetik
+   kanıt vardır (aşağıdaki kanıt dizini).
+3. `s5` tamamlanmamış teardown oturumu (kullanıcı sapması; M-1) ve ona bağlı dört FAIL (Q19, Q20,
+   Q32, Q35) kayıtta kalır.
+4. Q13, Q21 (tek takvim günü) ve Q33 ölçülemedi.
+5. C3 beyanlarının diskle çeliştiği yerler (inceleme M-2: `s1`, 25a, 5-BD14; 33a/33b) düzeltilmedi.
+6. K23-3: `ac.ps1`'in DUR ekranı (kit1 baytı) değişmedi.
+7. Beş pencerenin sapmasız bir insan koşusu hiç gösterilmedi.
+8. İncelemenin prova kartı ve plan aday listeleri (§15 "Kart/sayfa" ve "Sonraki plan") yeni prova
+   yapılmayacağı için uygulanmadı.
+9. İncelemenin G10 (a)-2'sindeki Faz B yardımcısı (`b.ps1`) `acil_kit_session` kuru denemesi
+   yapılmadı (prova hükmü değişmeyeceği için).
+10. K23-2 dalının `z1` etkisi yalnız kapı parçası ve kaynak tablosuyla ölçüldü; gerçek `z1`/`s29b`
+    ve kit2 `b0` bu dalda çalıştırılmadı.
+
+**Sonraki revizyona bırakılanlar.**
+
+1. İncelemenin §15 runbook/kit adayları (2) `ac.ps1` DUR-var ekranının "SILME OTURUMU değilse a2
+   YAZMAYIN" biçimi ve isteğe bağlı açık onay kelimesi (kit1 baytı; K23-3 ile bu turda HAYIR), (3)
+   N187 "GATE_BREAKERS" tanımının `z1` kapısıyla aynı kümeyi listelemesi (L-3; prova yardımcısı ve
+   plan tarafı), (4) `outside-writes` kaydında kullanıcı indirme klasörü kalıntısı (L-4).
+2. §34.25–§34.28'den açık kalanlar aynen (§34.28 "Sonraki revizyona bırakılanlar" 1–6; KR-1, KR-2).
+3. Prova yardımcıları sayfa blok listesini N189'dan türetmelidir (1. bölüm dahil); prova #8
+   `ft.ps1`'in sabit dizi tuzağı (§34.24) 1. bölüm için de geçerlidir (plan konusu; yeni prova yok).
+4. Gerçek kurulumda acil sayfa yeni N189'dan yeniden üretilir; sayfa SHA-256'sı, `ev.ps1`
+   sabiti, `EV_PS1_SHA256` ve `pins2.txt`'nin `ev.ps1` satırı o kurulumda yeniden ölçülür (§34.4
+   revizyon 23 satırı).
+
+**Kurulan dizinler ve sapmalar.** Oturum scratchpad'inde: tabanın kopyası ve blok listesi, sekiz
+sentetik kök, doldurulmuş eski/yeni sayfalar, ölçüm betikleri, çocuk süreçlerin TEMP/TMP dizini ve
+sahte profil dizini. Scratchpad dışında tek yeni dizin kanıt dizinidir. Her ölçüm turundan önce ve
+sonra profil kökü, Temp kökü, PowerShell kullanıcı dizinleri ve repo anlık görüntüyle karşılaştırıldı.
+**Sapmalar:** (1) Ölçüm betiğinin ilk turu (`run-1`) betiğin kendi yardımcı adı yüzünden hemen
+durdu (kit sıfırlama yardımcısının `*-Kit*` deseni yardımcının kendisini de sildi); hiçbir kit
+yüklenmedi, sentetik kökler değişmedi; tur kanıt dizininde korunur; düzeltilmiş betikle ikinci tur
+(`run-2`) koşuldu (aynı ölçüm için ikinci tur). (2) Bir betik düzeltmesi bir kez kabuk heredoc'u
+içinden çalışan tek satırlık Python ile yapıldı (bu turun "heredoc yok" kuralına aykırı); yalnız
+scratchpad'deki kurulum betiğini değiştirdi, sonraki bütün betikler Write aracıyla yazıldı. (3) Anlık
+görüntü betiğinin ilk çağrısı bir dosya türü hatasıyla durdu ve scratchpad'de boş bir anlık görüntü
+dosyası bıraktı; düzeltilip yeni adla yeniden alındı. (4) Ölçüm sırasında scratchpad ve kanıt dizini
+dışında değişenler: PowerShell'in kendi başlangıç önbelleği (`StartupProfileData-NonInteractive`;
+her `powershell.exe` açılışında güncellenir), Claude Code'un ayar dosyası ve Temp kökündeki oturum
+dosyası ile Windows kayıt defteri günlükleri; betikler bunlara yazmadı, açılmadılar. Temp kökünde
+oturum başlangıcına denk gelen bir dil sunucusu dizini görüldü (betiklerden önce; açılmadı). Bash
+yönlendirmesi ve git yazma komutu kullanılmadı; repo dosyası yalnız Edit aracıyla değişti.
+
+**Sonuç.** `READY_FOR_INDEPENDENT_REVIEW`.
+
 ---
 
 ## Ek R3 — İnsan adım kiti ve tek sayfalık adım listesi (revizyon 3)
@@ -16509,7 +16907,12 @@ seçimine girmez. Yeni süreye giren alan bulunmadı.
    GÖR / GÖRMEZSEN biçiminde yazılır):
    1. **Kanal kapısı:** yalnız kit1'i yükleyen KİT satırı (silme oturumu;
       `a2` → en az 2 dk → `a3`), ardından N117'nin yapıştırılması (bugünkü
-      sayfa madde 3b'nin karşılığı); oturum `a9` ile biter.
+      sayfa madde 3b'nin karşılığı); oturum `a9` ile biter. Revizyon 23
+      (§34.29; prova #13 incelemesi H-1): şablon N189 bu bloğu 1. bölümde
+      `--- BLOK N117` / `@@BLOK N117@@` olarak taşır; revizyon 17–22
+      şablonunda blok yoktu, yalnız adı anılıyordu. N117 yalnız kit1'in
+      tanımladığı adlara dayanır (`$global:KitSess`, `KitSessDir`,
+      `KitTeardown`, `KitE2Dir`; `Write-KitDurRule`) ve kit kilidi yazmaz.
    2. **Zorunlu ön bloklar (recheck-2 not 4; §28.3 F4 kapısı):** §13.8
       ortak yardımcıları (N48, N51) ve §10.5 yardımcıları (N19); N52
       (`<external-root>` sözleşmesi), N53 (`container-root`, `pilot-root`
@@ -17294,6 +17697,20 @@ durdurulması), G13/G14/S53 (son günden sonra doğrudan BİTİŞ) ve HAZIRLIK H
 güncellemesi; USB aygıtı, bağlı disk görüntüsü, optik sürücü) metinleri pozitif kontrollü statik
 denetim ve kaynak eşlemesiyle karşılandı; insan provasıyla değil. Dar prova (ayrı kullanıcı kararı;
 planı yazılmadı) bu dört maddeyi gerçek pencerede birer kez gösterir.
+
+**Revizyon 23 notu (§34.29; prova #13 incelemesi H-1, M-1).** Ölçüt (8)'in acil sayfa dalı için ek
+beklenti: sayfanın 1. bölümü N117 bloğunu taşır ve 1. bölümün blok listesi de N189'dan türetilir
+(N117; 2. bölüm için revizyon 18 kuralı aynı). Yalnız kit1 yüklü ACIL KIT oturumunda N117'nin
+`six-class.txt`'yi (`KIT_TEARDOWN_SESSION` dahil) yazdığı, eski şablonla yazılamadığı, `a3`
+TAMAM olmadan kayıtsız reddettiği, H cevabında kilit yazmadan `STOP` verdiği ve ikinci
+çalıştırmayı reddettiği ajan-yalnız sentetik düzenekte ölçüldü; insan provasıyla değil. N192
+SO0'ın yeni dalı (silme günü değilken yanlışlıkla `a2`) kanal kapısı parçasıyla sentetik
+kayıtlar üzerinde ölçüldü; insan provasıyla değil.
+
+**Dilim 5 durumu (revizyon 23).** Dilim 5 adlı sınırlarla kapandı (kullanıcı kararı
+D5-KAPANIS-A); kapanış, revizyon 23'ün bağımsız incelemesi `READY_FOR_COMMIT=YES` ve commit ile
+geçerlilik kazanır. Prova #12 ve #13 hükümleri FAIL olarak kayıtta kalır; adlı sınırlar §34.29
+"Dilim 5 kapanış notu"ndadır. Kapanış bir kit LOCK'u veya roadmap LOCK'u değildir.
 
 #### Ek R4/16.6 Sızıntı negatif testi (her dilimde zorunlu; KD-2, M1, M6, L-Y4)
 
@@ -22221,7 +22638,8 @@ if ("<expected-input-digest>" -cnotmatch '^[0-9a-f]{64}\z') { "STOP EXPECTED_INP
 YENİ (revizyon 17; §34.23). Dilim 4 kodu N175–N190'dır; N0–N174'ün numaraları kaymadı.
 Revizyon 18 (§34.24) N187'yi (`s29b` kanal kapısı kaynağı) ve N189'u (2. bölüme N191) değiştirdi
 ve sayfa bloğu N191'i ekledi; N0–N190'ın numaraları kaymadı. Revizyon 20 (§34.26) N188'i
-(`ev.ps1`: açılış yolu ve `OPEN_FAIL`) değiştirdi; numaralar kaymadı.
+(`ev.ps1`: açılış yolu ve `OPEN_FAIL`) değiştirdi; numaralar kaymadı. Revizyon 23 (§34.29)
+N189'un 1. bölümüne N117 bloğunu ekledi (yeni sayfa bloğu yok); numaralar kaymadı.
 Sentetik düzenekte ölçüldü, provaya tabidir ve provadan geçmeden gerçek koşuda kullanılamaz
 (§32/41).
 
@@ -22305,7 +22723,9 @@ Sentetik düzenekte ölçüldü, provaya tabidir ve provadan geçmeden gerçek k
    `<report-produced>` = `$true` ve `$false`; `@@SATIR S25@@`, `@@SATIR RAPOR@@`,
    `@@SATIR K6@@` N190'ın 1., 2. ve 3. satırıyla (`<evidence-dir>` doldurulmuş); 2. bölümde
    N13'ten önceki `@@BLOK N191@@` satırı aynı `@@BLOK Nnnn@@` kuralıyla N191'in tek satırıyla
-   doldurulur (revizyon 18; yeni bir doldurma kuralı yoktur). Üretilen
+   doldurulur (revizyon 18; yeni bir doldurma kuralı yoktur); 1. bölümdeki `@@BLOK N117@@` satırı
+   da aynı kuralla N117'nin baytlarıyla doldurulur (revizyon 23; N117'de yer tutucu yoktur; yeni
+   bir doldurma kuralı yoktur). Üretilen
    sayfada `@@` ve `<…>` kalmaz; sayfa yalnız ASCII'dir ve parola taşımaz (DSN'ler passfile
    parametrelidir; `app-dsn`/`admin-dsn` değerleri sayfada açık metindir — tasarım kararı,
    revizyon 17 incelemesi O-9). Üç satır salt okunurdur: S25 seçici yalnız `S25_PASS`/`S25_YOK`, rapor
@@ -23166,7 +23586,7 @@ $null = Complete-KbStep $r5xRec 'r5' @('CLI_RC=0', 'JOURNAL_ROW_STATE_FAILED=Tru
 **N189 — `acil sayfa şablonu` (kit2 dizinine girmez; Ek R4/23 madde 7).**
 
 ```text
-ACIL SILME SAYFASI - runbook Ek R4/13 ve Ek R4/23 madde 7 (revizyon 17, dilim 4; revizyon 18: 2. bolumde N191). Sablon; degerleri pencere oncesi ajan doldurur.
+ACIL SILME SAYFASI - runbook Ek R4/13 ve Ek R4/23 madde 7 (revizyon 17, dilim 4; revizyon 18: 2. bolumde N191; revizyon 23: 1. bolumde N117). Sablon; degerleri pencere oncesi ajan doldurur.
 Bu sayfa parola tasimaz. Sayfayi hicbir yere yapistirmayin, fotograflamayin, hicbir yapay zeka aracina vermeyin.
 Satir bicimi: YAP = yapilacak tek eylem; GOR = beklenen ekran; GORMEZSEN = baska her sonuc. Her blok, bastaki --- BLOK satirindan sonraki ilk satirdan
 --- BLOK SONU satirindan onceki son satira kadar, KIT penceresine (kit1 yuklu, kit2 yuklu degil) kopyalanip Enter ile calistirilir.
@@ -23182,8 +23602,15 @@ YAP: KIT satiri yerine yalniz kit1'i yukleyen ACIL KIT satirini Win+R ile acin:
      powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -Command ". '<evidence-dir>\kit\ac.ps1'"
 YAP: a2 yazip Enter. GOR: a2 TAMAM. En az 2 dakika bekleyin.
 YAP: a3 yazip Enter. GOR: a3 TAMAM.
-YAP: alti sinif kanal beyani blogunu (N117) yapistirin. GOR: alti cevap ve kayit.
-GORMEZSEN: a9 yazin, pencereyi kapatin; veri korunur; yazili karar bekleyin.
+YAP: asagidaki alti sinif kanal beyani blogunu (N117) yapistirin. GOR: "Yapay zeka kodlama asistani kapali mi?   Evet: E tusu   Hayir: H tusu"
+--- BLOK N117
+@@BLOK N117@@
+--- BLOK SONU
+YAP: alti sorunun her birine gercege gore E veya H. GOR: "KANAL BEYANI TAMAM. Sayfadaki madde 3 kalan adimlarina gecin." (bu sayfada: 2. bolum).
+GORMEZSEN: "BEKLEYIN: ... saniye daha. Sonra yeniden a3 yazin. (Kayit yazilmadi.)": yazdigi kadar bekleyip a3'u yeniden yazin.
+     "Once bu oturumda a3 TAMAM olmali. (Kayit yazilmadi.)": a3 yazip a3 TAMAM'i gorun, sonra N117 blogunu yeniden yapistirin.
+     "Kanal beyani bu oturumda zaten yazildi. Tekrar calismaz.": KANAL BEYANI TAMAM bu pencerede gorulduyse 2. bolume gecin; gorulmediyse asagidaki satir.
+GORMEZSEN (baska her sonuc, "DUR" ile baslayan satir dahil): a9 yazin, pencereyi kapatin; veri korunur; yazili karar bekleyin. Kitin "DUR OLURSA" satiri yerine bu satir uygulanir.
 
 == 2. ZORUNLU ON BLOKLAR ==
 --- BLOK N048
@@ -23476,6 +23903,16 @@ Ek R4/16.5) tabidir ve provadan geçmeden gerçek koşuda kullanılamaz (§32/41
     sonra ajana dönüldüğünde Adım 8 runbook'unun durdurma komutuyla durdurulur. G13: `s29b`
     PASS'ten sonra KİT ve KÜME de açılmaz; G14: bölümler yalnız bir adım veya kural gönderince
     okunur; A37, İ48, S53 ve E5 doğrudan BİTİŞ'e gönderir. Kit davranışı değişmedi.
+12. **Revizyon 23 (§34.29; prova #13 incelemesi M-1; K23-2).** SO0'a geri dönüş dalı: silme günü
+    değilken açılan (ekranda "SILME OTURUMU" yazan) KİT penceresinde yanlışlıkla `a2` yazıldıysa
+    pencere hemen kapatılmaz; aynı pencerede SGR2–SGR5 (2 dakika, `a3`, `b0`, altı soru; `b1` ve
+    `o` yazılmaz) ve SGR8–SGR9 (`a9` ve öz beyan) yapılır, sonra pencere kapatılır ve DUR OLURSA
+    D5'ten itibaren uygulanır. Kaynak: `s29b`'nin kanal kapısı `ac.txt` taşıyan her oturumda `a2`,
+    `a3`, `six-class.txt` ve `a9` ister (N187); `a2` + `a9` ile kapatılan oturum kapıyı kalıcı
+    olarak tamamlanmadı gösterir, dört kaydı tamamlanan oturum göstermez. Bu adımlardan birinin
+    GÖR'ü çıkmazsa `a9` ve kapatma (kapı tamamlanmadı kalır). İki yol da silme gününü
+    değiştirmez: `ac.ps1` her açılışta ilk boş `steps\s<k>`'yı açar ve önceki oturumlara bakmaz.
+    `ac.ps1`'in DUR ekranı (kit1 baytı) değişmedi (K23-3). Kit davranışı değişmedi.
 
 **N192 — `kit2 kullanıcı sayfası` (şablon; Ek R4/24; kit2 dizinine girmez; revizyon 19).**
 
@@ -24340,7 +24777,17 @@ SO0 KANAL KAPISI SÜREKLİLİĞİ: KİT satırı açılınca ekran "SILME OTURUM
    değildir, geri alınamaz ve silmeyi durdurmaz. Bundan kaçınmak için DUR'dan
    sonra KİT satırını YALNIZ silme günü açın. Silme günü değilken yanlışlıkla
    açtıysanız: a2 yazmadan pencereyi kapatın (kitin dediği gibi): DUR OLURSA
-   D5'ten itibaren. Önceki DUR kilit yazmadıysa (ör. kayıt açılmadan Ctrl+C,
+   D5'ten itibaren. O pencerede yanlışlıkla a2 de yazdıysanız ("a2 TAMAM.
+   ..." göründü): pencereyi henüz kapatmayın; aynı pencerede SGR2-SGR5'i
+   yapın (2 dakika, a3, b0, altı soru; b1 ve o YAZILMAZ), sonra SGR8-SGR9
+   (a9 ve öz beyan), sonra KİT penceresini X'ten kapatın: DUR OLURSA D5'ten
+   itibaren (SGR10'un "Sonra SO3" cümlesi bu dalda YOKTUR). Böylece bu
+   pencere kanal kapısını tamamlanmadı göstermez. Bu adımlardan birinin
+   GÖR'ü çıkmazsa (ör. b0 yok, "KIT2 YUKLENEMEDI"): a9 yazın, pencereyi
+   kapatın: DUR OLURSA; kapı yukarıdaki gibi tamamlanmadı kalır. İki yol da
+   silme gününü değiştirmez: o gün KİT satırı yeni bir oturum açar ve SİLME
+   OTURUMU bu bölümdeki gibi yapılır.
+   Önceki DUR kilit yazmadıysa (ör. kayıt açılmadan Ctrl+C,
    b0'da "Kit kilidi yazilmadi", G5 dalı) KİT satırı "SILME OTURUMU" demez:
    SO3 GÖRMEZSEN'deki giriş (SGR1-SGR10) aynı silme gününde yapılır; o
    pencerede de a2, a3, b0 ve a9 yazılır.
