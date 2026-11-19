@@ -394,6 +394,14 @@ try:
           F.system_check_reference("Bilirkişi Raporu 2", [D("x_001", "x.pdf", "Bilirkişi Raporu 2 değildir; Bilirkişi Raporu 3")])[0] == F.CHECK_NOT_FOUND)
     check("L-F (d) positive: the same multi-word reference in an unambiguous title ('Bilirkişi Raporu 2 sunulmuştur') is FOUND",
           F.system_check_reference("Bilirkişi Raporu 2", [D("x_001", "x.pdf", "Bilirkişi Raporu 2 sunulmuştur")])[0] == F.CHECK_FOUND)
+    # L-4: atıf adında ilk sayıdan SONRA bir sözcük var ('Ek-2 Raporu'); belirsizlik öneki yalnız ilk sayıdan ÖNCEKİ sözcüklerdir ('ek'),
+    # adın TÜM sözcükleri ('ek', 'raporu') DEĞİL. Eski testlerin hepsinde ad sayıyla bitiyordu, bu yüzden önekin tüm sözcüklerden kurulduğu mutant hayatta kalıyordu.
+    check("L-4 (negative): a reference with a WORD after its number ('Ek-2 Raporu') in a title where a different 'ek' number follows ('Ek-2 Raporu ve Ek-3') is ambiguous -> (BULUNAMADI, None)",
+          F.system_check_reference("Ek-2 Raporu", [D("x_001", "x.pdf", "Ek-2 Raporu ve Ek-3")]) == (F.CHECK_NOT_FOUND, None))
+    check("L-4 (positive 1): the same reference in a title where the SAME number repeats ('Ek-2 Raporu ve Ek-2 Eki') is not ambiguous -> (BULUNDU, document id)",
+          F.system_check_reference("Ek-2 Raporu", [D("x_001", "x.pdf", "Ek-2 Raporu ve Ek-2 Eki")]) == (F.CHECK_FOUND, "x_001"))
+    check("L-4 (positive 2): the same reference in an unambiguous title ('Ek-2 Raporu sunulmuştur') -> (BULUNDU, document id)",
+          F.system_check_reference("Ek-2 Raporu", [D("x_001", "x.pdf", "Ek-2 Raporu sunulmuştur")]) == (F.CHECK_FOUND, "x_001"))
     check("L-F regression: 'ek2.1.pdf' was already correct and stays BULUNAMADI", ek2("Belge", "ek2.1.pdf") == F.CHECK_NOT_FOUND)
     check("L-F must-stay-FOUND (six genuine Ek-2 forms): title 'Ek-2', title 'EK-2 Bilirkişi Raporu', title 'Ek-02', file 'ek2.pdf', title 'Ek-II', document id 'ek_002'",
           ek2("Ek-2") == F.CHECK_FOUND and ek2("EK-2 Bilirkişi Raporu") == F.CHECK_FOUND and ek2("Ek-02") == F.CHECK_FOUND
