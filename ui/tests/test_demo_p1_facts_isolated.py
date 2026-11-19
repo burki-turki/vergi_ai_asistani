@@ -382,6 +382,39 @@ try:
     check("L-F: name_tokens keeps decimals as ONE token and normalizes parts (Ek-2.1 -> ek, 2.1; Ek-02 -> ek, 2; 2,1 -> 2.1)",
           F.name_tokens("Ek-2.1") == ["ek", "2.1"] and F.name_tokens("Ek-02") == ["ek", "2"] and F.name_tokens("Ek 2,1") == ["ek", "2.1"]
           and F.name_tokens("Ek-2.") == ["ek", "2"])
+    # ---- P1-L-F kalan yanlış 'bulundu' kapanışı: kök neden 1 (devam numarası) + kök neden 2 (çok sözcüklü önek)
+    check("L-F (c1): a document ID 'ek_2_1' (continuation number) is NOT 'Ek-2' -> BULUNAMADI",
+          ek2("Tablo", "x.pdf", "ek_2_1") == F.CHECK_NOT_FOUND)
+    check("L-F (c2): a document ID 'ek2_1' is NOT 'Ek-2' -> BULUNAMADI", ek2("Tablo", "x.pdf", "ek2_1") == F.CHECK_NOT_FOUND)
+    check("L-F (c3): a file name 'Ek-2-1.pdf' is NOT 'Ek-2' -> BULUNAMADI", ek2("Tablo", "Ek-2-1.pdf") == F.CHECK_NOT_FOUND)
+    check("L-F (c4): a file name 'Ek-2_3.pdf' is NOT 'Ek-2' -> BULUNAMADI", ek2("Tablo", "Ek-2_3.pdf") == F.CHECK_NOT_FOUND)
+    check("L-F (c5): a title 'Ek-2/3 Tablo' is NOT 'Ek-2' -> BULUNAMADI", ek2("Ek-2/3 Tablo") == F.CHECK_NOT_FOUND)
+    check("L-F (c6): the continuation rule also holds for a title 'Ek-2-1 Tablo'", ek2("Ek-2-1 Tablo") == F.CHECK_NOT_FOUND)
+    check("L-F (d): a multi-word reference with two different numbers ('Bilirkişi Raporu 2 değildir; Bilirkişi Raporu 3') is ambiguous -> BULUNAMADI",
+          F.system_check_reference("Bilirkişi Raporu 2", [D("x_001", "x.pdf", "Bilirkişi Raporu 2 değildir; Bilirkişi Raporu 3")])[0] == F.CHECK_NOT_FOUND)
+    check("L-F (d) positive: the same multi-word reference in an unambiguous title ('Bilirkişi Raporu 2 sunulmuştur') is FOUND",
+          F.system_check_reference("Bilirkişi Raporu 2", [D("x_001", "x.pdf", "Bilirkişi Raporu 2 sunulmuştur")])[0] == F.CHECK_FOUND)
+    check("L-F regression: 'ek2.1.pdf' was already correct and stays BULUNAMADI", ek2("Belge", "ek2.1.pdf") == F.CHECK_NOT_FOUND)
+    check("L-F must-stay-FOUND (six genuine Ek-2 forms): title 'Ek-2', title 'EK-2 Bilirkişi Raporu', title 'Ek-02', file 'ek2.pdf', title 'Ek-II', document id 'ek_002'",
+          ek2("Ek-2") == F.CHECK_FOUND and ek2("EK-2 Bilirkişi Raporu") == F.CHECK_FOUND and ek2("Ek-02") == F.CHECK_FOUND
+          and ek2("Belge", "ek2.pdf") == F.CHECK_FOUND and ek2("Ek-II") == F.CHECK_FOUND and ek2("Belge", "belge.pdf", "ek_002") == F.CHECK_FOUND)
+    check("L-F must-stay-FOUND: the Ek-1 positive control by document id 'ek_1' and by file name 'Ek-1.pdf'",
+          F.system_check_reference("Ek-1", [D("ek_1", "x.pdf", "Belge")]) == (F.CHECK_FOUND, "ek_1")
+          and F.system_check_reference("Ek-1", [D("belge_001", "Ek-1.pdf", "Belge")]) == (F.CHECK_FOUND, "belge_001"))
+    check("L-F: a separator followed by a WORD (not a number) is not a continuation ('Ek-2-Bilirkişi_Raporu.pdf', id 'ek_2_bilirkisi') -> FOUND",
+          ek2("Belge", "Ek-2-Bilirkişi_Raporu.pdf") == F.CHECK_FOUND and ek2("Belge", "belge.pdf", "ek_2_bilirkisi") == F.CHECK_FOUND)
+    check("L-F disclosed fail-closed cost: a number-continued genuine name ('Ek-2-2025.pdf', 'Ek-2 2025 Raporu') returns BULUNAMADI (the lawyer checks by hand)",
+          ek2("Belge", "Ek-2-2025.pdf") == F.CHECK_NOT_FOUND and ek2("Ek-2 2025 Raporu") == F.CHECK_NOT_FOUND)
+    check("L-F DISCLOSED OPEN (takipte): a digit-attached letter suffix ('Ek-2a.pdf') is still 'found' - NOT closed by this slice; flip this check deliberately when it is closed",
+          ek2("Belge", "Ek-2a.pdf") == F.CHECK_FOUND)
+    cont_spec = copy.deepcopy(SPEC_RAW)
+    cont_spec["belgeler"][1]["title"] = "Ek-2-1 Tablo"
+    cont_s = S.validate_spec(cont_spec)
+    cont_docs = I.analyze_documents(self_root, cont_s, extractor=lambda p: TEXTS[Path(p).name])
+    _, cont_refs = F.evaluate(cont_s, cont_docs)
+    check("L-F (end to end): a presented document titled 'Ek-2-1 Tablo' leaves the Ek-2 citation BULUNAMADI (separate fields: citation ESLESTI/origin 'ornek')",
+          cont_refs[0].system_check == F.CHECK_NOT_FOUND and cont_refs[0].found_doc_id is None and cont_refs[0].origin == "ornek"
+          and cont_refs[0].citation_match == F.MATCH_OK)
     amb_spec = copy.deepcopy(SPEC_RAW)
     amb_spec["belgeler"][1]["title"] = "Ek 2 değildir; Ek-3"
     amb_s = S.validate_spec(amb_spec)

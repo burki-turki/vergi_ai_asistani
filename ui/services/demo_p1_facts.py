@@ -90,19 +90,34 @@ def name_tokens(text: str) -> list:
     return tokens
 
 
-def _contains_sequence(haystack: list, needle: list) -> bool:
-    if not needle or len(needle) > len(haystack):
-        return False
-    return any(haystack[i:i + len(needle)] == needle for i in range(len(haystack) - len(needle) + 1))
-
-
 def _is_number(token: str) -> bool:
     return token[0].isdigit()
 
 
-def _ambiguous_reference(tokens: list, lead: str) -> bool:
-    """Aynı kaynakta `lead` sözcüğünü (ör. 'ek') FARKLI sayıların izlediği (Ek 2 ... Ek-3) belirsizdir."""
-    numbers = {tokens[i + 1] for i in range(len(tokens) - 1) if tokens[i] == lead and _is_number(tokens[i + 1])}
+def _contains_sequence(haystack: list, needle: list) -> bool:
+    """Jeton dizisi BİTİŞİK geçmeli VE hemen ardından başka bir SAYI jetonu gelmemelidir: 'Ek-2' dizisi
+    'ek_2_1' / 'Ek-2-1' / 'Ek-2_3' / 'Ek-2/3' içinde 'Ek-2'nin devam numarası' olarak geçer (başka bir belge);
+    bu bir eşleşme SAYILMAZ (fail-closed). Bedel: 'Ek-2-2025' gibi meşru adlar da BULUNAMADI döner."""
+    if not needle or len(needle) > len(haystack):
+        return False
+    for i in range(len(haystack) - len(needle) + 1):
+        if haystack[i:i + len(needle)] != needle:
+            continue
+        end = i + len(needle)
+        if end < len(haystack) and _is_number(haystack[end]):
+            continue
+        return True
+    return False
+
+
+def _ambiguous_reference(tokens: list, prefix: list) -> bool:
+    """Aynı kaynakta `prefix` sözcük dizisini (ör. ['ek'] veya ['bilirkişi', 'raporu']) FARKLI sayıların
+    izlediği (Ek 2 ... Ek-3; Bilirkişi Raporu 2 ... Bilirkişi Raporu 3) kaynak belirsizdir."""
+    size = len(prefix)
+    numbers = {
+        tokens[i + size] for i in range(len(tokens) - size)
+        if tokens[i:i + size] == prefix and _is_number(tokens[i + size])
+    }
     return len(numbers) > 1
 
 
@@ -111,20 +126,25 @@ def system_check_reference(name: str, docs, exclude_doc_id=None):
     Jeton dizisi BİTİŞİK olarak tek bir kaynakta geçmelidir (Ek-2 != Ek-1; Ek-2 != Ek-20).
     Atfı İÇEREN belge aday değildir (kendi başlığındaki atıf, başka bir belge bulunduğu anlamına gelmez).
     Adda hem en az bir sayısal hem en az bir sözcük jetonu yoksa ('Ek' veya '2' tek başına) eşleşme
-    ARANMAZ -> BULUNAMADI. Sayısal jeton TAM jetondur ('Ek-2.1' atfı 'Ek-2' DEĞİLDİR). Bir kaynakta
-    aynı sözcüğü FARKLI sayılar izliyorsa ('Ek 2 değildir; Ek-3', 'Ek-2 ve Ek-3') kaynak BELİRSİZDİR ->
-    eşleşme SAYILMAZ (fail-closed; gerçek çok-atıflı bir başlık da BULUNAMADI döner)."""
+    ARANMAZ -> BULUNAMADI. Sayısal jeton TAM jetondur ('Ek-2.1' atfı 'Ek-2' DEĞİLDİR). Eşleşen dizinin
+    HEMEN ardından başka bir sayı geliyorsa ('ek_2_1', 'Ek-2-1', 'Ek-2_3', 'Ek-2/3') kaynak 'Ek-2'nin devam
+    numarasıdır -> eşleşme SAYILMAZ. Bir kaynakta aynı sözcük dizisini ('ek' veya 'bilirkişi raporu')
+    FARKLI sayılar izliyorsa ('Ek 2 değildir; Ek-3', 'Ek-2 ve Ek-3') kaynak BELİRSİZDİR -> eşleşme SAYILMAZ
+    (fail-closed; gerçek çok-atıflı veya tarih/numara devamlı bir ad da BULUNAMADI döner).
+    Rakama bitişik harf eki ('Ek-2a') BU KURALLARLA KAPATILMAZ (takipte; bilinen açık sınır)."""
     needle = name_tokens(name)
     if not any(_is_number(token) for token in needle) or all(_is_number(token) for token in needle):
         return CHECK_NOT_FOUND, None
-    lead = next(token for token in needle if not _is_number(token))
+    first_number = next(i for i, token in enumerate(needle) if _is_number(token))
+    # belirsizlik öneki: ilk sayıdan ÖNCEKİ sözcük dizisi; atıf sayıyla başlıyorsa ilk sözcük jetonu
+    prefix = needle[:first_number] or [next(token for token in needle if not _is_number(token))]
     for doc in docs:
         if exclude_doc_id is not None and doc.doc_id == exclude_doc_id:
             continue
         stem = Path(doc.file_name).stem
         for source in (doc.doc_id, stem, doc.title):
             tokens = name_tokens(source)
-            if _contains_sequence(tokens, needle) and not _ambiguous_reference(tokens, lead):
+            if _contains_sequence(tokens, needle) and not _ambiguous_reference(tokens, prefix):
                 return CHECK_FOUND, doc.doc_id
     return CHECK_NOT_FOUND, None
 
