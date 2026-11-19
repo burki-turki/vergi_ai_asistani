@@ -1066,6 +1066,113 @@ try:
     check("M-A REAL IAM: the assigned lawyer's identical call still works (UYUMLU result written)", len(read_records(ma2, "test_sonucu_")) == 1)
 
     # ============================================================
+    # TF-1 - GERÇEK IAM: atama uzun insan beklemesi SIRASINDA geri alınır; kayıt/silme yazımından HEMEN önce yeniden kontrol
+    # (revoke gerçek `UPDATE iam.case_assignments SET revoked_at = now()`; yeniden yetkilendirme `revoked_at = NULL`)
+    # ============================================================
+    def set_assignment_revoked(ctx, revoked):
+        conn_ = pg_connect()
+        try:
+            with conn_.cursor() as cur_:
+                cur_.execute("UPDATE iam.case_assignments SET revoked_at = " + ("now()" if revoked else "NULL")
+                             + " WHERE user_id = %s AND case_id = %s", (ctx.user, ctx.case_id))
+                return cur_.rowcount
+        finally:
+            conn_.close()
+
+    def revoke_at(ctx, key_name, snap):
+        def hook(key):
+            if key == key_name:
+                snap["fp"], snap["said"] = ma_fingerprint(ctx), len(ctx.io.said)
+                snap["rows"] = set_assignment_revoked(ctx, True)
+            return None
+        return hook
+
+    def code_of_resume(ctx, answers, **kwargs):
+        try:
+            resume(ctx, answers, **kwargs)
+        except records.OfficeFlowError as error:
+            return error.code
+        except EOFError:
+            return "EOFError(beklenmeyen soru)"
+        return None
+
+    def tolerant_resume(ctx, answers):
+        """Kurtarma adımı: bozuk (mutasyonlu) bir akışta test çökmek yerine adlandırılmış FAIL ile sürsün."""
+        try:
+            return resume(ctx, answers)
+        except (records.OfficeFlowError, EOFError):
+            return None
+
+    def state_name_pg(ctx):
+        try:
+            return state_of(ctx).state
+        except records.OfficeFlowError:
+            return "(durum dosyası yok)"
+
+    # W1/W3 gerçek IAM: UYUMLU, 'KONTROL TAMAMLANDI' beklenirken atama geri alınır
+    tf1 = start_ctx("tf1")
+    run_new(tf1, base_answers(tf1))
+    snap_tf1 = {}
+    code_tf1 = code_of_resume(tf1, {"kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "hayır"}, on_ask=revoke_at(tf1, "kontrol_tamam", snap_tf1))
+    print(f"INFO TF-1 PG W1 disk after the refusal: state={state_name_pg(tf1)}, result_records={len(read_records(tf1, 'test_sonucu_'))}, "
+          f"journal_rows={len(journal_rows(f'case:{tf1.case_id}'))}")
+    check("TF-1 PG W1 REAL IAM: assignment revoked (UPDATE touched 1 row) while 'KONTROL TAMAMLANDI' is awaited -> YETKI_YOK; state stays UYUMLU_RAPOR_KONTROLU, "
+          "NO result record, NO journal row, NO file change, NO screen output after the confirmation",
+          snap_tf1.get("rows") == 1 and code_tf1 == "YETKI_YOK" and read_records(tf1, "test_sonucu_") == []
+          and state_name_pg(tf1) == "UYUMLU_RAPOR_KONTROLU" and ma_fingerprint(tf1) == snap_tf1["fp"] and len(tf1.io.said) == snap_tf1["said"],
+          f"{code_tf1} rows={snap_tf1.get('rows')}")
+    code_tf1_still = code_of_resume(tf1, {"kontrol_tamam": "KONTROL TAMAMLANDI"})
+    check("TF-1 PG W1: while the assignment stays revoked a fresh --devam is also refused at its FIRST step (YETKI_YOK, nothing asked)",
+          code_tf1_still == "YETKI_YOK" and tf1.io.asked == [] and read_records(tf1, "test_sonucu_") == [])
+    check("TF-1 PG W1: re-assigning the lawyer (revoked_at = NULL) touched exactly 1 row", set_assignment_revoked(tf1, False) == 1)
+    tolerant_resume(tf1, {"kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "hayır"})
+    check("TF-1 PG W1 recovery: the authorised --devam completes from the SAME state with exactly ONE UYUMLU result record (no duplicate), state SILME_ONAYI_BEKLIYOR",
+          len(read_records(tf1, "test_sonucu_")) == 1 and read_records(tf1, "test_sonucu_")[0]["sonuc"] == "UYUMLU"
+          and state_name_pg(tf1) == "SILME_ONAYI_BEKLIYOR")
+
+    # W4/W5/W6 gerçek IAM: silme onayından ('SİLMEYİ ONAYLIYORUM') sonra, silmeden ÖNCE atama geri alınır
+    tf2 = start_ctx("tf2")
+    run_new(tf2, base_answers(tf2))
+    tolerant_resume(tf2, {"kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "hayır"})
+    snap_tf2 = {}
+    del_answers = {"silme_tam_ad": NAMES[LAWYER_ID], "silme_kod": tf2.dosya_kodu, "silme_onay": "SİLMEYİ ONAYLIYORUM", "kimlik_ad": NAMES[LAWYER_ID]}
+    code_tf2 = code_of_resume(tf2, del_answers, on_ask=revoke_at(tf2, "silme_onay", snap_tf2))
+    print(f"INFO TF-1 PG W5 disk after the refusal: state={state_name_pg(tf2)}, imha_records={len(read_records(tf2, 'imha_'))}, "
+          f"case_dir_exists={tf2.paths.case_dir.exists()}")
+    check("TF-1 PG W5/W6 REAL IAM: revoked after the last confirmation and BEFORE the deletion -> YETKI_YOK; deletion NEVER started: no imha record (no BASLADI), "
+          "no binding, every case/run file still on disk and byte-identical, no journal change, state SILME_ONAYI_BEKLIYOR",
+          snap_tf2.get("rows") == 1 and code_tf2 == "YETKI_YOK" and read_records(tf2, "imha_") == []
+          and records.read_imha_binding(tf2.paths.run_dir, run_id=tf2.run_id) is None and tf2.paths.case_dir.exists()
+          and ma_fingerprint(tf2) == snap_tf2["fp"] and state_name_pg(tf2) == "SILME_ONAYI_BEKLIYOR", f"{code_tf2}")
+    set_assignment_revoked(tf2, False)
+    tolerant_resume(tf2, del_answers)
+    imha_tf2 = read_records(tf2, "imha_")
+    check("TF-1 PG W5/W6 recovery: the re-assigned lawyer's --devam performs the deletion: BASLADI then SONUC=TAMAMLANDI exactly once, both owned directories gone, still ONE result record",
+          imha_tf2 and [r["asama"] for r in imha_tf2] == ["BASLADI", "SONUC"] and imha_tf2[-1]["genel_sonuc"] == "TAMAMLANDI"
+          and not tf2.paths.case_dir.exists() and len(read_records(tf2, "test_sonucu_")) == 1)
+
+    # Karakterizasyon (kod değişikliği YOK): onay adı beklenirken atama geri alınırsa gerçek onay yolu da reddeder
+    tf3 = start_ctx("tf3")
+    holder_tf3 = {}
+
+    def revoke_before_approval(key):
+        if key == "onay_ad":
+            holder_tf3["rows"] = set_assignment_revoked(tf3, True)
+        return None
+
+    code_tf3 = None
+    try:
+        run_new(tf3, base_answers(tf3), on_ask=revoke_before_approval)
+    except records.OfficeFlowError as error:
+        code_tf3 = error.code
+    canonical_tf3 = _TMP_CASES / tf3.case_id / "deadlines" / "deadline.json"
+    check("TF-1 PG characterization: revoked while the approval name is awaited -> the REAL approval path refuses: NO approval.deadline journal row, "
+          "NO canonical deadline.json, no test result record",
+          holder_tf3.get("rows") == 1 and code_tf3 is not None and count_family(tf3, "approval.deadline") == 0
+          and not canonical_tf3.exists() and read_records(tf3, "test_sonucu_") == [], f"{code_tf3}")
+    print(f"INFO TF-1 PG characterization: approval refused with code {code_tf3}")
+
+    # ============================================================
     # N - normal yerel hesap (uygulama DB rolü) çalışır; dış YZ reddedilir
     # ============================================================
     from psycopg import sql as _sql

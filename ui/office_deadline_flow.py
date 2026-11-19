@@ -383,6 +383,13 @@ class OfficeFlow:
         if not records.confirm_full_name(typed, identity.display_name):
             raise OfficeFlowError("KIMLIK_TEYIDI_BASARISIZ" if key == "kimlik_ad" else "ONAY_TEYIDI_BASARISIZ")
 
+    def _reauthorize(self, paths):
+        """TF-1: sonuç/imha kaydı veya o kaydı haklı çıkaran durum geçişinden HEMEN önce CANLI yetki
+        (aktif + lawyer + vakaya atanmış). `continue_run` başında alınan kimlik uzun insan beklemesi
+        boyunca bayatlar; atama bu sürede geri alınmış olabilir. Reddedilirse `YETKI_YOK`: o noktada
+        hiçbir kayıt/durum yazılmaz. Dönüş: taze kimlik."""
+        return self.backend.identity(paths.case_id)
+
     def _announce(self, run_id) -> None:
         """Koşu kimliği (rastgele, opak; dosyadan türetilmez). `--devam` için
         kullanıcıya her ara/durma çıktısında gösterilir. Destek özetine GİRMEZ."""
@@ -823,6 +830,7 @@ class OfficeFlow:
         if answer.strip() != "KONTROL TAMAMLANDI":
             self._say("Kontrol tamamlandı olarak işaretlenmedi; rapor korunuyor.")
             return
+        self._reauthorize(paths)   # TF-1 (W1): beyan sonrası, durum/kayıt yazımından ÖNCE
         if not self._fresh(paths, state):
             self._invalidate(paths, state)
             return
@@ -846,6 +854,7 @@ class OfficeFlow:
         ).strip()
         if category not in records.ERROR_CATEGORIES:
             raise OfficeFlowError("KAYIT_SEMASI_GECERSIZ")
+        self._reauthorize(paths)   # TF-1 (W2): kategori sonrası, ekran/durum/kayıt yazımından ÖNCE
         self._say(outcomes.CATEGORY_NOT_FINDING_SENTENCE)
         self._say(outcomes.CLOSURE_NOT_PROOF_SENTENCE)
         state.set_state("INCELEME_KAPALI")
@@ -858,6 +867,7 @@ class OfficeFlow:
         """Pilot test sonucu: koşu başına en çok BİR kez (aynı jeton -> O_EXCL)."""
         if state.get("sonuc") not in outcomes.RESULTS:
             return
+        self._reauthorize(paths)   # TF-1 (W3): tek geçit; 832/855 ve `continue_run` tekrar yolunu kapsar
         if state.get("sonuc_token") is None:
             state["sonuc_token"] = outcomes.new_result_token()
             self._save(paths, state)
@@ -886,7 +896,9 @@ class OfficeFlow:
         self.step = "F6"
         # Kimlik (aktif + lawyer + vakaya atanmış) plan/ret/jeton/kayıt işinden ÖNCE:
         # yetkisiz çağrı ekran çıktısı, kayıt, bağ veya durum geçişi üretmez.
-        identity = identity or self.backend.identity(paths.case_id)
+        # TF-1 (W4): HER ZAMAN taze kimlik. `continue_run`'dan gelen anlık görüntü (parametre) inceleme
+        # beklemesinden ÖNCEdir; refusal kaydı ve ad teyidi onunla yapılmaz (parametre yalnız imza uyumu).
+        identity = self._reauthorize(paths)
         if state.state == "UYUSMAZLIK_INCELEME_ACIK":
             raise OfficeFlowError("INCELEME_ACIK")
         if state.state not in records.DELETION_ENTRY_STATES:
@@ -933,6 +945,9 @@ class OfficeFlow:
         if approved.strip() != "SİLMEYİ ONAYLIYORUM":
             raise OfficeFlowError("SILME_ONAYI_YOK")
 
+        # TF-1 (W5/W6): son insan onayından sonra, bağ/durum/BASLADI yazımından ve silmeden ÖNCE.
+        # Silme başladıktan sonraki KAPANIŞ (SONUC) kaydı BİLİNÇLİ olarak kontrole bağlanmaz.
+        self._reauthorize(paths)
         if token is None:
             token = records.imha_token_for_run(paths.run_id)
             records.write_imha_binding(paths, token=token, dosya_kodu=state["dosya_kodu"])

@@ -111,6 +111,7 @@ class FakeBackend:
         self.system, self.anchors, self.fail_at, self.holiday_ok, self.secret_failure = system, anchors, fail_at, holiday_ok, secret_failure
         self.temp_seen = []
         self.identity_calls, self.deny = 0, False
+        self.deny_from_call = None   # TF-1: bu sıradaki (1 tabanlı) kimlik çağrısından itibaren IAM reddeder
         self.global_file = TMP / "global_ruleset.json"
         self.global_file.write_text("v1", encoding="utf-8")
         self.name = NAME
@@ -129,7 +130,7 @@ class FakeBackend:
     def identity(self, case_id):
         self.events.append(("identity", case_id))
         self.identity_calls += 1
-        if self.deny:
+        if self.deny or (self.deny_from_call is not None and self.identity_calls >= self.deny_from_call):
             raise R.OfficeFlowError("YETKI_YOK")
         return R.IdentitySnapshot(7, self.name, "kullanici", "makine", "2026-11-18T10:00:00+00:00")
 
@@ -929,6 +930,168 @@ try:
     # kimlik sayacı: her yol en az bir kimlik çağrısı yaptı
     check("M-A: every continue path made at least one identity call (backend call counter)",
           all(c.backend.identity_calls >= 2 for c in (u1, u2, u3, u4, u5, u6, u7)))
+
+    # ================================================================ TF-1: yetki HER kayıt/durum yazımından HEMEN önce yeniden kontrol edilir
+    # Senaryo: `continue_run` başındaki kimlik GEÇER; insan beklemesi sürerken atama geri alınır; yazım noktasında RED.
+    def flip_at(ctx, key_name, snap):
+        """`key_name` sorulduğunda (insan beklemesi sürüyor, yazım henüz yok) atamayı geri al ve o anki
+        disk/ekran anlık görüntüsünü al: sonradan fark = geri alma SONRASI yazılan her şey."""
+        def hook(key):
+            if key == key_name:
+                snap["fp"], snap["said"] = fingerprint(ctx), len(ctx.io.said)
+                ctx.backend.deny = True
+            return None
+        return hook
+
+    def records_of(ctx, prefix):
+        return [p.name for p in kayitlar(ctx) if p.name.startswith(prefix)]
+
+    def state_name(ctx):
+        try:
+            return state_of(ctx).state
+        except R.OfficeFlowError:
+            return "(durum dosyası yok)"
+
+    def first_result(ctx):
+        found = results(ctx)
+        return found[0].get("sonuc") if found else None
+
+    def code_safe(fn, *args):
+        """Hata kodu; mutasyonlu akışta beklenmeyen soru (EOFError) testi çökertmesin diye adlandırılmış değere çevrilir."""
+        try:
+            return code_of(fn, *args)
+        except EOFError:
+            return "EOFError(beklenmeyen soru)"
+
+    def tolerant_resume(ctx, answers):
+        """Kurtarma adımı: bozuk (mutasyonlu) bir akışta test çökmek yerine adlandırılmış FAIL ile sürsün."""
+        try:
+            return resume(ctx, answers)
+        except (R.OfficeFlowError, EOFError):
+            return None
+
+    # W1: UYUMLU, 'KONTROL TAMAMLANDI' beyanından sonra yetki reddedilir
+    t1 = start("tf1a")
+    new_run(t1)
+    snap_t1 = {}
+    t1.on_ask = flip_at(t1, "kontrol_tamam", snap_t1)
+    code_t1 = code_safe(resume, t1, {"kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "hayır"})
+    t1.backend.deny, t1.on_ask = False, None
+    print(f"INFO TF-1 W1 disk after the refusal: state={state_name(t1)}, result_records={len(records_of(t1, 'test_sonucu_'))}, "
+          f"imha_records={len(records_of(t1, 'imha_'))}")
+    check("TF-1 W1: the identity passes at continue_run start, the assignment is revoked while 'KONTROL TAMAMLANDI' is awaited -> YETKI_YOK; "
+          "state stays UYUMLU_RAPOR_KONTROLU (NOT KONTROL_TAMAM), NO result/imha record, NO file change and NO screen output after the confirmation",
+          code_t1 == "YETKI_YOK" and results(t1) == [] and imha(t1) == [] and state_name(t1) == "UYUMLU_RAPOR_KONTROLU"
+          and fingerprint(t1) == snap_t1["fp"] and len(t1.io.said) == snap_t1["said"], f"{code_t1}")
+    tolerant_resume(t1, {"kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "hayır"})
+    check("TF-1 W1 recovery: the authorised --devam completes from the SAME state: exactly ONE UYUMLU result record (no duplicate), state SILME_ONAYI_BEKLIYOR",
+          len(records_of(t1, "test_sonucu_")) == 1 and first_result(t1) == "UYUMLU" and state_name(t1) == "SILME_ONAYI_BEKLIYOR")
+
+    # W2: UYUŞMAZLIK, kategori yanıtından sonra yetki reddedilir
+    t2 = start("tf1b")
+    new_run(t2, base_answers(kor_son_gun="13.03.2026"))
+    snap_t2 = {}
+    t2.on_ask = flip_at(t2, "kategori", snap_t2)
+    code_t2 = code_safe(resume, t2, {"inceleme_kapat": "İNCELEMEYİ KAPAT", "kategori": "SURE_KURALI", "silme_simdi": "hayır"})
+    t2.backend.deny, t2.on_ask = False, None
+    print(f"INFO TF-1 W2 disk after the refusal: state={state_name(t2)}, result_records={len(records_of(t2, 'test_sonucu_'))}")
+    check("TF-1 W2: revoked while the category is awaited -> YETKI_YOK; state stays UYUSMAZLIK_INCELEME_ACIK (NOT INCELEME_KAPALI), no result record, no file change, no screen output after the answer",
+          code_t2 == "YETKI_YOK" and results(t2) == [] and state_name(t2) == "UYUSMAZLIK_INCELEME_ACIK"
+          and fingerprint(t2) == snap_t2["fp"] and len(t2.io.said) == snap_t2["said"], f"{code_t2}")
+    tolerant_resume(t2, {"inceleme_kapat": "İNCELEMEYİ KAPAT", "kategori": "SURE_KURALI", "silme_simdi": "hayır"})
+    check("TF-1 W2 recovery: the authorised --devam closes the review: exactly ONE UYUSMAZLIK result record, state SILME_ONAYI_BEKLIYOR",
+          len(records_of(t2, "test_sonucu_")) == 1 and first_result(t2) == "UYUSMAZLIK" and state_name(t2) == "SILME_ONAYI_BEKLIYOR")
+
+    # W3: `continue_run` tekrar yolu (durum KONTROL_TAMAM, kayıt yazım penceresinde kalmış): `_write_result_once` tek geçit
+    class WindowCrash(BaseException):
+        pass
+
+    t3 = start("tf1c")
+    new_run(t3)
+    flow_t3 = flow_for(t3, {"kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "hayır"})
+
+    def crash_before_write(paths_, state_):
+        raise WindowCrash()
+
+    flow_t3._write_result_once = crash_before_write
+    try:
+        flow_t3.continue_run(t3.run_id)
+    except WindowCrash:
+        pass
+    check("(setup TF-1 W3) the write-window crash left state KONTROL_TAMAM with NO result record",
+          state_name(t3) == "KONTROL_TAMAM" and results(t3) == [])
+    before_t3 = fingerprint(t3)
+    t3.backend.deny_from_call = t3.backend.identity_calls + 2   # 1. çağrı (continue_run başı) geçer; 2.si (`_write_result_once`) reddedilir
+    code_t3 = code_safe(resume, t3, DEL(t3))
+    t3.backend.deny_from_call = None
+    print(f"INFO TF-1 W3 disk after the refusal: state={state_name(t3)}, result_records={len(records_of(t3, 'test_sonucu_'))}")
+    check("TF-1 W3: the first identity check passes, the second (inside _write_result_once, retry path) is refused -> YETKI_YOK; state stays KONTROL_TAMAM, NO result record, NO file change, deletion not asked",
+          code_t3 == "YETKI_YOK" and results(t3) == [] and state_name(t3) == "KONTROL_TAMAM" and fingerprint(t3) == before_t3
+          and "silme_tam_ad" not in t3.io.asked, f"{code_t3}")
+    res_t3 = tolerant_resume(t3, DEL(t3))
+    check("TF-1 W3 recovery: the authorised --devam writes exactly ONE result record (no duplicate), then the deletion completes (TAMAMLANDI)",
+          len(records_of(t3, "test_sonucu_")) == 1 and first_result(t3) == "UYUMLU" and getattr(res_t3, "outcome", None) == "TAMAMLANDI")
+
+    # W4: bayat kimlik — inceleme beklemesinde (silme_simdi sorusu) atama geri alınır; delete_run taze kimlik almalı
+    t4 = start("tf1d")
+    new_run(t4)
+    snap_t4 = {}
+    t4.on_ask = flip_at(t4, "silme_simdi", snap_t4)
+    code_t4 = code_safe(resume, t4, {"kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "evet", **DEL(t4)})
+    t4.backend.deny, t4.on_ask = False, None
+    check("TF-1 W4: revoked while 'silme_simdi' is awaited (the identity snapshot from continue_run is STALE) -> YETKI_YOK before the plan/refusal/name question: "
+          "no imha record, no binding, nothing deleted, state SILME_ONAYI_BEKLIYOR; the result record written BEFORE the revocation stays (exactly one)",
+          code_t4 == "YETKI_YOK" and imha(t4) == [] and len(records_of(t4, "test_sonucu_")) == 1 and state_name(t4) == "SILME_ONAYI_BEKLIYOR"
+          and fingerprint(t4) == snap_t4["fp"] and t4.paths.case_dir.exists() and "silme_tam_ad" not in t4.io.asked
+          and R.read_imha_binding(t4.paths.run_dir, run_id=t4.run_id) is None, f"{code_t4}")
+    res_t4 = tolerant_resume(t4, DEL(t4))
+    check("TF-1 W4 recovery: the authorised --devam deletes (TAMAMLANDI) with BASLADI+SONUC exactly once and still ONE result record",
+          getattr(res_t4, "outcome", None) == "TAMAMLANDI" and [r["asama"] for r in imha(t4)] == ["BASLADI", "SONUC"] and len(records_of(t4, "test_sonucu_")) == 1)
+
+    # W5/W6: son insan onayından ('SİLMEYİ ONAYLIYORUM') sonra reddedilirse silme HİÇ başlamaz
+    t5 = ready("tf1e")
+    snap_t5 = {}
+    t5.on_ask = flip_at(t5, "silme_onay", snap_t5)
+    code_t5 = code_safe(resume, t5, DEL(t5))
+    t5.backend.deny, t5.on_ask = False, None
+    print(f"INFO TF-1 W5 disk after the refusal: state={state_name(t5)}, imha_records={len(imha(t5))}, case_dir_exists={t5.paths.case_dir.exists()}")
+    check("TF-1 W5/W6: revoked after the last confirmation, BEFORE the deletion -> YETKI_YOK; deletion NEVER started: no BASLADI/imha record, no binding, "
+          "every case/run file is still on disk (byte-identical to the moment of the revocation), state SILME_ONAYI_BEKLIYOR",
+          code_t5 == "YETKI_YOK" and imha(t5) == [] and R.read_imha_binding(t5.paths.run_dir, run_id=t5.run_id) is None
+          and fingerprint(t5) == snap_t5["fp"] and t5.paths.case_dir.exists() and state_name(t5) == "SILME_ONAYI_BEKLIYOR", f"{code_t5}")
+    res_t5 = tolerant_resume(t5, DEL(t5))
+    check("TF-1 W5/W6 recovery: the authorised --devam performs the deletion: TAMAMLANDI, BASLADI then SONUC exactly once",
+          getattr(res_t5, "outcome", None) == "TAMAMLANDI" and [r["asama"] for r in imha(t5)] == ["BASLADI", "SONUC"] and not t5.paths.case_dir.exists())
+
+    # Bilinçli istisna: silme BAŞLADIKTAN sonra yetki geri alınsa da KAPANIŞ kaydı (SONUC) yazılır
+    class RevokeDuringDeleteFs(cleanup.FsOps):
+        def __init__(self, backend):
+            self.backend = backend
+
+        def unlink(self, path):
+            self.backend.deny = True     # silme sürerken atama geri alındı
+            super().unlink(path)
+
+    t6 = ready("tf1f")
+    t6.fs = RevokeDuringDeleteFs(t6.backend)
+    res_t6 = tolerant_resume(t6, DEL(t6))
+    revoked_during = t6.backend.deny
+    t6.backend.deny, t6.fs = False, None
+    check("TF-1 exception: an assignment revoked AFTER the deletion started does NOT block the closing SONUC record (a deletion without its record is worse): "
+          "BASLADI + SONUC=TAMAMLANDI are both written",
+          revoked_during and getattr(res_t6, "outcome", None) == "TAMAMLANDI" and [r["asama"] for r in imha(t6)] == ["BASLADI", "SONUC"]
+          and imha(t6)[-1]["genel_sonuc"] == "TAMAMLANDI" and not t6.paths.case_dir.exists())
+
+    # delete_run'a DIŞARIDAN verilen (bayat) kimlik parametresi yetki denetimini atlatamaz
+    t7 = ready("tf1g")
+    before_t7 = fingerprint(t7)
+    stale_identity = R.IdentitySnapshot(7, NAME, "kullanici", "makine", "2026-01-01T00:00:00+00:00")
+    flow_t7 = flow_for(t7, {})
+    t7.backend.deny = True
+    code_t7 = code_safe(flow_t7.delete_run, t7.paths, state_of(t7), stale_identity)
+    t7.backend.deny = False
+    check("TF-1 W4: a stale identity PASSED to delete_run as a parameter does not bypass the live check (YETKI_YOK, no output, no change)",
+          code_t7 == "YETKI_YOK" and fingerprint(t7) == before_t7 and t7.io.said == [] and imha(t7) == [], f"{code_t7}")
 
     # L-h akış: eksik alanlı durum dosyası -> DUR (soru/bağ/kayıt yok)
     lh = start("lh")
