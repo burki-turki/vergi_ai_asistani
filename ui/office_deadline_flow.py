@@ -762,6 +762,9 @@ class OfficeFlow:
         )
         # Onay sahibi = oturumdaki yetkili kullanıcı (principal). Yazılan ad YALNIZ ek
         # teyittir: kayda yalnız `ek_teyit_eslesti` yazılır, yazılan metin ASLA.
+        # TF-1 (W7): ad beklemesi boyunca atama geri alınmış olabilir; ilk yazımdan (onay_kimlik)
+        # HEMEN önce CANLI yetki yeniden sorgulanır ve kayıt bu TAZE kimlikten yazılır.
+        identity = self._reauthorize(paths)
         state["onay_kimlik"] = {**identity.as_dict(), "ek_teyit_eslesti": True}
         self._save(paths, state)
         if not self._fresh(paths, state):

@@ -112,6 +112,7 @@ class FakeBackend:
         self.temp_seen = []
         self.identity_calls, self.deny = 0, False
         self.deny_from_call = None   # TF-1: bu sıradaki (1 tabanlı) kimlik çağrısından itibaren IAM reddeder
+        self.db_time_by_call = None  # L-1: çağrı sırasına (1 tabanlı) bağlı db_time; None = bugünkü sabit değer
         self.global_file = TMP / "global_ruleset.json"
         self.global_file.write_text("v1", encoding="utf-8")
         self.name = NAME
@@ -132,7 +133,8 @@ class FakeBackend:
         self.identity_calls += 1
         if self.deny or (self.deny_from_call is not None and self.identity_calls >= self.deny_from_call):
             raise R.OfficeFlowError("YETKI_YOK")
-        return R.IdentitySnapshot(7, self.name, "kullanici", "makine", "2026-11-18T10:00:00+00:00")
+        db_time = "2026-11-18T10:00:00+00:00" if self.db_time_by_call is None else self.db_time_by_call(self.identity_calls)
+        return R.IdentitySnapshot(7, self.name, "kullanici", "makine", db_time)
 
     def holiday_calendar_ok(self):
         return self.holiday_ok
@@ -1092,6 +1094,76 @@ try:
     t7.backend.deny = False
     check("TF-1 W4: a stale identity PASSED to delete_run as a parameter does not bypass the live check (YETKI_YOK, no output, no change)",
           code_t7 == "YETKI_YOK" and fingerprint(t7) == before_t7 and t7.io.said == [] and imha(t7) == [], f"{code_t7}")
+
+    # L-1 (W7): onay ADI beklenirken atama geri alınırsa durum dosyasına `onay_kimlik` YAZILMAZ (bağımsız incelemenin L-1 bulgusu)
+    def onay_of(ctx):
+        try:
+            return state_of(ctx).get("onay_kimlik")
+        except R.OfficeFlowError:
+            return "(durum dosyası yok)"
+
+    def run_new_fixed_id(ctx, answers, run_id):
+        """run_new, koşu kimliği ve yolları ÖNCEDEN bilinerek: red durumunda da disk/durum okunabilsin."""
+        ctx.run_id = run_id
+        ctx.paths = R.build_run_paths(ctx.office, ctx.cases, ctx.case_id, run_id)
+        WATCH["path"] = os.path.normcase(os.path.realpath(str(ctx.source)))
+        del SOURCE_EVENTS[:]
+        original = R.new_run_id
+        R.new_run_id = lambda: run_id
+        try:
+            return code_safe(lambda: flow_for(ctx, answers).run_new(case_id=ctx.case_id, dosya_kodu=ctx.dosya, source_pdf=ctx.source))
+        finally:
+            R.new_run_id = original
+
+    ONAY_KEYS = {"user_id", "display_name", "windows_user", "machine_name", "db_time", "ek_teyit_eslesti"}
+    w7 = start("w7a")
+    snap_w7 = {}
+    w7.on_ask = flip_at(w7, "onay_ad", snap_w7)
+    code_w7 = run_new_fixed_id(w7, base_answers(), "e" * 32)
+    w7.backend.deny, w7.on_ask = False, None
+    print(f"INFO L-1 W7 disk after the refusal: state={state_name(w7)}, onay_kimlik={onay_of(w7)!r}, result_records={len(records_of(w7, 'test_sonucu_'))}")
+    check("L-1 W7: the identity passes at the start, the assignment is revoked while the approval NAME is awaited -> exactly YETKI_YOK; the run state holds NO 'onay_kimlik' "
+          "(a revoked lawyer's approval mark is never written), the state stays KARSILASTIRMA_YAPILDI, NO approval call, NO result/imha record, NO file change, NO output after the answer",
+          code_w7 == "YETKI_YOK" and onay_of(w7) is None and state_name(w7) == "KARSILASTIRMA_YAPILDI"
+          and ("backend", "approve_deadline") not in w7.events and results(w7) == [] and imha(w7) == []
+          and fingerprint(w7) == snap_w7["fp"] and len(w7.io.said) == snap_w7["said"], f"{code_w7} {onay_of(w7)!r} {state_name(w7)}")
+    tolerant_resume(w7, {"onay_ad": NAME, "kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "hayır"})
+    onay_w7 = onay_of(w7)
+    check("L-1 W7 recovery: the re-assigned lawyer's --devam completes the approval EXACTLY ONCE (one approve_deadline call), writes 'onay_kimlik' (session identity, exact key set, "
+          "ek_teyit_eslesti True), state SILME_ONAYI_BEKLIYOR, exactly ONE UYUMLU result record",
+          sum(1 for e in w7.events if e == ("backend", "approve_deadline")) == 1 and isinstance(onay_w7, dict) and set(onay_w7) == ONAY_KEYS
+          and onay_w7["user_id"] == 7 and onay_w7["display_name"] == NAME and onay_w7["ek_teyit_eslesti"] is True
+          and state_name(w7) == "SILME_ONAYI_BEKLIYOR" and len(results(w7)) == 1 and first_result(w7) == "UYUMLU", f"{onay_w7!r} {state_name(w7)}")
+
+    # yetki SÜRÜYORSA: davranış aynı, kayıt TAZE kimlikten gelir (ad beklemesinden SONRA alınan anlık görüntü)
+    w8 = start("w8a")
+    w8.backend.db_time_by_call = lambda n: f"2026-11-18T10:00:{n:02d}+00:00"
+    mark_w8 = {}
+
+    def mark_onay(key):
+        if key == "onay_ad":
+            mark_w8["idx"], mark_w8["calls"] = len(w8.events), w8.backend.identity_calls
+        return None
+
+    w8.on_ask = mark_onay
+    new_run(w8)
+    w8.on_ask = None
+    onay_w8 = onay_of(w8)
+    after_w8 = w8.events[mark_w8["idx"]:]
+    first_id_w8 = next((i for i, e in enumerate(after_w8) if e[0] == "identity"), None)
+    approve_w8 = next((i for i, e in enumerate(after_w8) if e == ("backend", "approve_deadline")), None)
+    check("L-1 W7 (authority kept): a live identity query runs AFTER the approval-name question and BEFORE the approval call; behaviour is otherwise unchanged "
+          "(one approval, state UYUMLU_RAPOR_KONTROLU, exact key set, no typed text)",
+          first_id_w8 is not None and approve_w8 is not None and first_id_w8 < approve_w8
+          and sum(1 for e in w8.events if e == ("backend", "approve_deadline")) == 1 and state_name(w8) == "UYUMLU_RAPOR_KONTROLU"
+          and isinstance(onay_w8, dict) and set(onay_w8) == ONAY_KEYS and onay_w8["ek_teyit_eslesti"] is True, f"{first_id_w8} {approve_w8} {onay_w8!r}")
+    fresh_time = f"2026-11-18T10:00:{mark_w8['calls'] + 1:02d}+00:00"
+    stale_time = f"2026-11-18T10:00:{mark_w8['calls']:02d}+00:00"
+    check("L-1 W7 (fresh identity): 'onay_kimlik.db_time' is the snapshot taken by the FIRST identity call after the name question - NOT the snapshot passed in from earlier",
+          isinstance(onay_w8, dict) and onay_w8["db_time"] == fresh_time and onay_w8["db_time"] != stale_time, f"{onay_w8!r} fresh={fresh_time} stale={stale_time}")
+    check("L-1 W7 (same user): the approval mark and the reading record (first identity) carry the SAME user_id and registered name - the name confirmation and the fresh query bind to one user",
+          isinstance(onay_w8, dict) and onay_w8["user_id"] == R.load_reading_record(w8.paths)["kimlik"]["user_id"] == 7
+          and onay_w8["display_name"] == R.load_reading_record(w8.paths)["kimlik"]["display_name"] == NAME)
 
     # L-h akış: eksik alanlı durum dosyası -> DUR (soru/bağ/kayıt yok)
     lh = start("lh")

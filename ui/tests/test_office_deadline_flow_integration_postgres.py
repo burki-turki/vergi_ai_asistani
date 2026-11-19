@@ -1151,7 +1151,8 @@ try:
           imha_tf2 and [r["asama"] for r in imha_tf2] == ["BASLADI", "SONUC"] and imha_tf2[-1]["genel_sonuc"] == "TAMAMLANDI"
           and not tf2.paths.case_dir.exists() and len(read_records(tf2, "test_sonucu_")) == 1)
 
-    # Karakterizasyon (kod değişikliği YOK): onay adı beklenirken atama geri alınırsa gerçek onay yolu da reddeder
+    # L-1 (W7) gerçek IAM: onay ADI beklenirken atama geri alınır. Red artık `_approval_phase` içindeki canlı yetki
+    # sorgusundan gelir (ilk yazım olan `onay_kimlik` öncesi); gerçek onay yolu hiç çağrılmaz.
     tf3 = start_ctx("tf3")
     holder_tf3 = {}
 
@@ -1165,12 +1166,58 @@ try:
         run_new(tf3, base_answers(tf3), on_ask=revoke_before_approval)
     except records.OfficeFlowError as error:
         code_tf3 = error.code
+    # run_new reddedildi: koşu kimliği/yolları diskteki tek koşu dizininden okunur
+    tf3.run_id = [p.name for p in (tf3.office / "runs").iterdir()][0]
+    tf3.paths = records.build_run_paths(tf3.office, _TMP_CASES, tf3.case_id, tf3.run_id)
+
+    def onay_pg(ctx):
+        try:
+            return state_of(ctx).get("onay_kimlik")
+        except records.OfficeFlowError:
+            return "(durum dosyası yok)"
+
     canonical_tf3 = _TMP_CASES / tf3.case_id / "deadlines" / "deadline.json"
-    check("TF-1 PG characterization: revoked while the approval name is awaited -> the REAL approval path refuses: NO approval.deadline journal row, "
-          "NO canonical deadline.json, no test result record",
-          holder_tf3.get("rows") == 1 and code_tf3 is not None and count_family(tf3, "approval.deadline") == 0
-          and not canonical_tf3.exists() and read_records(tf3, "test_sonucu_") == [], f"{code_tf3}")
-    print(f"INFO TF-1 PG characterization: approval refused with code {code_tf3}")
+    check("TF-1 PG W7 REAL IAM: revoked while the approval NAME is awaited (UPDATE touched 1 row) -> exactly YETKI_YOK; NO approval.deadline journal row, NO canonical "
+          "deadline.json, no test result record, and the run state holds NO 'onay_kimlik' (state stays KARSILASTIRMA_YAPILDI)",
+          holder_tf3.get("rows") == 1 and code_tf3 == "YETKI_YOK" and count_family(tf3, "approval.deadline") == 0
+          and not canonical_tf3.exists() and read_records(tf3, "test_sonucu_") == []
+          and onay_pg(tf3) is None and state_name_pg(tf3) == "KARSILASTIRMA_YAPILDI", f"{code_tf3} {onay_pg(tf3)!r} {state_name_pg(tf3)}")
+    print(f"INFO TF-1 PG W7: approval name step refused with code {code_tf3}")
+    check("TF-1 PG W7: re-assigning the lawyer (revoked_at = NULL) touched exactly 1 row", set_assignment_revoked(tf3, False) == 1)
+    mark_tf3 = {}
+
+    def mark_onay_time(key):
+        """Ad sorulduğu anki GERÇEK DB saati: taze sorgu bundan SONRA, bayat (continue_run başı) anlık görüntü bundan ÖNCE alınmış olur."""
+        if key == "onay_ad":
+            conn_t = pg_connect()
+            try:
+                with conn_t.cursor() as cur_t:
+                    cur_t.execute("SELECT clock_timestamp()")
+                    mark_tf3["t"] = cur_t.fetchone()[0]
+            finally:
+                conn_t.close()
+        return None
+
+    try:
+        resume(tf3, {"onay_ad": NAMES[LAWYER_ID], "kontrol_tamam": "KONTROL TAMAMLANDI", "silme_simdi": "hayır", "kimlik_ad": NAMES[LAWYER_ID]},
+               on_ask=mark_onay_time)
+    except (records.OfficeFlowError, EOFError):
+        pass
+    onay_tf3 = onay_pg(tf3)
+    reading_tf3 = records.load_reading_record(tf3.paths)
+    check("TF-1 PG W7 recovery: the authorised --devam completes the approval EXACTLY ONCE (ONE approval.deadline journal row, canonical deadline.json exists), writes 'onay_kimlik' "
+          "(exact key set, ek_teyit_eslesti True), state SILME_ONAYI_BEKLIYOR, exactly ONE UYUMLU result record",
+          count_family(tf3, "approval.deadline") == 1 and canonical_tf3.exists() and isinstance(onay_tf3, dict)
+          and set(onay_tf3) == {"user_id", "display_name", "windows_user", "machine_name", "db_time", "ek_teyit_eslesti"} and onay_tf3["ek_teyit_eslesti"] is True
+          and state_name_pg(tf3) == "SILME_ONAYI_BEKLIYOR" and len(read_records(tf3, "test_sonucu_")) == 1
+          and read_records(tf3, "test_sonucu_")[0]["sonuc"] == "UYUMLU", f"{onay_tf3!r} {state_name_pg(tf3)}")
+    check("TF-1 PG W7 (same user): the approval mark's user_id equals the first identity's user_id in the reading record (the name confirmation and the fresh live query bind to ONE user, the real IAM lawyer)",
+          isinstance(onay_tf3, dict) and onay_tf3["user_id"] == reading_tf3["kimlik"]["user_id"] == LAWYER_ID
+          and onay_tf3["display_name"] == reading_tf3["kimlik"]["display_name"] == NAMES[LAWYER_ID])
+    import datetime as _dt_w7
+    check("TF-1 PG W7 (fresh identity, REAL DB clock): 'onay_kimlik.db_time' was taken AFTER the approval-name question was asked in the --devam run (a snapshot passed in from "
+          "the start of continue_run would predate it)",
+          isinstance(onay_tf3, dict) and "t" in mark_tf3 and _dt_w7.datetime.fromisoformat(onay_tf3["db_time"]) >= mark_tf3["t"], f"{onay_tf3!r} {mark_tf3!r}")
 
     # ============================================================
     # N - normal yerel hesap (uygulama DB rolü) çalışır; dış YZ reddedilir
