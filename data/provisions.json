@@ -583,7 +583,17 @@
         "valid_from": null,
         "valid_through": null,
         "repeal_effective_date": null,
-        "evidence": []
+        "evidence": [
+          {
+            "evidence_id": "ev_6183_m58_f1_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_6183",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.3.6183.pdf",
+            "citation": "6183 sayılı Amme Alacaklarının Tahsil Usulü Hakkında Kanun m.58/1 - Mevzuat Bilgi Sistemi konsolide metni, fiziksel sayfa 23",
+            "verified": false,
+            "notes": "DOĞRULANMAMIŞ ADAY. PDF 2026-11-20'de indirildi; ham bayt SHA-256 b286b3b7342d5e5bf3db5c640554d830148ee38675e921cd60776756318e5fa2 (documents.json kanun_6183 kaydındaki değerle aynı). Yalnız konsolide metin okunmuştur; yürürlük başlangıcı için değiştiren kanunun kendi metni okunmamıştır."
+          }
+        ]
       },
       "applicability": {
         "windows_complete": false,
@@ -594,7 +604,47 @@
       },
       "subject_periods": [],
       "relations": [],
-      "notes": "6183 sayılı AATUHK m.58 (madde başlığı: \"Ödeme emrine itiraz\"), fıkra 1: ödeme emrine karşı tebliğ tarihinden itibaren 15 gün içinde dava açılabilir. Mevzuat Bilgi Sistemi metninde fıkrada \"vergi itiraz komisyonu\" ifadesi geçmektedir (metnin 29 numaralı dipnotu). Maddenin bir fıkrası Anayasa Mahkemesinin 21/4/2022 tarihli, E.2021/119, K.2022/48 sayılı kararıyla iptal edilmiştir. Bu kaydın fıkra eşlemesi (locator madde 58 / fıkra 1), yürürlük durumu ve AYM iptalinin bu fıkraya etkisi AVUKAT TEYİDİ BEKLİYOR: verification_state=unverified, formal.verified=false, formal.status=unknown ve formal.evidence boş bırakılmıştır; bu nedenle Legal Knowledge Engine bu hükmü aktivasyona uygun (activation_eligible) saymaz. Kaynağın söylediği ile doğrulanmış hukuki gerçek aynı şey değildir (CLAUDE.md §3 Prensip 3)."
+      "notes": "6183 sayılı AATUHK m.58 (madde başlığı: \"Ödeme emrine itiraz\"), fıkra 1. KAYNAĞIN SÖYLEDİĞİ (Mevzuat Bilgi Sistemi PDF'i, SHA-256 b286b3b7342d5e5bf3db5c640554d830148ee38675e921cd60776756318e5fa2, fiziksel sayfa 23; 2026-11-20'de okundu): 'Kendisine ödeme emri tebliğ olunan şahıs, böyle bir borcu olmadığı veya kısmen ödediği veya zamanaşımına uğradığı hakkında tebliğ tarihinden itibaren 15 gün içinde alacaklı tahsil dairesine ait itiraz işlerine bakan vergi itiraz komisyonu nezdinde itirazda bulunabilir.' 29 numaralı dipnot: '7' ibaresi 28/11/2017 tarihli ve 7061 sayılı Kanunun 9 uncu maddesiyle '15' olarak değiştirilmiş, değişiklik aynı Kanunun 123 üncü maddesi uyarınca 1/1/2018'de yürürlüğe girmiştir; aynı PDF'in değişiklik tablosu (fiziksel sayfa 54) 7061 sayılı Kanun için 15, 22/A, 55, 56, 58, 60 ıncı maddeleri ve 1/1/2018 tarihini gösterir. Maddenin üçüncü fıkrası mülgadır (28/1/2010-5951/1 md.); Anayasa Mahkemesinin 21/4/2022 tarihli, E.2021/119, K.2022/48 sayılı kararıyla iptal edilen fıkra metinde beşinci sıradadır; birinci fıkra metinde yer almaktadır. Anayasa Mahkemesi kararının bu maddeye ve birinci fıkranın uygulanmasına etkisi HÜKÜM DOĞRULAMASI SIRASINDA avukat tarafından değerlendirilecek ve doğrulama kanıtına dahil edilecektir; bu kayıt o değerlendirmeyi yapılmış SAYMAZ. 7061 sayılı Kanunun kendi metni ve Resmî Gazete nüshası bu kayıt için OKUNMAMIŞTIR. AVUKAT GİRDİSİ (henüz LEGAL_APPROVED olarak kayda alınmadı): ikinci dalga süre kuralları formunun (SHA-256 1b59885846a7677dd4f4f03be85b2b42c16bcb900d808a76d885d66f84b669f8) 1. satırı 6183 m.58/1'i ödeme emrine karşı dava süresinin dayanağı olarak gösterir. DURUM: verification_state=unverified, formal.verified=false, formal.status=unknown; evidence listesindeki kayıt doğrulanmamış bir ADAYDIR (verified=false); bu nedenle Legal Knowledge Engine bu hükmü aktivasyona uygun (activation_eligible) saymaz. Doğrulanmış olarak işaretlenmesi açık kullanıcı onayına bağlıdır (CLAUDE.md §8). Kaynağın söylediği ile doğrulanmış hukuki gerçek aynı şey değildir (CLAUDE.md §3 Prensip 3)."
+    },
+    {
+      "provision_id": "kanun_6183_m15_f1",
+      "provision_version_id": "kanun_6183_m15_f1_v1",
+      "document_id": "kanun_6183",
+      "enabled": true,
+      "verification_state": "unverified",
+      "locator": {
+        "madde": "15",
+        "fikra": "1",
+        "bent": null
+      },
+      "formal": {
+        "verified": false,
+        "status": "unknown",
+        "valid_from": null,
+        "valid_through": null,
+        "repeal_effective_date": null,
+        "evidence": [
+          {
+            "evidence_id": "ev_6183_m15_f1_current_consolidated",
+            "kind": "consolidated_legislation",
+            "source_document_id": "kanun_6183",
+            "source_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.3.6183.pdf",
+            "citation": "6183 sayılı Amme Alacaklarının Tahsil Usulü Hakkında Kanun m.15/1 - Mevzuat Bilgi Sistemi konsolide metni, fiziksel sayfa 5",
+            "verified": false,
+            "notes": "DOĞRULANMAMIŞ ADAY. PDF 2026-11-20'de indirildi; ham bayt SHA-256 b286b3b7342d5e5bf3db5c640554d830148ee38675e921cd60776756318e5fa2 (documents.json kanun_6183 kaydındaki değerle aynı). Yalnız konsolide metin okunmuştur; yürürlük başlangıcı için değiştiren kanunun kendi metni okunmamıştır."
+          }
+        ]
+      },
+      "applicability": {
+        "windows_complete": false,
+        "windows_complete_verified": false,
+        "completion_evidence": [],
+        "windows": [],
+        "notes": null
+      },
+      "subject_periods": [],
+      "relations": [],
+      "notes": "6183 sayılı AATUHK m.15 (madde başlığı: \"İhtiyati hacze itiraz\"), fıkra 1. KAYNAĞIN SÖYLEDİĞİ (Mevzuat Bilgi Sistemi PDF'i, SHA-256 b286b3b7342d5e5bf3db5c640554d830148ee38675e921cd60776756318e5fa2, fiziksel sayfa 5; 2026-11-20'de okundu): 'Haklarında ihtiyati haciz tatbik olunanlar haczin tatbikı, gıyapta yapılan hacizlerde haczin tebliği tarihinden itibaren 15 gün içinde alacaklı tahsil dairesine ait itiraz işlerine bakan vergi itiraz komisyonu nezdinde ihtiyati haciz sebebine itiraz edebilirler.' 4 numaralı dipnot: '7' ibaresi 28/11/2017 tarihli ve 7061 sayılı Kanunun 9 uncu maddesiyle '15' olarak değiştirilmiş, değişiklik aynı Kanunun 123 üncü maddesi uyarınca 1/1/2018'de yürürlüğe girmiştir; aynı PDF'in değişiklik tablosu (fiziksel sayfa 54) 7061 sayılı Kanun için 15 inci maddeyi ve 1/1/2018 tarihini gösterir. 7061 sayılı Kanunun kendi metni ve Resmî Gazete nüshası bu kayıt için OKUNMAMIŞTIR. AVUKAT GİRDİSİ (henüz LEGAL_APPROVED olarak kayda alınmadı): ikinci dalga süre kuralları formunun (SHA-256 1b59885846a7677dd4f4f03be85b2b42c16bcb900d808a76d885d66f84b669f8) 8. satırı 6183 m.15/1'i ihtiyati hacze karşı dava süresinin dayanağı olarak gösterir ve sürenin 01.01.2018'den itibaren 15 gün olduğunu belirtir. DURUM: verification_state=unverified, formal.verified=false, formal.status=unknown; evidence listesindeki kayıt doğrulanmamış bir ADAYDIR (verified=false); bu nedenle Legal Knowledge Engine bu hükmü aktivasyona uygun (activation_eligible) saymaz. Doğrulanmış olarak işaretlenmesi açık kullanıcı onayına bağlıdır (CLAUDE.md §8). Kaynağın söylediği ile doğrulanmış hukuki gerçek aynı şey değildir (CLAUDE.md §3 Prensip 3)."
     }
   ]
 }

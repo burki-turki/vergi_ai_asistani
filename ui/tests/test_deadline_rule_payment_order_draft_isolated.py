@@ -11,9 +11,11 @@
 #   (1) gerçek registry deadline_rule_validator'dan geçer; yeni kural
 #       status=draft, calculation_enabled=false ve document_types boş
 #       DEĞİL (boş liste seçim politikasında jokerdir);
-#   (2) CLAUDE.md §13.2 mekanik bekçisi: yeni kuralın legal_basis_refs
-#       listesinde 5604 / İYUK m.8/2, m.8/3, m.61/1 ref'leri YOK - bu
-#       ref'lerin bağlanması avukat kararına bağlıdır;
+#   (2) CLAUDE.md §13.2 mekanik bekçisi: taslak, avukatın ikinci dalga
+#       formundaki 1. satıra göre (LEGAL_APPROVED kaydı henüz YOK) dar
+#       dayanak listesini taşır; mali tatil ref'i (5604) İYUK adli tatil
+#       ref'leriyle (m.8/3 + m.61/1) BİRLİKTE bağlıdır - "mali tatil var,
+#       adli tatil yok" durumu oluşmaz; effective_from=2018-01-01;
 #   (3) seçim politikası: ihbarname çapasında mevcut İYUK kuralı seçilir,
 #       odeme_emri çapasında no_match (draft kural aday olmaz);
 #   (4) hesaplayıcı: odeme_emri çapasında blocked_missing_rule,
@@ -62,13 +64,36 @@ IYUK_RULE_ID = "iyuk_tax_court_general_lawsuit_filing"
 DRAFT_RULE_ID = "aatuhk_6183_payment_order_lawsuit_filing"
 DRAFT_REF = "AATUHK_6183_m58_1"
 
-# CLAUDE.md §13.2 / avukat kararına bağlı, taslağa BİLİNÇLİ OLARAK
-# eklenmeyen ref'ler.
-EXCLUDED_REFS = (
-    "KANUN_5604_m1",
+# Taslağın dar dayanak listesi (Kol A / Dilim 1, K3): süreyi koyan
+# hüküm + İYUK başlangıç/tatil kuralları + mali tatil. Sıra registry
+# kaydındaki sırayla AYNIDIR.
+EXPECTED_DRAFT_REFS = [
+    "AATUHK_6183_m58_1",
+    "IYUK_2577_m8_1",
     "IYUK_2577_m8_2",
     "IYUK_2577_m8_3",
     "IYUK_2577_m61_1",
+    "KANUN_5604_m1",
+]
+
+MALI_TATIL_REF = "KANUN_5604_m1"
+
+# CLAUDE.md §13.2: mali tatil ref'i taşıyan bir kural bu iki İYUK adli
+# tatil ref'ini de taşımalıdır.
+RECESS_REFS = (
+    "IYUK_2577_m8_3",
+    "IYUK_2577_m61_1",
+)
+
+DRAFT_NOTES_PREFIX = "TASLAK — ETKİN DEĞİL (LEGAL_APPROVED kaydı yok). "
+
+# kanun_6183_m58_f1 notunda BİREBİR bulunması gereken cümle: AYM
+# kararının etkisi hüküm doğrulaması sırasında avukat tarafından
+# değerlendirilecektir; kayıt o değerlendirmeyi yapılmış saymaz.
+M58_AYM_SENTENCE = (
+    "Anayasa Mahkemesi kararının bu maddeye ve birinci fıkranın uygulanmasına etkisi HÜKÜM "
+    "DOĞRULAMASI SIRASINDA avukat tarafından değerlendirilecek ve doğrulama kanıtına dahil "
+    "edilecektir; bu kayıt o değerlendirmeyi yapılmış SAYMAZ."
 )
 
 passed = 0
@@ -142,9 +167,9 @@ def test_registry_validation(ruleset):
         result["errors"],
     )
     check(
-        "(1) registry: 2 kural, 1 active + 1 draft, yalnız 1 calculation_enabled",
-        result["rule_count"] == 2
-        and result["status_counts"] == {"active": 1, "draft": 1}
+        "(1) registry: 4 kural, 1 active + 3 draft, yalnız 1 calculation_enabled",
+        result["rule_count"] == 4
+        and result["status_counts"] == {"active": 1, "draft": 3}
         and result["calculation_enabled_count"] == 1,
         result,
     )
@@ -187,9 +212,21 @@ def test_registry_validation(ruleset):
         draft["priority"] == _rule_by_id(ruleset, IYUK_RULE_ID)["priority"] == 100,
     )
     check(
-        "(1) yeni kural notları TASLAK / LEGAL_APPROVED yok uyarısıyla başlar",
+        "(1) yeni kural notları TASLAK / LEGAL_APPROVED kaydı yok uyarısıyla başlar",
         isinstance(draft["notes"], str)
-        and draft["notes"].startswith("TASLAK — AVUKAT TEYİDİ BEKLİYOR (LEGAL_APPROVED yok)"),
+        and draft["notes"].startswith(DRAFT_NOTES_PREFIX),
+    )
+    check(
+        "(1) yeni kural effective_from=2018-01-01 (resmî metindeki 15 günün yürürlük başlangıcı), "
+        "effective_to boş",
+        draft["effective_from"] == "2018-01-01" and draft["effective_to"] is None,
+        (draft["effective_from"], draft["effective_to"]),
+    )
+    check(
+        "(1) yeni kural end_day_policy=next_business_day_if_holiday, "
+        "required_anchor_verification=verified",
+        draft["end_day_policy"] == "next_business_day_if_holiday"
+        and draft["required_anchor_verification"] == "verified",
     )
 
 
@@ -197,24 +234,42 @@ def test_registry_validation(ruleset):
 # (2) §13.2 MECHANICAL GUARD
 # ================================================================
 
-def test_excluded_refs_guard(ruleset):
+def test_section_13_2_guard(ruleset):
     draft = _rule_by_id(ruleset, DRAFT_RULE_ID)
     refs = draft["legal_basis_refs"] if draft else None
     check(
-        "(2) yeni kuralın legal_basis_refs == ['AATUHK_6183_m58_1']",
-        refs == [DRAFT_REF],
+        "(2) yeni kuralın legal_basis_refs dar dayanak listesine birebir eşit",
+        refs == EXPECTED_DRAFT_REFS,
         refs,
     )
-    for excluded in EXCLUDED_REFS:
+    check(
+        "(2) §13.2 bekçisi non-vacuous: taslak mali tatil ref'ini GERÇEKTEN taşıyor",
+        refs is not None and MALI_TATIL_REF in refs,
+        refs,
+    )
+    for recess_ref in RECESS_REFS:
         check(
-            f"(2) §13.2 bekçisi: yeni kuralda {excluded} YOK (avukat kararına bağlı)",
-            refs is not None and excluded not in refs,
+            f"(2) §13.2 bekçisi: mali tatil ref'i taşıyan taslakta {recess_ref} de VAR",
+            refs is not None and recess_ref in refs,
             refs,
         )
-    iyuk = _rule_by_id(ruleset, IYUK_RULE_ID)
     check(
-        "(2) bekçi non-vacuous: aynı dört ref mevcut İYUK kuralında GERÇEKTEN var",
-        iyuk is not None and all(r in iyuk["legal_basis_refs"] for r in EXCLUDED_REFS),
+        "(2) hesaplayıcı bayrakları: taslak hem mali tatil hem İYUK adli tatil dayanağını taşır",
+        draft is not None
+        and dc.rule_has_mali_tatil_basis(draft) is True
+        and dc.rule_has_iyuk_recess_basis(draft) is True,
+    )
+    # Registry genelinde §13.2: mali tatil ref'i taşıyan HİÇBİR kural adli
+    # tatil ref'lerinden yoksun olamaz.
+    orphaned = [
+        r["rule_id"] for r in ruleset["rules"]
+        if MALI_TATIL_REF in r["legal_basis_refs"]
+        and not all(x in r["legal_basis_refs"] for x in RECESS_REFS)
+    ]
+    check(
+        "(2) §13.2 registry bekçisi: mali tatil ref'i taşıyıp adli tatil ref'i taşımayan kural YOK",
+        orphaned == [],
+        orphaned,
     )
 
 
@@ -403,12 +458,31 @@ def test_supporting_records():
     if len(prov) == 1:
         prov = prov[0]
         check(
-            "kanun_6183_m58_f1_v1: unverified, formal.verified=false, status=unknown, evidence=[]",
+            "kanun_6183_m58_f1_v1: unverified, formal.verified=false, status=unknown, valid_from boş",
             prov["verification_state"] == "unverified"
             and prov["formal"]["verified"] is False
             and prov["formal"]["status"] == "unknown"
-            and prov["formal"]["evidence"] == [],
+            and prov["formal"]["valid_from"] is None,
             prov["formal"],
+        )
+        evidence = prov["formal"]["evidence"]
+        check(
+            "kanun_6183_m58_f1_v1: evidence yalnız DOĞRULANMAMIŞ adaylardan oluşur "
+            "(tek kayıt, verified=false, konsolide metin)",
+            len(evidence) == 1
+            and evidence[0]["verified"] is False
+            and evidence[0]["kind"] == "consolidated_legislation"
+            and evidence[0]["source_document_id"] == "kanun_6183",
+            evidence,
+        )
+        notes = prov.get("notes") or ""
+        check(
+            "kanun_6183_m58_f1_v1 notu: AYM kararının etkisinin HÜKÜM DOĞRULAMASI SIRASINDA "
+            "AVUKAT TARAFINDAN değerlendirileceği ve bu kaydın o değerlendirmeyi yapılmış "
+            "SAYMADIĞI cümlesi BİREBİR ve tam bir kez yazılıdır",
+            notes.count(M58_AYM_SENTENCE) == 1
+            and "E.2021/119" in notes and "K.2022/48" in notes,
+            notes[-600:],
         )
 
     manifest = manifest_validator.validate_manifest_file(raise_on_error=False)
@@ -437,7 +511,7 @@ def run_self_test():
 
     ruleset = _load_json(RULESET_PATH)
     test_registry_validation(ruleset)
-    test_excluded_refs_guard(ruleset)
+    test_section_13_2_guard(ruleset)
     test_selection(ruleset)
     test_calculator(ruleset)
     test_resolver()
