@@ -103,6 +103,9 @@ from pathlib import Path
 
 
 from deadline_rule_selection_policy import (
+    load_case_document_types,
+    normalize_string,
+    normalize_values,
     select_for_case_event,
 )
 
@@ -276,6 +279,108 @@ MALI_TATIL_EXCLUDED_AUTHORITY_KEYWORDS = (
     "il özel idaresi",
     "il özel idare",
 )
+
+
+# ============================================================
+# KOL A / MALİ TATİL DİLİM A - İŞLEM BELGESİNE BAĞLI ALACAK MODU
+#
+# Kural kaydı isteğe bağlı `mali_tatil_receivable_basis` alanında
+# `"action_document_receivables"` değerini taşıyorsa (bugün yalnız üç
+# TASLAK kural: ödeme emri, borçluya haciz / e-haciz bildirimi, gıyapta
+# ihtiyati haciz), 5604 m.1/7 kararı DOSYA GENELİNDEKİ vergi
+# türlerinden DEĞİL, çapa olayının dava konusu işlem belgesine bağlı
+# uyuşmazlık kalemlerinden ve o belgenin idari işlem kaydındaki
+# alacaklı idareden verilir (avukat cevabı 3.1-3.3 ve 4.1-4.2; Kol A
+# mali tatil kapsam paketi §4). Alan YOKSA davranış bu bölümün
+# eklenmesinden önceki dosya-geneli davranışla aynıdır (aktif İYUK
+# ihbarname kuralı bu alanı TAŞIMAZ).
+#
+# Yapı: değerlendirme `build_deadline_record()` içinde ÖNCEDEN yapılır
+# (`evaluate_mali_tatil_action_document_receivables()` - saf fonksiyon,
+# I/O yok, hata fırlatmaz). `calculate_rule_deadline()` hazır sonucu
+# YALNIZ sayım penceresi mali tatile gerçekten değiyorsa
+# (`is_mali_tatil_relevant()`) kullanır (K6). Bu modda eski biçimli
+# (dosya geneli) bağlam veya hiç bağlam (None) sessizce eski yönteme
+# DÖNMEZ; Temmuz'a değen sürede needs_review olur (§4 adım 11).
+#
+# SINIRLAR (abartılmaz):
+#   - `verification_state == "verified"` genel bir doğrulama
+#     işaretidir; "alacak türü işlem belgesinin kendisinden teyit
+#     edildi" ve "bağ listesi tam" anlamlarını TAŞIMAZ (K3). Avukatın
+#     belge + sayfa + "bağ tam" teyit kaydı Dilim B'nin işidir.
+#   - "vergi dairesi" tanıması (K5) ve yalnız Temmuz penceresinde bağ
+#     aranması (K6) avukat metninin MÜHENDİS yorumudur; kural
+#     etkinleştirilmeden önce avukata sorulacaktır.
+#   - Fer'i kalemler (gecikme zammı / gecikme faizi) bugünkü listelerde
+#     tanınmaz ve needs_review verir (K4); ceza kaleminin bağlı olduğu
+#     vergiyi izleyip izlemediği avukat sorusudur.
+#   - Vergi türü ve idare istisna listeleri DEĞİŞMEDİ.
+# ============================================================
+
+MALI_TATIL_RECEIVABLE_BASIS_FIELD = (
+    "mali_tatil_receivable_basis"
+)
+
+MALI_TATIL_RECEIVABLE_BASIS_ACTION_DOCUMENT = (
+    "action_document_receivables"
+)
+
+# K5: istisna anahtar kelimelerinden SONRA kontrol edilir; yalnız bu
+# ifadeyi içeren alacaklı idare "tanınmış vergi idaresi" sayılır.
+# Diğer her metin (malmüdürlüğü, SGK, boş metin vb.) needs_review.
+MALI_TATIL_RECOGNIZED_TAX_AUTHORITY_KEYWORDS = (
+    "vergi dairesi",
+)
+
+MALI_TATIL_RECEIVABLE_OUTCOME_APPLY = "apply"
+
+MALI_TATIL_RECEIVABLE_OUTCOME_NO_MALI_TATIL = "no_mali_tatil"
+
+MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW = "needs_review"
+
+MALI_TATIL_RECEIVABLE_MIXED_EXCLUSION_REASON = (
+    "mixed_receivables_no_mali_tatil"
+)
+
+# needs_review gerekçeleri: kod -> açıklama. Testler metne değil koda
+# bakar.
+MALI_TATIL_RECEIVABLE_REVIEW_REASONS = {
+    "mali_tatil_receivable_action_document_unresolved":
+        "dava konusu işlem belgesi belirlenemedi",
+
+    "mali_tatil_receivable_no_linked_item":
+        "alacak ile işlem arasında bağ yok",
+
+    "mali_tatil_receivable_item_unverified":
+        "alacak türü avukat tarafından teyit edilmedi",
+
+    "mali_tatil_receivable_authority_unresolved":
+        "alacaklı idare belirlenemedi veya teyit edilmedi",
+
+    "mali_tatil_receivable_authority_unclassified":
+        "alacaklı idare sınıflandırılamadı",
+
+    "mali_tatil_receivable_tax_type_unrecognized":
+        (
+            "bağlı alacağın vergi türü 5604 m.1/7 bakımından "
+            "güvenilir şekilde sınıflandırılamadı"
+        ),
+
+    "mali_tatil_receivable_unlinked_item_conflict":
+        (
+            "bağlanmamış farklı türde alacak var; bağın tam olduğu "
+            "teyit edilmedi"
+        ),
+
+    "mali_tatil_receivable_context_missing":
+        (
+            "işlem belgesine bağlı alacak değerlendirmesi yok veya "
+            "eski biçimli (dosya geneli) bağlam verildi"
+        ),
+
+    "mali_tatil_receivable_basis_unknown":
+        "kuraldaki mali_tatil_receivable_basis değeri tanınmıyor",
+}
 
 
 # ============================================================
@@ -1144,6 +1249,904 @@ def classify_mali_tatil_authority(
     return (
         "not_excluded",
         None,
+    )
+
+
+def rule_uses_mali_tatil_receivable_basis(
+    rule,
+):
+    """Kural `mali_tatil_receivable_basis` alanını TAŞIYOR mu? Alanın
+    VARLIĞI yeni modu açar; değer tanınmıyorsa hesap sessizce dosya
+    geneline DÖNMEZ (bkz. `_read_mali_tatil_receivable_assessment()`)."""
+
+    return (
+        isinstance(
+            rule,
+            dict,
+        )
+        and MALI_TATIL_RECEIVABLE_BASIS_FIELD
+        in rule
+    )
+
+
+def _mali_tatil_receivable_item_class(
+    item,
+):
+    """Tek bir uyuşmazlık kaleminin sınıfı: "excluded" / "included" /
+    "unrecognized". Sözlük olmayan kalem veya boş/eksik `tax_type`
+    "unrecognized" sayılır (küme tabanlı sınıflandırma boş değerleri
+    sessizce atardı - fail-closed). Listeler DEĞİŞMEDEN
+    `classify_mali_tatil_tax_type()` üzerinden kullanılır."""
+
+    if not isinstance(
+        item,
+        dict,
+    ):
+
+        return "unrecognized"
+
+    tax_type = _normalize_mali_tatil_text(
+        item.get(
+            "tax_type"
+        )
+    )
+
+    if not tax_type:
+
+        return "unrecognized"
+
+    item_class, _ = classify_mali_tatil_tax_type(
+        {
+            tax_type,
+        }
+    )
+
+    return item_class
+
+
+def _mali_tatil_receivable_item_id(
+    item,
+    position,
+):
+
+    if isinstance(
+        item,
+        dict,
+    ):
+
+        value = item.get(
+            "dispute_item_id"
+        )
+
+        if (
+            isinstance(
+                value,
+                str,
+            )
+            and value.strip()
+        ):
+
+            return value.strip()
+
+    return f"#{position}"
+
+
+def _mali_tatil_receivable_notes(
+    assessment,
+):
+    """§4 adım 10 (iz) ve adım 9 (fark uyarısı) notları. Sayfa bilgisi
+    Dilim B'ye kalır."""
+
+    linked_ids = assessment.get(
+        "linked_dispute_item_ids"
+    ) or []
+
+    notes = [
+        (
+            "mali_tatil_receivable_link="
+            "action_document:"
+            + str(
+                assessment.get(
+                    "action_document_id"
+                )
+                or "-"
+            )
+            + ";linked_dispute_items:"
+            + (
+                ",".join(
+                    linked_ids
+                )
+                or "-"
+            )
+            + ";action:"
+            + str(
+                assessment.get(
+                    "action_id"
+                )
+                or "-"
+            )
+        ),
+    ]
+
+    if assessment.get(
+        "difference"
+    ) is True:
+
+        notes.append(
+            "mali_tatil_receivable_difference="
+            "linked:"
+            + "/".join(
+                assessment.get(
+                    "linked_classes"
+                )
+                or []
+            )
+            + ";unlinked:"
+            + "/".join(
+                assessment.get(
+                    "unlinked_classes"
+                )
+                or []
+            )
+            + ";unlinked_dispute_items:"
+            + ",".join(
+                assessment.get(
+                    "unlinked_dispute_item_ids"
+                )
+                or []
+            )
+            + " (dosyadaki bağlanmamış uyuşmazlık kalemlerinin vergi "
+            "türü sınıfı, dava konusu işlem belgesine bağlı "
+            "alacaklarınkinden farklı; alacak türü işlem belgesinden "
+            "avukata teyit ettirilmelidir)"
+        )
+
+    return notes
+
+
+def evaluate_mali_tatil_action_document_receivables(
+    case_data,
+    anchor_event,
+    rule,
+    document_type_index,
+):
+    """KOL A / MALİ TATİL DİLİM A - §4 adım 1-7 ve 9-10 (saf fonksiyon;
+    I/O yok, hata fırlatmaz; bozuk girdi olumsuz sonuç verir).
+
+    `document_type_index`: `deadline_rule_selection_policy.
+    load_case_document_types()` çıktısı (belge kimliği -> normalize
+    belge türü) - kural seçiminin kullandığı AYNI yol.
+
+    Dönüş: hazır sonuç nesnesi. `outcome` ∈ {"apply", "no_mali_tatil",
+    "needs_review"}; `calculate_rule_deadline()` bunu YALNIZ sayım
+    penceresi mali tatile değiyorsa kullanır (K6). Sıra (bağlayıcı):
+      1 tek işlem belgesi -> 2 bağlı kalem -> 3 kalemler verified ->
+      4 tek idari işlem kaydı, idare dolu ve verified -> 5 idare sınıfı
+      -> 6 bağlı kalemlerin vergi türü sınıfı -> 7 eksik bağ koruması.
+    Çapa olayının `related_dispute_item_ids` alanı bu dilimde
+    KULLANILMAZ (adım 13)."""
+
+    assessment = {
+        "receivable_basis":
+            MALI_TATIL_RECEIVABLE_BASIS_ACTION_DOCUMENT,
+
+        "rule_id":
+            (
+                rule.get(
+                    "rule_id"
+                )
+                if isinstance(
+                    rule,
+                    dict,
+                )
+                else None
+            ),
+
+        "outcome":
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+
+        "reason_code":
+            None,
+
+        "exclusion_reason":
+            None,
+
+        "action_document_id":
+            None,
+
+        "action_id":
+            None,
+
+        "linked_dispute_item_ids":
+            [],
+
+        "unlinked_dispute_item_ids":
+            [],
+
+        "linked_classes":
+            [],
+
+        "unlinked_classes":
+            [],
+
+        "difference":
+            False,
+
+        "notes":
+            [],
+    }
+
+    def finish(
+        outcome,
+        reason_code=None,
+        exclusion_reason=None,
+    ):
+
+        assessment[
+            "outcome"
+        ] = outcome
+
+        assessment[
+            "reason_code"
+        ] = reason_code
+
+        assessment[
+            "exclusion_reason"
+        ] = exclusion_reason
+
+        assessment[
+            "notes"
+        ] = _mali_tatil_receivable_notes(
+            assessment
+        )
+
+        return assessment
+
+    # --------------------------------------------------------
+    # ADIM 1 - çapa olayında, türü kuralın document_types listesinde
+    # olan TAM BİR belge. Liste boşsa adım başarısızdır (seçimde boş
+    # liste jokerdir; burada işlem belgesi belirlenemez).
+    # --------------------------------------------------------
+
+    applicability = (
+        rule.get(
+            "applicability"
+        )
+        if isinstance(
+            rule,
+            dict,
+        )
+        else None
+    )
+
+    rule_document_types = (
+        applicability.get(
+            "document_types"
+        )
+        if isinstance(
+            applicability,
+            dict,
+        )
+        else None
+    )
+
+    rule_types = (
+        normalize_values(
+            rule_document_types
+        )
+        if isinstance(
+            rule_document_types,
+            list,
+        )
+        else set()
+    )
+
+    source_document_ids = (
+        anchor_event.get(
+            "source_document_ids"
+        )
+        if isinstance(
+            anchor_event,
+            dict,
+        )
+        else None
+    )
+
+    if not isinstance(
+        source_document_ids,
+        list,
+    ):
+
+        source_document_ids = []
+
+    type_index = (
+        document_type_index
+        if isinstance(
+            document_type_index,
+            dict,
+        )
+        else {}
+    )
+
+    candidates = []
+
+    for document_id in source_document_ids:
+
+        if (
+            not isinstance(
+                document_id,
+                str,
+            )
+            or document_id
+            in candidates
+        ):
+
+            continue
+
+        if (
+            normalize_string(
+                type_index.get(
+                    document_id
+                )
+            )
+            in rule_types
+        ):
+
+            candidates.append(
+                document_id
+            )
+
+    if (
+        not rule_types
+        or len(
+            candidates
+        )
+        != 1
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_action_document_unresolved",
+        )
+
+    action_document_id = candidates[
+        0
+    ]
+
+    assessment[
+        "action_document_id"
+    ] = action_document_id
+
+    # --------------------------------------------------------
+    # ADIM 2 - o belgeye bağlı en az bir uyuşmazlık kalemi.
+    # Adım 9 (fark uyarısı) burada hesaplanır; sonraki her sonuca
+    # (hesaplanan veya needs_review) eklenir.
+    # --------------------------------------------------------
+
+    items = (
+        case_data.get(
+            "dispute_items"
+        )
+        if isinstance(
+            case_data,
+            dict,
+        )
+        else None
+    )
+
+    if not isinstance(
+        items,
+        list,
+    ):
+
+        items = []
+
+    linked_items = []
+
+    unlinked_items = []
+
+    for position, item in enumerate(
+        items
+    ):
+
+        references = (
+            item.get(
+                "source_document_ids"
+            )
+            if isinstance(
+                item,
+                dict,
+            )
+            else None
+        )
+
+        if (
+            isinstance(
+                references,
+                list,
+            )
+            and action_document_id
+            in references
+        ):
+
+            linked_items.append(
+                (
+                    position,
+                    item,
+                )
+            )
+
+        else:
+
+            unlinked_items.append(
+                (
+                    position,
+                    item,
+                )
+            )
+
+    linked_classes = {
+        _mali_tatil_receivable_item_class(
+            item
+        )
+        for _, item in linked_items
+    }
+
+    unlinked_classes = {
+        _mali_tatil_receivable_item_class(
+            item
+        )
+        for _, item in unlinked_items
+    }
+
+    assessment[
+        "linked_dispute_item_ids"
+    ] = [
+        _mali_tatil_receivable_item_id(
+            item,
+            position,
+        )
+        for position, item in linked_items
+    ]
+
+    assessment[
+        "unlinked_dispute_item_ids"
+    ] = [
+        _mali_tatil_receivable_item_id(
+            item,
+            position,
+        )
+        for position, item in unlinked_items
+    ]
+
+    assessment[
+        "linked_classes"
+    ] = sorted(
+        linked_classes
+    )
+
+    assessment[
+        "unlinked_classes"
+    ] = sorted(
+        unlinked_classes
+    )
+
+    # Adım 9 okuması (yazar kararı, RAPOR'da sapma olarak anılır): fark
+    # yalnız HEM bağlı HEM bağsız kalem varken ve iki sınıf kümesi
+    # farklıyken tanımlıdır; bağsız kalem yoksa karşılaştırılacak bir
+    # dosya kaydı yoktur.
+    assessment[
+        "difference"
+    ] = bool(
+        linked_items
+        and unlinked_items
+        and linked_classes
+        != unlinked_classes
+    )
+
+    if not linked_items:
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_no_linked_item",
+        )
+
+    # --------------------------------------------------------
+    # ADIM 3 - bağlı kalemlerin HEPSİ verified (K3).
+    # --------------------------------------------------------
+
+    if any(
+        item.get(
+            "verification_state"
+        )
+        != "verified"
+        for _, item in linked_items
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_item_unverified",
+        )
+
+    # --------------------------------------------------------
+    # ADIM 4 - source_document_id değeri o belge olan TAM BİR idari
+    # işlem kaydı; issuing_authority dolu ve kayıt verified. Varsayım:
+    # bu alan "alacaklı idare" kabul edilir (şemada ayrı alan yok).
+    # --------------------------------------------------------
+
+    actions = (
+        case_data.get(
+            "administrative_actions"
+        )
+        if isinstance(
+            case_data,
+            dict,
+        )
+        else None
+    )
+
+    if not isinstance(
+        actions,
+        list,
+    ):
+
+        actions = []
+
+    # Düzeltme turu 1 (L-1): listede sözlük olmayan bir kayıt varsa
+    # teklik sayımı onu sessizce atlamaz; alacaklı idare belirlenemez.
+    if any(
+        not isinstance(
+            action,
+            dict,
+        )
+        for action in actions
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_authority_unresolved",
+        )
+
+    matching_actions = [
+        action
+        for action in actions
+        if isinstance(
+            action,
+            dict,
+        )
+        and action.get(
+            "source_document_id"
+        )
+        == action_document_id
+    ]
+
+    if (
+        len(
+            matching_actions
+        )
+        != 1
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_authority_unresolved",
+        )
+
+    action = matching_actions[
+        0
+    ]
+
+    action_id = action.get(
+        "action_id"
+    )
+
+    if (
+        isinstance(
+            action_id,
+            str,
+        )
+        and action_id.strip()
+    ):
+
+        assessment[
+            "action_id"
+        ] = action_id.strip()
+
+    # Düzeltme turu 1 (L-1): idare metin değilse (liste, sözlük, sayı,
+    # bool...) metne çevrilip tanınmaz; alacaklı idare belirlenemez.
+    if not isinstance(
+        action.get(
+            "issuing_authority"
+        ),
+        str,
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_authority_unresolved",
+        )
+
+    authority = _normalize_mali_tatil_text(
+        action.get(
+            "issuing_authority"
+        )
+    )
+
+    if (
+        not authority
+        or action.get(
+            "verification_state"
+        )
+        != "verified"
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_authority_unresolved",
+        )
+
+    # --------------------------------------------------------
+    # ADIM 5 - idare sınıfı: istisna anahtar kelimesi -> mali tatil YOK;
+    # tanınan vergi idaresi (K5) -> devam; diğer her şey -> needs_review.
+    # --------------------------------------------------------
+
+    authority_class, authority_match = (
+        classify_mali_tatil_authority(
+            {
+                authority,
+            }
+        )
+    )
+
+    if (
+        authority_class
+        == "excluded"
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NO_MALI_TATIL,
+            None,
+            "issuing_authority_excluded:"
+            f"{authority_match}",
+        )
+
+    if not any(
+        _normalize_mali_tatil_text(
+            keyword
+        )
+        in authority
+        for keyword in MALI_TATIL_RECOGNIZED_TAX_AUTHORITY_KEYWORDS
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_authority_unclassified",
+        )
+
+    # --------------------------------------------------------
+    # ADIM 6 - bağlı kalemlerin vergi türü sınıfı (listeler DEĞİŞMEDEN).
+    #   unrecognized (gecikme zammı/faizi dahil, K4) -> needs_review
+    #   excluded -> mali tatil yok
+    #   mixed -> mali tatil yok, erken tarih (avukat 3.2)
+    #   included -> adım 7
+    # --------------------------------------------------------
+
+    if (
+        "unrecognized"
+        in linked_classes
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_tax_type_unrecognized",
+        )
+
+    tax_class, tax_match = (
+        classify_mali_tatil_tax_type(
+            {
+                _normalize_mali_tatil_text(
+                    item.get(
+                        "tax_type"
+                    )
+                )
+                for _, item in linked_items
+            }
+        )
+    )
+
+    if (
+        tax_class
+        == "excluded"
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NO_MALI_TATIL,
+            None,
+            "tax_type_excluded:"
+            f"{tax_match}",
+        )
+
+    if (
+        tax_class
+        == "mixed"
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NO_MALI_TATIL,
+            None,
+            MALI_TATIL_RECEIVABLE_MIXED_EXCLUSION_REASON,
+        )
+
+    if (
+        tax_class
+        != "included"
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_tax_type_unrecognized",
+        )
+
+    # --------------------------------------------------------
+    # ADIM 7 - eksik bağ koruması (geç tarih yönü): mali tatil
+    # UYGULATACAK sonuçta, belgeye bağlı OLMAYAN her kalemin sınıfı da
+    # "included" olmalı. Mali tatilsiz (erken) sonuçları durdurmaz.
+    # --------------------------------------------------------
+
+    if any(
+        item_class
+        != "included"
+        for item_class in unlinked_classes
+    ):
+
+        return finish(
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_unlinked_item_conflict",
+        )
+
+    # ADIM 8 - mali tatil uygulanır (Adım 7 aritmetiği, değişmeden).
+
+    return finish(
+        MALI_TATIL_RECEIVABLE_OUTCOME_APPLY,
+    )
+
+
+def _read_mali_tatil_receivable_assessment(
+    rule,
+    case_tax_context,
+):
+    """`calculate_rule_deadline()` için hazır sonucu SIKI okur.
+    Dönüş: (outcome, değer) - needs_review ise değer gerekçe kodu,
+    no_mali_tatil ise istisna gerekçesi, apply ise None. Tanınmayan
+    kural değeri, eski biçimli/boş bağlam, başka kurala ait sonuç veya
+    bilinmeyen outcome HER ZAMAN needs_review'dır (§4 adım 11)."""
+
+    if (
+        rule.get(
+            MALI_TATIL_RECEIVABLE_BASIS_FIELD
+        )
+        != MALI_TATIL_RECEIVABLE_BASIS_ACTION_DOCUMENT
+    ):
+
+        return (
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_basis_unknown",
+        )
+
+    if (
+        not isinstance(
+            case_tax_context,
+            dict,
+        )
+        or case_tax_context.get(
+            "receivable_basis"
+        )
+        != MALI_TATIL_RECEIVABLE_BASIS_ACTION_DOCUMENT
+        or case_tax_context.get(
+            "rule_id"
+        )
+        != rule.get(
+            "rule_id"
+        )
+    ):
+
+        return (
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_context_missing",
+        )
+
+    outcome = case_tax_context.get(
+        "outcome"
+    )
+
+    if (
+        outcome
+        == MALI_TATIL_RECEIVABLE_OUTCOME_APPLY
+    ):
+
+        return (
+            MALI_TATIL_RECEIVABLE_OUTCOME_APPLY,
+            None,
+        )
+
+    if (
+        outcome
+        == MALI_TATIL_RECEIVABLE_OUTCOME_NO_MALI_TATIL
+    ):
+
+        exclusion_reason = case_tax_context.get(
+            "exclusion_reason"
+        )
+
+        if (
+            isinstance(
+                exclusion_reason,
+                str,
+            )
+            and exclusion_reason
+        ):
+
+            return (
+                MALI_TATIL_RECEIVABLE_OUTCOME_NO_MALI_TATIL,
+                exclusion_reason,
+            )
+
+        return (
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            "mali_tatil_receivable_context_missing",
+        )
+
+    reason_code = case_tax_context.get(
+        "reason_code"
+    )
+
+    if (
+        outcome
+        == MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW
+        and reason_code
+        in MALI_TATIL_RECEIVABLE_REVIEW_REASONS
+    ):
+
+        return (
+            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+            reason_code,
+        )
+
+    return (
+        MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+        "mali_tatil_receivable_context_missing",
+    )
+
+
+def _mali_tatil_receivable_assessment_consumed(
+    calculation,
+):
+    """`calculate_rule_deadline()` sonucu, mali tatil bölümüne ULAŞIP
+    sayım penceresini mali tatile değer bulduysa True. Mali tatil
+    bölümünden sonraki HER dönüş `mali_tatil_exclusion_reason` anahtarını
+    taşır; bölümden önceki erken dönüşler taşımaz. "window_not_relevant"
+    (K6) veya "rule_lacks_legal_basis" iken False - o durumda kayıt
+    notları bugünküyle aynı kalır."""
+
+    if (
+        not isinstance(
+            calculation,
+            dict,
+        )
+        or "mali_tatil_exclusion_reason"
+        not in calculation
+    ):
+
+        return False
+
+    return (
+        calculation[
+            "mali_tatil_exclusion_reason"
+        ]
+        not in (
+            "window_not_relevant",
+            "rule_lacks_legal_basis",
+        )
     )
 
 
@@ -2075,7 +3078,168 @@ def calculate_rule_deadline(
     # MALİ TATİL (5604 sayılı Kanun m.1) - PILOT READINESS ADIM 7
     # ========================================================
 
-    if rule_has_mali_tatil_basis(
+    if (
+        rule_has_mali_tatil_basis(
+            rule
+        )
+        and rule_uses_mali_tatil_receivable_basis(
+            rule
+        )
+    ):
+
+        # ----------------------------------------------------
+        # KOL A / MALİ TATİL DİLİM A - işlem belgesine bağlı alacak
+        # modu. Hazır sonuç YALNIZ sayım penceresi mali tatile
+        # değiyorsa kullanılır (K6); değmiyorsa sonuç bugünküyle
+        # aynıdır. Dosya geneli bağlama ASLA geri dönülmez.
+        # ----------------------------------------------------
+
+        if is_mali_tatil_relevant(
+            anchor,
+            duration_value,
+            holidays,
+        ):
+
+            receivable_outcome, receivable_value = (
+                _read_mali_tatil_receivable_assessment(
+                    rule,
+                    case_tax_context,
+                )
+            )
+
+            if (
+                receivable_outcome
+                == MALI_TATIL_RECEIVABLE_OUTCOME_NO_MALI_TATIL
+            ):
+
+                mali_tatil_exclusion_reason = (
+                    receivable_value
+                )
+
+            elif (
+                receivable_outcome
+                == MALI_TATIL_RECEIVABLE_OUTCOME_APPLY
+            ):
+
+                provisional_deadline, grace_floor_applied = (
+                    apply_mali_tatil_pause_resume(
+                        anchor,
+                        duration_value,
+                        holidays,
+                    )
+                )
+
+                mali_tatil_applied = True
+
+                # Adım 7 C.6 (değişmeden): m.1/6 asgari süresi nihai
+                # tarihi TEK BAŞINA belirliyor ve mahkeme adli
+                # tatilden yararlanmıyorsa kesin tarih yok.
+
+                if (
+                    grace_floor_applied
+                    and judicial_recess_applicable
+                    is False
+                ):
+
+                    return {
+                        "calculation_state":
+                            "needs_review",
+
+                        "calculated_deadline":
+                            None,
+
+                        "base_deadline":
+                            base_deadline.isoformat(),
+
+                        "provisional_deadline":
+                            provisional_deadline.isoformat(),
+
+                        "judicial_recess_applied":
+                            False,
+
+                        "holiday_adjustment_applied":
+                            False,
+
+                        "mali_tatil_applied":
+                            True,
+
+                        "mali_tatil_exclusion_reason":
+                            None,
+
+                        "reason":
+                            (
+                                "5604 m.1/6 asgari beş günlük süre "
+                                "kuralı (6661 sayılı Kanunla "
+                                "güncellenmiş) nihai tarihi TEK "
+                                "BAŞINA belirliyor ve "
+                                "judicial_recess_applicable=False "
+                                "olarak beyan edilmiş (adli tatil "
+                                "tarafından ayrıca teyit/uzatma "
+                                "yok). Avukat teyidi olmadan dava "
+                                "açma süreleri bakımından bu "
+                                "mekanizmaya dayanarak kesin tarih "
+                                "üretilmiyor - "
+                                "reason_code=mali_tatil_grace_"
+                                "floor_unconfirmed_without_recess."
+                            ),
+                    }
+
+            else:
+
+                return {
+                    "calculation_state":
+                        "needs_review",
+
+                    "calculated_deadline":
+                        None,
+
+                    "base_deadline":
+                        base_deadline.isoformat(),
+
+                    "judicial_recess_applied":
+                        False,
+
+                    "holiday_adjustment_applied":
+                        False,
+
+                    "mali_tatil_applied":
+                        False,
+
+                    "mali_tatil_exclusion_reason":
+                        None,
+
+                    "mali_tatil_receivable_reason_code":
+                        receivable_value,
+
+                    "reason":
+                        (
+                            "Base deadline mali tatile denk gelen "
+                            "bir sayım penceresi içeriyor ancak "
+                            "dava konusu işlem belgesine bağlı "
+                            "alacak bakımından (mali_tatil_"
+                            "receivable_basis=action_document_"
+                            "receivables) kesin tarih verilemiyor: "
+                            + MALI_TATIL_RECEIVABLE_REVIEW_REASONS.get(
+                                receivable_value,
+                                str(
+                                    receivable_value
+                                ),
+                            )
+                            + " - reason_code="
+                            + str(
+                                receivable_value
+                            )
+                            + "."
+                        ),
+                }
+
+        else:
+
+            mali_tatil_exclusion_reason = (
+                "window_not_relevant"
+            )
+
+    elif rule_has_mali_tatil_basis(
         rule
     ):
 
@@ -3241,6 +4405,8 @@ def build_deadline_record(
 
     case_tax_context = None
 
+    receivable_assessment = None
+
     if rule_has_mali_tatil_basis(
         selected_rule
     ):
@@ -3264,6 +4430,30 @@ def build_deadline_record(
                     case_data
                 ),
         }
+
+        # KOL A / MALİ TATİL DİLİM A: kural işlem belgesine bağlı alacak
+        # modundaysa dosya-geneli bağlam KULLANILMAZ; yerine hazır sonuç
+        # nesnesi verilir. Belge türü kural seçiminin kullandığı AYNI
+        # yoldan (`load_case_document_types()`) okunur.
+
+        if rule_uses_mali_tatil_receivable_basis(
+            selected_rule
+        ):
+
+            receivable_assessment = (
+                evaluate_mali_tatil_action_document_receivables(
+                    case_data,
+                    anchor_event,
+                    selected_rule,
+                    load_case_document_types(
+                        case_id
+                    ),
+                )
+            )
+
+            case_tax_context = (
+                receivable_assessment
+            )
 
     # ========================================================
     # CALCULATE
@@ -3374,6 +4564,30 @@ def build_deadline_record(
                 "mali_tatil_exclusion_reason"
             ]
         )
+
+    # KOL A / MALİ TATİL DİLİM A - §4 adım 9-10: iz ve fark notları
+    # YALNIZ hesap mali tatil bölümünde bu sonucu gerçekten kullandıysa
+    # (Temmuz'a değen pencere) eklenir; hem hesaplanan hem needs_review
+    # sonuçlarda görünür. Değmeyen pencerede notlar bugünküyle aynıdır.
+
+    if (
+        receivable_assessment
+        is not None
+        and _mali_tatil_receivable_assessment_consumed(
+            calculation
+        )
+    ):
+
+        for receivable_note in (
+            receivable_assessment.get(
+                "notes"
+            )
+            or []
+        ):
+
+            notes.append(
+                receivable_note
+            )
 
     if (
         isinstance(

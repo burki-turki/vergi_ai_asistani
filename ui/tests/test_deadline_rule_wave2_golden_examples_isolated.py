@@ -63,13 +63,30 @@
 #       geçerlidir. Etiketin doğruluğu giriş adımının ve girişi yapan
 #       kişinin beyanının işidir; bu belge türleri için giriş yolu henüz
 #       YOKTUR.
-#   (b) MALİ TATİLDE HANGİ ALACAĞIN ESAS ALINACAĞI AÇIK KONUDUR.
-#       Hesaplayıcı mali tatilin uygulanıp uygulanmayacağını dosyadaki
-#       uyuşmazlık kalemlerinin vergi türünden okur; ödeme emrinin veya
-#       haczin konusu alacağın türünü ayrıca almaz. Bu test o davranışı
-#       doğru saymaz, yalnız avukatın örneklerindeki varsayımla (kapsam
-#       içi vergi türü) çalıştırır. Konu avukatın yanıtına kadar açıktır
-#       ve etkinleştirmeden önce çözülmelidir.
+#   (b) MALİ TATİL KARARININ DAYANDIĞI BİLGİNİN DOĞRULUĞU DENETLENMEZ.
+#       Kol A mali tatil Dilim A'dan beri bu üç kural
+#       (`mali_tatil_receivable_basis = "action_document_receivables"`)
+#       mali tatil kararını dosya genelindeki vergi türünden DEĞİL, çapa
+#       olayının dava konusu işlem belgesine bağlı, teyitli uyuşmazlık
+#       kalemlerinden ve o belgenin teyitli idari işlem kaydındaki
+#       alacaklı idareden verir (avukat cevabı 3.1-3.3, 4.1-4.2); bağ,
+#       teyit veya idare eksikse Temmuz'a değen sürede kesin tarih
+#       vermez. Bu test avukatın örneklerini, işlem belgesine bağlı ve
+#       teyitli tek bir kapsam içi kalem ("gelir vergisi") ile teyitli
+#       bir vergi dairesi işlem kaydı kuran sentetik bir kurguyla
+#       çalıştırır; adım adım sözleşme ayrı modülde sınanır
+#       (test_deadline_mali_tatil_receivable_link_isolated). Kalan
+#       sınırlar: `verification_state == "verified"` genel bir doğrulama
+#       işaretidir; kalemin türünün ödeme emrinin veya haczin KENDİSİNDEN
+#       teyit edildiğini ve bağ listesinin TAM olduğunu göstermez (K3).
+#       Yanlış belgeye bağlanmış ve verified işaretlenmiş bir kalem yine
+#       yanlış sonuç verebilir; eksik bağ koruması bunu yalnız dosyada
+#       bağsız farklı türde bir kalem varsa yakalar. Kalemlerin belge ve
+#       sayfasıyla girilmesi ve avukatın "bağ tam" teyidi Dilim B'nin
+#       işidir; o gelene kadar bu kurallar gerçek dosyada Temmuz'a değen
+#       sürelerde kesin tarih üretemez. "vergi dairesi" tanıması (K5),
+#       bağın yalnız Temmuz penceresinde aranması (K6) ve fer'i / ceza
+#       kalemleri (K4) avukata sorulacak açık konulardır.
 #   (c) 5604 m.1'deki asgari beş günlük süre kuralı avukatın bu
 #       örneklerinde hiç devreye girmez; burada sınanmaz (mevcut
 #       test_deadline_calculator_mali_tatil_isolated sınar).
@@ -178,9 +195,16 @@ RULE_SPECS = {
 DRAFT_NOTES_PREFIX = "TASLAK — ETKİN DEĞİL (LEGAL_APPROVED kaydı yok). "
 
 # Avukatın örnekleri mali tatilin uygulandığı durumlarda kapsam içi bir
-# vergi türü varsayar (116-118 açıkça "gelir vergisi alacağı" der). Mali
-# tatile hiç dokunmayan örneklerde bu bağlam tümüyle etkisizdir.
-TAX_CONTEXT = {"tax_types": {"gelir vergisi"}, "issuing_authorities": set()}
+# vergi türü varsayar (116-118 açıkça "gelir vergisi alacağı" der). Kol A
+# mali tatil Dilim A'dan beri bu üç kural mali tatil kararını dava konusu
+# işlem belgesine bağlı alacaklardan verir; örnekler bu yüzden çapa
+# belgesine ("synthetic_doc_001") bağlı, teyitli tek bir "gelir vergisi"
+# kalemi ve aynı belgeye ait, teyitli bir vergi dairesi işlem kaydı kuran
+# sentetik bir kurguyla çalıştırılır. Mali tatile hiç dokunmayan
+# örneklerde bu bağlam tümüyle etkisizdir (K6).
+LINKED_DOCUMENT_ID = "synthetic_doc_001"
+LINKED_TAX_TYPES = ("gelir vergisi",)
+LINKED_AUTHORITY = "Kurgusal Vergi Dairesi Müdürlüğü"
 
 CALCULATED = "calculated"
 NEEDS_REVIEW = "needs_review"
@@ -371,13 +395,52 @@ def _context(document_types):
     }
 
 
+def _linked_case(tax_types=LINKED_TAX_TYPES):
+    """Çapa belgesine bağlı, teyitli kalem(ler) + aynı belgeye ait teyitli
+    vergi dairesi işlem kaydı (sentetik; gerçek veri yok)."""
+    return {
+        "case_id": "synthetic_case_wave2",
+        "dispute_items": [
+            {
+                "dispute_item_id": "synthetic_item_%03d" % index,
+                "tax_type": tax_type,
+                "source_document_ids": [LINKED_DOCUMENT_ID],
+                "verification_state": "verified",
+            }
+            for index, tax_type in enumerate(tax_types, 1)
+        ],
+        "administrative_actions": [
+            {
+                "action_id": "synthetic_action_001",
+                "action_category": "payment_order",
+                "issuing_authority": LINKED_AUTHORITY,
+                "source_document_id": LINKED_DOCUMENT_ID,
+                "verification_state": "verified",
+            }
+        ],
+    }
+
+
+def _receivable_context(rule, tax_types=LINKED_TAX_TYPES):
+    """`build_deadline_record()`'un ürettiği hazır sonuç nesnesinin AYNISI:
+    gerçek değerlendirici, sentetik bağlı kurguyla çağrılır."""
+    return dc.evaluate_mali_tatil_action_document_receivables(
+        _linked_case(tax_types),
+        _anchor(),
+        rule,
+        {LINKED_DOCUMENT_ID: rule["applicability"]["document_types"][0]},
+    )
+
+
 def _calc(rule, anchor, *, recess=True, tax=None):
     return dc.calculate_rule_deadline(
         anchor_date=anchor,
         rule=rule,
         holiday_calendar=CALENDAR,
         judicial_recess_applicable=recess,
-        case_tax_context=TAX_CONTEXT if tax is None else tax,
+        case_tax_context=_receivable_context(
+            rule, LINKED_TAX_TYPES if tax is None else tax,
+        ),
     )
 
 
@@ -462,6 +525,15 @@ def test_preconditions(ruleset):
             isinstance(rule["notes"], str)
             and rule["notes"].startswith(DRAFT_NOTES_PREFIX)
             and LAWYER_FORM_SHA256 in rule["notes"],
+        )
+        linked = _receivable_context(rule)
+        check(
+            f"(0) {label}: kural işlem belgesine bağlı alacak modundadır; örnek kurgusu "
+            "(bağlı, teyitli gelir vergisi + vergi dairesi) mali tatili uygulatır",
+            rule.get("mali_tatil_receivable_basis") == "action_document_receivables"
+            and linked["outcome"] == "apply"
+            and linked["action_document_id"] == LINKED_DOCUMENT_ID,
+            (linked["outcome"], linked["reason_code"]),
         )
 
 
@@ -762,8 +834,10 @@ def test_discrimination(ruleset):
                 for e in adli_examples
             ),
         )
-        excluded = {"tax_types": {"ötv"}, "issuing_authorities": set()}
-        unknown = {"tax_types": {"bilinmeyen vergi"}, "issuing_authorities": set()}
+        # Kol A mali tatil Dilim A: ayrım, dava konusu işlem belgesine
+        # BAĞLI ve teyitli kalemin vergi türüyle kurulur.
+        excluded = ("ötv",)
+        unknown = ("bilinmeyen vergi",)
         check(
             f"(4) {label}: 5604 m.1/7 istisnasındaki vergi türünde (ÖTV) mali tatil uygulanmaz",
             all(_calc(base, e[2], tax=excluded).get("mali_tatil_applied") is False
@@ -1133,8 +1207,19 @@ def _write_case(cases_dir, case_id, document_type, tax_type):
         "title": "Kol A Dilim 1 sentetik test dosyası",
         "case_type": None,
         "stage": None,
-        "dispute_items": [{"tax_type": tax_type}],
-        "administrative_actions": [],
+        "dispute_items": [{
+            "dispute_item_id": "synthetic_item_001",
+            "tax_type": tax_type,
+            "source_document_ids": ["synthetic_doc_001"],
+            "verification_state": "verified",
+        }],
+        "administrative_actions": [{
+            "action_id": "synthetic_action_001",
+            "action_category": "payment_order",
+            "issuing_authority": LINKED_AUTHORITY,
+            "source_document_id": "synthetic_doc_001",
+            "verification_state": "verified",
+        }],
         "events": [],
         "proceedings": [],
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

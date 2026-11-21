@@ -219,6 +219,13 @@
             "string",
             "null"
           ]
+        },
+
+        "mali_tatil_receivable_basis": {
+          "type": "string",
+          "enum": [
+            "action_document_receivables"
+          ]
         }
       }
     },
