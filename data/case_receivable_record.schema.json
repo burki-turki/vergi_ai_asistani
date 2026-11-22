@@ -1,0 +1,550 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case_receivable_record.schema.json",
+
+  "title": "Vergi AI Case Receivable Record Schema V1",
+
+  "description": "Kol A mali tatil Dilim B / B1: islem belgesi basina alacak kaydi. Kayit yalniz VERI tasir; hicbir alan 'mali tatil kapsami ici/disi' anlami tasimaz ve bu sema siniflandirma yapmaz. Anlam kurallari (dosya bagi, belge/sayfa, alacakli referansi, fer'i yapisi, teyit kipi) src/receivable_record_validator.py icindedir. Teyit eden kullanici kimligi ve teyit zamani bu kayitta TUTULMAZ; denetim (reviews/) kaydinda tutulur (K15, verification.fact emsali). Tutar ve belgeden metin alintisi bilincli olarak YOKTUR (K6).",
+
+  "type": "object",
+
+  "additionalProperties": false,
+
+  "required": [
+    "schema_version",
+    "case_id",
+    "record_id",
+    "action_document_id",
+    "action_document_type",
+    "link_basis",
+    "creditors",
+    "items",
+    "verification"
+  ],
+
+  "properties": {
+
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+
+    "case_id": {
+      "$ref": "#/$defs/segmentId"
+    },
+
+    "record_id": {
+      "$ref": "#/$defs/segmentId"
+    },
+
+    "action_document_id": {
+      "$ref": "#/$defs/segmentId"
+    },
+
+    "action_document_type": {
+      "type": "string",
+
+      "enum": [
+        "odeme_emri",
+        "borcluya_haciz_bildirimi",
+        "borcluya_e_haciz_bildirimi",
+        "ihtiyati_haciz_giyapta_tebligi"
+      ]
+    },
+
+    "link_basis": {
+      "$ref": "#/$defs/linkBasis"
+    },
+
+    "creditors": {
+      "type": "array",
+      "minItems": 1,
+
+      "items": {
+        "$ref": "#/$defs/creditor"
+      }
+    },
+
+    "items": {
+      "type": "array",
+      "minItems": 1,
+
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    },
+
+    "verification": {
+      "$ref": "#/$defs/verification"
+    }
+  },
+
+  "$defs": {
+
+    "segmentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "minLength": 3,
+      "maxLength": 128,
+
+      "not": {
+        "type": "string",
+        "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u00ad\\u061c\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u2069\\u206a-\\u206f\\ud800-\\udfff\\ufeff\\ufff9-\\ufffb\\ufffe-\\uffff]"
+      }
+    },
+
+    "nullableSegmentId": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/segmentId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "shortText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "[0-9A-Za-z\\u00c7\\u00d6\\u00dc\\u00e7\\u00f6\\u00fc\\u011e\\u011f\\u0130\\u0131\\u015e\\u015f]",
+
+      "not": {
+        "type": "string",
+        "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u00ad\\u061c\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u2069\\u206a-\\u206f\\ud800-\\udfff\\ufeff\\ufff9-\\ufffb\\ufffe-\\uffff]"
+      }
+    },
+
+    "nullableShortText": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/shortText"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "nullableDate": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "maxLength": 10,
+
+          "not": {
+            "type": "string",
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u00ad\\u061c\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u2069\\u206a-\\u206f\\ud800-\\udfff\\ufeff\\ufff9-\\ufffb\\ufffe-\\uffff]"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+
+    "page": {
+      "type": "integer",
+      "minimum": 1
+    },
+
+    "subjectType": {
+      "type": "string",
+
+      "enum": [
+        "gelir_vergisi",
+        "kurumlar_vergisi",
+        "katma_deger_vergisi",
+        "damga_vergisi",
+        "veraset_ve_intikal_vergisi",
+        "motorlu_tasitlar_vergisi",
+        "ozel_tuketim_vergisi",
+        "banka_ve_sigorta_muameleleri_vergisi",
+        "ozel_iletisim_vergisi",
+        "sans_oyunlari_vergisi",
+        "resim",
+        "harc",
+        "diger",
+        "gecikme_zammi",
+        "gecikme_faizi",
+        "vergi_ziyai_cezasi",
+        "usulsuzluk_cezasi",
+        "ozel_usulsuzluk_cezasi",
+        "diger_ceza"
+      ]
+    },
+
+    "relatedSubjectType": {
+      "type": [
+        "string",
+        "null"
+      ],
+
+      "enum": [
+        "gelir_vergisi",
+        "kurumlar_vergisi",
+        "katma_deger_vergisi",
+        "damga_vergisi",
+        "veraset_ve_intikal_vergisi",
+        "motorlu_tasitlar_vergisi",
+        "ozel_tuketim_vergisi",
+        "banka_ve_sigorta_muameleleri_vergisi",
+        "ozel_iletisim_vergisi",
+        "sans_oyunlari_vergisi",
+        "resim",
+        "harc",
+        "diger",
+        null
+      ]
+    },
+
+    "linkBasis": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "kind",
+        "debt_statement_document_id",
+        "basis",
+        "description"
+      ],
+
+      "properties": {
+
+        "kind": {
+          "type": "string",
+
+          "enum": [
+            "same_document",
+            "debt_statement"
+          ]
+        },
+
+        "debt_statement_document_id": {
+          "$ref": "#/$defs/nullableSegmentId"
+        },
+
+        "basis": {
+          "type": [
+            "string",
+            "null"
+          ],
+
+          "enum": [
+            "by_tracking_no",
+            "by_file_no",
+            "other",
+            null
+          ]
+        },
+
+        "description": {
+          "$ref": "#/$defs/nullableShortText"
+        }
+      }
+    },
+
+    "creditor": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "creditor_id",
+        "role",
+        "authority_type",
+        "authority_name",
+        "source_document_id",
+        "page"
+      ],
+
+      "properties": {
+
+        "creditor_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "role": {
+          "type": "string",
+
+          "enum": [
+            "tarh_eden",
+            "tahsil_eden",
+            "ikisi",
+            "belirsiz"
+          ]
+        },
+
+        "authority_type": {
+          "type": "string",
+
+          "enum": [
+            "vergi_dairesi_mudurlugu",
+            "vergi_dairesi_baskanligi",
+            "malmudurlugu",
+            "defterdarlik",
+            "gumruk",
+            "belediye",
+            "il_ozel_idaresi",
+            "diger"
+          ]
+        },
+
+        "authority_name": {
+          "$ref": "#/$defs/nullableShortText"
+        },
+
+        "source_document_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "page": {
+          "$ref": "#/$defs/page"
+        }
+      }
+    },
+
+    "period": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "start_date",
+        "end_date",
+        "label"
+      ],
+
+      "properties": {
+
+        "start_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "end_date": {
+          "$ref": "#/$defs/nullableDate"
+        },
+
+        "label": {
+          "$ref": "#/$defs/nullableShortText"
+        }
+      }
+    },
+
+    "item": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "item_id",
+        "receivable_kind",
+        "subject_type",
+        "subject_other_name",
+        "related_subject_type",
+        "related_subject_other_name",
+        "period",
+        "tax_code",
+        "creditor_id",
+        "source_document_id",
+        "page"
+      ],
+
+      "properties": {
+
+        "item_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "receivable_kind": {
+          "type": "string",
+
+          "enum": [
+            "asil",
+            "gecikme_zammi",
+            "gecikme_faizi",
+            "vergi_ziyai_cezasi",
+            "usulsuzluk_cezasi",
+            "ozel_usulsuzluk_cezasi",
+            "diger_ceza",
+            "diger"
+          ]
+        },
+
+        "subject_type": {
+          "$ref": "#/$defs/subjectType"
+        },
+
+        "subject_other_name": {
+          "$ref": "#/$defs/nullableShortText"
+        },
+
+        "related_subject_type": {
+          "$ref": "#/$defs/relatedSubjectType"
+        },
+
+        "related_subject_other_name": {
+          "$ref": "#/$defs/nullableShortText"
+        },
+
+        "period": {
+          "$ref": "#/$defs/period"
+        },
+
+        "tax_code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9]{1,16}$",
+              "maxLength": 16,
+
+              "not": {
+                "type": "string",
+                "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u00ad\\u061c\\u200b-\\u200f\\u2028-\\u202e\\u2060-\\u2069\\u206a-\\u206f\\ud800-\\udfff\\ufeff\\ufff9-\\ufffb\\ufffe-\\uffff]"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+
+        "creditor_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "source_document_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "page": {
+          "$ref": "#/$defs/page"
+        }
+      }
+    },
+
+    "itemEvidence": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "item_id",
+        "evidence_document_id",
+        "page"
+      ],
+
+      "properties": {
+
+        "item_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "evidence_document_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "page": {
+          "$ref": "#/$defs/page"
+        }
+      }
+    },
+
+    "creditorEvidence": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "creditor_id",
+        "evidence_document_id",
+        "page"
+      ],
+
+      "properties": {
+
+        "creditor_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "evidence_document_id": {
+          "$ref": "#/$defs/segmentId"
+        },
+
+        "page": {
+          "$ref": "#/$defs/page"
+        }
+      }
+    },
+
+    "verification": {
+      "type": "object",
+
+      "additionalProperties": false,
+
+      "required": [
+        "verification_state",
+        "completeness_attested",
+        "items_evidence",
+        "creditors_evidence",
+        "verification_audit_ref"
+      ],
+
+      "properties": {
+
+        "verification_state": {
+          "type": "string",
+
+          "enum": [
+            "unverified",
+            "verified"
+          ]
+        },
+
+        "completeness_attested": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+
+        "items_evidence": {
+          "anyOf": [
+            {
+              "type": "array",
+
+              "items": {
+                "$ref": "#/$defs/itemEvidence"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+
+        "creditors_evidence": {
+          "anyOf": [
+            {
+              "type": "array",
+
+              "items": {
+                "$ref": "#/$defs/creditorEvidence"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+
+        "verification_audit_ref": {
+          "$ref": "#/$defs/nullableSegmentId"
+        }
+      }
+    }
+  }
+}
