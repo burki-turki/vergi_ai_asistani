@@ -384,10 +384,15 @@ class OfficeFlow:
             raise OfficeFlowError("KIMLIK_TEYIDI_BASARISIZ" if key == "kimlik_ad" else "ONAY_TEYIDI_BASARISIZ")
 
     def _reauthorize(self, paths):
-        """TF-1: sonuç/imha kaydı veya o kaydı haklı çıkaran durum geçişinden HEMEN önce CANLI yetki
-        (aktif + lawyer + vakaya atanmış). `continue_run` başında alınan kimlik uzun insan beklemesi
-        boyunca bayatlar; atama bu sürede geri alınmış olabilir. Reddedilirse `YETKI_YOK`: o noktada
-        hiçbir kayıt/durum yazılmaz. Dönüş: taze kimlik."""
+        """TF-1 / O-5: insan beklemesinden sonraki ilk kayıt/dosya/durum yazımından HEMEN önce CANLI yetki
+        (aktif + lawyer + vakaya atanmış). Başta (F0 veya `continue_run` başı) alınan kimlik uzun insan
+        beklemesi boyunca bayatlar; atama bu sürede geri alınmış olabilir. Reddedilirse `YETKI_YOK`: o
+        noktada hiçbir kayıt/dosya/durum yazılmaz, ekrana bir şey basılmaz. Noktalar:
+        W1 kontrol tamamlandı, W2 inceleme kapatma, W3 sonuç kaydı, W4 silme girişi, W5/W6 silme
+        başlangıcı, W7 onay işareti; yeni koşuda (`run_new`) W8 ad teyidi sonrası koşu dizini (bu nokta
+        `paths` oluşmadan çalışır: aynı canlı sorgu `backend.identity(case_id)` doğrudan), W9 vaka
+        klasörüne belge kopyası, W10 okuma kaydı, W11 aday seçimi sonrası uyuşmazlık durumu/raporu veya
+        elle girdi dosyası. Dönüş: taze kimlik."""
         return self.backend.identity(paths.case_id)
 
     def _announce(self, run_id) -> None:
@@ -523,6 +528,9 @@ class OfficeFlow:
         self._confirm_identity(
             identity, "kimlik_ad", "Kimlik teyidi için tam adınızı yazın (kayıtlı adla aynen eşleşmeli):",
         )
+        # O-5 (W8): ad beklemesinden sonra, koşu dizini/durum/bildirim/TEMP yazımından ve ekran
+        # çıktısından ÖNCE canlı yetki (`paths` henüz yok: aynı canlı sorgu doğrudan).
+        self.backend.identity(case_id)
 
         run_id = records.new_run_id()
         paths = self._paths(run_id, case_id)
@@ -536,10 +544,16 @@ class OfficeFlow:
         self._redirect_temp(paths)
         try:
             self._f1(paths, state, manifest, source_pdf)
-            self._f2(paths, state, identity)
+            # O-5 (D3): F2'den sonra akışa geçen kimlik W10'da alınan TAZE kimliktir (F0 kimliği değil).
+            identity = self._f2(paths, state)
             self._f3_f4(paths, state, manifest, identity)
-        except Exception:
-            self._halt_if_prechain(paths, state)
+        except Exception as error:
+            # O-5 (D2): yetki reddinde (YETKI_YOK; kaynak `capture_identity` veya facade'in
+            # CaseAccessDeniedError'ı) durum dosyasına HİÇBİR ŞEY yazılmaz, ekrana basılmaz: koşu o anki
+            # durumda kalır; yetkili bir `--devam` onu sonradan DURDURULDU yapar (U4 ile aynı kural).
+            # Öteki hata türlerinde DURDURULDU yazımı değişmez.
+            if outcomes.error_code_for(error) != "YETKI_YOK":
+                self._halt_if_prechain(paths, state)
             raise
         finally:
             self.restore_temp()
@@ -569,6 +583,9 @@ class OfficeFlow:
             "vergi_turleri", "Uyuşmazlık kalemlerinin vergi türü (virgülle; G8 listesi):",
         )
         tax_types = [item.strip() for item in str(tax_text).split(",") if item.strip()]
+        # O-5 (W9): kaynak/sayfa/vergi türü beklemesinden sonra, belge kopyası ve çıkarılan metin vaka
+        # klasörüne yazılmadan (ve bildirim birleştirmesinden) ÖNCE canlı yetki.
+        self._reauthorize(paths)
         scratch = records.RunManifest()
         try:
             self._tracked(
@@ -580,7 +597,8 @@ class OfficeFlow:
         finally:
             self._merge_manifest(paths, scratch)
 
-    def _f2(self, paths, state, identity) -> None:
+    def _f2(self, paths, state):
+        """Dönüş: W10'da alınan taze kimlik (okuma kaydına yazılan kimlik)."""
         self.step = "F2"
         self._say("F2 - BAĞIMSIZ OKUMA: asıl belgeden okuyun; çıkarılmış metin ve sistem sonucu "
                   "henüz GÖSTERİLMEZ.")
@@ -601,6 +619,9 @@ class OfficeFlow:
         stopping_ref = None
         if stopping == "none":
             stopping_ref = self._ask("stopping_ref", "Beyanınızın opak referansı (tarih/uzun sayı yazmayın):")
+        # O-5 (W10): altı F2 sorusundan sonra, okuma kaydı/durum/bildirim yazımından ÖNCE canlı yetki;
+        # D3: okuma kaydına bu TAZE kimlik yazılır (F0 kimliği değil).
+        identity = self._reauthorize(paths)
         try:
             sayfa = int(str(sayfa_text).strip())
         except ValueError:
@@ -615,6 +636,7 @@ class OfficeFlow:
         mf = self._manifest(paths)
         mf.add(root="run", rel=records.READING_RECORD_NAME, tur="CALISMA_DOSYALARI")
         records.save_manifest(paths, mf)
+        return identity
 
     # ------------------------------------------------------------------
     # F3 - F4
@@ -631,6 +653,11 @@ class OfficeFlow:
         for candidate in candidates:
             self._say(f"{candidate.index}) {candidate.text}")
         choice_text = self._ask("aday_secimi", "Tebliğ tarihini içeren satırın numarası:")
+        # O-5 (W11): aday seçimi beklemesinden sonra (seçim doğrulamasından da önce), İKİ dalın her
+        # yazımından (uyuşmazlık: ekran + durum + rapor; uyuşma: durum + elle girdi dosyası) ÖNCE tek canlı
+        # yetki. Yalnız denetimdir: akışa geçen kimlik W10'daki taze kimlik olarak kalır (W7 onay
+        # işaretinden önce yeniden alınır).
+        self._reauthorize(paths)
         try:
             chosen = next(c for c in candidates if c.index == int(str(choice_text).strip()))
         except (StopIteration, ValueError):

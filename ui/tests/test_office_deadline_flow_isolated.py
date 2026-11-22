@@ -48,6 +48,7 @@ from ui.services import office_flow_cleanup as cleanup  # noqa: E402
 from ui.services import office_flow_intake as intake  # noqa: E402
 from ui.services import office_flow_outcomes as outcomes  # noqa: E402
 from ui.services import office_flow_records as R  # noqa: E402
+from ui.services.authz import CaseAccessDeniedError  # noqa: E402
 
 TMP = Path(tempfile.mkdtemp(prefix="vergi_t1_flow_"))
 NAME = "Av. Örnek Kullanıcı"
@@ -113,6 +114,7 @@ class FakeBackend:
         self.identity_calls, self.deny = 0, False
         self.deny_from_call = None   # TF-1: bu sıradaki (1 tabanlı) kimlik çağrısından itibaren IAM reddeder
         self.db_time_by_call = None  # L-1: çağrı sırasına (1 tabanlı) bağlı db_time; None = bugünkü sabit değer
+        self.deny_chain_step = None  # O-5 (D2): `deny` açıkken bu zincir adımı facade gibi CaseAccessDeniedError fırlatır
         self.global_file = TMP / "global_ruleset.json"
         self.global_file.write_text("v1", encoding="utf-8")
         self.name = NAME
@@ -120,6 +122,8 @@ class FakeBackend:
     def _enter(self, name, case_id=None):
         self.events.append(("backend", name))
         self.temp_seen.append((name, os.path.realpath(tempfile.gettempdir())))
+        if self.deny and self.deny_chain_step == name:
+            raise CaseAccessDeniedError("no_assignment")   # gerçek facade'in canlı authorize_case_access reddi
         if self.secret_failure and self.fail_at == name:
             raise RuntimeError(self.secret_failure)
         if self.fail_at == name:
@@ -1161,9 +1165,220 @@ try:
     stale_time = f"2026-11-18T10:00:{mark_w8['calls']:02d}+00:00"
     check("L-1 W7 (fresh identity): 'onay_kimlik.db_time' is the snapshot taken by the FIRST identity call after the name question - NOT the snapshot passed in from earlier",
           isinstance(onay_w8, dict) and onay_w8["db_time"] == fresh_time and onay_w8["db_time"] != stale_time, f"{onay_w8!r} fresh={fresh_time} stale={stale_time}")
-    check("L-1 W7 (same user): the approval mark and the reading record (first identity) carry the SAME user_id and registered name - the name confirmation and the fresh query bind to one user",
+    check("L-1 W7 (same user): the approval mark and the reading record (fresh W10 identity, O-5 D3) carry the SAME user_id and registered name - the name confirmation and the fresh query bind to one user",
           isinstance(onay_w8, dict) and onay_w8["user_id"] == R.load_reading_record(w8.paths)["kimlik"]["user_id"] == 7
           and onay_w8["display_name"] == R.load_reading_record(w8.paths)["kimlik"]["display_name"] == NAME)
+
+    # ================================================================ O-5: yeni koşunun ERKEN yazımlarında canlı yetki (W8-W11) + D2 + D3
+    # Senaryo: F0 kimliği GEÇER; insan beklemesi sürerken atama geri alınır; o noktanın ilk yazımından ÖNCE RED.
+    # D2: run_new'deki YETKI_YOK reddinde durum dosyasına HİÇBİR ŞEY yazılmaz (DURDURULDU yok, ekran çıktısı yok).
+    def o5_tree(ctx):
+        """Ofis ve vaka köklerinin TAMAMI (dosya -> sha256, dizin -> '<dir>'): yeni boş dizin de fark sayılır."""
+        out = {}
+        for base in (ctx.office, ctx.cases):
+            for dp, ds, fs_ in os.walk(base):
+                for d_ in ds:
+                    out[os.path.join(dp, d_)] = "<dir>"
+                for f in fs_:
+                    fp_ = os.path.join(dp, f)
+                    with open(fp_, "rb") as fh:
+                        out[fp_] = hashlib.sha256(fh.read()).hexdigest()
+        return out
+
+    def o5_flip(ctx, key_name, snap):
+        """`key_name` sorulduğunda (insan beklemesi, yazım yok) disk/ekran/olay anlık görüntüsü + atama geri alınır."""
+        def hook(key):
+            if key == key_name:
+                snap["tree"], snap["said"], snap["events"] = o5_tree(ctx), len(ctx.io.said), len(ctx.events)
+                ctx.backend.deny = True
+            return None
+        return hook
+
+    def o5_denied_new(ctx, key_name, answers, run_id):
+        """run_new: `key_name` beklenirken geri alma. Dönüş: (kod, anlık görüntü, sonraki olaylar)."""
+        snap = {}
+        ctx.on_ask = o5_flip(ctx, key_name, snap)
+        try:
+            code = run_new_fixed_id(ctx, answers, run_id)
+        finally:
+            ctx.backend.deny, ctx.on_ask = False, None
+        return code, snap, ctx.events[snap.get("events", len(ctx.events)):]
+
+    def o5_clean(ctx, snap, after_events):
+        """Red anından sonra: disk bayt-bayt aynı, ekran çıktısı yok, tek olay = reddeden canlı kimlik sorgusu."""
+        return (bool(snap) and o5_tree(ctx) == snap["tree"] and len(ctx.io.said) == snap["said"]
+                and after_events == [("identity", ctx.case_id)])
+
+    def o5_recover(ctx):
+        """Geri atanan avukat: 1. --devam koşuyu DURDURULDU yapar, 2. --devam (tam onayla) siler."""
+        first = tolerant_resume(ctx, {})
+        halted = state_name(ctx)
+        second = tolerant_resume(ctx, DEL(ctx))
+        return (first is None and halted == "DURDURULDU" and getattr(second, "outcome", None) == "TAMAMLANDI"
+                and not ctx.paths.run_dir.exists() and not ctx.paths.case_dir.exists()), halted, getattr(second, "outcome", None)
+
+    # W8: ad teyidi beklenirken geri alma -> koşu dizini/durum/bildirim/TEMP yok, koşu kimliği basılmaz
+    o5_w8 = start("o5w8")
+    code_o5_w8, snap_o5_w8, after_o5_w8 = o5_denied_new(o5_w8, "kimlik_ad", base_answers(), "8" * 32)
+    check("O-5 W8: the F0 identity passes, the assignment is revoked while the typed name is awaited -> exactly YETKI_YOK; NO run dir (runs/ empty), NO case dir, "
+          "NO state/manifest/TEMP dir, the run id is NEVER announced, NO screen output after the answer, the only event after the answer is the refusing live identity query",
+          code_o5_w8 == "YETKI_YOK" and o5_clean(o5_w8, snap_o5_w8, after_o5_w8) and not list((o5_w8.office / "runs").iterdir())
+          and not (o5_w8.cases / o5_w8.case_id).exists() and o5_w8.flow.run_id is None and "sayfa_sayisi" not in o5_w8.io.asked,
+          f"{code_o5_w8} {after_o5_w8} {o5_w8.flow.run_id}")
+    o5_w8_rerun = code_safe(lambda: new_run(o5_w8))
+    check("O-5 W8 recovery: nothing was left to resume; the re-assigned lawyer simply starts a new run, which completes normally (UYUMLU_RAPOR_KONTROLU)",
+          o5_w8_rerun is None and state_name(o5_w8) == "UYUMLU_RAPOR_KONTROLU" and len(list((o5_w8.office / "runs").iterdir())) == 1, f"{o5_w8_rerun}")
+
+    # W9: kaynak/sayfa/vergi türü beklenirken geri alma -> belge kopyası vaka klasörüne YAZILMAZ
+    o5_w9 = start("o5w9")
+    code_o5_w9, snap_o5_w9, after_o5_w9 = o5_denied_new(o5_w9, "vergi_turleri", base_answers(), "9" * 32)
+    print(f"INFO O-5 W9 disk after the refusal: state={state_name(o5_w9)}, case_dir_exists={o5_w9.paths.case_dir.exists()}")
+    check("O-5 W9: revoked while the tax types are awaited -> exactly YETKI_YOK; the client document copy and the extracted text are NOT written (no case dir), "
+          "D2: the run state stays HAZIRLANIYOR (NOT DURDURULDU), every file byte-identical, NO screen output after the answer, no F2 question asked",
+          code_o5_w9 == "YETKI_YOK" and o5_clean(o5_w9, snap_o5_w9, after_o5_w9) and not o5_w9.paths.case_dir.exists()
+          and state_name(o5_w9) == "HAZIRLANIYOR" and "tebligat_tarihi" not in o5_w9.io.asked, f"{code_o5_w9} {state_name(o5_w9)} {after_o5_w9}")
+    ok_o5_w9, halted_o5_w9, out_o5_w9 = o5_recover(o5_w9)
+    check("O-5 W9 recovery: the re-assigned lawyer's --devam turns the run into DURDURULDU, the next --devam deletes it with the full approval (TAMAMLANDI)",
+          ok_o5_w9 and source_ok(o5_w9), f"{halted_o5_w9} {out_o5_w9}")
+
+    # W10: altı F2 sorusundan sonra geri alma -> okuma kaydı YAZILMAZ
+    o5_w10 = start("o5w10")
+    code_o5_w10, snap_o5_w10, after_o5_w10 = o5_denied_new(o5_w10, "stopping_ref", base_answers(), "a" * 32)
+    print(f"INFO O-5 W10 disk after the refusal: state={state_name(o5_w10)}, reading_record_exists={o5_w10.paths.reading_path.exists()}")
+    check("O-5 W10: revoked while the last F2 answer is awaited -> exactly YETKI_YOK; NO reading record, D2: state stays HAZIRLANIYOR (no okuma_sha, NOT DURDURULDU), "
+          "every file byte-identical, NO screen output after the answer (no candidate list), the candidate question is never asked",
+          code_o5_w10 == "YETKI_YOK" and o5_clean(o5_w10, snap_o5_w10, after_o5_w10) and not o5_w10.paths.reading_path.exists()
+          and state_name(o5_w10) == "HAZIRLANIYOR" and "aday_secimi" not in o5_w10.io.asked and o5_w10.paths.case_dir.exists(),
+          f"{code_o5_w10} {state_name(o5_w10)} {after_o5_w10}")
+    ok_o5_w10, halted_o5_w10, out_o5_w10 = o5_recover(o5_w10)
+    check("O-5 W10 recovery: --devam -> DURDURULDU, then the lawyer-approved deletion removes the client copy (TAMAMLANDI)",
+          ok_o5_w10 and source_ok(o5_w10), f"{halted_o5_w10} {out_o5_w10}")
+
+    # W11 (a): uyuşmazlık dalı - aday seçimi beklenirken geri alma -> uyuşmazlık durumu/raporu YAZILMAZ
+    o5_w11a = start("o5w11a")
+    code_o5_w11a, snap_o5_w11a, after_o5_w11a = o5_denied_new(o5_w11a, "aday_secimi", base_answers(aday_secimi="2"), "b" * 32)
+    check("O-5 W11 (mismatch branch): revoked while the candidate choice is awaited -> exactly YETKI_YOK; NO mismatch report, D2: state stays OKUMA_KAYITLI "
+          "(NOT UYUSMAZLIK_INCELEME_ACIK, NOT DURDURULDU), NO mismatch message on screen, every file byte-identical, no backend call",
+          code_o5_w11a == "YETKI_YOK" and o5_clean(o5_w11a, snap_o5_w11a, after_o5_w11a) and not o5_w11a.paths.report_path.exists()
+          and state_name(o5_w11a) == "OKUMA_KAYITLI" and not any("UYUŞMUYOR" in t for t in o5_w11a.io.said)
+          and not [e for e in o5_w11a.events if e[0] == "backend"], f"{code_o5_w11a} {state_name(o5_w11a)} {after_o5_w11a}")
+    ok_o5_w11a, halted_o5_w11a, out_o5_w11a = o5_recover(o5_w11a)
+    check("O-5 W11 (mismatch branch) recovery: --devam -> DURDURULDU, then deletion TAMAMLANDI", ok_o5_w11a, f"{halted_o5_w11a} {out_o5_w11a}")
+
+    # W11 (b): uyuşma dalı - elle girdi dosyası YAZILMAZ, SISTEM_ZINCIRI'ne geçilmez
+    o5_w11b = start("o5w11b")
+    code_o5_w11b, snap_o5_w11b, after_o5_w11b = o5_denied_new(o5_w11b, "aday_secimi", base_answers(), "c" * 32)
+    check("O-5 W11 (match branch): revoked while the candidate choice is awaited -> exactly YETKI_YOK; NO manual_input file, D2: state stays OKUMA_KAYITLI "
+          "(NOT SISTEM_ZINCIRI, NOT DURDURULDU), every file byte-identical, no screen output, no backend call",
+          code_o5_w11b == "YETKI_YOK" and o5_clean(o5_w11b, snap_o5_w11b, after_o5_w11b)
+          and not (o5_w11b.paths.case_dir / "documents" / intake.DOC_ID / "manual_input").exists()
+          and state_name(o5_w11b) == "OKUMA_KAYITLI" and not [e for e in o5_w11b.events if e[0] == "backend"],
+          f"{code_o5_w11b} {state_name(o5_w11b)} {after_o5_w11b}")
+    ok_o5_w11b, halted_o5_w11b, out_o5_w11b = o5_recover(o5_w11b)
+    check("O-5 W11 (match branch) recovery: --devam -> DURDURULDU, then deletion TAMAMLANDI", ok_o5_w11b, f"{halted_o5_w11b} {out_o5_w11b}")
+
+    # D2 (zincir adımı): `dogrulama_karari` beklenirken geri alma -> verify_fact facade'i CaseAccessDeniedError ile reddeder
+    check("(setup O-5 D2) the facade's CaseAccessDeniedError maps to exactly YETKI_YOK (the D2 distinction does not depend on one class)",
+          outcomes.error_code_for(CaseAccessDeniedError("no_assignment")) == "YETKI_YOK" and outcomes.error_code_for(R.OfficeFlowError("YETKI_YOK")) == "YETKI_YOK")
+    o5_ch = start("o5ch")
+    o5_ch.backend.deny_chain_step = "verify_fact"
+    code_o5_ch, snap_o5_ch, after_o5_ch = o5_denied_new(o5_ch, "dogrulama_karari", base_answers(), "d" * 32)
+    check("O-5 D2 (chain step): revoked while the verification decision is awaited -> the verify_fact facade refuses (CaseAccessDeniedError) -> exactly YETKI_YOK; "
+          "the state stays SISTEM_ZINCIRI (DURDURULDU is NOT written), every file byte-identical, NO screen output (no run-id announce) after the answer",
+          code_o5_ch == "YETKI_YOK" and bool(snap_o5_ch) and after_o5_ch == [("backend", "verify_fact")] and o5_tree(o5_ch) == snap_o5_ch["tree"]
+          and len(o5_ch.io.said) == snap_o5_ch["said"] and state_name(o5_ch) == "SISTEM_ZINCIRI", f"{code_o5_ch} {state_name(o5_ch)} {after_o5_ch}")
+    ok_o5_ch, halted_o5_ch, out_o5_ch = o5_recover(o5_ch)
+    check("O-5 D2 (chain step) recovery: the re-assigned lawyer's --devam turns it into DURDURULDU (U4 rule), the next --devam deletes it (TAMAMLANDI)",
+          ok_o5_ch, f"{halted_o5_ch} {out_o5_ch}")
+
+    # D2 sınırı: aynı noktada YETKI_YOK OLMAYAN bir hata -> DURDURULDU bugünkü gibi yazılır (ve koşu kimliği basılır)
+    o5_db = start("o5db")
+    o5_db_orig_identity = o5_db.backend.identity
+    o5_db_flag = {"fail": False}
+
+    def o5_db_identity(case_id):
+        snapshot = o5_db_orig_identity(case_id)
+        if o5_db_flag["fail"]:
+            raise R.OfficeFlowError("VERITABANI_HATASI")
+        return snapshot
+
+    o5_db.backend.identity = o5_db_identity
+    o5_db_said = {}
+
+    def o5_db_hook(key):
+        if key == "stopping_ref":
+            o5_db_flag["fail"], o5_db_said["n"] = True, len(o5_db.io.said)
+        return None
+
+    o5_db.on_ask = o5_db_hook
+    code_o5_db = run_new_fixed_id(o5_db, base_answers(), "1" * 32)
+    o5_db.on_ask, o5_db.backend.identity = None, o5_db_orig_identity
+    check("O-5 D2 boundary: a NON-authorization error at the same point (W10 live query fails with VERITABANI_HATASI) still halts the run as today: "
+          "state DURDURULDU (deletable) and the run id is announced; no reading record",
+          code_o5_db == "VERITABANI_HATASI" and state_name(o5_db) == "DURDURULDU" and not o5_db.paths.reading_path.exists()
+          and any(o5_db.run_id in t for t in o5_db.io.said[o5_db_said.get("n", 10 ** 6):]), f"{code_o5_db} {state_name(o5_db)}")
+
+    # yetki SÜRÜYORSA: davranış aynı; her yeni nokta cevabın HEMEN ardından canlı sorgu; okuma kaydı TAZE (W10) kimlik
+    o5_keep = start("o5keep")
+    o5_keep.backend.db_time_by_call = lambda n: f"2026-11-22T09:00:{n:02d}+00:00"
+    o5_mark = {}
+    o5_f2_keys = ("tebligat_tarihi", "tebligat_sayfa", "kor_son_gun", "adli_tatil", "stopping_durum", "stopping_ref")
+
+    def o5_mark_f2(key):
+        if key in o5_f2_keys:
+            o5_mark["calls"] = o5_keep.backend.identity_calls   # son F2 sorusu kazanır
+        return None
+
+    o5_keep.on_ask = o5_mark_f2
+    new_run(o5_keep)
+    o5_keep.on_ask = None
+    ev_keep = o5_keep.events
+
+    def o5_next_after(key):
+        idx = ev_keep.index(("ask", key))
+        return ev_keep[idx + 1] if idx + 1 < len(ev_keep) else None
+
+    check("O-5 (authority kept): each new point queries the live identity IMMEDIATELY after its last question (kimlik_ad -> W8, vergi_turleri -> W9, stopping_ref -> W10, "
+          "aday_secimi -> W11)",
+          all(o5_next_after(k) == ("identity", o5_keep.case_id) for k in ("kimlik_ad", "vergi_turleri", "stopping_ref", "aday_secimi")),
+          str([o5_next_after(k) for k in ("kimlik_ad", "vergi_turleri", "stopping_ref", "aday_secimi")]))
+    check("O-5 (authority kept): behaviour otherwise unchanged - run_new makes exactly 6 live identity queries (F0, W8, W9, W10, W11, W7), the chain order is identical, "
+          "state UYUMLU_RAPOR_KONTROLU, report written",
+          sum(1 for e in ev_keep if e[0] == "identity") == 6 and o5_keep.backend.identity_calls == 6
+          and [e[1] for e in ev_keep if e[0] == "backend"] == ["manual_fact", "promote_fact", "verify_fact", "generate_timeline", "promote_timeline",
+                                                              "generate_deadline", "approve_deadline", "canonical_report"]
+          and state_name(o5_keep) == "UYUMLU_RAPOR_KONTROLU" and o5_keep.paths.report_path.is_file(), str([e for e in ev_keep if e[0] in ("identity", "backend")]))
+    o5_kimlik = R.load_reading_record(o5_keep.paths)["kimlik"]
+    o5_fresh = f"2026-11-22T09:00:{o5_mark.get('calls', -1) + 1:02d}+00:00"
+    o5_earlier = {f"2026-11-22T09:00:{n:02d}+00:00" for n in range(1, o5_mark.get("calls", 0) + 1)}
+    check("O-5 D3: the reading record's kimlik.db_time is the value of the FIRST live query AFTER the F2 questions (W10) - NOT the F0 snapshot nor any earlier one; "
+          "same user and registered name",
+          o5_mark.get("calls") == 3 and o5_kimlik["db_time"] == o5_fresh and o5_kimlik["db_time"] not in o5_earlier
+          and o5_kimlik["db_time"] != "2026-11-22T09:00:01+00:00" and o5_kimlik["user_id"] == 7 and o5_kimlik["display_name"] == NAME,
+          f"{o5_kimlik!r} mark={o5_mark} fresh={o5_fresh}")
+
+    # D3 (akış): W10'dan sonra F3/F4'e geçen kimlik W10 kimliğidir. Kayıtlı ad F2 sırasında değişir (F0 anlık görüntüsü
+    # eski adı taşır); onay adı YENİ adla verilir: koşu yalnız W10 kimliği akıyorsa tamamlanır.
+    o5_ren = start("o5ren")
+    o5_new_name = "Av. Örnek Kullanıcı Yeni"
+
+    def o5_rename(key):
+        if key == "tebligat_tarihi":
+            o5_ren.backend.name = o5_new_name   # F0/W8/W9 eski adı gördü; W10 ve sonrası yeni adı görür
+        return None
+
+    o5_ren.on_ask = o5_rename
+    code_o5_ren = code_safe(lambda: new_run(o5_ren, base_answers(onay_ad=o5_new_name)))
+    o5_ren.on_ask = None
+    o5_ren_run = [p_.name for p_ in (o5_ren.office / "runs").iterdir()]
+    o5_ren_paths = R.build_run_paths(o5_ren.office, o5_ren.cases, o5_ren.case_id, o5_ren_run[0]) if len(o5_ren_run) == 1 else None
+    o5_ren_state = R.load_run_state(o5_ren_paths.run_dir) if o5_ren_paths else None
+    check("O-5 D3 (flow): the identity handed to F3/F4 after W10 is the W10 snapshot - with the registered name changed during F2, the approval-name confirmation "
+          "against the NEW name succeeds (one approval, UYUMLU_RAPOR_KONTROLU) and the reading record carries the new name",
+          code_o5_ren is None and o5_ren_state is not None and o5_ren_state.state == "UYUMLU_RAPOR_KONTROLU"
+          and sum(1 for e in o5_ren.events if e == ("backend", "approve_deadline")) == 1
+          and R.load_reading_record(o5_ren_paths)["kimlik"]["display_name"] == o5_new_name,
+          f"{code_o5_ren} {getattr(o5_ren_state, 'state', None)}")
 
     # L-h akış: eksik alanlı durum dosyası -> DUR (soru/bağ/kayıt yok)
     lh = start("lh")

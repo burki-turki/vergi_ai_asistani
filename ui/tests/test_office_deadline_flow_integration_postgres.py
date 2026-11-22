@@ -1211,13 +1211,122 @@ try:
           and set(onay_tf3) == {"user_id", "display_name", "windows_user", "machine_name", "db_time", "ek_teyit_eslesti"} and onay_tf3["ek_teyit_eslesti"] is True
           and state_name_pg(tf3) == "SILME_ONAYI_BEKLIYOR" and len(read_records(tf3, "test_sonucu_")) == 1
           and read_records(tf3, "test_sonucu_")[0]["sonuc"] == "UYUMLU", f"{onay_tf3!r} {state_name_pg(tf3)}")
-    check("TF-1 PG W7 (same user): the approval mark's user_id equals the first identity's user_id in the reading record (the name confirmation and the fresh live query bind to ONE user, the real IAM lawyer)",
+    check("TF-1 PG W7 (same user): the approval mark's user_id equals the reading record's (fresh W10, O-5 D3) identity user_id (the name confirmation and the fresh live query bind to ONE user, the real IAM lawyer)",
           isinstance(onay_tf3, dict) and onay_tf3["user_id"] == reading_tf3["kimlik"]["user_id"] == LAWYER_ID
           and onay_tf3["display_name"] == reading_tf3["kimlik"]["display_name"] == NAMES[LAWYER_ID])
     import datetime as _dt_w7
     check("TF-1 PG W7 (fresh identity, REAL DB clock): 'onay_kimlik.db_time' was taken AFTER the approval-name question was asked in the --devam run (a snapshot passed in from "
           "the start of continue_run would predate it)",
           isinstance(onay_tf3, dict) and "t" in mark_tf3 and _dt_w7.datetime.fromisoformat(onay_tf3["db_time"]) >= mark_tf3["t"], f"{onay_tf3!r} {mark_tf3!r}")
+
+    # ============================================================
+    # O-5 - GERÇEK IAM: yeni koşunun ERKEN yazımları (W9 belge kopyası, W10 okuma kaydı) öncesi canlı yetki.
+    # Geri alma gerçek `revoked_at = now()`; D2: run_new YETKI_YOK reddinde durum dosyasına HİÇBİR ŞEY yazmaz.
+    # ============================================================
+    def o5_pg_tree(ctx):
+        """Ofis kökü + bu vakanın klasörü (dosya -> sha256, dizin -> '<dir>') + vakanın journal satır sayısı."""
+        out = {}
+        for base in (ctx.office, _TMP_CASES / ctx.case_id):
+            for dp, ds, fs_ in os.walk(base):
+                for d_ in ds:
+                    out[os.path.join(dp, d_)] = "<dir>"
+                for f in fs_:
+                    fp_ = os.path.join(dp, f)
+                    with open(fp_, "rb") as fh:
+                        out[fp_] = hashlib.sha256(fh.read()).hexdigest()
+        out["journal"] = len(journal_rows(f"case:{ctx.case_id}"))
+        return out
+
+    def o5_pg_denied_new(ctx, key_name, run_id):
+        """run_new (koşu kimliği önceden sabit): `key_name` beklenirken GERÇEK geri alma. Dönüş: (kod, anlık görüntü)."""
+        snap = {}
+
+        def hook(key):
+            if key == key_name:
+                snap["tree"], snap["said"], snap["events"] = o5_pg_tree(ctx), len(ctx.io.said), len(ctx.events)
+                snap["rows"] = set_assignment_revoked(ctx, True)
+            return None
+
+        original_new_id = records.new_run_id
+        records.new_run_id = lambda: run_id
+        code = None
+        try:
+            run_new(ctx, base_answers(ctx), on_ask=hook)
+        except records.OfficeFlowError as error:
+            code = error.code
+        except EOFError:
+            code = "EOFError(beklenmeyen soru)"
+        finally:
+            records.new_run_id = original_new_id
+        ctx.run_id = run_id
+        ctx.paths = records.build_run_paths(ctx.office, _TMP_CASES, ctx.case_id, run_id)
+        return code, snap
+
+    def o5_pg_recover(ctx):
+        """Geri atama (revoked_at = NULL) -> 1. --devam DURDURULDU, 2. --devam tam onayla siler."""
+        rows = set_assignment_revoked(ctx, False)
+        first = tolerant_resume(ctx, {})
+        halted = state_name_pg(ctx)
+        second = tolerant_resume(ctx, {"silme_tam_ad": NAMES[LAWYER_ID], "silme_kod": ctx.dosya_kodu,
+                                       "silme_onay": "SİLMEYİ ONAYLIYORUM", "kimlik_ad": NAMES[LAWYER_ID]})
+        outcome = getattr(second, "outcome", None)
+        return (rows == 1 and first is None and halted == "DURDURULDU" and outcome == "TAMAMLANDI"
+                and not ctx.paths.run_dir.exists() and not (_TMP_CASES / ctx.case_id).exists()), f"rows={rows} {halted} {outcome}"
+
+    # W9 gerçek IAM: vergi türü beklenirken geri alma -> belge kopyası vaka klasörüne YAZILMAZ
+    o5p9 = start_ctx("o5p9")
+    code_o5p9, snap_o5p9 = o5_pg_denied_new(o5p9, "vergi_turleri", "9" * 32)
+    print(f"INFO O-5 PG W9 disk after the refusal: state={state_name_pg(o5p9)}, case_dir_exists={(_TMP_CASES / o5p9.case_id).exists()}, "
+          f"journal_rows={len(journal_rows(f'case:{o5p9.case_id}'))}")
+    check("O-5 PG W9 REAL IAM: assignment revoked (UPDATE touched 1 row) while the tax types are awaited -> exactly YETKI_YOK; NO case dir (no document copy, no "
+          "extracted text), NO journal row, D2: state stays HAZIRLANIYOR (NOT DURDURULDU), every file byte-identical, NO screen output after the answer",
+          snap_o5p9.get("rows") == 1 and code_o5p9 == "YETKI_YOK" and not (_TMP_CASES / o5p9.case_id).exists()
+          and len(journal_rows(f"case:{o5p9.case_id}")) == 0 and state_name_pg(o5p9) == "HAZIRLANIYOR"
+          and o5_pg_tree(o5p9) == snap_o5p9.get("tree") and len(o5p9.io.said) == snap_o5p9.get("said")
+          and o5p9.events[snap_o5p9.get("events", 0):] == [] and "tebligat_tarihi" not in o5p9.io.asked,
+          f"{code_o5p9} rows={snap_o5p9.get('rows')} {state_name_pg(o5p9)}")
+    ok_o5p9, detail_o5p9 = o5_pg_recover(o5p9)
+    check("O-5 PG W9 recovery: after re-assignment (1 row) the lawyer's --devam turns the run into DURDURULDU, the next --devam deletes it (TAMAMLANDI); original PDF intact",
+          ok_o5p9 and source_intact(o5p9), detail_o5p9)
+
+    # W10 gerçek IAM: son F2 sorusu beklenirken geri alma -> okuma kaydı YAZILMAZ
+    o5p10 = start_ctx("o5p10")
+    code_o5p10, snap_o5p10 = o5_pg_denied_new(o5p10, "stopping_ref", "a" * 32)
+    print(f"INFO O-5 PG W10 disk after the refusal: state={state_name_pg(o5p10)}, reading_record_exists={o5p10.paths.reading_path.exists()}, "
+          f"journal_rows={len(journal_rows(f'case:{o5p10.case_id}'))}")
+    check("O-5 PG W10 REAL IAM: revoked (1 row) while the last F2 answer is awaited -> exactly YETKI_YOK; NO reading record, NO journal row, D2: state stays HAZIRLANIYOR, "
+          "every file byte-identical (the case dir seeded before the revocation is untouched), NO screen output, the candidate question is never asked",
+          snap_o5p10.get("rows") == 1 and code_o5p10 == "YETKI_YOK" and not o5p10.paths.reading_path.exists()
+          and len(journal_rows(f"case:{o5p10.case_id}")) == 0 and state_name_pg(o5p10) == "HAZIRLANIYOR"
+          and (_TMP_CASES / o5p10.case_id).exists() and o5_pg_tree(o5p10) == snap_o5p10.get("tree")
+          and len(o5p10.io.said) == snap_o5p10.get("said") and o5p10.events[snap_o5p10.get("events", 0):] == []
+          and "aday_secimi" not in o5p10.io.asked, f"{code_o5p10} rows={snap_o5p10.get('rows')} {state_name_pg(o5p10)}")
+    ok_o5p10, detail_o5p10 = o5_pg_recover(o5p10)
+    check("O-5 PG W10 recovery: after re-assignment the --devam halts (DURDURULDU) and the next --devam deletes the client copy (TAMAMLANDI); original PDF intact",
+          ok_o5p10 and source_intact(o5p10), detail_o5p10)
+
+    # D3 gerçek DB saati: okuma kaydındaki kimlik F2 sorularından SONRA alınmıştır (F0 anlık görüntüsü değil)
+    o5pd3 = start_ctx("o5pd3")
+    mark_o5pd3 = {}
+
+    def mark_o5pd3_hook(key):
+        if key == "stopping_ref":
+            conn_m = pg_connect()
+            try:
+                with conn_m.cursor() as cur_m:
+                    cur_m.execute("SELECT clock_timestamp()")
+                    mark_o5pd3["t"] = cur_m.fetchone()[0]
+            finally:
+                conn_m.close()
+        return None
+
+    run_new(o5pd3, base_answers(o5pd3, select="2"), on_ask=mark_o5pd3_hook)   # F3 tarih uyuşmazlığında biter (zincir yok)
+    reading_o5pd3 = records.load_reading_record(o5pd3.paths)
+    check("O-5 PG D3 (REAL DB clock): the reading record's kimlik.db_time was taken AFTER the last F2 question was asked (fresh W10 query, not the F0 snapshot); "
+          "the run otherwise behaves as before (UYUSMAZLIK_INCELEME_ACIK, report written, session user)",
+          "t" in mark_o5pd3 and _dt_w7.datetime.fromisoformat(reading_o5pd3["kimlik"]["db_time"]) >= mark_o5pd3["t"]
+          and reading_o5pd3["kimlik"]["user_id"] == LAWYER_ID and state_name_pg(o5pd3) == "UYUSMAZLIK_INCELEME_ACIK"
+          and o5pd3.paths.report_path.is_file(), f"{reading_o5pd3.get('kimlik')!r} {mark_o5pd3!r}")
 
     # ============================================================
     # N - normal yerel hesap (uygulama DB rolü) çalışır; dış YZ reddedilir
