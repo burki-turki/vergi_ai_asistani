@@ -14,10 +14,14 @@
 #   adım 3  bağlı kalemlerin hepsi verified (K3)
 #   adım 4  o belgeye ait TAM BİR idari işlem kaydı; idare dolu ve
 #           verified
-#   adım 5  idare sınıfı: istisna -> mali tatil yok; "vergi dairesi"
-#           (K5) -> devam; diğer -> needs_review
+#   adım 5  idare sınıfı: istisna -> mali tatil yok; "vergi dairesi",
+#           "malmüdürl", "defterdarl" (avukat 22.11.2026 3.2) -> devam;
+#           diğer -> needs_review
 #   adım 6  bağlı kalemlerin vergi türü sınıfı (listeler değişmeden);
-#           mixed -> mali tatilsiz erken tarih (avukat 3.2)
+#           tanınmayan / fer'i (gecikme zammı, gecikme faizi) / tek
+#           başına ceza -> needs_review, bu sırayla ilk gerekçe
+#           (Dilim C, avukat 22.11.2026 1.1-2.2, yalnız olumsuz yarı);
+#           mixed -> mali tatilsiz erken tarih (avukat 21.11.2026 3.2)
 #   adım 7  eksik bağ koruması (yalnız mali tatil UYGULATACAK sonuçta)
 #   adım 9  fark notu (hesaplanan ve needs_review sonuçlarda)
 #   adım 10 iz notu (belge kimliği + kalem kimlikleri)
@@ -28,7 +32,8 @@
 #   K6      Temmuz'a değmeyen sürede sonuç bugünküyle aynı
 #
 # KAYNAK AYRIMI (her kontrolün etiketinde yazılıdır):
-#   [AVUKAT 4.2]  Avukatın imzalı cevabındaki TEK altın örnek: ödeme
+#   [AVUKAT 4.2]  Avukatın 21.11.2026 tarihli forma verdiği imzalı
+#                 cevaptaki (4.2) TEK altın örnek: ödeme
 #                 emrinin konusu ÖTV, dosyada ayrıca gelir vergisi;
 #                 tebliğ 20.06.2026 -> son gün 06.07.2026; fark avukata
 #                 gösterilir; 07.09.2026 kesin tarih olarak SUNULMAZ.
@@ -37,6 +42,26 @@
 #                 yerde aynı vergi sınıfıyla bugünkü (dosya geneli)
 #                 hesabın verdiği sonuçla karşılaştırılarak sınanır -
 #                 Adım 7 aritmetiği değişmemiştir.
+#   [AVUKAT 22.11.2026]  Avukatın 22.11.2026 tarihli ek form cevabı:
+#                 YALNIZ sonucu formun tablosunda yazılı olan VEYA
+#                 avukatın işaretlediği kutunun doğrudan sonucu olan
+#                 kontroller (Soru 4 tablosu; Soru 1-3 tablolarındaki
+#                 ve 2.1'e göre değişmeyen satırlar; vergi dairesi
+#                 müdürlüğü / başkanlığı, malmüdürlüğü, defterdarlık ->
+#                 mali tatil). Malmüdürlüğü ve defterdarlık için
+#                 dayanak avukatın işaretlediği 3.2 kutusudur; formun
+#                 tablosu bu iki satırda o günkü yazılım çıktısı
+#                 olarak "kesin tarih yok" yazıyordu; bu iki satırdaki
+#                 07.09.2026 avukatın formda gördüğü tarih DEĞİLDİR.
+#                 Formdaki ve testlerdeki tüm tarihler yazılım
+#                 aritmetiğidir (form: yazılımın çıktısı, hukuki
+#                 değerlendirme değil).
+#   [MÜHENDİS K-C3] ÖTV + ilişkin olduğu vergi belirlenemeyen ceza ->
+#                 kesin tarih yok: mühendislik tercihi, avukat onayı
+#                 DEĞİL.
+#   "değişmezlik kanıtı"  Aktif İYUK yolunun bugünkü davranışının
+#                 DEĞİŞMEDİĞİNİ gösterir; bu davranışın doğru olduğu
+#                 onaylanmış SAYILMAZ (K-C5).
 #
 # NE KANITLANMAZ:
 #   - "verified" genel bir işarettir; kalemin türünün işlem belgesinin
@@ -45,9 +70,22 @@
 #     bir kalem yine yanlış sonuç verebilir; adım 7 bunu yalnız dosyada
 #     bağsız farklı bir kalem varsa yakalar. Avukatın belge + sayfa +
 #     "bağ tam" teyidi Dilim B'nin işidir.
-#   - "vergi dairesi" tanıması (K5) ve bağın yalnız Temmuz penceresinde
-#     aranması (K6) MÜHENDİS yorumudur; avukata sorulacaktır.
-#   - Fer'i kalemler ve ceza kaleminin bağlı olduğu vergi (K4) açıktır.
+#   - İdare tanıma (vergi dairesi / malmüdürlüğü / defterdarlık) ve
+#     bağın yalnız Temmuz penceresinde aranması artık avukat cevabıdır
+#     (22.11.2026, 3.2 ve 4.1); ancak avukatın istediği "dosya avukatı
+#     türü belge üzerinden teyit etsin" adımı (3.3) YOKTUR (Dilim B3).
+#     Alt dize tanıma, adında bu kök geçen ilgisiz bir birimi de
+#     tanıyabilir.
+#   - Fer'i ve ceza için yalnız OLUMSUZ yarı vardır: asıl alacak /
+#     ilişkin vergi belirlenemiyorsa kesin tarih yok. "Gelir vergisi +
+#     bu verginin gecikme zammı" ve "ÖTV'ye ilişkin ama yalnız ceza
+#     adıyla girilmiş ceza" satırlarında avukatın seçtiği kural, bağ
+#     bilinseydi bir tarih verirdi; buradaki "tarih yok" sonucu bağ
+#     bilinmediği için fail-closed karşılıktır, bu yüzden [MÜHENDİS]
+#     etiketlidir. Olumlu yarı Dilim B4'tedir.
+#   - `penalty_type` alanı okunmaz (planlayıcı yorumu, avukat cevabı
+#     DEĞİL); büyük harfle yazılmış ceza / fer'i adı ("VERGİ ZİYAI
+#     CEZASI") yeni kümelerle eşleşmez ve "tanınmayan" kalır.
 #   - Kurallar TASLAKTIR; tüm hesaplar kuralın YALNIZ BELLEKTE
 #     etkinleştirilmiş kopyasıyla yapılır.
 #
@@ -539,12 +577,21 @@ def test_steps(ruleset):
         and gumruk["exclusion_reason"] == "issuing_authority_excluded:gümrük",
         (gumruk["outcome"], gumruk["exclusion_reason"]),
     )
-    for authority in ("Kurgusal Malmüdürlüğü", "Kurgusal Sigorta Kurumu", "Kurgusal Tahsilat Birimi"):
+    # Dilim C: "Kurgusal Malmüdürlüğü" bu döngüden çıkarıldı; artık tanınır
+    # (avukat 22.11.2026 3.2) - bkz. test_dilim_c.
+    for authority in ("Kurgusal Sigorta Kurumu", "Kurgusal Tahsilat Birimi"):
         review(
-            f"[MÜHENDİS] adım 5: alacaklı idare '{authority}' tanınmıyor -> needs_review (K5)",
+            f"[MÜHENDİS] adım 5: alacaklı idare '{authority}' tanınmıyor -> needs_review",
             _case(items=[gv_linked], actions=[_action(authority=authority)]),
             "mali_tatil_receivable_authority_unclassified",
         )
+    malmudurlugu = _assess(rule, _case(items=[gv_linked], actions=[_action(authority="Kurgusal Malmüdürlüğü")]))
+    check(
+        "[AVUKAT 22.11.2026] adım 5: alacaklı idare 'Kurgusal Malmüdürlüğü' artık tanınır -> "
+        "mali tatil uygulanır (önce needs_review idi)",
+        malmudurlugu["outcome"] == "apply" and malmudurlugu["reason_code"] is None,
+        (malmudurlugu["outcome"], malmudurlugu["reason_code"]),
+    )
     dotted = _assess(rule, _case(items=[gv_linked], actions=[_action(authority="KURGUSAL VERGİ DAİRESİ")]))
     check(
         "[MÜHENDİS] adım 5: 'VERGİ DAİRESİ' (büyük İ) tanınır - Türkçe İ normalizasyonu (K5)",
@@ -554,14 +601,16 @@ def test_steps(ruleset):
 
     # --- adım 6 ---
     gecikme = review(
-        "[MÜHENDİS] adım 6: bağlı kalem gecikme zammı -> needs_review (K4, fer'i tanınmaz)",
+        "[MÜHENDİS] adım 6: bağlı kalem gecikme zammı -> needs_review, gerekçe fer'inin asıl "
+        "alacağı belirlenemedi (avukat 22.11.2026 1.1 olumsuz yarı; önce 'tanınmayan tür' idi)",
         _case(items=[_item("item_gz", "gecikme zammı")], actions=[_action()]),
-        "mali_tatil_receivable_tax_type_unrecognized",
+        "mali_tatil_receivable_ancillary_principal_unresolved",
     )
     review(
-        "[MÜHENDİS] adım 6: bağlı gelir vergisi + bağlı gecikme faizi -> needs_review (K4)",
+        "[MÜHENDİS] adım 6: bağlı gelir vergisi + bağlı gecikme faizi -> needs_review, gerekçe "
+        "fer'inin asıl alacağı belirlenemedi (avukat 22.11.2026 1.2 olumsuz yarı)",
         _case(items=[gv_linked, _item("item_gf", "gecikme faizi")], actions=[_action()]),
-        "mali_tatil_receivable_tax_type_unrecognized",
+        "mali_tatil_receivable_ancillary_principal_unresolved",
     )
     blank = dict(_item("item_blank", "x"))
     blank["tax_type"] = "   "
@@ -607,8 +656,9 @@ def test_steps(ruleset):
     gv_result = _calc(rule, LAWYER_ANCHOR, gv_only)
     today_gv = _today(rule, LAWYER_ANCHOR, {"gelir vergisi"})
     check(
-        "[MÜHENDİS] adım 8: yalnız gelir vergisi bağlı ve teyitli, idare vergi dairesi -> "
-        "mali tatil UYGULANIR; tarih bugünkü dahil-sınıf hesabıyla aynı (aritmetik değişmedi)",
+        "[AVUKAT 22.11.2026] adım 8: yalnız gelir vergisi bağlı ve teyitli, idare 'Kurgusal "
+        "Vergi Dairesi Müdürlüğü' -> mali tatil UYGULANIR; tarih bugünkü dahil-sınıf hesabıyla "
+        "aynı (aritmetik değişmedi)",
         gv_only["outcome"] == "apply"
         and gv_result["calculation_state"] == CALCULATED
         and gv_result["mali_tatil_applied"] is True
@@ -950,22 +1000,706 @@ def test_context_guard(ruleset):
 def test_k6_window(ruleset):
     for rule_id in DRAFT_RULE_IDS:
         rule = _activated(_rule_by_id(ruleset, rule_id))
-        for label, context in (
-            ("bağlam None", None),
-            ("eski biçimli bağlam", {"tax_types": {"ötv"}, "issuing_authorities": set()}),
-            ("bağ yok", _assess(rule, _case(items=[_item("i_1", "ÖTV", docs=())], actions=[]))),
+        for tag, label, context in (
+            ("[MÜHENDİS]", "bağlam None", None),
+            ("[MÜHENDİS]", "eski biçimli bağlam", {"tax_types": {"ötv"}, "issuing_authorities": set()}),
+            ("[AVUKAT 22.11.2026 4.1]", "bağ yok",
+             _assess(rule, _case(items=[_item("i_1", "ÖTV", docs=())], actions=[]))),
         ):
             new = _calc(rule, NON_JULY_ANCHOR, context)
             old = _calc(_without_field(rule), NON_JULY_ANCHOR,
                         {"tax_types": {"gelir vergisi"}, "issuing_authorities": set()})
             check(
-                f"[MÜHENDİS] K6 {rule_id}: Şubat çapası, {label} -> sonuç bugünküyle BİREBİR aynı "
+                f"{tag} K6 {rule_id}: Şubat çapası, {label} -> sonuç bugünküyle BİREBİR aynı "
                 "(window_not_relevant, hesaplandı)",
                 new == old
                 and new["calculation_state"] == CALCULATED
                 and new["mali_tatil_exclusion_reason"] == "window_not_relevant",
                 (_state(new), _state(old)),
             )
+
+
+# ================================================================
+# DİLİM C - AVUKATIN 22.11.2026 EK CEVAPLARI (yalnız alacak modu)
+#
+# Fer'i (1.1-1.2) ve ceza (2.1-2.2) için yalnız OLUMSUZ yarı: asıl
+# alacak / ilişkin vergi belirlenemiyorsa kesin tarih yok. İdare tanıma
+# (3.2) ve Temmuz dışı süre (4.1). Kurum adları KURGUSALDIR.
+# ================================================================
+
+PENALTY_CODE = "mali_tatil_receivable_penalty_related_tax_unresolved"
+ANCILLARY_CODE = "mali_tatil_receivable_ancillary_principal_unresolved"
+UNRECOGNIZED_CODE = "mali_tatil_receivable_tax_type_unrecognized"
+UNCLASSIFIED_CODE = "mali_tatil_receivable_authority_unclassified"
+UNLINKED_CODE = "mali_tatil_receivable_unlinked_item_conflict"
+
+PENALTY_NAMES = ("vergi ziyaı cezası", "usulsüzlük cezası", "özel usulsüzlük cezası")
+ANCILLARY_NAMES = ("gecikme zammı", "gecikme faizi")
+
+# Aktif yol değişmezlik kanıtı için taban (f14bb87) baytlarından ölçülen
+# literal paylaşılan listeler.
+SHARED_INCLUDED = frozenset({
+    "katma değer vergisi", "kdv", "kurumlar vergisi", "gelir vergisi", "damga vergisi",
+    "veraset ve intikal vergisi", "motorlu taşıtlar vergisi", "mtv",
+    "vergi ziyaı cezası", "usulsüzlük cezası", "özel usulsüzlük cezası",
+})
+SHARED_EXCLUDED = frozenset({
+    "özel tüketim vergisi", "ötv", "banka ve sigorta muameleleri vergisi", "bsmv",
+    "özel iletişim vergisi", "öiv", "şans oyunları vergisi",
+})
+SHARED_EXCLUDED_AUTHORITY = ("gümrük", "belediye", "il özel idaresi", "il özel idare")
+
+
+def test_dilim_c(ruleset):
+    rule = _activated(_rule_by_id(ruleset, PAYMENT_ORDER))
+    gv_linked = _item("item_gv", "Gelir Vergisi")
+    otv_linked = _item("item_otv", "ÖTV")
+
+    def outcome(case, anchor_date=LAWYER_ANCHOR, rule_used=None):
+        used = rule_used if rule_used is not None else rule
+        assessment = _assess(used, case)
+        return assessment, _calc(used, anchor_date, assessment)
+
+    def dated(label, case, expected_date, applied, anchor_date=LAWYER_ANCHOR, exclusion=None):
+        assessment, result = outcome(case, anchor_date)
+        check(
+            label,
+            result["calculation_state"] == CALCULATED
+            and result["calculated_deadline"] == expected_date
+            and result["mali_tatil_applied"] is applied
+            and (exclusion is None or result["mali_tatil_exclusion_reason"] == exclusion),
+            {"assessment": (assessment["outcome"], assessment["reason_code"],
+                            assessment["exclusion_reason"]), "result": _state(result)},
+        )
+        return assessment, result
+
+    def no_date(label, case, code, anchor_date=LAWYER_ANCHOR, rule_used=None):
+        assessment, result = outcome(case, anchor_date, rule_used)
+        check(
+            label,
+            assessment["outcome"] == NEEDS_REVIEW
+            and assessment["reason_code"] == code
+            and result["calculation_state"] == NEEDS_REVIEW
+            and result["calculated_deadline"] is None
+            and result["mali_tatil_applied"] is False
+            and result.get("mali_tatil_receivable_reason_code") == code
+            and ("reason_code=" + code) in result["reason"]
+            and dc.MALI_TATIL_RECEIVABLE_REVIEW_REASONS.get(code, "") in result["reason"],
+            {"assessment": (assessment["outcome"], assessment["reason_code"]),
+             "result": _state(result)},
+        )
+        return assessment, result
+
+    # --- sabitler ---
+    check(
+        "[MÜHENDİS] Dilim C sabitleri: kapalı ceza ve fer'i kümeleri tam bu adlar; tanınan idare "
+        "kökleri tam ('vergi dairesi', 'malmüdürl', 'defterdarl'); iki yeni gerekçe kodu kayıtlı",
+        dc.MALI_TATIL_RECEIVABLE_PENALTY_TAX_TYPES == frozenset(PENALTY_NAMES)
+        and dc.MALI_TATIL_RECEIVABLE_ANCILLARY_TAX_TYPES == frozenset(ANCILLARY_NAMES)
+        and dc.MALI_TATIL_RECOGNIZED_TAX_AUTHORITY_KEYWORDS
+        == ("vergi dairesi", "malmüdürl", "defterdarl")
+        and PENALTY_CODE in dc.MALI_TATIL_RECEIVABLE_REVIEW_REASONS
+        and ANCILLARY_CODE in dc.MALI_TATIL_RECEIVABLE_REVIEW_REASONS
+        and dc.MALI_TATIL_RECEIVABLE_REVIEW_CLASS_ORDER == (
+            ("unrecognized", UNRECOGNIZED_CODE),
+            ("ancillary_principal_unresolved", ANCILLARY_CODE),
+            ("penalty_related_tax_unresolved", PENALTY_CODE),
+        ),
+        (dc.MALI_TATIL_RECEIVABLE_PENALTY_TAX_TYPES, dc.MALI_TATIL_RECEIVABLE_ANCILLARY_TAX_TYPES,
+         dc.MALI_TATIL_RECOGNIZED_TAX_AUTHORITY_KEYWORDS),
+    )
+    for name in PENALTY_NAMES:
+        for written in (name, " %s " % name.capitalize()):
+            check(
+                f"[MÜHENDİS] kalem sınıfı: '{written}' -> penalty_related_tax_unresolved",
+                dc._mali_tatil_receivable_item_class(_item("i", written))
+                == "penalty_related_tax_unresolved",
+                dc._mali_tatil_receivable_item_class(_item("i", written)),
+            )
+    for name in ANCILLARY_NAMES:
+        check(
+            f"[MÜHENDİS] kalem sınıfı: '{name}' -> ancillary_principal_unresolved",
+            dc._mali_tatil_receivable_item_class(_item("i", " %s " % name.capitalize()))
+            == "ancillary_principal_unresolved",
+            dc._mali_tatil_receivable_item_class(_item("i", name)),
+        )
+    check(
+        "[MÜHENDİS] kalem sınıfı: ceza adına ek metin ('vergi ziyaı cezası (ötv)') TAM eşleşmez -> "
+        "unrecognized (ad tahmini yok)",
+        dc._mali_tatil_receivable_item_class(_item("i", "vergi ziyaı cezası (ötv)")) == "unrecognized",
+    )
+
+    # --- formdaki örnekler: Soru 1 ---
+    dated(
+        "[AVUKAT 22.11.2026] form Soru 1: gelir vergisi (Kurgusal Vergi Dairesi Müdürlüğü) -> "
+        "07.09.2026, mali tatil uygulanır",
+        _case(items=[gv_linked], actions=[_action()]), LATE_DATE_NOT_TO_PRESENT, True,
+    )
+    no_date(
+        "[MÜHENDİS] form Soru 1: gelir vergisi + gecikme zammı -> kesin tarih yok (fer'inin asıl "
+        "alacağı bu veride belirlenemiyor; avukat 1.1 olumsuz yarı, olumlu yarı B4)",
+        _case(items=[gv_linked, _item("item_gz", "gecikme zammı")], actions=[_action()]),
+        ANCILLARY_CODE,
+    )
+    no_date(
+        "[MÜHENDİS] form Soru 1: gelir vergisi + gecikme faizi -> kesin tarih yok (avukat 1.2 "
+        "olumsuz yarı)",
+        _case(items=[gv_linked, _item("item_gf", "gecikme faizi")], actions=[_action()]),
+        ANCILLARY_CODE,
+    )
+
+    # --- formdaki örnekler: Soru 2 ---
+    dated(
+        "[AVUKAT 22.11.2026] form Soru 2: ÖTV -> 06.07.2026, mali tatil uygulanmaz",
+        _case(items=[otv_linked], actions=[_action()]), LAWYER_EXPECTED, False,
+        exclusion="tax_type_excluded:ötv",
+    )
+    no_date(
+        "[MÜHENDİS] form Soru 2: yalnız 'vergi ziyaı cezası' (ilişkin vergi bu veride "
+        "belirlenemiyor) -> kesin tarih yok; 07.09.2026 ÇIKMAZ (avukat 2.1 olumsuz yarı)",
+        _case(items=[_item("item_vzc", "vergi ziyaı cezası")], actions=[_action()]),
+        PENALTY_CODE,
+    )
+    no_date(
+        "[MÜHENDİS K-C3] form Soru 2: ÖTV + ilişkin vergisi belirsiz vergi ziyaı cezası -> kesin "
+        "tarih yok (06.07.2026 de verilmez; mühendislik tercihi)",
+        _case(items=[otv_linked, _item("item_vzc", "vergi ziyaı cezası")], actions=[_action()]),
+        PENALTY_CODE,
+    )
+    for name in ("usulsüzlük cezası", "özel usulsüzlük cezası"):
+        no_date(
+            f"[MÜHENDİS] yalnız '{name}' -> kesin tarih yok (avukat 2.2 olumsuz yarı)",
+            _case(items=[_item("item_c", name)], actions=[_action()]),
+            PENALTY_CODE,
+        )
+    for rule_id in (SEIZURE, PRECAUTIONARY):
+        other = _activated(_rule_by_id(ruleset, rule_id))
+        no_date(
+            f"[MÜHENDİS] {rule_id}: yalnız vergi ziyaı cezası -> kesin tarih yok",
+            _case(items=[_item("item_vzc", "vergi ziyaı cezası")], actions=[_action()]),
+            PENALTY_CODE,
+            rule_used=other,
+        )
+
+    # --- tek kalemde vergi + cezası (penalty_type okunmaz; planlayıcı yorumu) ---
+    gv_with_penalty = dict(gv_linked, penalty_type="vergi ziyaı cezası")
+    otv_with_penalty = dict(otv_linked, penalty_type="vergi ziyaı cezası")
+    dated(
+        "[MÜHENDİS] tek kalem: tax_type=gelir vergisi, penalty_type=vergi ziyaı cezası -> 07.09.2026 "
+        "(ceza kalemin vergisini izler; penalty_type okunmaz - planlayıcı yorumu)",
+        _case(items=[gv_with_penalty], actions=[_action()]), LATE_DATE_NOT_TO_PRESENT, True,
+    )
+    dated(
+        "[MÜHENDİS] tek kalem: tax_type=ÖTV, penalty_type=vergi ziyaı cezası -> 06.07.2026",
+        _case(items=[otv_with_penalty], actions=[_action()]), LAWYER_EXPECTED, False,
+        exclusion="tax_type_excluded:ötv",
+    )
+
+    # --- adım 6 öncelik sırası ---
+    no_date(
+        "[MÜHENDİS] adım 6 öncelik: gelir vergisi + gecikme zammı + vergi ziyaı cezası -> fer'i "
+        "gerekçesi (ceza gerekçesinden önce)",
+        _case(items=[gv_linked, _item("item_gz", "gecikme zammı"),
+                     _item("item_vzc", "vergi ziyaı cezası")], actions=[_action()]),
+        ANCILLARY_CODE,
+    )
+    no_date(
+        "[MÜHENDİS] adım 6 öncelik: tanınmayan tür + gecikme faizi + usulsüzlük cezası -> "
+        "'tanınmayan tür' gerekçesi (ilk sırada)",
+        _case(items=[_item("item_x", "Kurgusal Bilinmeyen Alacak"), _item("item_gf", "gecikme faizi"),
+                     _item("item_uc", "usulsüzlük cezası")], actions=[_action()]),
+        UNRECOGNIZED_CODE,
+    )
+    no_date(
+        "[MÜHENDİS] adım 6 öncelik: ÖTV + gecikme zammı -> fer'i gerekçesi (excluded kararından önce)",
+        _case(items=[otv_linked, _item("item_gz", "gecikme zammı")], actions=[_action()]),
+        ANCILLARY_CODE,
+    )
+
+    # --- büyük harfle yazılmış ceza / fer'i adı: yeni kümelerle eşleşmez ---
+    for written in ("VERGİ ZİYAI CEZASI", "GECİKME ZAMMI"):
+        no_date(
+            f"[MÜHENDİS] '{written}' normalizasyonda noktalı 'i' olur, yeni kümelerle TAM eşleşmez -> "
+            "'tanınmayan tür', kesin tarih yok (açık risk: yeni yazım EKLENMEDİ)",
+            _case(items=[gv_linked, _item("item_upper", written)], actions=[_action()]),
+            UNRECOGNIZED_CODE,
+        )
+
+    # --- adım 7: bağsız ceza / fer'i ---
+    for name in ("vergi ziyaı cezası", "usulsüzlük cezası", "gecikme faizi"):
+        assessment = _assess(rule, _case(items=[gv_linked, _item("item_unlinked", name, docs=())],
+                                         actions=[_action()]))
+        check(
+            f"[MÜHENDİS] adım 7: bağlı gelir vergisi + BAĞSIZ '{name}' -> unlinked_item_conflict "
+            "(yeni sınıf 'included' değildir); fark notunda yeni sınıf görünür",
+            assessment["outcome"] == NEEDS_REVIEW
+            and assessment["reason_code"] == UNLINKED_CODE
+            and assessment["difference"] is True
+            and any(n.startswith("mali_tatil_receivable_difference=linked:included;unlinked:")
+                    and ("penalty_related_tax_unresolved" in n
+                         or "ancillary_principal_unresolved" in n)
+                    for n in assessment["notes"]),
+            (assessment["outcome"], assessment["reason_code"], assessment["notes"]),
+        )
+    early = _assess(rule, _case(items=[otv_linked, _item("item_vzc", "vergi ziyaı cezası", docs=())],
+                                actions=[_action()]))
+    check(
+        "[MÜHENDİS] adım 7 yalnız mali tatil UYGULATACAK sonucu durdurur: bağlı ÖTV + bağsız ceza -> "
+        "mali tatilsiz erken tarih",
+        early["outcome"] == "no_mali_tatil" and early["exclusion_reason"] == "tax_type_excluded:ötv",
+        (early["outcome"], early["reason_code"], early["exclusion_reason"]),
+    )
+
+    # --- formdaki örnekler: Soru 3 (idare) ---
+    for authority in ("Kurgusal Vergi Dairesi Müdürlüğü", "Kurgusal Vergi Dairesi Başkanlığı",
+                      "Kurgusal Malmüdürlüğü", "Kurgusal Defterdarlığı"):
+        dated(
+            f"[AVUKAT 22.11.2026] form Soru 3 (3.2): düzenleyen idare '{authority}' + gelir vergisi "
+            "-> 07.09.2026, mali tatil uygulanır",
+            _case(items=[gv_linked], actions=[_action(authority=authority)]),
+            LATE_DATE_NOT_TO_PRESENT, True,
+        )
+    for authority in ("KURGUSAL DEFTERDARLIĞI", "KURGUSAL MALMÜDÜRLÜĞÜ",
+                      "KURGUSAL VERGİ DAİRESİ BAŞKANLIĞI"):
+        dated(
+            f"[MÜHENDİS] büyük harf: '{authority}' tanınır -> 07.09.2026",
+            _case(items=[gv_linked], actions=[_action(authority=authority)]),
+            LATE_DATE_NOT_TO_PRESENT, True,
+        )
+    dated(
+        "[MÜHENDİS] SINIR (açık risk, onay DEĞİL): alt dize tanıma adında 'defterdarl' geçen "
+        "ilgisiz bir birimi de tanır ('Kurgusal Defterdarlık Lojmanı Birimi' -> 07.09.2026); "
+        "dosya avukatı teyidi (avukat 3.3) Dilim B3'te",
+        _case(items=[gv_linked], actions=[_action(authority="Kurgusal Defterdarlık Lojmanı Birimi")]),
+        LATE_DATE_NOT_TO_PRESENT, True,
+    )
+    for authority in ("Kurgusal Mal Müdürlüğü", "Kurgusal Kemal Müdürlüğü", "KURGUSAL MAL MÜDÜRLÜĞÜ"):
+        no_date(
+            f"[MÜHENDİS] K-C4 yanlış eşleşme koruması: '{authority}' (iki kelime) tanınmaz -> "
+            "needs_review",
+            _case(items=[gv_linked], actions=[_action(authority=authority)]),
+            UNCLASSIFIED_CODE,
+        )
+    for authority, keyword in (("Kurgusal Belediye Defterdarlığı", "belediye"),
+                               ("Kurgusal Gümrük Malmüdürlüğü", "gümrük"),
+                               ("Kurgusal İl Özel İdaresi Malmüdürlüğü", "il özel idare")):
+        assessment, result = dated(
+            f"[MÜHENDİS] istisna önceliği: '{authority}' -> istisna ({keyword}), mali tatil yok, "
+            "06.07.2026",
+            _case(items=[gv_linked], actions=[_action(authority=authority)]),
+            LAWYER_EXPECTED, False,
+        )
+        check(
+            f"[MÜHENDİS] istisna önceliği: '{authority}' gerekçesi istisna anahtar kelimesidir",
+            assessment["outcome"] == "no_mali_tatil"
+            and assessment["exclusion_reason"].startswith("issuing_authority_excluded:")
+            and keyword in assessment["exclusion_reason"],
+            assessment["exclusion_reason"],
+        )
+
+    # --- formdaki örnekler: Soru 4 (Temmuz dışı) ---
+    unknown_item = _item("item_x", "Kurgusal Bilinmeyen Alacak")
+    for anchor_date, case, expected, what in (
+        ("2026-02-10", _case(items=[gv_linked], actions=[_action()]), "2026-02-25",
+         "gelir vergisi, vergi dairesi"),
+        ("2026-02-10", _case(items=[unknown_item], actions=[_action()]), "2026-02-25",
+         "türü tanınmayan kalem"),
+        ("2026-02-10", _case(items=[gv_linked], actions=[_action(authority="Kurgusal Sigorta Kurumu")]),
+         "2026-02-25", "vergi idaresi olmayan idare"),
+        ("2026-06-15", _case(items=[unknown_item], actions=[_action()]), "2026-06-30",
+         "türü tanınmayan kalem (sayım 1 Temmuz'dan önce biter)"),
+        ("2026-02-10", _case(items=[_item("item_vzc", "vergi ziyaı cezası")], actions=[_action()]),
+         "2026-02-25", "yalnız vergi ziyaı cezası (Dilim C sınıfı Temmuz dışında etkisiz)"),
+    ):
+        tag = "[MÜHENDİS]" if "Dilim C" in what else "[AVUKAT 22.11.2026 4.1]"
+        assessment, result = outcome(case, anchor_date)
+        check(
+            f"{tag} form Soru 4: tebliğ {anchor_date}, {what} -> {expected}",
+            result["calculation_state"] == CALCULATED
+            and result["calculated_deadline"] == expected
+            and result["mali_tatil_exclusion_reason"] == "window_not_relevant",
+            _state(result),
+        )
+    no_date(
+        "[AVUKAT 22.11.2026] form Soru 4: tebliğ 16.06.2026, türü tanınmayan kalem -> kesin tarih "
+        "yok (sayım 1 Temmuz'a değiyor)",
+        _case(items=[unknown_item], actions=[_action()]),
+        UNRECOGNIZED_CODE,
+        anchor_date="2026-06-16",
+    )
+
+    # --- aktif İYUK yolu: değişmezlik kanıtı (onay DEĞİL, K-C5) ---
+    check(
+        "değişmezlik kanıtı: paylaşılan dahil / hariç / idare istisna listeleri taban (f14bb87) "
+        "değerleriyle aynı",
+        dc.MALI_TATIL_INCLUDED_TAX_TYPES == SHARED_INCLUDED
+        and dc.MALI_TATIL_EXCLUDED_TAX_TYPES == SHARED_EXCLUDED
+        and dc.MALI_TATIL_EXCLUDED_AUTHORITY_KEYWORDS == SHARED_EXCLUDED_AUTHORITY,
+        (sorted(dc.MALI_TATIL_INCLUDED_TAX_TYPES), sorted(dc.MALI_TATIL_EXCLUDED_TAX_TYPES)),
+    )
+    iyuk = _rule_by_id(ruleset, IYUK_RULE_ID)
+    for name in PENALTY_NAMES:
+        iyuk_result = _calc(iyuk, LAWYER_ANCHOR, {"tax_types": {name}, "issuing_authorities": set()})
+        check(
+            f"değişmezlik kanıtı: aktif İYUK yolunda tek başına '{name}' bugünkü gibi 'included' -> "
+            "hesaplandı, 07.09.2026, mali tatil uygulandı (K-C5: dokunulmadı)",
+            dc.classify_mali_tatil_tax_type({name}) == ("included", None)
+            and iyuk_result["calculation_state"] == CALCULATED
+            and iyuk_result["calculated_deadline"] == LATE_DATE_NOT_TO_PRESENT
+            and iyuk_result["mali_tatil_applied"] is True,
+            _state(iyuk_result),
+        )
+    for name in ANCILLARY_NAMES:
+        iyuk_result = _calc(iyuk, LAWYER_ANCHOR, {"tax_types": {name}, "issuing_authorities": set()})
+        check(
+            f"değişmezlik kanıtı: aktif İYUK yolunda '{name}' bugünkü gibi 'unrecognized' -> "
+            "needs_review",
+            dc.classify_mali_tatil_tax_type({name}) == ("unrecognized", name)
+            and iyuk_result["calculation_state"] == NEEDS_REVIEW
+            and iyuk_result["calculated_deadline"] is None,
+            _state(iyuk_result),
+        )
+    iyuk_malmud = _calc(iyuk, LAWYER_ANCHOR,
+                        {"tax_types": {"gelir vergisi"}, "issuing_authorities": {"kurgusal malmüdürlüğü"}})
+    check(
+        "değişmezlik kanıtı: aktif İYUK yolu idare tanıma kullanmaz; malmüdürlüğü adı sonucu "
+        "değiştirmez",
+        dc.classify_mali_tatil_authority({"kurgusal malmüdürlüğü"}) == ("not_excluded", None)
+        and iyuk_malmud["calculated_deadline"] == LATE_DATE_NOT_TO_PRESENT
+        and iyuk_malmud["mali_tatil_applied"] is True,
+        _state(iyuk_malmud),
+    )
+
+
+def test_dilim_c_end_to_end(ruleset, e2e):
+    """Uçtan uca (belge kaydı -> seçim -> bağ -> build_deadline_record)."""
+    for document_type, label in (("odeme_emri", "ödeme emri"),
+                                 ("borcluya_haciz_bildirimi", "haciz bildirimi")):
+        sel, record = e2e.record(
+            document_type,
+            _case(items=[_item("item_vzc", "vergi ziyaı cezası")], actions=[_action()]),
+            LAWYER_ANCHOR,
+        )
+        check(
+            f"[MÜHENDİS] Dilim C uçtan uca ({label}): yalnız vergi ziyaı cezası -> needs_review, "
+            "07.09.2026 yok, notta ceza gerekçe kodu",
+            record["calculation_state"] == NEEDS_REVIEW
+            and record["calculated_deadline"] is None
+            and record["requires_human_review"] is True
+            and ("reason_code=" + PENALTY_CODE) in _notes(record),
+            {k: record.get(k) for k in ("calculation_state", "calculated_deadline", "notes")},
+        )
+    sel, record = e2e.record(
+        "odeme_emri",
+        _case(items=[_item("item_gv", "Gelir Vergisi"), _item("item_gz", "gecikme zammı")],
+              actions=[_action()]),
+        LAWYER_ANCHOR,
+    )
+    check(
+        "[MÜHENDİS] Dilim C uçtan uca: gelir vergisi + gecikme zammı -> needs_review, notta fer'i "
+        "gerekçe kodu",
+        record["calculation_state"] == NEEDS_REVIEW
+        and record["calculated_deadline"] is None
+        and ("reason_code=" + ANCILLARY_CODE) in _notes(record),
+        _notes(record),
+    )
+    for authority in ("Kurgusal Malmüdürlüğü", "Kurgusal Defterdarlığı"):
+        sel, record = e2e.record(
+            "odeme_emri",
+            _case(items=[_item("item_gv", "Gelir Vergisi")], actions=[_action(authority=authority)]),
+            LAWYER_ANCHOR,
+        )
+        check(
+            f"[AVUKAT 22.11.2026] Dilim C uçtan uca: '{authority}' + gelir vergisi -> 07.09.2026, "
+            "mali tatil uygulandı",
+            sel["selected_rule"]["rule_id"] == PAYMENT_ORDER
+            and record["calculation_state"] == CALCULATED
+            and record["calculated_deadline"] == LATE_DATE_NOT_TO_PRESENT
+            and "mali_tatil_adjustment=applied" in _notes(record),
+            {k: record.get(k) for k in ("calculation_state", "calculated_deadline", "notes")},
+        )
+
+
+# ================================================================
+# DİLİM C - DÜZELTME TURU 1 (bağımsız inceleme M-1, L-3, O-5)
+#
+# M-1: kalem sınıfı ilk normalize değere bakıyordu; paylaşılan
+# sınıflandırıcı değeri bir kez daha normalize eder. "i" + İKİ birleşen
+# nokta veya "İ" + BİR birleşen nokta ikinci geçişte düz ada döner ve
+# tek başına cezayı "included" yaptırıyordu (07.09.2026). Birleşen
+# nokta (U+0307) ve "İ" (U+0130) kaynakta çıplak yazılmaz; chr() ile
+# üretilir. Beklenen sonuçlar [MÜHENDİS]: avukatın formunda bu yazımlar
+# yoktur; "kesin tarih yok" Dilim C'nin olumsuz yarısının yazım
+# varyantına uygulanmasıdır.
+# ================================================================
+
+COMBINING_DOT = chr(0x0307)
+CAPITAL_DOTTED_I = chr(0x0130)
+
+# "vergi" sonundaki "i" + iki birleşen nokta
+VZC_I_TWO_DOTS = "vergi" + COMBINING_DOT + COMBINING_DOT + " ziyaı cezası"
+# "vergİ" + bir birleşen nokta
+VZC_CAPITAL_I_ONE_DOT = "verg" + CAPITAL_DOTTED_I + COMBINING_DOT + " ziyaı cezası"
+# "ziya" içindeki "i" + iki birleşen nokta
+VZC_ZI_TWO_DOTS = "vergi zi" + COMBINING_DOT + COMBINING_DOT + "yaı cezası"
+# "vergi" sonundaki "i" + ÜÇ birleşen nokta (iki geçişten sonra da bir nokta kalır)
+VZC_I_THREE_DOTS = "vergi" + COMBINING_DOT * 3 + " ziyaı cezası"
+# fer'i adlarında aynı varyant
+GZ_I_TWO_DOTS = "geci" + COMBINING_DOT + COMBINING_DOT + "kme zammı"
+GZ_CAPITAL_I_ONE_DOT = "gec" + CAPITAL_DOTTED_I + COMBINING_DOT + "kme zammı"
+GF_I_TWO_DOTS = "gecikme fai" + COMBINING_DOT + COMBINING_DOT + "zi"
+
+
+def test_dilim_c_round1(ruleset):
+    rule = _activated(_rule_by_id(ruleset, PAYMENT_ORDER))
+    gv_linked = _item("item_gv", "Gelir Vergisi")
+    otv_linked = _item("item_otv", "ÖTV")
+
+    def outcome(case, anchor_date=LAWYER_ANCHOR):
+        assessment = _assess(rule, case)
+        return assessment, _calc(rule, anchor_date, assessment)
+
+    def no_date(label, case, code):
+        assessment, result = outcome(case)
+        check(
+            label,
+            assessment["outcome"] == NEEDS_REVIEW
+            and assessment["reason_code"] == code
+            and result["calculation_state"] == NEEDS_REVIEW
+            and result["calculated_deadline"] is None
+            and result["mali_tatil_applied"] is False
+            and result.get("mali_tatil_receivable_reason_code") == code,
+            {"assessment": (assessment["outcome"], assessment["reason_code"],
+                            assessment["exclusion_reason"]), "result": _state(result)},
+        )
+
+    # --- yazımlar gerçekten varyant (araç kaçışı düz harfe çevirmedi) ---
+    variants = (VZC_I_TWO_DOTS, VZC_CAPITAL_I_ONE_DOT, VZC_ZI_TWO_DOTS, VZC_I_THREE_DOTS,
+                GZ_I_TWO_DOTS, GZ_CAPITAL_I_ONE_DOT, GF_I_TWO_DOTS)
+    check(
+        "[MÜHENDİS M-1] ön kontrol: varyant yazımlar birleşen nokta taşır ve ilk normalize "
+        "değerleri düz addan farklıdır; ikinci geçiş düz ada döner (üç noktalı hariç)",
+        all(COMBINING_DOT in v for v in variants)
+        and CAPITAL_DOTTED_I in VZC_CAPITAL_I_ONE_DOT
+        and dc._normalize_mali_tatil_text(VZC_I_TWO_DOTS) != "vergi ziyaı cezası"
+        and dc._normalize_mali_tatil_text(
+            dc._normalize_mali_tatil_text(VZC_I_TWO_DOTS)) == "vergi ziyaı cezası"
+        and dc._normalize_mali_tatil_text(
+            dc._normalize_mali_tatil_text(VZC_CAPITAL_I_ONE_DOT)) == "vergi ziyaı cezası"
+        and dc._normalize_mali_tatil_text(
+            dc._normalize_mali_tatil_text(VZC_I_THREE_DOTS)) != "vergi ziyaı cezası",
+        [ascii(v) for v in variants],
+    )
+
+    # --- kalem sınıfı ---
+    for written, expected in (
+        (VZC_I_TWO_DOTS, "penalty_related_tax_unresolved"),
+        (VZC_CAPITAL_I_ONE_DOT, "penalty_related_tax_unresolved"),
+        (VZC_ZI_TWO_DOTS, "penalty_related_tax_unresolved"),
+        (GZ_I_TWO_DOTS, "ancillary_principal_unresolved"),
+        (GZ_CAPITAL_I_ONE_DOT, "ancillary_principal_unresolved"),
+        (GF_I_TWO_DOTS, "ancillary_principal_unresolved"),
+        (VZC_I_THREE_DOTS, "unrecognized"),
+    ):
+        got = dc._mali_tatil_receivable_item_class(_item("i", written))
+        check(
+            f"[MÜHENDİS M-1] kalem sınıfı: {ascii(written)} -> {expected} (ikinci geçiş "
+            "değeri de sınanır; 'included' DEĞİL)",
+            got == expected,
+            got,
+        )
+
+    # --- incelemenin M-1 tablosundaki beş girdi ---
+    no_date(
+        "[MÜHENDİS M-1] bağlı tek kalem 'vergi'+iki birleşen nokta ziyaı cezası -> kesin tarih yok, "
+        "07.09.2026 ÇIKMAZ (ceza gerekçesi)",
+        _case(items=[_item("item_vzc", VZC_I_TWO_DOTS)], actions=[_action()]),
+        PENALTY_CODE,
+    )
+    no_date(
+        "[MÜHENDİS M-1] bağlı tek kalem 'vergİ'+bir birleşen nokta ziyaı cezası -> kesin tarih yok, "
+        "07.09.2026 ÇIKMAZ (ceza gerekçesi)",
+        _case(items=[_item("item_vzc", VZC_CAPITAL_I_ONE_DOT)], actions=[_action()]),
+        PENALTY_CODE,
+    )
+    assessment, result = outcome(
+        _case(items=[gv_linked, _item("item_vzc", VZC_I_TWO_DOTS, docs=())], actions=[_action()])
+    )
+    check(
+        "[MÜHENDİS M-1] bağlı gelir vergisi + aynı yazımla BAĞSIZ ceza -> unlinked_item_conflict, "
+        "kesin tarih yok (adım 7 artık aşılmaz)",
+        assessment["outcome"] == NEEDS_REVIEW
+        and assessment["reason_code"] == UNLINKED_CODE
+        and assessment["unlinked_classes"] == ["penalty_related_tax_unresolved"]
+        and result["calculation_state"] == NEEDS_REVIEW
+        and result["calculated_deadline"] is None
+        and result["mali_tatil_applied"] is False,
+        {"assessment": (assessment["outcome"], assessment["reason_code"],
+                        assessment["unlinked_classes"]), "result": _state(result)},
+    )
+    no_date(
+        "[MÜHENDİS M-1] bağlı gelir vergisi + aynı yazımla bağlı ceza -> kesin tarih yok "
+        "(ceza gerekçesi)",
+        _case(items=[gv_linked, _item("item_vzc", VZC_I_TWO_DOTS)], actions=[_action()]),
+        PENALTY_CODE,
+    )
+    no_date(
+        "[MÜHENDİS K-C3] M-1: bağlı ÖTV + aynı yazımla bağlı ceza -> kesin tarih yok (06.07.2026 "
+        "de verilmez; mühendislik tercihi)",
+        _case(items=[otv_linked, _item("item_vzc", VZC_I_TWO_DOTS)], actions=[_action()]),
+        PENALTY_CODE,
+    )
+    no_date(
+        "[MÜHENDİS M-1] bağlı tek kalem 'ziya' içinde iki birleşen nokta -> kesin tarih yok "
+        "(ceza gerekçesi)",
+        _case(items=[_item("item_vzc", VZC_ZI_TWO_DOTS)], actions=[_action()]),
+        PENALTY_CODE,
+    )
+    no_date(
+        "[MÜHENDİS M-1] fer'i: gelir vergisi + 'geci'+iki birleşen nokta gecikme zammı -> kesin "
+        "tarih yok (fer'i gerekçesi; ikinci geçiş fer'i kümesinde de sınanır)",
+        _case(items=[gv_linked, _item("item_gz", GZ_I_TWO_DOTS)], actions=[_action()]),
+        ANCILLARY_CODE,
+    )
+
+    # --- üç birleşen nokta: güvenli kalır ---
+    no_date(
+        "[MÜHENDİS M-1] üç birleşen nokta: bağlı tek kalem -> 'tanınmayan tür', kesin tarih yok "
+        "(iki geçişten sonra da nokta kalır; paylaşılan listede yok)",
+        _case(items=[_item("item_vzc", VZC_I_THREE_DOTS)], actions=[_action()]),
+        UNRECOGNIZED_CODE,
+    )
+    assessment, result = outcome(
+        _case(items=[gv_linked, _item("item_vzc", VZC_I_THREE_DOTS, docs=())], actions=[_action()])
+    )
+    check(
+        "[MÜHENDİS M-1] üç birleşen nokta: bağlı gelir vergisi + BAĞSIZ ceza -> "
+        "unlinked_item_conflict, kesin tarih yok",
+        assessment["outcome"] == NEEDS_REVIEW
+        and assessment["reason_code"] == UNLINKED_CODE
+        and result["calculated_deadline"] is None,
+        {"assessment": (assessment["outcome"], assessment["reason_code"]), "result": _state(result)},
+    )
+
+    # --- aktif İYUK yolu: aynı varyantlar BUGÜNKÜ sonucu verir (değişmezlik kanıtı, onay DEĞİL) ---
+    iyuk = _rule_by_id(ruleset, IYUK_RULE_ID)
+    for written in (VZC_I_TWO_DOTS, VZC_CAPITAL_I_ONE_DOT):
+        case_types = dc.get_case_tax_types_for_mali_tatil(
+            _case(items=[_item("item_vzc", written, docs=())])
+        )
+        derived = _calc(iyuk, LAWYER_ANCHOR, {"tax_types": case_types, "issuing_authorities": set()})
+        raw = _calc(iyuk, LAWYER_ANCHOR, {"tax_types": {written}, "issuing_authorities": set()})
+        check(
+            f"değişmezlik kanıtı: aktif İYUK yolunda {ascii(written)} dosyadan türetilen bağlamla "
+            "bugünkü gibi 'included' -> 07.09.2026, mali tatil uygulandı (K-C5: dokunulmadı)",
+            dc.classify_mali_tatil_tax_type(case_types) == ("included", None)
+            and derived["calculation_state"] == CALCULATED
+            and derived["calculated_deadline"] == LATE_DATE_NOT_TO_PRESENT
+            and derived["mali_tatil_applied"] is True,
+            _state(derived),
+        )
+        check(
+            f"değişmezlik kanıtı: aktif İYUK yolunda {ascii(written)} ham (normalize edilmemiş) "
+            "bağlamla bugünkü gibi needs_review, kesin tarih yok",
+            raw["calculation_state"] == NEEDS_REVIEW
+            and raw["calculated_deadline"] is None,
+            _state(raw),
+        )
+    three_types = dc.get_case_tax_types_for_mali_tatil(
+        _case(items=[_item("item_vzc", VZC_I_THREE_DOTS, docs=())])
+    )
+    three = _calc(iyuk, LAWYER_ANCHOR, {"tax_types": three_types, "issuing_authorities": set()})
+    check(
+        "değişmezlik kanıtı: aktif İYUK yolunda üç birleşen noktalı ceza bugünkü gibi "
+        "'unrecognized' -> needs_review",
+        three["calculation_state"] == NEEDS_REVIEW
+        and three["calculated_deadline"] is None,
+        _state(three),
+    )
+
+    # --- O-5: 'defterdar' (l'siz) kökü tanınmaz ---
+    no_date(
+        "[MÜHENDİS O-5] idare 'Kurgusal Defterdar Yardımcılığı' ('defterdarl' kökü yok) + gelir "
+        "vergisi -> authority_unclassified, kesin tarih yok",
+        _case(items=[gv_linked], actions=[_action(authority="Kurgusal Defterdar Yardımcılığı")]),
+        UNCLASSIFIED_CODE,
+    )
+
+
+def test_dilim_c_round1_end_to_end(ruleset, e2e):
+    """Uçtan uca (build_deadline_record): M-1 varyantları ve L-3 fark notu."""
+    for document_type, label in (("odeme_emri", "ödeme emri"),
+                                 ("borcluya_haciz_bildirimi", "haciz bildirimi")):
+        for written in (VZC_I_TWO_DOTS, VZC_CAPITAL_I_ONE_DOT):
+            sel, record = e2e.record(
+                document_type,
+                _case(items=[_item("item_vzc", written)], actions=[_action()]),
+                LAWYER_ANCHOR,
+            )
+            check(
+                f"[MÜHENDİS M-1] uçtan uca ({label}): bağlı tek kalem {ascii(written)} -> "
+                "needs_review, 07.09.2026 yok, notta ceza gerekçe kodu",
+                sel["selected_rule"]["rule_id"] in DRAFT_RULE_IDS
+                and record["calculation_state"] == NEEDS_REVIEW
+                and record["calculated_deadline"] is None
+                and record["requires_human_review"] is True
+                and ("reason_code=" + PENALTY_CODE) in _notes(record),
+                {k: record.get(k) for k in ("calculation_state", "calculated_deadline", "notes")},
+            )
+    sel, record = e2e.record(
+        "odeme_emri",
+        _case(items=[_item("item_gv", "Gelir Vergisi"), _item("item_vzc", VZC_I_TWO_DOTS, docs=())],
+              actions=[_action()]),
+        LAWYER_ANCHOR,
+    )
+    check(
+        "[MÜHENDİS M-1] uçtan uca: bağlı gelir vergisi + aynı yazımla BAĞSIZ ceza -> needs_review, "
+        "notta unlinked_item_conflict",
+        record["calculation_state"] == NEEDS_REVIEW
+        and record["calculated_deadline"] is None
+        and ("reason_code=" + UNLINKED_CODE) in _notes(record),
+        _notes(record),
+    )
+    sel, record = e2e.record(
+        "vergi_ceza_ihbarnamesi",
+        _case(items=[_item("item_vzc", VZC_I_TWO_DOTS)], actions=[_action()]),
+        LAWYER_ANCHOR,
+    )
+    check(
+        "değişmezlik kanıtı: uçtan uca İYUK ihbarname kuralı, tek kalem 'vergi'+iki birleşen nokta "
+        "ceza -> bugünkü gibi 07.09.2026, mali tatil uygulandı, alacak modu notu yok (K-C5)",
+        sel["selected_rule"]["rule_id"] == IYUK_RULE_ID
+        and record["calculation_state"] == CALCULATED
+        and record["calculated_deadline"] == LATE_DATE_NOT_TO_PRESENT
+        and "mali_tatil_adjustment=applied" in _notes(record)
+        and "mali_tatil_receivable" not in _notes(record),
+        _notes(record),
+    )
+
+    # --- L-3: sonucu değişmeyen kayıtta fark notu (yalnız Temmuz'a değen pencere) ---
+    municipality = "Kurgusal Belediye Başkanlığı"
+    l3_case = _case(items=[_item("item_gv", "Gelir Vergisi"),
+                           _item("item_vzc", "vergi ziyaı cezası", docs=())],
+                    actions=[_action(authority=municipality)])
+    sel, record = e2e.record("odeme_emri", copy.deepcopy(l3_case), LAWYER_ANCHOR)
+    check(
+        "[MÜHENDİS L-3] (a) bağlı gelir vergisi + bağsız tek ceza, idare belediye, Temmuz'a değen "
+        "pencere -> 06.07.2026 hesaplandı; kayıt notunda yeni sınıf adıyla fark notu",
+        record["calculation_state"] == CALCULATED
+        and record["calculated_deadline"] == LAWYER_EXPECTED
+        and "mali_tatil_receivable_difference=linked:included;"
+            "unlinked:penalty_related_tax_unresolved" in _notes(record),
+        {k: record.get(k) for k in ("calculation_state", "calculated_deadline", "notes")},
+    )
+    sel, record = e2e.record("odeme_emri", copy.deepcopy(l3_case), NON_JULY_ANCHOR)
+    check(
+        "[MÜHENDİS L-3] (b) aynı girdi, Temmuz'a değmeyen pencere (tebliğ 10.02.2026) -> 25.02.2026 "
+        "hesaplandı; fark notu YOK",
+        record["calculation_state"] == CALCULATED
+        and record["calculated_deadline"] == "2026-02-25"
+        and "mali_tatil_receivable_difference" not in _notes(record),
+        {k: record.get(k) for k in ("calculation_state", "calculated_deadline", "notes")},
+    )
 
 
 # ================================================================
@@ -1190,7 +1924,7 @@ def test_end_to_end(ruleset, tmp_root):
         NON_JULY_ANCHOR,
     )
     check(
-        "[MÜHENDİS] K6 uçtan uca: Şubat çapası, bağ yok -> hesaplandı (25.02.2026), "
+        "[AVUKAT 22.11.2026 4.1] K6 uçtan uca: Şubat çapası, bağ yok -> hesaplandı (25.02.2026), "
         "kayıtta mali_tatil_receivable notu YOK",
         record["calculation_state"] == CALCULATED
         and record["calculated_deadline"] == "2026-02-25"
@@ -1231,6 +1965,8 @@ def run_self_test():
     test_round1_boundaries(ruleset)
     test_context_guard(ruleset)
     test_k6_window(ruleset)
+    test_dilim_c(ruleset)
+    test_dilim_c_round1(ruleset)
 
     tmp_root = Path(tempfile.mkdtemp(prefix="vergi_kola_mt_a_"))
     original_cases_dir = deadline_validator.CASES_DIR
@@ -1238,7 +1974,9 @@ def run_self_test():
     try:
         deadline_validator.CASES_DIR = tmp_root / "cases"
         selection.DATA_DIR = tmp_root
-        test_end_to_end(ruleset, tmp_root)
+        e2e = test_end_to_end(ruleset, tmp_root)
+        test_dilim_c_end_to_end(ruleset, e2e)
+        test_dilim_c_round1_end_to_end(ruleset, e2e)
     finally:
         deadline_validator.CASES_DIR = original_cases_dir
         selection.DATA_DIR = original_selection_data_dir

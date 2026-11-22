@@ -290,8 +290,8 @@ MALI_TATIL_EXCLUDED_AUTHORITY_KEYWORDS = (
 # ihtiyati haciz), 5604 m.1/7 kararı DOSYA GENELİNDEKİ vergi
 # türlerinden DEĞİL, çapa olayının dava konusu işlem belgesine bağlı
 # uyuşmazlık kalemlerinden ve o belgenin idari işlem kaydındaki
-# alacaklı idareden verilir (avukat cevabı 3.1-3.3 ve 4.1-4.2; Kol A
-# mali tatil kapsam paketi §4). Alan YOKSA davranış bu bölümün
+# alacaklı idareden verilir (avukatın 21.11.2026 tarihli form cevabı
+# 3.1-3.3 ve 4.1-4.2; Kol A mali tatil kapsam paketi §4). Alan YOKSA davranış bu bölümün
 # eklenmesinden önceki dosya-geneli davranışla aynıdır (aktif İYUK
 # ihbarname kuralı bu alanı TAŞIMAZ).
 #
@@ -308,13 +308,57 @@ MALI_TATIL_EXCLUDED_AUTHORITY_KEYWORDS = (
 #     işaretidir; "alacak türü işlem belgesinin kendisinden teyit
 #     edildi" ve "bağ listesi tam" anlamlarını TAŞIMAZ (K3). Avukatın
 #     belge + sayfa + "bağ tam" teyit kaydı Dilim B'nin işidir.
-#   - "vergi dairesi" tanıması (K5) ve yalnız Temmuz penceresinde bağ
-#     aranması (K6) avukat metninin MÜHENDİS yorumudur; kural
-#     etkinleştirilmeden önce avukata sorulacaktır.
-#   - Fer'i kalemler (gecikme zammı / gecikme faizi) bugünkü listelerde
-#     tanınmaz ve needs_review verir (K4); ceza kaleminin bağlı olduğu
-#     vergiyi izleyip izlemediği avukat sorusudur.
 #   - Vergi türü ve idare istisna listeleri DEĞİŞMEDİ.
+#
+# KOL A / MALİ TATİL DİLİM C - avukatın 22.11.2026 tarihli ek form
+# cevabı (yalnız bu üç TASLAK kural için; bu bölümdeki 1.x-4.x madde
+# numaraları 22.11.2026 formunundur):
+#   - 3.1: işlemi düzenleyen idare alacaklı idare kabul edilir (bugünkü
+#     davranış; artık mühendis yorumu değil, avukat cevabı).
+#   - 3.2: vergi dairesi müdürlükleri ve başkanlıkları, malmüdürlükleri
+#     ve defterdarlıklar mali tatilin uygulanabileceği vergi idaresidir
+#     (bkz. MALI_TATIL_RECOGNIZED_TAX_AUTHORITY_KEYWORDS).
+#   - 4.1: sayım mali tatile (Temmuz) değmiyorsa alacak bilgisi eksik
+#     veya teyitsiz olsa da son gün gösterilir (K6, bugünkü davranış;
+#     artık avukat cevabı).
+#   - 1.1-1.2: gecikme zammı / gecikme faizi bağlı olduğu asıl alacağı
+#     izler; asıl alacak belirlenemiyorsa kesin tarih yok. `case.json`
+#     kaleminde fer'iyi asıl alacağa bağlayan alan YOKTUR; bu yüzden
+#     burada yalnız OLUMSUZ yarı uygulanır: fer'i kalemi
+#     "ancillary_principal_unresolved" sınıfını alır ve kesin tarih
+#     vermez. Asıl alacak TAHMİN EDİLMEZ (ör. "belgede tek asıl alacak
+#     var, fer'i onundur" çıkarımı YAPILMAZ). Olumlu yarı Dilim B4'te
+#     (avukatın teyit ettiği alacak kaydı okununca).
+#   - 2.1-2.2: vergi ziyaı / usulsüzlük / özel usulsüzlük cezası
+#     ilişkin olduğu vergiyi izler; vergi belirlenemiyorsa kesin tarih
+#     yok. Bir kalemin `tax_type` değeri yalnız ceza adıysa cezanın
+#     vergisi belirlenemez: "penalty_related_tax_unresolved" sınıfı,
+#     kesin tarih yok. Olumlu yarı Dilim B4'te.
+#   - `penalty_type` alanı OKUNMAZ; bir kalemin cezası o kalemin
+#     `tax_type` değerini izler. Bu, avukatın 2.1 cevabının `case.json`
+#     modelindeki karşılığı olarak PLANLAYICI YORUMUDUR, avukat cevabı
+#     DEĞİLDİR; kural açılmadan önce sorulacaktır.
+#   - K-C3: ÖTV + ilişkin olduğu vergi belirlenemeyen ceza -> kesin
+#     tarih yok (mühendislik tercihi, avukat onayı DEĞİL).
+#   - Ad eşleşmesi `_normalize_mali_tatil_text()` sonrası TAM eşleşmedir;
+#     üyelik hem birinci normalize değerde hem de paylaşılan
+#     sınıflandırıcının karşılaştıracağı ikinci geçiş değerinde aranır
+#     (düzeltme turu 1, M-1: "i" + iki birleşen nokta veya "İ" + bir
+#     birleşen nokta yazımı ikinci geçişte düz ada döner ve artık cezayı
+#     "included" yaptıramaz). Büyük harfle yazılmış ad (ör. "VERGİ ZİYAI
+#     CEZASI" -> "vergi ziyai cezasi") hiçbir geçişte bu kümelerle
+#     eşleşmez ve "unrecognized" kalır (yine kesin tarih yok).
+#   - Yeni sınıflar, sonucu (tarih / durum) DEĞİŞMEYEN kayıtlarda da
+#     `mali_tatil_receivable_difference=...` fark notunu ekleyebilir
+#     veya nottaki sınıf adını değiştirebilir (ör. bağsız ceza:
+#     "unlinked:included" -> "unlinked:penalty_related_tax_unresolved");
+#     bu yalnız sayım penceresi Temmuz'a değdiğinde olur (bağımsız
+#     inceleme L-3).
+#   - 3.3 (yazılım addan tanır, dosya avukatı türü belge üzerinden teyit
+#     eder): teyit adımı bu dilimde YOKTUR (Dilim B3); kural açılışının
+#     ön koşuludur.
+#   - Aktif İYUK ihbarname kuralına DOKUNULMADI (K-C5): orada tek
+#     başına ceza kalemi hâlâ paylaşılan listeden "included" sayılır.
 # ============================================================
 
 MALI_TATIL_RECEIVABLE_BASIS_FIELD = (
@@ -325,11 +369,68 @@ MALI_TATIL_RECEIVABLE_BASIS_ACTION_DOCUMENT = (
     "action_document_receivables"
 )
 
-# K5: istisna anahtar kelimelerinden SONRA kontrol edilir; yalnız bu
-# ifadeyi içeren alacaklı idare "tanınmış vergi idaresi" sayılır.
-# Diğer her metin (malmüdürlüğü, SGK, boş metin vb.) needs_review.
+# Avukat 3.2 (22.11.2026): istisna anahtar kelimelerinden SONRA kontrol
+# edilir; normalize edilmiş adda bu köklerden biri ALT DİZE olarak
+# geçen alacaklı idare "tanınmış vergi idaresi" sayılır (vergi dairesi
+# müdürlüğü / başkanlığı, malmüdürlüğü, defterdarlık). Kökler "ı" ile
+# bitmez: büyük harfli "DEFTERDARLIĞI" normalizasyonda "defterdarliği"
+# olur. İki kelimelik "mal müdürl" BİLİNÇLİ olarak YOKTUR (K-C4):
+# "Kemal Müdürlüğü" gibi ilgisiz adlarla yanlış eşleşir; ayrı yazılan ad
+# needs_review verir (güvenli taraf). Diğer her metin (SGK, boş metin
+# vb.) needs_review. Alt dize tanıma, adında bu kök geçen ilgisiz bir
+# birimi de tanıyabilir; dosya avukatının teyidi (avukat 22.11.2026
+# 3.3) Dilim B3'tedir.
 MALI_TATIL_RECOGNIZED_TAX_AUTHORITY_KEYWORDS = (
     "vergi dairesi",
+    "malmüdürl",
+    "defterdarl",
+)
+
+# Dilim C (avukat 2.1-2.2): YALNIZ alacak modunda kullanılan kapalı ceza
+# adı kümesi. Paylaşılan MALI_TATIL_INCLUDED_TAX_TYPES listesinden
+# TÜRETİLMEZ, ona eklenmez, ondan çıkarılmaz (aktif yol değişmez).
+MALI_TATIL_RECEIVABLE_PENALTY_TAX_TYPES = frozenset(
+    {
+        "vergi ziyaı cezası",
+        "usulsüzlük cezası",
+        "özel usulsüzlük cezası",
+    }
+)
+
+# Dilim C (avukat 1.1-1.2): YALNIZ alacak modunda kullanılan kapalı
+# fer'i adı kümesi.
+MALI_TATIL_RECEIVABLE_ANCILLARY_TAX_TYPES = frozenset(
+    {
+        "gecikme zammı",
+        "gecikme faizi",
+    }
+)
+
+MALI_TATIL_RECEIVABLE_CLASS_PENALTY = (
+    "penalty_related_tax_unresolved"
+)
+
+MALI_TATIL_RECEIVABLE_CLASS_ANCILLARY = (
+    "ancillary_principal_unresolved"
+)
+
+# Adım 6 önceliği (bağlayıcı sıra): bağlı kalem sınıflarında bunlardan
+# biri varsa needs_review; gerekçe bu sırayla İLK bulunan sınıfın
+# kodudur. Bu kontrol excluded / mixed kararından ve paylaşılan
+# sınıflandırıcının ikinci çağrısından ÖNCE kapanır.
+MALI_TATIL_RECEIVABLE_REVIEW_CLASS_ORDER = (
+    (
+        "unrecognized",
+        "mali_tatil_receivable_tax_type_unrecognized",
+    ),
+    (
+        MALI_TATIL_RECEIVABLE_CLASS_ANCILLARY,
+        "mali_tatil_receivable_ancillary_principal_unresolved",
+    ),
+    (
+        MALI_TATIL_RECEIVABLE_CLASS_PENALTY,
+        "mali_tatil_receivable_penalty_related_tax_unresolved",
+    ),
 )
 
 MALI_TATIL_RECEIVABLE_OUTCOME_APPLY = "apply"
@@ -364,6 +465,17 @@ MALI_TATIL_RECEIVABLE_REVIEW_REASONS = {
         (
             "bağlı alacağın vergi türü 5604 m.1/7 bakımından "
             "güvenilir şekilde sınıflandırılamadı"
+        ),
+
+    "mali_tatil_receivable_ancillary_principal_unresolved":
+        (
+            "gecikme zammı / gecikme faizi kaleminin bağlı olduğu asıl "
+            "alacak belirlenemedi"
+        ),
+
+    "mali_tatil_receivable_penalty_related_tax_unresolved":
+        (
+            "ceza kaleminin ilişkin olduğu vergi belirlenemedi"
         ),
 
     "mali_tatil_receivable_unlinked_item_conflict":
@@ -1273,10 +1385,20 @@ def _mali_tatil_receivable_item_class(
     item,
 ):
     """Tek bir uyuşmazlık kaleminin sınıfı: "excluded" / "included" /
-    "unrecognized". Sözlük olmayan kalem veya boş/eksik `tax_type`
-    "unrecognized" sayılır (küme tabanlı sınıflandırma boş değerleri
-    sessizce atardı - fail-closed). Listeler DEĞİŞMEDEN
-    `classify_mali_tatil_tax_type()` üzerinden kullanılır."""
+    "unrecognized" / "ancillary_principal_unresolved" /
+    "penalty_related_tax_unresolved". Sözlük olmayan kalem veya
+    boş/eksik `tax_type` "unrecognized" sayılır (küme tabanlı
+    sınıflandırma boş değerleri sessizce atardı - fail-closed).
+
+    Dilim C (avukat 22.11.2026 1.1-2.2): `tax_type` normalize edildikten
+    sonra alacak moduna özgü kapalı fer'i / ceza adlarından biriyle TAM
+    eşleşirse kalem yeni sınıfı alır; bu kontrol paylaşılan
+    sınıflandırıcıdan ÖNCE yapılır (paylaşılan liste cezayı "included"
+    sayar). TAM eşleşme hem birinci normalize değerde hem de o değerin
+    bir kez daha normalize edilmiş hâlinde (paylaşılan sınıflandırıcının
+    gerçekten karşılaştırdığı değer) aranır (düzeltme turu 1, M-1).
+    Diğer her değer listeler DEĞİŞMEDEN
+    `classify_mali_tatil_tax_type()` üzerinden sınıflanır."""
 
     if not isinstance(
         item,
@@ -1294,6 +1416,38 @@ def _mali_tatil_receivable_item_class(
     if not tax_type:
 
         return "unrecognized"
+
+    # Dilim C düzeltme turu 1 (bağımsız inceleme M-1): aşağıdaki
+    # paylaşılan sınıflandırıcı `tax_type` değerini BİR KEZ DAHA
+    # normalize eder ve "i" + birleşen nokta dizisini tek geçişte yalnız
+    # bir kez temizler ("i" + iki birleşen nokta veya "İ" + bir
+    # birleşen nokta ikinci geçişte düz "i" olur). Bu yüzden kapalı
+    # kümelerin üyeliği hem birinci normalize değerle hem de
+    # sınıflandırıcının GERÇEKTEN karşılaştıracağı ikinci geçiş
+    # değeriyle sınanır; ikisinden biri kümedeyse yeni sınıf döner.
+    # Sınıflandırıcıya yine birinci değer verilir (değişmedi).
+    second_pass = _normalize_mali_tatil_text(
+        tax_type
+    )
+
+    candidates = {
+        tax_type,
+        second_pass,
+    }
+
+    if candidates & {
+        _normalize_mali_tatil_text(value)
+        for value in MALI_TATIL_RECEIVABLE_ANCILLARY_TAX_TYPES
+    }:
+
+        return MALI_TATIL_RECEIVABLE_CLASS_ANCILLARY
+
+    if candidates & {
+        _normalize_mali_tatil_text(value)
+        for value in MALI_TATIL_RECEIVABLE_PENALTY_TAX_TYPES
+    }:
+
+        return MALI_TATIL_RECEIVABLE_CLASS_PENALTY
 
     item_class, _ = classify_mali_tatil_tax_type(
         {
@@ -1887,7 +2041,8 @@ def evaluate_mali_tatil_action_document_receivables(
 
     # --------------------------------------------------------
     # ADIM 5 - idare sınıfı: istisna anahtar kelimesi -> mali tatil YOK;
-    # tanınan vergi idaresi (K5) -> devam; diğer her şey -> needs_review.
+    # tanınan vergi idaresi (avukat 22.11.2026 3.2: vergi dairesi,
+    # malmüdürlüğü, defterdarlık) -> devam; diğer her şey -> needs_review.
     # --------------------------------------------------------
 
     authority_class, authority_match = (
@@ -1925,21 +2080,32 @@ def evaluate_mali_tatil_action_document_receivables(
 
     # --------------------------------------------------------
     # ADIM 6 - bağlı kalemlerin vergi türü sınıfı (listeler DEĞİŞMEDEN).
-    #   unrecognized (gecikme zammı/faizi dahil, K4) -> needs_review
+    #   unrecognized / ancillary_principal_unresolved (gecikme zammı /
+    #   faizi, avukat 1.1-1.2) / penalty_related_tax_unresolved (tek
+    #   başına ceza, avukat 2.1-2.2) -> needs_review; gerekçe sabit
+    #   sırayla ilk bulunan (MALI_TATIL_RECEIVABLE_REVIEW_CLASS_ORDER).
+    #   Bu kontrol excluded / mixed kararından ÖNCE kapanır (K-C3: ÖTV +
+    #   tek başına ceza -> needs_review). Aşağıdaki ikinci, paylaşılan
+    #   sınıflandırıcı çağrısı tek başına cezayı "included" döndürür; bu
+    #   yüzden yeni sınıflar ona ULAŞMADAN burada durdurulur.
     #   excluded -> mali tatil yok
-    #   mixed -> mali tatil yok, erken tarih (avukat 3.2)
+    #   mixed -> mali tatil yok, erken tarih (avukat 21.11.2026 3.2)
     #   included -> adım 7
     # --------------------------------------------------------
 
-    if (
-        "unrecognized"
-        in linked_classes
+    for review_class, review_code in (
+        MALI_TATIL_RECEIVABLE_REVIEW_CLASS_ORDER
     ):
 
-        return finish(
-            MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
-            "mali_tatil_receivable_tax_type_unrecognized",
-        )
+        if (
+            review_class
+            in linked_classes
+        ):
+
+            return finish(
+                MALI_TATIL_RECEIVABLE_OUTCOME_NEEDS_REVIEW,
+                review_code,
+            )
 
     tax_class, tax_match = (
         classify_mali_tatil_tax_type(
@@ -1991,6 +2157,8 @@ def evaluate_mali_tatil_action_document_receivables(
     # ADIM 7 - eksik bağ koruması (geç tarih yönü): mali tatil
     # UYGULATACAK sonuçta, belgeye bağlı OLMAYAN her kalemin sınıfı da
     # "included" olmalı. Mali tatilsiz (erken) sonuçları durdurmaz.
+    # Dilim C: bağsız fer'i / ceza kalemi de yeni sınıfıyla "included"
+    # DEĞİLDİR ve mali tatil uygulatan sonucu durdurur.
     # --------------------------------------------------------
 
     if any(
