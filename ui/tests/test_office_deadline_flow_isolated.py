@@ -192,9 +192,13 @@ class FakeBackend:
     def pending_deadline_path(self, case_id):
         return self._case(case_id) / "deadlines" / f"deadline_{case_id}_v1.json.pending"
 
-    def approve_deadline(self, case_id, expected_pending_sha=None):
+    def approve_deadline(self, case_id, expected_pending_sha=None, *, office_flow_run_id=None):
+        # T2: gerçek RealChainBackend ile AYNI imza - koşu kimliği keyword-only; taşınan değer kaydedilir.
         self._enter("approve_deadline", case_id)
         self.last_expected_pending_sha = expected_pending_sha
+        self.approve_run_ids = getattr(self, "approve_run_ids", []) + [office_flow_run_id]
+        if getattr(self, "approve_raises", None) is not None:
+            raise self.approve_raises
         (self._case(case_id) / "deadlines" / "deadline.json").write_text("{\"approved\":1}", encoding="utf-8")
 
     def canonical_report(self, case_id):
@@ -1460,6 +1464,73 @@ try:
         eof_raised = True
     check("a missing answer (stdin closed) raises EOFError at F2 (mapped to KULLANICI_ILERLETMEDI by the CLI); no backend call happened",
           eof_raised and not [e for e in e7.events if e[0] == "backend"] and outcomes.error_code_for(EOFError()) == "KULLANICI_ILERLETMEDI")
+
+    # ================================================================ T2 (onay kapısı - akış tarafı)
+    from ui.services.mutation_approval_facade import OfficeFlowApprovalRequiredError  # noqa: E402
+
+    check("T2 flow: the approval call carried THIS run's id (office_flow_run_id == the run id) exactly once",
+          getattr(c1.backend, "approve_run_ids", None) == [c1.run_id], str(getattr(c1.backend, "approve_run_ids", None)))
+
+    def _t2_run_dir(ctx):
+        names = [p.name for p in (ctx.office / "runs").iterdir()]
+        return (ctx.office / "runs" / names[0]) if len(names) == 1 else None
+
+    def _t2_marker_scenario(tag, mutate):
+        ctx = start(tag)
+        marker = ctx.cases / ctx.case_id / R.OWNER_MARKER_NAME
+        seen = {"marker_before": None}
+
+        def on_ask(key):
+            if key == "onay_ad" and seen["marker_before"] is None:
+                seen["marker_before"] = marker.is_file()
+                mutate(ctx, marker)
+            return None
+
+        ctx.on_ask = on_ask
+        code = code_of(new_run, ctx)
+        run_dir = _t2_run_dir(ctx)
+        st = R.load_run_state(run_dir) if run_dir is not None else None
+        return ctx, code, st, seen
+
+    def _t2_delete(ctx, marker):
+        marker.unlink()
+
+    def _t2_other_run(ctx, marker):
+        marker.unlink()
+        R.write_new_file(marker, R.canonical_bytes({"kayit_surumu": R.RECORD_SCHEMA_VERSION, "kos": "0" * 32, "tur": "case_dir"}))
+
+    def _t2_corrupt(ctx, marker):
+        marker.unlink()
+        R.write_new_file(marker, b"{bozuk json")
+
+    def _t2_wrong_kind(ctx, marker):
+        data = json.loads(marker.read_bytes().decode("utf-8"))
+        marker.unlink()
+        R.write_new_file(marker, R.canonical_bytes({**data, "tur": "run_dir"}))
+
+    for _tag, _mutate, _what in (("t2a", _t2_delete, "MISSING"), ("t2b", _t2_other_run, "belongs to ANOTHER run"),
+                                 ("t2c", _t2_corrupt, "CORRUPT (invalid JSON)"), ("t2d", _t2_wrong_kind, "of the WRONG kind (run_dir)")):
+        t2, code_t2, st_t2, seen_t2 = _t2_marker_scenario(_tag, _mutate)
+        check(f"T2 flow ({_tag}): the case-dir owner marker existed and was valid right before the approval step (fixture sanity)",
+              seen_t2["marker_before"] is True)
+        check(f"T2 flow ({_tag}): marker {_what} at approval time -> exactly SAHIPLIK_ISARETI_YOK, the approval is NEVER called, "
+              f"no canonical deadline.json, no result record, no deletion record, state stays KARSILASTIRMA_YAPILDI",
+              code_t2 == "SAHIPLIK_ISARETI_YOK" and ("backend", "approve_deadline") not in t2.events
+              and not (t2.cases / t2.case_id / "deadlines" / "deadline.json").exists()
+              and results(t2) == [] and imha(t2) == [] and st_t2 is not None and st_t2.state == "KARSILASTIRMA_YAPILDI",
+              f"code={code_t2} state={getattr(st_t2, 'state', None)} events={[e for e in t2.events if e[0] == 'backend']}")
+
+    t2e = start("t2e")
+    t2e.backend.approve_raises = OfficeFlowApprovalRequiredError()
+    code_t2e = code_of(new_run, t2e)
+    run_dir_t2e = _t2_run_dir(t2e)
+    check("T2 flow (t2e): a facade-side OfficeFlowApprovalRequiredError during the approval maps to the EXISTING closed code "
+          "ZINCIR_ADIMI_BASARISIZ (no new error code), carried this run's id, and no result record was written",
+          code_t2e == "ZINCIR_ADIMI_BASARISIZ" and getattr(t2e.backend, "approve_run_ids", None) == [run_dir_t2e.name if run_dir_t2e else None]
+          and results(t2e) == [] and imha(t2e) == [],
+          f"code={code_t2e} ids={getattr(t2e.backend, 'approve_run_ids', None)}")
+    check("T2 flow: SAHIPLIK_ISARETI_YOK and ZINCIR_ADIMI_BASARISIZ are both pre-existing members of the closed error-code set",
+          {"SAHIPLIK_ISARETI_YOK", "ZINCIR_ADIMI_BASARISIZ"} <= R.ERROR_CODES)
 
     # ================================================================ CLI main
     class StubBackendFactory:

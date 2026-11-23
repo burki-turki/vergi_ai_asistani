@@ -12,9 +12,16 @@
 # Mevcut facade'ler SÜREÇ İÇİNDEN çağrılır (`cli_mutate._run_*` KULLANILMAZ);
 # `apply_generation`'ın stdout'u ASLA basılmaz. Hiçbir ağ/LLM/alt süreç yok
 # (varsayılan Poppler çıkarıcısı YALNIZ office_flow_intake'te). Otomatik
-# silme/zamanlayıcı yoktur. T2 (onay kapısı) YAPILMADI: akışı atlayan
-# doğrudan `cli_mutate approval` / `ui.deadline_report` yolu bu akışın
-# güvencesi DEĞİLDİR (bilinen, T2'ye bağlı açık bağımlılık).
+# silme/zamanlayıcı yoktur.
+#
+# T2 (onay kapısı): akışın açtığı (sahiplik işaretli) vaka klasöründe süre
+# onayı YALNIZ bu akışın içinden, akışın koşu kimliğiyle verilir - onay
+# katmanı (`mutation_approval_facade`) işaretli vakada koşu kimliği
+# taşımayan `cli_mutate approval` ve web onayını reddeder; akış da onaydan
+# hemen önce işareti kendisi denetler (SAHIPLIK_ISARETI_YOK). Bu bir kaza
+# önleyicidir: işareti elle silen veya onay katmanını Python'dan doğrudan
+# çağıran yerel kullanıcıyı durdurmaz. `ui.deadline_report` onaydan sonraki
+# girdi değişimini DENETLEMEZ (K3, adı konmuş sınır).
 # ============================================================
 
 from __future__ import annotations
@@ -300,9 +307,17 @@ class RealChainBackend:
 
         return Path(deadline_engine.get_pending_path(case_id))
 
-    def approve_deadline(self, case_id: str, expected_pending_sha=None) -> None:
+    def approve_deadline(self, case_id: str, expected_pending_sha=None, *, office_flow_run_id=None) -> None:
+        """T2: koşu kimliği keyword-only `office_flow_run_id` ile gelir ve onay
+        katmanına AYNEN iletilir (akış onu HER ZAMAN geçirir; verilmezse onay
+        katmanı işaretli vakada reddeder - fail-closed). Onay, kilitli `approval_registry.
+        case_scoped_approve` yerine (o yol koşu kimliği taşıyamaz) onay katmanı
+        (`mutation_approval_facade.approve_case_scoped_mutation`) DOĞRUDAN
+        çağrılarak verilir; pending parmak izi için `case_scoped_review` ve
+        GIRDI_DEGISTI denetimi aynen kalır."""
         from ui.services import approval_registry as ar
         from ui.services import authz as _authz
+        from ui.services import mutation_approval_facade as _approval_facade
 
         self._open()
         _authz.authorize_case_access(self._principal, case_id, "read", repository=self._repository)
@@ -310,10 +325,11 @@ class RealChainBackend:
         if expected_pending_sha is not None and review["pending_hash"] != expected_pending_sha:
             self.release()
             raise OfficeFlowError("GIRDI_DEGISTI")
-        ar.case_scoped_approve(
+        _approval_facade.approve_case_scoped_mutation(
             "deadline", case_id, review["pending_hash"],
             principal=self._principal, authz_repository=self._repository,
             conn_factory=self._mutation_conn_factory,
+            office_flow_run_id=office_flow_run_id,
         )
         self.release()
 
@@ -797,12 +813,20 @@ class OfficeFlow:
         if not self._fresh(paths, state):
             self._invalidate(paths, state)
             return
+        # T2 (K2): onaydan HEMEN önce akış tarafında fail-closed sahiplik
+        # denetimi - vaka klasörünün işareti bu koşuya ait değilse (eksik,
+        # bozuk, başka koşu) onay HİÇ çağrılmaz. Otoriter karar yine onay
+        # katmanında, kilit altındadır; bu yalnız akışın kendi ön denetimidir.
+        if not records.read_owner_marker(paths.case_dir, run_id=paths.run_id, kind="case_dir"):
+            raise OfficeFlowError("SAHIPLIK_ISARETI_YOK")
         try:
             # Onay, karşılaştırmada GÖRÜLEN pending ile bağlıdır: pending o günden
-            # beri değiştiyse onay verilmez (GIRDI_DEGISTI).
+            # beri değiştiyse onay verilmez (GIRDI_DEGISTI). T2: koşu kimliği onay
+            # katmanına keyword olarak taşınır.
             self._tracked(
                 paths, self.backend.approve_deadline, paths.case_id,
                 expected_pending_sha=(state.get("deadline_izi") or {}).get("pending"),
+                office_flow_run_id=paths.run_id,
             )
         except OfficeFlowError:
             raise

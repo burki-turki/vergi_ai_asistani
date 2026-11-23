@@ -232,6 +232,8 @@ import hashlib
 import io
 import json
 import logging
+import os
+import stat as _stat
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -252,6 +254,13 @@ from .common import (
     PreconditionRaceDetectedError,
     StaleViewError,
     sha256_file,
+)
+# T2 (büro akışı onay kapısı): işaret adı ve kayıt sürümü TEK kaynaktan
+# alınır. `office_flow_records` yalnız standart kütüphane kullanır ve hiçbir
+# `ui.*` modülü import etmez - döngüsel import riski yoktur.
+from .office_flow_records import (
+    OWNER_MARKER_NAME as _OFFICE_FLOW_OWNER_MARKER_NAME,
+    RECORD_SCHEMA_VERSION as _OFFICE_FLOW_RECORD_SCHEMA_VERSION,
 )
 
 # ROW 19C-2a: the row_key -> module_name mapping for all 10 case-scoped
@@ -561,6 +570,217 @@ def _safe_latest_audit(case_root_real: Path, reviews_dir_verified: Path):
     if not verified:
         return None
     return sorted(verified, key=lambda p: p.stat().st_mtime)[-1]
+
+
+# ============================================================
+# T2 - BÜRO AKIŞI ONAY KAPISI (YALNIZ `deadline` AİLESİ)
+#
+# Büro akışı (`ui/office_deadline_flow.py`) açtığı her vaka klasörüne,
+# klasörü yaratırken İLK iş olarak bir sahiplik işareti yazar:
+# `<vaka kökü>/.office_flow_owner` = {"kayit_surumu": 1, "kos": <koşu
+# kimliği>, "tur": "case_dir"} (`office_flow_records.create_owned_dir`,
+# `office_flow_intake.seed_case` içinden). Böyle işaretli bir vakada süre
+# (`deadline`) onayı YALNIZ akışın içinden, akışın kendi koşu kimliğiyle
+# (`office_flow_run_id`) verilebilir; `ui.cli_mutate approval` ve web onay
+# yolu (ikisi de bu parametreyi GEÇMEZ) reddedilir. İşaretsiz her vaka ve
+# diğer DOKUZ onay ailesi bugünkü gibi çalışır - o dokuz ailede işaret dosyası
+# HİÇ okunmaz.
+#
+# KARAR TABLOSU (belirsizlikte ret, fail-closed):
+#   - yalnız "giriş YOK" (`os.lstat` -> FileNotFoundError) "işaret yok"
+#     sayılır; düzenli dosya, dizin, symlink/junction, kırık link, kök dışına
+#     çıkan ya da okunamayan HER giriş "işaret VAR" sayılır;
+#   - parametre YOK: işaret yok -> bugünkü davranış; işaret var -> ret;
+#   - parametre VAR: onay ancak giriş link olmayan düzenli bir dosyaysa,
+#     içeriği tam olarak {kayit_surumu, kos, tur} anahtarlarını taşıyan geçerli
+#     bir JSON nesnesiyse, `tur == "case_dir"`, `kayit_surumu == 1` (bool
+#     DEĞİL, gerçek int) ve `kos == office_flow_run_id` ise verilir; işaret
+#     YOKSA da ret.
+#
+# ROW 19C-3a SLICE 2 GÜVENLİ TARAMA KONTRATI: işaret yolu, üzerinde HERHANGİ
+# bir `lstat`/`stat`/`open` yapılmadan ÖNCE paylaşılan, kilitli
+# `src.path_containment.resolve_for_create()` ile doğrulanır (önce saf,
+# dosya-sistemsiz birleştirme denetimi, sonra kök içinde çözümleme); çözülen
+# yol `<doğrulanmış kök>/.office_flow_owner`'a BİREBİR eşit değilse (link,
+# takma ad, kök dışı) giriş geçersiz sayılır. İçerik YALNIZ doğrulanmış yoldan,
+# `lstat` ile aynı dosya olduğu `fstat` ile teyit edilerek, sınırlı boyutta
+# okunur.
+#
+# İKİ AŞAMA (Row 19C-1 kilit-sonrası otoriter yeniden-kontrol kuralı):
+#   1. kilit ÖNCESİ hızlı ret - dış yetki denetimi ve mevcut iç içe yol
+#      doğrulamalarından SONRA; `conn_factory()` çağrılmadan, kilit
+#      istenmeden, journal SQL'inden ve composite snapshot okumasından ÖNCE.
+#      Güvenli tekrarda (`replayed`) `precondition_callback` HİÇ çağrılmadığı
+#      için tamamlanmış bir onayın komut satırından "tekrarı" da YALNIZ bu
+#      aşamada reddedilir;
+#   2. kilit ALTINDA otoriter yeniden kontrol - `precondition_callback`'in
+#      SONUNDA: yarış/bayatlık kontrollerinden ve (değişmeyen)
+#      `check_pending_promotion_contract` çağrısından SONRA, `prepared`
+#      satırından ÖNCE; kök TAZE yeniden doğrulanmış olarak.
+# İki aşamada da ret = SIFIR journal satırı, yazıcı HİÇ çağrılmaz, ret
+# yazıcının içine konmaz (çözülemeyen `reconciliation_required` OLUŞMAZ).
+#
+# KİMLİK DEĞİŞMEZ: `office_flow_run_id` `MutationIntent`'e ve idempotency
+# anahtarına GİRMEZ; parametreli ve parametresiz aynı onayın anahtarı
+# birebir aynıdır.
+#
+# DAR İDDİA: bu bir kaza önleyicidir. İşaret dosyasını elle silen veya bu
+# fonksiyonu Python'dan doğrudan, akışın koşu kimliğiyle çağıran yerel bir
+# kullanıcıyı DURDURMAZ. Facade doğrulaması ile yazıcının kendi ham yol
+# türetmesi arasındaki TOCTOU penceresi (Row 19C-3a Slice 2'nin adı konmuş
+# sınırı, Row 19D OS ACL borcu) bu kapıyla DEĞİŞMEZ.
+# ============================================================
+
+OFFICE_FLOW_GATED_ROW_KEY = "deadline"
+OFFICE_FLOW_MARKER_KIND = "case_dir"
+_OFFICE_FLOW_MARKER_KEYS = frozenset({"kayit_surumu", "kos", "tur"})
+# İşaret ~70 bayttır; sınır yalnız saldırgan/bozuk büyük bir dosyanın
+# belleğe okunmasını engeller.
+_OFFICE_FLOW_MARKER_MAX_BYTES = 4096
+
+# SABİT metin: yol, koşu kimliği veya vaka kimliği İÇERMEZ (web hata sayfası
+# ve komut satırı bu metni gösterebilir).
+OFFICE_FLOW_APPROVAL_REQUIRED_MESSAGE = (
+    "Bu vaka büro akışı tarafından açılmış; süre onayı yalnız büro akışının "
+    "içinden verilebilir. Onay verilmedi, hiçbir değişiklik yapılmadı."
+)
+
+_MARKER_ABSENT = "absent"
+_MARKER_INVALID = "invalid"
+_MARKER_VALID = "valid"
+
+
+class OfficeFlowApprovalRequiredError(ApprovalUiError):
+    """T2: büro akışının işaretlediği bir vakada `deadline` onayı akış
+    dışından (koşu kimliği olmadan) ya da eşleşmeyen/bozuk bir işaretle
+    istendi. `common.ApprovalUiError` alt sınıfıdır: `ui/main.py`'nin mevcut
+    `except ApprovalUiError` dalı ("APPROVAL_FAILED"), `ui.cli_mutate`'in
+    bilinen-hata sınıflandırması ve akışın `error_code_for()` eşlemesi
+    (`ZINCIR_ADIMI_BASARISIZ`) onu hiçbir çağıran değişmeden karşılar.
+    Mesajı SABİTTİR; kurucu argüman almaz. Yalnız `prepared` satırından
+    ÖNCE fırlatılır: sıfır journal satırı, yazıcı çağrılmaz."""
+
+    def __init__(self):
+        super().__init__(OFFICE_FLOW_APPROVAL_REQUIRED_MESSAGE)
+
+
+def _reject_duplicate_json_keys(pairs):
+    record = {}
+    for key, value in pairs:
+        if key in record:
+            raise ValueError("duplicate key in office-flow owner marker")
+        record[key] = value
+    return record
+
+
+def _read_office_flow_marker(case_root_real: Path):
+    """`(durum, kos)` döndürür; durum `_MARKER_ABSENT`/`_MARKER_INVALID`/
+    `_MARKER_VALID`'dir, `kos` yalnız `_MARKER_VALID` için dolu. ASLA
+    fırlatmaz (her beklenmeyen durum `_MARKER_INVALID` = "işaret var ama
+    geçersiz"). `case_root_real` çağıranın az önce doğruladığı gerçek vaka
+    köküdür. Sıra BAĞLAYICIDIR: containment -> lstat -> open/fstat -> okuma."""
+    name = _OFFICE_FLOW_OWNER_MARKER_NAME
+    expected = case_root_real / name
+
+    # (1) Containment, HER lstat/stat/open'dan ÖNCE.
+    try:
+        verified = _path_containment.resolve_for_create(case_root_real, name)
+    except _path_containment.PathContainmentError:
+        # kök dışına çözümlenen, kırık/döngüsel link vb.: giriş VAR, geçersiz.
+        return _MARKER_INVALID, None
+    except Exception:
+        return _MARKER_INVALID, None
+    if verified != expected:
+        # kök içinde başka bir yere çözümlenen link/takma ad: geçersiz.
+        return _MARKER_INVALID, None
+
+    # (2) Yalnız doğrulanmış yol üzerinde lstat. YALNIZ "giriş yok" = işaret yok.
+    try:
+        entry = os.lstat(verified)
+    except FileNotFoundError:
+        return _MARKER_ABSENT, None
+    except Exception:
+        return _MARKER_INVALID, None
+    if _stat.S_ISLNK(entry.st_mode) or not _stat.S_ISREG(entry.st_mode):
+        return _MARKER_INVALID, None
+    reparse_flag = getattr(_stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    if getattr(entry, "st_file_attributes", 0) & reparse_flag:
+        return _MARKER_INVALID, None
+    # Sabit bağlantı (hard link): içeriği vaka dışındaki bir dosyayla paylaşan
+    # düzenli dosya akışın kendi işareti DEĞİLDİR (`create_owned_dir` her zaman
+    # tek bağlantılı yeni bir dosya yazar).
+    if entry.st_nlink != 1:
+        return _MARKER_INVALID, None
+    if entry.st_size > _OFFICE_FLOW_MARKER_MAX_BYTES:
+        return _MARKER_INVALID, None
+
+    # (3) İçerik yalnız doğrulanmış yoldan; açılan dosya lstat'takiyle aynı mı.
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        fd = os.open(verified, flags)
+    except Exception:
+        return _MARKER_INVALID, None
+    try:
+        try:
+            opened = os.fstat(fd)
+        except Exception:
+            return _MARKER_INVALID, None
+        if not _stat.S_ISREG(opened.st_mode) or (opened.st_dev, opened.st_ino) != (entry.st_dev, entry.st_ino):
+            return _MARKER_INVALID, None
+        chunks = []
+        total = 0
+        while total <= _OFFICE_FLOW_MARKER_MAX_BYTES:
+            try:
+                chunk = os.read(fd, _OFFICE_FLOW_MARKER_MAX_BYTES + 1 - total)
+            except Exception:
+                return _MARKER_INVALID, None
+            if not chunk:
+                break
+            chunks.append(chunk)
+            total += len(chunk)
+    finally:
+        try:
+            os.close(fd)
+        except Exception:
+            pass
+    data = b"".join(chunks)
+    if len(data) > _OFFICE_FLOW_MARKER_MAX_BYTES:
+        return _MARKER_INVALID, None
+
+    # (4) İçerik: tam anahtar kümesi, katı tipler (`True == 1` tuzağına karşı).
+    try:
+        record = json.loads(data.decode("utf-8"), object_pairs_hook=_reject_duplicate_json_keys)
+    except Exception:
+        return _MARKER_INVALID, None
+    if not isinstance(record, dict) or set(record) != _OFFICE_FLOW_MARKER_KEYS:
+        return _MARKER_INVALID, None
+    version = record["kayit_surumu"]
+    kind = record["tur"]
+    run_id = record["kos"]
+    if type(version) is not int or version != _OFFICE_FLOW_RECORD_SCHEMA_VERSION:
+        return _MARKER_INVALID, None
+    if type(kind) is not str or kind != OFFICE_FLOW_MARKER_KIND:
+        return _MARKER_INVALID, None
+    if type(run_id) is not str or not run_id.strip():
+        return _MARKER_INVALID, None
+    return _MARKER_VALID, run_id
+
+
+def _enforce_office_flow_approval_gate(case_root_real: Path, office_flow_run_id) -> None:
+    """Karar tablosu (bkz. bölüm başlığı). Geçerse `None`, aksi halde
+    `OfficeFlowApprovalRequiredError` (sabit metin, zincirsiz)."""
+    state, marker_run_id = _read_office_flow_marker(case_root_real)
+    if office_flow_run_id is None:
+        if state == _MARKER_ABSENT:
+            return
+        raise OfficeFlowApprovalRequiredError() from None
+    if (
+        state == _MARKER_VALID
+        and type(office_flow_run_id) is str
+        and marker_run_id == office_flow_run_id
+    ):
+        return
+    raise OfficeFlowApprovalRequiredError() from None
 
 
 # ROW 19C-2a: fixed absence markers for the composite pre-state
@@ -910,6 +1130,7 @@ def approve_case_scoped_mutation(
     principal,
     authz_repository=None,
     conn_factory=None,
+    office_flow_run_id=None,
 ) -> CaseScopedApprovalResult:
     """The Row 19C-2a REPLACEMENT for directly calling
     `module.run_approve(case_id)` from `approval_registry.
@@ -939,6 +1160,16 @@ def approve_case_scoped_mutation(
       7. Release the lock, close the journal connection, and close the
          IAM authz connection if (and only if) this module opened it.
 
+    T2 (YALNIZ `row_key == "deadline"`): keyword-only `office_flow_run_id`
+    (varsayılan `None` - bugünkü her çağıran aynen çalışır) büro akışının
+    sahiplik işaretine karşı İKİ kez denetlenir: kilit ÖNCESİ (3. adımın iç
+    içe yol doğrulamalarından hemen sonra, snapshot okumasından ve 4. adımdan
+    ÖNCE) ve kilit ALTINDA (`precondition_callback`'in sonunda, `prepared`
+    ÖNCESİ). Parametre `MutationIntent`'e/idempotency anahtarına GİRMEZ.
+    Ret: `OfficeFlowApprovalRequiredError` - bkz. "T2 - BÜRO AKIŞI ONAY
+    KAPISI" bölümü. Diğer dokuz ailede parametre yok sayılır ve işaret
+    okunmaz.
+
     Raises, UNCHANGED in type/message, everything
     `case_scoped_approve()` already raises today for the SAME reasons
     (`PendingNotFoundError`, `StaleViewError`,
@@ -954,7 +1185,9 @@ def approve_case_scoped_mutation(
         `JournalCompletionUncertainError`);
       - this module's own `AuditBindingVerificationFailedError`
         (safe-replay corroboration failure) and
-        `ResolvedCaseIdMismatchError` (fail-closed backstop).
+        `ResolvedCaseIdMismatchError` (fail-closed backstop);
+      - T2: this module's own `OfficeFlowApprovalRequiredError` (an
+        `ApprovalUiError` subclass; `deadline` only).
     NONE of these are caught or reclassified here; the caller
     (`ui/main.py`) decides the HTTP mapping."""
 
@@ -1014,6 +1247,20 @@ def approve_case_scoped_mutation(
         pre_lock_nested_identity = (
             str(pre_lock_pending_verified), str(pre_lock_canonical_verified), str(pre_lock_reviews_dir_verified),
         )
+
+        # ============================================================
+        # T2 - BÜRO AKIŞI ONAY KAPISI, AŞAMA 1/2: KİLİT ÖNCESİ HIZLI RET
+        # (YALNIZ `deadline`). Dış yetki denetimi ve yukarıdaki iç içe yol
+        # doğrulamalarından SONRA; composite snapshot okumasından,
+        # `conn_factory()` çağrısından, kilit isteğinden ve HER journal
+        # SQL'inden ÖNCE. Ret: sıfır bağlantı, sıfır kilit, sıfır journal
+        # satırı, yazıcı çağrılmaz. Güvenli tekrar (`replayed`)
+        # `precondition_callback`'e HİÇ ulaşmadığı için tamamlanmış bir
+        # onayın akış dışından "tekrarı" yalnız BURADA reddedilir. Diğer
+        # dokuz ailede bu dal hiç çalışmaz (işaret okunmaz).
+        # ============================================================
+        if row_key == OFFICE_FLOW_GATED_ROW_KEY:
+            _enforce_office_flow_approval_gate(pre_lock_case_root_real, office_flow_run_id)
 
         # PRE-LOCK composite snapshot - recorded as this attempt's
         # `pre_hash` and re-verified under the lock (see this module's
@@ -1230,6 +1477,20 @@ def approve_case_scoped_mutation(
                         under_lock_case_root_real, carry_forward_dir_verified,
                         pattern="carry_forward_*.json", parse_json=False,
                     )
+
+            # ========================================================
+            # T2 - BÜRO AKIŞI ONAY KAPISI, AŞAMA 2/2: KİLİT ALTINDA
+            # OTORİTER YENİDEN KONTROL (YALNIZ `deadline`). Bu callback'in
+            # SON adımı: iç (otoriter) yetki denetiminden, yarış/bayatlık
+            # kontrollerinden ve DEĞİŞMEYEN `check_pending_promotion_
+            # contract` çağrısından SONRA; `run_mutation()`'ın 6. adımı
+            # (`_insert_prepared`) ÖNCESİ. Kök TAZE doğrulanmış
+            # (`under_lock_case_root_real`); işaret kilit beklenirken
+            # oluştuysa/değiştiyse burada reddedilir. Ret: SIFIR journal
+            # satırı (`prepared` dahil), yazıcı HİÇ çağrılmaz.
+            # ========================================================
+            if row_key == OFFICE_FLOW_GATED_ROW_KEY:
+                _enforce_office_flow_approval_gate(under_lock_case_root_real, office_flow_run_id)
 
         def writer_callback() -> _mutation_coordinator.WriterResult:
             stdout_capture = io.StringIO()
